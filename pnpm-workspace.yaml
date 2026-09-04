@@ -33,6 +33,14 @@ minimumReleaseAgeExclude:
   # this setting guards against does not apply to our own packages.
   - '@replit/*'
   - stripe-replit-sync
+  # Expo Go 57 requires its matching first-party native modules. These versions
+  # were released together by Expo and must stay aligned for device previews.
+  - expo
+  - expo-auth-session
+  - expo-image-picker
+  - expo-location
+  - expo-notifications
+  - expo-router
 
 packages:
   - artifacts/*

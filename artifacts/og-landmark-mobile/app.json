@@ -7,12 +7,6 @@
     "icon": "./assets/images/app-icon-professional.png",
     "scheme": "og-land-mobile",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/og-landmark-splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#102A43"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.oglandmark.app"

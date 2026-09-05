@@ -84,7 +84,7 @@
     <h1>Agent Login</h1>
     <div class="subtitle">Sign in to access your agent workspace</div>
     <div class="err" id="login-err"></div>
-    <div class="field"><label>Email Address</label><input type="email" id="login-email" placeholder="your@email.com" autocomplete="email"/></div>
+    <div class="field"><label>Email Address</label><input type="email" id="login-email" placeholder="your@email.com" autocomplete="off"/></div>
     <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="Your password" autocomplete="current-password"/></div>
     <button class="btn-main" id="login-btn" onclick="doLogin()">Sign In</button>
     <div class="divider">or</div>
@@ -104,7 +104,7 @@
       <div class="field" style="margin-bottom:0"><label>Last Name</label><input type="text" id="reg-lname" placeholder="Last name" autocomplete="family-name"/></div>
     </div>
     <div style="margin-bottom:14px"></div>
-    <div class="field"><label>Email Address</label><input type="email" id="reg-email" placeholder="your@email.com" autocomplete="email"/></div>
+    <div class="field"><label>Email Address</label><input type="email" id="reg-email" placeholder="your@email.com" autocomplete="off"/></div>
     <div class="field"><label>Phone Number</label><input type="tel" id="reg-phone" placeholder="+92 300 1234567" autocomplete="tel"/></div>
     <div class="grid2">
       <div class="field" style="margin-bottom:0">
@@ -158,7 +158,7 @@
     <div class="subtitle">Enter your email to receive a reset code</div>
     <div class="err" id="forgot-err"></div>
     <div class="success-box" id="forgot-ok">Reset code sent! Check your email.</div>
-    <div class="field"><label>Email Address</label><input type="email" id="forgot-email" placeholder="your@email.com"/></div>
+    <div class="field"><label>Email Address</label><input type="email" id="forgot-email" placeholder="your@email.com" autocomplete="off"/></div>
     <button class="btn-main" id="forgot-btn" onclick="doForgot()">Send Reset Code</button>
     <div class="divider">or</div>
     <button class="link-btn" onclick="showPanel('login')">← Back to Login</button>

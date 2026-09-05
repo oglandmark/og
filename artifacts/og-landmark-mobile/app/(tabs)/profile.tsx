@@ -924,19 +924,36 @@ export default function ProfileScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void getProfilePhoto().then(setPhotoUri);
+      if (!isLoggedIn) {
+        setPhotoUri(null);
+        setListingsCount(0);
+        setAgentLeadsCount(0);
+        setInquiries([]);
+        setSavedSearches([]);
+        setMyVisits([]);
+        return;
+      }
+
+      void getProfilePhoto()
+        .then(setPhotoUri)
+        .catch(() => setPhotoUri(null));
 
       if (role === 'agent') {
-        void Promise.all([getMyListings(user?.id ?? ''), getLeads()]).then(([myL, leads]) => {
-          setListingsCount(myL.length);
-          setAgentLeadsCount(leads.length);
-        });
+        void Promise.all([getMyListings(user?.id ?? ''), getLeads()])
+          .then(([myL, leads]) => {
+            setListingsCount(myL.length);
+            setAgentLeadsCount(leads.length);
+          })
+          .catch(() => {
+            setListingsCount(0);
+            setAgentLeadsCount(0);
+          });
       }
 
       if (role === 'buyer' || role === null) {
-        void getInquiries().then(setInquiries);
-        void getVisitHistory().then(setVisitHistory);
-        void getSavedSearches().then(setSavedSearches);
+        void getInquiries().then(setInquiries).catch(() => setInquiries([]));
+        void getVisitHistory().then(setVisitHistory).catch(() => setVisitHistory([]));
+        void getSavedSearches().then(setSavedSearches).catch(() => setSavedSearches([]));
         if (user?.id) {
           void Promise.all([
             getSiteVisitsByBuyer(user.id),
@@ -973,10 +990,12 @@ export default function ProfileScreen() {
               })),
             ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             setMyVisits(combined);
-          });
+          }).catch(() => setMyVisits([]));
+        } else {
+          setMyVisits([]);
         }
       }
-    }, [role, user?.id]),
+    }, [isLoggedIn, role, user?.id]),
   );
 
   // ── Handlers ───────────────────────────────────────────────────────────────

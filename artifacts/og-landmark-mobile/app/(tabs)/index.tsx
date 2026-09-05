@@ -53,7 +53,7 @@ type Transaction = 'Buy' | 'Rent';
 
 // ─── Drawer types & data ──────────────────────────────────────────────────────
 
-type DrawerRoute = '/explore' | '/(tabs)/post-ad' | '/(tabs)/saved' | '/(auth)/login' | '/tools?tool=land';
+type DrawerRoute = '/explore' | '/(tabs)/post-ad' | '/(tabs)/saved' | '/(auth)/login' | '/(tabs)/calculator';
 type DrawerInfo  = { title: string; eyebrow: string; body: string };
 type DrawerItem  = { label: string; detail: string; icon: keyof typeof Feather.glyphMap; route?: DrawerRoute; info?: DrawerInfo };
 
@@ -62,7 +62,7 @@ const drawerItems: DrawerItem[] = [
   { label: 'Add Property',      detail: 'List a property for buyers',     icon: 'plus-circle',  route: '/(tabs)/post-ad' },
   { label: 'Search Properties', detail: 'Find homes, plots and more',     icon: 'search',       route: '/explore' },
   { label: 'Favorites',         detail: 'Your saved properties',          icon: 'heart',        route: '/(tabs)/saved' },
-  { label: 'Land Calculator',   detail: 'Area, price & ROI tools',        icon: 'grid',         route: '/tools?tool=land' },
+  { label: 'Land Calculator',   detail: 'Area, price & ROI tools',        icon: 'grid',         route: '/(tabs)/calculator' },
   { label: 'Saved Searches',    detail: 'Keep your property searches close', icon: 'bookmark' },
 ];
 const discoverItems: DrawerItem[] = [
@@ -2102,7 +2102,7 @@ export default function HomeScreen() {
             <Pressable key={tool.label}
               onPress={() =>
                 tool.toolKey === 'calc'
-                  ? router.push({ pathname: '/tools', params: { tool: 'land' } } as any)
+                  ? router.push('/(tabs)/calculator' as any)
                   : router.push({ pathname: '/tools', params: { tool: tool.toolKey } } as any)
               }
               style={({ pressed }) => [s.toolTile, { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.85 : 1 }]}>

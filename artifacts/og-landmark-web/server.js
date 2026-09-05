@@ -489,6 +489,42 @@ async function initDb() {
     }
     return;
   }
+  // Keep production self-healing when only the original app_data table was
+  // created manually. Auth persistence is required by login, registration,
+  // and password reset, so ensure all three tables exist before dbReady flips.
+  await neonDb`
+    CREATE TABLE IF NOT EXISTS public.app_data (
+      id bigint primary key,
+      data jsonb not null,
+      updated_at timestamptz not null default now()
+    )
+  `;
+  await neonDb`
+    CREATE TABLE IF NOT EXISTS public.auth_sessions (
+      token_hash text primary key,
+      user_id bigint not null,
+      expires_at timestamptz not null,
+      created_at timestamptz not null default now()
+    )
+  `;
+  await neonDb`
+    CREATE INDEX IF NOT EXISTS idx_auth_sessions_user
+    ON public.auth_sessions (user_id)
+  `;
+  await neonDb`
+    CREATE INDEX IF NOT EXISTS idx_auth_sessions_expiry
+    ON public.auth_sessions (expires_at)
+  `;
+  await neonDb`
+    CREATE TABLE IF NOT EXISTS public.auth_challenges (
+      email text not null,
+      purpose text not null,
+      code_hash text not null,
+      attempts smallint not null default 0,
+      expires_at timestamptz not null,
+      primary key (email, purpose)
+    )
+  `;
   const existingRows = await neonDb`SELECT id, data FROM app_data WHERE id = 1 LIMIT 1`;
   const existing = existingRows[0];
   if (!existing) {

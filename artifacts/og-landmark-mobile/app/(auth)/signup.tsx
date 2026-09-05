@@ -46,7 +46,7 @@ export default function SignUpScreen() {
     if (!name.trim())                                          { setError('Full name is required.');                              return; }
     if (!email.includes('@'))                                  { setError('Enter a valid email address.');                        return; }
     if (!phone.trim() || phone.replace(/\D/g,'').length < 10) { setError('Enter a valid phone number (e.g. 0300-1234567).');     return; }
-    if (password.length < 6)                                   { setError('Password must be at least 6 characters.');            return; }
+    if (password.length < 8)                                   { setError('Password must be at least 8 characters.');            return; }
 
     setError('');
     setLoading(true);
@@ -162,7 +162,7 @@ export default function SignUpScreen() {
                 value={password}
                 onChangeText={(v) => { setPassword(v); setError(''); }}
                 secureTextEntry={!showPwd}
-                placeholder="Min. 6 characters"
+                placeholder="Min. 8 characters"
                 placeholderTextColor={MUTED}
                 textAlign={rtl}
                 style={[styles.underlineInput, { flex: 1, borderBottomWidth: 0 }]}

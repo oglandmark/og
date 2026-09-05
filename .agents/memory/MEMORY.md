@@ -4,3 +4,4 @@
 - [Hostinger startup timeout](hostinger-startup-timeout.md) — bind the Node port before MySQL initialization so external health checks do not time out.
 - [Hostinger SMTP delivery](hostinger-smtp-delivery.md) — OTP mail needs a real mailbox credential pair, independently of the database connection.
 - [Neon PostgreSQL production database](neon-database.md) — production persistence uses the user's Neon database through a server-only DATABASE_URL.
+- [Neon auth schema](neon-auth-schema.md) — app_data alone is insufficient; auth tables must exist before production auth flows are exercised.

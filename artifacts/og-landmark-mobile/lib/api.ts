@@ -12,16 +12,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // ─── Base URL ──────────────────────────────────────────────────────────────────
 // Override via EXPO_PUBLIC_API_URL in .env.local (no trailing /api)
 // e.g.  EXPO_PUBLIC_API_URL=https://oglandmark.com
+// The explicit URL must win over the injected preview domain so production
+// builds cannot accidentally keep calling a temporary Replit dev host.
+const configuredApiUrl = String(process.env.EXPO_PUBLIC_API_URL || '').trim().replace(/\/+$/, '');
+const injectedDomain = String(process.env.EXPO_PUBLIC_DOMAIN || '').trim();
 export const API_BASE: string =
-  (process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : undefined) ||
-  (process.env.EXPO_PUBLIC_API_URL as string) ||
-  'https://oglandmark.com';
+  configuredApiUrl ||
+  (injectedDomain ? `https://${injectedDomain}` : 'https://oglandmark.com');
 
 // ─── Local API server URL (social auth lives here) ─────────────────────────────
-// EXPO_PUBLIC_DOMAIN is injected in dev script as $REPLIT_DEV_DOMAIN
-const LOCAL_API_BASE: string = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`
-  : API_BASE;
+// EXPO_PUBLIC_DOMAIN is injected in dev script as $REPLIT_DEV_DOMAIN.
+// Keep social auth on the same API host as the rest of the client.
+const LOCAL_API_BASE: string = `${API_BASE}/api`;
 
 const TOKEN_KEY = '@og-landmark/api-token';
 
@@ -67,7 +69,12 @@ export async function apiRequest<T>(
     clearTimeout(timer);
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: res.statusText }));
-      throw new Error(err?.error || `HTTP ${res.status}`);
+      const message = typeof err === 'object' && err !== null
+        ? (err as { error?: string; message?: string; detail?: string }).error
+          || (err as { message?: string }).message
+          || (err as { detail?: string }).detail
+        : undefined;
+      throw new Error(message || `HTTP ${res.status}`);
     }
     return res.json() as Promise<T>;
   } catch (e: unknown) {
@@ -89,7 +96,12 @@ async function apiUpload<T>(path: string, form: FormData): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, { method: 'POST', body: form, headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err?.error || `HTTP ${res.status}`);
+    const message = typeof err === 'object' && err !== null
+      ? (err as { error?: string; message?: string; detail?: string }).error
+        || (err as { message?: string }).message
+        || (err as { detail?: string }).detail
+      : undefined;
+    throw new Error(message || `HTTP ${res.status}`);
   }
   return res.json();
 }

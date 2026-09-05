@@ -28,3 +28,17 @@ mtime_ms = 1788611914934
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/faf7da8f-1aed-4315-8882-65b8d9617bff/105c9446-ee92-4121-8a2f-57def59fe6ff"
 storage_version_token = "1788611935280748"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "KfrjPY4_AxRUf7fFIqSPG"
+uri = "file://exports/OG%20Landmark%20v10.zip"
+type = "unspecified"
+title = "OG Landmark v10 Hostinger package"
+description = "Clean Hostinger deployment ZIP with the Neon auth-table startup fix, mobile API routing/error handling updates, and the latest transparent OG Landmark logo assets."
+logical_id = "193a7bc4-161b-44eb-9dbf-6b7e5498a4cd"
+content_hash = "sha256:d67d675069e5499261af021faf9f5ee1aaf66606bb7387c3c4409cfb05aaf7f3"
+size = 10826803
+mtime_ms = 1788613150467
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/193a7bc4-161b-44eb-9dbf-6b7e5498a4cd/081abad9-b09e-4b85-8ef5-3830879626bc"
+storage_version_token = "1788613224321820"
+content_type = "application/octet-stream"

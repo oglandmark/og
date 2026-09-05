@@ -1,0 +1,508 @@
+OG LANDMARK — REBUILD LAND & PLOT MEASUREMENT CALCULATOR
+
+Replace the current Land/Area Calculator with a professional, practical Land & Plot Measurement Calculator designed specifically for real-estate users in Pakistan.
+
+IMPORTANT:
+This is NOT a basic mathematical area calculator.
+It should work like a real property/plot measurement tool used by property dealers, landowners, surveyors and buyers.
+
+Do NOT use terms like “height”, “depth”, “base”, or other confusing geometry terminology in the user interface.
+
+The user should simply enter the measurements of each side/boundary of the plot, just like a real plot is measured.
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+1. SUPPORTED PLOT SHAPES
+    ━━━━━━━━━━━━━━━━━━━━━━
+
+Allow the user to select:
+
+• 3-Sided Plot
+• 4-Sided Plot
+• 5-Sided Plot
+• 6-Sided Plot
+• 7-Sided Plot
+• 8-Sided Plot
+
+Default: 4-Sided Plot
+
+The interface should dynamically generate the required measurement fields according to the number of sides selected.
+
+For example:
+
+4-Sided Plot:
+• Side 1
+• Side 2
+• Side 3
+• Side 4
+
+5-Sided Plot:
+• Side 1
+• Side 2
+• Side 3
+• Side 4
+• Side 5
+
+Continue up to 8 sides.
+
+Use user-friendly labels such as:
+
+“Side 1”
+“Side 2”
+“Side 3”
+
+and optionally allow the user to rename them:
+
+“Front”
+“Back”
+“Left”
+“Right”
+“Side 5” etc.
+
+━━━━━━━━━━━━━━━━━━━━━━
+2. MEASUREMENT UNITS
+━━━━━━━━━━━━━━━━━━━━━━
+
+Support:
+
+• Feet
+• Meters
+
+The user must be able to select the input unit.
+
+Example:
+
+Measurement Unit:
+[ Feet ▼ ]
+
+Side 1: [ 40 ]
+Side 2: [ 80 ]
+Side 3: [ 40 ]
+Side 4: [ 80 ]
+
+Allow decimal values.
+
+Examples:
+40
+40.5
+75.25
+100.75
+
+━━━━━━━━━━━━━━━━━━━━━━
+3. IMPORTANT AREA CALCULATION LOGIC
+━━━━━━━━━━━━━━━━━━━━━━
+
+Do NOT simply multiply two sides for every plot.
+
+For regular 4-sided rectangular plots, calculate the area accurately.
+
+For irregular 4-sided, 5-sided, 6-sided, 7-sided and 8-sided plots, provide a proper practical calculation method.
+
+The best implementation is:
+
+A) Allow the user to enter boundary side measurements.
+
+B) Provide an optional “Add Diagonal Measurements” mode for irregular plots.
+
+For irregular plots, side lengths alone do NOT uniquely determine the exact area. Therefore, the app must NOT falsely claim an exact area from insufficient information.
+
+Instead:
+
+“Basic Measurement”
+→ calculate where mathematically possible.
+
+“Accurate Irregular Plot Measurement”
+→ allow the user to add diagonal measurements / additional measurements required to establish the plot geometry.
+
+The app should guide the user clearly instead of producing a misleading result.
+
+━━━━━━━━━━━━━━━━━━━━━━
+4. VISUAL PLOT MAP
+━━━━━━━━━━━━━━━━━━━━━━
+
+Create a simple interactive visual representation of the plot.
+
+When the user selects:
+
+3 sides → show triangular plot
+
+4 sides → show quadrilateral plot
+
+5 sides → show pentagon
+
+6 sides → show hexagon
+
+7 sides → show heptagon
+
+8 sides → show octagon
+
+Display the entered measurements visually around the plot.
+
+Example:
+
+      40 ft
+ ┌────────────┐
+
+80ft│            │80ft
+└────────────┘
+40 ft
+
+For irregular plots, dynamically draw the polygon according to the available measurements/geometry.
+
+The visual should look professional and property-survey oriented, not like a school mathematics diagram.
+
+━━━━━━━━━━━━━━━━━━━━━━
+5. AREA RESULT
+━━━━━━━━━━━━━━━━━━━━━━
+
+After calculation, show a large professional Result Card.
+
+Example:
+
+TOTAL LAND AREA
+
+3,200.00 sq ft
+
+10.00 Marla
+
+0.50 Kanal
+
+355.56 sq yd
+
+297.29 sq m
+
+0.0734 Acre
+
+Use clear labels:
+
+Square Feet
+Square Yards
+Square Meters
+Marla
+Kanal
+Acre
+
+IMPORTANT:
+Keep the conversion system configurable from one central configuration file.
+
+For Pakistan property measurements, initially use:
+
+1 Marla = 272.25 sq ft
+1 Kanal = 20 Marla = 5,445 sq ft
+1 Acre = 8 Kanal = 43,560 sq ft
+1 Square Yard = 9 sq ft
+1 Square Meter = 10.7639 sq ft
+
+Do NOT hard-code these values throughout the application.
+
+Create a central measurement configuration so they can be changed later if required by a specific locality.
+
+━━━━━━━━━━━━━━━━━━━━━━
+6. UNIT CONVERSION
+━━━━━━━━━━━━━━━━━━━━━━
+
+Internally calculate everything in square meters or square feet, then convert the final result into all supported units.
+
+Show:
+
+┌─────────────────────────────┐
+│       TOTAL AREA            │
+│                             │
+│     3,200.00 sq ft          │
+│                             │
+│     355.56 sq yd            │
+│     297.29 sq m             │
+│     11.75 Marla              │
+│     0.59 Kanal                │
+│     0.0734 Acre              │
+└─────────────────────────────┘
+
+Use appropriate decimal precision.
+
+Do not unnecessarily show excessive decimal places.
+
+━━━━━━━━━━━━━━━━━━━━━━
+7. INPUT VALIDATION
+━━━━━━━━━━━━━━━━━━━━━━
+
+Validate every field.
+
+Do not allow:
+
+• Empty measurements
+• Negative values
+• Invalid characters
+• Zero values
+
+Show clean inline validation messages.
+
+Example:
+
+“Please enter a valid measurement.”
+
+Do not crash if the user enters invalid data.
+
+━━━━━━━━━━━━━━━━━━━━━━
+8. RESET / CLEAR
+━━━━━━━━━━━━━━━━━━━━━━
+
+Add:
+
+[ Calculate Area ]
+
+[ Clear All ]
+
+The Clear All button should reset all measurements and results.
+
+━━━━━━━━━━━━━━━━━━━━━━
+9. SAVE MEASUREMENT
+━━━━━━━━━━━━━━━━━━━━━━
+
+Allow logged-in users to save a measurement.
+
+Saved record should contain:
+
+• Measurement name
+• Date
+• Plot shape
+• Number of sides
+• Side measurements
+• Unit
+• Calculated area
+• Square feet
+• Square meters
+• Marla
+• Kanal
+• Acre
+
+Example:
+
+“Ali Farm Land”
+
+4-Sided Plot
+
+40 × 80 × 42 × 78 ft
+
+Area:
+3,160 sq ft
+11.61 Marla
+0.58 Kanal
+0.0726 Acre
+
+Allow users to open previous measurements later.
+
+━━━━━━━━━━━━━━━━━━━━━━
+10. SHARE RESULT
+━━━━━━━━━━━━━━━━━━━━━━
+
+Add a professional:
+
+[ Share Result ]
+
+button.
+
+The shared result should contain:
+
+OG LANDMARK
+
+LAND MEASUREMENT RESULT
+
+Plot Type:
+4-Sided Plot
+
+Measurements:
+Side 1: 40 ft
+Side 2: 80 ft
+Side 3: 42 ft
+Side 4: 78 ft
+
+Total Area:
+3,160 sq ft
+
+11.61 Marla
+0.58 Kanal
+0.0726 Acre
+
+Include OG Landmark branding.
+
+━━━━━━━━━━━━━━━━━━━━━━
+11. MOBILE-FIRST DESIGN
+━━━━━━━━━━━━━━━━━━━━━━
+
+This is primarily a mobile app feature.
+
+Make the calculator extremely easy to use on phones.
+
+Requirements:
+
+• Large input fields
+• Large buttons
+• Clear typography
+• No unnecessary clutter
+• Smooth scrolling
+• Responsive layout
+• One-handed usability
+• Proper keyboard behavior
+• Numeric keyboard for measurements
+• No horizontal scrolling
+
+━━━━━━━━━━━━━━━━━━━━━━
+12. OG LANDMARK DESIGN
+━━━━━━━━━━━━━━━━━━━━━━
+
+Use the existing OG Landmark luxury real-estate design system.
+
+Maintain:
+
+• Premium dark navy theme
+• White/off-white surfaces
+• Luxury gold accents
+• Professional typography
+• Rounded modern cards
+• Subtle shadows
+• Clean icons
+• Premium real-estate appearance
+
+Do not make the calculator look like a generic calculator app.
+
+It should feel like a premium professional property measurement tool inside OG Landmark.
+
+━━━━━━━━━━━━━━━━━━━━━━
+13. USER FLOW
+━━━━━━━━━━━━━━━━━━━━━━
+
+The complete flow should be:
+
+Land Tools
+↓
+Land & Plot Measurement
+↓
+Select Plot Shape
+↓
+3 / 4 / 5 / 6 / 7 / 8 Sides
+↓
+Select Unit
+↓
+Enter Side Measurements
+↓
+Optional Accurate Irregular Measurement Mode
+↓
+View Plot Diagram
+↓
+Calculate Area
+↓
+Professional Result Card
+↓
+View:
+Sq Ft
+Sq Yd
+Sq M
+Marla
+Kanal
+Acre
+↓
+Save / Share
+
+━━━━━━━━━━━━━━━━━━━━━━
+14. ACCURACY & ENGINEERING REQUIREMENT
+━━━━━━━━━━━━━━━━━━━━━━
+
+This feature must be mathematically reliable.
+
+Do NOT invent an area when the entered information is mathematically insufficient.
+
+For polygons where side lengths alone cannot uniquely determine the area:
+
+• Clearly inform the user
+• Request the required diagonal/additional measurements
+• Use an appropriate polygon-area calculation method once sufficient geometry is available
+• Clearly distinguish “Estimated Area” from “Calculated Area” where applicable
+
+The app must never present an approximate result as an exact surveyed/legal land area.
+
+Add a small disclaimer:
+
+“OG Landmark measurement results are for estimation and property planning purposes only and should be verified by a qualified land surveyor for legal or official use.”
+
+━━━━━━━━━━━━━━━━━━━━━━
+15. EXISTING APP INTEGRATION
+━━━━━━━━━━━━━━━━━━━━━━
+
+IMPORTANT:
+
+Do not break any existing OG Landmark features.
+
+Do not remove:
+
+• Authentication
+• Buyer Portal
+• Seller Portal
+• Agent Portal
+• Maps
+• Property Listings
+• Saved Properties
+• User Profile
+• Existing Land Tools
+
+Only replace/rebuild the current Land Calculator module.
+
+Reuse the existing:
+
+• Navigation
+• Theme
+• Components
+• Icons
+• Authentication
+• Database
+• State management
+• Existing design system
+
+If the current calculator has existing saved data, preserve compatibility where possible.
+
+━━━━━━━━━━━━━━━━━━━━━━
+16. CODE QUALITY
+━━━━━━━━━━━━━━━━━━━━━━
+
+Build this as production-ready code.
+
+Requirements:
+
+• Reusable components
+• Clean architecture
+• Type-safe calculations
+• Centralized conversion constants
+• Separate calculation engine from UI
+• Proper error handling
+• Unit tests for calculation/conversion functions
+• No duplicated calculation logic
+• No hard-coded UI-specific calculations
+
+Before completing the task, test all supported polygon options:
+
+3 sides
+4 sides
+5 sides
+6 sides
+7 sides
+8 sides
+
+Test Feet and Meter inputs.
+
+Test conversion to:
+
+sq ft
+sq yd
+sq m
+Marla
+Kanal
+Acre
+
+Test irregular polygon validation and insufficient-measurement handling.
+
+FINAL REQUIREMENT:
+
+The result must feel like a professional Pakistani real-estate land measurement tool, not a basic calculator.
+
+Do not merely change the UI.
+
+Rebuild the underlying measurement/calculation logic properly and ensure every supported option actually works end-to-end.

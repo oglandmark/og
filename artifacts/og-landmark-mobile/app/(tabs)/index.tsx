@@ -53,7 +53,7 @@ type Transaction = 'Buy' | 'Rent';
 
 // ─── Drawer types & data ──────────────────────────────────────────────────────
 
-type DrawerRoute = '/explore' | '/(tabs)/post-ad' | '/(tabs)/saved' | '/(auth)/login' | '/(tabs)/calculator';
+type DrawerRoute = '/explore' | '/(tabs)/post-ad' | '/(tabs)/saved' | '/(auth)/login';
 type DrawerInfo  = { title: string; eyebrow: string; body: string };
 type DrawerItem  = { label: string; detail: string; icon: keyof typeof Feather.glyphMap; route?: DrawerRoute; info?: DrawerInfo };
 
@@ -62,7 +62,6 @@ const drawerItems: DrawerItem[] = [
   { label: 'Add Property',      detail: 'List a property for buyers',     icon: 'plus-circle',  route: '/(tabs)/post-ad' },
   { label: 'Search Properties', detail: 'Find homes, plots and more',     icon: 'search',       route: '/explore' },
   { label: 'Favorites',         detail: 'Your saved properties',          icon: 'heart',        route: '/(tabs)/saved' },
-  { label: 'Land Calculator',   detail: 'Area, price & ROI tools',        icon: 'grid',         route: '/(tabs)/calculator' },
   { label: 'Saved Searches',    detail: 'Keep your property searches close', icon: 'bookmark' },
 ];
 const discoverItems: DrawerItem[] = [
@@ -2113,9 +2112,6 @@ export default function HomeScreen() {
               <Text style={[s.toolTileSub, { color: colors.mutedForeground }]}>{tool.sub}</Text>
             </Pressable>
           ))}
-        </View>
-        <View style={{ marginTop: 14 }}>
-          <PlotMeasurementCalculator colors={colors} />
         </View>
       </AnimatedReveal>
 

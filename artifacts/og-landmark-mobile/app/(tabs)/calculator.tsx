@@ -177,9 +177,11 @@ function PlotAreaCalc({ colors }: { colors: any }) {
   const result    = typeof rawResult === 'object' && rawResult !== null ? rawResult : null;
 
   const hintMap: Record<CalcCorners, string> = {
-    3: 'Triangle: all 3 sides are required (Heron’s formula).',
-    4: 'Quadrilateral: enter 4 sides + diagonal AC to split it into 2 triangles.',
-    5: 'Pentagon: enter 5 sides + diagonals AC and AD to split it into 3 triangles.',
+    3: 'Triangle: enter all 3 boundary sides.',
+    4: '4 corners: enter 4 boundary sides + surface diagonal AC.',
+    5: '5 corners: enter 5 boundary sides + surface diagonals AC and AD.',
+    6: '6 corners: enter 6 boundary sides + surface diagonals AC, AD and AE.',
+    7: '7 corners: enter 7 boundary sides + surface diagonals AC, AD, AE and AF.',
   };
 
   return (
@@ -189,7 +191,7 @@ function PlotAreaCalc({ colors }: { colors: any }) {
         <View style={{ flex: 1 }}>
           <Text style={[lc.label, { color: colors.mutedForeground }]}>CORNERS</Text>
           <SegRow
-            items={([3, 4, 5] as CalcCorners[]).map((n) => ({ key: String(n), label: String(n) }))}
+            items={([3, 4, 5, 6, 7] as CalcCorners[]).map((n) => ({ key: String(n), label: String(n) }))}
             selected={String(corners)}
             onSelect={(k) => { setCorners(Number(k) as CalcCorners); setInputs({}); }}
             colors={colors}
@@ -209,7 +211,9 @@ function PlotAreaCalc({ colors }: { colors: any }) {
       {/* Dimension hint */}
       <View style={[lc.hintRow, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
         <Feather name="info" size={11} color={colors.mutedForeground} />
-        <Text style={[lc.note, { color: colors.mutedForeground, flex: 1 }]}>{hintMap[corners]}</Text>
+        <Text style={[lc.note, { color: colors.mutedForeground, flex: 1 }]}>
+          {hintMap[corners]} Surface measurements only — height/depth is not used.
+        </Text>
       </View>
 
       {/* Input fields */}
@@ -232,7 +236,6 @@ function PlotAreaCalc({ colors }: { colors: any }) {
         <View style={[lc.grid2, { backgroundColor: colors.secondary, borderColor: colors.border, marginTop: 6 }]}>
           {[
             { label: 'Square Feet',  val: result.sqft.toFixed(2) },
-            { label: 'Square Yards', val: result.sqYards.toFixed(2) },
             { label: 'Marla',        val: result.marla.toFixed(3) },
             { label: 'Kanal',        val: result.kanal.toFixed(3) },
             { label: 'Acre',         val: result.acre.toFixed(4)  },

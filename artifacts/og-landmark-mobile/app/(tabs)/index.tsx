@@ -1554,7 +1554,7 @@ function PlotCalculator({ colors }: { colors: Colors }) {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[cc.headerTitle, { color: colors.foreground }]}>Plot Area Calculator</Text>
-          <Text style={[cc.headerSub,   { color: colors.mutedForeground }]}>3 · 4 · 5 corners — Feet · Inches · Meters</Text>
+          <Text style={[cc.headerSub,   { color: colors.mutedForeground }]}>3 · 4 · 5 · 6 · 7 corners — surface measurements only</Text>
         </View>
         <Feather name={open ? 'chevron-up' : 'chevron-down'} size={17} color={colors.action} />
       </Pressable>
@@ -1568,7 +1568,7 @@ function PlotCalculator({ colors }: { colors: Colors }) {
             <View style={{ flex: 1 }}>
               <Text style={[cc.selLabel, { color: colors.mutedForeground }]}>Corners</Text>
               <View style={[cc.seg, { backgroundColor: colors.secondary }]}>
-                {([3, 4, 5] as SharedCalcCorners[]).map(n => (
+                {([3, 4, 5, 6, 7] as SharedCalcCorners[]).map(n => (
                   <Pressable key={n} onPress={() => switchCorners(n)}
                     style={[cc.segItem, n === corners && { backgroundColor: colors.action }]}>
                     <Text style={[cc.segText, { color: n === corners ? colors.actionForeground : colors.mutedForeground }]}>{n}</Text>
@@ -1596,10 +1596,15 @@ function PlotCalculator({ colors }: { colors: Colors }) {
             <Feather name="info" size={11} color={colors.mutedForeground} />
             <Text style={[cc.hintText, { color: colors.mutedForeground }]}>
               {corners === 3
-                ? 'Triangle: all 3 sides are required (Heron’s formula).'
+                ? 'Triangle: enter all 3 boundary sides.'
                 : corners === 4
-                  ? 'Quadrilateral: enter 4 sides + diagonal AC to split it into 2 triangles.'
-                  : 'Pentagon: enter 5 sides + diagonals AC and AD to split it into 3 triangles.'}
+                  ? '4 corners: enter 4 boundary sides + surface diagonal AC.'
+                  : corners === 5
+                    ? '5 corners: enter 5 boundary sides + surface diagonals AC and AD.'
+                    : corners === 6
+                      ? '6 corners: enter 6 boundary sides + surface diagonals AC, AD and AE.'
+                      : '7 corners: enter 7 boundary sides + surface diagonals AC, AD, AE and AF.'}
+              {' Surface measurements only — height/depth is not used.'}
             </Text>
           </View>
 
@@ -1651,7 +1656,6 @@ function PlotCalculator({ colors }: { colors: Colors }) {
               </View>
               <View style={cc.resultGrid}>
                 <CalcResultCell label="Square Feet"  value={result.sqft.toLocaleString('en', { maximumFractionDigits: 2 })} accent colors={colors} />
-                <CalcResultCell label="Square Yards" value={result.sqYards.toFixed(2)} colors={colors} />
                 <CalcResultCell label="Marla"        value={result.marla.toFixed(3)} colors={colors} />
                 <CalcResultCell label="Kanal"        value={result.kanal.toFixed(3)} colors={colors} />
                 <CalcResultCell label="Acre"         value={result.acre.toFixed(4)}  colors={colors} />

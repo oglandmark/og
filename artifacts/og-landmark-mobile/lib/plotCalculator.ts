@@ -12,7 +12,7 @@ export const MARLA_SQFT = 272.25;
 export const KANAL_SQFT = 5445; // 20 marla
 export const ACRE_SQFT = 43560; // 8 kanal
 
-export type CalcCorners = 3 | 4 | 5;
+export type CalcCorners = 3 | 4 | 5 | 6 | 7;
 export type CalcUnit = 'ft' | 'in' | 'm';
 
 export interface CalcResult {
@@ -108,44 +108,59 @@ export function computePlotArea(
     const area = triangleArea(value('A'), value('B'), value('C'));
     if (area == null) return 'Unable to calculate these measurements.';
     sqft = area;
-  } else if (corners === 4) {
-    const firstTriangle = triangleArea(value('A'), value('B'), value('AC'));
-    const secondTriangle = triangleArea(value('C'), value('D'), value('AC'));
-    if (firstTriangle == null || secondTriangle == null) return 'Unable to calculate these measurements.';
-    sqft = firstTriangle + secondTriangle;
   } else {
-    const firstTriangle = triangleArea(value('A'), value('B'), value('AC'));
-    const middleTriangle = triangleArea(value('AC'), value('C'), value('AD'));
-    const lastTriangle = triangleArea(value('AD'), value('D'), value('E'));
-    if (firstTriangle == null || middleTriangle == null || lastTriangle == null) {
+    const sideKeys = Array.from({ length: corners }, (_, index) => String.fromCharCode(65 + index));
+    const diagonalKeys = Array.from(
+      { length: corners - 3 },
+      (_, index) => `A${String.fromCharCode(67 + index)}`,
+    );
+
+    const firstTriangle = triangleArea(value(sideKeys[0]!), value(sideKeys[1]!), value(diagonalKeys[0]!));
+    if (firstTriangle == null) return 'Unable to calculate these measurements.';
+    sqft = firstTriangle;
+
+    for (let index = 1; index < diagonalKeys.length; index += 1) {
+      const middleTriangle = triangleArea(
+        value(diagonalKeys[index - 1]!),
+        value(sideKeys[index + 1]!),
+        value(diagonalKeys[index]!),
+      );
+      if (middleTriangle == null) return 'Unable to calculate these measurements.';
+      sqft += middleTriangle;
+    }
+
+    const lastDiagonal = diagonalKeys[diagonalKeys.length - 1]!;
+    const lastTriangle = triangleArea(
+      value(lastDiagonal),
+      value(sideKeys[corners - 2]!),
+      value(sideKeys[corners - 1]!),
+    );
+    if (lastTriangle == null) {
       return 'Unable to calculate these measurements.';
     }
-    sqft = firstTriangle + middleTriangle + lastTriangle;
+    sqft += lastTriangle;
   }
 
   return makeResult(sqft);
 }
 
+function makeCalcFields(corners: CalcCorners): CalcField[] {
+  const sideFields: CalcField[] = Array.from({ length: corners }, (_, index) => {
+    const current = String.fromCharCode(65 + index);
+    const next = String.fromCharCode(65 + ((index + 1) % corners));
+    return { key: current, label: `Side ${current}`, hint: `${current}${next}`, kind: 'side' };
+  });
+  const diagonalFields: CalcField[] = Array.from({ length: corners - 3 }, (_, index) => {
+    const target = String.fromCharCode(67 + index);
+    return { key: `A${target}`, label: `Diagonal A${target}`, hint: `Corner 1 → ${index + 3}`, kind: 'diagonal' };
+  });
+  return [...sideFields, ...diagonalFields];
+}
+
 export const CALC_FIELDS: Record<CalcCorners, CalcField[]> = {
-  3: [
-    { key: 'A', label: 'Side A', hint: 'AB', kind: 'side' },
-    { key: 'B', label: 'Side B', hint: 'BC', kind: 'side' },
-    { key: 'C', label: 'Side C', hint: 'CA', kind: 'side' },
-  ],
-  4: [
-    { key: 'A', label: 'Side A', hint: 'AB', kind: 'side' },
-    { key: 'B', label: 'Side B', hint: 'BC', kind: 'side' },
-    { key: 'C', label: 'Side C', hint: 'CD', kind: 'side' },
-    { key: 'D', label: 'Side D', hint: 'DA', kind: 'side' },
-    { key: 'AC', label: 'Diagonal AC', hint: 'Corner 1 → 3', kind: 'diagonal' },
-  ],
-  5: [
-    { key: 'A', label: 'Side A', hint: 'AB', kind: 'side' },
-    { key: 'B', label: 'Side B', hint: 'BC', kind: 'side' },
-    { key: 'C', label: 'Side C', hint: 'CD', kind: 'side' },
-    { key: 'D', label: 'Side D', hint: 'DE', kind: 'side' },
-    { key: 'E', label: 'Side E', hint: 'EA', kind: 'side' },
-    { key: 'AC', label: 'Diagonal AC', hint: 'Corner 1 → 3', kind: 'diagonal' },
-    { key: 'AD', label: 'Diagonal AD', hint: 'Corner 1 → 4', kind: 'diagonal' },
-  ],
+  3: makeCalcFields(3),
+  4: makeCalcFields(4),
+  5: makeCalcFields(5),
+  6: makeCalcFields(6),
+  7: makeCalcFields(7),
 };

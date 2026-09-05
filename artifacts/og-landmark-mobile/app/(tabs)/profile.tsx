@@ -72,7 +72,7 @@ function SlideSheet({
   return (
     <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={sh.root}>
-        <Animated.View style={[StyleSheet.absoluteFillObject, sh.backdrop, bgStyle]}>
+        <Animated.View style={[StyleSheet.absoluteFill, sh.backdrop, bgStyle]}>
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.25)' }]} />
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         </Animated.View>

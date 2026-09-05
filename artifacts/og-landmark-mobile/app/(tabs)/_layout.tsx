@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View, type ColorValue } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Tabs } from 'expo-router';
@@ -23,7 +23,7 @@ function TabIcon({
   focused,
 }: {
   name: React.ComponentProps<typeof Feather>['name'];
-  color: string;
+  color: ColorValue;
   size: number;
   focused: boolean;
 }) {
@@ -48,13 +48,13 @@ function TabIcon({
 
   return (
     <Animated.View style={animStyle}>
-      <Feather name={name} size={size} color={color} />
+      <Feather name={name} size={size} color={color as string} />
     </Animated.View>
   );
 }
 
 // ── Plus icon (post-ad) keeps its own raised circle treatment ────────────────
-function PostAdIcon({ color, focused }: { color: string; focused: boolean }) {
+function PostAdIcon({ color, focused }: { color: ColorValue; focused: boolean }) {
   const colors = useColors();
   const scale = useSharedValue(focused ? 1.08 : 1);
   const reducedMotion = useReducedMotion();

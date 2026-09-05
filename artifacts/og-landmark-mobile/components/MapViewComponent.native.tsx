@@ -155,7 +155,7 @@ export function StaticMap({ latitude, longitude, interactive = true }: StaticMap
       style={styles.map}
       provider={PROVIDER}
       initialRegion={region}
-      showsPointsOfInterest
+      showsPointsOfInterests
       showsBuildings
       showsIndoors
       showsCompass

@@ -159,7 +159,7 @@ export function PropertyMediaStrip({
             {images[0] && (
               <Image
                 source={images[0]}
-                style={StyleSheet.absoluteFillObject}
+                style={StyleSheet.absoluteFill}
                 resizeMode="cover"
                 blurRadius={8}
               />
@@ -343,7 +343,7 @@ const s = StyleSheet.create({
     height: '100%',
   },
   thumbOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(200,164,90,0.15)',
   },
 
@@ -364,7 +364,7 @@ const s = StyleSheet.create({
     opacity: 0.5,
   },
   videoScrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(10,20,35,0.62)',
   },
   playBtn: {
@@ -391,7 +391,7 @@ const fs = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
 
   /* Video fills the screen; tap to play/pause */
-  videoWrap: { ...StyleSheet.absoluteFillObject },
+  videoWrap: { ...StyleSheet.absoluteFill },
   video:     { flex: 1 },
 
   /* Close button — top right */
@@ -405,7 +405,7 @@ const fs = StyleSheet.create({
 
   /* Buffering */
   bufferOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.35)',
     zIndex: 10,

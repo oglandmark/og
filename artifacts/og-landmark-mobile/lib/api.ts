@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Override via EXPO_PUBLIC_API_URL in .env.local (no trailing /api)
 // e.g.  EXPO_PUBLIC_API_URL=https://oglandmark.com
 export const API_BASE: string =
+  (process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : undefined) ||
   (process.env.EXPO_PUBLIC_API_URL as string) ||
   'https://oglandmark.com';
 
@@ -39,7 +40,7 @@ export async function clearToken(): Promise<void> {
 const FETCH_TIMEOUT_MS       = 45_000; // 45s — handles slow mobile connections
 const AUTH_FETCH_TIMEOUT_MS  = 60_000; // 60s — login/register on slow networks
 
-async function apiFetch<T>(
+export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
   withAuth = true,
@@ -77,6 +78,8 @@ async function apiFetch<T>(
     throw e;
   }
 }
+
+const apiFetch = apiRequest;
 
 // Multipart fetch (for file uploads)
 async function apiUpload<T>(path: string, form: FormData): Promise<T> {
@@ -258,7 +261,8 @@ export async function updateUser(userId: string, payload: Partial<{
 }
 
 export async function deleteMyAccount(userId: string): Promise<void> {
-  await apiFetch(`/api/users/${userId}`, { method: 'DELETE' });
+  // Identity is derived from the bearer token; never trust a client supplied ID.
+  await apiFetch('/api/account', { method: 'DELETE' });
 }
 
 export async function updatePushToken(userId: number, pushToken: string): Promise<void> {
@@ -443,7 +447,11 @@ export async function uploadMultipleImages(uris: string[]): Promise<string[]> {
 }
 
 export async function uploadProfilePhoto(uri: string): Promise<{ url: string }> {
-  return uploadImage(uri, `profile_${Date.now()}.jpg`);
+  const uploaded = await uploadImage(uri, `profile_${Date.now()}.jpg`);
+  return apiFetch<{ url: string }>('/api/account/profile-photo', {
+    method: 'PUT',
+    body: JSON.stringify(uploaded),
+  });
 }
 
 // ─── Properties CRUD (for agents / sellers posting listings) ──────────────────

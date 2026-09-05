@@ -1,10 +1,8 @@
 /**
  * Developer Portal — Payment Plan Store
- * API-ready: swap AsyncStorage calls with oglandmark.com API when backend docs available.
+ * Payment plans are persisted to the authenticated backend account.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const PLANS_KEY = '@og-landmark/payment-plans-v1';
+import { apiRequest } from '@/lib/api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -74,37 +72,17 @@ export function newPlanId(): string {
 // ── CRUD ──────────────────────────────────────────────────────────────────────
 
 export async function getPaymentPlans(developerId: string): Promise<PaymentPlan[]> {
-  try {
-    const raw = await AsyncStorage.getItem(PLANS_KEY);
-    if (!raw) return [];
-    const all: PaymentPlan[] = JSON.parse(raw);
-    return all
-      .filter((p) => p.developerId === developerId)
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  } catch {
-    return [];
-  }
+  const plans = await apiRequest<PaymentPlan[]>('/api/developer/payment-plans');
+  return plans.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
 
 export async function savePaymentPlan(plan: PaymentPlan): Promise<void> {
-  try {
-    const raw = await AsyncStorage.getItem(PLANS_KEY);
-    const all: PaymentPlan[] = raw ? JSON.parse(raw) : [];
-    const now = new Date().toISOString();
-    const idx = all.findIndex((p) => p.id === plan.id);
-    if (idx >= 0) all[idx] = { ...plan, updatedAt: now };
-    else all.push({ ...plan, createdAt: now, updatedAt: now });
-    await AsyncStorage.setItem(PLANS_KEY, JSON.stringify(all));
-  } catch {
-    // TODO: POST/PATCH oglandmark.com/api/developer/payment-plans
-  }
+  const existing = !plan.id.startsWith('plan_');
+  await apiRequest(`/api/developer/payment-plans${existing ? `/${encodeURIComponent(plan.id)}` : ''}`, {
+    method: existing ? 'PUT' : 'POST', body: JSON.stringify(plan),
+  });
 }
 
 export async function deletePaymentPlan(id: string): Promise<void> {
-  try {
-    const raw = await AsyncStorage.getItem(PLANS_KEY);
-    if (!raw) return;
-    const all: PaymentPlan[] = JSON.parse(raw);
-    await AsyncStorage.setItem(PLANS_KEY, JSON.stringify(all.filter((p) => p.id !== id)));
-  } catch {}
+  await apiRequest(`/api/developer/payment-plans/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }

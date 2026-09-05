@@ -747,7 +747,7 @@ const styles = StyleSheet.create({
   // Hero
   hero:            { height: 370, position: 'relative', overflow: 'hidden' },
   heroImage:       { width: '100%', height: '100%' },
-  heroGradient:    { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10,20,30,0.55)' },
+  heroGradient:    { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(10,20,30,0.55)' },
   heroTopRow:      { position: 'absolute', left: 18, right: 18, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   heroTopRight:    { flexDirection: 'row', gap: 10 },
   heroRound:       { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(15,25,35,0.68)', alignItems: 'center', justifyContent: 'center' },

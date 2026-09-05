@@ -1,10 +1,8 @@
 /**
  * Developer Portal — Team Member Store
- * API-ready: swap AsyncStorage calls with oglandmark.com API when backend docs available.
+ * Team members are persisted to the authenticated backend account.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const TEAM_KEY = '@og-landmark/team-members-v1';
+import { apiRequest } from '@/lib/api';
 
 export type TeamRole = 'Sales Rep' | 'Agent' | 'Manager' | 'Admin';
 export const TEAM_ROLES: TeamRole[] = ['Sales Rep', 'Agent', 'Manager', 'Admin'];
@@ -35,51 +33,22 @@ export function roleColor(role: TeamRole): { bg: string; text: string } {
 }
 
 export async function getTeamMembers(developerId: string): Promise<TeamMember[]> {
-  try {
-    const raw = await AsyncStorage.getItem(TEAM_KEY);
-    if (!raw) return [];
-    const all: TeamMember[] = JSON.parse(raw);
-    return all
-      .filter((m) => m.developerId === developerId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  } catch {
-    return [];
-  }
+  return (await apiRequest<TeamMember[]>('/api/developer/team'))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export async function saveTeamMember(member: TeamMember): Promise<void> {
-  try {
-    const raw = await AsyncStorage.getItem(TEAM_KEY);
-    const all: TeamMember[] = raw ? JSON.parse(raw) : [];
-    const now = new Date().toISOString();
-    const idx = all.findIndex((m) => m.id === member.id);
-    if (idx >= 0) all[idx] = { ...member, updatedAt: now };
-    else all.push({ ...member, createdAt: now, updatedAt: now });
-    await AsyncStorage.setItem(TEAM_KEY, JSON.stringify(all));
-  } catch {
-    // TODO: POST/PATCH oglandmark.com/api/developer/team
-  }
+  const existing = !member.id.startsWith('member_');
+  await apiRequest(`/api/developer/team${existing ? `/${encodeURIComponent(member.id)}` : ''}`, {
+    method: existing ? 'PUT' : 'POST', body: JSON.stringify(member),
+  });
 }
 
 export async function toggleMemberActive(id: string, developerId: string): Promise<TeamMember[]> {
-  try {
-    const raw = await AsyncStorage.getItem(TEAM_KEY);
-    if (!raw) return [];
-    const all: TeamMember[] = JSON.parse(raw);
-    const idx = all.findIndex((m) => m.id === id);
-    if (idx >= 0) all[idx] = { ...all[idx], active: !all[idx].active, updatedAt: new Date().toISOString() };
-    await AsyncStorage.setItem(TEAM_KEY, JSON.stringify(all));
-    return all.filter((m) => m.developerId === developerId);
-  } catch {
-    return [];
-  }
+  await apiRequest(`/api/developer/team/${encodeURIComponent(id)}/active`, { method: 'PATCH' });
+  return getTeamMembers(developerId);
 }
 
 export async function deleteTeamMember(id: string): Promise<void> {
-  try {
-    const raw = await AsyncStorage.getItem(TEAM_KEY);
-    if (!raw) return;
-    const all: TeamMember[] = JSON.parse(raw);
-    await AsyncStorage.setItem(TEAM_KEY, JSON.stringify(all.filter((m) => m.id !== id)));
-  } catch {}
+  await apiRequest(`/api/developer/team/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }

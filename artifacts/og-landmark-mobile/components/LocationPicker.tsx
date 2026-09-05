@@ -686,7 +686,7 @@ const lp = StyleSheet.create({
   accuracyText:  { fontFamily: 'Inter_500Medium', fontSize: 10, flex: 1 },
 
   mapWrap:     { height: 230, borderRadius: 14, overflow: 'hidden', position: 'relative' },
-  tapHint:     { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 12 },
+  tapHint:     { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 12 },
   tapHintPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8 },
   tapHintText: { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#ffffff' },
 

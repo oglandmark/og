@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "fZ8Z8qBsxbDYrxqmc3-PW"
+uri = "file://exports/og-landmark-hostinger-complete.zip"
+type = "unspecified"
+title = "OG Landmark — Complete Hostinger Package"
+description = "Production Node.js package with the preserved website, expanded admin dashboard, shared API backend, MySQL/MariaDB schema and importer, environment template, and Hostinger deployment guide."
+logical_id = "04a7d239-8917-4db1-bc0c-3a65ef120f12"
+content_hash = "sha256:dbd0ea723b7623f993d09a54d0c3c5fec21d1a26bb555b753bb191d4599aa7d4"
+size = 12962173
+mtime_ms = 1788600583776
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/04a7d239-8917-4db1-bc0c-3a65ef120f12/8e7064a3-ee14-4fe5-ac5a-7bb1b9f2e3c6"
+storage_version_token = "1788600617856112"
+content_type = "application/octet-stream"

@@ -1,15 +1,16 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const KEY = '@og-landmark/profile-photo-v1';
+import { apiRequest } from '@/lib/api';
 
 export async function getProfilePhoto(): Promise<string | null> {
-  try { return await AsyncStorage.getItem(KEY); } catch { return null; }
+  const profile = await apiRequest<{ url?: string | null }>('/api/account/profile-photo');
+  return profile.url ?? null;
 }
 
 export async function saveProfilePhoto(uri: string): Promise<void> {
-  try { await AsyncStorage.setItem(KEY, uri); } catch { /* ignore */ }
+  await apiRequest('/api/account/profile-photo', {
+    method: 'PUT', body: JSON.stringify({ url: uri }),
+  });
 }
 
 export async function removeProfilePhoto(): Promise<void> {
-  try { await AsyncStorage.removeItem(KEY); } catch { /* ignore */ }
+  await apiRequest('/api/account/profile-photo', { method: 'DELETE' });
 }

@@ -1,0 +1,3281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin Dashboard – OG Landmark</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--red:#dc2626;--sidebar:#0f172a;--bg:#f1f5f9;--white:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--danger:#ef4444;--warn:#f59e0b;--green:#16a34a;--blue:#2563eb;--purple:#7c3aed}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+#sidebar{width:250px;min-height:100vh;background:var(--sidebar);display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:100}
+.sb-logo{padding:20px 16px;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:10px}
+.sb-logo span{color:#fff;font-size:16px;font-weight:700}
+.sb-logo small{display:block;color:#94a3b8;font-size:11px}
+nav{flex:1;padding:12px 0;overflow-y:auto}
+nav a{display:flex;align-items:center;gap:12px;padding:10px 16px;color:#94a3b8;text-decoration:none;font-size:14px;transition:.2s;border-left:3px solid transparent;cursor:pointer}
+nav a:hover,nav a.active{background:#1e293b;color:#fff;border-left-color:var(--red)}
+nav a svg{width:18px;height:18px;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;border-radius:999px;font-size:10px;font-weight:700;padding:1px 7px}
+.sb-footer{padding:16px;border-top:1px solid #1e293b}
+.sb-user{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sb-avatar{width:36px;height:36px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px}
+.sb-uname{color:#fff;font-size:13px;font-weight:600}
+.sb-uemail{color:#94a3b8;font-size:11px}
+.sb-logout{width:100%;padding:8px;background:#1e293b;color:#94a3b8;border:none;border-radius:6px;cursor:pointer;font-size:13px;text-align:left;display:flex;align-items:center;gap:8px}
+.sb-logout:hover{background:var(--danger);color:#fff}
+#main{margin-left:250px;flex:1;display:flex;flex-direction:column}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar h2{font-size:18px;font-weight:700}
+.page{display:none;padding:24px;animation:fadeIn .2s}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border);display:flex;align-items:center;gap:16px}
+.stat-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stat-icon svg{width:24px;height:24px}
+.stat-val{font-size:26px;font-weight:800;line-height:1}
+.stat-lbl{font-size:12px;color:var(--muted);margin-top:4px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sec-head h3{font-size:16px;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:.2s}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:#b91c1c}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{background:#15803d}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{background:#1d4ed8}
+.btn-warn{background:var(--warn);color:#fff}.btn-warn:hover{background:#d97706}
+.btn-outline{background:#fff;border:1px solid var(--border);color:var(--text)}.btn-outline:hover{border-color:var(--red);color:var(--red)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-purple{background:var(--purple);color:#fff}
+.table-wrap{background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:20px}
+table{width:100%;border-collapse:collapse}
+thead{background:#f8fafc}
+th{padding:12px 16px;text-align:left;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+td{padding:12px 16px;font-size:13px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8fafc}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700}
+.badge-green{background:#dcfce7;color:#16a34a}
+.badge-yellow{background:#fef9c3;color:#ca8a04}
+.badge-red{background:#fee2e2;color:#dc2626}
+.badge-blue{background:#dbeafe;color:#2563eb}
+.badge-gray{background:#f1f5f9;color:#64748b}
+.badge-purple{background:#ede9fe;color:#7c3aed}
+.empty{text-align:center;padding:48px 24px;color:var(--muted)}
+.prop-img{width:56px;height:42px;object-fit:cover;border-radius:6px;background:#e2e8f0}
+.prop-title{font-weight:600;font-size:13px}
+.prop-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.action-btns{display:flex;gap:6px;flex-wrap:wrap}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:16px;width:100%;max-width:560px;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,.25)}
+.modal-head{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--sidebar)}
+.modal-head h3{color:#fff;font-size:17px;font-weight:700}
+.modal-close{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:24px}
+.modal-body{padding:24px;max-height:70vh;overflow-y:auto}
+.modal-foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.form-group label{font-size:13px;font-weight:600}
+.form-group input,.form-group select,.form-group textarea{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:100%}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--red)}
+.toast{position:fixed;bottom:24px;right:24px;background:#0f172a;color:#fff;padding:14px 20px;border-radius:10px;font-size:14px;z-index:9999;transform:translateY(80px);opacity:0;transition:.3s;max-width:380px}
+.toast.show{transform:none;opacity:1}
+.toast.success{border-left:4px solid var(--green)}
+.toast.error{border-left:4px solid var(--danger)}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:20px}
+.tab-btn{padding:10px 18px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:.2s}
+.tab-btn.active{color:var(--red);border-bottom-color:var(--red)}
+.search-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.search-bar input,.search-bar select{padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px}
+.search-bar input{flex:1;min-width:180px}
+.pending-highlight td{background:#fffbeb!important}
+.score-bar{display:flex;gap:4px;align-items:center}
+.score-dot{width:8px;height:8px;border-radius:50%;background:#e2e8f0}
+.score-dot.filled{background:var(--warn)}
+.blog-card{background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:12px}
+.blog-card-head{padding:16px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.blog-card-title{font-weight:700;font-size:14px;margin-bottom:4px}
+.blog-card-meta{font-size:12px;color:var(--muted)}
+.blog-card-body{padding:0 16px 16px;font-size:13px;color:var(--muted);line-height:1.5}
+/* ── PROPERTY REVIEW PAGE ── */
+/* ── PROPERTY REVIEW PAGE (public-page style) ── */
+#page-prop-review{background:var(--bg);padding:0}
+.pr-topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;gap:12px;position:sticky;top:60px;z-index:40;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.pr-back{display:flex;align-items:center;gap:5px;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 13px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);transition:.2s;white-space:nowrap}
+.pr-back:hover{border-color:var(--red);color:var(--red)}
+.pr-topbar-title{font-size:13px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1}
+.pr-topbar-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+/* layout */
+.pr-body{display:grid;grid-template-columns:1fr 340px;gap:24px;padding:20px 24px;align-items:start}
+/* gallery */
+.pr-media-tabs{display:flex;gap:4px;margin-bottom:10px}
+.pr-media-tab{padding:6px 16px;border:1px solid var(--border);border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;background:#fff;color:var(--muted);transition:.2s}
+.pr-media-tab.active{background:#0B1F3A;color:#fff;border-color:#0B1F3A}
+.pr-gallery{position:relative;border-radius:12px;overflow:hidden;background:#0f172a;width:100%;aspect-ratio:4/3;max-height:480px}
+.pr-gallery img{width:100%;height:100%;object-fit:cover;display:none;transition:opacity .2s}
+.pr-gallery img.active{display:block}
+.pr-gallery-empty{display:flex;align-items:center;justify-content:center;height:100%;color:#4a5a6a;font-size:14px}
+.pr-gallery-count{position:absolute;bottom:14px;right:14px;background:rgba(0,0,0,.6);color:#fff;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px}
+.pr-gallery-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.9);border:none;color:#0B1F3A;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.2);transition:.2s}
+.pr-gallery-btn:hover{background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.pr-gallery-btn.prev{left:12px}.pr-gallery-btn.next{right:12px}
+.pr-thumbs{display:flex;gap:8px;overflow-x:auto;padding:10px 0 4px;scrollbar-width:thin}
+.pr-thumbs img{width:80px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid transparent;flex-shrink:0;transition:.2s;opacity:.6}
+.pr-thumbs img.active{border-color:#0B1F3A;opacity:1}
+.pr-video-wrap{display:none}
+.pr-video-wrap.show{display:block}
+.pr-video{border-radius:12px;overflow:hidden;background:#000;aspect-ratio:16/9;margin-top:10px}
+.pr-video iframe,.pr-video video{width:100%;height:100%;border:none;display:block}
+/* below gallery */
+.pr-prop-header{padding:16px 0 12px}
+.pr-prop-title{font-size:22px;font-weight:800;color:#0B1F3A;margin-bottom:8px;line-height:1.3}
+.pr-prop-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.pr-badge{display:inline-block;padding:3px 11px;border-radius:999px;font-size:12px;font-weight:700}
+.pr-badge-blue{background:#dbeafe;color:#1d4ed8}
+.pr-badge-gold{background:#fef3c7;color:#92400e}
+.pr-badge-green{background:#dcfce7;color:#15803d}
+.pr-badge-red{background:#fee2e2;color:#b91c1c}
+.pr-badge-gray{background:#f1f5f9;color:#475569}
+.pr-price{font-size:26px;font-weight:900;color:#0B1F3A;margin-bottom:14px}
+.pr-price span{font-size:13px;font-weight:600;color:var(--muted);margin-left:6px}
+.pr-stats-row{display:flex;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff;margin-bottom:14px}
+.pr-stat{flex:1;padding:12px 8px;text-align:center;border-right:1px solid var(--border)}
+.pr-stat:last-child{border-right:none}
+.pr-stat-icon{font-size:18px;margin-bottom:3px}
+.pr-stat-val{font-size:14px;font-weight:700;color:#0B1F3A}
+.pr-stat-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.pr-address{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-bottom:4px}
+/* sections */
+.pr-section{background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;margin-bottom:14px}
+.pr-section-title{font-size:14px;font-weight:700;color:#0B1F3A;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.pr-details-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pr-detail-item{display:flex;flex-direction:column;gap:3px}
+.pr-detail-item label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.pr-detail-item span{font-size:14px;font-weight:600;color:#0B1F3A}
+.pr-desc-text{font-size:14px;color:var(--muted);line-height:1.8}
+.pr-amenity{display:inline-flex;align-items:center;gap:5px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;padding:6px 12px;margin:3px;color:#334155}
+.pr-nearby-cat{margin-bottom:12px}
+.pr-nearby-cat-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.pr-nearby-item{font-size:13px;color:#334155;padding:5px 0;border-bottom:1px solid #f8fafc;display:flex;align-items:center;gap:6px}
+.pr-nearby-item:last-child{border-bottom:none}
+.score-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.score-label{font-size:13px;color:#334155;width:120px;flex-shrink:0;font-weight:500}
+.score-track{flex:1;height:7px;background:#e2e8f0;border-radius:99px;overflow:hidden}
+.score-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#C8A45A,#16a34a)}
+.score-val{font-size:13px;font-weight:700;width:32px;text-align:right;color:#0B1F3A}
+/* right panel */
+.pr-panel{position:sticky;top:112px;display:flex;flex-direction:column;gap:12px}
+.pr-panel-card{background:#fff;border-radius:12px;border:1px solid var(--border);padding:18px}
+.pr-status-pending{border-top:3px solid #f59e0b}
+.pr-status-active{border-top:3px solid #16a34a}
+.pr-status-rejected{border-top:3px solid #ef4444}
+.pr-approve-btn{width:100%;padding:13px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.pr-approve-btn:hover{background:#15803d}
+.pr-reject-btn{width:100%;padding:11px;background:#fff;color:#dc2626;border:2px solid #dc2626;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.pr-reject-btn:hover{background:#fef2f2}
+.pr-edit-panel-btn{width:100%;padding:11px;background:#fff;color:#0B1F3A;border:1px solid var(--border);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.pr-edit-panel-btn:hover{border-color:#0B1F3A}
+.pr-feature-btn{width:100%;padding:9px;background:#fff;color:var(--warn);border:1px solid #fde68a;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:6px;transition:.2s}
+.pr-feature-btn:hover{background:#fffbeb}
+.pr-feature-btn.active{background:#fffbeb;border-color:#f59e0b}
+.pr-priority-btn{width:100%;padding:9px;background:#fff;color:#7c3aed;border:1px solid #ddd6fe;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:6px;transition:.2s}
+.pr-priority-btn:hover{background:#f5f3ff}
+.pr-priority-btn.active{background:#f5f3ff;border-color:#7c3aed;color:#5b21b6}
+.pr-delete-btn{width:100%;padding:9px;background:#fff;color:var(--danger);border:1px solid #fecaca;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:.2s}
+.pr-delete-btn:hover{background:#fef2f2}
+.pr-reject-inline{display:none;margin-top:8px}
+.pr-reject-inline.open{display:block}
+.pr-seller-avatar{width:48px;height:48px;border-radius:50%;background:#0B1F3A;display:flex;align-items:center;justify-content:center;color:#C8A45A;font-weight:800;font-size:18px;flex-shrink:0}
+/* edit form */
+#pr-edit-form{display:none}
+#pr-edit-form.open{display:block}
+.pr-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pr-edit-grid .full{grid-column:1/-1}
+.pr-edit-field{display:flex;flex-direction:column;gap:4px}
+.pr-edit-field label{font-size:12px;font-weight:700;color:var(--muted)}
+.pr-edit-field input,.pr-edit-field select,.pr-edit-field textarea{padding:8px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:100%;font-family:inherit}
+.pr-edit-field input:focus,.pr-edit-field select:focus,.pr-edit-field textarea:focus{outline:none;border-color:var(--red)}
+</style>
+</head>
+<body>
+
+<aside id="sidebar">
+  <div class="sb-logo">
+    <img src="/images/og-logo.png" alt="OG Landmark" style="width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(200,164,90,.4))"/>
+    <div><span>OG Landmark</span><small>Admin Panel</small></div>
+  </div>
+  <nav>
+    <a onclick="showPage('dashboard')" id="nav-dashboard" class="active">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Dashboard
+    </a>
+    <a onclick="showPage('approvals')" id="nav-approvals">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+      Approvals <span class="nav-badge" id="pending-count">0</span>
+    </a>
+    <a onclick="showPage('properties')" id="nav-properties">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"/></svg>
+      All Properties
+    </a>
+    <a onclick="showPage('agents')" id="nav-agents">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      Agents <span class="nav-badge" id="agent-pending-count" style="display:none">0</span>
+    </a>
+    <a onclick="showPage('city-agents')" id="nav-city-agents">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      City Agents
+    </a>
+    <a onclick="showPage('users')" id="nav-users">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Users
+    </a>
+    <a onclick="showPage('inquiries')" id="nav-inquiries">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Inquiries
+    </a>
+    <a onclick="showPage('blog')" id="nav-blog">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
+      Blog Posts
+    </a>
+    <a onclick="showPage('settings')" id="nav-settings">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Settings
+    </a>
+
+    <a onclick="showPage('buyer-requests')" id="nav-buyer-requests">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+      Buyer Requests
+    </a>
+    <a onclick="showPage('developer-projects')" id="nav-developer-projects">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      Developer Projects
+    </a>
+    <a onclick="showPage('verifications')" id="nav-verifications">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      Verifications
+    </a>
+    <a onclick="showPage('conversations')" id="nav-conversations">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      Conversations
+    </a>
+    <a onclick="showPage('notifications')" id="nav-notifications">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      Notifications
+    </a>
+    <a onclick="showPage('mobile')" id="nav-mobile">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+      </svg>
+      Mobile App
+    </a>
+    <a onclick="showPage('banners')" id="nav-banners">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+      App Banners
+    </a>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar">A</div>
+      <div><div class="sb-uname" id="sb-uname">Admin</div><div class="sb-uemail" id="sb-uemail">—</div></div>
+    </div>
+    <button class="sb-logout" onclick="logout()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      Logout
+    </button>
+  </div>
+</aside>
+
+<div id="main">
+  <header class="topbar">
+    <h2 id="page-title">Admin Dashboard</h2>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="font-size:12px;color:var(--muted)" id="topbar-time"></span>
+      <div class="sb-avatar" style="width:34px;height:34px;font-size:13px;background:var(--red)" id="top-avatar">A</div>
+    </div>
+  </header>
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon" style="background:#fee2e2"><svg fill="none" stroke="#dc2626" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"/></svg></div><div><div class="stat-val" id="ds-props">0</div><div class="stat-lbl">Total Properties</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#fef9c3"><svg fill="none" stroke="#ca8a04" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div><div class="stat-val" id="ds-pending">0</div><div class="stat-lbl">Pending Approval</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#dcfce7"><svg fill="none" stroke="#16a34a" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div><div><div class="stat-val" id="ds-users">0</div><div class="stat-lbl">Total Users</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#dbeafe"><svg fill="none" stroke="#2563eb" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div><div class="stat-val" id="ds-inqs">0</div><div class="stat-lbl">Total Inquiries</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#ede9fe"><svg fill="none" stroke="#7c3aed" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg></div><div><div class="stat-val" id="ds-featured">0</div><div class="stat-lbl">Featured · <span id="ds-priority" style="color:#7c3aed">0 Priority</span></div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#dcfce7"><svg fill="none" stroke="#16a34a" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div><div class="stat-val" id="ds-active">0</div><div class="stat-lbl">Active Listings</div></div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div class="sec-head"><h3>Pending Approvals</h3><button class="btn btn-outline btn-sm" onclick="showPage('approvals')">View All</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Property</th><th>Seller</th><th>Actions</th></tr></thead><tbody id="dash-pending-body"></tbody></table></div>
+      </div>
+      <div>
+        <div class="sec-head"><h3>Recent Users</h3><button class="btn btn-outline btn-sm" onclick="showPage('users')">View All</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Joined</th></tr></thead><tbody id="dash-users-body"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Pending Agent Applications -->
+    <div style="margin-top:24px">
+      <div class="sec-head">
+        <h3>Pending Agent Applications <span id="dash-agent-pending-badge" style="display:none;margin-left:8px;background:var(--warn);color:#fff;border-radius:999px;font-size:11px;font-weight:700;padding:2px 9px"></span></h3>
+        <button class="btn btn-outline btn-sm" onclick="showPage('agents');filterAgents('Pending',document.querySelector('#page-agents .tab-btn:nth-child(2)'))">View All</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Agent</th><th>Email</th><th>Phone</th><th>City</th><th>Specialization</th><th>Experience</th><th>Actions</th></tr></thead>
+          <tbody id="dash-agent-pending-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPROVALS -->
+  <div class="page" id="page-approvals">
+    <div class="sec-head"><h3>Pending Property Approvals</h3><span id="approval-count" style="font-size:13px;color:var(--muted)"></span></div>
+    <div class="table-wrap"><table><thead><tr><th>Property</th><th>Type</th><th>City</th><th>Price</th><th>Seller</th><th>Submitted</th><th>Actions</th></tr></thead><tbody id="approvals-body"></tbody></table></div>
+
+    <div class="sec-head" style="margin-top:24px"><h3>All Properties (Review)</h3></div>
+    <div class="search-bar">
+      <input id="prop-search" oninput="renderAllProps()" placeholder="Search properties..."/>
+      <select id="prop-filter-type" onchange="renderAllProps()">
+        <option value="">All Types</option>
+        <option>House</option><option>Villa</option><option>Apartment</option><option>Plot</option><option>Commercial</option><option>Agriculture Land</option><option>Orchard</option><option>Farm House</option>
+      </select>
+      <select id="prop-filter-status" onchange="renderAllProps()">
+        <option value="">All Status</option><option>Active</option><option>Pending</option><option>Rejected</option>
+      </select>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Property</th><th>Type</th><th>City</th><th>Price</th><th>Status</th><th>Priority / Featured</th><th>Actions</th></tr></thead><tbody id="all-props-body"></tbody></table></div>
+  </div>
+
+  <!-- ALL PROPERTIES -->
+  <div class="page" id="page-properties">
+    <div class="sec-head"><h3>All Properties</h3></div>
+    <div class="search-bar">
+      <input id="all-prop-search" oninput="renderPropertiesPage()" placeholder="Search..."/>
+      <select id="all-prop-type" onchange="renderPropertiesPage()">
+        <option value="">All Types</option>
+        <option>House</option><option>Villa</option><option>Apartment</option><option>Plot</option>
+        <option>Commercial</option><option>Agriculture Land</option><option>Orchard</option><option>Farm House</option>
+      </select>
+      <select id="all-prop-city" onchange="renderPropertiesPage()"><option value="">All Cities</option></select>
+      <select id="all-prop-status" onchange="renderPropertiesPage()">
+        <option value="">All Status</option><option>Active</option><option>Pending</option><option>Rejected</option>
+      </select>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Property</th><th>Type</th><th>City</th><th>Price</th><th>Seller</th><th>Agent</th><th>Status</th><th>Priority/Featured</th><th>Views</th><th>Actions</th></tr></thead><tbody id="props-page-body"></tbody></table></div>
+  </div>
+
+
+  <!-- BUYER REQUESTS -->
+  <div class="page" id="page-buyer-requests">
+    <div class="sec-head"><h3>Buyer Requests</h3></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Client</th><th>Requirement</th><th>Budget</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="buyer-requests-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DEVELOPER PROJECTS -->
+  <div class="page" id="page-developer-projects">
+    <div class="sec-head">
+      <h3>Developer Projects</h3>
+      <button class="btn btn-red" onclick="openCreateProjectModal()">Create Project</button>
+    </div>
+    
+    <div class="tabs" style="margin-bottom:20px">
+      <button class="tab-btn active" onclick="switchDevTab(this, 'dev-projects-list')">Projects</button>
+      <button class="tab-btn" onclick="switchDevTab(this, 'dev-projects-inventory')">Inventory & Units</button>
+      <button class="tab-btn" onclick="switchDevTab(this, 'dev-projects-leads')">Leads & Analytics</button>
+      <button class="tab-btn" onclick="switchDevTab(this, 'dev-projects-team')">Team & Documents</button>
+      <button class="tab-btn" onclick="switchDevTab(this, 'dev-projects-finance')">Payment Plans & Promotions</button>
+    </div>
+
+    <div id="dev-projects-list" class="dev-tab-content active">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Project Name</th><th>Developer</th><th>Status</th><th>Completion</th><th>Actions</th></tr></thead>
+          <tbody id="dev-projects-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="dev-projects-inventory" class="dev-tab-content" style="display:none">
+      <div class="sec-head"><h4>Inventory Blocks & Units</h4><button class="btn btn-outline btn-sm" disabled title="Managed via API">Add Unit</button></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Project</th><th>Block/Phase</th><th>Unit No</th><th>Type</th><th>Status</th><th>Price</th><th>Actions</th></tr></thead>
+          <tbody id="dev-inventory-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="dev-projects-leads" class="dev-tab-content" style="display:none">
+       <div class="stats-grid" style="margin-bottom:16px;">
+        <div class="stat-card"><div><div class="stat-val">120</div><div class="stat-lbl">Total Leads</div></div></div>
+        <div class="stat-card"><div><div class="stat-val">45</div><div class="stat-lbl">Visits Scheduled</div></div></div>
+        <div class="stat-card"><div><div class="stat-val">12</div><div class="stat-lbl">Units Sold</div></div></div>
+       </div>
+       <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Client Name</th><th>Project</th><th>Interest</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="dev-leads-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="dev-projects-team" class="dev-tab-content" style="display:none">
+      <div class="sec-head"><h4>Team Members & Approvals</h4></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Role</th><th>Project</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="dev-team-body"></tbody>
+        </table>
+      </div>
+      <div class="sec-head" style="margin-top:20px"><h4>Project Documents</h4></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Document</th><th>Project</th><th>Type</th><th>Uploaded</th><th>Actions</th></tr></thead>
+          <tbody id="dev-docs-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="dev-projects-finance" class="dev-tab-content" style="display:none">
+      <div class="sec-head"><h4>Payment Plans & Promotions</h4></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Plan / Promo Name</th><th>Project</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="dev-finance-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- VERIFICATIONS -->
+  <div class="page" id="page-verifications">
+    <div class="sec-head"><h3>Verification Requests</h3></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Entity</th><th>Type</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="verifications-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CONVERSATIONS -->
+  <div class="page" id="page-conversations">
+    <div class="sec-head"><h3>Conversations</h3></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Participants</th><th>Topic / Property</th><th>Last Message</th><th>Time</th><th>Actions</th></tr></thead>
+        <tbody id="conversations-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS -->
+  <div class="page" id="page-notifications">
+    <div class="sec-head">
+      <h3>System Notifications</h3>
+      <button class="btn btn-outline" onclick="broadcastNotification()">Broadcast Message</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Title</th><th>Audience</th><th>Date Sent</th><th>Status</th></tr></thead>
+        <tbody id="notifications-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- AGENTS -->
+  <div class="page" id="page-agents">
+    <div class="sec-head">
+      <h3>Agent Management</h3>
+      <button class="btn btn-red" onclick="openAddAgentModal()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Add Agent
+      </button>
+    </div>
+    <!-- Agent Stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+      <div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:16px;text-align:center">
+        <div style="font-size:26px;font-weight:900;color:var(--text)" id="ag-total">0</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Total Agents</div>
+      </div>
+      <div style="background:var(--white);border-radius:10px;border:1px solid #fef9c3;padding:16px;text-align:center">
+        <div style="font-size:26px;font-weight:900;color:#ca8a04" id="ag-pending">0</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Pending Approval</div>
+      </div>
+      <div style="background:var(--white);border-radius:10px;border:1px solid #dcfce7;padding:16px;text-align:center">
+        <div style="font-size:26px;font-weight:900;color:var(--green)" id="ag-active">0</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Active Agents</div>
+      </div>
+      <div style="background:var(--white);border-radius:10px;border:1px solid #fee2e2;padding:16px;text-align:center">
+        <div style="font-size:26px;font-weight:900;color:var(--danger)" id="ag-suspended">0</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Suspended</div>
+      </div>
+    </div>
+    <!-- Filter tabs -->
+    <div class="tabs" style="margin-bottom:16px">
+      <button class="tab-btn active" onclick="filterAgents('all',this)">All</button>
+      <button class="tab-btn" onclick="filterAgents('Pending',this)">Pending</button>
+      <button class="tab-btn" style="color:#16a34a;font-weight:700" onclick="filterAgents('Live',this)"> Live on Website <span id="ag-live-count" style="background:#16a34a;color:#fff;border-radius:999px;font-size:10px;padding:1px 7px;margin-left:4px">0</span></button>
+      <button class="tab-btn" onclick="filterAgents('Approved',this)"> Approved</button>
+      <button class="tab-btn" onclick="filterAgents('Rejected',this)"> Rejected</button>
+      <button class="tab-btn" onclick="filterAgents('Suspended',this)"> Suspended</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Agent</th><th>Email</th><th>Phone</th><th>Approval</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+        <tbody id="agents-body"></tbody>
+      </table>
+    </div>
+
+    <!-- React Bundle Agents Management -->
+    <div style="margin-top:24px;background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <h4 style="font-size:14px;font-weight:700;color:var(--text)"> Website Bundle Agents</h4>
+        <span style="font-size:11px;color:var(--muted);background:#f1f5f9;padding:3px 10px;border-radius:999px">Hardcoded in React SPA</span>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">These agents are built into the website's React bundle. Toggle visibility to hide/show them on the public site.</p>
+      <div id="bundle-agents-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px"></div>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div class="page" id="page-users">
+    <div class="sec-head"><h3>Users & Agents</h3><button class="btn btn-red" onclick="openAddUserModal()"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>Add User</button></div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="filterUsers('all',this)">All Users</button>
+      <button class="tab-btn" onclick="filterUsers('Seller',this)">Sellers</button>
+      <button class="tab-btn" onclick="filterUsers('Agent',this)">Agents</button>
+      <button class="tab-btn" onclick="filterUsers('Buyer',this)">Buyers</button>
+      <button class="tab-btn" onclick="filterUsers('Admin',this)">Admins</button>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead><tbody id="users-body"></tbody></table></div>
+  </div>
+
+  <!-- INQUIRIES -->
+  <div class="page" id="page-inquiries">
+    <div class="sec-head"><h3>All Inquiries</h3><span id="inq-count" style="font-size:13px;color:var(--muted)"></span></div>
+    <div class="table-wrap"><table><thead><tr><th>Buyer</th><th>Property</th><th>Message</th><th>Phone</th><th>Email</th><th>Date</th><th>Actions</th></tr></thead><tbody id="inqs-body"></tbody></table></div>
+  </div>
+
+  <!-- BLOG -->
+  <div class="page" id="page-blog">
+    <div class="sec-head"><h3>Blog Posts</h3><button class="btn btn-red" onclick="openBlogModal()"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>New Post</button></div>
+    <div id="blog-list"></div>
+  </div>
+
+
+  <!-- MOBILE APP -->
+  <div class="page" id="page-mobile">
+    <div class="sec-head">
+      <h3>&#128241; Mobile App Control</h3>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="loadMobileStats()">&#x1F504; Refresh Stats</button>
+        <button class="btn btn-blue btn-sm" onclick="saveMobileSettings()">&#x1F4BE; Save Settings</button>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:800;color:#0A1D37" id="ms-views">-</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Total Mobile Views</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:800;color:#16a34a" id="ms-users">-</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Registered Users</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:800;color:#d97706" id="ms-pending">-</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Pending Approvals</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:800;color:#dc2626" id="ms-reports">-</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Pending Reports</div>
+      </div>
+    </div>
+
+    <!-- Feature Flags + Push Notification -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+
+      <!-- Feature Flags -->
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--text)">&#x1F39B; Mobile Feature Flags</h4>
+        <div style="display:flex;flex-direction:column;gap:14px">
+
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text)">&#10003; Verification Badge</div>
+              <div style="font-size:11px;color:var(--muted)">Show verified property badge on mobile</div>
+            </div>
+            <div style="position:relative;width:44px;height:24px;flex-shrink:0">
+              <input type="checkbox" id="ms-flag-verify" style="opacity:0;position:absolute;width:0;height:0" onchange="updateToggleStyle(this)">
+              <span id="ms-flag-verify-track" onclick="document.getElementById('ms-flag-verify').click()"
+                style="position:absolute;inset:0;background:#e2e8f0;border-radius:24px;cursor:pointer;transition:.2s">
+                <span style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.2)"></span>
+              </span>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text)">&#x1F514; Push Notifications</div>
+              <div style="font-size:11px;color:var(--muted)">Enable push notification broadcasting</div>
+            </div>
+            <div style="position:relative;width:44px;height:24px;flex-shrink:0">
+              <input type="checkbox" id="ms-flag-push" style="opacity:0;position:absolute;width:0;height:0" onchange="updateToggleStyle(this)">
+              <span id="ms-flag-push-track" onclick="document.getElementById('ms-flag-push').click()"
+                style="position:absolute;inset:0;background:#e2e8f0;border-radius:24px;cursor:pointer;transition:.2s">
+                <span style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.2)"></span>
+              </span>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text)">&#x1F319; Dark Mode</div>
+              <div style="font-size:11px;color:var(--muted)">Allow users to switch to dark mode</div>
+            </div>
+            <div style="position:relative;width:44px;height:24px;flex-shrink:0">
+              <input type="checkbox" id="ms-flag-dark" style="opacity:0;position:absolute;width:0;height:0" onchange="updateToggleStyle(this)">
+              <span id="ms-flag-dark-track" onclick="document.getElementById('ms-flag-dark').click()"
+                style="position:absolute;inset:0;background:#e2e8f0;border-radius:24px;cursor:pointer;transition:.2s">
+                <span style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.2)"></span>
+              </span>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--border)">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#dc2626">&#x1F6A7; Maintenance Mode</div>
+              <div style="font-size:11px;color:var(--muted)">Show maintenance screen on mobile</div>
+            </div>
+            <div style="position:relative;width:44px;height:24px;flex-shrink:0">
+              <input type="checkbox" id="ms-flag-maint" style="opacity:0;position:absolute;width:0;height:0" onchange="updateToggleStyle(this)">
+              <span id="ms-flag-maint-track" onclick="document.getElementById('ms-flag-maint').click()"
+                style="position:absolute;inset:0;background:#e2e8f0;border-radius:24px;cursor:pointer;transition:.2s">
+                <span style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.2)"></span>
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">Maintenance Message</label>
+            <textarea id="ms-maint-msg" rows="2"
+              style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical"
+              placeholder="We are upgrading the app. Back soon!"></textarea>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">App Version</label>
+              <input type="text" id="ms-app-version" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px" placeholder="1.0.0">
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Min Required Version</label>
+              <input type="text" id="ms-min-version" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px" placeholder="1.0.0">
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Push Notification Sender -->
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--text)">&#x1F4E3; Broadcast Push Notification</h4>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Notification Title *</label>
+            <input type="text" id="push-title"
+              style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px"
+              placeholder="e.g. New Properties in Lahore!">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Message Body *</label>
+            <textarea id="push-body" rows="3"
+              style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical"
+              placeholder="Tap to browse the latest listings..."></textarea>
+          </div>
+          <button class="btn btn-blue" style="width:100%;justify-content:center" onclick="sendPushNotification()">
+            &#x1F680; Send to All Mobile Users
+          </button>
+          <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 12px">
+            <div style="font-size:11px;color:#0369a1;font-weight:600">&#x1F4CC; Sent Notifications</div>
+            <div id="push-history" style="font-size:12px;color:var(--muted);margin-top:6px">No notifications sent yet.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- API Info + User Breakdown -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+
+      <!-- API Connection -->
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:14px;color:var(--text)">&#x1F517; Mobile API Connection</h4>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;padding:10px;background:#f8fafc;border-radius:8px">
+            <span style="font-size:12px;font-weight:600;color:var(--muted)">Base URL</span>
+            <span style="font-size:12px;font-weight:700;color:#0A1D37;font-family:monospace">oglandmark.com</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:#f8fafc;border-radius:8px">
+            <span style="font-size:12px;font-weight:600;color:var(--muted)">Auth</span>
+            <span style="font-size:12px;font-weight:700;color:#0A1D37;font-family:monospace">/api/auth/login</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:#f8fafc;border-radius:8px">
+            <span style="font-size:12px;font-weight:600;color:var(--muted)">Properties</span>
+            <span style="font-size:12px;font-weight:700;color:#0A1D37;font-family:monospace">/api/properties</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:#f8fafc;border-radius:8px">
+            <span style="font-size:12px;font-weight:600;color:var(--muted)">Settings</span>
+            <span style="font-size:12px;font-weight:700;color:#0A1D37;font-family:monospace">/api/mobile/settings</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:#f8fafc;border-radius:8px">
+            <span style="font-size:12px;font-weight:600;color:var(--muted)">Reports</span>
+            <span style="font-size:12px;font-weight:700;color:#0A1D37;font-family:monospace">/api/admin/reports</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:#dcfce7;border-radius:8px;border:1px solid #bbf7d0">
+            <span style="font-size:12px;font-weight:600;color:#16a34a">Status</span>
+            <span style="font-size:12px;font-weight:700;color:#16a34a">&#x2705; Live &amp; Connected</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Breakdown -->
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:14px;color:var(--text)">&#x1F465; User Breakdown</h4>
+        <div id="ms-user-breakdown" style="display:flex;flex-direction:column;gap:10px">
+          <div style="text-align:center;padding:30px;color:var(--muted)">Click &ldquo;Refresh Stats&rdquo; to load.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reports Table -->
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h4 style="font-size:14px;font-weight:700;color:var(--text)">&#x1F6A9; Property Reports from Mobile Users</h4>
+        <span id="mobile-reports-count" style="font-size:12px;color:var(--muted)"></span>
+      </div>
+      <div id="mobile-reports-body">
+        <div style="text-align:center;padding:20px;color:var(--muted)">Click &ldquo;Refresh Stats&rdquo; to load reports.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CITY AGENTS -->
+  <div class="page" id="page-city-agents">
+    <div class="sec-head">
+      <h3> City Agents</h3>
+      <button class="btn btn-blue btn-sm" onclick="openAddCityAgent()">+ Add Agent</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px">
+      Assign a local agent for each city. When a seller submits a property, the admin can attach the city's agent to the listing — buyers will see the agent's contact details on the property page.
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px" id="city-agents-grid">
+      <div style="color:var(--muted);font-size:13px;padding:20px">Loading…</div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="sec-head"><h3>System Settings</h3></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:16px">Platform Stats</h4>
+        <div id="settings-stats" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+      <div style="background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:16px">Data Backup</h4>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Download a full backup of all platform data in JSON format.</p>
+        <button class="btn btn-blue" onclick="downloadBackup()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Download Backup
+        </button>
+      </div>
+      <div style="background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:16px">Admin Profile</h4>
+        <div class="form-group"><label>Name</label><input id="admin-name" type="text"/></div>
+        <div class="form-group"><label>Email</label><input id="admin-email" type="email" readonly style="background:#f8fafc;color:var(--muted)"/></div>
+        <div class="form-group"><label>Phone</label><input id="admin-phone" type="tel"/></div>
+        <button class="btn btn-red" onclick="saveAdminProfile()">Save Profile</button>
+      </div>
+      <div style="background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:16px">Property Types Overview</h4>
+        <div id="type-breakdown" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD AGENT MODAL -->
+<div class="modal-overlay" id="add-agent-modal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-head"><h3 id="agent-modal-title">Add New Agent</h3><button class="modal-close" onclick="closeAddAgentModal()">&times;</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-agent-id"/>
+      <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#92400e">
+        <strong>Admin Only:</strong> Agents can only be created from this panel. They cannot self-register. Set their login credentials here.
+      </div>
+      <div class="form-group"><label>Full Name *</label><input id="agent-name" type="text" placeholder="e.g. Ahmed Hassan" required/></div>
+      <div class="form-group"><label>Email (Login ID) *</label><input id="agent-email" type="email" placeholder="agent@oglandmark.com" required/></div>
+      <div class="form-group"><label>Phone</label><input id="agent-phone" type="tel" placeholder="+92 3XX XXXXXXX"/></div>
+      <div class="form-group"><label>Password *</label>
+        <div style="position:relative">
+          <input id="agent-password" type="password" placeholder="Min 8 characters" required/>
+          <button type="button" onclick="togglePw('agent-password')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px">Show</button>
+        </div>
+      </div>
+      <div class="form-group"><label>Specialization</label>
+        <select id="agent-spec">
+          <option value="">General</option>
+          <option value="Residential">Residential</option>
+          <option value="Commercial">Commercial</option>
+          <option value="Agriculture">Agriculture / Farmland</option>
+          <option value="Plots">Plots & Land</option>
+          <option value="Luxury">Luxury Properties</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Agent Photo</label>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+          <div id="agent-photo-preview" style="width:64px;height:64px;border-radius:50%;border:2px solid var(--border);background:#f1f5f9;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:22px"></div>
+          <div style="flex:1">
+            <input type="hidden" id="agent-photo-url"/>
+            <label style="display:inline-block;padding:8px 14px;background:var(--navy);color:#fff;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600" for="agent-photo-file"> Upload Photo</label>
+            <input type="file" id="agent-photo-file" accept=".jpg,.jpeg,.png,.webp" style="display:none" onchange="uploadAgentPhoto(this)"/>
+            <div id="agent-photo-status" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group"><label>Title / Designation</label>
+        <input id="agent-title" type="text" placeholder="e.g. Senior Property Consultant"/>
+      </div>
+      <div class="form-group"><label>Experience</label>
+        <input id="agent-experience" type="text" placeholder="e.g. 5 Years"/>
+      </div>
+      <div class="form-group"><label>License Number</label>
+        <input id="agent-license" type="text" placeholder="e.g. RERA-2024-001"/>
+      </div>
+      <div class="form-group"><label>City / Area Coverage</label>
+        <input id="agent-city" type="text" placeholder="e.g. Okara, Depalpur, Renala Khurd"/>
+      </div>
+      <div class="form-group"><label>Languages</label>
+        <input id="agent-languages" type="text" placeholder="e.g. Urdu, Punjabi, English"/>
+      </div>
+      <div class="form-group"><label>Initial Rating <span style="font-weight:400;color:var(--muted)">(1–5)</span></label>
+        <input id="agent-rating" type="number" min="1" max="5" step="0.1" placeholder="e.g. 4.5"/>
+      </div>
+      <div class="form-group"><label>Bio <span style="font-weight:400;color:var(--muted)">(shown on public profile &amp; home page)</span></label>
+        <textarea id="agent-bio" rows="3" placeholder="Short bio about the agent..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;resize:vertical"></textarea>
+      </div>
+      <div id="edit-agent-only" style="display:none">
+        <hr style="border:none;border-top:1px solid var(--border);margin:16px 0"/>
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">Update Credentials</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Leave blank to keep existing email or password unchanged.</div>
+        <div class="form-group"><label>New Email</label><input id="agent-new-email" type="email" placeholder="New login email (optional)"/></div>
+        <div class="form-group"><label>New Password</label>
+          <div style="position:relative">
+            <input id="agent-new-password" type="password" placeholder="New password (optional, min 8 chars)"/>
+            <button type="button" onclick="togglePw('agent-new-password')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px">Show</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeAddAgentModal()">Cancel</button>
+      <button class="btn btn-red" id="save-agent-btn" onclick="saveAgent()">Add Agent</button>
+    </div>
+  </div>
+</div>
+
+<!-- AGENT REJECT MODAL -->
+<div class="modal-overlay" id="agent-reject-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head"><h3>Reject Agent Application</h3><button class="modal-close" onclick="document.getElementById('agent-reject-modal').classList.remove('open')">&times;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Reason for Rejection</label><textarea id="agent-reject-reason" rows="4" placeholder="Explain why this agent application is being rejected..."></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="document.getElementById('agent-reject-modal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-danger" id="agent-reject-confirm-btn">Reject Agent</button>
+    </div>
+  </div>
+</div>
+
+<!-- CITY AGENT MODAL -->
+<div class="modal-overlay" id="ca-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head"><h3 id="ca-modal-title">Add City Agent</h3><button class="modal-close" onclick="document.getElementById('ca-modal').classList.remove('open')">&times;</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>City *</label>
+        <select id="ca-city" style="width:100%">
+          <option value="">— Select City —</option>
+          <option>Okara</option>
+          <option>Depalpur</option>
+          <option>Renala Khurd</option>
+          <option>Hujrah Shah Muqeem</option>
+          <option>Basirpur</option>
+          <option>Haveli Lakha</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Agent Name *</label><input id="ca-name" type="text" placeholder="e.g. Muhammad Asif"/></div>
+      <div class="form-group"><label>Phone * <small style="color:var(--muted)">(03xxxxxxxxx)</small></label><input id="ca-phone" type="tel" placeholder="03001234567"/></div>
+      <div class="form-group"><label>WhatsApp Number <small style="color:var(--muted)">(92xxxxxxxxxx — optional)</small></label><input id="ca-whatsapp" type="tel" placeholder="923001234567"/></div>
+      <div class="form-group" style="display:flex;align-items:center;gap:10px">
+        <input id="ca-active" type="checkbox" checked style="width:16px;height:16px"/>
+        <label for="ca-active" style="margin:0;font-weight:500">Active (visible for assignment)</label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="document.getElementById('ca-modal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-blue" onclick="saveCityAgent()">Save Agent</button>
+    </div>
+  </div>
+</div>
+
+<!-- REJECT MODAL -->
+<div class="modal-overlay" id="reject-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head"><h3>Reject Property</h3><button class="modal-close" onclick="closeRejectModal()">&times;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Rejection Reason</label><textarea id="reject-reason" rows="4" placeholder="Explain why this property is being rejected..."></textarea></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-outline" onclick="closeRejectModal()">Cancel</button><button class="btn btn-danger" id="reject-confirm-btn">Reject Property</button></div>
+  </div>
+</div>
+
+<!-- ADD USER MODAL -->
+<div class="modal-overlay" id="add-user-modal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="user-modal-title">Add New User</h3><button class="modal-close" onclick="closeAddUserModal()">&times;</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-user-id"/>
+      <div class="form-group"><label>Full Name *</label><input id="user-name" type="text" required/></div>
+      <div class="form-group"><label>Email *</label><input id="user-email" type="email" required/></div>
+      <div class="form-group"><label>Phone</label><input id="user-phone" type="tel" placeholder="+92 3XX XXXXXXX"/></div>
+      <div class="form-group"><label>Role *</label>
+        <select id="user-role" required>
+          <option value="Buyer">Buyer</option><option value="Seller">Seller</option>
+          <option value="Agent">Agent</option><option value="Admin">Admin</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Password</label><input id="user-password" type="password" placeholder="Leave blank to keep unchanged"/></div>
+      <div class="form-group"><label>Status</label>
+        <select id="user-status"><option value="Active">Active</option><option value="Suspended">Suspended</option></select>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-outline" onclick="closeAddUserModal()">Cancel</button><button class="btn btn-red" onclick="saveUser()">Save User</button></div>
+  </div>
+</div>
+
+<!-- BLOG MODAL -->
+<div class="modal-overlay" id="blog-modal">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-head"><h3 id="blog-modal-title">New Blog Post</h3><button class="modal-close" onclick="closeBlogModal()">&times;</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-blog-id"/>
+      <div class="form-group"><label>Title *</label><input id="blog-title" type="text" required/></div>
+      <div class="form-group"><label>Category</label>
+        <select id="blog-cat"><option>Market Update</option><option>Investment</option><option>Legal</option><option>Tips</option><option>News</option></select>
+      </div>
+      <div class="form-group"><label>Excerpt</label><textarea id="blog-excerpt" rows="2" placeholder="Short summary..."></textarea></div>
+      <div class="form-group"><label>Content *</label><textarea id="blog-content" rows="8" required placeholder="Write the full article here..."></textarea></div>
+      <div class="form-group"><label>Cover Image URL</label><input id="blog-image" type="text" placeholder="/images/blog-1.jpg"/></div>
+      <div class="form-group" style="flex-direction:row;align-items:center;gap:10px">
+        <input type="checkbox" id="blog-published" style="width:16px;height:16px;accent-color:var(--red)"/>
+        <label for="blog-published" style="font-size:13px;font-weight:600">Published (visible on website)</label>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-outline" onclick="closeBlogModal()">Cancel</button><button class="btn btn-red" onclick="saveBlog()">Save Post</button></div>
+  </div>
+</div>
+
+<!-- PROPERTY REVIEW FULL PAGE -->
+
+  <!-- APP BANNERS PAGE -->
+  <div class="page" id="page-banners">
+    <div class="sec-head">
+      <h3>&#127916; Mobile App Banners</h3>
+      <button class="btn btn-outline btn-sm" onclick="loadBanners()">&#8635; Refresh</button>
+    </div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-body">
+        <h4 style="margin-bottom:6px;font-size:15px;font-weight:600">&#11014; Upload Banners (up to 5)</h4>
+        <p style="font-size:12px;color:#64748b;margin-bottom:16px">Har slot mein image ya video select karen (max 300 MB). Jo slot fill ho upload ho jayega.</p>
+        <div id="bn-slots" style="display:flex;flex-direction:column;gap:12px">
+          <!-- slots generated by initBannerSlots() -->
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-blue" onclick="uploadAllBanners()" id="bn-upload-all-btn">&#11014; Upload Selected</button>
+          <span id="bn-upload-status" style="font-size:13px;color:#64748b"></span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h4 style="margin-bottom:14px;font-size:15px;font-weight:600">Current Banners</h4>
+        <div id="banners-list"><div style="color:#94a3b8;padding:20px;text-align:center">Loading...</div></div>
+      </div>
+    </div>
+  </div>
+
+<div class="page" id="page-prop-review">
+  <!-- topbar -->
+  <div class="pr-topbar">
+    <button class="pr-back" onclick="closePropReview()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+      Back
+    </button>
+    <div class="pr-topbar-title">
+      <span style="color:#94a3b8">Properties</span>
+      <span style="margin:0 6px;color:#cbd5e1">/</span>
+      <span id="pr-breadcrumb"></span>
+    </div>
+    <div class="pr-topbar-actions">
+      <span id="pr-topbar-status"></span>
+    </div>
+  </div>
+
+  <div class="pr-body">
+    <!-- ── LEFT COLUMN ── -->
+    <div>
+      <!-- Media tabs -->
+      <div class="pr-media-tabs" id="pr-media-tabs">
+        <button class="pr-media-tab active" onclick="prShowTab('images',this)"> Images</button>
+        <button class="pr-media-tab" id="pr-video-tab" onclick="prShowTab('video',this)" style="display:none">▶ Video</button>
+      </div>
+
+      <!-- Gallery -->
+      <div id="pr-images-panel">
+        <div class="pr-gallery" id="pr-gallery">
+          <div class="pr-gallery-empty">No images uploaded</div>
+        </div>
+        <div class="pr-gallery-count" id="pr-img-counter" style="display:none"></div>
+        <div class="pr-thumbs" id="pr-thumbs"></div>
+      </div>
+
+      <!-- Video panel -->
+      <div class="pr-video-wrap" id="pr-video-panel">
+        <div class="pr-video" id="pr-video-embed"></div>
+      </div>
+
+      <!-- Property header (title, price, stats) -->
+      <div class="pr-prop-header">
+        <div class="pr-prop-badges" id="pr-prop-badges"></div>
+        <h1 class="pr-prop-title" id="pr-prop-title"></h1>
+        <div class="pr-price" id="pr-prop-price"></div>
+        <div class="pr-stats-row" id="pr-stats-row"></div>
+        <div class="pr-address" id="pr-prop-address"></div>
+      </div>
+
+      <!-- Edit Form (toggle) -->
+      <div id="pr-edit-form">
+        <div class="pr-section">
+          <div class="pr-section-title">️ Edit Property</div>
+          <div class="pr-edit-grid">
+            <div class="pr-edit-field full"><label>Title</label><input id="pe-title" type="text"/></div>
+            <div class="pr-edit-field"><label>Type</label>
+              <select id="pe-type"><option>House</option><option>Villa</option><option>Apartment</option><option>Penthouse</option><option>Plot</option><option>Commercial</option><option>Agriculture Land</option><option>Orchard</option><option>Farm House</option><option>Upper Portion</option><option>Lower Portion</option></select>
+            </div>
+            <div class="pr-edit-field"><label>Purpose</label>
+              <select id="pe-purpose"><option>For Sale</option><option>For Rent</option></select>
+            </div>
+            <div class="pr-edit-field"><label>Price (PKR)</label><input id="pe-price" type="number"/></div>
+            <div class="pr-edit-field"><label>Area</label><input id="pe-area" type="number"/></div>
+            <div class="pr-edit-field"><label>Area Unit</label>
+              <select id="pe-areaUnit"><option>Marla</option><option>Kanal</option><option>Square Feet</option><option>Square Yard</option><option>Acre</option></select>
+            </div>
+            <div class="pr-edit-field"><label>Bedrooms</label><input id="pe-bedrooms" type="number" min="0"/></div>
+            <div class="pr-edit-field"><label>Bathrooms</label><input id="pe-bathrooms" type="number" min="0"/></div>
+            <div class="pr-edit-field"><label>City</label><input id="pe-city" type="text"/></div>
+            <div class="pr-edit-field"><label>Society / Area</label><input id="pe-society" type="text"/></div>
+            <div class="pr-edit-field full"><label>Full Address</label><input id="pe-address" type="text"/></div>
+            <div class="pr-edit-field"><label>Year Built</label><input id="pe-yearBuilt" type="number"/></div>
+            <div class="pr-edit-field"><label>Furnishing</label>
+              <select id="pe-furnishing"><option value="">—</option><option>Furnished</option><option>Semi Furnished</option><option>Unfurnished</option></select>
+            </div>
+            <div class="pr-edit-field"><label>Availability</label>
+              <select id="pe-availability"><option>Ready to Move</option><option>Under Construction</option><option>On Booking</option></select>
+            </div>
+            <div class="pr-edit-field"><label>Video URL (YouTube)</label><input id="pe-videoUrl" type="text" placeholder="https://youtube.com/watch?v=..."/></div>
+            <div class="pr-edit-field full"><label>Description</label><textarea id="pe-description" rows="4"></textarea></div>
+            <div class="pr-edit-field full"><label>Amenities (comma separated)</label><input id="pe-amenities" type="text" placeholder="Pool, Gym, Garden..."/></div>
+            <div class="pr-edit-field full"><label>Images (comma separated URLs)</label><textarea id="pe-images" rows="3" placeholder="/images/photo1.jpg, /images/photo2.jpg"></textarea></div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+            <button class="btn btn-outline" onclick="togglePropEdit()">Cancel</button>
+            <button class="btn btn-red" onclick="savePropEdit()"> Save Changes</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Details -->
+      <div class="pr-section">
+        <div class="pr-section-title"> Property Details</div>
+        <div class="pr-details-grid" id="pr-details-grid"></div>
+      </div>
+
+      <!-- Description -->
+      <div class="pr-section" id="pr-desc-card" style="display:none">
+        <div class="pr-section-title"> Description</div>
+        <p class="pr-desc-text" id="pr-desc-text"></p>
+      </div>
+
+      <!-- Amenities -->
+      <div class="pr-section" id="pr-amenities-card" style="display:none">
+        <div class="pr-section-title"> Amenities &amp; Features</div>
+        <div id="pr-amenities-list" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+      </div>
+
+      <!-- Nearby -->
+      <div class="pr-section" id="pr-nearby-card" style="display:none">
+        <div class="pr-section-title"> Nearby Places</div>
+        <div id="pr-nearby-list"></div>
+      </div>
+
+      <!-- Score -->
+      <div class="pr-section" id="pr-score-card" style="display:none">
+        <div class="pr-section-title">⭐ Property Score</div>
+        <div id="pr-score-list"></div>
+      </div>
+    </div>
+
+    <!-- ── RIGHT PANEL ── -->
+    <div class="pr-panel">
+
+      <!-- Status card -->
+      <div class="pr-panel-card pr-status-pending" id="pr-status-card">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Approval Status</div>
+        <div id="pr-status-badge" style="font-size:17px;font-weight:800;margin-bottom:4px"></div>
+        <div id="pr-status-msg" style="font-size:12px;color:var(--muted);line-height:1.5"></div>
+      </div>
+
+      <!-- Assign City Agent card (shown for Pending/Rejected) -->
+      <div class="pr-panel-card" id="pr-agent-assign-section" style="border:2px dashed #C8A45A;background:#fffbf0">
+        <div style="font-size:12px;font-weight:700;color:#92660a;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px"> Assign City Agent</div>
+
+        <!-- Currently assigned agent -->
+        <div id="pr-assigned-agent-display" style="display:none;background:#fff;border:1px solid #e8c87a;border-radius:10px;padding:10px 12px;margin-bottom:12px">
+          <div style="font-size:11px;color:#92660a;font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Currently Assigned</div>
+          <div style="font-weight:700;font-size:14px;color:#0B1F3A" id="pr-aag-name">—</div>
+          <div style="font-size:12px;color:#555;margin-top:2px" id="pr-aag-phone">—</div>
+          <div style="margin-top:8px;display:flex;gap:6px">
+            <button onclick="prRemoveAgentAssignment()" style="font-size:11px;padding:4px 10px;border:1px solid #dc2626;background:#fff;color:#dc2626;border-radius:6px;cursor:pointer"> Remove</button>
+          </div>
+        </div>
+
+        <!-- Dropdown: city agents for this property's city -->
+        <div id="pr-city-agents-wrap" style="margin-bottom:10px">
+          <label style="font-size:11px;color:#666;font-weight:600;display:block;margin-bottom:4px">Select Agent for This City</label>
+          <select id="pr-city-agent-select" style="width:100%;padding:8px 10px;border:1px solid #d4a017;border-radius:8px;font-size:13px;background:#fff;color:#0B1F3A">
+            <option value="">— Pick an agent —</option>
+          </select>
+        </div>
+
+        <div style="text-align:center;font-size:11px;color:#999;margin:6px 0">— or enter manually —</div>
+
+        <!-- Manual fields -->
+        <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px">
+          <input id="pr-agent-name"     placeholder="Agent Name"          style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px" />
+          <input id="pr-agent-phone"    placeholder="Phone (03xxxxxxxxx)"  style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px" />
+          <input id="pr-agent-whatsapp" placeholder="WhatsApp (92xxxxxxxxxx)" style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px" />
+        </div>
+
+        <button onclick="prSaveAgentAssignment()" style="width:100%;padding:10px;background:#C8A45A;color:#0B1F3A;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer">
+           Save Agent to Property
+        </button>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="pr-panel-card" id="pr-approve-section">
+        <button class="pr-approve-btn" onclick="prApproveProperty()">
+          <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          Approve &amp; Go Live
+        </button>
+        <button class="pr-reject-btn" onclick="togglePrRejectForm()">
+          <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          Reject Property
+        </button>
+        <div class="pr-reject-inline" id="pr-reject-inline">
+          <textarea id="pr-reject-reason" rows="3" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:8px;font-family:inherit;resize:vertical" placeholder="Reason for rejection..."></textarea>
+          <button class="btn btn-danger" style="width:100%;justify-content:center" onclick="prRejectProperty()">Confirm Reject</button>
+        </div>
+      </div>
+
+      <!-- Edit + utility buttons -->
+      <div class="pr-panel-card">
+        <button class="pr-edit-panel-btn" onclick="togglePropEdit()" id="pr-edit-toggle-btn">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          Edit Property
+        </button>
+        <button class="pr-feature-btn" id="pr-feature-btn" onclick="prToggleFeatured()"> Mark as Featured</button>
+        <button class="pr-priority-btn" id="pr-priority-btn" onclick="prTogglePriority()"> Set as Priority Listing</button>
+        <button class="pr-delete-btn" onclick="prDeleteProperty()"> Delete Property</button>
+      </div>
+
+      <!-- Seller card -->
+      <div class="pr-panel-card">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px">Seller / Agent</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <div class="pr-seller-avatar" id="pr-seller-avatar">S</div>
+          <div>
+            <div style="font-weight:700;font-size:15px;color:#0B1F3A" id="pr-seller-name">—</div>
+            <div style="font-size:12px;color:var(--muted)" id="pr-seller-role">Seller</div>
+          </div>
+        </div>
+        <div id="pr-seller-details"></div>
+      </div>
+
+      <!-- Meta info -->
+      <div class="pr-panel-card">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Listing Info</div>
+        <div id="pr-meta-info"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- PROPERTY DETAIL MODAL (kept for backward compat, hidden) -->
+<div class="modal-overlay" id="prop-detail-modal" style="display:none!important">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-head"><h3>Property Details</h3><button class="modal-close" onclick="closePropDetail()">&times;</button></div>
+    <div class="modal-body" id="prop-detail-body"></div>
+    <div class="modal-foot" id="prop-detail-foot"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API='';
+let token='', currentUser=null, allProps=[], allUsers=[], allAgents=[], allInqs=[], allBlog=[], hiddenReactAgents=[];
+let rejectTargetId=null, editUserId=null, editBlogId=null, usersFilter='all', agentsFilter='all';
+
+
+// ─── NEW ADMIN SECTIONS LOGIC ───
+
+function switchDevTab(btn, tabId, projectId) {
+  const container = btn.closest('.page');
+  container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  container.querySelectorAll('.dev-tab-content').forEach(c => c.style.display = 'none');
+  document.getElementById(tabId).style.display = 'block';
+  
+  if (projectId) {
+    if (tabId === 'dev-projects-inventory') {
+      loadDeveloperBlocks(projectId);
+      loadDeveloperUnits(projectId);
+    } else if (tabId === 'dev-projects-leads') {
+      loadDeveloperLeads(projectId);
+    } else if (tabId === 'dev-projects-team') {
+      loadDeveloperTeam(projectId);
+      loadDeveloperDocuments(projectId);
+    } else if (tabId === 'dev-projects-finance') {
+      loadDeveloperPaymentPlans(projectId);
+      loadDeveloperPromotions(projectId);
+    }
+  }
+}
+
+function switchUserHistoryTab(btn, tabId) {
+  const container = btn.closest('.modal-body');
+  container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  container.querySelectorAll('.uh-tab-content').forEach(c => c.style.display = 'none');
+  document.getElementById(tabId).style.display = 'block';
+}
+
+function viewProjectTabs(projectId) {
+  const tabs = document.querySelectorAll('#page-developer-projects .tab-btn');
+  tabs.forEach(t => {
+    const tabId = t.getAttribute('onclick').match(/'([^']+)'/)[1];
+    t.setAttribute('onclick', `switchDevTab(this, '${tabId}', '${projectId}')`);
+  });
+  switchDevTab(tabs[1], 'dev-projects-inventory', projectId);
+}
+
+// ── Buyer Requests 
+async function loadBuyerRequests() {
+  const tbody = document.getElementById('buyer-requests-body');
+  tbody.innerHTML = '<tr><td colspan="6" class="empty">Loading...</td></tr>';
+  try {
+    const data = await api('GET', '/api/admin/buyer-requests');
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No buyer requests found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(r => `
+      <tr>
+        <td>${r.clientName || r.client || 'Unknown Client'}</td>
+        <td>${r.requirement || r.message || '—'}</td>
+        <td>${r.budget || '—'}</td>
+        <td>${r.location || r.city || '—'}</td>
+        <td><span class="badge badge-${(r.status||'Open')==='Matched'?'green':'warn'}">${r.status || 'Open'}</span></td>
+        <td>
+           <div class="action-btns">
+             <button class="btn btn-outline btn-sm" onclick="patchBuyerRequest('${r.id}', 'approve')">Approve</button>
+             <button class="btn btn-outline btn-sm" onclick="patchBuyerRequest('${r.id}', 'reject')">Reject</button>
+             <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="deleteBuyerRequest('${r.id}')">Delete</button>
+           </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="6" class="empty" style="color:var(--danger)">Error: ${e.message}</td></tr>`; }
+}
+async function patchBuyerRequest(id, action) {
+  try { await api('PATCH', `/api/admin/buyer-requests/${id}`, { action }); showToast('Action successful','success'); loadBuyerRequests(); } catch(e){ showToast(e.message,'error'); }
+}
+async function deleteBuyerRequest(id) {
+  if(!confirm('Delete?')) return;
+  try { await api('DELETE', `/api/admin/buyer-requests/${id}`); showToast('Deleted','success'); loadBuyerRequests(); } catch(e){ showToast(e.message,'error'); }
+}
+
+// ── Developer Projects 
+async function loadDeveloperProjects() {
+  const tbody = document.getElementById('dev-projects-body');
+  tbody.innerHTML = '<tr><td colspan="5" class="empty">Loading...</td></tr>';
+  try {
+    const data = await api('GET', '/api/admin/developer-projects');
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">No projects found</td></tr>';
+    } else {
+      tbody.innerHTML = data.map(p => `
+        <tr>
+          <td><strong>${p.title || p.name}</strong></td>
+          <td>${p.developer || '—'}</td>
+          <td><span class="badge badge-${p.status==='Live'?'green':'warn'}">${p.status}</span></td>
+          <td>${p.completionDate || '—'}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn btn-outline btn-sm" onclick="viewProjectTabs('${p.id}')">Manage Details</button>
+              <button class="btn btn-outline btn-sm" onclick="patchDevProject('${p.id}', 'approve')">Approve</button>
+              <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="deleteDevProject('${p.id}')">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="5" class="empty" style="color:var(--danger)">Error: ${e.message}</td></tr>`; }
+}
+async function patchDevProject(id, action) {
+  try { await api('PATCH', `/api/admin/developer-projects/${id}`, { action }); showToast('Action successful','success'); loadDeveloperProjects(); } catch(e){ showToast(e.message,'error'); }
+}
+async function deleteDevProject(id) {
+  if(!confirm('Delete?')) return;
+  try { await api('DELETE', `/api/admin/developer-projects/${id}`); showToast('Deleted','success'); loadDeveloperProjects(); } catch(e){ showToast(e.message,'error'); }
+}
+
+async function loadDeveloperBlocks(projectId) {
+  try {
+    const data = await api('GET', `/api/admin/developer-blocks?projectId=${projectId}`);
+  } catch(e) {}
+}
+
+async function loadDeveloperUnits(projectId) {
+  const tbody = document.getElementById('dev-inventory-body');
+  tbody.innerHTML = '<tr><td colspan="7" class="empty">Loading units...</td></tr>';
+  try {
+    const data = await api('GET', `/api/admin/developer-units?projectId=${projectId}`);
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">No units found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(u => `
+      <tr>
+        <td>${u.projectName || projectId}</td>
+        <td>${u.block || '—'}</td>
+        <td>${u.unitNo || '—'}</td>
+        <td>${u.type || '—'}</td>
+        <td><span class="badge badge-blue">${u.status || 'Available'}</span></td>
+        <td>${u.price || '—'}</td>
+        <td>
+           <button class="btn btn-outline btn-sm" onclick="patchDevUnit('${u.id}', 'suspend', '${projectId}')">Suspend</button>
+           <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="deleteDevUnit('${u.id}', '${projectId}')">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="7" class="empty" style="color:var(--danger)">Error: ${e.message}</td></tr>`; }
+}
+async function patchDevUnit(id, action, pId) {
+  try { await api('PATCH', `/api/admin/developer-units/${id}`, { action }); showToast('Action successful','success'); loadDeveloperUnits(pId); } catch(e){ showToast(e.message,'error'); }
+}
+async function deleteDevUnit(id, pId) {
+  if(!confirm('Delete?')) return;
+  try { await api('DELETE', `/api/admin/developer-units/${id}`); showToast('Deleted','success'); loadDeveloperUnits(pId); } catch(e){ showToast(e.message,'error'); }
+}
+
+async function loadDeveloperLeads(projectId) {
+  const tbody = document.getElementById('dev-leads-body');
+  tbody.innerHTML = '<tr><td colspan="6" class="empty">Loading leads...</td></tr>';
+  try {
+    const data = await api('GET', `/api/admin/developer-leads?projectId=${projectId}`);
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No leads found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(l => `
+      <tr>
+        <td>${l.date || l.createdAt || '—'}</td>
+        <td>${l.clientName || l.client || '—'}</td>
+        <td>${l.projectName || projectId}</td>
+        <td>${l.interest || '—'}</td>
+        <td><span class="badge badge-warn">${l.status || 'Pending'}</span></td>
+        <td>
+           <button class="btn btn-outline btn-sm" onclick="patchDevLead('${l.id}', 'archive', '${projectId}')">Archive</button>
+           <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="deleteDevLead('${l.id}', '${projectId}')">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="6" class="empty" style="color:var(--danger)">Error: ${e.message}</td></tr>`; }
+}
+async function patchDevLead(id, action, pId) {
+  try { await api('PATCH', `/api/admin/developer-leads/${id}`, { action }); showToast('Action successful','success'); loadDeveloperLeads(pId); } catch(e){ showToast(e.message,'error'); }
+}
+async function deleteDevLead(id, pId) {
+  if(!confirm('Delete?')) return;
+  try { await api('DELETE', `/api/admin/developer-leads/${id}`); showToast('Deleted','success'); loadDeveloperLeads(pId); } catch(e){ showToast(e.message,'error'); }
+}
+
+
+async function loadDeveloperTeam(projectId) {
+  const tbody = document.getElementById('dev-team-body');
+  tbody.innerHTML = '<tr><td colspan="5" class="empty">Loading team...</td></tr>';
+  try {
+    const data = await api('GET', `/api/admin/developer-team?projectId=${projectId}`);
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">No team members found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(t => `
+      <tr>
+        <td>${t.name || '—'}</td>
+        <td>${t.role || '—'}</td>
+        <td>${t.projectName || projectId}</td>
+        <td><span class="badge badge-green">${t.status || 'Active'}</span></td>
+        <td>
+           <button class="btn btn-outline btn-sm" onclick="patchDevTeam('${t.id}', 'suspend', '${projectId}')">Suspend</button>
+           <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="deleteDevTeam('${t.id}', '${projectId}')">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="5" class="empty" style="color:var(--danger)">Error: ${e.message}</td></tr>`; }
+}
+async function patchDevTeam(id, action, pId) {
+  try { await api('PATCH', `/api/admin/developer-team/${id}`, { action }); showToast('Action successful','success'); loadDeveloperTeam(pId); } catch(e){ showToast(e.message,'error'); }
+}
+async function deleteDevTeam(id, pId) {
+  if(!confirm('Delete?')) return;
+  try { await api('DELETE', `/api/admin/developer-team/${id}`); showToast('Deleted','success'); loadDeveloperTeam(pId); } catch(e){ showToast(e.message,'error'); }
+}
+
+async function loadDeveloperDocuments(projectId) {
+  const tbody = document.getElementById('dev-docs-body');
+  tbody.innerHTML = '<tr><td colspan="5" class="empty">Loading documents...</td></tr>';
+  try {
+    const data = await api('GET', `/api/admin/developer-documents?projectId=${projectId}`);
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">No documents found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(d => `
+      <tr>
+        <td>${d.name || d.title || '—'}</td>
+        <td>${d.projectName || projectId}</td>
+        <td>${d.type || '—'}</td>
+        <td>${d.uploadedAt || d.createdAt || '—'}</td>
+        <td>
+           <button class="btn btn-outline btn-sm" onclick="patchDevDoc('${d.id}', 'approve', '${projectId}')">Approve</button>
+           <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="deleteDevDoc('${d.id}', '${projectId}')">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="5" class="empty" style="color:var(--danger)">Error: ${e.message}</td></tr>`; }
+}
+async function patchDevDoc(id, action, pId) {
+  try { await api('PATCH', `/api/admin/developer-documents/${id}`, { action }); showToast('Action successful','success'); loadDeveloperDocuments(pId); } catch(e){ showToast(e.message,'error'); }
+}
+async function deleteDevDoc(id, pId) {
+  if(!confirm('Delete?')) return;
+  try { await api('DELETE', `/api/admin/developer-documents/${id}`); showToast('Deleted','success'); loadDeveloperDocuments(pId); } catch(e){ showToast(e.message,'error'); }
+}
+
+
+async function loadDeveloperPaymentPlans(projectId) {
+  const tbody = document.getElementById('dev-finance-body');
+  tbody.innerHTML = '<tr><td colspan="5" class="empty">Loading finance info...</td></tr>';
+  try {
+    const data = await api('GET', `/api/admin/developer-payment-plans?projectId=${projectId}`);
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">No payment plans found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(f => `
+      <tr>
+        <td>${f.name || f.title || '—'}</td>
+        <td>${f.projectName || projectId}</td>
+        <td>${f.type || 'Plan'}</td>
+        <td><span class="badge badge-green">${f.status || 'Active'}</span></td>
+        <td>
+           <button class="btn btn-outline btn-sm" onclick="patchDevPlan('${f.id}', 'suspend', '${projectId}')">Suspend</button>
+           <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="deleteDevPlan('${f.id}', '${projectId}')">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="5" class="empty" style="color:var(--danger)">Error: ${e.message}</td></tr>`; }
+}
+async function patchDevPlan(id, action, pId) {
+  try { await api('PATCH', `/api/admin/developer-payment-plans/${id}`, { action }); showToast('Action successful','success'); loadDeveloperPaymentPlans(pId); } catch(e){ showToast(e.message,'error'); }
+}
+async function deleteDevPlan(id, pId) {
+  if(!confirm('Delete?')) return;
+  try { await api('DELETE', `/api/admin/developer-payment-plans/${id}`); showToast('Deleted','success'); loadDeveloperPaymentPlans(pId); } catch(e){ showToast(e.message,'error'); }
+}
+
+
+async function loadDeveloperPromotions(projectId) {
+  try {
+    const data = await api('GET', `/api/admin/developer-promotions?projectId=${projectId}`);
+  } catch(e) {}
+}
+
+// ── Verifications 
+async function loadVerifications() {
+  const tbody = document.getElementById('verifications-body');
+  tbody.innerHTML = '<tr><td colspan="5" class="empty">Loading...</td></tr>';
+  try {
+    const data = await api('GET', '/api/admin/verification-requests');
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">No verification requests found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(v => `
+      <tr>
+        <td><strong>${v.entityName || '—'}</strong></td>
+        <td>${v.type || '—'}</td>
+        <td>${v.submittedAt || v.createdAt || '—'}</td>
+        <td><span class="badge badge-warn">${v.status || 'Pending'}</span></td>
+        <td>
+           <div class="action-btns">
+             <button class="btn btn-green btn-sm" onclick="patchVerification('${v.id}', 'approve')">Approve</button>
+             <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="patchVerification('${v.id}', 'reject')">Reject</button>
+             <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="deleteVerification('${v.id}')">Delete</button>
+           </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="5" class="empty" style="color:var(--danger)">Error: ${e.message}</td></tr>`; }
+}
+async function patchVerification(id, action) {
+  try { await api('PATCH', `/api/admin/verification-requests/${id}`, { action }); showToast('Action successful','success'); loadVerifications(); } catch(e){ showToast(e.message,'error'); }
+}
+async function deleteVerification(id) {
+  if(!confirm('Delete?')) return;
+  try { await api('DELETE', `/api/admin/verification-requests/${id}`); showToast('Deleted','success'); loadVerifications(); } catch(e){ showToast(e.message,'error'); }
+}
+
+
+// ── Conversations 
+async function loadConversations() {
+  const tbody = document.getElementById('conversations-body');
+  tbody.innerHTML = '<tr><td colspan="5" class="empty">Loading...</td></tr>';
+  try {
+    const data = await api('GET', '/api/admin/conversations');
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">No conversations found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(c => `
+      <tr>
+        <td>${c.participants ? c.participants.join(', ') : 'Unknown'}</td>
+        <td>${c.topic || 'General'}</td>
+        <td>"${c.lastMessage || ''}"</td>
+        <td>${c.lastMessageTime ? new Date(c.lastMessageTime).toLocaleTimeString() : '—'}</td>
+        <td>
+           <div class="action-btns">
+             <button class="btn btn-outline btn-sm" onclick="patchConversation('${c.id}', 'archive')">Archive</button>
+             <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="deleteConversation('${c.id}')">Delete</button>
+           </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="5" class="empty" style="color:var(--danger)">Error: ${e.message}</td></tr>`; }
+}
+async function patchConversation(id, action) {
+  try { await api('PATCH', `/api/admin/conversations/${id}`, { action }); showToast('Action successful','success'); loadConversations(); } catch(e){ showToast(e.message,'error'); }
+}
+async function deleteConversation(id) {
+  if(!confirm('Delete this conversation?')) return;
+  try {
+    await api('DELETE', `/api/admin/conversations/${id}`);
+    showToast('Conversation deleted', 'success');
+    loadConversations();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── Notifications 
+async function loadNotifications() {
+  const tbody = document.getElementById('notifications-body');
+  tbody.innerHTML = '<tr><td colspan="4" class="empty">Loading...</td></tr>';
+  try {
+    const data = await api('GET', '/api/admin/notifications');
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty">No notifications found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(n => `
+      <tr>
+        <td>${n.title || 'Notification'}</td>
+        <td>${n.forPortal || 'All'}</td>
+        <td>${new Date(n.timestamp).toLocaleString()}</td>
+        <td>
+           <span class="badge badge-${n.read?'gray':'green'}">${n.read?'Read':'Unread'}</span>
+           <button class="btn btn-outline btn-sm" onclick="patchNotification('${n.id}', 'archive')">Archive</button>
+           <button class="btn btn-outline btn-sm" style="margin-left:8px;color:var(--danger)" onclick="deleteNotification('${n.id}')">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="4" class="empty" style="color:var(--danger)">Error: ${e.message}</td></tr>`; }
+}
+async function patchNotification(id, action) {
+  try { await api('PATCH', `/api/admin/notifications/${id}`, { action }); showToast('Action successful','success'); loadNotifications(); } catch(e){ showToast(e.message,'error'); }
+}
+async function deleteNotification(id) {
+  if(!confirm('Delete this notification?')) return;
+  try {
+    await api('DELETE', `/api/admin/notifications/${id}`);
+    showToast('Notification deleted', 'success');
+    loadNotifications();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function broadcastNotification() {
+  const title = prompt('Enter notification title:');
+  if(!title) return;
+  const message = prompt('Enter message:');
+  if(!message) return;
+  const audience = prompt('Enter audience (buyer, seller, agent, all):', 'all');
+  try {
+    await api('POST', '/api/admin/notifications', { title, message, forPortal: audience, read: false, timestamp: new Date().toISOString() });
+    showToast('Broadcast sent', 'success');
+    loadNotifications();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function openUserHistory(userId) {
+  document.getElementById('user-history-modal').classList.add('open');
+  const aBody = document.getElementById('user-activity-body');
+  aBody.innerHTML = '<tr><td colspan="3" class="empty">Loading activity...</td></tr>';
+  
+  // existing saved searches logic
+  const sBody = document.getElementById('user-saved-searches-body');
+  sBody.innerHTML = '<tr><td colspan="3" class="empty">Loading...</td></tr>';
+  try {
+    const searches = await api('GET', '/api/saved-searches'); // Uses existing non-admin or we can switch if needed, but the prompt says use requireAdmin endpoints. Wait, the prompt says "Use these requireAdmin endpoints exactly:"
+    // The prompt only listed user activity, agent leads/visits, etc.
+    const userSearches = searches.filter(s => String(s.userId) === String(userId));
+    if (!userSearches.length) {
+      sBody.innerHTML = '<tr><td colspan="3" class="empty">No saved searches for this user</td></tr>';
+    } else {
+      sBody.innerHTML = userSearches.map(s => `
+        <tr>
+          <td>${s.query || s.criteria || 'Custom Search'}</td>
+          <td>${s.alertsEnabled ? 'Enabled' : 'Disabled'}</td>
+          <td>${new Date(s.createdAt).toLocaleDateString()}</td>
+        </tr>
+      `).join('');
+    }
+  } catch(e) {
+    sBody.innerHTML = `<tr><td colspan="3" class="empty" style="color:var(--danger)">Error: ${e.message}</td></tr>`;
+  }
+
+  // Activity logic
+  try {
+    const actData = await api('GET', `/api/admin/users/${userId}/activity`);
+    if(!actData || !actData.length) {
+      aBody.innerHTML = '<tr><td colspan="3" class="empty">No activity found</td></tr>';
+    } else {
+      aBody.innerHTML = actData.map(a => `
+        <tr>
+          <td>${a.action}</td>
+          <td>${a.details || ''}</td>
+          <td>${new Date(a.createdAt).toLocaleString()}</td>
+        </tr>
+      `).join('');
+    }
+  } catch(e) {
+    aBody.innerHTML = `<tr><td colspan="3" class="empty" style="color:var(--danger)">Error: ${e.message}</td></tr>`;
+  }
+}
+
+async function openAgentLeads(agentId) {
+  document.getElementById('agent-leads-modal').classList.add('open');
+  const tbody = document.getElementById('agent-leads-body');
+  tbody.innerHTML = '<tr><td colspan="5" class="empty">Loading...</td></tr>';
+  try {
+    const leads = await api('GET', `/api/admin/agent-leads?agentId=${agentId}`);
+    const visits = await api('GET', `/api/admin/agent-visits?agentId=${agentId}`);
+    const combined = [...leads, ...visits].sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
+    
+    if (!combined.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">No leads or visits found for this agent</td></tr>';
+    } else {
+      tbody.innerHTML = combined.map(l => `
+        <tr>
+          <td>${l.clientName || 'Unknown'}</td>
+          <td>${l.propertyTitle || '—'}</td>
+          <td>${l.type || 'Lead'}</td>
+          <td><span class="badge badge-${l.status==='Completed'?'green':'warn'}">${l.status || 'Pending'}</span></td>
+          <td>
+            <button class="btn btn-outline btn-sm" onclick="patchAgentLead('${l.id}', 'archive', '${agentId}')">Archive</button>
+            <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="deleteAgentLead('${l.id}', '${agentId}')">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty" style="color:var(--danger)">Error: ${e.message}</td></tr>`;
+  }
+}
+async function patchAgentLead(id, action, agentId) {
+  try { await api('PATCH', `/api/admin/agent-leads/${id}`, { action }); showToast('Action successful','success'); openAgentLeads(agentId); } catch(e){ showToast(e.message,'error'); }
+}
+async function deleteAgentLead(id, agentId) {
+  if(!confirm('Delete?')) return;
+  try { await api('DELETE', `/api/admin/agent-leads/${id}`); showToast('Deleted','success'); openAgentLeads(agentId); } catch(e){ showToast(e.message,'error'); }
+}
+
+
+function init(){
+  token=localStorage.getItem('og_token')||'';
+  const adminAuth=localStorage.getItem('adminAuth');
+  const u=localStorage.getItem('og_user');
+  if(!token||!adminAuth||!u){ window.location.href='/portal/admin'; return; }
+  currentUser=JSON.parse(u);
+  if(currentUser.role!=='Admin'){ window.location.href='/portal/admin'; return; }
+  const av=(currentUser.name||'A')[0].toUpperCase();
+  document.getElementById('sb-avatar').textContent=av;
+  document.getElementById('top-avatar').textContent=av;
+  document.getElementById('sb-uname').textContent=currentUser.name||'Admin';
+  document.getElementById('sb-uemail').textContent=currentUser.email||'';
+  document.getElementById('admin-name').value=currentUser.name||'';
+  document.getElementById('admin-email').value=currentUser.email||'';
+  document.getElementById('admin-phone').value=currentUser.phone||'';
+  setInterval(()=>{ document.getElementById('topbar-time').textContent=new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}); },1000);
+  loadAll();
+}
+
+function logout(){ localStorage.removeItem('og_token'); localStorage.removeItem('og_user'); localStorage.removeItem('adminAuth'); window.location.href='/portal/admin'; }
+
+async function api(method,path,body){
+  const opts={method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}};
+  if(body) opts.body=JSON.stringify(body);
+  const r=await fetch(API+path,opts);
+  if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error(e.error||r.statusText); }
+  return r.json();
+}
+
+async function loadAll(){
+  try{
+    const [props, users, agents, inqs, blog, bundleHidden, cityAg] = await Promise.all([
+      api('GET','/api/properties?limit=1000').catch(()=>[]),
+      api('GET','/api/users').catch(()=>[]),
+      api('GET','/api/agents').catch(()=>[]),
+      api('GET','/api/inquiries').catch(()=>[]),
+      api('GET','/api/blog').catch(()=>[]),
+      fetch('/api/settings/hidden-react-agents').then(r=>r.ok?r.json():[]).catch(()=>[]),
+      api('GET','/api/city-agents').catch(()=>[]),
+    ]);
+    allProps=Array.isArray(props)?props:[];
+    allUsers=Array.isArray(users)?users:[];
+    allAgents=Array.isArray(agents)?agents:[];
+    allInqs=Array.isArray(inqs)?inqs:[];
+    allBlog=Array.isArray(blog)?blog:[];
+    hiddenReactAgents=Array.isArray(bundleHidden)?bundleHidden:[];
+    allCityAgents=Array.isArray(cityAg)?cityAg:[];
+    renderAll();
+  } catch(e){ showToast(e.message,'error'); }
+}
+
+function renderAll(){
+  updateDashStats(); renderDashPending(); renderDashUsers(); renderDashAgentPending(); renderApprovals();
+  renderAllProps(); renderPropertiesPage(); renderAgents(); renderBundleAgents(); renderUsers(); renderInquiries(); renderBlog(); renderSettings(); renderCityAgents();
+}
+
+// ── React Bundle Agents Management ──────────────────────────────────────────
+const BUNDLE_AGENTS = [
+  {name:'Ahmed Hassan', role:'Senior Property Consultant'},
+  {name:'Fatima Khan',  role:'Commercial Real Estate Specialist'},
+  {name:'Bilal Rashid', role:'Residential Property Expert'},
+  {name:'Sara Ali',     role:'Luxury Property Advisor'},
+  {name:'Imran Malik',  role:'Investment Property Consultant'},
+  {name:'Ayesha Siddiqui', role:'Property Investment Advisor'},
+];
+
+function renderBundleAgents(){
+  const list=document.getElementById('bundle-agents-list');
+  if(!list) return;
+  list.innerHTML=BUNDLE_AGENTS.map(ag=>{
+    const hidden=hiddenReactAgents.includes(ag.name);
+    return `<div style="background:#f8fafc;border:1px solid ${hidden?'#fee2e2':'#e2e8f0'};border-radius:10px;padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div>
+        <div style="font-weight:600;font-size:14px;color:var(--text)">${ag.name}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${ag.role}</div>
+        <div style="margin-top:6px">
+          ${hidden
+            ?'<span style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px"> Hidden</span>'
+            :'<span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px"> Visible</span>'}
+        </div>
+      </div>
+      <button onclick="toggleBundleAgent('${ag.name}',${!hidden})"
+        style="padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;
+          background:${hidden?'#16a34a':'#dc2626'};color:#fff;font-family:inherit;transition:.2s"
+        onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        ${hidden?' Show':' Hide'}
+      </button>
+    </div>`;
+  }).join('');
+}
+
+async function toggleBundleAgent(name, hide){
+  try{
+    const r=await fetch('/api/settings/hidden-react-agents',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({name,hidden:hide})
+    });
+    const data=await r.json();
+    if(data.success){
+      hiddenReactAgents=data.hiddenReactAgents||[];
+      renderBundleAgents();
+      showToast(hide?`${name} hidden from website`:`${name} now visible on website`,'success');
+    } else {
+      showToast(data.error||'Failed','error');
+    }
+  } catch(e){ showToast('Error: '+e.message,'error'); }
+}
+
+function updateDashStats(){
+  const pending=allProps.filter(p=>p.approvalStatus==='Pending');
+  const featured=allProps.filter(p=>p.featured);
+  const priority=allProps.filter(p=>p.priority);
+  const active=allProps.filter(p=>p.approvalStatus==='Active');
+  const agentPending=allAgents.filter(a=>a.approvalStatus==='Pending');
+  document.getElementById('ds-props').textContent=allProps.length;
+  document.getElementById('ds-pending').textContent=pending.length;
+  document.getElementById('ds-users').textContent=allUsers.length;
+  document.getElementById('ds-inqs').textContent=allInqs.length;
+  document.getElementById('ds-featured').textContent=featured.length;
+  const prioEl=document.getElementById('ds-priority');
+  if(prioEl) prioEl.textContent=priority.length+' Priority';
+  document.getElementById('ds-active').textContent=active.length;
+  document.getElementById('pending-count').textContent=pending.length;
+  document.getElementById('pending-count').style.display=pending.length?'inline':'none';
+  // Agent pending badge
+  const apEl=document.getElementById('agent-pending-count');
+  if(apEl){ apEl.textContent=agentPending.length; apEl.style.display=agentPending.length?'inline':'none'; }
+}
+
+function renderDashPending(){
+  const pending=allProps.filter(p=>p.approvalStatus==='Pending').slice(0,5);
+  const tbody=document.getElementById('dash-pending-body');
+  tbody.innerHTML=pending.length?pending.map(p=>`<tr class="pending-highlight">
+    <td><div class="prop-title">${p.title}</div><div class="prop-sub">${p.type} · ${p.city}</div></td>
+    <td>${p.sellerName||'—'}</td>
+    <td><div class="action-btns"><button class="btn btn-outline btn-sm" onclick="openPropReview(${p.id},'dashboard')"> Review</button><button class="btn btn-green btn-sm" onclick="approveProperty(${p.id})"> Approve</button><button class="btn btn-danger btn-sm" onclick="openRejectModal(${p.id})"> Reject</button></div></td>
+  </tr>`).join(''):'<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--muted)">No pending approvals </td></tr>';
+}
+
+function renderDashUsers(){
+  const tbody=document.getElementById('dash-users-body');
+  const recent=[...allUsers].sort((a,b)=>new Date(b.joinedDate||0)-new Date(a.joinedDate||0)).slice(0,5);
+  tbody.innerHTML=recent.map(u=>`<tr><td><div class="prop-title">${u.name}</div></td><td>${roleBadge(u.role)}</td><td>${fmtDate(u.joinedDate)}</td></tr>`).join('');
+}
+
+function renderDashAgentPending(){
+  const pending=allAgents.filter(a=>a.approvalStatus==='Pending');
+  const badge=document.getElementById('dash-agent-pending-badge');
+  if(badge){ badge.textContent=pending.length; badge.style.display=pending.length?'inline':'none'; }
+  const tbody=document.getElementById('dash-agent-pending-body');
+  if(!tbody) return;
+  if(!pending.length){
+    tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">No pending agent applications </td></tr>`;
+    return;
+  }
+  tbody.innerHTML=pending.map(a=>`<tr style="background:#fffbeb">
+    <td><div style="display:flex;align-items:center;gap:9px">
+      ${a.photo?`<img src="${a.photo}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0" onerror="this.style.display='none'">`
+               :`<div style="width:34px;height:34px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0"></div>`}
+      <div><div class="prop-title">${a.name||'—'}</div><div class="prop-sub">Applied ${fmtDate(a.joinedDate)}</div></div>
+    </div></td>
+    <td style="font-size:13px">${a.email||'—'}</td>
+    <td style="font-size:13px">${a.phone||'—'}</td>
+    <td style="font-size:13px">${a.city||'—'}</td>
+    <td><span class="badge badge-blue">${a.specialization||'General'}</span></td>
+    <td style="font-size:13px">${a.experience||'—'}</td>
+    <td><div class="action-btns">
+      <button class="btn btn-green btn-sm" onclick="approveAgent(${a.id})"> Approve</button>
+      <button class="btn btn-danger btn-sm" onclick="openAgentRejectModal(${a.id})"> Reject</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function renderApprovals(){
+  const pending=allProps.filter(p=>p.approvalStatus==='Pending');
+  document.getElementById('approval-count').textContent=`${pending.length} pending`;
+  const tbody=document.getElementById('approvals-body');
+  tbody.innerHTML=pending.length?pending.map(p=>`<tr class="pending-highlight">
+    <td><div style="display:flex;align-items:center;gap:10px"><img class="prop-img" src="${(p.images&&p.images[0])||''}" onerror="this.style.display='none'"/><div><div class="prop-title">${p.title}</div><div class="prop-sub">${p.purpose||'For Sale'}</div></div></div></td>
+    <td><span class="badge badge-blue">${p.type}</span></td>
+    <td>${p.city||'—'}</td>
+    <td style="font-weight:700">PKR ${fmtPrice(p.price)}</td>
+    <td>${p.sellerName||'—'}</td>
+    <td>${fmtDate(p.createdAt)}</td>
+    <td><div class="action-btns">
+      <button class="btn btn-blue btn-sm" onclick="openPropReview(${p.id},'approvals')"> Full Review</button>
+      <button class="btn btn-green btn-sm" onclick="approveProperty(${p.id})"> Approve</button>
+      <button class="btn btn-danger btn-sm" onclick="openRejectModal(${p.id})"> Reject</button>
+    </div></td>
+  </tr>`).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">No pending approvals </td></tr>';
+}
+
+function renderAllProps(){
+  const q=(document.getElementById('prop-search')?.value||'').toLowerCase();
+  const ft=document.getElementById('prop-filter-type')?.value||'';
+  const fs=document.getElementById('prop-filter-status')?.value||'';
+  let list=allProps;
+  if(q) list=list.filter(p=>(p.title||'').toLowerCase().includes(q)||(p.city||'').toLowerCase().includes(q));
+  if(ft) list=list.filter(p=>p.type===ft);
+  if(fs) list=list.filter(p=>p.approvalStatus===fs);
+  const tbody=document.getElementById('all-props-body');
+  tbody.innerHTML=list.map(p=>`<tr>
+    <td><div class="prop-title">${p.title}</div><div class="prop-sub">${p.city}</div></td>
+    <td><span class="badge badge-blue">${p.type}</span></td>
+    <td>${p.city||'—'}</td>
+    <td>PKR ${fmtPrice(p.price)}</td>
+    <td>${statusBadge(p.approvalStatus)}</td>
+    <td>
+      ${p.priority?'<span class="badge" style="background:#f5f3ff;color:#5b21b6;margin-bottom:2px;display:inline-block"> Priority</span><br/>':''}
+      ${p.featured?'<span class="badge badge-yellow">⭐ Featured</span>':'<span class="badge badge-gray">—</span>'}
+    </td>
+    <td><div class="action-btns">
+      <button class="btn btn-blue btn-sm" onclick="openPropReview(${p.id},'approvals')"> Review</button>
+      <button class="btn btn-outline btn-sm" onclick="openPropEdit(${p.id},'approvals')"> Edit</button>
+      ${p.approvalStatus==='Pending'?`<button class="btn btn-green btn-sm" onclick="approveProperty(${p.id})"></button><button class="btn btn-danger btn-sm" onclick="openRejectModal(${p.id})"></button>`:''}
+      <button class="btn btn-${p.featured?'warn':'purple'} btn-sm" title="${p.featured?'Remove Featured':'Mark Featured'}" onclick="toggleFeatured(${p.id})">${p.featured?'⭐':''}</button>
+      ${p.approvalStatus==='Active'?`<button class="btn btn-sm" style="background:${p.priority?'#f5f3ff':'#f8fafc'};color:${p.priority?'#5b21b6':'#64748b'};border:1px solid ${p.priority?'#ddd6fe':'#e2e8f0'}" title="${p.priority?'Remove Priority':'Set Priority'}" onclick="togglePriority(${p.id})">${p.priority?'':'↑'}</button>`:''}
+      <button class="btn btn-danger btn-sm" onclick="deleteProperty(${p.id})"></button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function renderPropertiesPage(){
+  const q=(document.getElementById('all-prop-search')?.value||'').toLowerCase();
+  const ft=document.getElementById('all-prop-type')?.value||'';
+  const fc=document.getElementById('all-prop-city')?.value||'';
+  const fs=document.getElementById('all-prop-status')?.value||'';
+  let list=allProps;
+  if(q) list=list.filter(p=>(p.title||'').toLowerCase().includes(q)||(p.sellerName||'').toLowerCase().includes(q));
+  if(ft) list=list.filter(p=>p.type===ft);
+  if(fc) list=list.filter(p=>p.city===fc);
+  if(fs) list=list.filter(p=>p.approvalStatus===fs);
+  // populate city filter
+  const citySelect=document.getElementById('all-prop-city');
+  if(citySelect&&citySelect.options.length<=1){
+    const cities=[...new Set(allProps.map(p=>p.city).filter(Boolean))].sort();
+    cities.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; citySelect.appendChild(o); });
+  }
+  const tbody=document.getElementById('props-page-body');
+  tbody.innerHTML=list.map(p=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:8px"><img class="prop-img" src="${(p.images&&p.images[0])||''}" onerror="this.style.display='none'"/><div><div class="prop-title">${p.title}</div><div class="prop-sub">${p.area} ${p.areaUnit||''}</div></div></div></td>
+    <td><span class="badge badge-blue">${p.type}</span></td>
+    <td>${p.city||'—'}</td>
+    <td>PKR ${fmtPrice(p.price)}</td>
+    <td>${p.sellerName||'—'}</td>
+    <td>${p.agentId||'—'}</td>
+    <td>${statusBadge(p.approvalStatus)}</td>
+    <td>
+      ${p.priority?'<span class="badge" style="background:#f5f3ff;color:#5b21b6"> Priority</span>':p.featured?'<span class="badge badge-yellow">⭐ Featured</span>':'<span class="badge badge-gray">—</span>'}
+    </td>
+    <td>${p.views||0}</td>
+    <td><div class="action-btns">
+      <button class="btn btn-blue btn-sm" onclick="openPropReview(${p.id},'properties')"> Review</button>
+      <button class="btn btn-outline btn-sm" onclick="openPropEdit(${p.id},'properties')"> Edit</button>
+      <button class="btn btn-${p.featured?'warn':'purple'} btn-sm" title="${p.featured?'Remove Featured':'Mark Featured'}" onclick="toggleFeatured(${p.id})">${p.featured?'⭐':''}</button>
+      ${p.approvalStatus==='Active'?`<button class="btn btn-sm" style="background:${p.priority?'#f5f3ff':'#f8fafc'};color:${p.priority?'#5b21b6':'#64748b'};border:1px solid ${p.priority?'#ddd6fe':'#e2e8f0'}" title="${p.priority?'Remove Priority':'Set Priority Listing'}" onclick="togglePriority(${p.id})">${p.priority?'':'↑ Priority'}</button>`:''}
+      <button class="btn btn-danger btn-sm" onclick="deleteProperty(${p.id})"></button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function renderUsers(){
+  let list=allUsers;
+  if(usersFilter!=='all') list=list.filter(u=>u.role===usersFilter);
+  const tbody=document.getElementById('users-body');
+  tbody.innerHTML=list.map(u=>`<tr>
+    <td><div class="prop-title">${u.name}</div></td>
+    <td>${u.email}</td>
+    <td>${u.phone||'—'}</td>
+    <td>${roleBadge(u.role)}</td>
+    <td><span class="badge ${u.status==='Active'?'badge-green':'badge-red'}">${u.status||'Active'}</span></td>
+    <td>${fmtDate(u.joinedDate)}</td>
+    <td><div class="action-btns">
+      <button class="btn btn-outline btn-sm" onclick="openEditUserModal(${u.id})"> Edit</button>\n      <button class="btn btn-outline btn-sm" onclick="openUserHistory(${u.id})">History</button>
+      <button class="btn btn-${u.status==='Active'?'warn':'green'} btn-sm" onclick="toggleUserStatus(${u.id})">${u.status==='Active'?'Suspend':'Activate'}</button>
+      ${u.role!=='Admin'?`<button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})"></button>`:''}
+    </div></td>
+  </tr>`).join('');
+}
+function filterUsers(role,btn){ usersFilter=role; document.querySelectorAll('#page-users .tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderUsers(); }
+
+async function deleteUser(id){
+  const u=allUsers.find(x=>x.id===id); if(!u) return;
+  if(!confirm(`Delete ${u.role} "${u.name}" permanently? This cannot be undone.`)) return;
+  try{
+    await api('DELETE',`/api/users/${id}`);
+    await loadAll();
+    showToast(`${u.role} "${u.name}" deleted`,'success');
+  }catch(e){ showToast(e.message,'error'); }
+}
+
+// ── AGENTS ──
+function renderAgents(){
+  const isLive=a=>a.approvalStatus==='Approved'&&a.status==='Active';
+  const agents=agentsFilter==='all'?allAgents:allAgents.filter(a=>{
+    if(agentsFilter==='Live')      return isLive(a);
+    if(agentsFilter==='Pending')   return a.approvalStatus==='Pending';
+    if(agentsFilter==='Approved')  return a.approvalStatus==='Approved' && a.status==='Active';
+    if(agentsFilter==='Rejected')  return a.approvalStatus==='Rejected';
+    if(agentsFilter==='Suspended') return a.status==='Suspended';
+    return true;
+  });
+  // Stats
+  const liveCount=allAgents.filter(isLive).length;
+  document.getElementById('ag-total').textContent=allAgents.length;
+  document.getElementById('ag-pending').textContent=allAgents.filter(a=>a.approvalStatus==='Pending').length;
+  document.getElementById('ag-active').textContent=liveCount;
+  document.getElementById('ag-suspended').textContent=allAgents.filter(a=>a.status==='Suspended').length;
+  const lcEl=document.getElementById('ag-live-count'); if(lcEl) lcEl.textContent=liveCount;
+
+  const tbody=document.getElementById('agents-body');
+  if(!agents.length){
+    const msg=agentsFilter==='Live'?'No agents are currently visible on the public website.':'No agents found';
+    tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">${msg}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=agents.map(a=>{
+    const apStatus=a.approvalStatus||'Pending';
+    const apBadge={Approved:'badge-green',Pending:'badge-yellow',Rejected:'badge-red'}[apStatus]||'badge-gray';
+    const stBadge=a.status==='Active'?'badge-green':'badge-red';
+    const isPending=apStatus==='Pending';
+    const live=isLive(a);
+    const photoHtml=a.photo
+      ?`<img src="${a.photo}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0" onerror="this.style.display='none'">`
+      :`<div style="width:38px;height:38px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0"></div>`;
+    const liveBadge=live?`<span style="display:inline-block;background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;letter-spacing:.5px;padding:2px 7px;border-radius:999px;margin-left:6px;vertical-align:middle"> LIVE</span>`:'';
+    const extraInfo=isPending&&(a.city||a.experience)?`<div class="prop-sub" style="margin-top:2px">${[a.city,a.experience].filter(Boolean).join(' · ')}</div>`:'';
+    const rowBg=isPending?'background:#fffbeb':live&&agentsFilter==='Live'?'background:#f0fdf4':'';
+    return `<tr${rowBg?` style="${rowBg}"`:''}>
+      <td><div style="display:flex;align-items:center;gap:10px">${photoHtml}<div><div class="prop-title">${a.name||'—'}${liveBadge}</div><div class="prop-sub">${a.specialization||'General'}</div>${extraInfo}</div></div></td>
+      <td style="font-size:13px">${a.email}</td>
+      <td style="font-size:13px">${a.phone||'—'}</td>
+      <td><span class="badge ${apBadge}">${apStatus}</span></td>
+      <td><span class="badge ${stBadge}">${a.status||'Active'}</span></td>
+      <td style="font-size:13px">${fmtDate(a.joinedDate)}</td>
+      <td><div class="action-btns" style="flex-wrap:wrap;gap:4px">
+        ${isPending?`<button class="btn btn-green btn-sm" onclick="approveAgent(${a.id})"> Approve</button><button class="btn btn-danger btn-sm" onclick="openAgentRejectModal(${a.id})"> Reject</button>`:''}
+        <button class="btn btn-outline btn-sm" onclick="openEditAgentModal(${a.id})"> Edit</button>
+        ${!isPending?`<button class="btn btn-${a.status==='Active'?'warn':'green'} btn-sm" onclick="toggleAgentStatus(${a.id})">${a.status==='Active'?'Suspend':'Activate'}</button>`:''}
+        ${live
+          ?`<button class="btn btn-danger btn-sm" onclick="deleteAgent(${a.id})" style="font-weight:700" title="Remove this agent from the public website"> Remove from Site</button>`
+          :`<button class="btn btn-danger btn-sm" onclick="deleteAgent(${a.id})"> Delete</button>`
+        }
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+function filterAgents(f,btn){ agentsFilter=f; document.querySelectorAll('#page-agents .tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderAgents(); }
+
+function resetAgentPhotoUI(photoUrl){
+  const url=photoUrl||'';
+  document.getElementById('agent-photo-url').value=url;
+  document.getElementById('agent-photo-status').textContent='';
+  document.getElementById('agent-photo-file').value='';
+  const prev=document.getElementById('agent-photo-preview');
+  prev.innerHTML=url?`<img src="${url}" style="width:100%;height:100%;object-fit:cover"/>`: '';
+}
+async function uploadAgentPhoto(input){
+  const file=input.files[0]; if(!file) return;
+  const status=document.getElementById('agent-photo-status');
+  status.textContent='Uploading...';
+  const fd=new FormData(); fd.append('image',file);
+  try{
+    const r=await fetch('/api/upload/single',{method:'POST',headers:{'Authorization':'Bearer '+token},body:fd});
+    const d=await r.json();
+    if(!r.ok||!d.url) throw new Error(d.error||'Upload failed');
+    document.getElementById('agent-photo-url').value=d.url;
+    document.getElementById('agent-photo-preview').innerHTML=`<img src="${d.url}" style="width:100%;height:100%;object-fit:cover"/>`;
+    status.textContent=' Photo uploaded';
+    status.style.color='#16a34a';
+  }catch(e){
+    status.textContent=' '+e.message;
+    status.style.color='var(--danger)';
+  }
+}
+function openAddAgentModal(){
+  document.getElementById('edit-agent-id').value='';
+  document.getElementById('agent-modal-title').textContent='Add New Agent';
+  document.getElementById('save-agent-btn').textContent='Add Agent';
+  document.getElementById('agent-name').value='';
+  document.getElementById('agent-email').value='';
+  document.getElementById('agent-phone').value='';
+  document.getElementById('agent-password').value='';
+  document.getElementById('agent-spec').value='';
+  document.getElementById('agent-title').value='';
+  document.getElementById('agent-experience').value='';
+  document.getElementById('agent-license').value='';
+  document.getElementById('agent-city').value='';
+  document.getElementById('agent-languages').value='';
+  document.getElementById('agent-rating').value='';
+  document.getElementById('agent-bio').value='';
+  resetAgentPhotoUI('');
+  document.getElementById('edit-agent-only').style.display='none';
+  document.getElementById('agent-password').required=true;
+  document.getElementById('agent-email').readOnly=false;
+  document.getElementById('add-agent-modal').classList.add('open');
+}
+function openEditAgentModal(id){
+  const a=allAgents.find(x=>x.id===id); if(!a) return;
+  document.getElementById('edit-agent-id').value=id;
+  document.getElementById('agent-modal-title').textContent='Edit Agent — '+a.name;
+  document.getElementById('save-agent-btn').textContent='Save Changes';
+  document.getElementById('agent-name').value=a.name||'';
+  document.getElementById('agent-email').value=a.email||'';
+  document.getElementById('agent-email').readOnly=true;
+  document.getElementById('agent-phone').value=a.phone||'';
+  document.getElementById('agent-spec').value=a.specialization||'';
+  document.getElementById('agent-title').value=a.title||'';
+  document.getElementById('agent-experience').value=a.experience||'';
+  document.getElementById('agent-license').value=a.license||'';
+  document.getElementById('agent-city').value=a.city||'';
+  document.getElementById('agent-languages').value=a.languages||'';
+  document.getElementById('agent-rating').value=a.rating||'';
+  document.getElementById('agent-bio').value=a.bio||'';
+  resetAgentPhotoUI(a.photo||'');
+  document.getElementById('agent-password').value='';
+  document.getElementById('agent-password').required=false;
+  document.getElementById('agent-new-email').value='';
+  document.getElementById('agent-new-password').value='';
+  document.getElementById('edit-agent-only').style.display='block';
+  document.getElementById('add-agent-modal').classList.add('open');
+}
+function closeAddAgentModal(){ document.getElementById('add-agent-modal').classList.remove('open'); }
+
+function togglePw(id){ const el=document.getElementById(id); el.type=el.type==='password'?'text':'password'; }
+
+async function saveAgent(){
+  const editId=document.getElementById('edit-agent-id').value;
+  const name=document.getElementById('agent-name').value.trim();
+  const email=document.getElementById('agent-email').value.trim();
+  const phone=document.getElementById('agent-phone').value.trim();
+  const password=document.getElementById('agent-password').value;
+  const specialization=document.getElementById('agent-spec').value;
+  const photo=document.getElementById('agent-photo-url').value.trim()||null;
+  const bio=document.getElementById('agent-bio').value.trim();
+  const experience=document.getElementById('agent-experience').value.trim();
+  const title=document.getElementById('agent-title').value.trim();
+  const license=document.getElementById('agent-license').value.trim();
+  const city=document.getElementById('agent-city').value.trim();
+  const languages=document.getElementById('agent-languages').value.trim();
+  const rating=parseFloat(document.getElementById('agent-rating').value)||null;
+
+  if(editId){
+    try{
+      await api('PUT',`/api/users/${editId}`,{name,phone,specialization,photo,bio,experience,title,license,city,languages,rating});
+      const newEmail=document.getElementById('agent-new-email').value.trim();
+      const newPw=document.getElementById('agent-new-password').value;
+      if(newEmail||newPw){
+        const creds={};
+        if(newEmail) creds.email=newEmail;
+        if(newPw)    creds.password=newPw;
+        await api('PATCH',`/api/agents/${editId}/credentials`,creds);
+      }
+      showToast('Agent updated successfully','success');
+      closeAddAgentModal(); await loadAll();
+    } catch(e){ showToast(e.message,'error'); }
+  } else {
+    if(!name||!email||!password){ showToast('Name, email and password are required','error'); return; }
+    try{
+      await api('POST','/api/agents',{name,email,phone,password,specialization,photo,bio,experience,title,license,city,languages,rating});
+      showToast('Agent account created!','success');
+      closeAddAgentModal(); await loadAll();
+    } catch(e){ showToast(e.message,'error'); }
+  }
+}
+
+async function approveAgent(id){
+  if(!confirm('Approve this agent? They will be able to log in.')) return;
+  try{ await api('PATCH',`/api/agents/${id}/approve`,{}); await loadAll(); showToast('Agent approved! They can now log in.','success'); }
+  catch(e){ showToast(e.message,'error'); }
+}
+
+function openAgentRejectModal(id){
+  document.getElementById('agent-reject-reason').value='';
+  document.getElementById('agent-reject-modal').classList.add('open');
+  document.getElementById('agent-reject-confirm-btn').onclick=async()=>{
+    const reason=document.getElementById('agent-reject-reason').value.trim();
+    try{
+      await api('PATCH',`/api/agents/${id}/reject`,{reason});
+      document.getElementById('agent-reject-modal').classList.remove('open');
+      await loadAll(); showToast('Agent application rejected','success');
+    } catch(e){ showToast(e.message,'error'); }
+  };
+}
+
+async function toggleAgentStatus(id){
+  const a=allAgents.find(x=>x.id===id); if(!a) return;
+  const newStatus=a.status==='Active'?'Suspended':'Active';
+  try{ await api('PATCH',`/api/agents/${id}/status`,{status:newStatus}); await loadAll(); showToast('Agent '+newStatus,'success'); }
+  catch(e){ showToast(e.message,'error'); }
+}
+
+async function deleteAgent(id){
+  const a=allAgents.find(x=>x.id===id); if(!a) return;
+  if(!confirm(`Delete agent "${a.name}" permanently? This cannot be undone.`)) return;
+  try{ await api('DELETE',`/api/agents/${id}`); await loadAll(); showToast('Agent deleted','success'); }
+  catch(e){ showToast(e.message,'error'); }
+}
+
+function renderInquiries(){
+  const tbody=document.getElementById('inqs-body');
+  const cEl=document.getElementById('inq-count');
+  if(cEl) cEl.textContent=allInqs.length+' total';
+  tbody.innerHTML=allInqs.length?allInqs.map(i=>`<tr>
+    <td><div class="prop-title">${esc(i.name||i.buyerName||'Buyer')}</div><div class="prop-sub">${esc(i.email||'')}</div></td>
+    <td style="max-width:160px;font-size:12px">${esc(i.propertyTitle||'—')}</td>
+    <td style="max-width:200px;font-size:12px;color:var(--muted)">${esc(i.message||'—')}</td>
+    <td style="font-size:12px">${i.phone||'—'}</td>
+    <td style="font-size:12px">${i.email||'—'}</td>
+    <td style="font-size:12px">${fmtDate(i.createdAt||i.date)}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteInquiry(${i.id})"></button></td>
+  </tr>`).join(''):'<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">No inquiries yet</td></tr>';
+}
+
+async function deleteInquiry(id){
+  if(!confirm('Delete this inquiry permanently?')) return;
+  try{
+    await api('DELETE',`/api/inquiries/${id}`);
+    await loadAll();
+    showToast('Inquiry deleted','success');
+  }catch(e){ showToast(e.message,'error'); }
+}
+
+function renderBlog(){
+  const div=document.getElementById('blog-list');
+  div.innerHTML=allBlog.length?allBlog.map(b=>`<div class="blog-card">
+    <div class="blog-card-head">
+      <div><div class="blog-card-title">${b.title}</div><div class="blog-card-meta">${b.category||'General'} · ${fmtDate(b.createdAt)} · ${b.views||0} views</div></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="badge ${b.published?'badge-green':'badge-gray'}">${b.published?'Published':'Draft'}</span>
+        <button class="btn btn-outline btn-sm" onclick="openBlogModal(${b.id})">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteBlog(${b.id})">Delete</button>
+      </div>
+    </div>
+    ${b.excerpt?`<div class="blog-card-body">${b.excerpt}</div>`:''}
+  </div>`).join(''):'<div class="empty"><p>No blog posts yet. Create your first post!</p></div>';
+}
+
+function renderSettings(){
+  const types=[...new Set(allProps.map(p=>p.type))];
+  document.getElementById('type-breakdown').innerHTML=types.map(t=>{
+    const count=allProps.filter(p=>p.type===t).length;
+    const pct=Math.round(count/allProps.length*100)||0;
+    return `<div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>${t}</span><span style="font-weight:700">${count}</span></div><div style="height:6px;background:#e2e8f0;border-radius:99px"><div style="height:100%;width:${pct}%;background:var(--red);border-radius:99px"></div></div></div>`;
+  }).join('');
+  document.getElementById('settings-stats').innerHTML=[
+    {l:'Total Properties',v:allProps.length},
+    {l:'Active Listings',v:allProps.filter(p=>p.approvalStatus==='Active').length},
+    {l:'Pending Review',v:allProps.filter(p=>p.approvalStatus==='Pending').length},
+    {l:'Priority Listings (Home Page)',v:allProps.filter(p=>p.priority).length},
+    {l:'Featured Properties',v:allProps.filter(p=>p.featured).length},
+    {l:'Total Users',v:allUsers.length},
+    {l:'Sellers',v:allUsers.filter(u=>u.role==='Seller').length},
+    {l:'Agents',v:allUsers.filter(u=>u.role==='Agent').length},
+    {l:'Buyers',v:allUsers.filter(u=>u.role==='Buyer').length},
+    {l:'Total Inquiries',v:allInqs.length},
+    {l:'Blog Posts',v:allBlog.length},
+  ].map(s=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">${s.l}</span><span style="font-weight:700">${s.v}</span></div>`).join('');
+}
+
+// ── PROPERTY ACTIONS ──
+async function approveProperty(id){
+  try{ await api('PATCH',`/api/properties/${id}/approve`,{}); await loadAll(); showToast('Property approved!','success'); }
+  catch(e){ showToast(e.message,'error'); }
+}
+function openRejectModal(id){
+  rejectTargetId=id;
+  document.getElementById('reject-reason').value='';
+  document.getElementById('reject-modal').classList.add('open');
+  document.getElementById('reject-confirm-btn').onclick=async()=>{
+    const reason=document.getElementById('reject-reason').value.trim();
+    try{
+      await api('PATCH',`/api/properties/${rejectTargetId}/reject`,{reason});
+      closeRejectModal(); await loadAll(); showToast('Property rejected','success');
+    } catch(e){ showToast(e.message,'error'); }
+  };
+}
+function closeRejectModal(){ document.getElementById('reject-modal').classList.remove('open'); }
+
+async function toggleFeatured(id){
+  const p=allProps.find(x=>x.id===id);
+  if(!p) return;
+  try{ await api('PATCH',`/api/properties/${id}/feature`,{featured:!p.featured}); await loadAll(); showToast((p.featured?'Removed from':'Added to')+' featured','success'); }
+  catch(e){ showToast(e.message,'error'); }
+}
+async function deleteProperty(id){
+  if(!confirm('Delete this property permanently?')) return;
+  try{ await api('DELETE',`/api/properties/${id}`); await loadAll(); showToast('Property deleted','success'); }
+  catch(e){ showToast(e.message,'error'); }
+}
+
+function viewPropDetail(id){ openPropReview(id); }
+function closePropDetail(){ closePropReview(); }
+
+// ── PROPERTY REVIEW PAGE ──
+let prCurrentId=null, prFromPage='approvals';
+let prGalleryIndex=0, prImages=[];
+
+function fmtPKR(n){
+  if(!n) return '—';
+  if(n>=10000000) return 'PKR '+(n/10000000).toFixed(2)+' Crore';
+  if(n>=100000) return 'PKR '+(n/100000).toFixed(2)+' Lakh';
+  return 'PKR '+n.toLocaleString();
+}
+
+function prShowTab(tab, btn){
+  document.querySelectorAll('.pr-media-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pr-images-panel').style.display = tab==='images'?'':'none';
+  document.getElementById('pr-video-panel').classList.toggle('show', tab==='video');
+}
+
+function openPropReview(id, fromPage){
+  const p=allProps.find(x=>x.id===id);
+  if(!p) return;
+  prCurrentId=id;
+  prFromPage=fromPage||document.querySelector('nav a.active')?.id?.replace('nav-','')||'approvals';
+  prGalleryIndex=0;
+  document.getElementById('pr-edit-form').classList.remove('open');
+  document.getElementById('pr-reject-inline').classList.remove('open');
+  // reset tab
+  document.querySelectorAll('.pr-media-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.pr-media-tab').classList.add('active');
+  document.getElementById('pr-images-panel').style.display='';
+  document.getElementById('pr-video-panel').classList.remove('show');
+
+  // Breadcrumb
+  document.getElementById('pr-breadcrumb').textContent=p.title;
+
+  // Topbar status badge
+  const stColors={Pending:'#f59e0b',Active:'#16a34a',Rejected:'#ef4444'};
+  document.getElementById('pr-topbar-status').innerHTML=`<span style="background:${stColors[p.approvalStatus]||'#94a3b8'}22;color:${stColors[p.approvalStatus]||'#94a3b8'};border:1px solid ${stColors[p.approvalStatus]||'#94a3b8'}44;border-radius:999px;font-size:12px;font-weight:700;padding:4px 12px">${p.approvalStatus}</span>`;
+
+  // ── GALLERY ──
+  prImages=Array.isArray(p.images)&&p.images.length?p.images:[];
+  const gallery=document.getElementById('pr-gallery');
+  const thumbsEl=document.getElementById('pr-thumbs');
+  const counter=document.getElementById('pr-img-counter');
+  if(prImages.length){
+    gallery.innerHTML=prImages.map((src,i)=>`<img src="${src}" class="${i===0?'active':''}" onerror="this.src='/images/property-1.jpg'" alt="Property image"/>`).join('')+
+      (prImages.length>1?`<button class="pr-gallery-btn prev" onclick="prGalleryNav(-1)">&#8249;</button><button class="pr-gallery-btn next" onclick="prGalleryNav(1)">&#8250;</button>`:'');
+    thumbsEl.innerHTML=prImages.map((src,i)=>`<img src="${src}" class="${i===0?'active':''}" onclick="prGalleryGo(${i})" onerror="this.style.display='none'" alt="thumb"/>`).join('');
+    counter.style.display=''; counter.textContent=`1 / ${prImages.length}`;
+  } else {
+    gallery.innerHTML=`<div class="pr-gallery-empty">No images uploaded</div>`;
+    thumbsEl.innerHTML=''; counter.style.display='none';
+  }
+
+  // ── VIDEO TAB ──
+  const vidTab=document.getElementById('pr-video-tab');
+  const vidEmbed=document.getElementById('pr-video-embed');
+  if(p.videoUrl){
+    vidTab.style.display='';
+    let embed=p.videoUrl;
+    if(embed.includes('youtube.com/watch')){embed=embed.replace('watch?v=','embed/');}
+    else if(embed.includes('youtu.be/')){embed='https://www.youtube.com/embed/'+embed.split('youtu.be/')[1];}
+    const isYt=embed.includes('youtube.com/embed')||embed.includes('youtu.be');
+    vidEmbed.innerHTML=isYt?`<iframe src="${embed}" allowfullscreen style="width:100%;height:100%;border:none"></iframe>`:`<video src="${embed}" controls style="width:100%;height:100%"></video>`;
+  } else { vidTab.style.display='none'; vidEmbed.innerHTML=''; }
+
+  // ── PROPERTY HEADER ──
+  const badges=[];
+  if(p.priority) badges.push(`<span class="pr-badge" style="background:#f5f3ff;color:#5b21b6"> Priority</span>`);
+  if(p.featured) badges.push(`<span class="pr-badge pr-badge-gold">⭐ Featured</span>`);
+  if(p.purpose==='For Sale'||p.status==='For Sale') badges.push(`<span class="pr-badge pr-badge-blue">For Sale</span>`);
+  else if(p.purpose==='For Rent'||p.status==='For Rent') badges.push(`<span class="pr-badge pr-badge-green">For Rent</span>`);
+  if(p.type) badges.push(`<span class="pr-badge pr-badge-gray">${p.type}</span>`);
+  if((p.tags||[]).includes('verified')) badges.push(`<span class="pr-badge pr-badge-green"> Verified</span>`);
+  document.getElementById('pr-prop-badges').innerHTML=badges.join('');
+  document.getElementById('pr-prop-title').textContent=p.title||'Untitled Property';
+  document.getElementById('pr-prop-price').innerHTML=fmtPKR(p.price)+(p.purpose==='For Rent'?`<span>/ month</span>`:'');
+
+  // Stats row
+  const stats=[];
+  if(p.bedrooms>0) stats.push({icon:'',val:p.bedrooms,lbl:'Beds'});
+  if(p.bathrooms>0) stats.push({icon:'',val:p.bathrooms,lbl:'Baths'});
+  if(p.area) stats.push({icon:'',val:p.area+' '+(p.areaUnit||''),lbl:'Area'});
+  if(p.city) stats.push({icon:'',val:p.city,lbl:'City'});
+  if(p.yearBuilt) stats.push({icon:'',val:p.yearBuilt,lbl:'Built'});
+  document.getElementById('pr-stats-row').innerHTML=stats.map(s=>`<div class="pr-stat"><div class="pr-stat-icon">${s.icon}</div><div class="pr-stat-val">${s.val}</div><div class="pr-stat-lbl">${s.lbl}</div></div>`).join('');
+
+  // Address
+  const addrParts=[p.address,p.society,p.city].filter(Boolean);
+  document.getElementById('pr-prop-address').innerHTML=addrParts.length?`<svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>${addrParts.join(', ')}`:'';
+
+  // ── DETAILS GRID ──
+  const detailRows=[
+    ['Property Type',p.type],
+    ['Purpose',p.purpose||p.status],
+    ['Price',fmtPKR(p.price)],
+    ['Area',p.area?(p.area+' '+(p.areaUnit||'')):null],
+    ['Bedrooms',p.bedrooms||null],
+    ['Bathrooms',p.bathrooms||null],
+    ['City',p.city],
+    ['Society / Area',p.society],
+    ['Block',p.block],
+    ['Landmark',p.landmark],
+    ['Full Address',p.address],
+    ['Year Built',p.yearBuilt],
+    ['Furnishing',p.furnishing],
+    ['Availability',p.availability],
+    ['Construction Age',p.constructionAge],
+    ['Views',p.views||0],
+    ['Inquiries',p.inquiryCount||0],
+    ...(p.soilType?[['Soil Type',p.soilType]]:[]),
+    ...(p.waterSource?[['Water Source',p.waterSource]]:[]),
+    ...(p.mainCrop?[['Main Crop',p.mainCrop]]:[]),
+    ...(p.fruitTrees?[['Fruit Trees',p.fruitTrees]]:[]),
+  ].filter(([,v])=>v!=null&&v!=='');
+  document.getElementById('pr-details-grid').innerHTML=detailRows.map(([l,v])=>`<div class="pr-detail-item"><label>${l}</label><span>${v}</span></div>`).join('');
+
+  // ── DESCRIPTION ──
+  const descCard=document.getElementById('pr-desc-card');
+  if(p.description){ descCard.style.display=''; document.getElementById('pr-desc-text').textContent=p.description; }
+  else descCard.style.display='none';
+
+  // ── AMENITIES ──
+  const amCard=document.getElementById('pr-amenities-card');
+  if(p.amenities&&p.amenities.length){
+    amCard.style.display='';
+    document.getElementById('pr-amenities-list').innerHTML=p.amenities.map(a=>`<span class="pr-amenity"> ${a}</span>`).join('');
+  } else amCard.style.display='none';
+
+  // ── NEARBY ──
+  const nbCard=document.getElementById('pr-nearby-card');
+  const nb=p.nearbyPlaces||{};
+  const nbCats=[
+    {title:'Schools',icon:'',items:nb.schools||[]},
+    {title:'Hospitals',icon:'',items:nb.hospitals||[]},
+    {title:'Mosques',icon:'',items:nb.mosques||[]},
+    {title:'Markets',icon:'',items:nb.markets||[]},
+    {title:'Metro Stations',icon:'',items:nb.metroStations||[]},
+  ].filter(c=>c.items.length);
+  const motorwayHtml=nb.motorwayDist?`<div class="pr-nearby-cat"><div class="pr-nearby-cat-title"> Motorway Distance</div><div class="pr-nearby-item">${nb.motorwayDist}</div></div>`:'';
+  if(nbCats.length||motorwayHtml){
+    nbCard.style.display='';
+    document.getElementById('pr-nearby-list').innerHTML=
+      nbCats.map(c=>`<div class="pr-nearby-cat"><div class="pr-nearby-cat-title">${c.icon} ${c.title}</div>${c.items.map(it=>`<div class="pr-nearby-item">${it}</div>`).join('')}</div>`).join('')+motorwayHtml;
+  } else nbCard.style.display='none';
+
+  // ── SCORE ──
+  const scoreCard=document.getElementById('pr-score-card');
+  const sc=p.propertyScore;
+  if(sc&&sc.overall){
+    scoreCard.style.display='';
+    const scoreRows=[['Location',sc.location],['Amenities',sc.amenities],['Investment Potential',sc.investment],['Construction Quality',sc.construction],['Future Growth',sc.futureGrowth],['Overall Score',sc.overall]];
+    document.getElementById('pr-score-list').innerHTML=scoreRows.filter(([,v])=>v).map(([l,v])=>
+      `<div class="score-row"><span class="score-label">${l}</span><div class="score-track"><div class="score-fill" style="width:${(v/5)*100}%"></div></div><span class="score-val">${v}/5</span></div>`
+    ).join('');
+  } else scoreCard.style.display='none';
+
+  // ── STATUS PANEL ──
+  const stCard=document.getElementById('pr-status-card');
+  stCard.className='pr-panel-card pr-status-'+p.approvalStatus.toLowerCase();
+  const stMap={
+    Pending:{emoji:'⏳',label:'Pending Review',msg:'This property is awaiting your review. Check all details before approving.'},
+    Active:{emoji:'',label:'Live & Active',msg:'This property is visible on public pages.'},
+    Rejected:{emoji:'',label:'Rejected',msg:p.rejectionReason?`Reason: ${p.rejectionReason}`:'Does not meet listing guidelines.'}
+  };
+  const st=stMap[p.approvalStatus]||{emoji:'•',label:p.approvalStatus,msg:''};
+  document.getElementById('pr-status-badge').textContent=`${st.emoji} ${st.label}`;
+  document.getElementById('pr-status-msg').textContent=st.msg;
+
+  // Show/hide approve section
+  document.getElementById('pr-approve-section').style.display=(p.approvalStatus==='Pending'||p.approvalStatus==='Rejected')?'':'none';
+
+  // ── CITY AGENT ASSIGNMENT CARD ──
+  prPopulateAgentCard(p);
+
+  // ── SELLER CARD ──
+  const seller=allUsers.find(u=>u.id===p.sellerId)||{};
+  const sellerName=seller.name||p.sellerName||'Unknown Seller';
+  const initials=sellerName.split(' ').map(w=>w[0]).join('').substr(0,2).toUpperCase();
+  document.getElementById('pr-seller-avatar').textContent=initials;
+  document.getElementById('pr-seller-name').textContent=sellerName;
+  document.getElementById('pr-seller-role').textContent=seller.role||'Seller';
+  document.getElementById('pr-seller-details').innerHTML=[
+    seller.email?`<div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)"></span><span>${seller.email}</span></div>`:'',
+    seller.phone?`<div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 0"><span style="color:var(--muted)"></span><span>${seller.phone}</span></div>`:'',
+  ].join('');
+
+  // ── FEATURE BUTTON ──
+  const featBtn = document.getElementById('pr-feature-btn');
+  featBtn.textContent = p.featured ? '⭐ Remove from Featured' : ' Mark as Featured';
+  featBtn.classList.toggle('active', !!p.featured);
+
+  // ── PRIORITY BUTTON ──
+  const prioBtn = document.getElementById('pr-priority-btn');
+  prioBtn.textContent = p.priority ? ' Remove Priority Listing' : ' Set as Priority Listing';
+  prioBtn.classList.toggle('active', !!p.priority);
+  // Only allow priority toggle for Active properties
+  prioBtn.disabled = p.approvalStatus !== 'Active';
+  prioBtn.title = p.approvalStatus !== 'Active' ? 'Property must be Active to set priority' : '';
+
+  // ── META INFO ──
+  document.getElementById('pr-meta-info').innerHTML=[
+    {l:'Listing ID',v:'#'+p.id},
+    {l:'Submitted',v:p.createdAt?new Date(p.createdAt).toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'}):'—'},
+    {l:'Views',v:(p.views||0).toLocaleString()},
+    {l:'Inquiries',v:p.inquiryCount||0},
+  ].map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--muted)">${r.l}</span><span style="font-weight:600">${r.v}</span></div>`).join('');
+
+  // ── FILL EDIT FORM ──
+  document.getElementById('pe-title').value=p.title||'';
+  document.getElementById('pe-type').value=p.type||'House';
+  document.getElementById('pe-purpose').value=p.purpose||p.status||'For Sale';
+  document.getElementById('pe-price').value=p.price||'';
+  document.getElementById('pe-area').value=p.area||'';
+  document.getElementById('pe-areaUnit').value=p.areaUnit||'Marla';
+  document.getElementById('pe-bedrooms').value=p.bedrooms||0;
+  document.getElementById('pe-bathrooms').value=p.bathrooms||0;
+  document.getElementById('pe-city').value=p.city||'';
+  document.getElementById('pe-society').value=p.society||'';
+  document.getElementById('pe-address').value=p.address||'';
+  document.getElementById('pe-yearBuilt').value=p.yearBuilt||'';
+  document.getElementById('pe-furnishing').value=p.furnishing||'';
+  document.getElementById('pe-availability').value=p.availability||'Ready to Move';
+  document.getElementById('pe-videoUrl').value=p.videoUrl||'';
+  document.getElementById('pe-description').value=p.description||'';
+  document.getElementById('pe-amenities').value=(p.amenities||[]).join(', ');
+  document.getElementById('pe-images').value=(p.images||[]).join(', ');
+
+  showPage('prop-review');
+}
+
+function closePropReview(){
+  showPage(prFromPage||'approvals');
+}
+
+function prGalleryNav(dir){
+  prGalleryGo((prGalleryIndex+dir+prImages.length)%prImages.length);
+}
+function prGalleryGo(idx){
+  prGalleryIndex=idx;
+  document.querySelectorAll('#pr-gallery img').forEach((img,i)=>img.classList.toggle('active',i===idx));
+  document.querySelectorAll('#pr-thumbs img').forEach((img,i)=>img.classList.toggle('active',i===idx));
+  const counter=document.getElementById('pr-img-counter');
+  if(counter) counter.textContent=`${idx+1} / ${prImages.length}`;
+}
+
+function togglePropEdit(){
+  const form=document.getElementById('pr-edit-form');
+  const btn=document.getElementById('pr-edit-toggle-btn');
+  const open=form.classList.toggle('open');
+  btn.innerHTML=open
+    ?' Cancel Edit'
+    :'<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg> Edit Property';
+  if(open) form.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+// Direct edit — opens review panel then immediately activates edit mode
+function openPropEdit(id, fromPage){
+  openPropReview(id, fromPage);
+  // Small delay to let the panel populate before toggling edit
+  setTimeout(()=>{
+    const form=document.getElementById('pr-edit-form');
+    if(!form.classList.contains('open')) togglePropEdit();
+  }, 150);
+}
+
+async function savePropEdit(){
+  const p=allProps.find(x=>x.id===prCurrentId); if(!p) return;
+  const body={
+    title:document.getElementById('pe-title').value.trim(),
+    type:document.getElementById('pe-type').value,
+    purpose:document.getElementById('pe-purpose').value,
+    status:document.getElementById('pe-purpose').value,
+    price:Number(document.getElementById('pe-price').value)||0,
+    area:Number(document.getElementById('pe-area').value)||0,
+    areaUnit:document.getElementById('pe-areaUnit').value,
+    bedrooms:Number(document.getElementById('pe-bedrooms').value)||0,
+    bathrooms:Number(document.getElementById('pe-bathrooms').value)||0,
+    city:document.getElementById('pe-city').value.trim(),
+    society:document.getElementById('pe-society').value.trim(),
+    address:document.getElementById('pe-address').value.trim(),
+    yearBuilt:Number(document.getElementById('pe-yearBuilt').value)||null,
+    furnishing:document.getElementById('pe-furnishing').value||null,
+    availability:document.getElementById('pe-availability').value,
+    videoUrl:document.getElementById('pe-videoUrl').value.trim()||null,
+    description:document.getElementById('pe-description').value.trim(),
+    amenities:document.getElementById('pe-amenities').value.split(',').map(s=>s.trim()).filter(Boolean),
+    images:document.getElementById('pe-images').value.split(',').map(s=>s.trim()).filter(Boolean),
+  };
+  if(!body.title){showToast('Title is required','error');return;}
+  try{
+    await api('PUT',`/api/properties/${prCurrentId}`,body);
+    showToast('Property updated successfully!','success');
+    await loadAll();
+    openPropReview(prCurrentId, prFromPage);
+  }catch(e){showToast(e.message,'error');}
+}
+
+// ── CITY AGENT ASSIGNMENT ──
+let allCityAgents = [];
+
+async function loadCityAgents(){
+  try{ allCityAgents = await api('GET','/api/city-agents'); } catch(e){ allCityAgents=[]; }
+}
+
+function prPopulateAgentCard(p){
+  const sec = document.getElementById('pr-agent-assign-section');
+  const disp = document.getElementById('pr-assigned-agent-display');
+  if(!sec) return;
+
+  // Show/hide the card — for pending, rejected, and active
+  sec.style.display = (p.approvalStatus==='Pending'||p.approvalStatus==='Rejected'||p.approvalStatus==='Active') ? '' : 'none';
+
+  // Show currently assigned agent if any
+  if(p.assignedAgent){
+    disp.style.display='';
+    document.getElementById('pr-aag-name').textContent  = p.assignedAgent.name||'—';
+    document.getElementById('pr-aag-phone').textContent = ' '+(p.assignedAgent.phone||'—')+(p.assignedAgent.whatsapp?' ·  '+p.assignedAgent.whatsapp:'');
+  } else {
+    disp.style.display='none';
+  }
+
+  // Populate city agents dropdown for this property's city
+  const city = (p.city||'').trim().toLowerCase();
+  const forCity = allCityAgents.filter(a=>a.city.toLowerCase()===city && a.active!==false);
+  const sel = document.getElementById('pr-city-agent-select');
+  sel.innerHTML='<option value="">— Pick an agent —</option>';
+  forCity.forEach(a=>{
+    const opt=document.createElement('option');
+    opt.value=a.id;
+    opt.textContent=`${a.name}  (${a.phone})`;
+    sel.appendChild(opt);
+  });
+  if(forCity.length===0){
+    const opt=document.createElement('option');
+    opt.disabled=true;
+    opt.textContent=`No agents for "${p.city||'this city'}" — enter manually`;
+    sel.appendChild(opt);
+  }
+
+  // When dropdown changes, pre-fill manual fields
+  sel.onchange=()=>{
+    const chosen=allCityAgents.find(a=>a.id===Number(sel.value));
+    if(chosen){
+      document.getElementById('pr-agent-name').value     = chosen.name||'';
+      document.getElementById('pr-agent-phone').value    = chosen.phone||'';
+      document.getElementById('pr-agent-whatsapp').value = chosen.whatsapp||'';
+    }
+  };
+
+  // Pre-fill if agent already assigned
+  if(p.assignedAgent){
+    document.getElementById('pr-agent-name').value     = p.assignedAgent.name||'';
+    document.getElementById('pr-agent-phone').value    = p.assignedAgent.phone||'';
+    document.getElementById('pr-agent-whatsapp').value = p.assignedAgent.whatsapp||'';
+  } else {
+    document.getElementById('pr-agent-name').value='';
+    document.getElementById('pr-agent-phone').value='';
+    document.getElementById('pr-agent-whatsapp').value='';
+  }
+}
+
+async function prSaveAgentAssignment(){
+  const selVal = document.getElementById('pr-city-agent-select').value;
+  const name   = document.getElementById('pr-agent-name').value.trim();
+  const phone  = document.getElementById('pr-agent-phone').value.trim();
+  const whats  = document.getElementById('pr-agent-whatsapp').value.trim();
+
+  if(!name || !phone){ showToast('Agent name and phone are required','error'); return; }
+
+  const body = selVal
+    ? { cityAgentId: Number(selVal) }
+    : { name, phone, whatsapp: whats||phone.replace(/^0/,'92') };
+
+  try{
+    await api('PATCH',`/api/properties/${prCurrentId}/assign-agent`, body);
+    showToast(' Agent assigned to property!','success');
+    await loadAll();
+    await loadCityAgents();
+    openPropReview(prCurrentId, prFromPage);
+  }catch(e){ showToast(e.message,'error'); }
+}
+
+// ── CITY AGENTS MANAGEMENT ──
+let editCityAgentId = null;
+
+function renderCityAgents(){
+  const grid = document.getElementById('city-agents-grid');
+  if(!grid) return;
+  if(!allCityAgents.length){
+    grid.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px">No city agents yet. Click "+ Add Agent" to create one.</div>';
+    return;
+  }
+  grid.innerHTML = allCityAgents.map(a=>`
+    <div style="background:var(--white);border-radius:14px;border:1px solid var(--border);padding:18px;position:relative">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:44px;height:44px;border-radius:22px;background:#0B1F3A;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#C8A45A">
+          ${a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:15px;color:#0B1F3A">${a.name}</div>
+          <div style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px">
+            <span></span><span>${a.city}</span>
+            ${a.active===false?'<span style="background:#fef2f2;color:#dc2626;border-radius:999px;font-size:10px;font-weight:700;padding:1px 7px;margin-left:4px">Inactive</span>':'<span style="background:#f0fdf4;color:#16a34a;border-radius:999px;font-size:10px;font-weight:700;padding:1px 7px;margin-left:4px">Active</span>'}
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#555;display:flex;flex-direction:column;gap:4px;margin-bottom:14px">
+        <div> <a href="tel:${a.phone}" style="color:#0B1F3A;text-decoration:none">${a.phone}</a></div>
+        ${a.whatsapp?`<div> <a href="https://wa.me/${a.whatsapp}" target="_blank" style="color:#25D366;text-decoration:none">${a.whatsapp}</a></div>`:''}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="openEditCityAgent(${a.id})" style="flex:1;padding:7px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--white);border-radius:8px;cursor:pointer">️ Edit</button>
+        <button onclick="deleteCityAgent(${a.id})" style="flex:1;padding:7px;font-size:12px;font-weight:600;border:1px solid #dc2626;background:#fff;color:#dc2626;border-radius:8px;cursor:pointer"> Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openAddCityAgent(){
+  editCityAgentId=null;
+  document.getElementById('ca-modal-title').textContent='Add City Agent';
+  document.getElementById('ca-city').value='';
+  document.getElementById('ca-name').value='';
+  document.getElementById('ca-phone').value='';
+  document.getElementById('ca-whatsapp').value='';
+  document.getElementById('ca-active').checked=true;
+  document.getElementById('ca-modal').classList.add('open');
+}
+
+function openEditCityAgent(id){
+  const a=allCityAgents.find(x=>x.id===id); if(!a) return;
+  editCityAgentId=id;
+  document.getElementById('ca-modal-title').textContent='Edit City Agent';
+  document.getElementById('ca-city').value=a.city||'';
+  document.getElementById('ca-name').value=a.name||'';
+  document.getElementById('ca-phone').value=a.phone||'';
+  document.getElementById('ca-whatsapp').value=a.whatsapp||'';
+  document.getElementById('ca-active').checked=a.active!==false;
+  document.getElementById('ca-modal').classList.add('open');
+}
+
+async function saveCityAgent(){
+  const city=document.getElementById('ca-city').value.trim();
+  const name=document.getElementById('ca-name').value.trim();
+  const phone=document.getElementById('ca-phone').value.trim();
+  const whatsapp=document.getElementById('ca-whatsapp').value.trim();
+  const active=document.getElementById('ca-active').checked;
+  if(!city||!name||!phone){ showToast('City, name and phone are required','error'); return; }
+  try{
+    if(editCityAgentId){
+      await api('PUT',`/api/city-agents/${editCityAgentId}`,{city,name,phone,whatsapp,active});
+      showToast('Agent updated!','success');
+    } else {
+      await api('POST','/api/city-agents',{city,name,phone,whatsapp,active});
+      showToast('City agent added!','success');
+    }
+    document.getElementById('ca-modal').classList.remove('open');
+    await loadAll();
+  }catch(e){ showToast(e.message,'error'); }
+}
+
+async function deleteCityAgent(id){
+  const a=allCityAgents.find(x=>x.id===id);
+  if(!confirm(`Delete agent "${a?.name}" for ${a?.city}?`)) return;
+  try{
+    await api('DELETE',`/api/city-agents/${id}`);
+    showToast('Agent deleted','success');
+    await loadAll();
+  }catch(e){ showToast(e.message,'error'); }
+}
+
+async function prRemoveAgentAssignment(){
+  if(!confirm('Remove agent assignment from this property?')) return;
+  try{
+    await api('DELETE',`/api/properties/${prCurrentId}/assign-agent`);
+    showToast('Agent removed from property','success');
+    await loadAll();
+    openPropReview(prCurrentId, prFromPage);
+  }catch(e){ showToast(e.message,'error'); }
+}
+
+async function prApproveProperty(){
+  try{
+    await api('PATCH',`/api/properties/${prCurrentId}/approve`,{});
+    showToast(' Property approved! Now live on public pages.','success');
+    await loadAll();
+    openPropReview(prCurrentId, prFromPage);
+  }catch(e){showToast(e.message,'error');}
+}
+
+function togglePrRejectForm(){
+  document.getElementById('pr-reject-inline').classList.toggle('open');
+}
+
+async function prRejectProperty(){
+  const reason=document.getElementById('pr-reject-reason').value.trim();
+  if(!reason){showToast('Please enter a rejection reason','error');return;}
+  try{
+    await api('PATCH',`/api/properties/${prCurrentId}/reject`,{reason});
+    showToast('Property rejected.','success');
+    await loadAll();
+    openPropReview(prCurrentId, prFromPage);
+  }catch(e){showToast(e.message,'error');}
+}
+
+async function prToggleFeatured(){
+  const p=allProps.find(x=>x.id===prCurrentId); if(!p) return;
+  try{
+    await api('PATCH',`/api/properties/${prCurrentId}/feature`,{featured:!p.featured});
+    showToast((p.featured?'Removed from':'Added to')+' featured','success');
+    await loadAll();
+    openPropReview(prCurrentId, prFromPage);
+  }catch(e){showToast(e.message,'error');}
+}
+
+async function prTogglePriority(){
+  const p=allProps.find(x=>x.id===prCurrentId); if(!p) return;
+  if(p.approvalStatus!=='Active'){showToast('Only Active properties can be set as Priority','error');return;}
+  try{
+    await api('PATCH',`/api/properties/${prCurrentId}/priority`,{priority:!p.priority});
+    showToast((p.priority?'Removed from':'Added to')+' Priority Listings — will appear on Home page','success');
+    await loadAll();
+    openPropReview(prCurrentId, prFromPage);
+  }catch(e){showToast(e.message,'error');}
+}
+
+async function togglePriority(id){
+  const p=allProps.find(x=>x.id===id); if(!p) return;
+  if(p.approvalStatus!=='Active'){showToast('Only Active properties can be Priority','error');return;}
+  try{
+    await api('PATCH',`/api/properties/${id}/priority`,{priority:!p.priority});
+    await loadAll();
+    showToast((p.priority?'Removed from':'Added to')+' Priority Listings','success');
+  }catch(e){showToast(e.message,'error');}
+}
+
+async function prDeleteProperty(){
+  if(!confirm('Delete this property permanently? This cannot be undone.')) return;
+  try{
+    await api('DELETE',`/api/properties/${prCurrentId}`);
+    showToast('Property deleted','success');
+    await loadAll();
+    closePropReview();
+  }catch(e){showToast(e.message,'error');}
+}
+
+// ── USER ACTIONS ──
+function openAddUserModal(){ editUserId=null; document.getElementById('user-modal-title').textContent='Add New User'; document.getElementById('edit-user-id').value=''; document.getElementById('user-name').value=''; document.getElementById('user-email').value=''; document.getElementById('user-phone').value=''; document.getElementById('user-role').value='Buyer'; document.getElementById('user-password').value=''; document.getElementById('add-user-modal').classList.add('open'); }
+function openEditUserModal(id){
+  const u=allUsers.find(x=>x.id===id); if(!u) return;
+  editUserId=id;
+  document.getElementById('user-modal-title').textContent='Edit User';
+  document.getElementById('edit-user-id').value=id;
+  document.getElementById('user-name').value=u.name||'';
+  document.getElementById('user-email').value=u.email||'';
+  document.getElementById('user-phone').value=u.phone||'';
+  document.getElementById('user-role').value=u.role||'Buyer';
+  document.getElementById('user-status').value=u.status||'Active';
+  document.getElementById('user-password').value='';
+  document.getElementById('add-user-modal').classList.add('open');
+}
+function closeAddUserModal(){ document.getElementById('add-user-modal').classList.remove('open'); }
+async function saveUser(){
+  const body={name:document.getElementById('user-name').value,email:document.getElementById('user-email').value,phone:document.getElementById('user-phone').value,role:document.getElementById('user-role').value,status:document.getElementById('user-status').value};
+  const pw=document.getElementById('user-password').value;
+  if(pw) body.password=pw;
+  try{
+    if(editUserId){ await api('PUT',`/api/users/${editUserId}`,body); showToast('User updated','success'); }
+    else{ await api('POST','/api/users',{...body,joinedDate:new Date().toISOString().split('T')[0]}); showToast('User added','success'); }
+    closeAddUserModal(); await loadAll();
+  } catch(e){ showToast(e.message,'error'); }
+}
+async function toggleUserStatus(id){
+  const u=allUsers.find(x=>x.id===id); if(!u) return;
+  const newStatus=u.status==='Active'?'Suspended':'Active';
+  try{ await api('PUT',`/api/users/${id}`,{status:newStatus}); await loadAll(); showToast('User '+newStatus,'success'); }
+  catch(e){ showToast(e.message,'error'); }
+}
+
+// ── BLOG ACTIONS ──
+function openBlogModal(id){
+  editBlogId=id||null;
+  document.getElementById('blog-modal-title').textContent=id?'Edit Blog Post':'New Blog Post';
+  document.getElementById('edit-blog-id').value=id||'';
+  if(id){
+    const b=allBlog.find(x=>x.id===id); if(!b) return;
+    document.getElementById('blog-title').value=b.title||'';
+    document.getElementById('blog-cat').value=b.category||'Market Update';
+    document.getElementById('blog-excerpt').value=b.excerpt||'';
+    document.getElementById('blog-content').value=b.content||'';
+    document.getElementById('blog-image').value=b.image||'';
+    document.getElementById('blog-published').checked=!!b.published;
+  } else {
+    document.getElementById('blog-title').value='';
+    document.getElementById('blog-excerpt').value='';
+    document.getElementById('blog-content').value='';
+    document.getElementById('blog-image').value='';
+    document.getElementById('blog-published').checked=false;
+  }
+  document.getElementById('blog-modal').classList.add('open');
+}
+function closeBlogModal(){ document.getElementById('blog-modal').classList.remove('open'); }
+async function saveBlog(){
+  const body={title:document.getElementById('blog-title').value,category:document.getElementById('blog-cat').value,excerpt:document.getElementById('blog-excerpt').value,content:document.getElementById('blog-content').value,image:document.getElementById('blog-image').value,published:document.getElementById('blog-published').checked,author:'OG Landmark',createdAt:new Date().toISOString().split('T')[0]};
+  if(!body.title){ showToast('Title required','error'); return; }
+  try{
+    if(editBlogId){ await api('PUT',`/api/blog/${editBlogId}`,body); showToast('Post updated','success'); }
+    else{ await api('POST','/api/blog',body); showToast('Post created','success'); }
+    closeBlogModal(); await loadAll();
+  } catch(e){ showToast(e.message,'error'); }
+}
+async function deleteBlog(id){
+  if(!confirm('Delete this blog post?')) return;
+  try{ await api('DELETE',`/api/blog/${id}`); await loadAll(); showToast('Post deleted','success'); }
+  catch(e){ showToast(e.message,'error'); }
+}
+
+async function downloadBackup(){
+  try{ const d=await api('GET','/api/backup'); const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='og-landmark-backup-'+new Date().toISOString().split('T')[0]+'.json'; a.click(); showToast('Backup downloaded!','success'); }
+  catch(e){ showToast(e.message,'error'); }
+}
+async function saveAdminProfile(){
+  const body={name:document.getElementById('admin-name').value,phone:document.getElementById('admin-phone').value};
+  try{ await api('PUT',`/api/users/${currentUser.id}`,body); currentUser={...currentUser,...body}; localStorage.setItem('og_user',JSON.stringify(currentUser)); document.getElementById('sb-uname').textContent=currentUser.name; showToast('Profile saved!','success'); }
+  catch(e){ showToast(e.message,'error'); }
+}
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
+  document.getElementById('page-'+name)?.classList.add('active');
+  document.getElementById('nav-'+name)?.classList.add('active');
+  const titles={dashboard:'Admin Dashboard',approvals:'Property Approvals',properties:'All Properties',agents:'Agent Management',users:'Users',inquiries:'All Inquiries',blog:'Blog Posts',settings:'Settings','prop-review':'Property Review',mobile:'Mobile App Control',banners:'App Banners'};
+  document.getElementById('page-title').textContent=titles[name]||'Dashboard'; if(name==='mobile') loadMobileStats(); if(name==='banners'){initBannerSlots();loadBanners();}
+}
+
+function statusBadge(s){ const m={Active:'badge-green',Pending:'badge-yellow',Rejected:'badge-red'}; return `<span class="badge ${m[s]||'badge-gray'}">${s||'—'}</span>`; }
+function roleBadge(r){ const m={Admin:'badge-red',Seller:'badge-blue',Agent:'badge-purple',Buyer:'badge-green',Developer:'badge-yellow'}; return `<span class="badge ${m[r]||'badge-gray'}">${r}</span>`; }
+function fmtPrice(p){ if(!p) return '0'; if(p>=10000000) return (p/10000000).toFixed(1)+' Cr'; if(p>=100000) return (p/100000).toFixed(0)+' L'; return p.toLocaleString(); }
+function fmtDate(d){ if(!d) return '—'; return new Date(d).toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'}); }
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ─── MOBILE APP ADMIN ─────────────────────────────────────────────────────────
+var _pushHistory = [];
+
+function loadMobileStats() {
+  Promise.all([
+    api('GET', '/api/mobile/stats').catch(function() { return null; }),
+    api('GET', '/api/mobile/settings').catch(function() { return null; }),
+    api('GET', '/api/admin/reports').catch(function() { return []; }),
+  ]).then(function(res) {
+    var stats = res[0], settings = res[1], reports = res[2] || [];
+
+    if (stats) {
+      document.getElementById('ms-views').textContent   = stats.totalMobileViews || 0;
+      document.getElementById('ms-users').textContent   = stats.totalUsers        || 0;
+      document.getElementById('ms-pending').textContent = stats.pendingApprovals  || 0;
+      document.getElementById('ms-reports').textContent = stats.pendingReports    || 0;
+
+      var bd = document.getElementById('ms-user-breakdown');
+      var rows = [
+        { label: 'Buyers',  count: stats.buyerCount  || 0, color: '#16a34a' },
+        { label: 'Sellers', count: stats.sellerCount || 0, color: '#0A1D37' },
+        { label: 'Agents',  count: stats.agentCount  || 0, color: '#7c3aed' },
+      ];
+      bd.innerHTML = rows.map(function(r) {
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f8fafc;border-radius:8px">'
+          + '<span style="font-size:13px;font-weight:600;color:' + r.color + '">' + r.label + '</span>'
+          + '<span style="font-size:22px;font-weight:800;color:' + r.color + '">' + r.count + '</span>'
+          + '</div>';
+      }).join('');
+    }
+
+    if (settings) { _applyMobileSettings(settings); }
+
+    // Reports table
+    var pending = reports.filter(function(r) { return r.status === 'Pending'; });
+    var countEl = document.getElementById('mobile-reports-count');
+    if (countEl) countEl.textContent = pending.length + ' pending';
+
+    var container = document.getElementById('mobile-reports-body');
+    if (!container) return;
+
+    if (!pending.length) {
+      container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">No pending reports &#127881;</div>';
+      return;
+    }
+
+    var rows2 = pending.map(function(r) {
+      // Use data-id attribute + event delegation to avoid quote-in-onclick issues
+      return '<tr data-report-id="' + r.id + '">'
+        + '<td><div class="prop-title">' + (r.propertyTitle || 'Property #' + r.propertyId) + '</div>'
+        + (r.description ? '<div class="prop-sub">' + r.description.slice(0,60) + '</div>' : '')
+        + '</td>'
+        + '<td><span class="badge badge-yellow">' + r.reason + '</span></td>'
+        + '<td>' + fmtDate(r.reportedAt) + '</td>'
+        + '<td><div class="action-btns">'
+        + '<button class="btn btn-green btn-sm" data-action="Resolved">&#10003; Resolve</button>'
+        + '<button class="btn btn-danger btn-sm" data-action="Dismissed">&#10007; Dismiss</button>'
+        + '</div></td></tr>';
+    }).join('');
+
+    container.innerHTML = '<table class="data-table" style="width:100%">'
+      + '<thead><tr><th>Property</th><th>Reason</th><th>Reported At</th><th>Actions</th></tr></thead>'
+      + '<tbody>' + rows2 + '</tbody></table>';
+
+    // Single delegated click handler — no inline onclick quotes needed
+    container.querySelector('tbody').addEventListener('click', function(e) {
+      var btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      var tr = btn.closest('tr[data-report-id]');
+      if (!tr) return;
+      _resolveReport(Number(tr.dataset.reportId), btn.dataset.action);
+    });
+
+  }).catch(function(e) { showToast('Failed to load mobile stats: ' + e.message, 'error'); });
+}
+
+function _applyMobileSettings(s) {
+  _setToggle('ms-flag-verify', !!s.verificationBadgeEnabled);
+  _setToggle('ms-flag-push',   !!s.pushNotificationsEnabled);
+  _setToggle('ms-flag-dark',   !!s.darkModeEnabled);
+  _setToggle('ms-flag-maint',  !!s.maintenanceMode);
+  var mm = document.getElementById('ms-maint-msg');   if (mm) mm.value = s.maintenanceMessage || '';
+  var av = document.getElementById('ms-app-version'); if (av) av.value = s.appVersion         || '1.0.0';
+  var mv = document.getElementById('ms-min-version'); if (mv) mv.value = s.minAppVersion      || '1.0.0';
+}
+
+function _setToggle(id, value) {
+  var cb = document.getElementById(id);
+  if (!cb) return;
+  cb.checked = value;
+  updateToggleStyle(cb);
+}
+
+function updateToggleStyle(cb) {
+  var track = document.getElementById(cb.id + '-track');
+  if (!track) return;
+  var knob = track.querySelector('span');
+  if (cb.checked) {
+    track.style.background = '#0A1D37';
+    if (knob) knob.style.transform = 'translateX(20px)';
+  } else {
+    track.style.background = '#e2e8f0';
+    if (knob) knob.style.transform = 'translateX(0)';
+  }
+}
+
+function saveMobileSettings() {
+  var body = {
+    verificationBadgeEnabled: document.getElementById('ms-flag-verify').checked,
+    pushNotificationsEnabled:  document.getElementById('ms-flag-push').checked,
+    darkModeEnabled:           document.getElementById('ms-flag-dark').checked,
+    maintenanceMode:           document.getElementById('ms-flag-maint').checked,
+    maintenanceMessage: (document.getElementById('ms-maint-msg').value    || '').trim(),
+    appVersion:         (document.getElementById('ms-app-version').value  || '1.0.0').trim(),
+    minAppVersion:      (document.getElementById('ms-min-version').value  || '1.0.0').trim(),
+  };
+  api('PUT', '/api/mobile/settings', body)
+    .then(function()  { showToast('Mobile settings saved!', 'success'); })
+    .catch(function(e){ showToast(e.message, 'error'); });
+}
+
+function sendPushNotification() {
+  var title = (document.getElementById('push-title').value || '').trim();
+  var body  = (document.getElementById('push-body').value  || '').trim();
+  if (!title || !body) { showToast('Title and message are required', 'error'); return; }
+
+  api('POST', '/api/mobile/push', { title: title, body: body })
+    .then(function(r) {
+      _pushHistory.unshift({ title: title, body: body, sentAt: r.sentAt || new Date().toISOString() });
+      document.getElementById('push-title').value = '';
+      document.getElementById('push-body').value  = '';
+      var hist = document.getElementById('push-history');
+      hist.innerHTML = _pushHistory.slice(0, 5).map(function(n) {
+        return '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">'
+          + '<strong>' + n.title + '</strong> &mdash; '
+          + '<span style="color:var(--muted)">' + n.body.slice(0, 55) + (n.body.length > 55 ? '...' : '') + '</span>'
+          + '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + fmtDate(n.sentAt) + '</div></div>';
+      }).join('');
+      showToast('Push notification sent!', 'success');
+    })
+    .catch(function(e){ showToast(e.message, 'error'); });
+}
+
+function _resolveReport(id, status) {
+  api('PATCH', '/api/admin/reports/' + id, { status: status })
+    .then(function()  { showToast('Report ' + status.toLowerCase() + '!', 'success'); loadMobileStats(); })
+    .catch(function(e){ showToast(e.message, 'error'); });
+}
+
+
+init();
+
+// ─── APP BANNERS ──────────────────────────────────────────────────────────────
+async function loadBanners() {
+  const el = document.getElementById('banners-list');
+  if (!el) return;
+  el.innerHTML = '<div style="color:#94a3b8;padding:20px;text-align:center">Loading...</div>';
+  try {
+    const banners = await api('GET', '/api/mobile/banners/all');
+    if (!banners || !banners.length) {
+      el.innerHTML = '<div style="color:#94a3b8;padding:20px;text-align:center">No banners yet. Upload one above.</div>';
+      return;
+    }
+    el.innerHTML = banners.map(b => {
+      const thumb = b.videoUrl
+        ? `<video src="${b.videoUrl}" style="width:110px;height:70px;object-fit:cover;border-radius:8px;background:#000;flex-shrink:0" muted preload="metadata"></video>`
+        : `<img src="${b.imageUrl||''}" style="width:110px;height:70px;object-fit:cover;border-radius:8px;background:#f1f5f9;flex-shrink:0" onerror="this.style.background='#e2e8f0'"/>`;
+      const isActive = b.active !== false;
+      return `<div style="display:flex;align-items:center;gap:14px;padding:12px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;background:#fafafa">
+        ${thumb}
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px">${b.type==='video'?' Video Banner':' Image Banner'}</div>
+          <div style="font-size:12px;color:#64748b;margin-top:3px">${isActive?'<span style="color:#22c55e">● Active</span>':'<span style="color:#94a3b8">● Inactive</span>'}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <button onclick="toggleBanner(${b.id},${isActive})" class="btn btn-sm ${isActive?'btn-outline':'btn-blue'}" style="font-size:12px">${isActive?'Disable':'Enable'}</button>
+          <button onclick="deleteBanner(${b.id})" class="btn btn-sm" style="background:#fee2e2;color:#dc2626;border:none;font-size:12px">Delete</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="color:#ef4444;padding:20px;text-align:center">Error: '+e.message+'</div>';
+  }
+}
+
+// ── Banner slots (5 slots) ────────────────────────────────────────────────────
+const BN_SLOT_COUNT = 5;
+function initBannerSlots() {
+  const container = document.getElementById('bn-slots');
+  if (!container) return;
+  container.innerHTML = '';
+  for (let i = 0; i < BN_SLOT_COUNT; i++) {
+    container.innerHTML += `
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc">
+        <span style="font-size:12px;font-weight:600;color:#64748b;min-width:54px">Slot ${i+1}</span>
+        <select id="bn-type-${i}" class="form-control" style="min-width:120px;font-size:13px"
+          onchange="document.getElementById('bn-file-${i}').accept=this.value==='video'?'video/*':'image/*'">
+          <option value="video">&#127916; Video</option>
+          <option value="image">&#128444; Image</option>
+        </select>
+        <input type="file" id="bn-file-${i}" class="form-control" accept="video/*" style="flex:1;min-width:200px;font-size:13px"/>
+        <span id="bn-slot-status-${i}" style="font-size:12px;color:#64748b"></span>
+      </div>`;
+  }
+}
+
+async function uploadAllBanners() {
+  const status = document.getElementById('bn-upload-status');
+  const btn = document.getElementById('bn-upload-all-btn');
+  const token = localStorage.getItem('og_token');
+  let uploaded = 0, failed = 0;
+  btn.disabled = true;
+  status.textContent = 'Uploading...'; status.style.color='#3b82f6';
+
+  for (let i = 0; i < BN_SLOT_COUNT; i++) {
+    const fileInput = document.getElementById(`bn-file-${i}`);
+    const typeSelect = document.getElementById(`bn-type-${i}`);
+    const slotStatus = document.getElementById(`bn-slot-status-${i}`);
+    const file = fileInput && fileInput.files[0];
+    if (!file) continue; // skip empty slots
+
+    slotStatus.textContent = '⏳'; slotStatus.style.color='#3b82f6';
+    const fd = new FormData();
+    fd.append('media', file);
+    fd.append('type', typeSelect ? typeSelect.value : 'image');
+    fd.append('active', 'true');
+    try {
+      const r = await fetch('/api/mobile/banners', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: fd
+      });
+      const d = await r.json();
+      if (r.ok) {
+        slotStatus.textContent = ''; slotStatus.style.color='#22c55e';
+        fileInput.value = '';
+        uploaded++;
+      } else {
+        slotStatus.textContent = ' '+(d.error||'Failed'); slotStatus.style.color='#ef4444';
+        failed++;
+      }
+    } catch(e) {
+      slotStatus.textContent = ' Error'; slotStatus.style.color='#ef4444';
+      failed++;
+    }
+  }
+
+  btn.disabled = false;
+  if (uploaded === 0 && failed === 0) {
+    status.textContent = ' Koi file select nahi ki'; status.style.color='#f59e0b';
+  } else if (failed === 0) {
+    status.textContent = ` ${uploaded} banner(s) uploaded!`; status.style.color='#22c55e';
+    loadBanners();
+  } else {
+    status.textContent = `${uploaded} uploaded, ${failed} failed`; status.style.color='#ef4444';
+    if (uploaded > 0) loadBanners();
+  }
+}
+
+// Legacy single-upload kept for backwards compat (not shown in UI)
+async function uploadBanner() { await uploadAllBanners(); }
+
+async function toggleBanner(id, currentlyActive) {
+  try {
+    await api('PATCH', '/api/mobile/banners/'+id+'/toggle');
+    showToast(currentlyActive ? 'Banner disabled' : 'Banner enabled');
+    loadBanners();
+  } catch(e) { showToast('Error: '+e.message, 'error'); }
+}
+
+async function deleteBanner(id) {
+  if (!confirm('Delete this banner?')) return;
+  try {
+    await api('DELETE', '/api/mobile/banners/'+id);
+    showToast('Banner deleted');
+    loadBanners();
+  } catch(e) { showToast('Error: '+e.message, 'error'); }
+}
+
+</script>
+</body>
+</html>

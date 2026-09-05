@@ -1,17 +1,13 @@
 /**
- * Property comparison store — persists selected property IDs to AsyncStorage.
+ * Property comparison selections belong to the authenticated account.
  * Max 3 properties at once.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiRequest } from '@/lib/api';
 
-const KEY    = '@og-landmark/compare-ids-v1';
 export const MAX_COMPARE = 3;
 
 export async function getCompareIds(): Promise<number[]> {
-  try {
-    const raw = await AsyncStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as number[]) : [];
-  } catch { return []; }
+  return apiRequest<number[]>('/api/comparison');
 }
 
 export async function toggleCompare(id: number): Promise<{ added: boolean; ids: number[] }> {
@@ -30,12 +26,12 @@ export async function toggleCompare(id: number): Promise<{ added: boolean; ids: 
     }
     added = true;
   }
-  await AsyncStorage.setItem(KEY, JSON.stringify(next));
+  await apiRequest('/api/comparison', { method: 'PUT', body: JSON.stringify({ propertyIds: next }) });
   return { added, ids: next };
 }
 
 export async function clearCompare(): Promise<void> {
-  await AsyncStorage.removeItem(KEY);
+  await apiRequest('/api/comparison', { method: 'DELETE' });
 }
 
 export async function isInCompare(id: number): Promise<boolean> {

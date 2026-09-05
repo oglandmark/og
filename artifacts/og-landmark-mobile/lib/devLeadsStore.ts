@@ -1,11 +1,9 @@
 /**
  * Developer CRM — Project Leads Store
  * 8-stage pipeline: NEW → CONTACTED → INTERESTED → SITE_VISIT → NEGOTIATION → BOOKING → WON / LOST
- * API-ready: swap AsyncStorage calls with oglandmark.com API when backend docs available.
+ * Leads are persisted to the authenticated backend account.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const LEADS_KEY = '@og-landmark/dev-leads-v1';
+import { apiRequest } from '@/lib/api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -100,106 +98,33 @@ const SEED: Omit<DevLead, 'id' | 'developerId' | 'createdAt' | 'updatedAt'>[] = 
 // ── CRUD ──────────────────────────────────────────────────────────────────────
 
 export async function getDevLeads(developerId: string): Promise<DevLead[]> {
-  try {
-    const raw = await AsyncStorage.getItem(LEADS_KEY);
-    if (!raw) {
-      // Seed initial data
-      const now = new Date().toISOString();
-      const seeded: DevLead[] = SEED.map((l, i) => ({
-        ...l, developerId,
-        id: `devlead_seed_${i}_${Date.now()}`,
-        createdAt: now, updatedAt: now,
-      }));
-      await AsyncStorage.setItem(LEADS_KEY, JSON.stringify(seeded));
-      return seeded;
-    }
-    const all: DevLead[] = JSON.parse(raw);
-    // If no leads for this developer yet, seed for them
-    const mine = all.filter((l) => l.developerId === developerId);
-    if (mine.length === 0 && all.length > 0) {
-      // Existing data from another dev — seed for this one
-      const now = new Date().toISOString();
-      const seeded: DevLead[] = SEED.map((l, i) => ({
-        ...l, developerId,
-        id: `devlead_seed_${i}_${Date.now()}`,
-        createdAt: now, updatedAt: now,
-      }));
-      const combined = [...all, ...seeded];
-      await AsyncStorage.setItem(LEADS_KEY, JSON.stringify(combined));
-      return seeded;
-    }
-    return mine.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  } catch {
-    return [];
-  }
+  return (await apiRequest<DevLead[]>('/api/developer/leads'))
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
 
 export async function saveDevLead(lead: DevLead): Promise<void> {
-  // Save to AsyncStorage (primary)
-  try {
-    const raw = await AsyncStorage.getItem(LEADS_KEY);
-    const all: DevLead[] = raw ? JSON.parse(raw) : [];
-    const now = new Date().toISOString();
-    const idx = all.findIndex((l) => l.id === lead.id);
-    if (idx >= 0) all[idx] = { ...lead, updatedAt: now };
-    else all.push({ ...lead, createdAt: now, updatedAt: now });
-    await AsyncStorage.setItem(LEADS_KEY, JSON.stringify(all));
-  } catch {}
-
-  // Mirror to backend as an inquiry (best-effort)
-  try {
-    const { submitInquiry } = await import('@/lib/api');
-    await submitInquiry({
-      propertyId: 0,
-      propertyTitle: lead.interestedProject || 'Developer Inquiry',
-      clientName:    lead.name,
-      phone:         lead.phone,
-      email:         lead.email || undefined,
-      message:       `Unit: ${lead.interestedUnit}, Budget: ${lead.budget}, Source: ${lead.source}. ${lead.notes}`.trim(),
-      agentId:       parseInt(lead.developerId) || undefined,
-    });
-  } catch { /* offline or non-critical */ }
+  const existing = !lead.id.startsWith('devlead_');
+  await apiRequest(`/api/developer/leads${existing ? `/${encodeURIComponent(lead.id)}` : ''}`, {
+    method: existing ? 'PUT' : 'POST', body: JSON.stringify(lead),
+  });
 }
 
 export async function updateDevLeadStatus(
   id: string, status: DevLeadStatus, developerId: string,
 ): Promise<DevLead[]> {
-  try {
-    const raw = await AsyncStorage.getItem(LEADS_KEY);
-    if (!raw) return [];
-    const all: DevLead[] = JSON.parse(raw);
-    const idx = all.findIndex((l) => l.id === id);
-    if (idx >= 0) all[idx] = { ...all[idx], status, updatedAt: new Date().toISOString() };
-    await AsyncStorage.setItem(LEADS_KEY, JSON.stringify(all));
-    return all.filter((l) => l.developerId === developerId);
-  } catch {
-    return [];
-  }
+  await apiRequest(`/api/developer/leads/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+  return getDevLeads(developerId);
 }
 
 export async function updateDevLeadNotes(
   id: string, notes: string, developerId: string,
 ): Promise<DevLead[]> {
-  try {
-    const raw = await AsyncStorage.getItem(LEADS_KEY);
-    if (!raw) return [];
-    const all: DevLead[] = JSON.parse(raw);
-    const idx = all.findIndex((l) => l.id === id);
-    if (idx >= 0) all[idx] = { ...all[idx], notes, updatedAt: new Date().toISOString() };
-    await AsyncStorage.setItem(LEADS_KEY, JSON.stringify(all));
-    return all.filter((l) => l.developerId === developerId);
-  } catch {
-    return [];
-  }
+  await apiRequest(`/api/developer/leads/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ notes }) });
+  return getDevLeads(developerId);
 }
 
 export async function deleteDevLead(id: string): Promise<void> {
-  try {
-    const raw = await AsyncStorage.getItem(LEADS_KEY);
-    if (!raw) return;
-    const all: DevLead[] = JSON.parse(raw);
-    await AsyncStorage.setItem(LEADS_KEY, JSON.stringify(all.filter((l) => l.id !== id)));
-  } catch {}
+  await apiRequest(`/api/developer/leads/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────

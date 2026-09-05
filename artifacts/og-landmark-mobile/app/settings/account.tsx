@@ -96,18 +96,14 @@ export default function AccountSettingsScreen() {
       if (!result.canceled && result.assets[0]) {
         const uri = result.assets[0].uri;
         setPhotoUri(uri);
-        // Upload to backend and persist the remote URL
-        try {
-          const uploaded = await uploadProfilePhoto(uri);
-          setPhotoUri(uploaded.url);
-          await saveProfilePhoto(uploaded.url);
-        } catch {
-          // fallback: keep local URI if upload fails
-          await saveProfilePhoto(uri);
-        }
+        // The server is authoritative. Do not display a local-only successful
+        // profile photo update when the upload fails.
+        const uploaded = await uploadProfilePhoto(uri);
+        setPhotoUri(uploaded.url);
+        await saveProfilePhoto(uploaded.url);
       }
-    } catch {
-      Alert.alert('Error', 'Could not pick image. Please try again.');
+    } catch (err: unknown) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Could not update profile photo. Please try again.');
     } finally {
       setPhotoLoading(false);
     }

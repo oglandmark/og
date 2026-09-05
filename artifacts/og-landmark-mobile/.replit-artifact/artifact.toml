@@ -1,5 +1,5 @@
 kind = "mobile"
-previewPath = "/"
+previewPath = "/mobile/"
 title = "OG Landmark"
 description = "A bilingual real estate mobile app connecting buyers, agents, and developers with property discovery, listings, leads, maps, and onboarding flows."
 version = "1.0.0"
@@ -9,7 +9,7 @@ router = "expo-domain"
 [[services]]
 name = "expo"
 ensurePreviewReachable = "/status"
-paths = [ "/" ]
+paths = [ "/mobile/" ]
 localPort = 18115
 
 [services.development]
@@ -21,4 +21,4 @@ run = [ "pnpm", "--filter", "@workspace/mobile", "run", "serve" ]
 
 [services.env]
 PORT = "18115"
-BASE_PATH = "/"
+BASE_PATH = "/mobile/"

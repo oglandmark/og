@@ -1,12 +1,8 @@
 /**
  * Developer Portal — Inventory Store
- * Block + Unit CRUD backed by AsyncStorage.
- * API-ready: replace AsyncStorage calls with oglandmark.com API endpoints when backend is ready.
+ * Block and unit CRUD is persisted to the authenticated backend account.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const BLOCKS_KEY = '@og-landmark/inventory-blocks-v1';
-const UNITS_KEY  = '@og-landmark/inventory-units-v1';
+import { apiRequest } from '@/lib/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -132,113 +128,40 @@ export function newUnitId(): string {
 // ── Block CRUD ────────────────────────────────────────────────────────────────
 
 export async function getBlocks(projectId: string): Promise<InventoryBlock[]> {
-  try {
-    const raw = await AsyncStorage.getItem(BLOCKS_KEY);
-    if (!raw) return [];
-    const all: InventoryBlock[] = JSON.parse(raw);
-    return all
-      .filter((b) => b.projectId === projectId)
-      .sort((a, b) => a.name.localeCompare(b.name));
-  } catch {
-    return [];
-  }
+  return (await apiRequest<InventoryBlock[]>(`/api/developer/projects/${encodeURIComponent(projectId)}/blocks`))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function saveBlock(block: InventoryBlock): Promise<void> {
-  // Failures propagate to the caller — never swallow silently.
-  // TODO: replace AsyncStorage calls with API — POST/PATCH oglandmark.com/api/developer/blocks
-  let all: InventoryBlock[] = [];
-  try {
-    const raw = await AsyncStorage.getItem(BLOCKS_KEY);
-    if (raw) all = JSON.parse(raw) as InventoryBlock[];
-  } catch {
-    // Corrupted storage: start fresh rather than losing the incoming write.
-    all = [];
-  }
-  const now = new Date().toISOString();
-  const idx = all.findIndex((b) => b.id === block.id);
-  if (idx >= 0) {
-    all[idx] = { ...block, updatedAt: now };
-  } else {
-    all.push({ ...block, createdAt: now, updatedAt: now });
-  }
-  // Let this throw if AsyncStorage itself fails — the UI will catch and alert.
-  await AsyncStorage.setItem(BLOCKS_KEY, JSON.stringify(all));
+  const existing = !block.id.startsWith('blk_');
+  await apiRequest(`/api/developer/blocks${existing ? `/${encodeURIComponent(block.id)}` : ''}`, {
+    method: existing ? 'PUT' : 'POST', body: JSON.stringify(block),
+  });
 }
 
 export async function deleteBlock(blockId: string): Promise<void> {
-  // TODO: replace with API — DELETE oglandmark.com/api/developer/blocks/:id
-  let all: InventoryBlock[] = [];
-  try {
-    const raw = await AsyncStorage.getItem(BLOCKS_KEY);
-    if (raw) all = JSON.parse(raw) as InventoryBlock[];
-  } catch {
-    all = [];
-  }
-  await AsyncStorage.setItem(BLOCKS_KEY, JSON.stringify(all.filter((b) => b.id !== blockId)));
-  // Cascade: also delete all units in this block (propagates if it throws)
-  await deleteUnitsByBlock(blockId);
+  await apiRequest(`/api/developer/blocks/${encodeURIComponent(blockId)}`, { method: 'DELETE' });
 }
 
 // ── Unit CRUD ─────────────────────────────────────────────────────────────────
 
 export async function getUnits(projectId: string, blockId?: string): Promise<InventoryUnit[]> {
-  try {
-    const raw = await AsyncStorage.getItem(UNITS_KEY);
-    if (!raw) return [];
-    const all: InventoryUnit[] = JSON.parse(raw);
-    return all
-      .filter((u) => u.projectId === projectId && (!blockId || u.blockId === blockId))
-      .sort((a, b) => a.unitNumber.localeCompare(b.unitNumber, undefined, { numeric: true }));
-  } catch {
-    return [];
-  }
+  const query = blockId ? `?blockId=${encodeURIComponent(blockId)}` : '';
+  return (await apiRequest<InventoryUnit[]>(`/api/developer/projects/${encodeURIComponent(projectId)}/units${query}`))
+    .sort((a, b) => a.unitNumber.localeCompare(b.unitNumber, undefined, { numeric: true }));
 }
 
 export async function saveUnit(unit: InventoryUnit): Promise<void> {
-  // Failures propagate to the caller — never swallow silently.
-  // TODO: replace AsyncStorage calls with API — POST/PATCH oglandmark.com/api/developer/units
-  let all: InventoryUnit[] = [];
-  try {
-    const raw = await AsyncStorage.getItem(UNITS_KEY);
-    if (raw) all = JSON.parse(raw) as InventoryUnit[];
-  } catch {
-    // Corrupted storage: start fresh so the incoming write still succeeds.
-    all = [];
-  }
-  const now = new Date().toISOString();
-  const idx = all.findIndex((u) => u.id === unit.id);
-  if (idx >= 0) {
-    all[idx] = { ...unit, updatedAt: now };
-  } else {
-    all.push({ ...unit, createdAt: now, updatedAt: now });
-  }
-  // Let this throw if AsyncStorage itself fails — the UI will catch and alert.
-  await AsyncStorage.setItem(UNITS_KEY, JSON.stringify(all));
+  const existing = !unit.id.startsWith('unit_');
+  await apiRequest(`/api/developer/units${existing ? `/${encodeURIComponent(unit.id)}` : ''}`, {
+    method: existing ? 'PUT' : 'POST', body: JSON.stringify(unit),
+  });
 }
 
 export async function deleteUnit(unitId: string): Promise<void> {
-  // TODO: replace with API — DELETE oglandmark.com/api/developer/units/:id
-  let all: InventoryUnit[] = [];
-  try {
-    const raw = await AsyncStorage.getItem(UNITS_KEY);
-    if (raw) all = JSON.parse(raw) as InventoryUnit[];
-  } catch {
-    all = [];
-  }
-  await AsyncStorage.setItem(UNITS_KEY, JSON.stringify(all.filter((u) => u.id !== unitId)));
+  await apiRequest(`/api/developer/units/${encodeURIComponent(unitId)}`, { method: 'DELETE' });
 }
 
-async function deleteUnitsByBlock(blockId: string): Promise<void> {
-  let all: InventoryUnit[] = [];
-  try {
-    const raw = await AsyncStorage.getItem(UNITS_KEY);
-    if (raw) all = JSON.parse(raw) as InventoryUnit[];
-  } catch {
-    all = [];
-  }
-  await AsyncStorage.setItem(UNITS_KEY, JSON.stringify(all.filter((u) => u.blockId !== blockId)));
-}
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
 

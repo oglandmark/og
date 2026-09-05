@@ -1,8 +1,8 @@
 /**
  * Agent Visits Store — manage property visit appointments for agents.
- * AsyncStorage-backed. Swap fetch() calls for oglandmark.com API when ready.
+ * Agent visits are persisted to the authenticated backend account.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiRequest } from '@/lib/api';
 
 export type VisitStatus = 'Requested' | 'Confirmed' | 'Completed' | 'Cancelled' | 'No Show' | 'Rescheduled';
 
@@ -26,81 +26,36 @@ export type AgentVisit = {
   updatedAt: string;    // ISO
 };
 
-const KEY = '@og-landmark/agent-visits-v1';
-
 export function newVisitId(): string {
   return `visit_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 }
 
 function todayISO(): string { return new Date().toISOString().slice(0, 10); }
-function tomorrowISO(): string { return new Date(Date.now() + 86_400_000).toISOString().slice(0, 10); }
-function in3daysISO(): string { return new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10); }
-function yesterdayISO(): string { return new Date(Date.now() - 86_400_000).toISOString().slice(0, 10); }
-
-function seedVisits(agentId: string): AgentVisit[] {
-  const now = new Date().toISOString();
-  return [
-    { id: 'v1', agentId, clientName: 'Muhammad Imran', clientPhone: '0301-1234567', propertyTitle: '5 Marla House – Okara City', propertyCity: 'Okara', date: tomorrowISO(), time: '10:00', status: 'Confirmed', notes: 'Client is a cash buyer, bring NOC copy.', createdAt: now, updatedAt: now },
-    { id: 'v2', agentId, clientName: 'Asif Raza', clientPhone: '0321-9876543', propertyTitle: 'Agricultural Land – Depalpur', propertyCity: 'Depalpur', date: in3daysISO(), time: '09:00', status: 'Requested', notes: 'Wants to check tube well and canal access.', createdAt: now, updatedAt: now },
-    { id: 'v3', agentId, clientName: 'Sana Bibi', clientPhone: '0341-7778899', propertyTitle: '3 Marla Plot – Okara', propertyCity: 'Okara', date: todayISO(), time: '14:00', status: 'Confirmed', notes: 'Second visit — she liked it last time.', createdAt: now, updatedAt: now },
-    { id: 'v4', agentId, clientName: 'Zahid Hussain', clientPhone: '0300-5554321', propertyTitle: 'Commercial Shop – Renala Khurd', propertyCity: 'Renala Khurd', date: yesterdayISO(), time: '11:00', status: 'Completed', notes: 'Visit done. Interested, negotiation pending.', createdAt: now, updatedAt: now },
-  ];
-}
-
 export async function getAgentVisitsByBuyer(buyerId: string): Promise<AgentVisit[]> {
-  try {
-    const raw = await AsyncStorage.getItem(KEY);
-    if (!raw) return [];
-    const all: AgentVisit[] = JSON.parse(raw);
-    return all
-      .filter((v) => v.buyerId === buyerId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  } catch {
-    return [];
-  }
+  return (await apiRequest<AgentVisit[]>('/api/agent/visits/mine'))
+    .filter((v) => v.buyerId === buyerId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export async function getAgentVisits(agentId: string): Promise<AgentVisit[]> {
-  try {
-    const raw = await AsyncStorage.getItem(KEY);
-    if (raw) {
-      const all: AgentVisit[] = JSON.parse(raw);
-      const mine = all.filter((v) => v.agentId === agentId);
-      if (mine.length > 0) return mine.sort((a, b) => a.date.localeCompare(b.date));
-    }
-    // Seed on first load
-    const seeded = seedVisits(agentId);
-    const existing: AgentVisit[] = raw ? JSON.parse(raw) : [];
-    await AsyncStorage.setItem(KEY, JSON.stringify([...seeded, ...existing]));
-    return seeded;
-  } catch {
-    return seedVisits(agentId);
-  }
+  return (await apiRequest<AgentVisit[]>('/api/agent/visits'))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export async function saveAgentVisit(visit: AgentVisit): Promise<void> {
-  const raw = await AsyncStorage.getItem(KEY);
-  const all: AgentVisit[] = raw ? JSON.parse(raw) : [];
-  const now = new Date().toISOString();
-  const idx = all.findIndex((v) => v.id === visit.id);
-  if (idx >= 0) { all[idx] = { ...visit, updatedAt: now }; }
-  else { all.unshift({ ...visit, createdAt: now, updatedAt: now }); }
-  await AsyncStorage.setItem(KEY, JSON.stringify(all));
+  const existing = !visit.id.startsWith('visit_');
+  await apiRequest(`/api/agent/visits${existing ? `/${encodeURIComponent(visit.id)}` : ''}`, {
+    method: existing ? 'PUT' : 'POST', body: JSON.stringify(visit),
+  });
 }
 
 export async function updateVisitStatus(id: string, status: VisitStatus): Promise<AgentVisit[]> {
-  const raw = await AsyncStorage.getItem(KEY);
-  const all: AgentVisit[] = raw ? JSON.parse(raw) : [];
-  const now = new Date().toISOString();
-  const updated = all.map((v) => v.id === id ? { ...v, status, updatedAt: now } : v);
-  await AsyncStorage.setItem(KEY, JSON.stringify(updated));
-  return updated;
+  await apiRequest(`/api/agent/visits/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+  return getAgentVisits('');
 }
 
 export async function deleteAgentVisit(id: string): Promise<void> {
-  const raw = await AsyncStorage.getItem(KEY);
-  const all: AgentVisit[] = raw ? JSON.parse(raw) : [];
-  await AsyncStorage.setItem(KEY, JSON.stringify(all.filter((v) => v.id !== id)));
+  await apiRequest(`/api/agent/visits/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
 export function isToday(date: string): boolean { return date === todayISO(); }

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>About Us – OG Landmark</title>
+<link rel="icon" href="/og-logo.png"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0B1F3A;--gold:#C8A45A;--gold-light:#f0d9a0;--white:#fff;--bg:#f8f9fa;--text:#1e293b;--muted:#64748b;--border:#e2e8f0}
+body{font-family:'Segoe UI',Georgia,sans-serif;color:var(--text);background:var(--white)}
+
+/* NAV */
+nav{background:var(--navy);padding:0 5%;display:flex;align-items:center;justify-content:space-between;height:70px;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.3)}
+.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+.nav-logo img{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(200,164,90,.4))}
+.nav-brand{color:var(--gold);font-size:20px;font-weight:800;letter-spacing:.5px}
+.nav-brand small{display:block;color:rgba(255,255,255,.5);font-size:10px;font-weight:400;letter-spacing:2px;text-transform:uppercase}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{color:rgba(255,255,255,.75);text-decoration:none;font-size:14px;font-weight:500;transition:.2s}
+.nav-links a:hover{color:var(--gold)}
+.nav-cta{background:var(--gold);color:var(--navy)!important;padding:9px 20px;border-radius:6px;font-weight:700!important}
+.nav-cta:hover{background:var(--gold-light)!important}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--navy) 0%,#112244 60%,#0d2a5c 100%);padding:90px 5% 80px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:url('/images/hero-bg.jpg') center/cover;opacity:.07}
+.hero-badge{display:inline-block;background:rgba(200,164,90,.15);border:1px solid rgba(200,164,90,.3);color:var(--gold);padding:6px 20px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px}
+.hero h1{font-size:clamp(32px,5vw,56px);font-weight:900;color:var(--white);line-height:1.15;margin-bottom:20px}
+.hero h1 span{color:var(--gold)}
+.hero p{font-size:18px;color:rgba(255,255,255,.7);max-width:620px;margin:0 auto;line-height:1.7}
+
+/* SECTIONS */
+.section{padding:80px 5%}
+.section-alt{background:var(--bg)}
+.container{max-width:1100px;margin:0 auto}
+.section-badge{display:inline-block;background:rgba(200,164,90,.12);color:var(--gold);padding:4px 16px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+.section-title{font-size:clamp(26px,3vw,38px);font-weight:800;color:var(--navy);margin-bottom:16px;line-height:1.25}
+.section-subtitle{font-size:16px;color:var(--muted);line-height:1.7;max-width:640px;margin-bottom:48px}
+.gold-line{width:56px;height:4px;background:var(--gold);border-radius:2px;margin-bottom:20px}
+
+/* STORY */
+.story-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.story-img{border-radius:16px;overflow:hidden;position:relative}
+.story-img img{width:100%;height:420px;object-fit:cover;display:block}
+.story-img-badge{position:absolute;bottom:24px;left:24px;background:var(--gold);color:var(--navy);padding:12px 20px;border-radius:10px;font-weight:800;font-size:13px}
+.story-img-badge span{display:block;font-size:24px;font-weight:900;line-height:1}
+.story-text p{font-size:15px;color:var(--muted);line-height:1.85;margin-bottom:18px}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--border);border-radius:16px;overflow:hidden;margin:60px 0}
+.stat-item{background:var(--white);padding:36px 24px;text-align:center}
+.stat-num{font-size:42px;font-weight:900;color:var(--navy);line-height:1}
+.stat-num span{color:var(--gold)}
+.stat-label{font-size:13px;color:var(--muted);margin-top:8px;font-weight:500}
+
+/* VALUES */
+.values-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
+.value-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:32px;transition:.3s;position:relative;overflow:hidden}
+.value-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--gold)}
+.value-card:hover{box-shadow:0 8px 32px rgba(11,31,58,.1);transform:translateY(-2px)}
+.value-icon{width:52px;height:52px;background:rgba(200,164,90,.1);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;font-size:24px}
+.value-title{font-size:17px;font-weight:800;color:var(--navy);margin-bottom:10px}
+.value-desc{font-size:14px;color:var(--muted);line-height:1.7}
+
+/* TEAM */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:28px}
+.team-card{text-align:center;background:var(--white);border:1px solid var(--border);border-radius:16px;padding:32px 24px;transition:.3s}
+.team-card:hover{box-shadow:0 8px 32px rgba(11,31,58,.1)}
+.team-avatar{width:90px;height:90px;border-radius:50%;margin:0 auto 16px;object-fit:cover;border:3px solid var(--gold);background:var(--navy)}
+.team-avatar-placeholder{width:90px;height:90px;border-radius:50%;margin:0 auto 16px;background:linear-gradient(135deg,var(--navy),#1a3a6b);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:30px;font-weight:800;border:3px solid var(--gold)}
+.team-name{font-size:17px;font-weight:800;color:var(--navy);margin-bottom:4px}
+.team-role{font-size:13px;color:var(--gold);font-weight:600;margin-bottom:10px}
+.team-bio{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* WHY US */
+.why-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.why-item{display:flex;gap:16px;align-items:flex-start;background:var(--white);border-radius:12px;padding:20px;border:1px solid var(--border)}
+.why-num{width:40px;height:40px;border-radius:10px;background:var(--navy);color:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;flex-shrink:0}
+.why-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.why-desc{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* AREAS */
+.areas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.area-tag{background:var(--navy);color:var(--gold);padding:12px 16px;border-radius:10px;text-align:center;font-size:13px;font-weight:600}
+
+/* CTA */
+.cta-section{background:linear-gradient(135deg,var(--navy),#112244);padding:80px 5%;text-align:center}
+.cta-section h2{font-size:clamp(24px,3vw,40px);font-weight:900;color:var(--white);margin-bottom:16px}
+.cta-section p{font-size:16px;color:rgba(255,255,255,.7);margin-bottom:36px;max-width:520px;margin-left:auto;margin-right:auto}
+.cta-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.btn-gold{background:var(--gold);color:var(--navy);padding:14px 32px;border-radius:8px;font-size:15px;font-weight:800;text-decoration:none;transition:.2s;display:inline-block}
+.btn-gold:hover{background:var(--gold-light)}
+.btn-outline-white{border:2px solid rgba(255,255,255,.4);color:var(--white);padding:14px 32px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;transition:.2s;display:inline-block}
+.btn-outline-white:hover{border-color:var(--gold);color:var(--gold)}
+
+/* FOOTER */
+footer{background:#07111f;padding:32px 5%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+footer p{color:rgba(255,255,255,.4);font-size:13px}
+.footer-socials{display:flex;gap:14px;align-items:center}
+.social-btn{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-decoration:none;transition:.2s;flex-shrink:0}
+.social-btn:hover{transform:scale(1.1)}
+.social-btn.fb{background:#1877F2}
+.social-btn.wa{background:#25D366}
+.social-btn.em{background:#c5a028}
+.social-btn svg{width:20px;height:20px;fill:#fff}
+
+@media(max-width:768px){
+  .story-grid,.why-grid{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .nav-links{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <img src="/images/og-logo.png" alt="OG Landmark"/>
+    <div class="nav-brand">OG Landmark<small>Premium Real Estate</small></div>
+  </a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+    <a href="/terms">Terms</a>
+    <a href="/privacy-policy">Privacy</a>
+    <a href="/portal/seller" class="nav-cta">List Property</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div style="position:relative">
+    <div class="hero-badge">About OG Landmark</div>
+    <h1>Pakistan's Most Trusted<br/><span>Real Estate Platform</span></h1>
+    <p>We connect buyers, sellers, and agents across Pakistan with transparency, integrity, and excellence — from Lahore to Karachi, Okara to Islamabad.</p>
+  </div>
+</section>
+
+<!-- OUR STORY -->
+<section class="section">
+  <div class="container">
+    <div class="story-grid">
+      <div class="story-img">
+        <img src="/images/hero-bg.jpg" alt="OG Landmark Office"/>
+        <div class="story-img-badge"><span>2019</span>Established</div>
+      </div>
+      <div class="story-text">
+        <div class="section-badge">Our Story</div>
+        <div class="gold-line"></div>
+        <h2 class="section-title">Built on Trust, Driven by Excellence</h2>
+        <p>OG Landmark was founded in 2019 with a single mission: to make real estate transactions in Pakistan transparent, efficient, and trustworthy. We saw a market where buyers struggled to find verified properties, sellers had no professional platform, and agents lacked the tools to serve their clients properly.</p>
+        <p>Starting from Okara district — the heart of Punjab's agricultural belt — we built a platform that serves every type of property: from residential villas in DHA to fertile farmlands in Depalpur, from commercial plazas in Lahore to orchards in Renala Khurd.</p>
+        <p>Today, OG Landmark is a comprehensive real estate ecosystem trusted by thousands of buyers, sellers, and agents across Pakistan. We combine local market expertise with modern technology to deliver results that matter.</p>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-num">5,000<span>+</span></div><div class="stat-label">Properties Listed</div></div>
+      <div class="stat-item"><div class="stat-num">12,000<span>+</span></div><div class="stat-label">Happy Clients</div></div>
+      <div class="stat-item"><div class="stat-num">150<span>+</span></div><div class="stat-label">Verified Agents</div></div>
+      <div class="stat-item"><div class="stat-num">25<span>+</span></div><div class="stat-label">Cities Covered</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- OUR VALUES -->
+<section class="section section-alt">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:48px">
+      <div class="section-badge">Our Values</div>
+      <div class="gold-line" style="margin:14px auto 20px"></div>
+      <h2 class="section-title" style="margin-bottom:0">What We Stand For</h2>
+    </div>
+    <div class="values-grid">
+      <div class="value-card">
+        <div class="value-icon">🤝</div>
+        <div class="value-title">Integrity First</div>
+        <div class="value-desc">Every listing on OG Landmark goes through a verification process. We never compromise on honesty — with our clients, our agents, or our partners.</div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">🔍</div>
+        <div class="value-title">Transparency</div>
+        <div class="value-desc">No hidden fees. No false advertising. Every property detail — price, area, location, condition — is disclosed clearly and completely.</div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">💡</div>
+        <div class="value-title">Innovation</div>
+        <div class="value-desc">From 360° virtual tours to AI-powered search and real-time notifications, we use technology to make property search faster and smarter.</div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">🌱</div>
+        <div class="value-title">Community Focus</div>
+        <div class="value-desc">We are deeply invested in the communities we serve — especially in Okara and the greater Punjab region — supporting local sellers and buyers equally.</div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">⚡</div>
+        <div class="value-title">Speed & Efficiency</div>
+        <div class="value-desc">Time is money in real estate. Our platform connects buyers and sellers quickly, with responsive agents and instant inquiry systems.</div>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">🛡️</div>
+        <div class="value-title">Client Protection</div>
+        <div class="value-desc">We advocate for buyer rights, verify seller credentials, and ensure every transaction follows Pakistan's property laws and regulations.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY CHOOSE US -->
+<section class="section">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center">
+      <div>
+        <div class="section-badge">Why OG Landmark</div>
+        <div class="gold-line"></div>
+        <h2 class="section-title">Pakistan's Most Complete Property Platform</h2>
+        <p class="section-subtitle" style="margin-bottom:0">We offer features no other Pakistani real estate platform provides — all in one place.</p>
+      </div>
+      <div class="why-grid">
+        <div class="why-item"><div class="why-num">01</div><div><div class="why-title">Verified Listings</div><div class="why-desc">Admin-approved properties only — no fraud, no fake ads.</div></div></div>
+        <div class="why-item"><div class="why-num">02</div><div><div class="why-title">Agriculture Specialist</div><div class="why-desc">Pakistan's leading platform for farmland and orchards.</div></div></div>
+        <div class="why-item"><div class="why-num">03</div><div><div class="why-title">Expert Agents</div><div class="why-desc">150+ certified agents across Punjab and Sindh.</div></div></div>
+        <div class="why-item"><div class="why-num">04</div><div><div class="why-title">Secure Transactions</div><div class="why-desc">End-to-end support from listing to registry transfer.</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OUR TEAM -->
+<section class="section section-alt">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:48px">
+      <div class="section-badge">Leadership</div>
+      <div class="gold-line" style="margin:14px auto 20px"></div>
+      <h2 class="section-title" style="margin-bottom:10px">The Team Behind OG Landmark</h2>
+      <p style="color:var(--muted);font-size:15px;max-width:500px;margin:0 auto">Experienced professionals committed to transforming Pakistan's real estate industry.</p>
+    </div>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar-placeholder">OG</div>
+        <div class="team-name">OG Group</div>
+        <div class="team-role">Founder & CEO</div>
+        <div class="team-bio">15+ years in Pakistani real estate markets with deep expertise in agricultural land and residential developments across Punjab.</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar-placeholder">S</div>
+        <div class="team-name">Sales Division</div>
+        <div class="team-role">Director of Sales</div>
+        <div class="team-bio">Overseeing 150+ agents and thousands of transactions annually, ensuring every client receives professional and ethical service.</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar-placeholder">L</div>
+        <div class="team-name">Legal Team</div>
+        <div class="team-role">Head of Legal & Compliance</div>
+        <div class="team-bio">Ensuring all transactions comply with Pakistan's property laws, RERA regulations, and protect both buyers and sellers.</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar-placeholder">T</div>
+        <div class="team-name">Tech Team</div>
+        <div class="team-role">Technology & Digital</div>
+        <div class="team-bio">Building Pakistan's most advanced real estate platform with modern tools including AI search, virtual tours, and secure portals.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AREAS WE SERVE -->
+<section class="section">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:40px">
+      <div class="section-badge">Coverage</div>
+      <div class="gold-line" style="margin:14px auto 20px"></div>
+      <h2 class="section-title" style="margin-bottom:10px">Areas We Serve</h2>
+      <p style="color:var(--muted);font-size:15px">From our home district of Okara to every major city in Pakistan.</p>
+    </div>
+    <div class="areas-grid">
+      <div class="area-tag">Okara</div><div class="area-tag">Depalpur</div><div class="area-tag">Renala Khurd</div>
+      <div class="area-tag">Haveli Lakha</div><div class="area-tag">Lahore</div><div class="area-tag">Faisalabad</div>
+      <div class="area-tag">Multan</div><div class="area-tag">Sahiwal</div><div class="area-tag">Gujranwala</div>
+      <div class="area-tag">Rawalpindi</div><div class="area-tag">Islamabad</div><div class="area-tag">Karachi</div>
+      <div class="area-tag">Sialkot</div><div class="area-tag">Bahawalpur</div><div class="area-tag">Sargodha</div>
+      <div class="area-tag">Peshawar</div><div class="area-tag">Quetta</div><div class="area-tag">Hyderabad</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <h2>Ready to Find Your Dream Property?</h2>
+    <p>Join thousands of buyers and sellers who trust OG Landmark for Pakistan's finest real estate.</p>
+    <div class="cta-btns">
+      <a href="/" class="btn-gold">Browse Properties</a>
+      <a href="/portal/seller" class="btn-outline-white">List a Property</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2025 OG Landmark. All rights reserved. | Okara, Punjab, Pakistan</p>
+  <div class="footer-socials">
+    <a href="https://www.facebook.com/share/1cJgDSD2RB/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" class="social-btn fb" title="OG Landmark on Facebook">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+    </a>
+    <a href="https://wa.me/923042569000" target="_blank" rel="noopener noreferrer" class="social-btn wa" title="Chat on WhatsApp">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    </a>
+    <a href="mailto:support@oglandmark.com" class="social-btn em" title="Email Us">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+    </a>
+  </div>
+</footer>
+
+</body>
+</html>

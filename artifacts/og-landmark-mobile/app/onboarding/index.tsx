@@ -180,7 +180,7 @@ export default function OnboardingScreen() {
       </View>
 
       <Animated.ScrollView
-        ref={(node) => {
+        ref={(node: Animated.ScrollView | null) => {
           scrollRef.current = node;
         }}
         horizontal

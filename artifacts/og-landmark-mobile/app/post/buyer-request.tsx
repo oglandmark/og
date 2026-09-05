@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
-import { addUserListing } from '@/lib/listingsStore';
+import { createProperty } from '@/lib/api';
 import { okaraDistrict } from '@/lib/cities';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
@@ -73,31 +73,22 @@ export default function BuyerRequestScreen() {
     if (!validate()) return;
     setSubmitting(true);
     try {
-      await addUserListing({
-        id: `buyer_${Date.now()}`,
-        postedBy: user?.id ?? 'unknown',
-        agentName: user?.name ?? '',
-        role: 'buyer',
+      await createProperty({
         title: `Looking for ${propertyType} in ${city || 'Okara District'}`,
         type: propertyType,
-        category: 'Looking For',
         status: 'Looking For',
         price: Number(budget.replace(/[^0-9]/g, '')) || 0,
         area: 0,
         areaUnit: sizeUnit,
         city: city || 'Okara',
-        neighborhood: locality,
+        address: locality,
         description: [requirements, `Purpose: ${purpose}`, `Timeline: ${timeline}`, `Contact: ${contactPref}`, minSize ? `Min: ${minSize} ${sizeUnit}` : '', maxSize ? `Max: ${maxSize} ${sizeUnit}` : ''].filter(Boolean).join('\n'),
         bedrooms: bedrooms === 'Any' ? 0 : Number(bedrooms.replace('+', '')) || 0,
         bathrooms: bathrooms === 'Any' ? 0 : Number(bathrooms.replace('+', '')) || 0,
-        postedAt: new Date().toISOString(),
-        listingStatus: 'Active',
-        views: 0, saves: 0, leadsCount: 0,
-        requirements,
       });
       setSubmitted(true);
-    } catch {
-      Alert.alert('Error', 'Could not save your request. Please try again.');
+    } catch (err: unknown) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Could not submit your request. Please try again.');
     } finally {
       setSubmitting(false);
     }

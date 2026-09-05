@@ -1,11 +1,8 @@
 /**
  * Developer Portal — Project Store
- * API-ready architecture: replace AsyncStorage calls with oglandmark.com API endpoints
- * when backend integration is ready.
+ * Developer projects are persisted to the authenticated backend account.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const PROJECTS_KEY = '@og-landmark/developer-projects-v1';
+import { apiRequest } from '@/lib/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -206,76 +203,20 @@ export function statusColor(status: ProjectStatus): { bg: string; text: string }
 // ── CRUD ─────────────────────────────────────────────────────────────────────
 
 export async function getDevProjects(developerId: string): Promise<DeveloperProject[]> {
-  try {
-    const raw = await AsyncStorage.getItem(PROJECTS_KEY);
-    if (!raw) return [];
-    const all: DeveloperProject[] = (JSON.parse(raw) as DeveloperProject[]).map(migrateProject);
-    return all
-      .filter((p) => p.developerId === developerId)
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  } catch {
-    return [];
-  }
+  const projects = await apiRequest<DeveloperProject[]>('/api/developer/projects');
+  return projects.map(migrateProject).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
 
 export async function saveDevProject(project: DeveloperProject): Promise<void> {
-  // Save to AsyncStorage (primary store for complex developer data)
-  try {
-    const raw = await AsyncStorage.getItem(PROJECTS_KEY);
-    const all: DeveloperProject[] = raw ? JSON.parse(raw) : [];
-    const now = new Date().toISOString();
-    const idx = all.findIndex((p) => p.id === project.id);
-    if (idx >= 0) {
-      all[idx] = { ...project, updatedAt: now };
-    } else {
-      all.push({ ...project, createdAt: now, updatedAt: now });
-    }
-    await AsyncStorage.setItem(PROJECTS_KEY, JSON.stringify(all));
-  } catch {}
-
-  // Mirror to backend as a property listing (best-effort)
-  try {
-    const { createProperty, updateProperty } = await import('@/lib/api');
-    const payload = {
-      title:       project.name,
-      type:        project.type as string,
-      status:      project.status === 'Live' ? 'For Sale' : 'Pending',
-      price:       project.startingPrice,
-      area:        project.totalUnits,   // use unit count as numeric area proxy
-      areaUnit:    'Marla' as const,
-      city:        project.city,
-      address:     project.address,
-      description: project.fullDescription || project.shortDescription,
-      amenities:   project.amenities,
-    };
-    if (project.apiId) {
-      await updateProperty(project.apiId, payload);
-    } else {
-      const created = await createProperty(payload);
-      // Store returned API ID back into AsyncStorage
-      const raw2 = await AsyncStorage.getItem(PROJECTS_KEY);
-      const all2: DeveloperProject[] = raw2 ? JSON.parse(raw2) : [];
-      const idx2 = all2.findIndex((p) => p.id === project.id);
-      if (idx2 >= 0) { all2[idx2].apiId = created.id; await AsyncStorage.setItem(PROJECTS_KEY, JSON.stringify(all2)); }
-    }
-  } catch { /* offline or field mismatch — AsyncStorage copy is authoritative */ }
+  const existing = project.apiId ?? (project.id.startsWith('proj_') ? undefined : project.id);
+  await apiRequest(`/api/developer/projects${existing ? `/${encodeURIComponent(String(existing))}` : ''}`, {
+    method: existing ? 'PUT' : 'POST',
+    body: JSON.stringify(project),
+  });
 }
 
 export async function deleteDevProject(id: string): Promise<void> {
-  try {
-    const raw = await AsyncStorage.getItem(PROJECTS_KEY);
-    if (!raw) return;
-    const all: DeveloperProject[] = JSON.parse(raw);
-    const target = all.find((p) => p.id === id);
-    // Delete from backend if we have a server ID
-    if (target?.apiId) {
-      try {
-        const { deleteProperty } = await import('@/lib/api');
-        await deleteProperty(target.apiId);
-      } catch { /* offline */ }
-    }
-    await AsyncStorage.setItem(PROJECTS_KEY, JSON.stringify(all.filter((p) => p.id !== id)));
-  } catch {}
+  await apiRequest(`/api/developer/projects/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
 // ── Stats calculation ─────────────────────────────────────────────────────────
@@ -319,24 +260,10 @@ export function newProjectId(): string {
 
 /** Find a single project by ID across all developers — for buyer-facing screens. */
 export async function getDevProjectById(id: string): Promise<DeveloperProject | null> {
-  try {
-    const raw = await AsyncStorage.getItem(PROJECTS_KEY);
-    if (!raw) return null;
-    const all: DeveloperProject[] = (JSON.parse(raw) as DeveloperProject[]).map(migrateProject);
-    return all.find((p) => p.id === id) ?? null;
-  } catch {
-    return null;
-  }
+  return migrateProject(await apiRequest<DeveloperProject>(`/api/developer/projects/${encodeURIComponent(id)}`));
 }
 
 /** Return all approved/live projects for buyer-facing browsing (not scoped to a developer). */
 export async function getAllPublicProjects(): Promise<DeveloperProject[]> {
-  try {
-    const raw = await AsyncStorage.getItem(PROJECTS_KEY);
-    if (!raw) return [];
-    const all: DeveloperProject[] = (JSON.parse(raw) as DeveloperProject[]).map(migrateProject);
-    return all.filter((p) => ['Live', 'Approved', 'Under Development', 'Coming Soon', 'Completed'].includes(p.status));
-  } catch {
-    return [];
-  }
+  return (await apiRequest<DeveloperProject[]>('/api/projects', {}, false)).map(migrateProject);
 }

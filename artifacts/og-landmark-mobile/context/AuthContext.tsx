@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { loginWithAPI, loginWithSocial, registerWithAPI, clearToken, setToken, adminVerify, adminOtpLogin } from '@/lib/api';
+import { clearLocalAccountData } from '@/lib/accountCleanup';
 
 export type Role = 'buyer' | 'agent' | 'developer' | 'admin';
 
@@ -210,6 +211,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await Promise.all([
       AsyncStorage.removeItem(STORAGE_KEY).catch(() => undefined),
       clearToken(),
+      clearLocalAccountData(),
     ]);
   }, []);
 

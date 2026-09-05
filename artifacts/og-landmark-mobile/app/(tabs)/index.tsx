@@ -102,7 +102,7 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
   return (
     <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={s.drawerRoot}>
-        <Animated.View style={[StyleSheet.absoluteFillObject, s.drawerBackdrop, backdropStyle]}>
+        <Animated.View style={[StyleSheet.absoluteFill, s.drawerBackdrop, backdropStyle]}>
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.25)' }]} />
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close menu" />
         </Animated.View>
@@ -855,7 +855,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
 const fp = StyleSheet.create({
   // ── Card ──────────────────────────────────────────────────────────────────
   card:         { width: 300, height: 320, borderRadius: 22, overflow: 'hidden', marginRight: 16, shadowColor: '#102a43', shadowOpacity: 0.18, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
-  image:        { ...StyleSheet.absoluteFillObject },
+  image:        { ...StyleSheet.absoluteFill },
   galleryStatus:{ position: 'absolute', top: 56, right: 14, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#071521aa', borderWidth: 1, borderColor: '#ffffff33', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 5 },
   galleryDots:  { flexDirection: 'row', alignItems: 'center', gap: 3 },
   galleryDot:   { width: 4, height: 4, borderRadius: 2, backgroundColor: '#ffffff66' },
@@ -886,11 +886,11 @@ const fp = StyleSheet.create({
 
   // ── Fullscreen player ─────────────────────────────────────────────────────
   fsContainer:  { flex: 1, backgroundColor: '#000' },
-  fsVideoWrap:  { ...StyleSheet.absoluteFillObject },
+  fsVideoWrap:  { ...StyleSheet.absoluteFill },
   fsVideo:      { flex: 1 },
   fsClose:      { position: 'absolute', top: 48, right: 16, zIndex: 30 },
   fsCloseInner: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.6)', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  fsBuffer:     { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.35)', zIndex: 10 },
+  fsBuffer:     { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.35)', zIndex: 10 },
   fsPauseIcon:  { position: 'absolute', alignSelf: 'center', top: '50%', marginTop: -30, width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', zIndex: 10 },
   fsBar:        { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 32, paddingTop: 14, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 20, gap: 12 },
   fsMuteBtn:    { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(200,164,90,0.12)', borderWidth: 1.5, borderColor: 'rgba(200,164,90,0.4)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
@@ -1033,7 +1033,7 @@ function AgentCard({ agent, colors, onPress }: { agent: typeof SAMPLE_AGENTS[num
           )}
           <LinearGradient
             colors={['transparent', 'rgba(7,24,39,0.78)']}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
           />
           <View style={ac.photoAccent} />
           {agent.verified && (
@@ -1194,8 +1194,8 @@ function ProjectShowcaseCard({ project, colors, onPress }: { project: typeof pro
 
 const pc = StyleSheet.create({
   card:         { width: 290, height: 320, borderRadius: 22, overflow: 'hidden', marginRight: 16, position: 'relative' },
-  image:        { ...StyleSheet.absoluteFillObject },
-  gradient:     { ...StyleSheet.absoluteFillObject },
+  image:        { ...StyleSheet.absoluteFill },
+  gradient:     { ...StyleSheet.absoluteFill },
   topRow:       { position: 'absolute', top: 14, left: 14, right: 14, flexDirection: 'row', gap: 8 },
   typeBadge:    { borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 },
   typeBadgeText:{ fontFamily: 'Inter_700Bold', fontSize: 9, color: '#ffffff', letterSpacing: 0.4 },
@@ -1245,9 +1245,9 @@ function DevProjectCard({ project, colors, onPress }: { project: DeveloperProjec
 
 const dpc = StyleSheet.create({
   card:             { width: 250, height: 270, borderRadius: 22, borderWidth: 1, overflow: 'hidden', marginRight: 14, position: 'relative' },
-  image:            { ...StyleSheet.absoluteFillObject },
-  imagePlaceholder: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
-  gradient:         { ...StyleSheet.absoluteFillObject },
+  image:            { ...StyleSheet.absoluteFill },
+  imagePlaceholder: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
+  gradient:         { ...StyleSheet.absoluteFill },
   statusBadge:      { position: 'absolute', top: 14, left: 14, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 },
   statusText:       { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#ffffff', letterSpacing: 0.4 },
   info:             { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16 },
@@ -1358,8 +1358,8 @@ function AgriCommCard({ property, colors, isAgri, onPress }: {
 
 const acp = StyleSheet.create({
   card:        { width: 200, height: 200, borderRadius: 18, overflow: 'hidden', marginRight: 14, borderWidth: 1 },
-  image:       { ...StyleSheet.absoluteFillObject },
-  gradient:    { ...StyleSheet.absoluteFillObject },
+  image:       { ...StyleSheet.absoluteFill },
+  gradient:    { ...StyleSheet.absoluteFill },
   typeBadge:   { position: 'absolute', top: 12, left: 12, borderRadius: 7, paddingHorizontal: 8, paddingVertical: 4 },
   demoBadge:   { position: 'absolute', top: 12, right: 12 },
   typeBadgeText:{ fontFamily: 'Inter_700Bold', fontSize: 8, color: '#ffffff', letterSpacing: 0.6 },
@@ -1408,7 +1408,7 @@ function LocationSheet({ visible, selected, onSelect, onClose, colors, insets, m
   return (
     <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-        <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#0d1d2bbb' }, bgStyle]}>
+        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#0d1d2bbb' }, bgStyle]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         </Animated.View>
         <Animated.View style={[ls.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20, borderColor: colors.border }, sheetStyle]}>
@@ -2177,7 +2177,7 @@ const s = StyleSheet.create({
   // Hero / Trust
   hero:             { marginHorizontal: 18, marginTop: 36, borderRadius: 22, overflow: 'hidden', paddingHorizontal: 22, paddingTop: 26, paddingBottom: 24 },
   heroImage:        { borderRadius: 22 },
-  heroShade:        { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(12, 20, 28, 0.75)' },
+  heroShade:        { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(12, 20, 28, 0.75)' },
   heroKicker:       { color: '#bcebd4', fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.8, marginBottom: 10 },
   heroTitle:        { color: '#ffffff', fontFamily: 'Inter_700Bold', fontSize: 26, lineHeight: 31, marginBottom: 22 },
   trustGrid:        { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
@@ -2225,7 +2225,7 @@ const s = StyleSheet.create({
   drawerLangBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   drawerFooter:       { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 4 },
   drawerFooterText:   { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 5 },
-  infoOverlay:        { ...StyleSheet.absoluteFillObject, justifyContent: 'center', padding: 18 },
+  infoOverlay:        { ...StyleSheet.absoluteFill, justifyContent: 'center', padding: 18 },
   infoCard:           { borderWidth: 1, borderRadius: 22, padding: 18, overflow: 'hidden', shadowColor: '#081522', shadowOpacity: 0.28, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 12 },
   infoCardTop:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   infoCardIcon:       { width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },

@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "OG Landmark Website"
+description = "The supplied OG Landmark public website and role-based portals, preserved visually as provided and connected to the shared production API and administration backend."
+version = "1.0.0"
+id = "artifacts/og-landmark-web"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/", "/api" ]
+localPort = 25189
+
+[services.development]
+run = "pnpm --filter @workspace/og-landmark-web run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/og-landmark-web", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/og-landmark-web/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25189"
+BASE_PATH = "/"

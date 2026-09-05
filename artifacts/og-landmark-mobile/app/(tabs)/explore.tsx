@@ -1659,7 +1659,7 @@ const ex = StyleSheet.create({
 
 const fs = StyleSheet.create({
   root:          { flex: 1, justifyContent: 'flex-end', backgroundColor: '#102a4366' },
-  backdrop:      { ...StyleSheet.absoluteFillObject },
+  backdrop:      { ...StyleSheet.absoluteFill },
   sheet:         { maxHeight: '92%', borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 24 },
   handle:        { alignSelf: 'center', width: 42, height: 4, borderRadius: 2, backgroundColor: '#c8a45a', opacity: 0.7, marginBottom: 18 },
   header:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 },

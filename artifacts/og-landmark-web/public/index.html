@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>OG Landmark — Real Estate Platform</title>
+    <meta name="description" content="OG Landmark — Real Estate Platform — built on Replit. Update this description to reflect the app." />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:title" content="OG Landmark — Real Estate Platform" />
+    <meta property="og:description" content="OG Landmark — Real Estate Platform — built on Replit. Update this description to reflect the app." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="OG Landmark — Real Estate Platform" />
+    <meta name="twitter:description" content="OG Landmark — Real Estate Platform — built on Replit. Update this description to reflect the app." />
+    <link rel="icon" type="image/png" href="/og-logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="/assets/index-CXxrK7KP.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-cXzZ8FaN.css">
+    <style>
+      /* Hide Developer and Agent options from registration dropdown */
+      [data-value="developer"],
+      [value="developer"],
+      [data-radix-select-item][data-value="developer"],
+      [data-value="agent"],
+      [value="agent"],
+      [data-radix-select-item][data-value="agent"] {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // ── Intercept /sell → /seller (handles both direct load and React Router client-side nav) ──
+      (function(){
+        function guardSell(){
+          if(window.location.pathname==='/sell'||window.location.pathname.startsWith('/sell/')){
+            window.location.replace('/seller'); return true;
+          }
+        }
+        if(guardSell()) return;
+        // Wrap pushState / replaceState so React Router navigation is also caught
+        ['pushState','replaceState'].forEach(fn=>{
+          const orig=history[fn].bind(history);
+          history[fn]=function(s,t,u){
+            orig(s,t,u);
+            if(u==='/sell'||String(u||'').startsWith('/sell/')) window.location.replace('/seller');
+          };
+        });
+        window.addEventListener('popstate',guardSell);
+      })();
+
+      // ── Remove hardcoded demo popups (Price Drop Alert / New Property Listed) ──
+      const _popupKill = new MutationObserver(mutations => {
+        const KILL = ['Price Drop Alert','New Property Listed','Price drop alert','New property listed'];
+        mutations.forEach(m => {
+          m.addedNodes.forEach(node => {
+            if (node.nodeType !== 1) return;
+            const txt = node.textContent || '';
+            if (KILL.some(k => txt.includes(k))) {
+              // Remove the toast container itself (walk up to a fixed/absolute positioned ancestor)
+              let el = node;
+              for (let i = 0; i < 6; i++) {
+                const st = window.getComputedStyle(el);
+                if (st.position === 'fixed' || st.position === 'absolute' || el.tagName === 'LI' || el.getAttribute('role') === 'status') {
+                  el.remove(); return;
+                }
+                if (!el.parentElement) break;
+                el = el.parentElement;
+              }
+              node.remove();
+            }
+          });
+        });
+      });
+      _popupKill.observe(document.body, { childList: true, subtree: true });
+
+      // ── Advanced Search Filter Panel — Complete Injection ──
+      (function(){
+        // Cities
+        const NON_OKARA      = new Set(['Lahore','Karachi','Islamabad','Rawalpindi','Faisalabad','Multan','Sahiwal','Gujranwala','Rahim Yar Khan']);
+        const INJECT_CITIES  = ['Hujrah Shah Muqeem','Basirpur','Haveli Lakha'];
+        // Property Types
+        const HIDE_TYPES     = new Set(['Shop','Office','Warehouse','Factory','Hotel']);
+        const INJECT_TYPES   = ['Penthouse','Upper Portion','Lower Portion'];
+        // Construction Age
+        const CON_AGE_MAP    = {'New':'New (<1yr)','1 Year':'1 Year','5 Years':'3–5 Yrs','10 Years':'6–10 Yrs','Old':'21+ Yrs'};
+        const CON_AGE_ADD    = ['2 Years','11–15 Yrs','16–20 Yrs','Under Construction'];
+        // Furnishing
+        const INJECT_FURNISH = ['Luxury Furnished'];
+        // CamelCase → Display label map (for Agricultural, House, Commercial, Premium sections)
+        const LABEL_MAP = {
+          // 🌾 Agricultural
+          canalWater:'Canal Water', tubeWell:'Tube Well', solarTubeWell:'Solar Tube Well',
+          orchard:'Orchard', riceLand:'Rice Land', potatoLand:'Potato Land',
+          dairyFarm:'Dairy Farm', poultryFarm:'Poultry Farm', cornerLand:'Corner Land', roadFront:'Road Front',
+          // 🏡 House Features
+          corner:'Corner', parkFacing:'Park Facing', mainBoulevard:'Main Boulevard',
+          basement:'Basement', servantQuarter:'Servant Quarter', swimmingPool:'Swimming Pool',
+          lift:'Lift / Elevator', smartHome:'Smart Home', solar:'Solar',
+          cctv:'CCTV', generator:'Generator', evCharging:'EV Charging',
+          // 🏢 Commercial
+          rentalIncome:'Rental Income', occupied:'Occupied', vacant:'Vacant',
+          mainRoad:'Main Road', parking:'Parking',
+          // ⭐ Premium
+          featured:'Featured', verified:'Verified', urgentSale:'Urgent Sale',
+          priceReduced:'Price Reduced', newListing:'New Listing',
+          highROI:'High ROI', hotArea:'Hot Area', investorChoice:'Investor Choice',
+        };
+
+        let _busy = false;
+
+        // Find a label's DIRECT parent container by matching a known label text
+        function labelContainer(knownText) {
+          for(const lbl of document.querySelectorAll('label:not([data-ogc])')) {
+            if(lbl.textContent.trim() === knownText) return lbl.parentElement;
+          }
+          return null;
+        }
+        // Find a button's DIRECT parent container by matching known button text
+        function btnContainer(knownText) {
+          for(const btn of document.querySelectorAll('button')) {
+            if(!btn.getAttribute('data-ogp') && !btn.getAttribute('data-og-rl') && btn.textContent.trim() === knownText)
+              return btn.parentElement;
+          }
+          return null;
+        }
+
+        // Relabel all camelCase text nodes on the page that match LABEL_MAP
+        function relabelAll() {
+          document.querySelectorAll('label:not([data-ogr])').forEach(label => {
+            // Check direct text node children
+            for(const node of label.childNodes) {
+              if(node.nodeType === 3) { // TEXT_NODE
+                const t = node.textContent.trim();
+                if(LABEL_MAP[t]) { node.textContent = ' ' + LABEL_MAP[t]; label.setAttribute('data-ogr','1'); break; }
+              }
+            }
+            // Also check a single span/div child (React sometimes wraps text)
+            if(!label.getAttribute('data-ogr')) {
+              const span = label.querySelector('span:last-child,div:last-child');
+              if(span && span.childElementCount === 0) {
+                const t = span.textContent.trim();
+                if(LABEL_MAP[t]) { span.textContent = LABEL_MAP[t]; label.setAttribute('data-ogr','1'); }
+              }
+            }
+          });
+        }
+
+        function injectCheckLabel(cnt, text, refLabel) {
+          if(!cnt || cnt.querySelector('[data-ogc="'+text.replace(/"/g,'&quot;')+'"]')) return;
+          const w = document.createElement('label');
+          w.setAttribute('data-ogc', text);
+          if(refLabel) w.className = refLabel.className;
+          w.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;padding:2px 0';
+          const box = document.createElement('span');
+          box.style.cssText = 'width:16px;height:16px;border:1.5px solid #cbd5e1;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;background:#fff';
+          const lbl = document.createElement('span'); lbl.textContent = text;
+          w.appendChild(box); w.appendChild(lbl);
+          let on = false;
+          w.addEventListener('click', e => {
+            e.preventDefault(); on = !on;
+            box.style.background = on ? '#C8A45A' : '#fff';
+            box.style.borderColor = on ? '#C8A45A' : '#cbd5e1';
+            box.innerHTML = on ? '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '';
+            const inp = document.querySelector('input[placeholder*="ity"],input[placeholder*="ocatio"],input[placeholder*="earch"]');
+            if(inp) {
+              Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(inp, on ? text : '');
+              inp.dispatchEvent(new Event('input',{bubbles:true}));
+            }
+          });
+          cnt.appendChild(w);
+        }
+
+        function injectPill(cnt, text, refBtn) {
+          if(!cnt || cnt.querySelector('[data-ogp="'+text+'"]')) return;
+          const b = document.createElement('button');
+          b.setAttribute('data-ogp', text); b.type='button'; b.textContent=text;
+          if(refBtn) b.className = refBtn.className;
+          b.style.cssText = 'cursor:pointer';
+          let on=false;
+          b.addEventListener('click',()=>{
+            on=!on;
+            b.style.background = on ? '#C8A45A' : '';
+            b.style.color      = on ? '#fff' : '';
+            b.style.borderColor= on ? '#C8A45A' : '';
+          });
+          cnt.appendChild(b);
+        }
+
+        function processFilters() {
+          if(_busy) return;
+          _busy = true;
+          try {
+            // ── CITIES ── find container via known city label
+            const cityCnt = labelContainer('Lahore') || labelContainer('Karachi') || labelContainer('Okara');
+            if(cityCnt) {
+              cityCnt.querySelectorAll('label:not([data-ogc])').forEach(lbl => {
+                lbl.style.display = NON_OKARA.has(lbl.textContent.trim()) ? 'none' : '';
+              });
+              const refLbl = cityCnt.querySelector('label:not([data-ogc]):not([style*="none"])');
+              INJECT_CITIES.forEach(c => injectCheckLabel(cityCnt, c, refLbl));
+            }
+
+            // ── PROPERTY TYPE ── find container via known type label
+            const typeCnt = labelContainer('House') || labelContainer('Apartment');
+            if(typeCnt) {
+              typeCnt.querySelectorAll('label:not([data-ogc])').forEach(lbl => {
+                lbl.style.display = HIDE_TYPES.has(lbl.textContent.trim()) ? 'none' : '';
+              });
+              const refLbl = typeCnt.querySelector('label:not([data-ogc]):not([style*="none"])');
+              INJECT_TYPES.forEach(t => injectCheckLabel(typeCnt, t, refLbl));
+            }
+
+            // ── CONSTRUCTION AGE ── find container via "New" button (original React text)
+            const ageCnt = btnContainer('New') || btnContainer('New (<1yr)');
+            if(ageCnt) {
+              ageCnt.querySelectorAll('button:not([data-ogp])').forEach(btn => {
+                if(btn.getAttribute('data-og-rl')) return;
+                const m = CON_AGE_MAP[btn.textContent.trim()];
+                if(m) { btn.textContent=m; btn.setAttribute('data-og-rl','1'); }
+              });
+              const refBtn = ageCnt.querySelector('button:not([data-ogp])');
+              CON_AGE_ADD.forEach(a => injectPill(ageCnt, a, refBtn));
+            }
+
+            // ── FURNISHING ── find container via "Furnished" button
+            const furnCnt = btnContainer('Furnished') || btnContainer('Semi Furnished');
+            if(furnCnt) {
+              const refBtn = furnCnt.querySelector('button:not([data-ogp])');
+              INJECT_FURNISH.forEach(f => injectPill(furnCnt, f, refBtn));
+            }
+
+            // ── RELABEL ALL camelCase labels (Agri, House, Commercial, Premium) ──
+            relabelAll();
+
+          } finally { _busy = false; }
+        }
+
+        const _sfObs = new MutationObserver(processFilters);
+        _sfObs.observe(document.body, {childList:true, subtree:true});
+        window.addEventListener('popstate', ()=>setTimeout(processFilters,200));
+        document.addEventListener('click', ()=>setTimeout(processFilters,150));
+      })();
+
+      // ── Hide "YOUR RESET CODE" display box ──
+      // ── HERO TEXT REPLACE ──
+      const TEXT_REPLACEMENTS = [
+        ['Discover premium real estate across Karachi, Lahore, and Islamabad',
+         'Discover premium real estate across Okara, Depalpur, and Renala Khurd'],
+        ['Karachi, Lahore, and Islamabad', 'Okara, Depalpur, and Renala Khurd'],
+      ];
+      function applyTextReplacements() {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let node;
+        while ((node = walker.nextNode())) {
+          TEXT_REPLACEMENTS.forEach(([from, to]) => {
+            if (node.nodeValue && node.nodeValue.includes(from)) {
+              node.nodeValue = node.nodeValue.replace(from, to);
+            }
+          });
+        }
+      }
+
+      // ── HIDE DEVELOPER & AGENT OPTIONS FROM REGISTRATION ──
+      function hideDeveloperOption() {
+        // Radix UI select items: role="option" or data-radix-select-item
+        document.querySelectorAll('[role="option"], [data-radix-select-item]').forEach(el => {
+          const txt = el.textContent.trim();
+          if (
+            txt === 'Property Developer' || txt === '🏗 Property Developer' || txt === 'Developer' ||
+            txt === 'Agent' || txt === '🏢 Agent' || txt === 'Real Estate Agent'
+          ) {
+            el.style.display = 'none';
+            el.setAttribute('data-og-hidden', '1');
+          }
+        });
+        document.querySelectorAll(
+          '[data-value="developer"], [value="developer"], [data-value="agent"], [value="agent"]'
+        ).forEach(el => {
+          el.style.display = 'none';
+          el.setAttribute('data-og-hidden', '1');
+        });
+      }
+
+      const _obs = new MutationObserver(() => {
+        applyTextReplacements();
+        hideDeveloperOption();
+        document.querySelectorAll('*').forEach(el => {
+          if (el.childNodes.length === 1 && el.textContent.trim() === 'YOUR RESET CODE') {
+            const box = el.closest('[class*="bg-"]') || el.parentElement?.parentElement;
+            if (box) box.style.display = 'none';
+          }
+        });
+      });
+      _obs.observe(document.body, { childList: true, subtree: true });
+      applyTextReplacements();
+      hideDeveloperOption();
+
+      // ── AUTH-AWARE NAVBAR ──
+      // When logged in: replace Buy/Sell buttons with profile dropdown + Dashboard link
+      (function(){
+        const token = localStorage.getItem('og_token');
+        const uStr  = localStorage.getItem('og_user');
+        if (!token || !uStr) return;
+        let user; try { user = JSON.parse(uStr); } catch(e){ return; }
+        const role = user.role || 'Buyer';
+        const dashMap = { Admin:'/admin', Agent:'/agent', Seller:'/seller', Buyer:'/user' };
+        const dashUrl = dashMap[role] || '/user';
+        const initials = (user.name||role).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        const roleColor = { Admin:'#dc2626', Agent:'#7c3aed', Seller:'#16a34a', Buyer:'#2563eb' }[role] || '#C8A45A';
+
+        const sty = document.createElement('style');
+        sty.textContent = `
+          .og-nav-auth{display:flex!important;align-items:center;gap:8px;z-index:9999}
+          .og-dash-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:transparent;color:#C8A45A;border:1.5px solid #C8A45A;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;transition:.2s;white-space:nowrap}
+          .og-dash-btn:hover{background:#C8A45A;color:#0B1F3A}
+          .og-profile-wrap{position:relative}
+          .og-profile-btn{width:38px;height:38px;border-radius:50%;background:${roleColor};color:#fff;border:none;font-weight:800;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;letter-spacing:.5px}
+          .og-dropdown{display:none;position:absolute;right:0;top:46px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.18);min-width:210px;z-index:99999;overflow:hidden}
+          .og-dropdown.open{display:block;animation:ogFade .15s ease}
+          @keyframes ogFade{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+          .og-dd-header{padding:14px 16px 10px;border-bottom:1px solid #f1f5f9;background:#f8fafc}
+          .og-dd-name{font-weight:700;font-size:14px;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+          .og-dd-role{font-size:11px;color:#fff;background:${roleColor};display:inline-block;padding:2px 8px;border-radius:999px;margin-top:4px;font-weight:700}
+          .og-dd-link{display:flex;align-items:center;gap:8px;padding:10px 16px;font-size:13px;color:#1e293b;text-decoration:none;transition:.15s;cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+          .og-dd-link svg{flex-shrink:0;color:#94a3b8}
+          .og-dd-link:hover{background:#f8fafc;color:#0B1F3A}
+          .og-dd-link:hover svg{color:#0B1F3A}
+          .og-dd-link.danger{color:#ef4444}
+          .og-dd-link.danger svg{color:#ef4444}
+          .og-dd-link.danger:hover{background:#fef2f2}
+          .og-dd-sep{height:1px;background:#f1f5f9;margin:4px 0}
+        `;
+        document.head.appendChild(sty);
+
+        const wrap = document.createElement('div');
+        wrap.id = 'og-nav-auth';
+        wrap.className = 'og-nav-auth';
+        wrap.innerHTML = `
+          <a href="${dashUrl}" class="og-dash-btn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            Dashboard
+          </a>
+          <div class="og-profile-wrap">
+            <button class="og-profile-btn" id="og-prof-btn">${initials}</button>
+            <div class="og-dropdown" id="og-dropdown">
+              <div class="og-dd-header">
+                <div class="og-dd-name">${(user.name||role).replace(/</g,'&lt;')}</div>
+                <div class="og-dd-role">${role}</div>
+              </div>
+              <a href="${dashUrl}" class="og-dd-link">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                My Dashboard
+              </a>
+              <a href="${dashUrl}" class="og-dd-link">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                My Profile
+              </a>
+              <div class="og-dd-sep"></div>
+              <button class="og-dd-link danger" onclick="localStorage.removeItem('og_token');localStorage.removeItem('og_user');window.location.reload()">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                Logout
+              </button>
+            </div>
+          </div>`;
+
+        document.addEventListener('click', e=>{
+          const dd=document.getElementById('og-dropdown');
+          const btn=document.getElementById('og-prof-btn');
+          if(dd && btn && !dd.contains(e.target) && e.target!==btn) dd.classList.remove('open');
+        });
+
+        // ── Step 1: Permanently hide Buy/Sell via CSS (survives React re-renders) ──
+        const hideSty = document.createElement('style');
+        hideSty.textContent = `
+          a[href*="auth?role=buyer"], a[href*="auth?role=seller"] { display:none!important; }
+        `;
+        document.head.appendChild(hideSty);
+
+        // ── Step 2: Re-inject profile wrap whenever React blows it away ──
+        function tryInjectNav() {
+          // Already in DOM — nothing to do
+          if (document.getElementById('og-nav-auth')) return;
+          // Find the Buy anchor (href-based — works regardless of locale/language)
+          const buyLink = document.querySelector('a[href*="auth?role=buyer"]');
+          if (!buyLink) return;
+          const parent = buyLink.parentElement;
+          if (!parent) return;
+          // Insert our wrap right before the (now-hidden) Buy link
+          parent.insertBefore(wrap, buyLink);
+          // Wire profile button toggle (only once per wrap element)
+          const profBtn = document.getElementById('og-prof-btn');
+          if (profBtn && !profBtn._ogWired) {
+            profBtn._ogWired = true;
+            profBtn.addEventListener('click', e => {
+              e.stopPropagation();
+              document.getElementById('og-dropdown')?.classList.toggle('open');
+            });
+          }
+        }
+
+        // MutationObserver for instant reaction + interval as fallback
+        const navObs = new MutationObserver(tryInjectNav);
+        navObs.observe(document.body, { childList: true, subtree: true });
+        setInterval(tryInjectNav, 400); // catches route-change re-renders
+      })();
+    </script>
+
+    <!-- ── Post-login redirect: intercept localStorage so React login/register
+         sends Seller → /seller, Buyer → /user, Agent → /agent, Admin → /admin ── -->
+    <script>
+      (function () {
+        const _origSet = localStorage.setItem.bind(localStorage);
+        localStorage.setItem = function (key, value) {
+          _origSet(key, value);
+          // When token is written, read the user object and redirect
+          if (key === 'og_token') {
+            try {
+              const uStr = localStorage.getItem('og_user');
+              if (!uStr) return;
+              const user = JSON.parse(uStr);
+              const role = (user.role || '').toLowerCase();
+              const map = { seller: '/seller/add-property', admin: '/admin', agent: '/agent', buyer: '/user' };
+              const dest = map[role];
+              if (dest) {
+                // small delay so React can finish its own state update before we navigate
+                setTimeout(() => { window.location.href = dest; }, 80);
+              }
+            } catch (e) {}
+          }
+        };
+      })();
+    </script>
+
+    <!-- ── Live Property Injection — Priority on Home, All on /properties, All on /search ── -->
+    <script>
+    (function(){
+      'use strict';
+      var _allProps=null, _priorityProps=null, _busy=false;
+
+      function fmt(p){
+        if(!p) return 'PKR —';
+        if(p>=10000000) return 'PKR '+(p/10000000).toFixed(1)+' Cr';
+        if(p>=100000)   return 'PKR '+(p/100000).toFixed(0)+' Lac';
+        return 'PKR '+p.toLocaleString();
+      }
+
+      function makeCard(prop){
+        var wrap=document.createElement('div');
+        wrap.setAttribute('data-og-live-prop','1');
+        wrap.style.cssText='background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:.25s;cursor:pointer';
+        if(prop.priority) wrap.style.cssText+='border-color:#ddd6fe;box-shadow:0 2px 8px rgba(124,58,237,.12)';
+        wrap.onclick=function(){window.location.href='/properties/'+prop.id;};
+        wrap.onmouseenter=function(){this.style.boxShadow='0 8px 24px rgba(0,0,0,.14)';this.style.transform='translateY(-3px)';};
+        wrap.onmouseleave=function(){this.style.boxShadow=prop.priority?'0 2px 8px rgba(124,58,237,.12)':'0 2px 8px rgba(0,0,0,.06)';this.style.transform='';};
+        var img=prop.images&&prop.images[0]?prop.images[0]:'/images/property-1.jpg';
+        var purpose=prop.purpose||prop.status||'For Sale';
+        var isRent=purpose.toLowerCase().includes('rent');
+        // Build badges — priority takes top-left, purpose takes top-right
+        var topLeftBadge='';
+        if(prop.priority){
+          topLeftBadge='<span style="position:absolute;top:10px;left:10px;background:#7c3aed;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;z-index:2">🔝 Priority</span>';
+        } else if(prop.featured){
+          topLeftBadge='<span style="position:absolute;top:10px;left:10px;background:#C8A45A;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;z-index:2">⭐ Featured</span>';
+        }
+        wrap.innerHTML=
+          '<div style="position:relative;height:210px;overflow:hidden;background:#f1f5f9">'+
+            '<img src="'+img+'" style="width:100%;height:100%;object-fit:cover" onerror="this.src=\'/images/property-1.jpg\'"/>'+
+            topLeftBadge+
+            '<span style="position:absolute;top:10px;right:10px;background:'+(isRent?'#dcfce7':'#dbeafe')+';color:'+(isRent?'#16a34a':'#2563eb')+';font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px">'+purpose+'</span>'+
+          '</div>'+
+          '<div style="padding:14px 16px">'+
+            '<p style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:600">'+(prop.type||'Property')+' · '+(prop.city||'Pakistan')+'</p>'+
+            '<h3 style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:8px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">'+prop.title+'</h3>'+
+            '<p style="font-size:20px;font-weight:800;color:#C8A45A;margin-bottom:8px">'+fmt(prop.price)+'</p>'+
+            '<p style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:4px"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>'+(prop.address||prop.city||'Pakistan')+'</p>'+
+            (prop.bedrooms?'<p style="font-size:11px;color:#94a3b8;margin-top:6px">'+prop.bedrooms+' Beds · '+(prop.bathrooms||0)+' Baths · '+prop.area+' '+(prop.areaUnit||'sqft')+'</p>':'')+
+          '</div>';
+        return wrap;
+      }
+
+      // Find property grid: the container whose DIRECT children are property cards
+      // A property card = div/a that contains both an img AND text with "PKR"
+      function findGrid(){
+        var containers=document.querySelectorAll('main > *, section > *, [class] > [class]');
+        var found=null, maxCards=0;
+        containers.forEach(function(c){
+          if(c.children.length<2) return;
+          var cardCount=0;
+          for(var i=0;i<c.children.length;i++){
+            var ch=c.children[i];
+            if(ch.querySelector('img')&&/PKR/.test(ch.textContent)) cardCount++;
+          }
+          if(cardCount>maxCards){maxCards=cardCount;found=c;}
+        });
+        return maxCards>=2?found:null;
+      }
+
+      function getShownTitles(grid){
+        var set=new Set();
+        if(!grid) return set;
+        for(var i=0;i<grid.children.length;i++){
+          var card=grid.children[i];
+          var h=card.querySelector('h3,h2,[class*="title"],[class*="name"]');
+          if(h){var t=h.textContent.trim().toLowerCase(); if(t.length>4) set.add(t.substring(0,30));}
+        }
+        return set;
+      }
+
+      // ── INJECT on /properties or /search — shows ALL active properties ──
+      function injectAllProps(){
+        if(_busy||!_allProps) return;
+        _busy=true;
+        try{
+          var grid=findGrid();
+          if(!grid){return;}
+          var shown=getShownTitles(grid);
+          grid.querySelectorAll('[data-og-live-prop]').forEach(function(el){el.remove();});
+          var added=0;
+          _allProps.forEach(function(prop){
+            if(!prop.title) return;
+            var key=prop.title.toLowerCase().substring(0,30);
+            if(!shown.has(key)){grid.appendChild(makeCard(prop));added++;}
+          });
+          // Update counter text
+          if(added>0){
+            var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+            var node;
+            while((node=walker.nextNode())){
+              if(/^\d+\s+propert/i.test(node.nodeValue.trim())){
+                var m=node.nodeValue.match(/(\d+)/);
+                if(m){node.nodeValue=node.nodeValue.replace(m[1],String(parseInt(m[1])+added));break;}
+              }
+            }
+          }
+        }finally{_busy=false;}
+      }
+
+      // ── INJECT on / (home) — shows only Priority properties ──
+      function injectPriorityOnHome(){
+        if(_busy||!_priorityProps||!_priorityProps.length) return;
+        _busy=true;
+        try{
+          var grid=findGrid();
+          if(!grid){return;}
+          var shown=getShownTitles(grid);
+          grid.querySelectorAll('[data-og-live-prop]').forEach(function(el){el.remove();});
+          var added=0;
+          _priorityProps.forEach(function(prop){
+            if(!prop.title) return;
+            var key=prop.title.toLowerCase().substring(0,30);
+            if(!shown.has(key)){grid.appendChild(makeCard(prop));added++;}
+          });
+          if(added>0){
+            var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+            var node;
+            while((node=walker.nextNode())){
+              if(/^\d+\s+propert/i.test(node.nodeValue.trim())){
+                var m=node.nodeValue.match(/(\d+)/);
+                if(m){node.nodeValue=node.nodeValue.replace(m[1],String(parseInt(m[1])+added));break;}
+              }
+            }
+          }
+        }finally{_busy=false;}
+      }
+
+      // Track which path we last injected for — never re-inject the same path twice
+      var _lastInjectedPath=null;
+      var _t=null;
+
+      function runForCurrentPath(){
+        var path=window.location.pathname;
+        // Skip if we already injected for this exact path (prevents blinking on pagination/re-renders)
+        if(path===_lastInjectedPath) return;
+        if(path==='/properties'||path==='/search'||path.startsWith('/search')){
+          _lastInjectedPath=path;
+          injectAllProps();
+        } else if(path==='/'||path===''){
+          _lastInjectedPath=path;
+          injectPriorityOnHome();
+        } else {
+          // Different page (property detail, etc.) — reset so next nav to /properties re-injects
+          _lastInjectedPath=null;
+        }
+      }
+
+      // Fetch all active properties once, then trigger injection
+      fetch('/api/properties').then(function(r){return r.ok?r.json():null;}).then(function(d){
+        if(d&&Array.isArray(d)){
+          _allProps=d;
+          _priorityProps=d.filter(function(p){return p.priority===true;});
+          // Small delay so React finishes its first render before we inject
+          setTimeout(runForCurrentPath, 500);
+        }
+      }).catch(function(){});
+
+      // Only re-trigger on actual route changes (pushState / popstate), NOT on every DOM mutation or click
+      function onRouteChange(){
+        clearTimeout(_t);
+        _t=setTimeout(runForCurrentPath, 600);
+      }
+      // Patch pushState/replaceState (React Router uses these)
+      ['pushState','replaceState'].forEach(function(fn){
+        var orig=history[fn].bind(history);
+        history[fn]=function(s,t,u){
+          orig(s,t,u);
+          onRouteChange();
+        };
+      });
+      window.addEventListener('popstate', onRouteChange);
+
+      // Re-inject when React wipes our cards without a URL change (filters, pagination, re-render)
+      var _propT2=null;
+      new MutationObserver(function(){
+        if(!_allProps) return;
+        clearTimeout(_propT2);
+        _propT2=setTimeout(function(){
+          var path=window.location.pathname;
+          if(path==='/properties'||path==='/search'||path.startsWith('/search')||path==='/'||path===''){
+            if(!document.querySelector('[data-og-live-prop]')){
+              _lastInjectedPath=null;
+              runForCurrentPath();
+            }
+          }
+        }, 800);
+      }).observe(document.body,{childList:true,subtree:true});
+    })();
+    </script>
+
+    <!-- ── Dynamic Agent Injection — DB agents appear on Home & /agents pages ── -->
+    <script>
+    (function(){
+      'use strict';
+      var _agents=null, _injected=false;
+
+      // ── Hardcoded React bundle agent names — already rendered, skip duplicates
+      var REACT_AGENTS=['Ahmed Hassan','Fatima Khan','Bilal Rashid','Sara Ali','Imran Malik'];
+
+      function esc(s){ var d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+
+      function makeAgentCard(a){
+        var wrap=document.createElement('div');
+        wrap.setAttribute('data-og-live-agent','1');
+        wrap.style.cssText='background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:.25s';
+        wrap.onmouseenter=function(){ this.style.boxShadow='0 8px 24px rgba(0,0,0,.14)'; this.style.transform='translateY(-3px)'; };
+        wrap.onmouseleave=function(){ this.style.boxShadow='0 2px 8px rgba(0,0,0,.06)'; this.style.transform=''; };
+
+        var photo=a.photo||'';
+        var initials=(a.name||'A').split(' ').map(function(n){return n[0];}).join('').toUpperCase().slice(0,2);
+        var avatarHtml=photo
+          ? '<img src="'+photo+'" alt="'+esc(a.name)+'" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'"/><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:#fff;background:linear-gradient(135deg,#C8A45A,#0f172a)">'+esc(initials)+'</span>'
+          : '<span style="display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:#fff;background:linear-gradient(135deg,#C8A45A,#0f172a)">'+esc(initials)+'</span>';
+
+        var rating=parseFloat(a.rating)||4.5;
+        var stars='';
+        for(var i=0;i<5;i++){ stars+='<span style="color:'+(i<Math.round(rating)?'#f59e0b':'#d1d5db')+'">★</span>'; }
+
+        var phoneHtml=a.phone?'<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#475569;margin-bottom:6px"><span style="color:#0B1F3A">📞</span><a href="tel:'+esc(a.phone)+'" style="color:#475569;text-decoration:none">'+esc(a.phone)+'</a></div>':'';
+        var emailHtml=a.email?'<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#475569;margin-bottom:12px"><span style="color:#0B1F3A">✉</span><a href="mailto:'+esc(a.email)+'" style="color:#475569;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">'+esc(a.email)+'</a></div>':'';
+        var profileUrl='/agents/'+a.id;
+        var waMsg=encodeURIComponent('Hi, I would like to connect with agent '+a.name+' from OG Landmark.');
+        var contactPhone=(a.phone||'').replace(/\D/g,'');
+        if(contactPhone&&contactPhone.length>=10&&contactPhone[0]!=='9') contactPhone='92'+contactPhone.slice(contactPhone.startsWith('0')?1:0);
+        var btnStyle='display:block;width:100%;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-align:center;font-family:inherit;transition:.2s;text-decoration:none;box-sizing:border-box';
+        var listingsLabel=a.propertiesCount?a.propertiesCount+' Listings':'';
+
+        wrap.innerHTML=
+          '<div style="padding:20px;text-align:center">'+
+            '<div style="width:88px;height:88px;border-radius:50%;overflow:hidden;border:3px solid #C8A45A;margin:0 auto 12px;background:#e2e8f0">'+
+              avatarHtml+
+            '</div>'+
+            '<h3 style="font-weight:700;font-size:17px;margin-bottom:3px;color:#1e293b">'+esc(a.name)+'</h3>'+
+            '<p style="font-size:12px;color:#64748b;margin-bottom:8px">'+esc(a.title||a.specialization||'Property Consultant')+'</p>'+
+            '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:12px">'+
+              '<span style="font-size:14px;letter-spacing:1px">'+stars+'</span>'+
+              (listingsLabel?'<span style="font-size:12px;color:#94a3b8">'+esc(listingsLabel)+'</span>':'')+
+            '</div>'+
+          '</div>'+
+          '<div style="padding:0 20px 16px">'+
+            (a.phone||a.email?'<div style="border-top:1px solid #f1f5f9;padding-top:12px;margin-bottom:12px">'+phoneHtml+emailHtml+'</div>':'')+
+            '<div style="display:flex;flex-direction:column;gap:8px">'+
+              '<a href="'+profileUrl+'" style="'+btnStyle+';background:#0B1F3A;color:#fff" onmouseover="this.style.background=\'#172e52\'" onmouseout="this.style.background=\'#0B1F3A\'">View Profile</a>'+
+              (contactPhone
+                ?'<a href="https://wa.me/'+contactPhone+'?text='+waMsg+'" target="_blank" style="'+btnStyle+';background:transparent;border:1.5px solid #e2e8f0;color:#374151" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'transparent\'">📞 Contact</a>'
+                :'')+
+            '</div>'+
+          '</div>';
+        return wrap;
+      }
+
+      // Find the agent cards grid — the container of cards that contain h3 matching known agent names
+      function findAgentGrid(){
+        var allH3=document.querySelectorAll('h3');
+        for(var i=0;i<allH3.length;i++){
+          var name=allH3[i].textContent.trim();
+          if(REACT_AGENTS.indexOf(name)>-1){
+            // Walk up to find the grid container
+            var el=allH3[i].parentElement;
+            for(var j=0;j<5;j++){
+              if(!el) break;
+              // Grid container has multiple child cards (at least 2)
+              if(el.children.length>=2){
+                // Verify it's the agent grid (children contain h3 with agent names)
+                var agentCards=0;
+                for(var k=0;k<el.children.length;k++){
+                  if(el.children[k].querySelector('h3')) agentCards++;
+                }
+                if(agentCards>=2) return el;
+              }
+              el=el.parentElement;
+            }
+          }
+        }
+        return null;
+      }
+
+      function getShownAgentNames(grid){
+        var set=new Set();
+        if(!grid) return set;
+        grid.querySelectorAll('h3').forEach(function(h){ set.add(h.textContent.trim()); });
+        return set;
+      }
+
+      function injectAgents(){
+        if(!_agents||!_agents.length) return;
+        var grid=findAgentGrid();
+        if(!grid) return;
+
+        // Remove stale injected cards first
+        grid.querySelectorAll('[data-og-live-agent]').forEach(function(el){el.remove();});
+
+        var shown=getShownAgentNames(grid);
+        var added=0;
+        _agents.forEach(function(a){
+          if(!a.name) return;
+          var nm=a.name.trim();
+          // Skip if already shown (either React hardcoded or already injected)
+          if(shown.has(nm)) return;
+          grid.appendChild(makeAgentCard(a));
+          added++;
+        });
+        if(added>0) _injected=true;
+      }
+
+      // Also patch photos of React hardcoded agents if we have a matching name
+      function patchExistingCards(){
+        if(!_agents) return;
+        document.querySelectorAll('h3').forEach(function(h3){
+          var nm=h3.textContent.trim();
+          var match=_agents.find(function(a){return a.name&&a.name.trim()===nm;});
+          if(!match||!match.photo) return;
+          var card=h3;
+          for(var i=0;i<5;i++){
+            if(!card) break;
+            var img=card.querySelector('img[alt="'+nm+'"],img');
+            if(img&&img.getAttribute('alt')===nm){
+              if(img.src!==location.origin+match.photo) img.src=match.photo;
+              break;
+            }
+            card=card.parentElement;
+          }
+        });
+      }
+
+      // Hidden React bundle agents list (set by admin)
+      var _hiddenReactAgents=['Ayesha Siddiqui'];
+
+      // Remove hidden hardcoded React agent cards from DOM
+      function removeHiddenReactAgents(){
+        if(!_hiddenReactAgents.length) return;
+        document.querySelectorAll('h3').forEach(function(h3){
+          var nm=h3.textContent.trim();
+          if(_hiddenReactAgents.indexOf(nm)===-1) return;
+          // Walk up to find the card wrapper and remove it
+          var el=h3;
+          for(var i=0;i<6;i++){
+            if(!el||!el.parentElement) break;
+            // Card wrapper typically has padding and is a direct child of the grid
+            if(el.parentElement.children.length>=2 && el.style.padding!==''){
+              el.remove(); return;
+            }
+            // Also check for common card class patterns
+            var cs=el.className||'';
+            if(cs.indexOf('card')>-1||cs.indexOf('Card')>-1||cs.indexOf('rounded')>-1){
+              el.remove(); return;
+            }
+            el=el.parentElement;
+          }
+          // Fallback: remove the closest block-level ancestor of h3
+          var fallback=h3;
+          for(var j=0;j<5;j++){
+            if(!fallback||!fallback.parentElement) break;
+            var tag=fallback.parentElement.tagName;
+            if(tag==='DIV'&&fallback.parentElement!==document.body){
+              // Remove if it contains the agent name and nothing else substantial
+              fallback.remove(); return;
+            }
+            fallback=fallback.parentElement;
+          }
+        });
+      }
+
+      // Fetch agents + hidden list in parallel, then inject
+      Promise.all([
+        fetch('/api/agents?approvalStatus=Approved').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+        fetch('/api/settings/hidden-react-agents').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+      ]).then(function(results){
+        var agentsData=results[0], hiddenData=results[1];
+        if(Array.isArray(agentsData)) _agents=agentsData.filter(function(a){return a.status==='Active';});
+        if(Array.isArray(hiddenData)) _hiddenReactAgents=hiddenData;
+        setTimeout(function(){
+          injectAgents();
+          patchExistingCards();
+          removeHiddenReactAgents();
+        }, 800);
+      });
+
+      // Watch React route changes and re-run
+      var _t=null;
+      var obs=new MutationObserver(function(){
+        clearTimeout(_t);
+        _t=setTimeout(function(){
+          injectAgents();
+          patchExistingCards();
+          removeHiddenReactAgents();
+        }, 600);
+      });
+      obs.observe(document.body,{childList:true,subtree:true});
+      window.addEventListener('popstate',function(){
+        clearTimeout(_t); _t=setTimeout(function(){ injectAgents(); patchExistingCards(); removeHiddenReactAgents(); },700);
+      });
+    })();
+    </script>
+  </body>
+</html>

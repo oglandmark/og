@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OG Landmark — Seller Portal</title>
+  <link rel="icon" href="/og-logo.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;min-height:100vh;background:#0B1F3A;display:flex}
+    .split{display:flex;min-height:100vh;width:100%}
+    .brand{flex:1;background:linear-gradient(160deg,#071428 0%,#0B1F3A 40%,#0d1f38 100%);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:48px;position:relative;overflow:hidden}
+    .brand::before{content:'';position:absolute;inset:0;background:url('/images/property-1.jpg') center/cover;opacity:.1}
+    .brand-content{position:relative;text-align:center}
+    .brand-logo{width:100px;height:100px;margin-bottom:24px;object-fit:contain;filter:drop-shadow(0 6px 24px rgba(200,164,90,.5))}
+    .brand-title{font-size:30px;font-weight:800;color:#C8A45A;letter-spacing:1px}
+    .brand-sub{font-size:11px;color:#888;letter-spacing:5px;text-transform:uppercase;margin-top:4px}
+    .brand-tagline{font-size:15px;color:rgba(255,255,255,.6);margin-top:36px;line-height:1.7;max-width:280px}
+    .brand-features{margin-top:48px;display:flex;flex-direction:column;gap:12px}
+    .brand-feat{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.7);font-size:14px}
+    .brand-feat-dot{width:8px;height:8px;border-radius:50%;background:#C8A45A;flex-shrink:0}
+    .form-side{width:500px;background:#fff;display:flex;flex-direction:column;justify-content:center;padding:52px 48px;overflow-y:auto;min-height:100vh}
+    .panel{display:none;animation:fadeIn .25s ease}
+    .panel.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    .role-badge{display:inline-flex;align-items:center;gap:8px;background:#0B1F3A;color:#C8A45A;border-radius:100px;padding:7px 16px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:28px}
+    .role-dot{width:6px;height:6px;border-radius:50%;background:#10b981}
+    .form-title{font-size:26px;font-weight:800;color:#0B1F3A;margin-bottom:6px}
+    .form-subtitle{font-size:14px;color:#777;margin-bottom:32px;line-height:1.5}
+    .field{margin-bottom:18px}
+    .field label{display:block;font-size:13px;font-weight:600;color:#333;margin-bottom:6px}
+    .field input{width:100%;padding:13px 16px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:15px;font-family:inherit;outline:none;transition:all .2s;background:#fafafa;color:#111}
+    .field input:focus{border-color:#C8A45A;background:#fff;box-shadow:0 0 0 3px rgba(200,164,90,.1)}
+    .otp-input{text-align:center;font-size:32px;font-weight:700;letter-spacing:16px;color:#0B1F3A;padding:16px}
+    .btn{width:100%;padding:14px;background:#C8A45A;color:#0B1F3A;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+    .btn:hover:not(:disabled){background:#b8943a;transform:translateY(-1px);box-shadow:0 6px 24px rgba(200,164,90,.35)}
+    .btn:disabled{background:#e0e0e0;color:#aaa;cursor:not-allowed;transform:none;box-shadow:none}
+    .btn-outline{background:transparent;border:1.5px solid #ddd;color:#555;margin-top:10px}
+    .btn-outline:hover:not(:disabled){background:#f5f5f5;border-color:#bbb;box-shadow:none;transform:none}
+    .err-msg{color:#e53935;font-size:13px;margin-top:10px;padding:10px 14px;background:#fdecea;border-radius:8px;display:none}
+    .err-msg.show{display:block}
+    .ok-msg{color:#2e7d32;font-size:13px;margin-top:10px;padding:10px 14px;background:#e8f5e9;border-radius:8px;display:none}
+    .ok-msg.show{display:block}
+    .link-btn{background:none;border:none;color:#C8A45A;font-size:13px;cursor:pointer;font-family:inherit;text-decoration:underline;padding:0}
+    .link-btn:hover{color:#b8943a}
+    .back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:#888;font-size:14px;cursor:pointer;font-family:inherit;padding:0;margin-bottom:28px}
+    .back-btn:hover{color:#0B1F3A}
+    .captcha-wrap{margin-bottom:20px}
+    .divider{text-align:center;margin:20px 0;position:relative}
+    .divider::before{content:'';position:absolute;left:0;right:0;top:50%;border-top:1px solid #eee}
+    .divider span{position:relative;background:#fff;padding:0 14px;font-size:13px;color:#aaa}
+    .success-icon{text-align:center;font-size:56px;margin-bottom:16px}
+    .spinner{width:16px;height:16px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .portal-links{margin-top:32px;padding-top:24px;border-top:1px solid #f0f0f0;text-align:center;font-size:13px;color:#999}
+    .portal-links a{color:#C8A45A;text-decoration:none;font-weight:600;margin:0 8px}
+    .portal-links a:hover{text-decoration:underline}
+    @media(max-width:768px){.brand{display:none}.form-side{width:100%;padding:32px 24px}}
+  </style>
+</head>
+<body>
+<div class="split">
+  <div class="brand">
+    <div class="brand-content">
+      <img src="/og-logo.png" class="brand-logo" alt="OG Landmark" />
+      <div class="brand-title">OG Landmark</div>
+      <div class="brand-sub">Premium Real Estate</div>
+      <div class="brand-tagline">List your properties and connect with qualified buyers across Pakistan.</div>
+      <div class="brand-features">
+        <div class="brand-feat"><span class="brand-feat-dot"></span>Manage Your Listings</div>
+        <div class="brand-feat"><span class="brand-feat-dot"></span>Track Inquiries & Offers</div>
+        <div class="brand-feat"><span class="brand-feat-dot"></span>Schedule Appointments</div>
+        <div class="brand-feat"><span class="brand-feat-dot"></span>Real-time Notifications</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-side">
+
+    <!-- Panel 1: Login -->
+    <div class="panel active" id="panel-login">
+      <div class="role-badge"><span class="role-dot"></span>Seller Portal</div>
+      <div class="form-title">Seller Login</div>
+      <div class="form-subtitle">Sign in to manage your properties and leads</div>
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="your@email.com" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <div class="captcha-wrap" id="captcha-login"></div>
+      <div class="err-msg" id="login-err"></div>
+      <button class="btn" id="login-btn" onclick="doLogin()">Sign In</button>
+      <div class="divider"><span>or</span></div>
+      <button class="link-btn" onclick="showPanel('panel-reset')">Forgot Password?</button>
+      <div class="portal-links">
+        Other portals: <a href="/portal/buyer">Buyer</a>
+      </div>
+    </div>
+
+    <!-- Panel 2: Password Reset Request -->
+    <div class="panel" id="panel-reset">
+      <button class="back-btn" onclick="showPanel('panel-login')">← Back to Login</button>
+      <div class="role-badge"><span class="role-dot"></span>Seller Portal</div>
+      <div class="form-title">Reset Password</div>
+      <div class="form-subtitle">Enter your registered email to receive a reset code</div>
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="reset-email" placeholder="your@email.com" />
+      </div>
+      <div class="captcha-wrap" id="captcha-reset"></div>
+      <div class="err-msg" id="reset-err"></div>
+      <div class="ok-msg" id="reset-ok"></div>
+      <button class="btn" id="reset-btn" onclick="doResetRequest()">Send Reset Code</button>
+      <button class="btn btn-outline" onclick="showPanel('panel-login')">Cancel</button>
+    </div>
+
+    <!-- Panel 3: Password Reset Confirm -->
+    <div class="panel" id="panel-reset-confirm">
+      <button class="back-btn" onclick="showPanel('panel-reset')">← Back</button>
+      <div class="role-badge"><span class="role-dot"></span>Seller Portal</div>
+      <div class="form-title">Set New Password</div>
+      <div class="form-subtitle">Enter the code from your email and a new password</div>
+      <div class="field">
+        <label>Reset Code</label>
+        <input type="text" class="otp-input" id="confirm-otp" placeholder="000000" maxlength="6" inputmode="numeric" />
+      </div>
+      <div class="field">
+        <label>New Password</label>
+        <input type="password" id="confirm-pass" placeholder="Min. 8 characters" autocomplete="new-password" />
+      </div>
+      <div class="field">
+        <label>Confirm Password</label>
+        <input type="password" id="confirm-pass2" placeholder="Repeat password" autocomplete="new-password" />
+      </div>
+      <div class="err-msg" id="confirm-err"></div>
+      <button class="btn" id="confirm-btn" onclick="doResetConfirm()">Update Password</button>
+    </div>
+
+    <!-- Panel 4: Success -->
+    <div class="panel" id="panel-success">
+      <div class="success-icon">✅</div>
+      <div class="form-title" style="text-align:center">Password Updated!</div>
+      <div class="form-subtitle" style="text-align:center;margin-bottom:28px">Your password has been changed. Redirecting to login…</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let siteKey = null;
+let captchaLoginId = null;
+let captchaResetId = null;
+let pendingEmail = '';
+
+async function init() {
+  try {
+    const cfg = await fetch('/api/config').then(r => r.json());
+    siteKey = cfg.recaptchaSiteKey;
+    if (siteKey) loadRecaptcha();
+  } catch(e) {}
+}
+
+function loadRecaptcha() {
+  const s = document.createElement('script');
+  s.src = 'https://www.google.com/recaptcha/api.js?onload=renderCaptchas&render=explicit';
+  s.async = true; s.defer = true;
+  document.head.appendChild(s);
+}
+
+window.renderCaptchas = function() {
+  if (siteKey) {
+    captchaLoginId = grecaptcha.render('captcha-login', { sitekey: siteKey });
+    captchaResetId = grecaptcha.render('captcha-reset', { sitekey: siteKey });
+  }
+};
+
+async function verifyCaptcha(widgetId) {
+  if (!siteKey) return true;
+  const token = grecaptcha.getResponse(widgetId);
+  if (!token) return false;
+  const r = await fetch('/api/auth/captcha', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ token })
+  });
+  const d = await r.json();
+  return d.success;
+}
+
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  clearErrors();
+}
+
+function clearErrors() {
+  document.querySelectorAll('.err-msg,.ok-msg').forEach(el => el.classList.remove('show'));
+}
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function showOk(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function setLoading(btnId, loading, text) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.innerHTML = loading ? '<span class="spinner"></span> Please wait…' : text;
+}
+
+async function doLogin() {
+  clearErrors();
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  if (!email || !pass) return showErr('login-err', 'Please enter your email and password.');
+  setLoading('login-btn', true, 'Sign In');
+  try {
+    const ok = await verifyCaptcha(captchaLoginId);
+    if (!ok) { setLoading('login-btn', false, 'Sign In'); return showErr('login-err', 'Please complete the CAPTCHA.'); }
+
+    const r = await fetch('/api/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password: pass })
+    });
+    const d = await r.json();
+    if (!r.ok) {
+      setLoading('login-btn', false, 'Sign In');
+      if (d.code === 'AGENT_PENDING') {
+        return showErr('login-err', '⏳ Your agent account is pending admin approval. Please wait — you will be notified once approved.');
+      }
+      if (d.code === 'AGENT_REJECTED') {
+        return showErr('login-err', '❌ Your agent account was not approved. Please contact OG Landmark admin at support@oglandmark.com');
+      }
+      return showErr('login-err', d.error || 'Login failed.');
+    }
+    if (!['Seller','Agent'].includes(d.user.role)) { setLoading('login-btn', false, 'Sign In'); return showErr('login-err', 'This account is not registered as a Seller or Agent.'); }
+
+    localStorage.setItem('og_token', d.token);
+    localStorage.setItem('og_user', JSON.stringify(d.user));
+    window.location.href = d.user.role === 'Agent' ? '/agent' : '/seller/add-property';
+  } catch(e) {
+    showErr('login-err', 'Connection error. Please try again.');
+    setLoading('login-btn', false, 'Sign In');
+  }
+}
+
+async function doResetRequest() {
+  clearErrors();
+  const email = document.getElementById('reset-email').value.trim();
+  if (!email) return showErr('reset-err', 'Please enter your email.');
+  setLoading('reset-btn', true, 'Send Reset Code');
+  try {
+    const ok = await verifyCaptcha(captchaResetId);
+    if (!ok) { setLoading('reset-btn', false, 'Send Reset Code'); return showErr('reset-err', 'Please complete the CAPTCHA.'); }
+
+    await fetch('/api/auth/request-reset', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email, role: 'Seller' })
+    });
+    pendingEmail = email;
+    showOk('reset-ok', 'Reset code sent! Check your email (or server logs).');
+    setTimeout(() => showPanel('panel-reset-confirm'), 1500);
+  } catch(e) {
+    showErr('reset-err', 'Connection error. Please try again.');
+  }
+  setLoading('reset-btn', false, 'Send Reset Code');
+}
+
+async function doResetConfirm() {
+  clearErrors();
+  const otp  = document.getElementById('confirm-otp').value.trim();
+  const pass = document.getElementById('confirm-pass').value;
+  const pass2= document.getElementById('confirm-pass2').value;
+  if (otp.length !== 6)  return showErr('confirm-err', 'Enter the 6-digit code.');
+  if (pass.length < 8)   return showErr('confirm-err', 'Password must be at least 8 characters.');
+  if (pass !== pass2)    return showErr('confirm-err', 'Passwords do not match.');
+  setLoading('confirm-btn', true, 'Update Password');
+  try {
+    const r = await fetch('/api/auth/confirm-reset', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email: pendingEmail, otp, newPassword: pass })
+    });
+    const d = await r.json();
+    if (!r.ok) { setLoading('confirm-btn', false, 'Update Password'); return showErr('confirm-err', d.error || 'Failed.'); }
+    showPanel('panel-success');
+    setTimeout(() => showPanel('panel-login'), 2500);
+  } catch(e) {
+    showErr('confirm-err', 'Connection error. Please try again.');
+    setLoading('confirm-btn', false, 'Update Password');
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const active = document.querySelector('.panel.active').id;
+  if (active === 'panel-login')          doLogin();
+  else if (active === 'panel-reset')     doResetRequest();
+  else if (active === 'panel-reset-confirm') doResetConfirm();
+});
+
+init();
+</script>
+</body>
+</html>

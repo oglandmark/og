@@ -31,7 +31,7 @@ export function VideoWatermark({ style }: { style?: StyleProp<ViewStyle> }) {
 
 const styles = StyleSheet.create({
   anchor: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 25,

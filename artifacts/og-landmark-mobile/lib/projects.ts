@@ -46,18 +46,13 @@ function apiToProject(p: ApiProperty): Project {
   };
 }
 
-/** Fetch live projects from backend; fall back to hardcoded sample */
+/** Fetch live projects from backend. Errors deliberately propagate to the UI. */
 export async function fetchProjects(): Promise<Project[]> {
-  try {
-    const apiProps = await getProperties({ type: 'Housing Society', limit: 50 });
-    if (apiProps.length > 0) return apiProps.map(apiToProject);
-    // Also try commercial/apartment types
-    const all = await getProperties({ limit: 100 });
-    const projectTypes = ['Housing Society', 'Apartment', 'Commercial'];
-    const filtered = all.filter((p) => projectTypes.includes(p.type));
-    if (filtered.length > 0) return filtered.map(apiToProject);
-  } catch { /* offline — use local fallback */ }
-  return projects;
+  const apiProps = await getProperties({ type: 'Housing Society', limit: 50 });
+  if (apiProps.length > 0) return apiProps.map(apiToProject);
+  const all = await getProperties({ limit: 100 });
+  const projectTypes = ['Housing Society', 'Apartment', 'Commercial'];
+  return all.filter((p) => projectTypes.includes(p.type)).map(apiToProject);
 }
 
 // ── Local fallback (sample data) ──────────────────────────────────────────────

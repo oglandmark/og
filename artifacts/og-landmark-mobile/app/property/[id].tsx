@@ -638,7 +638,7 @@ function PropertyDetailScreen() {
             );
             setActiveImage(Math.max(0, Math.min(idx, images.length - 1)));
           }}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         >
           {images.map((img, i) => (
             <Pressable key={i} onPress={() => setGalleryVisible(true)} accessibilityLabel="Open full-screen gallery">
@@ -1152,7 +1152,7 @@ const styles = StyleSheet.create({
   imageWrap: { height: 352, position: 'relative' },
   image: { width: '100%', height: '100%' },
   imageTap: { flex: 1 },
-  imageShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(18, 25, 28, 0.28)' },
+  imageShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(18, 25, 28, 0.28)' },
   backRow: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between' },
   topActions: { flexDirection: 'row', gap: 8 },
   roundButton: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
@@ -1269,7 +1269,7 @@ const styles = StyleSheet.create({
   // ── Property detail Google Maps card ────────────────────────────────────────
   detailMapCard:         { borderWidth: 1, borderRadius: 20, overflow: 'hidden', marginBottom: 12, elevation: 2, shadowColor: '#1c2024', shadowOpacity: 0.06, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } },
   detailMapSurface:      { height: 200, overflow: 'hidden', position: 'relative' },
-  detailMapNoCoords:     { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', gap: 10 },
+  detailMapNoCoords:     { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', gap: 10 },
   detailMapNoCoordsText: { fontFamily: 'Inter_400Regular', fontSize: 13 },
   detailMapSatBtn:       { position: 'absolute', top: 10, right: 10, flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1, elevation: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
   detailMapSatLabel:     { fontFamily: 'Inter_600SemiBold', fontSize: 11 },

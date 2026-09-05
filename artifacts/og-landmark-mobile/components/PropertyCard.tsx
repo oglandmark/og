@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   galleryArrowRight:{ right: 8 },
   imageCounter:  { position: 'absolute', bottom: 8, right: 9, zIndex: 4, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#071521bb', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 4 },
   imageCounterText:{ color: '#fff', fontSize: 9, fontWeight: '700' },
-  imageShade:    { ...StyleSheet.absoluteFillObject },
+  imageShade:    { ...StyleSheet.absoluteFill },
   status:        { position: 'absolute', top: 12, left: 12, borderRadius: 8, borderWidth: 1, paddingHorizontal: 9, paddingVertical: 6, overflow: 'hidden' },
   demoBadge:    { position: 'absolute', top: 48, left: 12 },
   statusText:    { fontFamily: 'Inter_600SemiBold', fontSize: 10, letterSpacing: 0.4 },

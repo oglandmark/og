@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, overflow: 'hidden' },
   webView: { flex: 1, backgroundColor: 'transparent' },
   loading: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 9,

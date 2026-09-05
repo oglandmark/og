@@ -102,7 +102,7 @@ export function OpeningSplash({ onFinished }: { onFinished?: () => void }) {
   return (
     <Animated.View
       pointerEvents="auto"
-      style={[StyleSheet.absoluteFillObject, styles.overlay, { backgroundColor: colors.action }, overlayStyle]}
+      style={[StyleSheet.absoluteFill, styles.overlay, { backgroundColor: colors.action }, overlayStyle]}
     >
       <StatusBar style="light" />
       <LinearGradient

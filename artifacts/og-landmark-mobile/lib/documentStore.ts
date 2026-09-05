@@ -1,11 +1,8 @@
 /**
  * Developer Portal — Document Store
- * Stores document metadata in AsyncStorage; the URI points to the local file
- * selected via expo-image-picker. API-ready: swap with oglandmark.com file upload.
+ * Stores document metadata against the authenticated backend account.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const DOCS_KEY = '@og-landmark/documents-v1';
+import { apiRequest } from '@/lib/api';
 
 export type DocType =
   | 'NOC'
@@ -49,36 +46,17 @@ export function docTypeColor(type: DocType): { bg: string; text: string; icon: s
 }
 
 export async function getDocuments(developerId: string): Promise<DeveloperDocument[]> {
-  try {
-    const raw = await AsyncStorage.getItem(DOCS_KEY);
-    if (!raw) return [];
-    const all: DeveloperDocument[] = JSON.parse(raw);
-    return all
-      .filter((d) => d.developerId === developerId)
-      .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
-  } catch {
-    return [];
-  }
+  return (await apiRequest<DeveloperDocument[]>('/api/developer/documents'))
+    .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
 }
 
 export async function saveDocument(doc: DeveloperDocument): Promise<void> {
-  try {
-    const raw = await AsyncStorage.getItem(DOCS_KEY);
-    const all: DeveloperDocument[] = raw ? JSON.parse(raw) : [];
-    const idx = all.findIndex((d) => d.id === doc.id);
-    if (idx >= 0) all[idx] = doc;
-    else all.push(doc);
-    await AsyncStorage.setItem(DOCS_KEY, JSON.stringify(all));
-  } catch {
-    // TODO: POST oglandmark.com/api/developer/documents (multipart upload)
-  }
+  const existing = !doc.id.startsWith('doc_');
+  await apiRequest(`/api/developer/documents${existing ? `/${encodeURIComponent(doc.id)}` : ''}`, {
+    method: existing ? 'PUT' : 'POST', body: JSON.stringify(doc),
+  });
 }
 
 export async function deleteDocument(id: string): Promise<void> {
-  try {
-    const raw = await AsyncStorage.getItem(DOCS_KEY);
-    if (!raw) return;
-    const all: DeveloperDocument[] = JSON.parse(raw);
-    await AsyncStorage.setItem(DOCS_KEY, JSON.stringify(all.filter((d) => d.id !== id)));
-  } catch {}
+  await apiRequest(`/api/developer/documents/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }

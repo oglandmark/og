@@ -4,6 +4,7 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "strict": true,
+    "types": ["node"],
     "paths": {
       "@/*": [
         "./*"

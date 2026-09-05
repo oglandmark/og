@@ -1,8 +1,6 @@
 /**
- * User Listings Store — write-through cache
- * Writes go to backend first; AsyncStorage used as offline cache.
+ * User Listings Store — authenticated backend source of truth.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   createProperty,
   updateProperty,
@@ -57,9 +55,6 @@ export type UserListing = {
   videoUrl?: string;       // backend URL after upload
 };
 
-const KEY     = '@og-landmark/user-listings-v2';
-const OLD_KEY = '@og-landmark/user-listings-v1';
-
 function migrateListing(l: Partial<UserListing> & { id: string; postedBy: string }): UserListing {
   return {
     agentName: '', role: 'agent', title: '', type: '', category: '',
@@ -69,26 +64,6 @@ function migrateListing(l: Partial<UserListing> & { id: string; postedBy: string
     views: 0, saves: 0, leadsCount: 0,
     ...l,
   } as UserListing;
-}
-
-// ── Local cache helpers ───────────────────────────────────────────────────────
-
-async function readCache(): Promise<UserListing[]> {
-  try {
-    const raw = await AsyncStorage.getItem(KEY);
-    if (raw) return (JSON.parse(raw) as UserListing[]).map(migrateListing);
-    const oldRaw = await AsyncStorage.getItem(OLD_KEY);
-    if (oldRaw) {
-      const migrated = (JSON.parse(oldRaw) as UserListing[]).map(migrateListing);
-      await AsyncStorage.setItem(KEY, JSON.stringify(migrated));
-      return migrated;
-    }
-    return [];
-  } catch { return []; }
-}
-
-async function writeCache(listings: UserListing[]): Promise<void> {
-  await AsyncStorage.setItem(KEY, JSON.stringify(listings)).catch(() => undefined);
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -129,28 +104,13 @@ function mapApiPropToListing(p: Awaited<ReturnType<typeof getMyProperties>>[numb
 }
 
 export async function getUserListings(): Promise<UserListing[]> {
-  try {
-    // /api/my-properties returns ALL statuses for the logged-in user (Pending + Active + Rejected)
-    const apiProps = await getMyProperties();
-    if (apiProps.length > 0) {
-      const fromApi = apiProps.map(mapApiPropToListing);
-      // Merge: keep local-only cache entries (offline submissions) that don't have a server id yet
-      const cache = await readCache();
-      const apiIds = new Set(fromApi.map((l) => l.id));
-      const localOnly = cache.filter((l) => !apiIds.has(l.id) && !l.apiId);
-      const merged = [...localOnly, ...fromApi];
-      await writeCache(merged);
-      return merged;
-    }
-    // Not logged in or no server results — fall back to local cache
-    return readCache();
-  } catch {
-    return readCache();
-  }
+  return (await getMyProperties()).map(mapApiPropToListing);
 }
 
 export async function saveAllListings(listings: UserListing[]): Promise<void> {
-  await writeCache(listings);
+  await Promise.all(listings.filter((listing) => listing.apiId).map((listing) =>
+    updateUserListing(listing),
+  ));
 }
 
 export async function addUserListing(listing: UserListing): Promise<void> {
@@ -165,84 +125,43 @@ export async function addUserListing(listing: UserListing): Promise<void> {
     updatedAt: now,
   };
 
-  try {
-    const payload: CreatePropertyPayload = {
-      title:       newEntry.title,
-      type:        newEntry.type,
-      status:      newEntry.status,
-      price:       newEntry.price,
-      area:        newEntry.area,
-      areaUnit:    newEntry.areaUnit,
-      bedrooms:    newEntry.bedrooms,
-      bathrooms:   newEntry.bathrooms,
-      city:        newEntry.city,
-      address:     newEntry.fullAddress || newEntry.neighborhood,
-      description: newEntry.description,
-      lat:         newEntry.latitude,
-      lng:         newEntry.longitude,
-      images:      newEntry.images,
-      videoUrl:    newEntry.videoUrl,
-    };
-    const created = await createProperty(payload);
-    newEntry.apiId = created.id;
-    newEntry.id    = `api_${created.id}`;
-  } catch {
-    // offline — keep local id, sync later
-  }
-
-  const existing = await readCache();
-  await writeCache([newEntry, ...existing]);
+  const payload: CreatePropertyPayload = {
+    title: newEntry.title, type: newEntry.type, status: newEntry.status,
+    price: newEntry.price, area: newEntry.area, areaUnit: newEntry.areaUnit,
+    bedrooms: newEntry.bedrooms, bathrooms: newEntry.bathrooms, city: newEntry.city,
+    address: newEntry.fullAddress || newEntry.neighborhood, description: newEntry.description,
+    lat: newEntry.latitude, lng: newEntry.longitude, images: newEntry.images, videoUrl: newEntry.videoUrl,
+  };
+  await createProperty(payload);
 }
 
 export async function updateUserListing(updated: UserListing): Promise<void> {
   const now = new Date().toISOString();
   const entry = { ...updated, updatedAt: now };
 
-  if (entry.apiId) {
-    try {
-      await updateProperty(entry.apiId, {
-        title:       entry.title,
-        type:        entry.type,
-        status:      entry.status,
-        price:       entry.price,
-        area:        entry.area,
-        areaUnit:    entry.areaUnit,
-        bedrooms:    entry.bedrooms,
-        bathrooms:   entry.bathrooms,
-        city:        entry.city,
-        address:     entry.fullAddress || entry.neighborhood,
-        description: entry.description,
-        lat:         entry.latitude,
-        lng:         entry.longitude,
-      });
-    } catch { /* offline — update cache only */ }
-  }
-
-  const all = await readCache();
-  await writeCache(all.map((l) => l.id === entry.id ? entry : l));
+  if (!entry.apiId) throw new Error('Listing is not available on the server.');
+  await updateProperty(entry.apiId, {
+    title: entry.title, type: entry.type, status: entry.status, price: entry.price,
+    area: entry.area, areaUnit: entry.areaUnit, bedrooms: entry.bedrooms, bathrooms: entry.bathrooms,
+    city: entry.city, address: entry.fullAddress || entry.neighborhood, description: entry.description,
+    lat: entry.latitude, lng: entry.longitude,
+  });
 }
 
 export async function updateListingStatus(
   id: string, listingStatus: ListingStatus,
 ): Promise<UserListing[]> {
-  const all     = await readCache();
-  const now     = new Date().toISOString();
-  const updated = all.map((l) => l.id === id ? { ...l, listingStatus, updatedAt: now } : l);
-  await writeCache(updated);
-  return updated;
+  const listing = (await getUserListings()).find((item) => item.id === id);
+  if (!listing?.apiId) throw new Error('Listing is not available on the server.');
+  await updateProperty(listing.apiId, { status: listingStatus });
+  return getUserListings();
 }
 
 export async function deleteUserListing(id: string): Promise<UserListing[]> {
-  const all     = await readCache();
-  const target  = all.find((l) => l.id === id);
-
-  if (target?.apiId) {
-    try { await deleteProperty(target.apiId); } catch { /* offline */ }
-  }
-
-  const updated = all.filter((l) => l.id !== id);
-  await writeCache(updated);
-  return updated;
+  const target = (await getUserListings()).find((listing) => listing.id === id);
+  if (!target?.apiId) throw new Error('Listing is not available on the server.');
+  await deleteProperty(target.apiId);
+  return getUserListings();
 }
 
 export async function getMyListings(userId: string): Promise<UserListing[]> {

@@ -1,46 +1,28 @@
 /**
  * Recent Searches Store
  * Records the last N text searches made from the Explore screen.
- * Stored in AsyncStorage, capped at MAX_ENTRIES.
+ * Stored against the authenticated account, capped at MAX_ENTRIES.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiRequest } from '@/lib/api';
 
-const KEY = '@og-landmark/recent-searches-v1';
 const MAX_ENTRIES = 10;
-let _cache: string[] | null = null;
-
-async function load(): Promise<string[]> {
-  if (_cache) return _cache;
-  try {
-    const raw = await AsyncStorage.getItem(KEY);
-    if (raw) { _cache = JSON.parse(raw) as string[]; return _cache; }
-  } catch { /* ignore */ }
-  _cache = [];
-  return _cache;
-}
-
-async function persist(list: string[]): Promise<void> {
-  _cache = list;
-  await AsyncStorage.setItem(KEY, JSON.stringify(list)).catch(() => undefined);
-}
 
 export async function getRecentSearches(): Promise<string[]> {
-  return load();
+  return apiRequest<string[]>('/api/recent-searches');
 }
 
 export async function addRecentSearch(query: string): Promise<void> {
   const q = query.trim();
   if (!q) return;
-  const list = await load();
-  const deduped = [q, ...list.filter((s) => s.toLowerCase() !== q.toLowerCase())].slice(0, MAX_ENTRIES);
-  await persist(deduped);
+  await apiRequest('/api/recent-searches', {
+    method: 'POST', body: JSON.stringify({ query: q, limit: MAX_ENTRIES }),
+  });
 }
 
 export async function clearRecentSearches(): Promise<void> {
-  await persist([]);
+  await apiRequest('/api/recent-searches', { method: 'DELETE' });
 }
 
 export async function removeRecentSearch(query: string): Promise<void> {
-  const list = await load();
-  await persist(list.filter((s) => s !== query));
+  await apiRequest(`/api/recent-searches/${encodeURIComponent(query)}`, { method: 'DELETE' });
 }

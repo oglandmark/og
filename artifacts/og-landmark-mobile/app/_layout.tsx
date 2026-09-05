@@ -42,7 +42,9 @@ function RootLayoutNav({ splashDone }: { splashDone: boolean }) {
   const notificationDenialAlertShown = React.useRef(false);
 
   useEffect(() => {
-    void configurePushNotifications();
+    void configurePushNotifications().catch((error: unknown) => {
+      console.warn('[push] Could not configure push notifications.', error);
+    });
 
     if (Platform.OS === 'web') return;
     let mounted = true;
@@ -292,10 +294,10 @@ export default function RootLayout() {
                   </GestureHandlerRootView>
                 </SavedProvider>
               </AuthProvider>
+              {Platform.OS !== 'web' && <OpeningSplash onFinished={() => setSplashDone(true)} />}
             </LanguageProvider>
           </OnboardingProvider>
         </QueryClientProvider>
-        {Platform.OS !== 'web' && <OpeningSplash onFinished={() => setSplashDone(true)} />}
       </ErrorBoundary>
     </SafeAreaProvider>
   );

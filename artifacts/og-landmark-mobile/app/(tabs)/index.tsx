@@ -1916,7 +1916,7 @@ export default function HomeScreen() {
         // Track banner's bottom edge so we know when it has scrolled off screen
         bannerBottomRef.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height;
       }}>
-        <CinematicBanner router={router} isScreenVisible={isVideoScreenVisible} externalSlides={apiBannerSlides} config={homeContent} />
+        <CinematicBanner isScreenVisible={isVideoScreenVisible} externalSlides={apiBannerSlides} config={homeContent} />
       </View>
 
       {/* ─── FIND YOUR PROPERTY (Browse / Discovery) ────────────────────── */}

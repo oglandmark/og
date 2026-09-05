@@ -420,6 +420,45 @@ export async function getBanners(): Promise<BannerSlide[]> {
 }
 
 // ─── Mobile settings ───────────────────────────────────────────────────────────
+export type MobilePortalConfig = {
+  title: string;
+  overviewTitle?: string;
+  quickActionsTitle?: string;
+  recentLeadsTitle?: string;
+  viewAllLeads?: string;
+  totalLeadsLabel?: string;
+  todayVisitsLabel?: string;
+  upcomingVisitsLabel?: string;
+  pendingTitle?: string;
+  pendingSubtitle?: string;
+  noLeadsTitle?: string;
+  noLeadsSubtitle?: string;
+  companyFallback?: string;
+  inventoryTitle?: string;
+  financialTitle?: string;
+  recentProjectsTitle?: string;
+  viewAllProjects?: string;
+  promotionLabel?: string;
+  promotionDescription?: string;
+  noProjectsTitle?: string;
+  noProjectsDescription?: string;
+  createFirstProject?: string;
+  showOverview?: boolean;
+  showQuickActions?: boolean;
+  showRecentLeads?: boolean;
+  showInventory?: boolean;
+  showFinancial?: boolean;
+  showPromotion?: boolean;
+  showRecentProjects?: boolean;
+  statLabels?: Record<string, string>;
+  statVisibility?: Record<string, boolean>;
+  kpiLabels?: Record<string, string>;
+  inventoryLabels?: Record<string, string>;
+  financialLabels?: Record<string, string>;
+  actionLabels?: Record<string, string>;
+  actionVisibility?: Record<string, boolean>;
+};
+
 export type MobileContent = {
   global: {
     theme: Record<string, string>;
@@ -442,7 +481,10 @@ export type MobileContent = {
     profile: { title: string; subtitle: string; showRecentlyViewed: boolean; showSavedSearches: boolean };
     account: Record<string, string>;
     tools: Record<string, string>;
-    portals: Record<string, string>;
+    portals: {
+      agent: MobilePortalConfig;
+      developer: MobilePortalConfig;
+    };
   };
 };
 

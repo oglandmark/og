@@ -20,6 +20,7 @@ import {
 } from '@/lib/developerStore';
 import { getDevLeads, calcDevLeadStats } from '@/lib/devLeadsStore';
 import { getSiteVisits, isUpcoming } from '@/lib/siteVisitStore';
+import type { MobileContent } from '@/lib/api';
 
 // ── Lead status display map ───────────────────────────────────────────────────
 const LEAD_STATUS_MAP: Record<string, { label: string; color: string }> = {
@@ -43,7 +44,7 @@ function DeveloperDashboard({
   logout: ReturnType<typeof useAuth>['logout'];
   tr: ReturnType<typeof useLanguage>['tr'];
   isRTL: boolean;
-  portalCopy: Record<string, string>;
+  portalCopy?: MobileContent['screens']['portals'];
 }) {
   const rtl = isRTL ? 'right' as const : 'left' as const;
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
@@ -67,32 +68,33 @@ function DeveloperDashboard({
   const isVerified = user?.verificationStatus === 'verified';
   const isPending  = user?.verificationStatus === 'pending';
   const firstName  = user?.name?.split(' ')[0] ?? '';
+  const portal = portalCopy?.developer;
 
   const kpiCards = [
-    { label: tr('totalProjects'),  value: String(stats.totalProjects),    icon: 'layers'    as const, color: '#102a43' },
-    { label: tr('activeProjects'), value: String(stats.activeProjects),   icon: 'activity'  as const, color: '#1a6b3a' },
-    { label: tr('availableUnits'), value: String(stats.availableUnits),   icon: 'grid'      as const, color: '#c8a45a' },
-    { label: tr('reservedUnits'),  value: String(stats.reservedUnits),    icon: 'lock'      as const, color: '#6b3a1a' },
-    { label: tr('devNewLeads'),    value: String(devLeadStats.newCount),  icon: 'users'     as const, color: '#102a43' },
-    { label: tr('devSiteVisits'),  value: String(visitCount),             icon: 'calendar'  as const, color: '#1a6b3a' },
-  ];
+    { key: 'totalProjects', label: portal?.kpiLabels?.totalProjects || tr('totalProjects'), value: String(stats.totalProjects), icon: 'layers' as const, color: '#102a43' },
+    { key: 'activeProjects', label: portal?.kpiLabels?.activeProjects || tr('activeProjects'), value: String(stats.activeProjects), icon: 'activity' as const, color: '#1a6b3a' },
+    { key: 'availableUnits', label: portal?.kpiLabels?.availableUnits || tr('availableUnits'), value: String(stats.availableUnits), icon: 'grid' as const, color: '#c8a45a' },
+    { key: 'reservedUnits', label: portal?.kpiLabels?.reservedUnits || tr('reservedUnits'), value: String(stats.reservedUnits), icon: 'lock' as const, color: '#6b3a1a' },
+    { key: 'newLeads', label: portal?.kpiLabels?.newLeads || tr('devNewLeads'), value: String(devLeadStats.newCount), icon: 'users' as const, color: '#102a43' },
+    { key: 'siteVisits', label: portal?.kpiLabels?.siteVisits || tr('devSiteVisits'), value: String(visitCount), icon: 'calendar' as const, color: '#1a6b3a' },
+  ].filter((card) => portal?.statVisibility?.[card.key] !== false);
 
   const financialCards = [
-    { label: tr('totalListedValue'), value: stats.totalListedValue > 0 ? `PKR ${formatPKR(stats.totalListedValue)}` : '—', icon: 'trending-up' as const, color: '#102a43' },
-    { label: tr('reservedValue'),    value: stats.reservedValue    > 0 ? `PKR ${formatPKR(stats.reservedValue)}`    : '—', icon: 'lock'        as const, color: '#c8a45a' },
-    { label: tr('soldValue'),        value: stats.soldValue        > 0 ? `PKR ${formatPKR(stats.soldValue)}`        : '—', icon: 'check-circle' as const, color: '#1a6b3a' },
+    { key: 'totalListed', label: portal?.financialLabels?.totalListed || tr('totalListedValue'), value: stats.totalListedValue > 0 ? `PKR ${formatPKR(stats.totalListedValue)}` : '—', icon: 'trending-up' as const, color: '#102a43' },
+    { key: 'reserved', label: portal?.financialLabels?.reserved || tr('reservedValue'), value: stats.reservedValue > 0 ? `PKR ${formatPKR(stats.reservedValue)}` : '—', icon: 'lock' as const, color: '#c8a45a' },
+    { key: 'sold', label: portal?.financialLabels?.sold || tr('soldValue'), value: stats.soldValue > 0 ? `PKR ${formatPKR(stats.soldValue)}` : '—', icon: 'check-circle' as const, color: '#1a6b3a' },
   ];
 
   const quickActions = [
-    { label: tr('createProject'),     icon: 'plus-circle' as const, onPress: () => router.push('/developer/create-project'  as Parameters<typeof router.push>[0]) },
-    { label: tr('myProjects'),        icon: 'layers'      as const, onPress: () => router.push('/(tabs)/projects'            as Parameters<typeof router.push>[0]) },
-    { label: tr('projectLeads'),      icon: 'users'       as const, onPress: () => router.push('/(tabs)/leads'               as Parameters<typeof router.push>[0]) },
-    { label: tr('createPaymentPlan'), icon: 'credit-card' as const, onPress: () => router.push('/developer/payment-plans'   as Parameters<typeof router.push>[0]) },
-    { label: tr('siteVisitsTitle'),   icon: 'calendar'    as const, onPress: () => router.push('/developer/site-visits'     as Parameters<typeof router.push>[0]) },
-    { label: tr('analyticsTitle'),    icon: 'bar-chart-2' as const, onPress: () => router.push('/developer/analytics'       as Parameters<typeof router.push>[0]) },
-    { label: tr('teamTitle'),         icon: 'user-check'  as const, onPress: () => router.push('/developer/team'            as Parameters<typeof router.push>[0]) },
-    { label: tr('documentsTitle'),    icon: 'folder'      as const, onPress: () => router.push('/developer/documents'       as Parameters<typeof router.push>[0]) },
-  ];
+    { key: 'createProject', label: portal?.actionLabels?.createProject || tr('createProject'), icon: 'plus-circle' as const, onPress: () => router.push('/developer/create-project' as Parameters<typeof router.push>[0]) },
+    { key: 'myProjects', label: portal?.actionLabels?.myProjects || tr('myProjects'), icon: 'layers' as const, onPress: () => router.push('/(tabs)/projects' as Parameters<typeof router.push>[0]) },
+    { key: 'projectLeads', label: portal?.actionLabels?.projectLeads || tr('projectLeads'), icon: 'users' as const, onPress: () => router.push('/(tabs)/leads' as Parameters<typeof router.push>[0]) },
+    { key: 'paymentPlans', label: portal?.actionLabels?.paymentPlans || tr('createPaymentPlan'), icon: 'credit-card' as const, onPress: () => router.push('/developer/payment-plans' as Parameters<typeof router.push>[0]) },
+    { key: 'siteVisits', label: portal?.actionLabels?.siteVisits || tr('siteVisitsTitle'), icon: 'calendar' as const, onPress: () => router.push('/developer/site-visits' as Parameters<typeof router.push>[0]) },
+    { key: 'analytics', label: portal?.actionLabels?.analytics || tr('analyticsTitle'), icon: 'bar-chart-2' as const, onPress: () => router.push('/developer/analytics' as Parameters<typeof router.push>[0]) },
+    { key: 'team', label: portal?.actionLabels?.team || tr('teamTitle'), icon: 'user-check' as const, onPress: () => router.push('/developer/team' as Parameters<typeof router.push>[0]) },
+    { key: 'documents', label: portal?.actionLabels?.documents || tr('documentsTitle'), icon: 'folder' as const, onPress: () => router.push('/developer/documents' as Parameters<typeof router.push>[0]) },
+  ].filter((action) => portal?.actionVisibility?.[action.key] !== false);
 
   const recentProjects = projects.slice(0, 3);
 
@@ -120,7 +122,7 @@ function DeveloperDashboard({
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[ds.companyName, { color: colors.foreground, textAlign: rtl }]} numberOfLines={1}>
-              {user?.companyName ?? 'My Company'}
+              {user?.companyName ?? portal?.companyFallback ?? 'My Company'}
             </Text>
             <View style={ds.badgeRow}>
               {isVerified ? (
@@ -142,16 +144,16 @@ function DeveloperDashboard({
             </View>
           </View>
           <View style={{ alignItems: isRTL ? 'flex-start' : 'flex-end' }}>
-            <Text style={[ds.portalLabel, { color: colors.mutedForeground }]}>{portalCopy.developerTitle || tr('devCompanyPortal')}</Text>
+            <Text style={[ds.portalLabel, { color: colors.mutedForeground }]}>{portal?.title || tr('devCompanyPortal')}</Text>
             <Text style={[ds.greeting2, { color: colors.foreground }]}>{tr('hiGreeting')}, {firstName}</Text>
           </View>
         </View>
       </AnimatedReveal>
 
       {/* ── KPI cards ─────────────────────────────────────────────── */}
-      <AnimatedReveal delay={100}>
+      {portal?.showOverview !== false && <AnimatedReveal delay={100}>
         <Text style={[ds.sectionLabel, { color: colors.mutedForeground, paddingHorizontal: 20, marginTop: 28, marginBottom: 14, textAlign: rtl }]}>
-          {tr('devKpiOverview')}
+          {portal?.overviewTitle || tr('devKpiOverview')}
         </Text>
         <View style={ds.kpiGrid}>
           {kpiCards.map((k, i) => (
@@ -167,31 +169,31 @@ function DeveloperDashboard({
             </AnimatedReveal>
           ))}
         </View>
-      </AnimatedReveal>
+      </AnimatedReveal>}
 
       {/* ── Inventory snapshot (4 pill chips) ────────────────────── */}
-      <AnimatedReveal delay={250}>
+      {portal?.showInventory !== false && <AnimatedReveal delay={250}>
         <Text style={[ds.sectionLabel, { color: colors.mutedForeground, paddingHorizontal: 20, marginTop: 26, marginBottom: 12, textAlign: rtl }]}>
-          {tr('inventorySnapshot')}
+          {portal?.inventoryTitle || tr('inventorySnapshot')}
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}>
-          {[
-            { label: `${tr('unitsTotal')}: ${stats.totalInventory}`,  color: colors.foreground,       bg: colors.secondary },
-            { label: `${tr('availableLabel')}: ${stats.availableUnits}`, color: '#1a6b3a',            bg: '#1a6b3a18' },
-            { label: `${tr('reservedLabel')}: ${stats.reservedUnits}`,   color: '#c8a45a',            bg: '#c8a45a18' },
-            { label: `${tr('soldLabel')}: ${stats.soldUnits}`,           color: colors.mutedForeground, bg: colors.secondary },
+            {[
+            { label: `${portal?.inventoryLabels?.total || tr('unitsTotal')}: ${stats.totalInventory}`, color: colors.foreground, bg: colors.secondary },
+            { label: `${portal?.inventoryLabels?.available || tr('availableLabel')}: ${stats.availableUnits}`, color: '#1a6b3a', bg: '#1a6b3a18' },
+            { label: `${portal?.inventoryLabels?.reserved || tr('reservedLabel')}: ${stats.reservedUnits}`, color: '#c8a45a', bg: '#c8a45a18' },
+            { label: `${portal?.inventoryLabels?.sold || tr('soldLabel')}: ${stats.soldUnits}`, color: colors.mutedForeground, bg: colors.secondary },
           ].map((chip) => (
             <View key={chip.label} style={[ds.chip, { backgroundColor: chip.bg }]}>
               <Text style={[ds.chipText, { color: chip.color }]}>{chip.label}</Text>
             </View>
           ))}
         </ScrollView>
-      </AnimatedReveal>
+      </AnimatedReveal>}
 
       {/* ── Financial overview ────────────────────────────────────── */}
-      <AnimatedReveal delay={300}>
+      {portal?.showFinancial !== false && <AnimatedReveal delay={300}>
         <Text style={[ds.sectionLabel, { color: colors.mutedForeground, paddingHorizontal: 20, marginTop: 26, marginBottom: 12, textAlign: rtl }]}>
-          {tr('financialOverview')}
+          {portal?.financialTitle || tr('financialOverview')}
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}>
           {financialCards.map((f) => (
@@ -205,10 +207,10 @@ function DeveloperDashboard({
             </View>
           ))}
         </ScrollView>
-      </AnimatedReveal>
+      </AnimatedReveal>}
 
       {/* ── Promote banner ────────────────────────────────────────── */}
-      <AnimatedReveal delay={330}>
+      {portal?.showPromotion !== false && <AnimatedReveal delay={330}>
         <Pressable
           onPress={() => router.push('/developer/promote' as Parameters<typeof router.push>[0])}
           style={({ pressed }) => [ds.promoteBanner, { backgroundColor: colors.action, opacity: pressed ? 0.88 : 1, marginHorizontal: 20, marginTop: 22 }]}
@@ -218,18 +220,18 @@ function DeveloperDashboard({
               <Feather name="zap" size={20} color="#c8a45a" />
             </View>
             <View>
-              <Text style={ds.promoteBannerTitle}>{tr('promoteBannerLabel')}</Text>
-              <Text style={ds.promoteBannerDesc}>{tr('promoteBannerDesc')}</Text>
+              <Text style={ds.promoteBannerTitle}>{portal?.promotionLabel || tr('promoteBannerLabel')}</Text>
+              <Text style={ds.promoteBannerDesc}>{portal?.promotionDescription || tr('promoteBannerDesc')}</Text>
             </View>
           </View>
           <Feather name="arrow-right" size={18} color="#ffffff99" />
         </Pressable>
-      </AnimatedReveal>
+      </AnimatedReveal>}
 
       {/* ── Quick actions ─────────────────────────────────────────── */}
-      <AnimatedReveal delay={350}>
+      {portal?.showQuickActions !== false && <AnimatedReveal delay={350}>
         <Text style={[ds.sectionLabel, { color: colors.mutedForeground, paddingHorizontal: 20, marginTop: 22, marginBottom: 14, textAlign: rtl }]}>
-          {tr('sectionQuickActions')}
+          {portal?.quickActionsTitle || tr('sectionQuickActions')}
         </Text>
         <View style={ds.kpiGrid}>
           {quickActions.map((a, i) => (
@@ -246,16 +248,16 @@ function DeveloperDashboard({
             </AnimatedReveal>
           ))}
         </View>
-      </AnimatedReveal>
+      </AnimatedReveal>}
 
       {/* ── Recent projects ───────────────────────────────────────── */}
-      <AnimatedReveal delay={460}>
+      {portal?.showRecentProjects !== false && <AnimatedReveal delay={460}>
         <View style={[ds.sectionHeader, { paddingHorizontal: 20, marginTop: 28 }]}>
           <Text style={[ds.sectionLabel, { color: colors.mutedForeground, textAlign: rtl }]}>
-            {tr('sectionRecentProjects')}
+            {portal?.recentProjectsTitle || tr('sectionRecentProjects')}
           </Text>
           <Pressable onPress={() => router.push('/(tabs)/projects' as Parameters<typeof router.push>[0])}>
-            <Text style={[ds.viewAll, { color: colors.action }]}>{tr('viewAllProjects')}</Text>
+            <Text style={[ds.viewAll, { color: colors.action }]}>{portal?.viewAllProjects || tr('viewAllProjects')}</Text>
           </Pressable>
         </View>
         <View style={{ paddingHorizontal: 20, marginTop: 12, gap: 10 }}>
@@ -266,11 +268,11 @@ function DeveloperDashboard({
                 style={[ds.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}
               >
                 <Feather name="layers" size={28} color={colors.mutedForeground} style={{ marginBottom: 10 }} />
-                <Text style={[ds.emptyTitle, { color: colors.foreground }]}>{tr('noProjectsYet')}</Text>
-                <Text style={[ds.emptyDesc, { color: colors.mutedForeground }]}>{tr('noProjectsDesc')}</Text>
+                <Text style={[ds.emptyTitle, { color: colors.foreground }]}>{portal?.noProjectsTitle || tr('noProjectsYet')}</Text>
+                <Text style={[ds.emptyDesc, { color: colors.mutedForeground }]}>{portal?.noProjectsDescription || tr('noProjectsDesc')}</Text>
                 <View style={[ds.emptyBtn, { backgroundColor: colors.action }]}>
                   <Feather name="plus" size={14} color="#ffffff" />
-                  <Text style={ds.emptyBtnText}>{tr('createFirstProject')}</Text>
+                  <Text style={ds.emptyBtnText}>{portal?.createFirstProject || tr('createFirstProject')}</Text>
                 </View>
               </Pressable>
             </AnimatedReveal>
@@ -303,7 +305,7 @@ function DeveloperDashboard({
             })
           )}
         </View>
-      </AnimatedReveal>
+      </AnimatedReveal>}
     </ScrollView>
   );
 }
@@ -325,7 +327,8 @@ export default function DashboardScreen() {
   const botPad  = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
   const rtl     = isRTL ? 'right' as const : 'left' as const;
   const isPending = user?.verificationStatus === 'pending';
-  const portalCopy = content?.screens?.portals || {};
+  const portalCopy = content?.screens?.portals;
+  const agentPortal = portalCopy?.agent;
 
   // Agent-specific state
   const [activeListingsCount, setActiveListingsCount] = useState(0);
@@ -375,21 +378,21 @@ export default function DashboardScreen() {
 
   // ── Agent / other dashboard ──────────────────────────────────────
   const agentStats = [
-    { label: tr('activeListings'),    value: String(activeListingsCount), icon: 'home'          as const, color: '#102a43', route: '/(tabs)/listings' },
-    { label: tr('totalViews'),        value: String(totalViews),          icon: 'eye'           as const, color: '#1a6b3a', route: '/settings/analytics' },
-    { label: tr('newLeads'),          value: String(newLeadsCount),       icon: 'users'         as const, color: '#c8a45a', route: '/(tabs)/leads' },
-    { label: 'Total Leads',           value: String(totalLeadsCount),     icon: 'user-check'    as const, color: '#1a6b3a', route: '/(tabs)/leads' },
-    { label: "Today's Visits",        value: String(todayVisits),         icon: 'calendar'      as const, color: '#7c3aed', route: '/agent/visits' },
-    { label: 'Upcoming Visits',       value: String(upcomingVisits),      icon: 'clock'         as const, color: '#b94b42', route: '/agent/visits' },
-  ];
+    { key: 'activeListings', label: agentPortal?.statLabels?.activeListings || tr('activeListings'), value: String(activeListingsCount), icon: 'home' as const, color: '#102a43', route: '/(tabs)/listings' },
+    { key: 'totalViews', label: agentPortal?.statLabels?.totalViews || tr('totalViews'), value: String(totalViews), icon: 'eye' as const, color: '#1a6b3a', route: '/settings/analytics' },
+    { key: 'newLeads', label: agentPortal?.statLabels?.newLeads || tr('newLeads'), value: String(newLeadsCount), icon: 'users' as const, color: '#c8a45a', route: '/(tabs)/leads' },
+    { key: 'totalLeads', label: agentPortal?.statLabels?.totalLeads || agentPortal?.totalLeadsLabel || 'Total Leads', value: String(totalLeadsCount), icon: 'user-check' as const, color: '#1a6b3a', route: '/(tabs)/leads' },
+    { key: 'todayVisits', label: agentPortal?.statLabels?.todayVisits || agentPortal?.todayVisitsLabel || "Today's Visits", value: String(todayVisits), icon: 'calendar' as const, color: '#7c3aed', route: '/agent/visits' },
+    { key: 'upcomingVisits', label: agentPortal?.statLabels?.upcomingVisits || agentPortal?.upcomingVisitsLabel || 'Upcoming Visits', value: String(upcomingVisits), icon: 'clock' as const, color: '#b94b42', route: '/agent/visits' },
+  ].filter((card) => agentPortal?.statVisibility?.[card.key] !== false);
   const agentActions = [
-    { label: 'Post Property',    icon: 'plus-circle'   as const, route: '/(tabs)/post-ad'  },
-    { label: 'My Listings',      icon: 'home'          as const, route: '/(tabs)/listings' },
-    { label: 'CRM / Leads',      icon: 'users'         as const, route: '/(tabs)/leads'    },
-    { label: 'Add Lead',         icon: 'user-plus'     as const, route: '/agent/add-lead'  },
-    { label: 'Schedule Visit',   icon: 'calendar'      as const, route: '/agent/visits'    },
-    { label: 'Messages',         icon: 'message-circle'as const, route: '/(tabs)/messages' },
-  ];
+    { key: 'postProperty', label: agentPortal?.actionLabels?.postProperty || 'Post Property', icon: 'plus-circle' as const, route: '/(tabs)/post-ad' },
+    { key: 'myListings', label: agentPortal?.actionLabels?.myListings || 'My Listings', icon: 'home' as const, route: '/(tabs)/listings' },
+    { key: 'leads', label: agentPortal?.actionLabels?.leads || 'CRM / Leads', icon: 'users' as const, route: '/(tabs)/leads' },
+    { key: 'addLead', label: agentPortal?.actionLabels?.addLead || 'Add Lead', icon: 'user-plus' as const, route: '/agent/add-lead' },
+    { key: 'visits', label: agentPortal?.actionLabels?.visits || 'Schedule Visit', icon: 'calendar' as const, route: '/agent/visits' },
+    { key: 'messages', label: agentPortal?.actionLabels?.messages || 'Messages', icon: 'message-circle' as const, route: '/(tabs)/messages' },
+  ].filter((action) => agentPortal?.actionVisibility?.[action.key] !== false);
 
   return (
     <ScrollView
@@ -405,7 +408,7 @@ export default function DashboardScreen() {
           </Pressable>
         </View>
         <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
-          <Text style={[styles.greeting, { color: colors.mutedForeground, textAlign: rtl }]}>{portalCopy.agentTitle || tr('agentPortal')}</Text>
+          <Text style={[styles.greeting, { color: colors.mutedForeground, textAlign: rtl }]}>{agentPortal?.title || tr('agentPortal')}</Text>
           <Text style={[styles.userName, { color: colors.foreground, textAlign: rtl }]}>
             {tr('hiGreeting')}, {user?.name?.split(' ')[0] ?? ''}
           </Text>
@@ -422,17 +425,17 @@ export default function DashboardScreen() {
               <Feather name="clock" size={18} color={colors.accentForeground} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.verifyTitle, { color: colors.accentForeground, textAlign: rtl }]}>{tr('verificationPending')}</Text>
-              <Text style={[styles.verifyDesc, { color: colors.accentForeground + 'cc', textAlign: rtl }]}>{tr('verificationPendingDesc')}</Text>
+              <Text style={[styles.verifyTitle, { color: colors.accentForeground, textAlign: rtl }]}>{agentPortal?.pendingTitle || tr('verificationPending')}</Text>
+              <Text style={[styles.verifyDesc, { color: colors.accentForeground + 'cc', textAlign: rtl }]}>{agentPortal?.pendingSubtitle || tr('verificationPendingDesc')}</Text>
             </View>
           </View>
         </AnimatedReveal>
       )}
 
       {/* KPI Grid — 6 cards, clickable */}
-      <AnimatedReveal delay={100}>
+      {agentPortal?.showOverview !== false && <AnimatedReveal delay={100}>
         <Text style={[styles.sectionLabel, { color: colors.mutedForeground, paddingHorizontal: 20, marginTop: 28, marginBottom: 14, textAlign: rtl }]}>
-          {tr('sectionOverview')}
+          {agentPortal?.overviewTitle || tr('sectionOverview')}
         </Text>
         <View style={styles.statsGrid}>
           {agentStats.map((s, i) => (
@@ -451,12 +454,12 @@ export default function DashboardScreen() {
             </AnimatedReveal>
           ))}
         </View>
-      </AnimatedReveal>
+      </AnimatedReveal>}
 
       {/* Quick Actions — 6 cards */}
-      <AnimatedReveal delay={200}>
+      {agentPortal?.showQuickActions !== false && <AnimatedReveal delay={200}>
         <Text style={[styles.sectionLabel, { color: colors.mutedForeground, paddingHorizontal: 20, marginTop: 28, marginBottom: 14, textAlign: rtl }]}>
-          {tr('sectionQuickActions')}
+          {agentPortal?.quickActionsTitle || tr('sectionQuickActions')}
         </Text>
         <View style={styles.actionsGrid}>
           {agentActions.map((a, i) => (
@@ -473,14 +476,14 @@ export default function DashboardScreen() {
             </AnimatedReveal>
           ))}
         </View>
-      </AnimatedReveal>
+      </AnimatedReveal>}
 
       {/* Recent Leads — real from store */}
-      <AnimatedReveal delay={280}>
+      {agentPortal?.showRecentLeads !== false && <AnimatedReveal delay={280}>
         <View style={[styles.sectionHeader, { paddingHorizontal: 20, marginTop: 28 }]}>
-          <Text style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign: rtl }]}>{tr('sectionRecentLeads')}</Text>
+          <Text style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign: rtl }]}>{agentPortal?.recentLeadsTitle || tr('sectionRecentLeads')}</Text>
           <Pressable onPress={() => router.push('/(tabs)/leads')}>
-            <Text style={[styles.viewAll, { color: colors.action }]}>{tr('viewAllLeads')}</Text>
+            <Text style={[styles.viewAll, { color: colors.action }]}>{agentPortal?.viewAllLeads || tr('viewAllLeads')}</Text>
           </Pressable>
         </View>
         <View style={{ paddingHorizontal: 20, marginTop: 12, gap: 10 }}>
@@ -488,8 +491,8 @@ export default function DashboardScreen() {
             <AnimatedReveal delay={300}>
               <View style={[styles.leadCard, { backgroundColor: colors.card, borderColor: colors.border, alignItems: 'center', paddingVertical: 24 }]}>
                 <Feather name="users" size={28} color={colors.mutedForeground} />
-                <Text style={[styles.leadName, { color: colors.mutedForeground, marginTop: 8 }]}>No leads yet</Text>
-                <Text style={[styles.leadProp, { color: colors.mutedForeground, textAlign: 'center' }]}>Your new inquiries will appear here</Text>
+                <Text style={[styles.leadName, { color: colors.mutedForeground, marginTop: 8 }]}>{agentPortal?.noLeadsTitle || 'No leads yet'}</Text>
+                <Text style={[styles.leadProp, { color: colors.mutedForeground, textAlign: 'center' }]}>{agentPortal?.noLeadsSubtitle || 'Your new inquiries will appear here'}</Text>
               </View>
             </AnimatedReveal>
           ) : (
@@ -518,7 +521,7 @@ export default function DashboardScreen() {
             })
           )}
         </View>
-      </AnimatedReveal>
+      </AnimatedReveal>}
     </ScrollView>
   );
 }

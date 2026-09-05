@@ -14,3 +14,17 @@ mtime_ms = 1788602166069
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/04a7d239-8917-4db1-bc0c-3a65ef120f12/7fd06a94-b60e-409e-b6ee-222b0e8c66fa"
 storage_version_token = "1788602174569520"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "JRvBIlnaNTG2zBhnWeRGP"
+uri = "file://exports/OG%20Landmark%20website%2005.09.zip"
+type = "unspecified"
+title = "OG Landmark website 05.09"
+description = "Corrected Hostinger deployment package with the website, backend, MySQL setup files, and public npm registry configuration."
+logical_id = "faf7da8f-1aed-4315-8882-65b8d9617bff"
+content_hash = "sha256:73a043b638eff6331f4bef7dd686421add2bb1c0cd04e99f26dff39bda00a6b3"
+size = 12957502
+mtime_ms = 1788602216088
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/faf7da8f-1aed-4315-8882-65b8d9617bff/13200ef7-31db-4b98-bfc7-d2cdd59a7a0d"
+storage_version_token = "1788602222813209"
+content_type = "application/octet-stream"

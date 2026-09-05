@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { useMobileContent } from '@/hooks/useMobileContent';
 import {
   AREA_UNITS,
   AreaUnit,
@@ -987,12 +988,18 @@ const TOOL_META = {
 
 export default function PropertyToolsScreen() {
   const colors = useColors();
+  const content = useMobileContent();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ tool?: string | string[] }>();
   const rawTool = Array.isArray(params.tool) ? params.tool[0] : params.tool;
   const selectedTool = rawTool ? TOOL_ALIASES[rawTool] : undefined;
-  const header = selectedTool ? TOOL_META[selectedTool] : { title: 'Tools & Calculators', description: 'Property utilities built for Pakistan — use your own figures for transparent estimates.' };
+  const toolsCopy = content?.screens?.tools || {};
+  const baseHeader = selectedTool ? TOOL_META[selectedTool] : { title: 'Tools & Calculators', description: 'Property utilities built for Pakistan — use your own figures for transparent estimates.' };
+  const header = {
+    title: toolsCopy[`${selectedTool || 'home'}Title`] || toolsCopy.title || baseHeader.title,
+    description: toolsCopy[`${selectedTool || 'home'}Description`] || toolsCopy.description || baseHeader.description,
+  };
   const topPadding = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
   return (
@@ -1016,7 +1023,7 @@ export default function PropertyToolsScreen() {
           >
             <Feather name="arrow-left" size={20} color={colors.actionForeground} />
           </Pressable>
-          <Text style={[styles.headerEyebrow, { color: colors.primary }]}>OG LANDMARK</Text>
+          <Text style={[styles.headerEyebrow, { color: colors.primary }]}>{toolsCopy.eyebrow || 'OG LANDMARK'}</Text>
           <Text style={[styles.headerTitle, { color: colors.actionForeground }]}>{header.title}</Text>
           <Text style={[styles.headerDescription, { color: `${colors.actionForeground}B8` }]}>{header.description}</Text>
         </View>

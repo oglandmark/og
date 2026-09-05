@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { getProfilePhoto, saveProfilePhoto, removeProfilePhoto } from '@/lib/profilePhotoStore';
 import { updateUser, uploadProfilePhoto } from '@/lib/api';
+import { useMobileContent } from '@/hooks/useMobileContent';
 
 type Field = { key: string; label: string; icon: keyof typeof Feather.glyphMap; placeholder: string; keyboard?: 'default' | 'email-address' | 'phone-pad' };
 
@@ -25,6 +26,7 @@ const FIELDS: Field[] = [
 
 export default function AccountSettingsScreen() {
   const colors = useColors();
+  const content = useMobileContent();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, login } = useAuth();
@@ -164,8 +166,8 @@ export default function AccountSettingsScreen() {
               <Feather name="arrow-left" size={18} color={colors.foreground} />
             </Pressable>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>PROFILE</Text>
-              <Text style={[styles.title, { color: colors.foreground }]}>Account Settings</Text>
+          <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>{content?.screens?.account?.eyebrow || 'PROFILE'}</Text>
+          <Text style={[styles.title, { color: colors.foreground }]}>{content?.screens?.account?.title || 'Account Settings'}</Text>
             </View>
           </View>
         </AnimatedReveal>
@@ -266,7 +268,7 @@ export default function AccountSettingsScreen() {
               ? <Text style={[styles.saveBtnText, { color: colors.actionForeground }]}>Saving…</Text>
               : <>
                   <Feather name="check" size={16} color={colors.actionForeground} />
-                  <Text style={[styles.saveBtnText, { color: colors.actionForeground }]}>Save Changes</Text>
+                  <Text style={[styles.saveBtnText, { color: colors.actionForeground }]}>{content?.screens?.account?.saveLabel || 'Save Changes'}</Text>
                 </>
             }
           </Pressable>

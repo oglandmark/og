@@ -421,6 +421,11 @@ export async function getBanners(): Promise<BannerSlide[]> {
 
 // ─── Mobile settings ───────────────────────────────────────────────────────────
 export type MobileContent = {
+  global: {
+    theme: Record<string, string>;
+    screenVisibility: Record<string, boolean>;
+    pushTemplates: { key: string; label: string; title: string; body: string }[];
+  };
   homepage: {
     sections: Record<string, string>;
     browse: { enabled: boolean; showCategories: boolean; showTransactionSwitch: boolean };
@@ -435,6 +440,9 @@ export type MobileContent = {
     categories: Record<string, string>;
     navigation: Record<string, string>;
     profile: { title: string; subtitle: string; showRecentlyViewed: boolean; showSavedSearches: boolean };
+    account: Record<string, string>;
+    tools: Record<string, string>;
+    portals: Record<string, string>;
   };
 };
 

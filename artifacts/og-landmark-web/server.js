@@ -2698,6 +2698,38 @@ app.get('/api/admin/users/:id/activity', requireAdmin, async (req, res) => {
 
 // ─── MOBILE SETTINGS + CONTENT MANAGEMENT ───────────────────────────────────
 const DEFAULT_MOBILE_CONTENT = {
+  global: {
+    theme: {
+      background: '#f7f9fc',
+      card: '#ffffff',
+      foreground: '#102a43',
+      mutedForeground: '#6b7c93',
+      border: '#d9e2ec',
+      secondary: '#eef2f7',
+      primary: '#c8a45a',
+      action: '#102a43',
+      actionForeground: '#ffffff',
+      accent: '#f3ead5',
+    },
+    screenVisibility: {
+      home: true,
+      explore: true,
+      postAd: true,
+      saved: true,
+      calculator: true,
+      profile: true,
+      help: true,
+      tools: true,
+      account: true,
+      agentPortal: true,
+      developerPortal: true,
+    },
+    pushTemplates: [
+      { key: 'newListings', label: 'New listings available', title: 'New Properties Available!', body: 'Explore the latest listings on OG Landmark.' },
+      { key: 'verification', label: 'Verification update', title: 'Verification Update', body: 'Your OG Landmark verification status has been updated.' },
+      { key: 'maintenance', label: 'Maintenance notice', title: 'Scheduled Maintenance', body: 'We will be back shortly. Thank you for your patience.' },
+    ],
+  },
   homepage: {
     sections: {
       browseEyebrow: 'EXPLORE THE MARKET',
@@ -2769,10 +2801,15 @@ const DEFAULT_MOBILE_CONTENT = {
       ],
     },
     categories: {
-      residential: 'Homes & Apartments',
+      houses: 'Houses',
+      apartments: 'Apartments',
       plots: 'Plots & Land',
+      residential: 'Homes & Apartments',
       agriculture: 'Farm & Land',
       commercial: 'Shops & Offices',
+      farmhouses: 'Farmhouses',
+      industrial: 'Industrial',
+      projects: 'Projects',
     },
     navigation: {
       home: 'Home',
@@ -2792,6 +2829,23 @@ const DEFAULT_MOBILE_CONTENT = {
       subtitle: 'Manage your account and preferences',
       showRecentlyViewed: true,
       showSavedSearches: true,
+    },
+    account: {
+      eyebrow: 'PROFILE',
+      title: 'Account Settings',
+      saveLabel: 'Save Changes',
+      securityLabel: 'Security & Privacy',
+    },
+    tools: {
+      eyebrow: 'PROPERTY TOOLS',
+      title: 'Property Tools',
+      subtitle: 'Make better property decisions with practical calculators.',
+    },
+    portals: {
+      agentTitle: 'Agent Portal',
+      developerTitle: 'Developer Portal',
+      emptyTitle: 'Nothing here yet',
+      emptySubtitle: 'Your activity will appear here once you get started.',
     },
   },
 };
@@ -2817,6 +2871,15 @@ function mobileSettingsPayload(stored = {}) {
     content: {
       ...DEFAULT_MOBILE_CONTENT,
       ...storedContent,
+      global: {
+        ...DEFAULT_MOBILE_CONTENT.global,
+        ...(storedContent.global || {}),
+        theme: { ...DEFAULT_MOBILE_CONTENT.global.theme, ...(storedContent.global?.theme || {}) },
+        screenVisibility: { ...DEFAULT_MOBILE_CONTENT.global.screenVisibility, ...(storedContent.global?.screenVisibility || {}) },
+        pushTemplates: Array.isArray(storedContent.global?.pushTemplates)
+          ? storedContent.global.pushTemplates
+          : DEFAULT_MOBILE_CONTENT.global.pushTemplates,
+      },
       homepage: {
         ...DEFAULT_MOBILE_CONTENT.homepage,
         ...storedHomepage,
@@ -2835,6 +2898,9 @@ function mobileSettingsPayload(stored = {}) {
         categories: { ...DEFAULT_MOBILE_CONTENT.screens.categories, ...(storedScreens.categories || {}) },
         navigation: { ...DEFAULT_MOBILE_CONTENT.screens.navigation, ...(storedScreens.navigation || {}) },
         profile: { ...DEFAULT_MOBILE_CONTENT.screens.profile, ...(storedScreens.profile || {}) },
+        account: { ...DEFAULT_MOBILE_CONTENT.screens.account, ...(storedScreens.account || {}) },
+        tools: { ...DEFAULT_MOBILE_CONTENT.screens.tools, ...(storedScreens.tools || {}) },
+        portals: { ...DEFAULT_MOBILE_CONTENT.screens.portals, ...(storedScreens.portals || {}) },
       },
     },
   };
@@ -2870,6 +2936,15 @@ app.put('/api/mobile/settings', requireAdmin, async (req, res) => {
           theme: { ...current.content.homepage.theme, ...(incoming.content?.homepage?.theme || {}) },
           fallback: { ...current.content.homepage.fallback, ...(incoming.content?.homepage?.fallback || {}) },
         },
+        global: {
+          ...current.content.global,
+          ...(incoming.content?.global || {}),
+          theme: { ...current.content.global.theme, ...(incoming.content?.global?.theme || {}) },
+          screenVisibility: { ...current.content.global.screenVisibility, ...(incoming.content?.global?.screenVisibility || {}) },
+          pushTemplates: Array.isArray(incoming.content?.global?.pushTemplates)
+            ? incoming.content.global.pushTemplates
+            : current.content.global.pushTemplates,
+        },
         screens: {
           ...current.content.screens,
           ...(incoming.content?.screens || {}),
@@ -2879,6 +2954,9 @@ app.put('/api/mobile/settings', requireAdmin, async (req, res) => {
           categories: { ...current.content.screens.categories, ...(incoming.content?.screens?.categories || {}) },
           navigation: { ...current.content.screens.navigation, ...(incoming.content?.screens?.navigation || {}) },
           profile: { ...current.content.screens.profile, ...(incoming.content?.screens?.profile || {}) },
+           account: { ...current.content.screens.account, ...(incoming.content?.screens?.account || {}) },
+           tools: { ...current.content.screens.tools, ...(incoming.content?.screens?.tools || {}) },
+           portals: { ...current.content.screens.portals, ...(incoming.content?.screens?.portals || {}) },
         },
       },
     });

@@ -767,6 +767,10 @@ tr:hover td{background:#f8fafc}
       <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
         Edit homepage headings, browse visibility, carousel timing/colors, fallback media, calculator/help/onboarding copy, categories, navigation labels and profile options. Keep the JSON format valid.
       </p>
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">Global app controls, theme, screen visibility and push templates</label>
+        <textarea id="mc-global-json" rows="14" style="width:100%;font-family:monospace;font-size:11px;line-height:1.45;padding:10px;border:1px solid var(--border);border-radius:8px;resize:vertical"></textarea>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
         <div>
           <label style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">Homepage configuration</label>
@@ -3107,8 +3111,10 @@ function _applyMobileSettings(s) {
 }
 
 function _applyMobileContent(content) {
+  var global = document.getElementById('mc-global-json');
   var home = document.getElementById('mc-home-json');
   var screens = document.getElementById('mc-screen-json');
+  if (global) global.value = JSON.stringify(content.global || {}, null, 2);
   if (home) home.value = JSON.stringify(content.homepage || {}, null, 2);
   if (screens) screens.value = JSON.stringify(content.screens || {}, null, 2);
 }
@@ -3136,6 +3142,7 @@ function updateToggleStyle(cb) {
 function saveMobileSettings() {
   var content = {};
   try {
+    content.global = JSON.parse(document.getElementById('mc-global-json').value || '{}');
     content.homepage = JSON.parse(document.getElementById('mc-home-json').value || '{}');
     content.screens = JSON.parse(document.getElementById('mc-screen-json').value || '{}');
   } catch (e) {

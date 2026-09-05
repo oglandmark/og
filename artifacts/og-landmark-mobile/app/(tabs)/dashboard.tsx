@@ -6,6 +6,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // BlurView removed — crashes Android GPU
 import { useColors } from '@/hooks/useColors';
+import { useMobileContent } from '@/hooks/useMobileContent';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -33,7 +34,7 @@ const LEAD_STATUS_MAP: Record<string, { label: string; color: string }> = {
 //  DEVELOPER DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
 function DeveloperDashboard({
-  colors, router, insets, user, logout, tr, isRTL,
+  colors, router, insets, user, logout, tr, isRTL, portalCopy,
 }: {
   colors: ReturnType<typeof import('@/hooks/useColors').useColors>;
   router: ReturnType<typeof useRouter>;
@@ -42,6 +43,7 @@ function DeveloperDashboard({
   logout: ReturnType<typeof useAuth>['logout'];
   tr: ReturnType<typeof useLanguage>['tr'];
   isRTL: boolean;
+  portalCopy: Record<string, string>;
 }) {
   const rtl = isRTL ? 'right' as const : 'left' as const;
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
@@ -140,7 +142,7 @@ function DeveloperDashboard({
             </View>
           </View>
           <View style={{ alignItems: isRTL ? 'flex-start' : 'flex-end' }}>
-            <Text style={[ds.portalLabel, { color: colors.mutedForeground }]}>{tr('devCompanyPortal')}</Text>
+            <Text style={[ds.portalLabel, { color: colors.mutedForeground }]}>{portalCopy.developerTitle || tr('devCompanyPortal')}</Text>
             <Text style={[ds.greeting2, { color: colors.foreground }]}>{tr('hiGreeting')}, {firstName}</Text>
           </View>
         </View>
@@ -311,6 +313,7 @@ function DeveloperDashboard({
 // ─────────────────────────────────────────────────────────────────────────────
 export default function DashboardScreen() {
   const colors  = useColors();
+  const content = useMobileContent();
   const router  = useRouter();
   const insets  = useSafeAreaInsets();
   const { user, role, logout } = useAuth();
@@ -322,6 +325,7 @@ export default function DashboardScreen() {
   const botPad  = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
   const rtl     = isRTL ? 'right' as const : 'left' as const;
   const isPending = user?.verificationStatus === 'pending';
+  const portalCopy = content?.screens?.portals || {};
 
   // Agent-specific state
   const [activeListingsCount, setActiveListingsCount] = useState(0);
@@ -364,6 +368,7 @@ export default function DashboardScreen() {
         logout={logout}
         tr={tr}
         isRTL={isRTL}
+        portalCopy={portalCopy}
       />
     );
   }
@@ -400,7 +405,7 @@ export default function DashboardScreen() {
           </Pressable>
         </View>
         <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
-          <Text style={[styles.greeting, { color: colors.mutedForeground, textAlign: rtl }]}>{tr('agentPortal')}</Text>
+          <Text style={[styles.greeting, { color: colors.mutedForeground, textAlign: rtl }]}>{portalCopy.agentTitle || tr('agentPortal')}</Text>
           <Text style={[styles.userName, { color: colors.foreground, textAlign: rtl }]}>
             {tr('hiGreeting')}, {user?.name?.split(' ')[0] ?? ''}
           </Text>

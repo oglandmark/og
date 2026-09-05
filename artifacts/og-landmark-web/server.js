@@ -182,7 +182,7 @@ function emailWrapper(bodyHtml) {
 
           <!-- HEADER -->
           <tr><td style="background:#0B1F3A;border-radius:12px 12px 0 0;padding:28px 32px;text-align:center">
-            <img src="${(process.env.APP_URL||'https://oglandmark.com').replace(/\/$/,'')}/images/og-logo.png" alt="OG Landmark" width="72" height="72" style="display:block;margin:0 auto 12px;border-radius:14px;object-fit:contain;background:#fff;padding:4px"/>
+            <img src="${(process.env.APP_URL||'https://oglandmark.com').replace(/\/$/,'')}/images/og-logo.png?v=10" alt="OG Landmark" width="72" height="72" style="display:block;margin:0 auto 12px;border-radius:14px;object-fit:contain;background:#fff;padding:4px"/>
             <h1 style="color:#C8A45A;font-size:24px;margin:4px 0 2px;letter-spacing:1px">OG Landmark</h1>
             <p style="color:#8a9ab5;font-size:11px;margin:0;letter-spacing:3px;text-transform:uppercase">Premium Real Estate</p>
           </td></tr>

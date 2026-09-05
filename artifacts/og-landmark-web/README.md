@@ -16,4 +16,6 @@ SMTP values are required for email verification and password reset delivery. Nev
 
 The package intentionally does not include a generated lockfile: Replit lockfiles can contain workspace-only package-firewall URLs that are not reachable from Hostinger. `.npmrc` pins installation to the public npm registry.
 
+If hPanel uses different database variable names, the server also accepts `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, or a MySQL/MariaDB `DATABASE_URL`. The database variables are required; without them Node.js exits during startup and Hostinger returns 503.
+
 Production refuses to start without MySQL. A `runtime-data.json` fallback is used only for local/Replit preview when MySQL settings are absent. `app_data` durably stores listings, users, mobile/developer resources, verification requests, promotions, device tokens, and account-scoped history. `auth_sessions` stores hashed expiring bearer sessions; `auth_challenges` stores hashed password-reset and admin-OTP challenges with attempt limits. Do not commit `.env` or the local fallback file.

@@ -42,15 +42,40 @@ const upload = multer({
   }
 });
 
-// MySQL is mandatory outside an explicitly local preview.  The preview fallback
-// is a durable file, never silently selected in production.
-const mysqlConfigured = ['MYSQL_HOST', 'MYSQL_USER', 'MYSQL_DATABASE'].every(k => process.env[k]);
+// MySQL is mandatory outside an explicitly local preview. Accept both the
+// documented MYSQL_* names and common Hostinger DB_* / DATABASE_URL names.
+// The preview fallback is a durable file, never silently selected in production.
+let databaseUrlConfig = {};
+if (process.env.DATABASE_URL) {
+  try {
+    const url = new URL(process.env.DATABASE_URL);
+    databaseUrlConfig = {
+      host: url.hostname,
+      port: url.port || undefined,
+      user: decodeURIComponent(url.username || ''),
+      password: decodeURIComponent(url.password || ''),
+      database: decodeURIComponent(url.pathname.replace(/^\//, '') || ''),
+    };
+  } catch {
+    databaseUrlConfig = {};
+  }
+}
+const databaseConfig = {
+  host: process.env.MYSQL_HOST || process.env.DB_HOST || databaseUrlConfig.host,
+  port: process.env.MYSQL_PORT || process.env.DB_PORT || databaseUrlConfig.port || 3306,
+  user: process.env.MYSQL_USER || process.env.DB_USER || databaseUrlConfig.user,
+  password: process.env.MYSQL_PASSWORD ?? process.env.DB_PASSWORD ?? databaseUrlConfig.password ?? '',
+  database: process.env.MYSQL_DATABASE || process.env.DB_NAME || databaseUrlConfig.database,
+};
+const mysqlConfigured = Boolean(databaseConfig.host && databaseConfig.user && databaseConfig.database);
 const localPreview = !mysqlConfigured && (process.env.REPLIT_ENVIRONMENT || process.env.NODE_ENV !== 'production');
-if (!mysqlConfigured && !localPreview) throw new Error('MYSQL_HOST, MYSQL_USER and MYSQL_DATABASE are required in production.');
+if (!mysqlConfigured && !localPreview) {
+  throw new Error('Database settings are required in production. Set MYSQL_HOST, MYSQL_USER, MYSQL_DATABASE and MYSQL_PASSWORD (or DB_HOST, DB_USER, DB_NAME, DB_PASSWORD / DATABASE_URL).');
+}
 const pool = mysqlConfigured ? mysql.createPool({
-  host: process.env.MYSQL_HOST, port: Number(process.env.MYSQL_PORT || 3306),
-  user: process.env.MYSQL_USER, password: process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DATABASE, waitForConnections: true, connectionLimit: 5,
+  host: databaseConfig.host, port: Number(databaseConfig.port),
+  user: databaseConfig.user, password: databaseConfig.password,
+  database: databaseConfig.database, waitForConnections: true, connectionLimit: 5,
   ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: process.env.MYSQL_SSL_REJECT_UNAUTHORIZED === 'true' } : undefined
 }) : null;
 const fallbackFile = path.join(__dirname, 'runtime-data.json');

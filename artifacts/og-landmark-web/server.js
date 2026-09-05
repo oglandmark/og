@@ -2473,7 +2473,15 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
   try {
     const data = await readData();
     let users = data.users || [];
-    if (req.query.role) users = users.filter(user => user.role === req.query.role);
+    if (req.query.role) {
+      const requestedRole = String(req.query.role).trim().toLowerCase();
+      users = users.filter(user => String(user.role || '').trim().toLowerCase() === requestedRole);
+    }
+    users = [...users].sort((a, b) => {
+      const bTime = new Date(b.joinedDate || 0).getTime();
+      const aTime = new Date(a.joinedDate || 0).getTime();
+      return bTime - aTime;
+    });
     if (req.query.limit) users = users.slice(0, Math.max(0, Number(req.query.limit) || 0));
     users = users.map(({ password: _, ...u }) => u);
     res.json(users);

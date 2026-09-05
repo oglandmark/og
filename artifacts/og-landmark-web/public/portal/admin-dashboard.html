@@ -293,6 +293,7 @@ tr:hover td{background:#f8fafc}
   <header class="topbar">
     <h2 id="page-title">Admin Dashboard</h2>
     <div style="display:flex;align-items:center;gap:12px">
+      <button class="btn btn-outline btn-sm" onclick="refreshDashboard(true)" title="Reload all dashboard data">Refresh Data</button>
       <span style="font-size:12px;color:var(--muted)" id="topbar-time"></span>
       <div class="sb-avatar" style="width:34px;height:34px;font-size:13px;background:var(--red)" id="top-avatar">A</div>
     </div>
@@ -1798,7 +1799,7 @@ function init(){
   document.getElementById('admin-email').value=currentUser.email||'';
   document.getElementById('admin-phone').value=currentUser.phone||'';
   setInterval(()=>{ document.getElementById('topbar-time').textContent=new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}); },1000);
-  loadAll();
+  refreshDashboard(false);
 }
 
 function logout(){ localStorage.removeItem('og_token'); localStorage.removeItem('og_user'); localStorage.removeItem('adminAuth'); window.location.href='/portal/admin'; }
@@ -1807,30 +1808,65 @@ async function api(method,path,body){
   const opts={method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}};
   if(body) opts.body=JSON.stringify(body);
   const r=await fetch(API+path,opts);
-  if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error(e.error||r.statusText); }
+  if(!r.ok){
+    const e=await r.json().catch(()=>({}));
+    const error=new Error(e.error||r.statusText);
+    error.status=r.status;
+    throw error;
+  }
   return r.json();
 }
 
 async function loadAll(){
-  try{
-    const [props, users, agents, inqs, blog, bundleHidden, cityAg] = await Promise.all([
-      api('GET','/api/properties?limit=1000').catch(()=>[]),
-      api('GET','/api/users').catch(()=>[]),
-      api('GET','/api/agents').catch(()=>[]),
-      api('GET','/api/inquiries').catch(()=>[]),
-      api('GET','/api/blog').catch(()=>[]),
-      fetch('/api/settings/hidden-react-agents').then(r=>r.ok?r.json():[]).catch(()=>[]),
-      api('GET','/api/city-agents').catch(()=>[]),
-    ]);
-    allProps=Array.isArray(props)?props:[];
-    allUsers=Array.isArray(users)?users:[];
-    allAgents=Array.isArray(agents)?agents:[];
-    allInqs=Array.isArray(inqs)?inqs:[];
-    allBlog=Array.isArray(blog)?blog:[];
-    hiddenReactAgents=Array.isArray(bundleHidden)?bundleHidden:[];
-    allCityAgents=Array.isArray(cityAg)?cityAg:[];
-    renderAll();
-  } catch(e){ showToast(e.message,'error'); }
+  const sources=[
+    ['properties',()=>api('GET','/api/properties?limit=1000')],
+    ['users',()=>api('GET','/api/users')],
+    ['agents',()=>api('GET','/api/agents')],
+    ['inquiries',()=>api('GET','/api/inquiries')],
+    ['blog',()=>api('GET','/api/blog')],
+    ['hidden website agents',()=>api('GET','/api/settings/hidden-react-agents')],
+    ['city agents',()=>api('GET','/api/city-agents')],
+  ];
+  const results=await Promise.all(sources.map(async ([label,request])=>{
+    try{return {label,value:await request()};}
+    catch(error){return {label,error};}
+  }));
+  const failures=results.filter(result=>result.error);
+  const unauthorized=failures.some(result=>result.error.status===401||result.error.status===403);
+  if(unauthorized){
+    showToast('Admin session expired. Please sign in again.','error');
+    setTimeout(logout,900);
+    return;
+  }
+  const values=results.map(result=>result.value);
+  if(Array.isArray(values[0])) allProps=values[0];
+  if(Array.isArray(values[1])) allUsers=values[1];
+  if(Array.isArray(values[2])) allAgents=values[2];
+  if(Array.isArray(values[3])) allInqs=values[3];
+  if(Array.isArray(values[4])) allBlog=values[4];
+  if(Array.isArray(values[5])) hiddenReactAgents=values[5];
+  if(Array.isArray(values[6])) allCityAgents=values[6];
+  renderAll();
+  if(failures.length){
+    showToast('Some dashboard data could not be refreshed: '+failures.map(result=>result.label).join(', '),'error');
+  }
+}
+
+async function loadSecondaryData(){
+  await Promise.allSettled([
+    loadBuyerRequests(),
+    loadDeveloperProjects(),
+    loadVerifications(),
+    loadConversations(),
+    loadNotifications(),
+    loadMobileStats(),
+    (async()=>{ initBannerSlots(); await loadBanners(); })(),
+  ]);
+}
+
+async function refreshDashboard(showMessage=false){
+  await Promise.all([loadAll(),loadSecondaryData()]);
+  if(showMessage) showToast('All dashboard data refreshed','success');
 }
 
 function renderAll(){
@@ -3021,8 +3057,16 @@ function showPage(name){
   document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
   document.getElementById('page-'+name)?.classList.add('active');
   document.getElementById('nav-'+name)?.classList.add('active');
-  const titles={dashboard:'Admin Dashboard',approvals:'Property Approvals',properties:'All Properties',agents:'Agent Management',users:'Users',inquiries:'All Inquiries',blog:'Blog Posts',settings:'Settings','prop-review':'Property Review',mobile:'Mobile App Control',banners:'App Banners'};
-  document.getElementById('page-title').textContent=titles[name]||'Dashboard'; if(name==='users') refreshUsers(); if(name==='mobile') loadMobileStats(); if(name==='banners'){initBannerSlots();loadBanners();}
+  const titles={dashboard:'Admin Dashboard',approvals:'Property Approvals',properties:'All Properties',agents:'Agent Management',users:'Users',inquiries:'All Inquiries',blog:'Blog Posts',settings:'Settings','city-agents':'City Agents','buyer-requests':'Buyer Requests','developer-projects':'Developer Projects',verifications:'Verification Requests',conversations:'Conversations',notifications:'Notifications','prop-review':'Property Review',mobile:'Mobile App Control',banners:'App Banners'};
+  document.getElementById('page-title').textContent=titles[name]||'Dashboard';
+  if(name==='users') refreshUsers();
+  if(name==='buyer-requests') loadBuyerRequests();
+  if(name==='developer-projects') loadDeveloperProjects();
+  if(name==='verifications') loadVerifications();
+  if(name==='conversations') loadConversations();
+  if(name==='notifications') loadNotifications();
+  if(name==='mobile') loadMobileStats();
+  if(name==='banners'){initBannerSlots();loadBanners();}
 }
 
 function statusBadge(s){ const m={Active:'badge-green',Pending:'badge-yellow',Rejected:'badge-red'}; return `<span class="badge ${m[s]||'badge-gray'}">${s||'—'}</span>`; }

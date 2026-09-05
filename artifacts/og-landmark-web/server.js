@@ -3554,6 +3554,7 @@ personalCrud('/api/comparisons', 'comparisons', 'comparison');
 personalCrud('/api/visit-history', 'visitHistory', 'history');
 personalCrud('/api/promotions', 'promotions', 'promotion');
 personalCrud('/api/verification-requests', 'verificationRequests', 'verification');
+personalCrud('/api/measurements', 'measurements', 'measurement');
 
 // ─── Mobile domain resources ─────────────────────────────────────────────────
 // JSON documents retain the mobile clients' flexible payload contracts while

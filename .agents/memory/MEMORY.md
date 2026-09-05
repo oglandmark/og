@@ -6,3 +6,4 @@
 - [Neon PostgreSQL production database](neon-database.md) — production persistence uses the user's Neon database through a server-only DATABASE_URL.
 - [Neon auth schema](neon-auth-schema.md) — app_data alone is insufficient; auth tables must exist before production auth flows are exercised.
 - [Expo GitHub build dispatch](expo-github-build-dispatch.md) — after repository linking, EAS dispatch can still return transient 503s; verify no queued build before retrying.
+- [Plot calculator geometry](plot-calculator-geometry.md) — irregular plots need diagonals for exact triangulation; side-only results must be labelled estimates or declined.

@@ -45,6 +45,7 @@ import {
   computePlotArea as computeSharedPlotArea,
   CALC_FIELDS as SHARED_CALC_FIELDS,
 } from '@/lib/plotCalculator';
+import { PlotMeasurementCalculator } from '@/components/PlotMeasurementCalculator';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -1506,6 +1507,8 @@ function CalcResultCell({ label, value, accent, colors }: { label: string; value
 }
 
 function PlotCalculator({ colors }: { colors: Colors }) {
+  return <PlotMeasurementCalculator colors={colors} compact />;
+
   const [open,    setOpen]    = useState(false);
   const [corners, setCorners] = useState<SharedCalcCorners>(4);
   const [unit,    setUnit]    = useState<SharedCalcUnit>('ft');
@@ -1655,11 +1658,11 @@ function PlotCalculator({ colors }: { colors: Colors }) {
                 <Text style={[cc.resultTitle, { color: colors.primary }]}>AREA RESULT</Text>
               </View>
               <View style={cc.resultGrid}>
-                <CalcResultCell label="Square Feet"  value={result.sqft.toLocaleString('en', { maximumFractionDigits: 2 })} accent colors={colors} />
-                <CalcResultCell label="Marla"        value={result.marla.toFixed(3)} colors={colors} />
-                <CalcResultCell label="Kanal"        value={result.kanal.toFixed(3)} colors={colors} />
-                <CalcResultCell label="Acre"         value={result.acre.toFixed(4)}  colors={colors} />
-                <CalcResultCell label="Square Meter" value={result.sqm.toFixed(2)} colors={colors} />
+                <CalcResultCell label="Square Feet"  value={result!.sqft.toLocaleString('en', { maximumFractionDigits: 2 })} accent colors={colors} />
+                <CalcResultCell label="Marla"        value={result!.marla.toFixed(3)} colors={colors} />
+                <CalcResultCell label="Kanal"        value={result!.kanal.toFixed(3)} colors={colors} />
+                <CalcResultCell label="Acre"         value={result!.acre.toFixed(4)}  colors={colors} />
+                <CalcResultCell label="Square Meter" value={result!.sqm.toFixed(2)} colors={colors} />
               </View>
               <Text style={[cc.resultNote, { color: colors.mutedForeground }]}>
                 1 Marla = 272.25 sq ft · 1 Kanal = 20 Marla · 1 Acre = 8 Kanal
@@ -2110,6 +2113,9 @@ export default function HomeScreen() {
               <Text style={[s.toolTileSub, { color: colors.mutedForeground }]}>{tool.sub}</Text>
             </Pressable>
           ))}
+        </View>
+        <View style={{ marginTop: 14 }}>
+          <PlotMeasurementCalculator colors={colors} />
         </View>
       </AnimatedReveal>
 

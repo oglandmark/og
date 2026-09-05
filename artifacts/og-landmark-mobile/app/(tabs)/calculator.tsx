@@ -14,9 +14,10 @@ import { useRouter } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import {
-  CalcCorners, CalcUnit, computePlotArea, CALC_FIELDS, MARLA_SQFT, KANAL_SQFT, ACRE_SQFT,
+  MARLA_SQFT, KANAL_SQFT, ACRE_SQFT,
 } from '@/lib/plotCalculator';
 import { getMobileSettings } from '@/lib/api';
+import { PlotMeasurementCalculator } from '@/components/PlotMeasurementCalculator';
 
 // ── Unit conversion data ──────────────────────────────────────────────────────
 const CONV_UNITS = [
@@ -163,104 +164,6 @@ function UnitConverter({ colors }: { colors: any }) {
   );
 }
 
-// ── 2. Plot Area Calculator ───────────────────────────────────────────────────
-
-function PlotAreaCalc({ colors }: { colors: any }) {
-  const [corners, setCorners] = useState<CalcCorners>(4);
-  const [unit,    setUnit]    = useState<CalcUnit>('ft');
-  const [inputs,  setInputs]  = useState<Record<string, string>>({});
-
-  const fields      = CALC_FIELDS[corners];
-  const hasAnyInput = Object.values(inputs).some((value) => value.trim() !== '');
-  const rawResult   = hasAnyInput ? computePlotArea(corners, inputs, unit) : null;
-  const errMsg    = typeof rawResult === 'string' ? rawResult : null;
-  const result    = typeof rawResult === 'object' && rawResult !== null ? rawResult : null;
-
-  const hintMap: Record<CalcCorners, string> = {
-    3: 'Triangle: enter all 3 boundary sides.',
-    4: '4 corners: enter 4 boundary sides + surface diagonal AC.',
-    5: '5 corners: enter 5 boundary sides + surface diagonals AC and AD.',
-    6: '6 corners: enter 6 boundary sides + surface diagonals AC, AD and AE.',
-    7: '7 corners: enter 7 boundary sides + surface diagonals AC, AD, AE and AF.',
-  };
-
-  return (
-    <Card title="Plot Area Calculator" icon="grid" colors={colors}>
-      {/* Corners + Unit */}
-      <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
-        <View style={{ flex: 1 }}>
-          <Text style={[lc.label, { color: colors.mutedForeground }]}>CORNERS</Text>
-          <SegRow
-            items={([3, 4, 5, 6, 7] as CalcCorners[]).map((n) => ({ key: String(n), label: String(n) }))}
-            selected={String(corners)}
-            onSelect={(k) => { setCorners(Number(k) as CalcCorners); setInputs({}); }}
-            colors={colors}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[lc.label, { color: colors.mutedForeground }]}>INPUT UNIT</Text>
-          <SegRow
-            items={[{ key: 'ft', label: 'Feet' }, { key: 'in', label: 'Inches' }, { key: 'm', label: 'Meters' }]}
-            selected={unit}
-            onSelect={(k) => { setUnit(k as CalcUnit); setInputs({}); }}
-            colors={colors}
-          />
-        </View>
-      </View>
-
-      {/* Dimension hint */}
-      <View style={[lc.hintRow, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
-        <Feather name="info" size={11} color={colors.mutedForeground} />
-        <Text style={[lc.note, { color: colors.mutedForeground, flex: 1 }]}>
-          {hintMap[corners]} Surface measurements only — height/depth is not used.
-        </Text>
-      </View>
-
-      {/* Input fields */}
-      {fields.map((f) => (
-        <Field key={f.key} label={f.label} value={inputs[f.key] ?? ''}
-          onChange={(v) => setInputs((prev) => ({ ...prev, [f.key]: v }))}
-          placeholder={`Enter ${f.label.toLowerCase()} (${unit})`} colors={colors} />
-      ))}
-
-      {/* Error */}
-      {errMsg && (
-        <View style={[lc.errRow, { marginTop: 4 }]}>
-          <Feather name="alert-circle" size={13} color="#e11d48" />
-          <Text style={[lc.note, { color: '#e11d48', flex: 1 }]}>{errMsg}</Text>
-        </View>
-      )}
-
-      {/* Results */}
-      {result && (
-        <View style={[lc.grid2, { backgroundColor: colors.secondary, borderColor: colors.border, marginTop: 6 }]}>
-          {[
-            { label: 'Square Feet',  val: result.sqft.toFixed(2) },
-            { label: 'Marla',        val: result.marla.toFixed(3) },
-            { label: 'Kanal',        val: result.kanal.toFixed(3) },
-            { label: 'Acre',         val: result.acre.toFixed(4)  },
-            { label: 'Square Meter', val: result.sqm.toFixed(2) },
-          ].map((r) => (
-            <View key={r.label} style={[lc.cell2, { borderColor: colors.border }]}>
-              <Text style={[lc.cellVal, { color: colors.foreground }]}>{r.val}</Text>
-              <Text style={[lc.cellKey, { color: colors.mutedForeground }]}>{r.label}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Reset */}
-      {Object.keys(inputs).length > 0 && (
-        <Pressable onPress={() => setInputs({})}
-          style={[lc.resetBtn, { borderColor: colors.border }]}>
-          <Feather name="refresh-ccw" size={11} color={colors.mutedForeground} />
-          <Text style={[lc.note, { color: colors.mutedForeground }]}>Reset</Text>
-        </Pressable>
-      )}
-    </Card>
-  );
-}
-
 // ── Quick-link tiles to other tools ──────────────────────────────────────────
 
 function QuickTool({
@@ -328,7 +231,7 @@ export default function CalculatorScreen() {
       {/* ── Embedded calculators ──────────────────────────────────────── */}
       <View style={lc.sections}>
         {content?.showUnitConverter !== false && <UnitConverter colors={colors} />}
-        {content?.showPlotArea !== false && <PlotAreaCalc colors={colors} />}
+        {content?.showPlotArea !== false && <PlotMeasurementCalculator colors={colors} />}
 
         {/* ── More Tools ── */}
         {content?.showMoreTools !== false && <View style={[lc.moreSection, { backgroundColor: colors.card, borderColor: colors.border }]}>

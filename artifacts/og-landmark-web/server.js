@@ -1,7 +1,7 @@
 /**
- * OG Landmark — Express Backend (MySQL/MariaDB Storage)
+ * OG Landmark — Express Backend (Supabase Storage)
  * --------------------------------------------------
- * Data stored in MySQL/MariaDB database (persists across restarts)
+ * Data stored in Supabase PostgreSQL (persists across restarts)
  * Run: node server.js
  */
 
@@ -13,7 +13,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
-const mysql = require('mysql2/promise');
+const { createClient } = require('@supabase/supabase-js');
 const multer = require('multer');
 
 // ─── File Upload (Multer) ─────────────────────────────────────────────────────
@@ -42,59 +42,20 @@ const upload = multer({
   }
 });
 
-// MySQL is mandatory outside an explicitly local preview. Accept both the
-// documented MYSQL_* names and common Hostinger DB_* / DATABASE_URL names.
-// The preview fallback is a durable file, never silently selected in production.
-let databaseUrlConfig = {};
-if (
-  process.env.DATABASE_URL &&
-  !process.env.REPLIT_ENVIRONMENT &&
-  /^(mysql|mariadb):/i.test(process.env.DATABASE_URL)
-) {
-  try {
-    const url = new URL(process.env.DATABASE_URL);
-    databaseUrlConfig = {
-      host: url.hostname,
-      port: url.port || undefined,
-      user: decodeURIComponent(url.username || ''),
-      password: decodeURIComponent(url.password || ''),
-      database: decodeURIComponent(url.pathname.replace(/^\//, '') || ''),
-    };
-  } catch {
-    databaseUrlConfig = {};
-  }
+// Supabase is the production database. The local/Replit preview keeps its
+// JSON fallback so the website can run without exposing database credentials.
+const supabaseUrl = process.env.SUPABASE_URL || process.env.SUPABASE_PROJECT_URL || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+const supabaseConfigured = Boolean(supabaseUrl && supabaseKey);
+const localPreview = Boolean(process.env.REPLIT_ENVIRONMENT) || (!supabaseConfigured && process.env.NODE_ENV === 'development');
+if (!supabaseConfigured && !localPreview) {
+  console.error('Supabase settings are missing. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in production.');
 }
-const databaseConfig = {
-  host: process.env.MYSQL_HOST || process.env.DB_HOST || databaseUrlConfig.host,
-  port: process.env.MYSQL_PORT || process.env.DB_PORT || databaseUrlConfig.port || 3306,
-  user: process.env.MYSQL_USER || process.env.DB_USER || databaseUrlConfig.user,
-  password: process.env.MYSQL_PASSWORD ?? process.env.DB_PASSWORD ?? databaseUrlConfig.password ?? '',
-  database: process.env.MYSQL_DATABASE || process.env.DB_NAME || databaseUrlConfig.database,
-};
-const mysqlConfigured = Boolean(databaseConfig.host && databaseConfig.user && databaseConfig.database);
-const localPreview = Boolean(process.env.REPLIT_ENVIRONMENT) || (!mysqlConfigured && process.env.NODE_ENV === 'development');
-if (!mysqlConfigured && !localPreview) {
-  console.error('Database settings are missing. Set MYSQL_HOST, MYSQL_USER, MYSQL_DATABASE and MYSQL_PASSWORD (or DB_HOST, DB_USER, DB_NAME, DB_PASSWORD / DATABASE_URL).');
-}
-const pool = mysqlConfigured && !localPreview ? mysql.createPool({
-  host: databaseConfig.host, port: Number(databaseConfig.port),
-  user: databaseConfig.user, password: databaseConfig.password,
-  database: databaseConfig.database, waitForConnections: true, connectionLimit: 5,
-  connectTimeout: 5000,
-  ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: process.env.MYSQL_SSL_REJECT_UNAUTHORIZED === 'true' } : undefined
-}) : null;
+const supabase = supabaseConfigured && !localPreview
+  ? createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false, autoRefreshToken: false } })
+  : null;
 const fallbackFile = path.join(__dirname, 'runtime-data.json');
 let dbReady = false;
-async function dbQueryWithRetry(sql, params = [], retries = 3) {
-  if (!pool) throw new Error('MySQL is not configured');
-  for (let attempt = 1; attempt <= retries; attempt++) try {
-    const [rows] = await pool.execute(sql, params);
-    return { rows: Array.isArray(rows) ? rows : [], rowCount: Array.isArray(rows) ? rows.length : rows.affectedRows };
-  } catch (err) {
-    if (attempt === retries) throw err;
-    await new Promise(resolve => setTimeout(resolve, attempt * 500));
-  }
-}
 // Legacy maps remain only as a local cache; authoritative sessions/challenges are persisted.
 const otpStore = new Map();
 const resetStore = new Map();
@@ -105,27 +66,52 @@ function generateOTP() {
 }
 const codeDigest = code => crypto.createHash('sha256').update(String(code)).digest('hex');
 async function saveChallenge(email, purpose, code, minutes) {
-  if (!pool) { otpStore.set(`${purpose}:${email}`, { otp: code, expiry: Date.now() + minutes * 60000, attempts: 0 }); return; }
-  await dbQueryWithRetry(`INSERT INTO auth_challenges (email,purpose,code_hash,attempts,expires_at)
-    VALUES (?, ?, ?, 0, DATE_ADD(NOW(), INTERVAL ? MINUTE))
-    ON DUPLICATE KEY UPDATE code_hash=VALUES(code_hash), attempts=0, expires_at=VALUES(expires_at)`,
-    [email, purpose, codeDigest(code), minutes]);
+  if (supabase) {
+    const { error } = await supabase.from('auth_challenges').upsert({
+      email,
+      purpose,
+      code_hash: codeDigest(code),
+      attempts: 0,
+      expires_at: new Date(Date.now() + minutes * 60000).toISOString(),
+    }, { onConflict: 'email,purpose' });
+    if (error) throw new Error(`Supabase challenge save failed: ${error.message}`);
+    return;
+  }
+  if (localPreview) {
+    otpStore.set(`${purpose}:${email}`, { otp: code, expiry: Date.now() + minutes * 60000, attempts: 0 });
+    return;
+  }
+  throw new Error('Supabase is not configured for production.');
 }
 async function consumeChallenge(email, purpose, code) {
-  if (!pool) {
+  if (supabase) {
+    const { data: row, error } = await supabase
+      .from('auth_challenges')
+      .select('email,purpose,code_hash,attempts,expires_at')
+      .eq('email', email)
+      .eq('purpose', purpose)
+      .maybeSingle();
+    if (error) throw new Error(`Supabase challenge lookup failed: ${error.message}`);
+    if (!row || new Date(row.expires_at) < new Date()) return { ok: false, reason: 'expired' };
+    if (row.attempts >= 3) return { ok: false, reason: 'attempts' };
+    if (codeDigest(code) !== row.code_hash) {
+      await supabase.from('auth_challenges').update({ attempts: row.attempts + 1 })
+        .eq('email', email).eq('purpose', purpose);
+      return { ok: false, reason: 'invalid', left: 2 - row.attempts };
+    }
+    const { error: deleteError } = await supabase.from('auth_challenges')
+      .delete().eq('email', email).eq('purpose', purpose);
+    if (deleteError) throw new Error(`Supabase challenge delete failed: ${deleteError.message}`);
+    return { ok: true };
+  }
+  if (localPreview) {
     const r = otpStore.get(`${purpose}:${email}`);
     if (!r || r.expiry < Date.now()) return { ok: false, reason: 'expired' };
     if (r.attempts >= 3) return { ok: false, reason: 'attempts' };
     if (r.otp !== String(code)) { r.attempts++; return { ok: false, reason: 'invalid', left: 3 - r.attempts }; }
     otpStore.delete(`${purpose}:${email}`); return { ok: true };
   }
-  const found = await dbQueryWithRetry('SELECT * FROM auth_challenges WHERE email=? AND purpose=?', [email, purpose]);
-  const r = found.rows[0];
-  if (!r || new Date(r.expires_at) < new Date()) return { ok: false, reason: 'expired' };
-  if (r.attempts >= 3) return { ok: false, reason: 'attempts' };
-  if (codeDigest(code) !== r.code_hash) { await dbQueryWithRetry('UPDATE auth_challenges SET attempts=attempts+1 WHERE email=? AND purpose=?', [email, purpose]); return { ok: false, reason: 'invalid', left: 2 - r.attempts }; }
-  await dbQueryWithRetry('DELETE FROM auth_challenges WHERE email=? AND purpose=?', [email, purpose]);
-  return { ok: true };
+  throw new Error('Supabase is not configured for production.');
 }
 
 // Create nodemailer transporter from environment variables.
@@ -293,7 +279,7 @@ const PORT = process.env.PORT || 3000;
 app.use('/api/auth', (req, res, next) => {
   if (!dbReady) {
     return res.status(503).json({
-      error: 'Database is not ready. Check the Hostinger MySQL settings and application log.',
+      error: 'Database is not ready. Check the Supabase settings and application log.',
       code: 'DB_NOT_READY',
     });
   }
@@ -303,7 +289,7 @@ app.use('/api/auth', (req, res, next) => {
 app.use('/api', (req, res, next) => {
   if (req.path === '/health' || req.path === '/config' || dbReady) return next();
   return res.status(503).json({
-    error: 'Database is not ready. Check the Hostinger MySQL settings and application log.',
+    error: 'Database is not ready. Check the Supabase settings and application log.',
     code: 'DB_NOT_READY',
   });
 });
@@ -333,11 +319,18 @@ const tokenDigest = token => crypto.createHash('sha256').update(token).digest('h
 async function createSession(user) {
   const token = generateToken(user.id);
   const expiry = new Date(Date.now() + Number(process.env.SESSION_TTL_HOURS || 168) * 3600000);
-  if (pool) await dbQueryWithRetry(
-    'INSERT INTO auth_sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)',
-    [tokenDigest(token), user.id, expiry]
-  );
-  else tokenStore.set(token, { userId: user.id, expiresAt: expiry.getTime() });
+  if (supabase) {
+    const { error } = await supabase.from('auth_sessions').insert({
+      token_hash: tokenDigest(token),
+      user_id: user.id,
+      expires_at: expiry.toISOString(),
+    });
+    if (error) throw new Error(`Supabase session save failed: ${error.message}`);
+  } else if (localPreview) {
+    tokenStore.set(token, { userId: user.id, expiresAt: expiry.getTime() });
+  } else {
+    throw new Error('Supabase is not configured for production.');
+  }
   return token;
 }
 async function getRequestUser(req) {
@@ -346,14 +339,20 @@ async function getRequestUser(req) {
   if (!token) return null;
   let userId;
   try {
-    if (pool) {
-      const result = await dbQueryWithRetry('SELECT user_id FROM auth_sessions WHERE token_hash = ? AND expires_at > NOW()', [tokenDigest(token)]);
-      if (!result.rowCount) return null;
-      userId = Number(result.rows[0].user_id);
-    } else {
+    if (supabase) {
+      const { data: session, error } = await supabase.from('auth_sessions')
+        .select('user_id')
+        .eq('token_hash', tokenDigest(token))
+        .gt('expires_at', new Date().toISOString())
+        .maybeSingle();
+      if (error || !session) return null;
+      userId = Number(session.user_id);
+    } else if (localPreview) {
       const stored = tokenStore.get(token);
       if (!stored || stored.expiresAt < Date.now()) return null;
       userId = stored.userId;
+    } else {
+      return null;
     }
     const data = await readData();
     return data.users.find(u => u.id === userId) || null;
@@ -480,8 +479,8 @@ function getSeedData() {
 
 // ─── Database initialization ───────────────────────────────────────────────────
 async function initDb() {
-  if (!pool) {
-    if (!localPreview) throw new Error('MySQL is not configured for production.');
+  if (!supabase) {
+    if (!localPreview) throw new Error('Supabase is not configured for production.');
     if (!fs.existsSync(fallbackFile)) {
       const seed = getSeedData();
       seed.users.forEach(u => { if (!u.password.startsWith('pbkdf2:')) u.password = hashPassword(u.password); });
@@ -489,25 +488,10 @@ async function initDb() {
     }
     return;
   }
-  await dbQueryWithRetry(`
-    CREATE TABLE IF NOT EXISTS app_data (
-      id TINYINT PRIMARY KEY,
-      data JSON NOT NULL,
-      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )
-  `);
-  await dbQueryWithRetry(`CREATE TABLE IF NOT EXISTS auth_sessions (
-    token_hash CHAR(64) PRIMARY KEY, user_id BIGINT NOT NULL, expires_at DATETIME NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, INDEX (user_id), INDEX (expires_at)
-  )`);
-  await dbQueryWithRetry(`CREATE TABLE IF NOT EXISTS auth_challenges (
-    email VARCHAR(255) NOT NULL, purpose VARCHAR(32) NOT NULL, code_hash CHAR(64) NOT NULL,
-    attempts TINYINT NOT NULL DEFAULT 0, expires_at DATETIME NOT NULL, PRIMARY KEY(email, purpose)
-  )`);
-
-  // Check if data already exists
-  const result = await dbQueryWithRetry('SELECT id FROM app_data WHERE id = 1');
-  if (result.rowCount === 0) {
+  const { data: existing, error: lookupError } = await supabase
+    .from('app_data').select('id,data').eq('id', 1).maybeSingle();
+  if (lookupError) throw new Error(`Supabase app_data lookup failed: ${lookupError.message}`);
+  if (!existing) {
     // First run — seed the database
     const seed = getSeedData();
     // Apply env-var admin credentials if set
@@ -518,16 +502,13 @@ async function initDb() {
     }
     // Hash all seed passwords before saving
     seed.users.forEach(u => { u.password = hashPassword(u.password); });
-    await dbQueryWithRetry(
-      'INSERT INTO app_data (id, data) VALUES (1, ?)',
-      [JSON.stringify(seed)]
-    );
+    const { error } = await supabase.from('app_data').insert({ id: 1, data: seed });
+    if (error) throw new Error(`Supabase seed failed: ${error.message}`);
     console.log('✅ Database seeded with initial data');
   } else {
     // Update admin email/password from env vars if set (runtime override)
     if (process.env.ADMIN_EMAIL || process.env.ADMIN_PASSWORD) {
-      const existing = await dbQueryWithRetry('SELECT data FROM app_data WHERE id = 1');
-      const data = typeof existing.rows[0].data === 'string' ? JSON.parse(existing.rows[0].data) : existing.rows[0].data;
+      const data = typeof existing.data === 'string' ? JSON.parse(existing.data) : existing.data;
       const adminUser = data.users.find(u => u.role === 'Admin');
       if (adminUser) {
         let changed = false;
@@ -543,7 +524,8 @@ async function initDb() {
           }
         }
         if (changed) {
-          await dbQueryWithRetry('UPDATE app_data SET data = ? WHERE id = 1', [JSON.stringify(data)]);
+          const { error } = await supabase.from('app_data').update({ data }).eq('id', 1);
+          if (error) throw new Error(`Supabase admin update failed: ${error.message}`);
           console.log('✅ Admin credentials updated from environment variables');
         }
       }
@@ -554,29 +536,23 @@ async function initDb() {
 
 // ─── Data persistence ──────────────────────────────────────────────────────────
 async function readData() {
-  if (!pool) {
-    if (!localPreview) throw new Error('MySQL is not configured for production.');
+  if (!supabase) {
+    if (!localPreview) throw new Error('Supabase is not configured for production.');
     const data = JSON.parse(fs.readFileSync(fallbackFile, 'utf8'));
     return data;
   }
-  let result;
-  try {
-    result = await dbQueryWithRetry('SELECT data FROM app_data WHERE id = 1');
-  } catch (err) {
-    // Table likely doesn't exist yet — run initDb and retry
-    console.log('⚠️  app_data table missing — running initDb()...');
-    await initDb();
-    result = await dbQueryWithRetry('SELECT data FROM app_data WHERE id = 1');
-  }
-  if (result.rowCount === 0) {
+  let { data: row, error } = await supabase.from('app_data').select('data').eq('id', 1).maybeSingle();
+  if (error) throw new Error(`Supabase app_data read failed: ${error.message}`);
+  if (!row) {
     // Table exists but empty — seed it
     const seed = getSeedData();
     seed.users.forEach(u => { u.password = hashPassword(u.password); });
-    await dbQueryWithRetry('INSERT INTO app_data (id, data) VALUES (1, ?)', [JSON.stringify(seed)]);
+    const inserted = await supabase.from('app_data').insert({ id: 1, data: seed });
+    if (inserted.error) throw new Error(`Supabase seed failed: ${inserted.error.message}`);
     console.log('✅ Database seeded from readData fallback');
     return seed;
   }
-  const data = typeof result.rows[0].data === 'string' ? JSON.parse(result.rows[0].data) : result.rows[0].data;
+  const data = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
   // Migrate plain-text passwords to hashed on first read (backwards compat)
   let migrated = false;
   data.users.forEach(u => {
@@ -590,17 +566,15 @@ async function readData() {
 }
 
 async function writeData(data) {
-  if (!pool) {
-    if (!localPreview) throw new Error('MySQL is not configured for production.');
+  if (!supabase) {
+    if (!localPreview) throw new Error('Supabase is not configured for production.');
     const temp = `${fallbackFile}.${process.pid}.tmp`;
     fs.writeFileSync(temp, JSON.stringify(data), { mode: 0o600 });
     fs.renameSync(temp, fallbackFile);
     return;
   }
-  await dbQueryWithRetry(
-    'UPDATE app_data SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1',
-    [JSON.stringify(data)]
-  );
+  const { error } = await supabase.from('app_data').update({ data, updated_at: new Date().toISOString() }).eq('id', 1);
+  if (error) throw new Error(`Supabase app_data write failed: ${error.message}`);
 }
 
 function nextId(data) {
@@ -1539,9 +1513,10 @@ app.post('/api/auth/admin-otp', async (req, res) => {
 // ─── DB Debug endpoint ────────────────────────────────────────────────────────
 app.get('/api/debug/db', async (req, res) => {
   try {
-    if (!pool) return res.json({ dbConnected: false, previewFallback: true });
-    const r = await dbQueryWithRetry('SELECT id FROM app_data WHERE id = 1');
-    res.json({ dbConnected: true, tableExists: true, rowCount: r.rowCount, mysql: 'configured' });
+    if (!supabase) return res.json({ dbConnected: false, previewFallback: localPreview, provider: localPreview ? 'local' : 'supabase' });
+    const { data, error } = await supabase.from('app_data').select('id').eq('id', 1).limit(1);
+    if (error) throw error;
+    res.json({ dbConnected: true, tableExists: true, rowCount: data.length, provider: 'supabase' });
   } catch (err) {
     res.json({ dbConnected: false, error: err.message });
   }
@@ -2892,6 +2867,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: dbReady ? 'ok' : 'degraded',
     database: dbReady ? 'connected' : 'not_connected',
+    databaseProvider: supabase ? 'supabase' : (localPreview ? 'local_preview' : 'supabase'),
     smtp: smtpConfigured ? 'configured' : 'not_configured',
     message: dbReady ? 'OG Landmark API running' : 'OG Landmark server is running but the database is not ready',
     version: '1.0.0',
@@ -3005,7 +2981,10 @@ app.put('/api/account', requireAuth, async (req, res) => {
 app.delete('/api/account', requireAuth, async (req, res) => {
   const data = await readData(); const user = data.users.find(u => u.id === req.currentUser.id);
   if (user) { user.status = 'Deleted'; user.email = `deleted-${user.id}-${Date.now()}@invalid.local`; await writeData(data); }
-  if (pool) await dbQueryWithRetry('DELETE FROM auth_sessions WHERE user_id=?', [req.currentUser.id]);
+  if (supabase) {
+    const { error } = await supabase.from('auth_sessions').delete().eq('user_id', req.currentUser.id);
+    if (error) return res.status(500).json({ error: 'Could not clear sessions' });
+  }
   res.status(204).end();
 });
 app.put('/api/account/profile-photo', requireAuth, async (req, res) => {
@@ -3828,7 +3807,7 @@ app.get('*', (req, res) => {
 
 // ─── START ────────────────────────────────────────────────────────────────────
 // Listen before database initialization so Hostinger's health check never
-// times out while MySQL is unreachable. Database-backed routes remain guarded
+// times out while Supabase is unreachable. Database-backed routes remain guarded
 // until initDb succeeds, and the exact failure is visible in the app log.
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`OG Landmark listening on ${PORT}`);
@@ -3842,6 +3821,6 @@ const server = app.listen(PORT, '0.0.0.0', () => {
       console.error(`Database initialization failed: ${err.message}`);
     });
 });
-const close = () => server.close(() => pool ? pool.end().finally(() => process.exit(0)) : process.exit(0));
+const close = () => server.close(() => process.exit(0));
 process.once('SIGTERM', close);
 process.once('SIGINT', close);

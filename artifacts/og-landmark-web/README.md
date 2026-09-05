@@ -1,16 +1,17 @@
 # OG Landmark Hostinger deployment
 
-This is the supplied website served at `/`, with its API at `/api`.
+This is the supplied website served at `/`, with its API at `/api`. Production storage uses Supabase PostgreSQL.
 
 ## Hostinger setup
 
-1. Create a MariaDB/MySQL database and database user in hPanel.
+1. Create or select a Supabase project. In the Supabase SQL Editor, run `database/schema.sql`.
 2. Upload and extract the ZIP into the Node.js application's root directory.
 3. Select Node.js 18 or newer and run `npm install --omit=dev`.
-4. Copy the names from `.env.example` into hPanel's environment-variable settings. Use the database values issued by Hostinger, set `NODE_ENV=production`, and keep `APP_URL=https://oglandmark.com`.
-5. Run `npm run import-data` once. It applies `database/schema.sql` and imports `og-landmark-data.json`.
-6. Set the startup file to `server.js` and the start command to `npm start`.
-7. Point `oglandmark.com` at the Node.js application, enable Hostinger SSL, then restart the application.
+4. Copy the names from `.env.example` into hPanel's environment-variable settings. Set `SUPABASE_URL` to the project URL and `SUPABASE_SERVICE_ROLE_KEY` to the server-only service-role key. Set `NODE_ENV=production` and keep `APP_URL=https://oglandmark.com`.
+5. For a new Supabase project, run `npm run import-data` once. It imports `og-landmark-data.json` into Supabase `app_data`.
+6. If the old Hostinger MySQL database already contains live OG Landmark data, temporarily set the old `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DATABASE`, `MYSQL_USER`, and `MYSQL_PASSWORD` variables alongside the Supabase variables and run `npm run migrate-mysql-data` once. Remove the `MYSQL_*` variables afterward; the running server no longer reads MySQL.
+7. Set the startup file to `server.js` and the start command to `npm start`.
+8. Point `oglandmark.com` at the Node.js application, enable Hostinger SSL, then restart the application.
 
 Do not create a fixed `PORT` environment variable. Hostinger assigns the application port and the server reads it from `process.env.PORT`; manually forcing `3000` can make the proxy wait on the wrong port.
 
@@ -20,8 +21,8 @@ After restarting, `/api/health` reports `"smtp": "configured"` when both SMTP us
 
 The package intentionally does not include a generated lockfile: Replit lockfiles can contain workspace-only package-firewall URLs that are not reachable from Hostinger. `.npmrc` pins installation to the public npm registry.
 
-If hPanel uses different database variable names, the server also accepts `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, or a MySQL/MariaDB `DATABASE_URL`. The database variables are required; without them Node.js exits during startup and Hostinger returns 503.
+The Supabase service-role key must remain server-side: never put it in browser code, `public/`, Git, or chat. Do not use the anon key for this backend because the app's private JSON document and session tables have RLS enabled.
 
-Production never uses the local fallback file. If MySQL settings are missing or unreachable, the HTTP server still opens its assigned port immediately, `/api/health` reports `status: "degraded"` and `database: "not_connected"`, and database-backed API routes return `503` with `DB_NOT_READY`. This prevents Hostinger's startup health check from hanging while making the database problem visible in the application log. Once MySQL is reachable, restart the app and `/api/health` should report `status: "ok"` and `database: "connected"`.
+After restarting, `/api/health` reports `status: "ok"` and `database: "connected"` when Supabase is reachable. If Supabase settings are missing or unreachable, the HTTP server still opens its assigned port immediately, `/api/health` reports `status: "degraded"` and `database: "not_connected"`, and database-backed API routes return `503` with `DB_NOT_READY`.
 
 `app_data` durably stores listings, users, mobile/developer resources, verification requests, promotions, device tokens, and account-scoped history. `auth_sessions` stores hashed expiring bearer sessions; `auth_challenges` stores hashed password-reset and admin-OTP challenges with attempt limits. Do not commit `.env` or the local fallback file.

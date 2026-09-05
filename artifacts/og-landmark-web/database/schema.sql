@@ -1,27 +1,32 @@
-CREATE TABLE IF NOT EXISTS app_data (
-  id TINYINT PRIMARY KEY,
-  data JSON NOT NULL,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-CREATE TABLE IF NOT EXISTS auth_sessions (
-  token_hash CHAR(64) PRIMARY KEY,
-  user_id BIGINT NOT NULL,
-  expires_at DATETIME NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_sessions_user (user_id),
-  INDEX idx_sessions_expiry (expires_at)
-);
-CREATE TABLE IF NOT EXISTS auth_challenges (
-  email VARCHAR(255) NOT NULL,
-  purpose VARCHAR(32) NOT NULL,
-  code_hash CHAR(64) NOT NULL,
-  attempts TINYINT NOT NULL DEFAULT 0,
-  expires_at DATETIME NOT NULL,
-  PRIMARY KEY (email, purpose)
+-- OG Landmark Supabase schema
+-- Run this once in the Supabase SQL Editor before starting the Node server.
+
+create table if not exists public.app_data (
+  id bigint primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
 );
 
--- app_data is the durable JSON document store for listings, users, developer
--- records, mobile settings, promotions, verification requests, device tokens,
--- account-scoped histories/searches/comparisons, and all other application data.
--- auth_sessions and auth_challenges intentionally remain relational so bearer
--- sessions and reset/admin OTP challenges survive Node.js restarts.
+create table if not exists public.auth_sessions (
+  token_hash text primary key,
+  user_id bigint not null,
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_auth_sessions_user on public.auth_sessions (user_id);
+create index if not exists idx_auth_sessions_expiry on public.auth_sessions (expires_at);
+
+create table if not exists public.auth_challenges (
+  email text not null,
+  purpose text not null,
+  code_hash text not null,
+  attempts smallint not null default 0,
+  expires_at timestamptz not null,
+  primary key (email, purpose)
+);
+
+-- The server uses the service-role key and keeps these tables private.
+alter table public.app_data enable row level security;
+alter table public.auth_sessions enable row level security;
+alter table public.auth_challenges enable row level security;

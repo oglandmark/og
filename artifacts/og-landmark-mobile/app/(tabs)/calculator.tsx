@@ -3,7 +3,7 @@
  * Unit Converter + Plot Area Calculator embedded inline.
  * Price Estimator / ROI / Agri link out to the full Tools screen.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Pressable, ScrollView, StyleSheet, View, Platform,
 } from 'react-native';
@@ -16,6 +16,7 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import {
   CalcCorners, CalcUnit, computePlotArea, CALC_FIELDS, MARLA_SQFT, KANAL_SQFT, ACRE_SQFT,
 } from '@/lib/plotCalculator';
+import { getMobileSettings } from '@/lib/api';
 
 // ── Unit conversion data ──────────────────────────────────────────────────────
 const CONV_UNITS = [
@@ -289,6 +290,10 @@ export default function CalculatorScreen() {
   const insets       = useSafeAreaInsets();
   const tabBarHeight = useTabBarHeight();
   const topPad       = insets.top + (Platform.OS === 'web' ? 67 : 0);
+  const [content, setContent] = useState<any>(null);
+  useEffect(() => {
+    getMobileSettings().then((settings) => setContent(settings.content?.screens?.calculator)).catch(() => undefined);
+  }, []);
 
   return (
     <ScrollView
@@ -300,7 +305,7 @@ export default function CalculatorScreen() {
       <View style={lc.header}>
         <View>
           <Text style={[lc.eyebrow, { color: colors.action }]}>OG LANDMARK</Text>
-          <Text style={[lc.headerTitle, { color: colors.foreground }]}>Land Calculator</Text>
+          <Text style={[lc.headerTitle, { color: colors.foreground }]}>{content?.title || 'Land Calculator'}</Text>
         </View>
         <Pressable onPress={() => router.push('/tools' as any)}
           style={({ pressed }) => [lc.allToolsBtn, { backgroundColor: colors.secondary, borderColor: colors.border, opacity: pressed ? 0.8 : 1 }]}>
@@ -319,12 +324,12 @@ export default function CalculatorScreen() {
 
       {/* ── Embedded calculators ──────────────────────────────────────── */}
       <View style={lc.sections}>
-        <UnitConverter colors={colors} />
-        <PlotAreaCalc  colors={colors} />
+        {content?.showUnitConverter !== false && <UnitConverter colors={colors} />}
+        {content?.showPlotArea !== false && <PlotAreaCalc colors={colors} />}
 
         {/* ── More Tools ── */}
-        <View style={[lc.moreSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[lc.moreTitle, { color: colors.foreground }]}>More Property Tools</Text>
+        {content?.showMoreTools !== false && <View style={[lc.moreSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[lc.moreTitle, { color: colors.foreground }]}>{content?.subtitle || 'More Property Tools'}</Text>
           <Text style={[lc.moreSub, { color: colors.mutedForeground }]}>Open the full tools screen for detailed estimates</Text>
           <View style={lc.quickList}>
             <QuickTool icon="trending-up" label="Price Estimator"
@@ -337,7 +342,7 @@ export default function CalculatorScreen() {
               sub="8 farming & agri land terms explained"
               toolKey="agri" colors={colors} router={router} />
           </View>
-        </View>
+        </View>}
       </View>
     </ScrollView>
   );

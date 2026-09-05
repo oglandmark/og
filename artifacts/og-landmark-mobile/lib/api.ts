@@ -420,6 +420,24 @@ export async function getBanners(): Promise<BannerSlide[]> {
 }
 
 // ─── Mobile settings ───────────────────────────────────────────────────────────
+export type MobileContent = {
+  homepage: {
+    sections: Record<string, string>;
+    browse: { enabled: boolean; showCategories: boolean; showTransactionSwitch: boolean };
+    carousel: { intervalMs: number; videoMaxDurationMs: number; showDots: boolean; animationsEnabled: boolean };
+    theme: { primary: string; action: string; overlayStart: string; overlayMiddle: string; overlayEnd: string };
+    fallback: { imageUrl: string; videoUrl: string; eyebrow: string; title: string; subtitle: string; cta: string; route: string };
+  };
+  screens: {
+    calculator: { title: string; subtitle: string; showUnitConverter: boolean; showPlotArea: boolean; showMoreTools: boolean };
+    help: { heroTitle: string; heroSubtitle: string; faqs: { q: string; a: string }[] };
+    onboarding: { buyerSlides: { icon: string; title: string; desc: string }[] };
+    categories: Record<string, string>;
+    navigation: Record<string, string>;
+    profile: { title: string; subtitle: string; showRecentlyViewed: boolean; showSavedSearches: boolean };
+  };
+};
+
 export type MobileSettings = {
   verificationBadgeEnabled: boolean;
   pushNotificationsEnabled: boolean;
@@ -428,6 +446,7 @@ export type MobileSettings = {
   maintenanceMessage: string;
   appVersion: string;
   minAppVersion: string;
+  content: MobileContent;
 };
 
 export async function getMobileSettings(): Promise<MobileSettings> {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { getMobileSettings } from '@/lib/api';
 
 type FAQ = { q: string; a: string };
 
@@ -49,6 +50,11 @@ export default function HelpScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [content, setContent] = useState<any>(null);
+  useEffect(() => {
+    getMobileSettings().then((settings) => setContent(settings.content?.screens?.help)).catch(() => undefined);
+  }, []);
+  const faqList: FAQ[] = content?.faqs?.length ? content.faqs : FAQS;
 
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
@@ -109,8 +115,8 @@ export default function HelpScreen() {
             <Feather name="help-circle" size={26} color="#ffffff" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.heroTitle}>We're here to help</Text>
-            <Text style={styles.heroSub}>OG Landmark support team is available 6 days a week</Text>
+            <Text style={styles.heroTitle}>{content?.heroTitle || "We're here to help"}</Text>
+            <Text style={styles.heroSub}>{content?.heroSubtitle || 'OG Landmark support team is available 6 days a week'}</Text>
           </View>
         </View>
       </AnimatedReveal>
@@ -146,7 +152,7 @@ export default function HelpScreen() {
       <AnimatedReveal delay={200}>
         <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>FREQUENTLY ASKED QUESTIONS</Text>
         <View style={[styles.faqCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          {FAQS.map((faq, i) => {
+          {faqList.map((faq, i) => {
             const isOpen = openFaq === i;
             return (
               <View key={i}>

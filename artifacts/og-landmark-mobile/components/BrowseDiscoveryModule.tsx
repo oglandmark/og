@@ -23,6 +23,8 @@ interface Props {
   selectedLocation: string;
   colors: Colors;
   router: any;
+  content?: { showCategories?: boolean; eyebrow?: string; title?: string };
+  categoryLabels?: Record<string, string>;
 }
 
 // ── Categories ─────────────────────────────────────────────────────────────────
@@ -457,7 +459,7 @@ function LocationCard({
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
-export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, router }: Props) {
+export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, router, content, categoryLabels }: Props) {
   const [activeCat, setActiveCat] = useState<CategoryKey>('Houses');
   const [activeTab, setActiveTab] = useState<TabKey>('Popular');
   const [pagerWidth, setPagerWidth] = useState(0);
@@ -519,8 +521,8 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
       {/* ── Header ── */}
       <View style={mod.header}>
         <View>
-          <Text style={[mod.eyebrow, { color: colors.primary }]}>EXPLORE THE MARKET</Text>
-          <Text style={[mod.title, { color: colors.foreground }]}>Find Your Property</Text>
+          <Text style={[mod.eyebrow, { color: colors.primary }]}>{content?.eyebrow || 'EXPLORE THE MARKET'}</Text>
+          <Text style={[mod.title, { color: colors.foreground }]}>{content?.title || 'Find Your Property'}</Text>
           <Text style={[mod.subtitle, { color: colors.mutedForeground }]}>
             Verified properties by type, location &amp; budget
           </Text>
@@ -540,7 +542,7 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
       </View>
 
       {/* ── Category chips ── */}
-      <ScrollView
+      {content?.showCategories !== false && <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={mod.catRow}
@@ -576,12 +578,12 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
                 mod.catLabel,
                 { color: sel ? colors.actionForeground : colors.foreground },
               ]}>
-                {cat.label}
+                 {(categoryLabels as any)?.[cat.key.toLowerCase()] || cat.label}
               </Text>
             </Pressable>
           );
         })}
-      </ScrollView>
+      </ScrollView>}
 
       {/* ── Category count badge ── */}
       {categoryCount > 0 && (

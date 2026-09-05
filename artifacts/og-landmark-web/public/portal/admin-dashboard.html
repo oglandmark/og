@@ -758,6 +758,28 @@ tr:hover td{background:#f8fafc}
       </div>
     </div>
 
+    <!-- CONTENT STUDIO -->
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px">
+        <h4 style="font-size:14px;font-weight:700;color:var(--text)">&#127912; Mobile Content Studio</h4>
+        <button class="btn btn-blue btn-sm" onclick="saveMobileContent()">Save App Content</button>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
+        Edit homepage headings, browse visibility, carousel timing/colors, fallback media, calculator/help/onboarding copy, categories, navigation labels and profile options. Keep the JSON format valid.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">Homepage configuration</label>
+          <textarea id="mc-home-json" rows="22" style="width:100%;font-family:monospace;font-size:11px;line-height:1.45;padding:10px;border:1px solid var(--border);border-radius:8px;resize:vertical"></textarea>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">App screens configuration</label>
+          <textarea id="mc-screen-json" rows="22" style="width:100%;font-family:monospace;font-size:11px;line-height:1.45;padding:10px;border:1px solid var(--border);border-radius:8px;resize:vertical"></textarea>
+        </div>
+      </div>
+      <div id="mc-content-status" style="font-size:12px;margin-top:8px;color:var(--muted)"></div>
+    </div>
+
     <!-- Reports Table -->
     <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
@@ -3081,6 +3103,14 @@ function _applyMobileSettings(s) {
   var mm = document.getElementById('ms-maint-msg');   if (mm) mm.value = s.maintenanceMessage || '';
   var av = document.getElementById('ms-app-version'); if (av) av.value = s.appVersion         || '1.0.0';
   var mv = document.getElementById('ms-min-version'); if (mv) mv.value = s.minAppVersion      || '1.0.0';
+  _applyMobileContent(s.content || {});
+}
+
+function _applyMobileContent(content) {
+  var home = document.getElementById('mc-home-json');
+  var screens = document.getElementById('mc-screen-json');
+  if (home) home.value = JSON.stringify(content.homepage || {}, null, 2);
+  if (screens) screens.value = JSON.stringify(content.screens || {}, null, 2);
 }
 
 function _setToggle(id, value) {
@@ -3104,6 +3134,16 @@ function updateToggleStyle(cb) {
 }
 
 function saveMobileSettings() {
+  var content = {};
+  try {
+    content.homepage = JSON.parse(document.getElementById('mc-home-json').value || '{}');
+    content.screens = JSON.parse(document.getElementById('mc-screen-json').value || '{}');
+  } catch (e) {
+    var status = document.getElementById('mc-content-status');
+    if (status) { status.textContent = 'Invalid JSON in Content Studio: ' + e.message; status.style.color = '#dc2626'; }
+    showToast('Fix the Content Studio JSON before saving', 'error');
+    return;
+  }
   var body = {
     verificationBadgeEnabled: document.getElementById('ms-flag-verify').checked,
     pushNotificationsEnabled:  document.getElementById('ms-flag-push').checked,
@@ -3112,10 +3152,15 @@ function saveMobileSettings() {
     maintenanceMessage: (document.getElementById('ms-maint-msg').value    || '').trim(),
     appVersion:         (document.getElementById('ms-app-version').value  || '1.0.0').trim(),
     minAppVersion:      (document.getElementById('ms-min-version').value  || '1.0.0').trim(),
+    content: content,
   };
   api('PUT', '/api/mobile/settings', body)
-    .then(function()  { showToast('Mobile settings saved!', 'success'); })
+    .then(function()  { showToast('Mobile settings and content saved!', 'success'); })
     .catch(function(e){ showToast(e.message, 'error'); });
+}
+
+function saveMobileContent() {
+  saveMobileSettings();
 }
 
 function sendPushNotification() {
@@ -3167,11 +3212,20 @@ async function loadBanners() {
       const isActive = b.active !== false;
       return `<div style="display:flex;align-items:center;gap:14px;padding:12px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;background:#fafafa">
         ${thumb}
-        <div style="flex:1">
+         <div style="min-width:0">
           <div style="font-weight:600;font-size:14px">${b.type==='video'?' Video Banner':' Image Banner'}</div>
           <div style="font-size:12px;color:#64748b;margin-top:3px">${isActive?'<span style="color:#22c55e">● Active</span>':'<span style="color:#94a3b8">● Inactive</span>'}</div>
+           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+             <input id="bn-eyebrow-${b.id}" class="form-control" placeholder="Eyebrow" value="${b.eyebrow||''}"/>
+             <input id="bn-title-${b.id}" class="form-control" placeholder="Main title" value="${b.title||''}"/>
+             <input id="bn-subtitle-${b.id}" class="form-control" placeholder="Subtitle" value="${b.subtitle||''}"/>
+             <input id="bn-cta-${b.id}" class="form-control" placeholder="CTA button" value="${b.cta||'Explore Now'}"/>
+             <input id="bn-route-${b.id}" class="form-control" placeholder="CTA route" value="${b.route||'/explore'}"/>
+             <input id="bn-order-${b.id}" class="form-control" type="number" min="0" placeholder="Order" value="${Number(b.order)||0}"/>
+           </div>
         </div>
-        <div style="display:flex;gap:8px;flex-shrink:0">
+         <div style="display:flex;gap:8px;flex-shrink:0;align-items:flex-start">
+           <button onclick="saveBanner(${b.id})" class="btn btn-sm btn-blue" style="font-size:12px">Save</button>
           <button onclick="toggleBanner(${b.id},${isActive})" class="btn btn-sm ${isActive?'btn-outline':'btn-blue'}" style="font-size:12px">${isActive?'Disable':'Enable'}</button>
           <button onclick="deleteBanner(${b.id})" class="btn btn-sm" style="background:#fee2e2;color:#dc2626;border:none;font-size:12px">Delete</button>
         </div>
@@ -3201,6 +3255,21 @@ function initBannerSlots() {
         <span id="bn-slot-status-${i}" style="font-size:12px;color:#64748b"></span>
       </div>`;
   }
+}
+
+async function saveBanner(id) {
+  try {
+    await api('PUT', '/api/mobile/banners/' + id, {
+      eyebrow: document.getElementById('bn-eyebrow-' + id).value.trim(),
+      title: document.getElementById('bn-title-' + id).value.trim(),
+      subtitle: document.getElementById('bn-subtitle-' + id).value.trim(),
+      cta: document.getElementById('bn-cta-' + id).value.trim(),
+      route: document.getElementById('bn-route-' + id).value.trim() || '/explore',
+      order: Number(document.getElementById('bn-order-' + id).value) || 0,
+    });
+    showToast('Banner content and order saved!', 'success');
+    loadBanners();
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function uploadAllBanners() {

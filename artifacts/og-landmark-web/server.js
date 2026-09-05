@@ -2696,19 +2696,154 @@ app.get('/api/admin/users/:id/activity', requireAdmin, async (req, res) => {
   }
 });
 
-// ─── MOBILE SETTINGS (feature flags) ─────────────────────────────────────────
+// ─── MOBILE SETTINGS + CONTENT MANAGEMENT ───────────────────────────────────
+const DEFAULT_MOBILE_CONTENT = {
+  homepage: {
+    sections: {
+      browseEyebrow: 'EXPLORE THE MARKET',
+      browseTitle: 'Find Your Property',
+      featuredEyebrow: 'HANDPICKED FOR YOU',
+      featuredTitle: 'Featured properties',
+      recommendedEyebrow: 'FOR BUYERS',
+      recommendedTitle: 'Recommended for you',
+      latestEyebrow: 'JUST LISTED',
+      latestTitle: 'Latest properties',
+      projectsEyebrow: 'PREMIUM PROJECTS',
+      projectsTitle: 'Exceptional developments',
+      agentsEyebrow: 'VERIFIED PROFESSIONALS',
+      agentsTitle: 'Verified Agents',
+      toolsEyebrow: 'OG LANDMARK',
+      toolsTitle: 'Explore Tools',
+    },
+    browse: {
+      enabled: true,
+      showCategories: true,
+      showTransactionSwitch: true,
+    },
+    carousel: {
+      intervalMs: 4200,
+      videoMaxDurationMs: 60000,
+      showDots: true,
+      animationsEnabled: true,
+    },
+    theme: {
+      primary: '#c8a45a',
+      action: '#102a43',
+      overlayStart: '#00000000',
+      overlayMiddle: '#0d1d2bcc',
+      overlayEnd: '#102a43f0',
+    },
+    fallback: {
+      imageUrl: '',
+      videoUrl: '',
+      eyebrow: 'OKARA DISTRICT • PAKISTAN',
+      title: 'Find Your Dream Property',
+      subtitle: 'Premium homes, plots & commercial spaces across Okara & surroundings',
+      cta: 'Explore Now',
+      route: '/explore',
+    },
+  },
+  screens: {
+    calculator: {
+      title: 'Land Calculator',
+      subtitle: 'Convert land units and calculate plot areas',
+      showUnitConverter: true,
+      showPlotArea: true,
+      showMoreTools: true,
+    },
+    help: {
+      heroTitle: "We're here to help",
+      heroSubtitle: 'OG Landmark support team is available 6 days a week',
+      faqs: [
+        { q: 'How long does agent verification take?', a: 'Verification typically takes 24–48 hours after you submit your CNIC and contact details.' },
+        { q: 'How do I post a property listing?', a: 'Tap the Post an Ad tab, fill in the property details, add photos, and submit.' },
+        { q: 'Can I edit or delete my listing after posting?', a: 'Yes. Open the Listings tab, find your listing, then tap Edit or Delete.' },
+        { q: 'How do I contact a lead?', a: 'Open the Leads tab and use the Call or WhatsApp buttons to contact the lead.' },
+      ],
+    },
+    onboarding: {
+      buyerSlides: [
+        { icon: 'home', title: 'Find Your Dream Property', desc: 'Browse verified listings across Okara District tailored to your interest.' },
+        { icon: 'trending-up', title: 'Smart Investment Guide', desc: 'Get market insights for better investment decisions.' },
+        { icon: 'shield', title: 'Sell or Rent Your Property', desc: 'List your property and reach qualified buyers and renters.' },
+      ],
+    },
+    categories: {
+      residential: 'Homes & Apartments',
+      plots: 'Plots & Land',
+      agriculture: 'Farm & Land',
+      commercial: 'Shops & Offices',
+    },
+    navigation: {
+      home: 'Home',
+      explore: 'Explore',
+      postAd: 'Post Ad',
+      saved: 'Saved',
+      calculator: 'Calculator',
+      profile: 'Profile',
+      dashboard: 'Dashboard',
+      listings: 'Listings',
+      projects: 'Projects',
+      leads: 'Leads',
+      messages: 'Messages',
+    },
+    profile: {
+      title: 'Profile',
+      subtitle: 'Manage your account and preferences',
+      showRecentlyViewed: true,
+      showSavedSearches: true,
+    },
+  },
+};
+
+const DEFAULT_MOBILE_SETTINGS = {
+  verificationBadgeEnabled: true,
+  pushNotificationsEnabled: true,
+  darkModeEnabled: true,
+  maintenanceMode: false,
+  maintenanceMessage: '',
+  appVersion: '1.0.0',
+  minAppVersion: '1.0.0',
+  content: DEFAULT_MOBILE_CONTENT,
+};
+
+function mobileSettingsPayload(stored = {}) {
+  const storedContent = stored.content || {};
+  const storedHomepage = storedContent.homepage || {};
+  const storedScreens = storedContent.screens || {};
+  return {
+    ...DEFAULT_MOBILE_SETTINGS,
+    ...stored,
+    content: {
+      ...DEFAULT_MOBILE_CONTENT,
+      ...storedContent,
+      homepage: {
+        ...DEFAULT_MOBILE_CONTENT.homepage,
+        ...storedHomepage,
+        sections: { ...DEFAULT_MOBILE_CONTENT.homepage.sections, ...(storedHomepage.sections || {}) },
+        browse: { ...DEFAULT_MOBILE_CONTENT.homepage.browse, ...(storedHomepage.browse || {}) },
+        carousel: { ...DEFAULT_MOBILE_CONTENT.homepage.carousel, ...(storedHomepage.carousel || {}) },
+        theme: { ...DEFAULT_MOBILE_CONTENT.homepage.theme, ...(storedHomepage.theme || {}) },
+        fallback: { ...DEFAULT_MOBILE_CONTENT.homepage.fallback, ...(storedHomepage.fallback || {}) },
+      },
+      screens: {
+        ...DEFAULT_MOBILE_CONTENT.screens,
+        ...storedScreens,
+        calculator: { ...DEFAULT_MOBILE_CONTENT.screens.calculator, ...(storedScreens.calculator || {}) },
+        help: { ...DEFAULT_MOBILE_CONTENT.screens.help, ...(storedScreens.help || {}) },
+        onboarding: { ...DEFAULT_MOBILE_CONTENT.screens.onboarding, ...(storedScreens.onboarding || {}) },
+        categories: { ...DEFAULT_MOBILE_CONTENT.screens.categories, ...(storedScreens.categories || {}) },
+        navigation: { ...DEFAULT_MOBILE_CONTENT.screens.navigation, ...(storedScreens.navigation || {}) },
+        profile: { ...DEFAULT_MOBILE_CONTENT.screens.profile, ...(storedScreens.profile || {}) },
+      },
+    },
+  };
+}
+
 app.get('/api/mobile/settings', async (req, res) => {
   try {
     const data = await readData();
-    res.json(data.mobileSettings || {
-      verificationBadgeEnabled: true,
-      pushNotificationsEnabled: true,
-      darkModeEnabled:          true,
-      maintenanceMode:          false,
-      maintenanceMessage:       '',
-      appVersion:               '1.0.0',
-      minAppVersion:            '1.0.0',
-    });
+    res.json(mobileSettingsPayload(data.mobileSettings));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -2718,9 +2853,37 @@ app.get('/api/mobile/settings', async (req, res) => {
 app.put('/api/mobile/settings', requireAdmin, async (req, res) => {
   try {
     const data = await readData();
-    data.mobileSettings = { ...(data.mobileSettings || {}), ...req.body };
+    const current = mobileSettingsPayload(data.mobileSettings);
+    const incoming = req.body || {};
+    data.mobileSettings = mobileSettingsPayload({
+      ...current,
+      ...incoming,
+      content: {
+        ...current.content,
+        ...(incoming.content || {}),
+        homepage: {
+          ...current.content.homepage,
+          ...(incoming.content?.homepage || {}),
+          sections: { ...current.content.homepage.sections, ...(incoming.content?.homepage?.sections || {}) },
+          browse: { ...current.content.homepage.browse, ...(incoming.content?.homepage?.browse || {}) },
+          carousel: { ...current.content.homepage.carousel, ...(incoming.content?.homepage?.carousel || {}) },
+          theme: { ...current.content.homepage.theme, ...(incoming.content?.homepage?.theme || {}) },
+          fallback: { ...current.content.homepage.fallback, ...(incoming.content?.homepage?.fallback || {}) },
+        },
+        screens: {
+          ...current.content.screens,
+          ...(incoming.content?.screens || {}),
+          calculator: { ...current.content.screens.calculator, ...(incoming.content?.screens?.calculator || {}) },
+          help: { ...current.content.screens.help, ...(incoming.content?.screens?.help || {}) },
+          onboarding: { ...current.content.screens.onboarding, ...(incoming.content?.screens?.onboarding || {}) },
+          categories: { ...current.content.screens.categories, ...(incoming.content?.screens?.categories || {}) },
+          navigation: { ...current.content.screens.navigation, ...(incoming.content?.screens?.navigation || {}) },
+          profile: { ...current.content.screens.profile, ...(incoming.content?.screens?.profile || {}) },
+        },
+      },
+    });
     await writeData(data);
-    res.json({ success: true, settings: data.mobileSettings });
+    res.json({ success: true, settings: mobileSettingsPayload(data.mobileSettings) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -2817,7 +2980,9 @@ function resolveImg(url) {
 app.get('/api/mobile/banners', async (req, res) => {
   try {
     const data = await readData();
-    const banners = (data.mobileBanners || []).filter(b => b.active !== false);
+    const banners = (data.mobileBanners || [])
+      .filter(b => b.active !== false)
+      .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
     res.json(banners.map(b => ({
       ...b,
       imageUrl: b.imageUrl ? siteUrl(b.imageUrl) : null,
@@ -2829,7 +2994,9 @@ app.get('/api/mobile/banners', async (req, res) => {
 app.get('/api/mobile/banners/all', requireAdmin, async (req, res) => {
   try {
     const data = await readData();
-    res.json((data.mobileBanners || []).map(b => ({
+    res.json((data.mobileBanners || [])
+      .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0))
+      .map(b => ({
       ...b,
       imageUrl: b.imageUrl ? siteUrl(b.imageUrl) : null,
       videoUrl: b.videoUrl ? siteUrl(b.videoUrl) : null,
@@ -2848,8 +3015,14 @@ app.post('/api/mobile/banners', requireAdmin, upload.single('media'), async (req
       id: Date.now(), type,
       imageUrl: (!isVideo && filePath) ? filePath : (req.body.imageUrl || null),
       videoUrl: (isVideo && filePath) ? filePath : (req.body.videoUrl || null),
+      eyebrow: req.body.eyebrow || '',
+      title: req.body.title || '',
+      subtitle: req.body.subtitle || '',
+      cta: req.body.cta || 'Explore Now',
+      route: req.body.route || '/explore',
+      ctaParams: req.body.ctaParams ? JSON.parse(req.body.ctaParams) : {},
       active: req.body.active !== 'false',
-      order: data.mobileBanners.length,
+      order: req.body.order !== undefined ? Number(req.body.order) : data.mobileBanners.length,
       createdAt: new Date().toISOString(),
     };
     data.mobileBanners.push(banner);
@@ -2864,7 +3037,12 @@ app.put('/api/mobile/banners/:id', requireAdmin, async (req, res) => {
     if (!data.mobileBanners) data.mobileBanners = [];
     const b = data.mobileBanners.find(x => x.id === Number(req.params.id));
     if (!b) return res.status(404).json({ error: 'Banner not found' });
-    Object.assign(b, req.body);
+    const incoming = { ...req.body };
+    if (incoming.order !== undefined) incoming.order = Number(incoming.order);
+    if (typeof incoming.ctaParams === 'string') {
+      try { incoming.ctaParams = JSON.parse(incoming.ctaParams); } catch { delete incoming.ctaParams; }
+    }
+    Object.assign(b, incoming);
     await writeData(data);
     res.json({ success: true, banner: b });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }

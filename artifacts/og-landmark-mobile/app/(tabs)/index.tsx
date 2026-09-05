@@ -27,7 +27,7 @@ import { BrandMark } from '@/components/BrandMark';
 import { BrowseDiscoveryModule } from '@/components/BrowseDiscoveryModule';
 import { PropertyDemoBadge } from '@/components/PropertyDemoBadge';
 import { VideoWatermark } from '@/components/VideoWatermark';
-import { getBanners, getProperties, API_BASE, type BannerSlide as ApiBannerSlide } from '@/lib/api';
+import { getBanners, getMobileSettings, getProperties, API_BASE, type BannerSlide as ApiBannerSlide, type MobileContent } from '@/lib/api';
 import { apiPropertyToProperty } from '@/lib/properties';
 import { ExploreMapView } from '@/components/ExploreMapView';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
@@ -307,10 +307,11 @@ const BANNER_H            = 165;
 const BANNER_AUTO_INTERVAL = 4200;
 const VIDEO_MAX_DURATION   = 60_000; // 60 s — auto-advance after this even if looping
 
-function CinematicBanner({ router, isScreenVisible, externalSlides }: {
+function CinematicBanner({ router, isScreenVisible, externalSlides, config }: {
   router: ReturnType<typeof useRouter>;
   isScreenVisible: boolean;
   externalSlides?: BannerSlideData[];
+  config?: MobileContent['homepage'];
 }) {
   const [slides, setSlides]       = useState<BannerSlideData[]>(FALLBACK_SLIDES);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -332,16 +333,43 @@ function CinematicBanner({ router, isScreenVisible, externalSlides }: {
     }
   }, [externalSlides]);
 
+  useEffect(() => {
+    if (externalSlides && externalSlides.length === 0 && config?.fallback) {
+      const fallback = config.fallback;
+      const videoUrl = fallback.videoUrl
+        ? (fallback.videoUrl.startsWith('http') ? fallback.videoUrl : `${API_BASE}${fallback.videoUrl}`)
+        : '';
+      const imageUrl = fallback.imageUrl
+        ? (fallback.imageUrl.startsWith('http') ? fallback.imageUrl : `${API_BASE}${fallback.imageUrl}`)
+        : '';
+      if (videoUrl || imageUrl) {
+        setSlides([{
+          type: videoUrl ? 'video' : 'image',
+          videoUri: videoUrl || undefined,
+          image: imageUrl ? { uri: imageUrl } : require('@/assets/images/property-1.jpg'),
+          eyebrow: fallback.eyebrow || 'OG LANDMARK',
+          title: fallback.title || 'Find Your Dream Property',
+          subtitle: fallback.subtitle || 'Premium homes & commercial spaces',
+          cta: fallback.cta || 'Explore Now',
+          route: (fallback.route || '/explore') as '/explore',
+          ctaParams: {},
+        }]);
+        setActiveIdx(0);
+      }
+    }
+  }, [config, externalSlides]);
+
   const activeSlide  = slides[activeIdx] ?? slides[0];
   const isVideoSlide = activeSlide?.type === 'video';
 
+  const carouselInterval = Math.max(1500, Number(config?.carousel?.intervalMs) || BANNER_AUTO_INTERVAL);
   const startTimer = useCallback(() => {
     if (autoRef.current) clearInterval(autoRef.current);
     if (isVideoSlide) return;
     autoRef.current = setInterval(() => {
       setActiveIdx(prev => (prev + 1) % slides.length);
-    }, BANNER_AUTO_INTERVAL);
-  }, [isVideoSlide, slides.length]);
+    }, carouselInterval);
+  }, [carouselInterval, isVideoSlide, slides.length]);
 
   useEffect(() => {
     startTimer();
@@ -383,9 +411,10 @@ function CinematicBanner({ router, isScreenVisible, externalSlides }: {
               isMuted={isMuted}
               isScreenVisible={isScreenVisible}
               router={router}
+              theme={config?.theme}
             />
           ) : (
-            <BannerSlide key={i} slide={slide} isActive={i === activeIdx} router={router} />
+            <BannerSlide key={i} slide={slide} isActive={i === activeIdx} router={router} theme={config?.theme} />
           ),
         )}
       </View>
@@ -396,22 +425,23 @@ function CinematicBanner({ router, isScreenVisible, externalSlides }: {
         </Pressable>
       )}
 
-      <View style={bn.dots}>
+      {config?.carousel?.showDots !== false && <View style={bn.dots}>
         {slides.map((_, i) => (
           <Pressable key={i} onPress={() => goTo(i)} hitSlop={8}>
             <Animated.View style={[bn.dot, i === activeIdx && bn.dotActive]} />
           </Pressable>
         ))}
-      </View>
+      </View>}
     </View>
   );
 }
 
 // ── Image slide (original Ken Burns) ──────────────────────────────────────────
-function BannerSlide({ slide, isActive, router }: {
+function BannerSlide({ slide, isActive, router, theme }: {
   slide: BannerSlideData;
   isActive: boolean;
   router: ReturnType<typeof useRouter>;
+  theme?: MobileContent['homepage']['theme'];
 }) {
   const opacity   = useSharedValue(isActive ? 1 : 0);
   const kenScale  = useSharedValue(1);
@@ -435,22 +465,33 @@ function BannerSlide({ slide, isActive, router }: {
     transform: [{ translateY: contentY.value }],
   }));
 
+  const overlay = theme ?? { overlayStart: '#00000000', overlayMiddle: '#0d1d2bcc', overlayEnd: '#102a43f0' };
   return (
     <Animated.View style={[bn.slide, StyleSheet.absoluteFill, slideStyle]} pointerEvents={isActive ? 'auto' : 'none'}>
       <Animated.Image source={slide.image} style={[bn.image, imgStyle]} resizeMode="cover" />
-      <LinearGradient colors={['#00000000', '#0d1d2bcc', '#102a43f0']} locations={[0.05, 0.5, 1]} style={StyleSheet.absoluteFill} pointerEvents="none" />
+       <LinearGradient colors={[overlay.overlayStart, overlay.overlayMiddle, overlay.overlayEnd]} locations={[0.05, 0.5, 1]} style={StyleSheet.absoluteFill} pointerEvents="none" />
+       <Animated.View style={[bn.content, contentStyle]}>
+         <Text style={[bn.eyebrow, { color: theme?.primary || '#c8a45a' }]}>{slide.eyebrow}</Text>
+         <Text style={bn.title}>{slide.title}</Text>
+         <Text style={bn.subtitle}>{slide.subtitle}</Text>
+         <Pressable style={[bn.cta, { backgroundColor: theme?.primary || '#c8a45a' }]} onPress={() => router.push({ pathname: slide.route, params: slide.ctaParams } as any)}>
+           <Text style={bn.ctaText}>{slide.cta}</Text>
+           <Feather name="arrow-right" size={13} color="#ffffff" />
+         </Pressable>
+       </Animated.View>
     </Animated.View>
   );
 }
 
 // ── Video slide — loops up to 60 s, with sound, mute toggle ───────────────────
 // isScreenVisible — false when user scrolls banner off screen or switches tab.
-function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, router }: {
+function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, router, theme }: {
   slide: BannerSlideData;
   isActive: boolean;
   isMuted: boolean;
   isScreenVisible: boolean;
   router: ReturnType<typeof useRouter>;
+  theme?: MobileContent['homepage']['theme'];
 }) {
   const opacity   = useSharedValue(isActive ? 1 : 0);
   const contentY  = useSharedValue(isActive ? 0 : 14);
@@ -498,6 +539,15 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, router }:
       ) : (
         <Image source={slide.image ?? require('@/assets/images/property-1.jpg')} style={bn.image} resizeMode="cover" />
       )}
+       <Animated.View style={[bn.content, contentStyle]}>
+         <Text style={[bn.eyebrow, { color: theme?.primary || '#c8a45a' }]}>{slide.eyebrow}</Text>
+         <Text style={bn.title}>{slide.title}</Text>
+         <Text style={bn.subtitle}>{slide.subtitle}</Text>
+         <Pressable style={[bn.cta, { backgroundColor: theme?.primary || '#c8a45a' }]} onPress={() => router.push({ pathname: slide.route, params: slide.ctaParams } as any)}>
+           <Text style={bn.ctaText}>{slide.cta}</Text>
+           <Feather name="arrow-right" size={13} color="#ffffff" />
+         </Pressable>
+       </Animated.View>
       {/* Glass watermark — top-left corner */}
       <View style={bn.watermark}>
         <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.25)' }]} />
@@ -1701,7 +1751,7 @@ const cc = StyleSheet.create({
 // ─── Home Screen ──────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
-  const colors = useColors();
+  const baseColors = useColors();
   const router     = useRouter();
   const navigation = useNavigation();
   const insets     = useSafeAreaInsets();
@@ -1727,6 +1777,14 @@ export default function HomeScreen() {
   const [apiLoading,       setApiLoading]       = useState(true);
   const [userListings,     setUserListings]     = useState<Property[]>([]);
   const [devProjects,      setDevProjects]      = useState<DeveloperProject[]>([]);
+  const [mobileContent,    setMobileContent]    = useState<MobileContent | null>(null);
+  const homeContent = mobileContent?.homepage;
+  const homeSections = homeContent?.sections ?? {};
+  const colors = {
+    ...baseColors,
+    primary: homeContent?.theme?.primary || baseColors.primary,
+    action: homeContent?.theme?.action || baseColors.action,
+  };
 
   // ── Animated toggle pill ──────────────────────────────────────────────────
   const togglePillX   = useSharedValue(0);
@@ -1769,6 +1827,12 @@ export default function HomeScreen() {
 
   // ── Fetch banner slides on every focus so newly-uploaded banners appear ──────
   const [apiBannerSlides, setApiBannerSlides] = useState<BannerSlideData[]>([]);
+  useFocusEffect(useCallback(() => {
+    getMobileSettings()
+      .then((settings) => setMobileContent(settings.content))
+      .catch(() => undefined);
+  }, []));
+
   useFocusEffect(useCallback(() => {
     getBanners()
       .then((raw) => {
@@ -1898,22 +1962,24 @@ export default function HomeScreen() {
         // Track banner's bottom edge so we know when it has scrolled off screen
         bannerBottomRef.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height;
       }}>
-        <CinematicBanner router={router} isScreenVisible={isVideoScreenVisible} externalSlides={apiBannerSlides} />
+        <CinematicBanner router={router} isScreenVisible={isVideoScreenVisible} externalSlides={apiBannerSlides} config={homeContent} />
       </View>
 
       {/* ─── FIND YOUR PROPERTY (Browse / Discovery) ────────────────────── */}
       <AnimatedReveal>
-        <BrowseDiscoveryModule
+        {homeContent?.browse?.enabled !== false && <BrowseDiscoveryModule
           transaction={transaction}
           selectedLocation={selectedLocation}
           colors={colors}
           router={router}
-        />
+          content={{ ...(homeContent?.browse || {}), eyebrow: homeSections.browseEyebrow, title: homeSections.browseTitle }}
+          categoryLabels={mobileContent?.screens?.categories}
+        />}
       </AnimatedReveal>
 
       {/* ─── FEATURED PROPERTIES ────────────────────────────────────────── */}
       <AnimatedReveal delay={100}>
-        <SectionHeader eyebrow="HANDPICKED FOR YOU" title="Featured properties" onViewAll={() => router.push({ pathname: '/explore', params: { type: transaction } })} colors={colors} />
+        <SectionHeader eyebrow={homeSections.featuredEyebrow || 'HANDPICKED FOR YOU'} title={homeSections.featuredTitle || 'Featured properties'} onViewAll={() => router.push({ pathname: '/explore', params: { type: transaction } })} colors={colors} />
         {apiLoading ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.hRow}>
             {[1, 2, 3].map((i) => (
@@ -1943,10 +2009,10 @@ export default function HomeScreen() {
               <View style={s.recommendedEyebrowRow}>
                 <View style={[s.recommendedDot, { backgroundColor: colors.primary }]} />
                 <Text style={[s.sectionEyebrow, { color: colors.primary, marginBottom: 0 }]}>
-                  {transaction === 'Buy' ? 'FOR BUYERS' : 'FOR RENTERS'}
+                  {transaction === 'Buy' ? (homeSections.recommendedEyebrow || 'FOR BUYERS') : (homeSections.recommendedEyebrow || 'FOR RENTERS')}
                 </Text>
               </View>
-              <Text style={[s.sectionTitle, { color: colors.foreground }]}>Recommended for you</Text>
+              <Text style={[s.sectionTitle, { color: colors.foreground }]}>{homeSections.recommendedTitle || 'Recommended for you'}</Text>
             </View>
             <Pressable onPress={() => router.push({ pathname: '/explore', params: { type: transaction } })} hitSlop={10}>
               <View style={[s.viewAllBtn, { backgroundColor: colors.action + '14', borderColor: colors.action + '33' }]}>
@@ -1970,7 +2036,7 @@ export default function HomeScreen() {
 
       {/* ─── LATEST PROPERTIES ───────────────────────────────────────────── */}
       <AnimatedReveal delay={170}>
-        <SectionHeader eyebrow="JUST LISTED" title="Latest properties" onViewAll={() => router.push({ pathname: '/explore', params: { type: transaction } })} colors={colors} />
+        <SectionHeader eyebrow={homeSections.latestEyebrow || 'JUST LISTED'} title={homeSections.latestTitle || 'Latest properties'} onViewAll={() => router.push({ pathname: '/explore', params: { type: transaction } })} colors={colors} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={s.hRow}>
           {latestProps.map((p, i) => <PropertyCard key={`latest-${p.id}-${i}`} property={p} />)}
         </ScrollView>
@@ -1978,7 +2044,7 @@ export default function HomeScreen() {
 
       {/* ─── PREMIUM PROJECTS ────────────────────────────────────────────── */}
       <AnimatedReveal delay={200}>
-        <SectionHeader eyebrow="PREMIUM PROJECTS" title="Exceptional developments" onViewAll={() => router.push({ pathname: '/explore', params: { propertyType: 'House,Apartment' } })} colors={colors} />
+        <SectionHeader eyebrow={homeSections.projectsEyebrow || 'PREMIUM PROJECTS'} title={homeSections.projectsTitle || 'Exceptional developments'} onViewAll={() => router.push({ pathname: '/explore', params: { propertyType: 'House,Apartment' } })} colors={colors} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={s.hRow}>
           {devProjects.map((p) => (
             <DevProjectCard key={p.id} project={p} colors={colors} onPress={() => router.push(`/project/${p.id}` as any)} />
@@ -2034,8 +2100,8 @@ export default function HomeScreen() {
         {/* Section header with inline See All */}
         <View style={s.agentSectionRow}>
           <View>
-            <Text style={[s.agentEyebrow, { color: colors.action }]}>VERIFIED PROFESSIONALS</Text>
-            <Text style={[s.agentTitle, { color: colors.foreground }]}>Verified Agents</Text>
+            <Text style={[s.agentEyebrow, { color: colors.action }]}>{homeSections.agentsEyebrow || 'VERIFIED PROFESSIONALS'}</Text>
+            <Text style={[s.agentTitle, { color: colors.foreground }]}>{homeSections.agentsTitle || 'Verified Agents'}</Text>
           </View>
           <Pressable onPress={() => router.push('/agent/find' as any)}
             style={({ pressed }) => [s.seeAllPill, { backgroundColor: colors.secondary, borderColor: colors.border, opacity: pressed ? 0.8 : 1 }]}>
@@ -2055,7 +2121,7 @@ export default function HomeScreen() {
         <View style={s.toolsSectionRow}>
           <View>
             <Text style={[s.agentEyebrow, { color: colors.action }]}>OG LANDMARK</Text>
-            <Text style={[s.agentTitle, { color: colors.foreground }]}>Explore Tools</Text>
+            <Text style={[s.agentTitle, { color: colors.foreground }]}>{homeSections.toolsTitle || 'Explore Tools'}</Text>
           </View>
           <Pressable onPress={() => router.push('/tools' as any)}
             style={({ pressed }) => [s.seeAllPill, { backgroundColor: colors.secondary, borderColor: colors.border, opacity: pressed ? 0.8 : 1 }]}>

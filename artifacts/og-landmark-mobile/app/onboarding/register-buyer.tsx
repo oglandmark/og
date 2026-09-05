@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   KeyboardAvoidingView,
@@ -16,6 +16,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { okaraDistrict } from '@/lib/cities';
+import { getMobileSettings } from '@/lib/api';
 
 const ACTION  = '#102a43';
 const GOLD    = '#c8a45a';
@@ -50,6 +51,15 @@ export default function RegisterBuyerScreen() {
   const { tr, isRTL }   = useLanguage();
 
   const [slide, setSlide] = useState(0);
+  const [featureSlides, setFeatureSlides] = useState(FEATURES);
+  useEffect(() => {
+    getMobileSettings()
+      .then((settings) => {
+        const slides = settings.content?.screens?.onboarding?.buyerSlides;
+        if (slides?.length) setFeatureSlides(slides as typeof FEATURES);
+      })
+      .catch(() => undefined);
+  }, []);
 
   // Form state
   const [name,     setName]     = useState('');
@@ -130,16 +140,16 @@ export default function RegisterBuyerScreen() {
         <View style={styles.carousel}>
           <View style={styles.carouselCard}>
             <View style={styles.featureIconWrap}>
-              <Feather name={FEATURES[slide].icon} size={28} color={ACTION} />
+              <Feather name={(featureSlides[slide] || featureSlides[0]).icon as any} size={28} color={ACTION} />
             </View>
             <View style={styles.featureTextWrap}>
-              <Text style={styles.featureTitle}>{FEATURES[slide].title}</Text>
-              <Text style={styles.featureDesc}>{FEATURES[slide].desc}</Text>
+              <Text style={styles.featureTitle}>{(featureSlides[slide] || featureSlides[0]).title}</Text>
+              <Text style={styles.featureDesc}>{(featureSlides[slide] || featureSlides[0]).desc}</Text>
             </View>
           </View>
           {/* Dots */}
           <View style={styles.dotsRow}>
-            {FEATURES.map((_, i) => (
+            {featureSlides.map((_, i) => (
               <Pressable key={i} onPress={() => setSlide(i)} hitSlop={8}>
                 <View style={[styles.dot, i === slide && styles.dotActive]} />
               </Pressable>

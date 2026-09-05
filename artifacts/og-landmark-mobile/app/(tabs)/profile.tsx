@@ -19,6 +19,7 @@ import { useSaved } from '@/context/SavedContext';
 import { getMyListings } from '@/lib/listingsStore';
 import { getLeads } from '@/lib/leadsStore';
 import { getProfilePhoto } from '@/lib/profilePhotoStore';
+import { getMobileSettings } from '@/lib/api';
 import { getInquiries, deleteInquiry, formatInquiryPrice, type Inquiry } from '@/lib/inquiriesStore';
 import { getVisitHistory, removeVisit, clearVisitHistory, type VisitRecord } from '@/lib/visitHistoryStore';
 import { getSavedSearches, deleteSavedSearch, type SavedSearch } from '@/lib/savedSearchesStore';
@@ -897,6 +898,10 @@ export default function ProfileScreen() {
   const { tr }  = useLanguage();
   const { savedIds } = useSaved();
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [profileContent, setProfileContent] = useState<any>(null);
+  useEffect(() => {
+    getMobileSettings().then((settings) => setProfileContent(settings.content?.screens?.profile)).catch(() => undefined);
+  }, []);
 
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
@@ -1076,7 +1081,10 @@ export default function ProfileScreen() {
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <AnimatedReveal>
         <View style={styles.header}>
-          <BrandMark />
+          <View>
+            <BrandMark />
+            <Text style={[styles.profileSubtitle, { color: colors.mutedForeground }]}>{profileContent?.subtitle || 'Manage your account and preferences'}</Text>
+          </View>
           <Pressable onPress={() => router.push('/settings/account' as any)}
             style={[styles.iconButton, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
             <Feather name="settings" size={18} color={colors.mutedForeground} />
@@ -1174,12 +1182,12 @@ export default function ProfileScreen() {
               <RowLink icon="heart" label="Saved Properties"
                 sublabel={savedIds.length > 0 ? `${savedIds.length} propert${savedIds.length !== 1 ? 'ies' : 'y'} shortlisted` : 'Your favourites'}
                 onPress={() => router.push('/(tabs)/saved')} colors={colors} iconColor="#e71616" />
-              <RowLink icon="eye" label="Recently Viewed"
+              {profileContent?.showRecentlyViewed !== false && <RowLink icon="eye" label="Recently Viewed"
                 sublabel={visitHistory.length > 0 ? `${visitHistory.length} properties opened` : 'Properties you have opened'}
-                onPress={() => setHistoryOpen(true)} colors={colors} iconColor={colors.action} />
-              <RowLink icon="search" label="Saved Searches"
+                onPress={() => setHistoryOpen(true)} colors={colors} iconColor={colors.action} />}
+              {profileContent?.showSavedSearches !== false && <RowLink icon="search" label="Saved Searches"
                 sublabel={savedSearches.length > 0 ? `${savedSearches.length} searches saved` : 'Quick-access search filters'}
-                onPress={() => setSearchesOpen(true)} colors={colors} iconColor="#c8a45a" />
+                onPress={() => setSearchesOpen(true)} colors={colors} iconColor="#c8a45a" />}
               <RowLink icon="tool" label="Tools & Calculators"
                 sublabel="Area calc · Price estimator · ROI"
                 onPress={() => router.push('/tools' as any)} colors={colors} iconColor={colors.action} />
@@ -1338,6 +1346,7 @@ const gst = StyleSheet.create({
 const styles = StyleSheet.create({
   screen:        { flex: 1 },
   header:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  profileSubtitle: { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 3 },
   iconButton:    { width: 42, height: 42, borderRadius: 21, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   // Profile card
   profileCard:   { borderRadius: 22, padding: 18, flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginBottom: 10 },

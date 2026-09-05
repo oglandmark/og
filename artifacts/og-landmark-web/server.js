@@ -46,7 +46,7 @@ const upload = multer({
 // documented MYSQL_* names and common Hostinger DB_* / DATABASE_URL names.
 // The preview fallback is a durable file, never silently selected in production.
 let databaseUrlConfig = {};
-if (process.env.DATABASE_URL) {
+if (process.env.DATABASE_URL && !process.env.REPLIT_ENVIRONMENT) {
   try {
     const url = new URL(process.env.DATABASE_URL);
     databaseUrlConfig = {
@@ -68,11 +68,11 @@ const databaseConfig = {
   database: process.env.MYSQL_DATABASE || process.env.DB_NAME || databaseUrlConfig.database,
 };
 const mysqlConfigured = Boolean(databaseConfig.host && databaseConfig.user && databaseConfig.database);
-const localPreview = !mysqlConfigured && (process.env.REPLIT_ENVIRONMENT || process.env.NODE_ENV !== 'production');
+const localPreview = Boolean(process.env.REPLIT_ENVIRONMENT) || (!mysqlConfigured && process.env.NODE_ENV !== 'production');
 if (!mysqlConfigured && !localPreview) {
   throw new Error('Database settings are required in production. Set MYSQL_HOST, MYSQL_USER, MYSQL_DATABASE and MYSQL_PASSWORD (or DB_HOST, DB_USER, DB_NAME, DB_PASSWORD / DATABASE_URL).');
 }
-const pool = mysqlConfigured ? mysql.createPool({
+const pool = mysqlConfigured && !localPreview ? mysql.createPool({
   host: databaseConfig.host, port: Number(databaseConfig.port),
   user: databaseConfig.user, password: databaseConfig.password,
   database: databaseConfig.database, waitForConnections: true, connectionLimit: 5,

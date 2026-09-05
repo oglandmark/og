@@ -573,6 +573,7 @@ function PropertyDetailScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { isLoggedIn } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isSaved, toggleSaved } = useSaved();
   const numId = Number(id);
@@ -606,6 +607,7 @@ function PropertyDetailScreen() {
 
   // Record visit whenever this property is opened
   useEffect(() => {
+    if (!isLoggedIn) return;
     void recordVisit({
       propertyId:     property.id,
       propertyTitle:  property.title,
@@ -613,8 +615,8 @@ function PropertyDetailScreen() {
       propertyCity:   property.city,
       propertyPrice:  property.price,
       propertyStatus: property.status,
-    });
-  }, [property.id, property.title, property.type, property.city, property.price, property.status]);
+    }).catch(() => undefined);
+  }, [isLoggedIn, property.id, property.title, property.type, property.city, property.price, property.status]);
 
   const agentPhone = property.agentPhone ?? '03042569000';
   const waUrl = `https://wa.me/92${agentPhone.replace(/\D/g, '').replace(/^0/, '')}`;

@@ -278,7 +278,7 @@ async function doLogin() {
 
     localStorage.setItem('og_token', d.token);
     localStorage.setItem('og_user', JSON.stringify(d.user));
-    window.location.href = '/user';
+    window.location.href = '/buyer';
   } catch(e) {
     showErr('login-err', 'Connection error. Please try again.');
     setLoading('login-btn', false, 'Sign In');
@@ -362,7 +362,7 @@ async function doRegister() {
     // Save auth and redirect to dashboard
     localStorage.setItem('og_user', JSON.stringify(d.user));
     localStorage.setItem('og_token', d.token);
-    window.location.href = '/user';
+    window.location.href = '/buyer';
   } catch(e) {
     showErr('reg-err', 'Connection error. Please try again.');
     setLoading('reg-btn', false, 'Create Account');

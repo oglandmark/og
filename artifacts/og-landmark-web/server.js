@@ -3218,8 +3218,18 @@ app.get('/agent',    (req, res) => { noCache(res); res.sendFile(path.join(public
 app.get('/agent/*',  (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/agent-dashboard.html')); });
 app.get('/admin',    (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/admin-dashboard.html')); });
 app.get('/admin/*',  (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/admin-dashboard.html')); });
-app.get('/user',     (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/buyer-dashboard.html')); });
-app.get('/user/*',   (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/buyer-dashboard.html')); });
+const buyerDashboard = (req, res) => {
+  noCache(res);
+  res.sendFile(path.join(publicDir, 'portal/buyer-dashboard.html'));
+};
+// Keep every buyer dashboard entry point on the same professional dashboard.
+// /user remains supported for existing login links and saved bookmarks.
+app.get('/user',                    buyerDashboard);
+app.get('/user/*',                  buyerDashboard);
+app.get('/buyer',                   buyerDashboard);
+app.get('/buyer/*',                 buyerDashboard);
+app.get('/portal/buyer-dashboard',  buyerDashboard);
+app.get('/portal/buyer-dashboard/*', buyerDashboard);
 
 // ─── STATIC FILES (React build) ────────────────────────────────────────────────
 if (fs.existsSync(publicDir)) {

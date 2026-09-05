@@ -307,7 +307,7 @@
         if (!token || !uStr) return;
         let user; try { user = JSON.parse(uStr); } catch(e){ return; }
         const role = user.role || 'Buyer';
-        const dashMap = { Admin:'/admin', Agent:'/agent', Seller:'/seller', Buyer:'/user' };
+        const dashMap = { Admin:'/admin', Agent:'/agent', Seller:'/seller', Buyer:'/buyer' };
         const dashUrl = dashMap[role] || '/user';
         const initials = (user.name||role).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
         const roleColor = { Admin:'#dc2626', Agent:'#7c3aed', Seller:'#16a34a', Buyer:'#2563eb' }[role] || '#C8A45A';

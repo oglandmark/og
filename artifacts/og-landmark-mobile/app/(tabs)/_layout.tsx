@@ -154,6 +154,8 @@ export default function TabLayout() {
       <Tabs.Screen name="messages"  options={{ title: navLabels.messages || tr('tabMessages'),  href: isVisible('agentPortal', isProfessional) ? undefined : null, tabBarIcon: ({ color, size, focused }) => <TabIcon name="message-circle" color={color} size={size} focused={focused} /> }} />
 
       {/* ── ALWAYS VISIBLE ──────────────── */}
+      {/* Keep the utility route available to internal links, but never show it in the tab bar. */}
+      <Tabs.Screen name="calculator" options={{ href: null }} />
       <Tabs.Screen name="profile"    options={{ title: navLabels.profile || tr('tabProfile'), href: visibility.profile === false ? null : undefined, tabBarIcon: ({ color, size, focused }) => <TabIcon name="user" color={color} size={size} focused={focused} /> }} />
     </Tabs>
     </ErrorBoundary>

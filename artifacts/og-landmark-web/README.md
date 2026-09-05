@@ -1,17 +1,16 @@
 # OG Landmark Hostinger deployment
 
-This is the supplied website served at `/`, with its API at `/api`. Production storage uses Supabase PostgreSQL.
+This is the supplied website served at `/`, with its API at `/api`. Production storage uses Neon PostgreSQL.
 
 ## Hostinger setup
 
-1. Create or select a Supabase project. In the Supabase SQL Editor, run `database/schema.sql`.
+1. Create or select a Neon PostgreSQL project. In the Neon SQL Editor, run `database/schema.sql`.
 2. Upload and extract the ZIP into the Node.js application's root directory.
 3. Select Node.js 18 or newer and run `npm install --omit=dev`.
-4. Copy the names from `.env.example` into hPanel's environment-variable settings. Set `SUPABASE_URL` to the project URL and `SUPABASE_SERVICE_ROLE_KEY` to the server-only service-role key. Set `NODE_ENV=production` and keep `APP_URL=https://oglandmark.com`.
-5. For a new Supabase project, run `npm run import-data` once. It imports `og-landmark-data.json` into Supabase `app_data`.
-6. If the old Hostinger MySQL database already contains live OG Landmark data, temporarily set the old `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DATABASE`, `MYSQL_USER`, and `MYSQL_PASSWORD` variables alongside the Supabase variables and run `npm run migrate-mysql-data` once. Remove the `MYSQL_*` variables afterward; the running server no longer reads MySQL.
-7. Set the startup file to `server.js` and the start command to `npm start`.
-8. Point `oglandmark.com` at the Node.js application, enable Hostinger SSL, then restart the application.
+4. Copy the names from `.env.example` into hPanel's environment-variable settings. Set `DATABASE_URL` to the Neon PostgreSQL connection string. Set `NODE_ENV=production` and keep `APP_URL=https://oglandmark.com`.
+5. For a new Neon database, run `npm run import-data` once. It imports `og-landmark-data.json` into Neon `app_data`.
+6. Set the startup file to `server.js` and the start command to `npm start`.
+7. Point `oglandmark.com` at the Node.js application, enable Hostinger SSL, then restart the application.
 
 Do not create a fixed `PORT` environment variable. Hostinger assigns the application port and the server reads it from `process.env.PORT`; manually forcing `3000` can make the proxy wait on the wrong port.
 
@@ -21,8 +20,8 @@ After restarting, `/api/health` reports `"smtp": "configured"` when both SMTP us
 
 The package intentionally does not include a generated lockfile: Replit lockfiles can contain workspace-only package-firewall URLs that are not reachable from Hostinger. `.npmrc` pins installation to the public npm registry.
 
-The Supabase service-role key must remain server-side: never put it in browser code, `public/`, Git, or chat. Do not use the anon key for this backend because the app's private JSON document and session tables have RLS enabled.
+The Neon connection string contains database credentials and must remain server-side: never put it in browser code, `public/`, Git, or chat.
 
-After restarting, `/api/health` reports `status: "ok"` and `database: "connected"` when Supabase is reachable. If Supabase settings are missing or unreachable, the HTTP server still opens its assigned port immediately, `/api/health` reports `status: "degraded"` and `database: "not_connected"`, and database-backed API routes return `503` with `DB_NOT_READY`.
+After restarting, `/api/health` reports `status: "ok"`, `database: "connected"`, and `databaseProvider: "neon"` when Neon is reachable. If `DATABASE_URL` is missing or Neon is unreachable, the HTTP server still opens its assigned port immediately, `/api/health` reports `status: "degraded"` and `database: "not_connected"`, and database-backed API routes return `503` with `DB_NOT_READY`.
 
 `app_data` durably stores listings, users, mobile/developer resources, verification requests, promotions, device tokens, and account-scoped history. `auth_sessions` stores hashed expiring bearer sessions; `auth_challenges` stores hashed password-reset and admin-OTP challenges with attempt limits. Do not commit `.env` or the local fallback file.

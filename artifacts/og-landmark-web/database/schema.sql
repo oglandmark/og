@@ -1,5 +1,5 @@
--- OG Landmark Supabase schema
--- Run this once in the Supabase SQL Editor before starting the Node server.
+-- OG Landmark Neon PostgreSQL schema
+-- Run this once in the Neon SQL Editor before starting the Node server.
 
 create table if not exists public.app_data (
   id bigint primary key,
@@ -25,8 +25,3 @@ create table if not exists public.auth_challenges (
   expires_at timestamptz not null,
   primary key (email, purpose)
 );
-
--- The server uses the service-role key and keeps these tables private.
-alter table public.app_data enable row level security;
-alter table public.auth_sessions enable row level security;
-alter table public.auth_challenges enable row level security;

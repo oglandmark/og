@@ -1,7 +1,7 @@
 /**
- * OG Landmark — Express Backend (Supabase Storage)
+ * OG Landmark — Express Backend (Neon PostgreSQL Storage)
  * --------------------------------------------------
- * Data stored in Supabase PostgreSQL (persists across restarts)
+ * Data stored in Neon PostgreSQL (persists across restarts)
  * Run: node server.js
  */
 
@@ -13,7 +13,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
-const { createClient } = require('@supabase/supabase-js');
+const { neon } = require('@neondatabase/serverless');
 const multer = require('multer');
 
 // ─── File Upload (Multer) ─────────────────────────────────────────────────────
@@ -42,18 +42,15 @@ const upload = multer({
   }
 });
 
-// Supabase is the production database. The local/Replit preview keeps its
+// Neon is the production database. The local/Replit preview keeps its
 // JSON fallback so the website can run without exposing database credentials.
-const supabaseUrl = process.env.SUPABASE_URL || process.env.SUPABASE_PROJECT_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
-const supabaseConfigured = Boolean(supabaseUrl && supabaseKey);
-const localPreview = Boolean(process.env.REPLIT_ENVIRONMENT) || (!supabaseConfigured && process.env.NODE_ENV === 'development');
-if (!supabaseConfigured && !localPreview) {
-  console.error('Supabase settings are missing. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in production.');
+const databaseUrl = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL || '';
+const databaseConfigured = Boolean(databaseUrl);
+const localPreview = Boolean(process.env.REPLIT_ENVIRONMENT) || (!databaseConfigured && process.env.NODE_ENV === 'development');
+if (!databaseConfigured && !localPreview) {
+  console.error('Neon settings are missing. Set DATABASE_URL to your Neon PostgreSQL connection string in production.');
 }
-const supabase = supabaseConfigured && !localPreview
-  ? createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false, autoRefreshToken: false } })
-  : null;
+const neonDb = databaseConfigured && !localPreview ? neon(databaseUrl) : null;
 const fallbackFile = path.join(__dirname, 'runtime-data.json');
 let dbReady = false;
 let dbInitError = null;
@@ -67,42 +64,44 @@ function generateOTP() {
 }
 const codeDigest = code => crypto.createHash('sha256').update(String(code)).digest('hex');
 async function saveChallenge(email, purpose, code, minutes) {
-  if (supabase) {
-    const { error } = await supabase.from('auth_challenges').upsert({
-      email,
-      purpose,
-      code_hash: codeDigest(code),
-      attempts: 0,
-      expires_at: new Date(Date.now() + minutes * 60000).toISOString(),
-    }, { onConflict: 'email,purpose' });
-    if (error) throw new Error(`Supabase challenge save failed: ${error.message}`);
+  if (neonDb) {
+    await neonDb`
+      INSERT INTO auth_challenges (email, purpose, code_hash, attempts, expires_at)
+      VALUES (${email}, ${purpose}, ${codeDigest(code)}, 0, NOW() + ${minutes} * INTERVAL '1 minute')
+      ON CONFLICT (email, purpose)
+      DO UPDATE SET code_hash = EXCLUDED.code_hash, attempts = 0, expires_at = EXCLUDED.expires_at
+    `;
     return;
   }
   if (localPreview) {
     otpStore.set(`${purpose}:${email}`, { otp: code, expiry: Date.now() + minutes * 60000, attempts: 0 });
     return;
   }
-  throw new Error('Supabase is not configured for production.');
+  throw new Error('Neon is not configured for production.');
 }
 async function consumeChallenge(email, purpose, code) {
-  if (supabase) {
-    const { data: row, error } = await supabase
-      .from('auth_challenges')
-      .select('email,purpose,code_hash,attempts,expires_at')
-      .eq('email', email)
-      .eq('purpose', purpose)
-      .maybeSingle();
-    if (error) throw new Error(`Supabase challenge lookup failed: ${error.message}`);
+  if (neonDb) {
+    const rows = await neonDb`
+      SELECT email, purpose, code_hash, attempts, expires_at
+      FROM auth_challenges
+      WHERE email = ${email} AND purpose = ${purpose}
+      LIMIT 1
+    `;
+    const row = rows[0];
     if (!row || new Date(row.expires_at) < new Date()) return { ok: false, reason: 'expired' };
     if (row.attempts >= 3) return { ok: false, reason: 'attempts' };
     if (codeDigest(code) !== row.code_hash) {
-      await supabase.from('auth_challenges').update({ attempts: row.attempts + 1 })
-        .eq('email', email).eq('purpose', purpose);
+      await neonDb`
+        UPDATE auth_challenges
+        SET attempts = ${row.attempts + 1}
+        WHERE email = ${email} AND purpose = ${purpose}
+      `;
       return { ok: false, reason: 'invalid', left: 2 - row.attempts };
     }
-    const { error: deleteError } = await supabase.from('auth_challenges')
-      .delete().eq('email', email).eq('purpose', purpose);
-    if (deleteError) throw new Error(`Supabase challenge delete failed: ${deleteError.message}`);
+    await neonDb`
+      DELETE FROM auth_challenges
+      WHERE email = ${email} AND purpose = ${purpose}
+    `;
     return { ok: true };
   }
   if (localPreview) {
@@ -112,7 +111,7 @@ async function consumeChallenge(email, purpose, code) {
     if (r.otp !== String(code)) { r.attempts++; return { ok: false, reason: 'invalid', left: 3 - r.attempts }; }
     otpStore.delete(`${purpose}:${email}`); return { ok: true };
   }
-  throw new Error('Supabase is not configured for production.');
+  throw new Error('Neon is not configured for production.');
 }
 
 // Create nodemailer transporter from environment variables.
@@ -280,7 +279,7 @@ const PORT = process.env.PORT || 3000;
 app.use('/api/auth', (req, res, next) => {
   if (!dbReady) {
     return res.status(503).json({
-      error: 'Database is not ready. Check the Supabase settings and application log.',
+      error: 'Database is not ready. Check the Neon settings and application log.',
       code: 'DB_NOT_READY',
     });
   }
@@ -290,7 +289,7 @@ app.use('/api/auth', (req, res, next) => {
 app.use('/api', (req, res, next) => {
   if (req.path === '/health' || req.path === '/config' || dbReady) return next();
   return res.status(503).json({
-    error: 'Database is not ready. Check the Supabase settings and application log.',
+    error: 'Database is not ready. Check the Neon settings and application log.',
     code: 'DB_NOT_READY',
   });
 });
@@ -320,17 +319,15 @@ const tokenDigest = token => crypto.createHash('sha256').update(token).digest('h
 async function createSession(user) {
   const token = generateToken(user.id);
   const expiry = new Date(Date.now() + Number(process.env.SESSION_TTL_HOURS || 168) * 3600000);
-  if (supabase) {
-    const { error } = await supabase.from('auth_sessions').insert({
-      token_hash: tokenDigest(token),
-      user_id: user.id,
-      expires_at: expiry.toISOString(),
-    });
-    if (error) throw new Error(`Supabase session save failed: ${error.message}`);
+  if (neonDb) {
+    await neonDb`
+      INSERT INTO auth_sessions (token_hash, user_id, expires_at)
+      VALUES (${tokenDigest(token)}, ${user.id}, ${expiry.toISOString()})
+    `;
   } else if (localPreview) {
     tokenStore.set(token, { userId: user.id, expiresAt: expiry.getTime() });
   } else {
-    throw new Error('Supabase is not configured for production.');
+    throw new Error('Neon is not configured for production.');
   }
   return token;
 }
@@ -340,13 +337,16 @@ async function getRequestUser(req) {
   if (!token) return null;
   let userId;
   try {
-    if (supabase) {
-      const { data: session, error } = await supabase.from('auth_sessions')
-        .select('user_id')
-        .eq('token_hash', tokenDigest(token))
-        .gt('expires_at', new Date().toISOString())
-        .maybeSingle();
-      if (error || !session) return null;
+    if (neonDb) {
+      const sessions = await neonDb`
+        SELECT user_id
+        FROM auth_sessions
+        WHERE token_hash = ${tokenDigest(token)}
+          AND expires_at > ${new Date().toISOString()}
+        LIMIT 1
+      `;
+      const session = sessions[0];
+      if (!session) return null;
       userId = Number(session.user_id);
     } else if (localPreview) {
       const stored = tokenStore.get(token);
@@ -480,8 +480,8 @@ function getSeedData() {
 
 // ─── Database initialization ───────────────────────────────────────────────────
 async function initDb() {
-  if (!supabase) {
-    if (!localPreview) throw new Error('Supabase is not configured for production.');
+  if (!neonDb) {
+    if (!localPreview) throw new Error('Neon is not configured for production.');
     if (!fs.existsSync(fallbackFile)) {
       const seed = getSeedData();
       seed.users.forEach(u => { if (!u.password.startsWith('pbkdf2:')) u.password = hashPassword(u.password); });
@@ -489,9 +489,8 @@ async function initDb() {
     }
     return;
   }
-  const { data: existing, error: lookupError } = await supabase
-    .from('app_data').select('id,data').eq('id', 1).maybeSingle();
-  if (lookupError) throw new Error(`Supabase app_data lookup failed: ${lookupError.message}`);
+  const existingRows = await neonDb`SELECT id, data FROM app_data WHERE id = 1 LIMIT 1`;
+  const existing = existingRows[0];
   if (!existing) {
     // First run — seed the database
     const seed = getSeedData();
@@ -503,8 +502,7 @@ async function initDb() {
     }
     // Hash all seed passwords before saving
     seed.users.forEach(u => { u.password = hashPassword(u.password); });
-    const { error } = await supabase.from('app_data').insert({ id: 1, data: seed });
-    if (error) throw new Error(`Supabase seed failed: ${error.message}`);
+    await neonDb`INSERT INTO app_data (id, data) VALUES (1, ${JSON.stringify(seed)}::jsonb)`;
     console.log('✅ Database seeded with initial data');
   } else {
     // Update admin email/password from env vars if set (runtime override)
@@ -525,8 +523,7 @@ async function initDb() {
           }
         }
         if (changed) {
-          const { error } = await supabase.from('app_data').update({ data }).eq('id', 1);
-          if (error) throw new Error(`Supabase admin update failed: ${error.message}`);
+          await neonDb`UPDATE app_data SET data = ${JSON.stringify(data)}::jsonb, updated_at = NOW() WHERE id = 1`;
           console.log('✅ Admin credentials updated from environment variables');
         }
       }
@@ -537,19 +534,18 @@ async function initDb() {
 
 // ─── Data persistence ──────────────────────────────────────────────────────────
 async function readData() {
-  if (!supabase) {
-    if (!localPreview) throw new Error('Supabase is not configured for production.');
+  if (!neonDb) {
+    if (!localPreview) throw new Error('Neon is not configured for production.');
     const data = JSON.parse(fs.readFileSync(fallbackFile, 'utf8'));
     return data;
   }
-  let { data: row, error } = await supabase.from('app_data').select('data').eq('id', 1).maybeSingle();
-  if (error) throw new Error(`Supabase app_data read failed: ${error.message}`);
+  const rows = await neonDb`SELECT data FROM app_data WHERE id = 1 LIMIT 1`;
+  const row = rows[0];
   if (!row) {
     // Table exists but empty — seed it
     const seed = getSeedData();
     seed.users.forEach(u => { u.password = hashPassword(u.password); });
-    const inserted = await supabase.from('app_data').insert({ id: 1, data: seed });
-    if (inserted.error) throw new Error(`Supabase seed failed: ${inserted.error.message}`);
+    await neonDb`INSERT INTO app_data (id, data) VALUES (1, ${JSON.stringify(seed)}::jsonb)`;
     console.log('✅ Database seeded from readData fallback');
     return seed;
   }
@@ -567,15 +563,14 @@ async function readData() {
 }
 
 async function writeData(data) {
-  if (!supabase) {
-    if (!localPreview) throw new Error('Supabase is not configured for production.');
+  if (!neonDb) {
+    if (!localPreview) throw new Error('Neon is not configured for production.');
     const temp = `${fallbackFile}.${process.pid}.tmp`;
     fs.writeFileSync(temp, JSON.stringify(data), { mode: 0o600 });
     fs.renameSync(temp, fallbackFile);
     return;
   }
-  const { error } = await supabase.from('app_data').update({ data, updated_at: new Date().toISOString() }).eq('id', 1);
-  if (error) throw new Error(`Supabase app_data write failed: ${error.message}`);
+  await neonDb`UPDATE app_data SET data = ${JSON.stringify(data)}::jsonb, updated_at = NOW() WHERE id = 1`;
 }
 
 function nextId(data) {
@@ -1514,10 +1509,9 @@ app.post('/api/auth/admin-otp', async (req, res) => {
 // ─── DB Debug endpoint ────────────────────────────────────────────────────────
 app.get('/api/debug/db', async (req, res) => {
   try {
-    if (!supabase) return res.json({ dbConnected: false, previewFallback: localPreview, provider: localPreview ? 'local' : 'supabase' });
-    const { data, error } = await supabase.from('app_data').select('id').eq('id', 1).limit(1);
-    if (error) throw error;
-    res.json({ dbConnected: true, tableExists: true, rowCount: data.length, provider: 'supabase' });
+    if (!neonDb) return res.json({ dbConnected: false, previewFallback: localPreview, provider: localPreview ? 'local' : 'neon' });
+    const data = await neonDb`SELECT id FROM app_data WHERE id = 1 LIMIT 1`;
+    res.json({ dbConnected: true, tableExists: true, rowCount: data.length, provider: 'neon' });
   } catch (err) {
     res.json({ dbConnected: false, error: err.message });
   }
@@ -2868,8 +2862,8 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: dbReady ? 'ok' : 'degraded',
     database: dbReady ? 'connected' : 'not_connected',
-    databaseProvider: supabase ? 'supabase' : (localPreview ? 'local_preview' : 'supabase'),
-    databaseError: dbReady ? null : (dbInitError ? dbInitError.message : (supabaseConfigured ? 'Database initialization is still in progress' : 'SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing')),
+    databaseProvider: neonDb ? 'neon' : (localPreview ? 'local_preview' : 'neon'),
+    databaseError: dbReady ? null : (dbInitError ? dbInitError.message : (databaseConfigured ? 'Database initialization is still in progress' : 'DATABASE_URL is missing')),
     smtp: smtpConfigured ? 'configured' : 'not_configured',
     message: dbReady ? 'OG Landmark API running' : 'OG Landmark server is running but the database is not ready',
     version: '1.0.0',
@@ -2983,9 +2977,12 @@ app.put('/api/account', requireAuth, async (req, res) => {
 app.delete('/api/account', requireAuth, async (req, res) => {
   const data = await readData(); const user = data.users.find(u => u.id === req.currentUser.id);
   if (user) { user.status = 'Deleted'; user.email = `deleted-${user.id}-${Date.now()}@invalid.local`; await writeData(data); }
-  if (supabase) {
-    const { error } = await supabase.from('auth_sessions').delete().eq('user_id', req.currentUser.id);
-    if (error) return res.status(500).json({ error: 'Could not clear sessions' });
+  if (neonDb) {
+    try {
+      await neonDb`DELETE FROM auth_sessions WHERE user_id = ${req.currentUser.id}`;
+    } catch {
+      return res.status(500).json({ error: 'Could not clear sessions' });
+    }
   }
   res.status(204).end();
 });
@@ -3809,7 +3806,7 @@ app.get('*', (req, res) => {
 
 // ─── START ────────────────────────────────────────────────────────────────────
 // Listen before database initialization so Hostinger's health check never
-// times out while Supabase is unreachable. Database-backed routes remain guarded
+// times out while Neon is unreachable. Database-backed routes remain guarded
 // until initDb succeeds, and the exact failure is visible in the app log.
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`OG Landmark listening on ${PORT}`);

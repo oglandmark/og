@@ -56,6 +56,7 @@ const supabase = supabaseConfigured && !localPreview
   : null;
 const fallbackFile = path.join(__dirname, 'runtime-data.json');
 let dbReady = false;
+let dbInitError = null;
 // Legacy maps remain only as a local cache; authoritative sessions/challenges are persisted.
 const otpStore = new Map();
 const resetStore = new Map();
@@ -2868,6 +2869,7 @@ app.get('/api/health', (req, res) => {
     status: dbReady ? 'ok' : 'degraded',
     database: dbReady ? 'connected' : 'not_connected',
     databaseProvider: supabase ? 'supabase' : (localPreview ? 'local_preview' : 'supabase'),
+    databaseError: dbReady ? null : (dbInitError ? dbInitError.message : (supabaseConfigured ? 'Database initialization is still in progress' : 'SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing')),
     smtp: smtpConfigured ? 'configured' : 'not_configured',
     message: dbReady ? 'OG Landmark API running' : 'OG Landmark server is running but the database is not ready',
     version: '1.0.0',
@@ -3815,9 +3817,11 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   initDb()
     .then(() => {
       dbReady = true;
+      dbInitError = null;
       console.log('OG Landmark database ready');
     })
     .catch(err => {
+      dbInitError = err;
       console.error(`Database initialization failed: ${err.message}`);
     });
 });

@@ -42,11 +42,7 @@ minimumReleaseAgeExclude:
   - expo-notifications
   - expo-router
 
-onlyBuiltDependencies:
-  - '@swc/core'
-  - esbuild
-  - msw
-  - unrs-resolver
+dangerouslyAllowAllBuilds: true
 
 overrides:
   '@esbuild-kit/esm-loader': npm:tsx@^4.21.0

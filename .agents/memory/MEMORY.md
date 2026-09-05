@@ -5,3 +5,4 @@
 - [Hostinger SMTP delivery](hostinger-smtp-delivery.md) — OTP mail needs a real mailbox credential pair, independently of the database connection.
 - [Neon PostgreSQL production database](neon-database.md) — production persistence uses the user's Neon database through a server-only DATABASE_URL.
 - [Neon auth schema](neon-auth-schema.md) — app_data alone is insufficient; auth tables must exist before production auth flows are exercised.
+- [Expo GitHub build dispatch](expo-github-build-dispatch.md) — after repository linking, EAS dispatch can still return transient 503s; verify no queued build before retrying.

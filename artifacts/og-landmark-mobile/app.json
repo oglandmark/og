@@ -55,7 +55,10 @@
           "locationAlwaysAndWhenInUsePermission": "OG Landmark uses your location to show nearby properties.",
           "locationWhenInUsePermission": "OG Landmark uses your location to show nearby properties."
         }
-      ]
+      ],
+      "expo-video",
+      "expo-audio",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

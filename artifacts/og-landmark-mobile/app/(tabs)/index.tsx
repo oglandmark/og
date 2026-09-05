@@ -5,7 +5,8 @@ import {
   StyleSheet, View, useWindowDimensions,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
-import { Audio, Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
+import { setAudioModeAsync } from 'expo-audio';
+import { VideoView, useVideoPlayer, type VideoPlayer, type VideoSource } from 'expo-video';
 import { Image as ExpoImage } from 'expo-image';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -315,7 +316,6 @@ function CinematicBanner({ router, isScreenVisible, externalSlides }: {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isMuted, setIsMuted]     = useState(false);
   const autoRef  = useRef<ReturnType<typeof setInterval> | null>(null);
-  const videoRef = useRef<Video | null>(null);
 
   // When parent provides fresh API slides:
   // — On native: always show local promo video first, then append API slides (incl. API videos).
@@ -382,7 +382,6 @@ function CinematicBanner({ router, isScreenVisible, externalSlides }: {
               isActive={i === activeIdx}
               isMuted={isMuted}
               isScreenVisible={isScreenVisible}
-              videoRef={i === activeIdx ? videoRef : undefined}
               router={router}
             />
           ) : (
@@ -446,21 +445,22 @@ function BannerSlide({ slide, isActive, router }: {
 
 // ── Video slide — loops up to 60 s, with sound, mute toggle ───────────────────
 // isScreenVisible — false when user scrolls banner off screen or switches tab.
-function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, videoRef, router }: {
+function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, router }: {
   slide: BannerSlideData;
   isActive: boolean;
   isMuted: boolean;
   isScreenVisible: boolean;
-  videoRef?: React.MutableRefObject<Video | null>;
   router: ReturnType<typeof useRouter>;
 }) {
   const opacity   = useSharedValue(isActive ? 1 : 0);
   const contentY  = useSharedValue(isActive ? 0 : 14);
   const contentOp = useSharedValue(isActive ? 1 : 0);
-  const localRef  = useRef<Video>(null);
-  const ref       = videoRef ?? localRef;
-
   const shouldPlay = isActive && isScreenVisible;
+  const source: VideoSource = slide.localVideo ?? (slide.videoUri ? { uri: slide.videoUri } : null);
+  const player = useVideoPlayer(source, (videoPlayer) => {
+    videoPlayer.loop = true;
+    videoPlayer.muted = isMuted;
+  });
 
   useEffect(() => {
     opacity.value   = withTiming(isActive ? 1 : 0, { duration: 900, easing: Easing.out(Easing.quad) });
@@ -470,15 +470,17 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, videoRef,
 
   // Play when active; pause + rewind when becoming inactive so it starts fresh next cycle
   useEffect(() => {
-    if (!ref.current) return;
     if (shouldPlay) {
-      ref.current.playAsync().catch(() => undefined);
+      player.play();
     } else {
-      ref.current.pauseAsync()
-        .then(() => ref.current?.setPositionAsync(0))
-        .catch(() => undefined);
+      player.pause();
+      player.currentTime = 0;
     }
-  }, [shouldPlay]);
+  }, [player, shouldPlay]);
+
+  useEffect(() => {
+    player.muted = isMuted;
+  }, [isMuted, player]);
 
   const slideStyle   = useAnimatedStyle(() => ({ opacity: opacity.value }));
   const contentStyle = useAnimatedStyle(() => ({
@@ -490,25 +492,9 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, videoRef,
     <Animated.View style={[bn.slide, StyleSheet.absoluteFill, slideStyle]} pointerEvents={isActive ? 'auto' : 'none'}>
       {/* Remote video only on native — web uses image fallback (avoids byte-range 422 errors) */}
       {(slide.localVideo && Platform.OS !== 'web') ? (
-        <Video
-          ref={ref}
-          source={slide.localVideo}
-          style={bn.image}
-          resizeMode={ResizeMode.COVER}
-          shouldPlay={shouldPlay}
-          isMuted={isMuted}
-          isLooping={true}
-        />
+        <VideoView player={player} style={bn.image} contentFit="cover" nativeControls={false} />
       ) : slide.videoUri && Platform.OS !== 'web' ? (
-        <Video
-          ref={ref}
-          source={{ uri: slide.videoUri }}
-          style={bn.image}
-          resizeMode={ResizeMode.COVER}
-          shouldPlay={shouldPlay}
-          isMuted={isMuted}
-          isLooping={true}
-        />
+        <VideoView player={player} style={bn.image} contentFit="cover" nativeControls={false} />
       ) : (
         <Image source={slide.image ?? require('@/assets/images/property-1.jpg')} style={bn.image} resizeMode="cover" />
       )}
@@ -604,6 +590,50 @@ function SectionHeader({ eyebrow, title, onViewAll, colors }: { eyebrow: string;
   );
 }
 
+// ─── Fullscreen video playback (Expo 57 expo-video) ───────────────────────────
+function FullscreenVideo({
+  source, muted, onPlayerReady, onBufferingChange, onPlayingChange, onError, onFinished, style,
+}: {
+  source: VideoSource;
+  muted: boolean;
+  onPlayerReady: (player: VideoPlayer) => void;
+  onBufferingChange: (buffering: boolean) => void;
+  onPlayingChange: (playing: boolean) => void;
+  onError: () => void;
+  onFinished: () => void;
+  style: any;
+}) {
+  const player = useVideoPlayer(source, (videoPlayer) => {
+    videoPlayer.loop = false;
+    videoPlayer.muted = muted;
+    videoPlayer.volume = 1;
+    videoPlayer.play();
+  });
+
+  useEffect(() => {
+    onPlayerReady(player);
+    const statusSubscription = player.addListener('statusChange', ({ status }) => {
+      onBufferingChange(status === 'loading');
+      if (status === 'error') onError();
+    });
+    const playingSubscription = player.addListener('playingChange', ({ isPlaying }) => {
+      onPlayingChange(isPlaying);
+    });
+    const completionSubscription = player.addListener('playToEnd', onFinished);
+    return () => {
+      statusSubscription.remove();
+      playingSubscription.remove();
+      completionSubscription.remove();
+    };
+  }, [onBufferingChange, onError, onFinished, onPlayerReady, onPlayingChange, player]);
+
+  useEffect(() => {
+    player.muted = muted;
+  }, [muted, player]);
+
+  return <VideoView player={player} style={style} contentFit="contain" nativeControls={false} />;
+}
+
 // ─── Featured Property Card (large cinematic) ─────────────────────────────────
 
 function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
@@ -639,7 +669,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
   const [isMutedV,     setIsMutedV]     = useState(false);
   const [isPlayingV,   setIsPlayingV]   = useState(false);
   const [hasError,     setHasError]     = useState(false);
-  const videoRef = useRef<Video>(null);
+  const videoPlayerRef = useRef<VideoPlayer | null>(null);
 
   const videoSource: { uri: string } | number | null =
     property.videoAsset != null ? property.videoAsset
@@ -650,31 +680,23 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
   async function openVideoTour(e: any) {
     e.stopPropagation();
     if (!hasVideo) return;
-    try { await Audio.setAudioModeAsync({ playsInSilentModeIOS: true, allowsRecordingIOS: false, staysActiveInBackground: false }); } catch {}
+    try { await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false, shouldPlayInBackground: false }); } catch {}
     setIsBuffering(true); setHasError(false); setIsPlayingV(true); setIsMutedV(false);
     setVideoVisible(true);
   }
   function closeVideo() {
-    videoRef.current?.stopAsync().catch(() => {});
+    videoPlayerRef.current?.pause();
+    if (videoPlayerRef.current) videoPlayerRef.current.currentTime = 0;
     setVideoVisible(false); setIsPlayingV(false);
   }
   function toggleMute() {
     const next = !isMutedV; setIsMutedV(next);
-    videoRef.current?.setIsMutedAsync(next).catch(() => {});
+    if (videoPlayerRef.current) videoPlayerRef.current.muted = next;
   }
   function togglePlay() {
-    if (isPlayingV) { videoRef.current?.pauseAsync().catch(() => {}); }
-    else            { videoRef.current?.playAsync().catch(() => {}); }
+    if (isPlayingV) { videoPlayerRef.current?.pause(); }
+    else            { videoPlayerRef.current?.play(); }
     setIsPlayingV(p => !p);
-  }
-  function onPlaybackStatus(s: AVPlaybackStatus) {
-    if (!s.isLoaded) { if ((s as any).error) setHasError(true); return; }
-    if (s.didJustFinish) {
-      closeVideo();
-      return;
-    }
-    setIsBuffering(s.isBuffering && !s.isPlaying);
-    setIsPlayingV(s.isPlaying);
   }
   // ──────────────────────────────────────────────────────────────────────────
 
@@ -805,16 +827,15 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
         ) : (
           <>
             <Pressable style={fp.fsVideoWrap} onPress={togglePlay}>
-              <Video
-                ref={videoRef}
+              <FullscreenVideo
                 source={videoSource!}
+                muted={isMutedV}
+                onPlayerReady={(player) => { videoPlayerRef.current = player; }}
+                onBufferingChange={setIsBuffering}
+                onPlayingChange={setIsPlayingV}
+                onError={() => setHasError(true)}
+                onFinished={closeVideo}
                 style={fp.fsVideo}
-                resizeMode={ResizeMode.CONTAIN}
-                shouldPlay
-                isLooping={false}
-                isMuted={isMutedV}
-                volume={1.0}
-                onPlaybackStatusUpdate={onPlaybackStatus}
               />
               <VideoWatermark />
             </Pressable>

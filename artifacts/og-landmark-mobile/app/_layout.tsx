@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { ActivityIndicator, Alert, AppState, Linking, Platform, View } from 'react-native';
-import { Audio } from 'expo-av';
-import * as Notifications from 'expo-notifications';
+import { setAudioModeAsync } from 'expo-audio';
+import type { NotificationResponse } from 'expo-notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -20,8 +20,11 @@ import { OpeningSplash } from '@/components/OpeningSplash';
 import { useColors } from '@/hooks/useColors';
 import {
   configurePushNotifications,
+  clearLastNotificationResponse,
   getNotificationData,
+  hasNotificationPermission,
   registerPushTokenForUser,
+  subscribeToNotificationResponses,
 } from '@/lib/pushNotifications';
 
 SplashScreen.preventAutoHideAsync();
@@ -39,14 +42,16 @@ function RootLayoutNav({ splashDone }: { splashDone: boolean }) {
   const notificationDenialAlertShown = React.useRef(false);
 
   useEffect(() => {
-    configurePushNotifications();
+    void configurePushNotifications();
 
     if (Platform.OS === 'web') return;
-    const handleNotificationResponse = (response: Notifications.NotificationResponse) => {
+    let mounted = true;
+    let unsubscribe: () => void = () => {};
+    const handleNotificationResponse = (response: NotificationResponse) => {
       const responseId = response.notification.request.identifier;
       if (handledNotificationResponses.current.has(responseId)) return;
       handledNotificationResponses.current.add(responseId);
-      Notifications.clearLastNotificationResponseAsync().catch((error: unknown) => {
+      clearLastNotificationResponse().catch((error: unknown) => {
         console.warn('[push] Could not clear the handled notification response.', error);
       });
 
@@ -63,24 +68,19 @@ function RootLayoutNav({ splashDone }: { splashDone: boolean }) {
       }
     };
 
-    const responseSubscription = Notifications.addNotificationResponseReceivedListener(
-      handleNotificationResponse,
-    );
-
-    // A tap that launches a fully closed app is not delivered through the
-    // listener, so process Expo's cached response once on startup.
-    Notifications.getLastNotificationResponseAsync()
-      .then((response) => {
-        if (response) {
-          handleNotificationResponse(response);
-        }
-        return undefined;
+    subscribeToNotificationResponses(handleNotificationResponse)
+      .then((cleanup) => {
+        if (mounted) unsubscribe = cleanup;
+        else cleanup();
       })
       .catch((error: unknown) => {
-        console.warn('[push] Could not inspect the last notification response.', error);
+        console.warn('[push] Could not subscribe to notification responses.', error);
       });
 
-    return () => responseSubscription.remove();
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, [router]);
 
   useEffect(() => {
@@ -145,9 +145,9 @@ function RootLayoutNav({ splashDone }: { splashDone: boolean }) {
 
     const appStateSubscription = AppState.addEventListener('change', (nextState) => {
       if (nextState !== 'active') return;
-      Notifications.getPermissionsAsync()
-        .then((permission) => {
-          if (permission.granted) {
+      hasNotificationPermission()
+        .then((granted) => {
+          if (granted) {
             void attemptRegistration(false);
           }
         })
@@ -267,10 +267,10 @@ export default function RootLayout() {
   // even when iOS silent switch is off or no explicit user interaction yet.
   useEffect(() => {
     if (Platform.OS === 'web') return;
-    Audio.setAudioModeAsync({
-      playsInSilentModeIOS:    true,   // ignore iOS silent/mute switch
-      allowsRecordingIOS:      false,
-      staysActiveInBackground: false,
+    setAudioModeAsync({
+      playsInSilentMode: true, // ignore iOS silent/mute switch
+      allowsRecording: false,
+      shouldPlayInBackground: false,
     }).catch(() => undefined);
   }, []);
   // The browser preview can render with platform fallback fonts while the

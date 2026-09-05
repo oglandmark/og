@@ -14,7 +14,8 @@ import {
   ScrollView, StatusBar, StyleSheet, TouchableOpacity, View,
 } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
-import { Audio, Video, ResizeMode, type AVPlaybackStatus } from 'expo-av';
+import { setAudioModeAsync } from 'expo-audio';
+import { VideoView, useVideoPlayer, type VideoPlayer, type VideoSource } from 'expo-video';
 import { Feather } from '@expo/vector-icons';
 import { propertyImages, type Property } from '@/lib/properties';
 import { useColors } from '@/hooks/useColors';
@@ -28,6 +29,48 @@ const MAX_THUMBS  = 5;    // max image thumbnails to show
 // Keep a playable local tour available even when an API property has no
 // uploaded video or its remote URL is temporarily unreachable.
 const DEFAULT_PROPERTY_VIDEO = require('@/assets/videos/property-tour-2.mp4') as number;
+
+function PropertyFullscreenVideo({
+  source, muted, onPlayerReady, onBufferingChange, onPlayingChange, onError, onFinished,
+}: {
+  source: VideoSource;
+  muted: boolean;
+  onPlayerReady: (player: VideoPlayer) => void;
+  onBufferingChange: (buffering: boolean) => void;
+  onPlayingChange: (playing: boolean) => void;
+  onError: () => void;
+  onFinished: () => void;
+}) {
+  const player = useVideoPlayer(source, (videoPlayer) => {
+    videoPlayer.loop = false;
+    videoPlayer.muted = muted;
+    videoPlayer.volume = 1;
+    videoPlayer.play();
+  });
+
+  React.useEffect(() => {
+    onPlayerReady(player);
+    const statusSubscription = player.addListener('statusChange', ({ status }) => {
+      onBufferingChange(status === 'loading');
+      if (status === 'error') onError();
+    });
+    const playingSubscription = player.addListener('playingChange', ({ isPlaying }) => {
+      onPlayingChange(isPlaying);
+    });
+    const completionSubscription = player.addListener('playToEnd', onFinished);
+    return () => {
+      statusSubscription.remove();
+      playingSubscription.remove();
+      completionSubscription.remove();
+    };
+  }, [onBufferingChange, onError, onFinished, onPlayerReady, onPlayingChange, player]);
+
+  React.useEffect(() => {
+    player.muted = muted;
+  }, [muted, player]);
+
+  return <VideoView player={player} style={fs.video} contentFit="contain" nativeControls={false} />;
+}
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 export function PropertyMediaStrip({
@@ -45,7 +88,7 @@ export function PropertyMediaStrip({
   const [hasError,      setHasError]      = useState(false);
   const [isMuted,       setIsMuted]       = useState(false);
   const [isPlaying,     setIsPlaying]     = useState(false);
-  const videoRef = useRef<Video>(null);
+  const videoPlayerRef = useRef<VideoPlayer | null>(null);
   const stripRef = useRef<ScrollView>(null);
   const [stripOffset, setStripOffset] = useState(0);
   const [stripWidth, setStripWidth] = useState(0);
@@ -78,10 +121,10 @@ export function PropertyMediaStrip({
   async function openVideo() {
     // Enable audio on iOS even in silent mode
     try {
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        allowsRecordingIOS: false,
-        staysActiveInBackground: false,
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: false,
+        shouldPlayInBackground: false,
       });
     } catch {}
     setIsBuffering(true);
@@ -90,31 +133,23 @@ export function PropertyMediaStrip({
     setVideoVisible(true);
   }
   function closeVideo() {
-    videoRef.current?.stopAsync().catch(() => {});
+    videoPlayerRef.current?.pause();
+    if (videoPlayerRef.current) videoPlayerRef.current.currentTime = 0;
     setIsPlaying(false);
     setVideoVisible(false);
   }
   function toggleMute() {
     const next = !isMuted;
     setIsMuted(next);
-    videoRef.current?.setIsMutedAsync(next).catch(() => {});
+    if (videoPlayerRef.current) videoPlayerRef.current.muted = next;
   }
   function togglePlay() {
     if (isPlaying) {
-      videoRef.current?.pauseAsync().catch(() => {});
+      videoPlayerRef.current?.pause();
     } else {
-      videoRef.current?.playAsync().catch(() => {});
+      videoPlayerRef.current?.play();
     }
     setIsPlaying((p) => !p);
-  }
-  function onPlaybackStatus(status: AVPlaybackStatus) {
-    if (!status.isLoaded) { if ((status as any).error) setHasError(true); return; }
-    if (status.didJustFinish) {
-      closeVideo();
-      return;
-    }
-    setIsBuffering(status.isBuffering && !status.isPlaying);
-    setIsPlaying(status.isPlaying);
   }
 
   return (
@@ -233,16 +268,14 @@ export function PropertyMediaStrip({
             <>
               {/* Video — unmuted by default, no native controls */}
               <Pressable style={fs.videoWrap} onPress={togglePlay}>
-                <Video
-                  ref={videoRef}
+                <PropertyFullscreenVideo
                   source={videoSource!}
-                  style={fs.video}
-                  resizeMode={ResizeMode.CONTAIN}
-                  shouldPlay
-                  isLooping={false}
-                  isMuted={isMuted}
-                  volume={1.0}
-                  onPlaybackStatusUpdate={onPlaybackStatus}
+                  muted={isMuted}
+                  onPlayerReady={(player) => { videoPlayerRef.current = player; }}
+                  onBufferingChange={setIsBuffering}
+                  onPlayingChange={setIsPlaying}
+                  onError={() => setHasError(true)}
+                  onFinished={closeVideo}
                 />
                 <VideoWatermark />
               </Pressable>

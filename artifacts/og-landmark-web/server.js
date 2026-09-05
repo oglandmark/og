@@ -46,7 +46,11 @@ const upload = multer({
 // documented MYSQL_* names and common Hostinger DB_* / DATABASE_URL names.
 // The preview fallback is a durable file, never silently selected in production.
 let databaseUrlConfig = {};
-if (process.env.DATABASE_URL && !process.env.REPLIT_ENVIRONMENT) {
+if (
+  process.env.DATABASE_URL &&
+  !process.env.REPLIT_ENVIRONMENT &&
+  /^(mysql|mariadb):/i.test(process.env.DATABASE_URL)
+) {
   try {
     const url = new URL(process.env.DATABASE_URL);
     databaseUrlConfig = {
@@ -68,14 +72,15 @@ const databaseConfig = {
   database: process.env.MYSQL_DATABASE || process.env.DB_NAME || databaseUrlConfig.database,
 };
 const mysqlConfigured = Boolean(databaseConfig.host && databaseConfig.user && databaseConfig.database);
-const localPreview = Boolean(process.env.REPLIT_ENVIRONMENT) || (!mysqlConfigured && process.env.NODE_ENV !== 'production');
+const localPreview = Boolean(process.env.REPLIT_ENVIRONMENT) || (!mysqlConfigured && process.env.NODE_ENV === 'development');
 if (!mysqlConfigured && !localPreview) {
-  throw new Error('Database settings are required in production. Set MYSQL_HOST, MYSQL_USER, MYSQL_DATABASE and MYSQL_PASSWORD (or DB_HOST, DB_USER, DB_NAME, DB_PASSWORD / DATABASE_URL).');
+  console.error('Database settings are missing. Set MYSQL_HOST, MYSQL_USER, MYSQL_DATABASE and MYSQL_PASSWORD (or DB_HOST, DB_USER, DB_NAME, DB_PASSWORD / DATABASE_URL).');
 }
 const pool = mysqlConfigured && !localPreview ? mysql.createPool({
   host: databaseConfig.host, port: Number(databaseConfig.port),
   user: databaseConfig.user, password: databaseConfig.password,
   database: databaseConfig.database, waitForConnections: true, connectionLimit: 5,
+  connectTimeout: 5000,
   ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: process.env.MYSQL_SSL_REJECT_UNAUTHORIZED === 'true' } : undefined
 }) : null;
 const fallbackFile = path.join(__dirname, 'runtime-data.json');
@@ -266,11 +271,19 @@ const PORT = process.env.PORT || 3000;
 app.use('/api/auth', (req, res, next) => {
   if (!dbReady) {
     return res.status(503).json({
-      error: 'Database not connected. Configure MYSQL_HOST, MYSQL_USER and MYSQL_DATABASE in Hostinger and restart the app.',
+      error: 'Database is not ready. Check the Hostinger MySQL settings and application log.',
       code: 'DB_NOT_READY',
     });
   }
   next();
+});
+
+app.use('/api', (req, res, next) => {
+  if (req.path === '/health' || req.path === '/config' || dbReady) return next();
+  return res.status(503).json({
+    error: 'Database is not ready. Check the Hostinger MySQL settings and application log.',
+    code: 'DB_NOT_READY',
+  });
 });
 
 // ─── Password Hashing (PBKDF2 — built-in Node.js, no npm needed) ────────────
@@ -446,6 +459,7 @@ function getSeedData() {
 // ─── Database initialization ───────────────────────────────────────────────────
 async function initDb() {
   if (!pool) {
+    if (!localPreview) throw new Error('MySQL is not configured for production.');
     if (!fs.existsSync(fallbackFile)) {
       const seed = getSeedData();
       seed.users.forEach(u => { if (!u.password.startsWith('pbkdf2:')) u.password = hashPassword(u.password); });
@@ -519,6 +533,7 @@ async function initDb() {
 // ─── Data persistence ──────────────────────────────────────────────────────────
 async function readData() {
   if (!pool) {
+    if (!localPreview) throw new Error('MySQL is not configured for production.');
     const data = JSON.parse(fs.readFileSync(fallbackFile, 'utf8'));
     return data;
   }
@@ -554,6 +569,7 @@ async function readData() {
 
 async function writeData(data) {
   if (!pool) {
+    if (!localPreview) throw new Error('MySQL is not configured for production.');
     const temp = `${fallbackFile}.${process.pid}.tmp`;
     fs.writeFileSync(temp, JSON.stringify(data), { mode: 0o600 });
     fs.renameSync(temp, fallbackFile);
@@ -2851,7 +2867,13 @@ app.patch('/api/mobile/banners/:id/toggle', requireAdmin, async (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'OG Landmark API running', version: '1.0.0', timestamp: new Date().toISOString() });
+  res.json({
+    status: dbReady ? 'ok' : 'degraded',
+    database: dbReady ? 'connected' : 'not_connected',
+    message: dbReady ? 'OG Landmark API running' : 'OG Landmark server is running but the database is not ready',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // ─── CONFIG (public env for frontend) ────────────────────────────────────────
@@ -3771,15 +3793,20 @@ app.get('*', (req, res) => {
 });
 
 // ─── START ────────────────────────────────────────────────────────────────────
-initDb()
-  .then(() => {
-    dbReady = true;
-    const server = app.listen(PORT, '0.0.0.0', () => console.log(`OG Landmark listening on ${PORT}`));
-    const close = () => server.close(() => pool ? pool.end().finally(() => process.exit(0)) : process.exit(0));
-    process.once('SIGTERM', close);
-    process.once('SIGINT', close);
-  })
-  .catch(err => {
-    console.error(`Database initialization failed: ${err.message}`);
-    process.exit(1);
-  });
+// Listen before database initialization so Hostinger's health check never
+// times out while MySQL is unreachable. Database-backed routes remain guarded
+// until initDb succeeds, and the exact failure is visible in the app log.
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`OG Landmark listening on ${PORT}`);
+  initDb()
+    .then(() => {
+      dbReady = true;
+      console.log('OG Landmark database ready');
+    })
+    .catch(err => {
+      console.error(`Database initialization failed: ${err.message}`);
+    });
+});
+const close = () => server.close(() => pool ? pool.end().finally(() => process.exit(0)) : process.exit(0));
+process.once('SIGTERM', close);
+process.once('SIGINT', close);

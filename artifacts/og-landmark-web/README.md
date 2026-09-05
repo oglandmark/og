@@ -12,10 +12,14 @@ This is the supplied website served at `/`, with its API at `/api`.
 6. Set the startup file to `server.js` and the start command to `npm start`.
 7. Point `oglandmark.com` at the Node.js application, enable Hostinger SSL, then restart the application.
 
+Do not create a fixed `PORT` environment variable. Hostinger assigns the application port and the server reads it from `process.env.PORT`; manually forcing `3000` can make the proxy wait on the wrong port.
+
 SMTP values are required for email verification and password reset delivery. Never upload a populated `.env` file or commit database/SMTP credentials.
 
 The package intentionally does not include a generated lockfile: Replit lockfiles can contain workspace-only package-firewall URLs that are not reachable from Hostinger. `.npmrc` pins installation to the public npm registry.
 
 If hPanel uses different database variable names, the server also accepts `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, or a MySQL/MariaDB `DATABASE_URL`. The database variables are required; without them Node.js exits during startup and Hostinger returns 503.
 
-Production refuses to start without MySQL. A `runtime-data.json` fallback is used only for local/Replit preview when MySQL settings are absent. `app_data` durably stores listings, users, mobile/developer resources, verification requests, promotions, device tokens, and account-scoped history. `auth_sessions` stores hashed expiring bearer sessions; `auth_challenges` stores hashed password-reset and admin-OTP challenges with attempt limits. Do not commit `.env` or the local fallback file.
+Production never uses the local fallback file. If MySQL settings are missing or unreachable, the HTTP server still opens its assigned port immediately, `/api/health` reports `status: "degraded"` and `database: "not_connected"`, and database-backed API routes return `503` with `DB_NOT_READY`. This prevents Hostinger's startup health check from hanging while making the database problem visible in the application log. Once MySQL is reachable, restart the app and `/api/health` should report `status: "ok"` and `database: "connected"`.
+
+`app_data` durably stores listings, users, mobile/developer resources, verification requests, promotions, device tokens, and account-scoped history. `auth_sessions` stores hashed expiring bearer sessions; `auth_challenges` stores hashed password-reset and admin-OTP challenges with attempt limits. Do not commit `.env` or the local fallback file.

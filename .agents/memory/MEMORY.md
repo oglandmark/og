@@ -1,3 +1,4 @@
 - [OG Landmark frontend preservation](frontend-preservation.md) — keep supplied public site assets unchanged; limit functional UI extensions to the existing admin style.
 - [Expo Go native modules](expo-go-media.md) — use supported media packages and guard remote push code so Android Expo Go can start.
 - [Hostinger package portability](hostinger-package-portability.md) — omit Replit lockfiles and force the public npm registry in external deployment ZIPs.
+- [Hostinger startup timeout](hostinger-startup-timeout.md) — bind the Node port before MySQL initialization so external health checks do not time out.

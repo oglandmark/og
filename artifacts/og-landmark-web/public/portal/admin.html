@@ -307,12 +307,17 @@ async function doResetRequest() {
     const ok = await verifyCaptcha(captchaResetId);
     if (!ok) { setLoading('reset-btn', false, 'Send Reset Code'); return showErr('reset-err', 'Please complete the CAPTCHA.'); }
 
-    await fetch('/api/auth/request-reset', {
+    const r = await fetch('/api/auth/request-reset', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ email, role: 'Admin' })
     });
+    const d = await r.json();
+    if (!r.ok || d.smtpOff || !d.success) {
+      setLoading('reset-btn', false, 'Send Reset Code');
+      return showErr('reset-err', d.message || d.error || 'Unable to send the reset email. Check SMTP settings.');
+    }
     pendingEmail = email;
-    showOk('reset-ok', 'Reset code sent! Check your email (or server logs).');
+    showOk('reset-ok', d.message || 'Reset code sent! Check your email.');
     setTimeout(() => showPanel('panel-reset-confirm'), 1500);
   } catch(e) {
     showErr('reset-err', 'Connection error. Please try again.');

@@ -128,38 +128,60 @@ async function consumeChallenge(email, purpose, code) {
   return { ok: true };
 }
 
-// Create nodemailer transporter from env vars
-// Set SMTP_USER, SMTP_PASS (and optionally SMTP_HOST, SMTP_PORT) in environment variables
+// Create nodemailer transporter from environment variables.
+// Hostinger normally uses the full mailbox address as SMTP_USER and the
+// mailbox password as SMTP_PASS. MAIL_* aliases are accepted for hPanel
+// configurations that use those names.
+const smtpSettings = {
+  host: process.env.SMTP_HOST || process.env.MAIL_HOST || 'smtp.hostinger.com',
+  port: Number(process.env.SMTP_PORT || process.env.MAIL_PORT || 465),
+  user: process.env.SMTP_USER || process.env.MAIL_USERNAME || process.env.MAIL_USER || '',
+  pass: process.env.SMTP_PASS || process.env.MAIL_PASSWORD || '',
+  from: process.env.FROM_EMAIL || process.env.MAIL_FROM_ADDRESS || '',
+  fromName: process.env.FROM_NAME || 'OG Landmark',
+};
+const smtpConfigured = Boolean(smtpSettings.user && smtpSettings.pass);
+
 function createTransporter() {
-  const user = process.env.SMTP_USER || 'support@oglandmark.com';
-  const pass = process.env.SMTP_PASS;
-  if (!pass) { console.warn('⚠  SMTP_PASS not set — emails will not be sent'); return null; }
-
-  const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
-  const port = parseInt(process.env.SMTP_PORT || '465', 10);
-
-  if (host) {
-    return nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: { user, pass },
-      tls: { rejectUnauthorized: false },
-    });
+  if (!smtpConfigured) {
+    console.warn('SMTP is not configured — set SMTP_USER and SMTP_PASS in Hostinger.');
+    return null;
   }
 
-  // Gmail fallback (only works for @gmail.com accounts)
   return nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user, pass },
+    host: smtpSettings.host,
+    port: smtpSettings.port,
+    secure: process.env.SMTP_SECURE
+      ? process.env.SMTP_SECURE === 'true'
+      : smtpSettings.port === 465,
+    auth: { user: smtpSettings.user, pass: smtpSettings.pass },
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 10000,
+    tls: {
+      rejectUnauthorized: process.env.SMTP_TLS_REJECT_UNAUTHORIZED === 'true',
+    },
   });
 }
 
 // The visible FROM address shown to email recipients
 function fromAddress() {
-  const name = process.env.FROM_NAME || 'OG Landmark';
-  const email = process.env.FROM_EMAIL || process.env.SMTP_USER;
+  const name = smtpSettings.fromName;
+  const email = smtpSettings.from || smtpSettings.user;
   return `"${name}" <${email}>`;
+}
+
+async function verifySmtpConnection() {
+  if (!smtpConfigured) {
+    console.warn('SMTP status: not_configured');
+    return;
+  }
+  try {
+    await createTransporter().verify();
+    console.log(`SMTP status: connected (${smtpSettings.host}:${smtpSettings.port})`);
+  } catch (err) {
+    console.error(`SMTP status: connection_failed (${err.message})`);
+  }
 }
 
 // Branded email wrapper
@@ -224,7 +246,7 @@ async function sendPasswordResetEmail(toEmail, otp, role) {
   `;
   await transporter.sendMail({
     from: fromAddress(),
-    replyTo: process.env.FROM_EMAIL || process.env.SMTP_USER,
+    replyTo: smtpSettings.from || smtpSettings.user,
     to: toEmail,
     subject: '🔐 OG Landmark — Password Reset Code',
     html: emailWrapper(body),
@@ -256,7 +278,7 @@ async function sendOtpEmail(toEmail, otp) {
   `;
   await transporter.sendMail({
     from: fromAddress(),
-    replyTo: process.env.FROM_EMAIL || process.env.SMTP_USER,
+    replyTo: smtpSettings.from || smtpSettings.user,
     to: toEmail,
     subject: '🔑 OG Landmark Admin — Login Verification Code',
     html: emailWrapper(body),
@@ -2870,6 +2892,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: dbReady ? 'ok' : 'degraded',
     database: dbReady ? 'connected' : 'not_connected',
+    smtp: smtpConfigured ? 'configured' : 'not_configured',
     message: dbReady ? 'OG Landmark API running' : 'OG Landmark server is running but the database is not ready',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
@@ -2913,10 +2936,21 @@ app.post('/api/auth/request-reset', async (req, res) => {
     }
     const otp = generateOTP();
     await saveChallenge(email.toLowerCase(), 'password-reset', otp, 15);
-    try { await sendPasswordResetEmail(email, otp, user.role); } catch (e) {
+    let smtpOff = false;
+    try {
+      const result = await sendPasswordResetEmail(email, otp, user.role);
+      smtpOff = Boolean(result && result.fallback);
+    } catch (e) {
+      smtpOff = true;
       console.error('[Reset email error]', e.message);
     }
-    res.json({ success: true });
+    res.json({
+      success: !smtpOff,
+      smtpOff,
+      message: smtpOff
+        ? 'Email service is not configured or the SMTP connection failed. Check the Hostinger SMTP settings.'
+        : 'Reset code sent. Check your email.',
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -3798,6 +3832,7 @@ app.get('*', (req, res) => {
 // until initDb succeeds, and the exact failure is visible in the app log.
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`OG Landmark listening on ${PORT}`);
+  verifySmtpConnection();
   initDb()
     .then(() => {
       dbReady = true;

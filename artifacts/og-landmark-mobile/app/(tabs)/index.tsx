@@ -307,8 +307,7 @@ const BANNER_H            = 165;
 const BANNER_AUTO_INTERVAL = 4200;
 const VIDEO_MAX_DURATION   = 60_000; // 60 s — auto-advance after this even if looping
 
-function CinematicBanner({ router, isScreenVisible, externalSlides, config }: {
-  router: ReturnType<typeof useRouter>;
+function CinematicBanner({ isScreenVisible, externalSlides, config }: {
   isScreenVisible: boolean;
   externalSlides?: BannerSlideData[];
   config?: MobileContent['homepage'];
@@ -324,8 +323,9 @@ function CinematicBanner({ router, isScreenVisible, externalSlides, config }: {
   useEffect(() => {
     if (externalSlides && externalSlides.length > 0) {
       if (Platform.OS !== 'web' && LOCAL_PROMO_VIDEO) {
-        // Keep local video first; include ALL API slides (image + remote video) after
-        setSlides([VIDEO_SLIDE, ...externalSlides]);
+        // Keep the homepage banner video-only on native. API image slides are
+        // intentionally excluded so no other banner content replaces the video.
+        setSlides([VIDEO_SLIDE, ...externalSlides.filter((slide) => slide.type === 'video')]);
       } else {
         setSlides(externalSlides);
       }
@@ -342,6 +342,20 @@ function CinematicBanner({ router, isScreenVisible, externalSlides, config }: {
       const imageUrl = fallback.imageUrl
         ? (fallback.imageUrl.startsWith('http') ? fallback.imageUrl : `${API_BASE}${fallback.imageUrl}`)
         : '';
+      if (Platform.OS !== 'web') {
+        if (videoUrl) {
+          setSlides([{
+            ...VIDEO_SLIDE,
+            type: 'video',
+            localVideo: undefined,
+            videoUri: videoUrl,
+          }]);
+        } else {
+          setSlides([VIDEO_SLIDE]);
+        }
+        setActiveIdx(0);
+        return;
+      }
       if (videoUrl || imageUrl) {
         setSlides([{
           type: videoUrl ? 'video' : 'image',
@@ -410,11 +424,9 @@ function CinematicBanner({ router, isScreenVisible, externalSlides, config }: {
               isActive={i === activeIdx}
               isMuted={isMuted}
               isScreenVisible={isScreenVisible}
-              router={router}
-              theme={config?.theme}
             />
           ) : (
-            <BannerSlide key={i} slide={slide} isActive={i === activeIdx} router={router} theme={config?.theme} />
+            <BannerSlide key={i} slide={slide} isActive={i === activeIdx} />
           ),
         )}
       </View>
@@ -437,21 +449,15 @@ function CinematicBanner({ router, isScreenVisible, externalSlides, config }: {
 }
 
 // ── Image slide (original Ken Burns) ──────────────────────────────────────────
-function BannerSlide({ slide, isActive, router, theme }: {
+function BannerSlide({ slide, isActive }: {
   slide: BannerSlideData;
   isActive: boolean;
-  router: ReturnType<typeof useRouter>;
-  theme?: MobileContent['homepage']['theme'];
 }) {
   const opacity   = useSharedValue(isActive ? 1 : 0);
   const kenScale  = useSharedValue(1);
-  const contentY  = useSharedValue(isActive ? 0 : 14);
-  const contentOp = useSharedValue(isActive ? 1 : 0);
 
   useEffect(() => {
     opacity.value   = withTiming(isActive ? 1 : 0, { duration: 900, easing: Easing.out(Easing.quad) });
-    contentOp.value = withTiming(isActive ? 1 : 0, { duration: 700, easing: Easing.out(Easing.quad) });
-    contentY.value  = withTiming(isActive ? 0 : 10, { duration: 700, easing: Easing.out(Easing.quad) });
     if (isActive) {
       kenScale.value = 1;
       kenScale.value = withTiming(1.1, { duration: BANNER_AUTO_INTERVAL + 800, easing: Easing.linear });
@@ -460,42 +466,22 @@ function BannerSlide({ slide, isActive, router, theme }: {
 
   const slideStyle   = useAnimatedStyle(() => ({ opacity: opacity.value }));
   const imgStyle     = useAnimatedStyle(() => ({ transform: [{ scale: kenScale.value }] }));
-  const contentStyle = useAnimatedStyle(() => ({
-    opacity: contentOp.value,
-    transform: [{ translateY: contentY.value }],
-  }));
-
-  const overlay = theme ?? { overlayStart: '#00000000', overlayMiddle: '#0d1d2bcc', overlayEnd: '#102a43f0' };
   return (
     <Animated.View style={[bn.slide, StyleSheet.absoluteFill, slideStyle]} pointerEvents={isActive ? 'auto' : 'none'}>
       <Animated.Image source={slide.image} style={[bn.image, imgStyle]} resizeMode="cover" />
-       <LinearGradient colors={[overlay.overlayStart, overlay.overlayMiddle, overlay.overlayEnd]} locations={[0.05, 0.5, 1]} style={StyleSheet.absoluteFill} pointerEvents="none" />
-       <Animated.View style={[bn.content, contentStyle]}>
-         <Text style={[bn.eyebrow, { color: theme?.primary || '#c8a45a' }]}>{slide.eyebrow}</Text>
-         <Text style={bn.title}>{slide.title}</Text>
-         <Text style={bn.subtitle}>{slide.subtitle}</Text>
-         <Pressable style={[bn.cta, { backgroundColor: theme?.primary || '#c8a45a' }]} onPress={() => router.push({ pathname: slide.route, params: slide.ctaParams } as any)}>
-           <Text style={bn.ctaText}>{slide.cta}</Text>
-           <Feather name="arrow-right" size={13} color="#ffffff" />
-         </Pressable>
-       </Animated.View>
     </Animated.View>
   );
 }
 
 // ── Video slide — loops up to 60 s, with sound, mute toggle ───────────────────
 // isScreenVisible — false when user scrolls banner off screen or switches tab.
-function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, router, theme }: {
+function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible }: {
   slide: BannerSlideData;
   isActive: boolean;
   isMuted: boolean;
   isScreenVisible: boolean;
-  router: ReturnType<typeof useRouter>;
-  theme?: MobileContent['homepage']['theme'];
 }) {
   const opacity   = useSharedValue(isActive ? 1 : 0);
-  const contentY  = useSharedValue(isActive ? 0 : 14);
-  const contentOp = useSharedValue(isActive ? 1 : 0);
   const shouldPlay = isActive && isScreenVisible;
   const source: VideoSource = slide.localVideo ?? (slide.videoUri ? { uri: slide.videoUri } : null);
   const player = useVideoPlayer(source, (videoPlayer) => {
@@ -505,8 +491,6 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, router, t
 
   useEffect(() => {
     opacity.value   = withTiming(isActive ? 1 : 0, { duration: 900, easing: Easing.out(Easing.quad) });
-    contentOp.value = withTiming(isActive ? 1 : 0, { duration: 700, easing: Easing.out(Easing.quad) });
-    contentY.value  = withTiming(isActive ? 0 : 10, { duration: 700, easing: Easing.out(Easing.quad) });
   }, [isActive]);
 
   // Play when active; pause + rewind when becoming inactive so it starts fresh next cycle
@@ -524,10 +508,6 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, router, t
   }, [isMuted, player]);
 
   const slideStyle   = useAnimatedStyle(() => ({ opacity: opacity.value }));
-  const contentStyle = useAnimatedStyle(() => ({
-    opacity: contentOp.value,
-    transform: [{ translateY: contentY.value }],
-  }));
 
   return (
     <Animated.View style={[bn.slide, StyleSheet.absoluteFill, slideStyle]} pointerEvents={isActive ? 'auto' : 'none'}>
@@ -539,22 +519,6 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, router, t
       ) : (
         <Image source={slide.image ?? require('@/assets/images/property-1.jpg')} style={bn.image} resizeMode="cover" />
       )}
-       <Animated.View style={[bn.content, contentStyle]}>
-         <Text style={[bn.eyebrow, { color: theme?.primary || '#c8a45a' }]}>{slide.eyebrow}</Text>
-         <Text style={bn.title}>{slide.title}</Text>
-         <Text style={bn.subtitle}>{slide.subtitle}</Text>
-         <Pressable style={[bn.cta, { backgroundColor: theme?.primary || '#c8a45a' }]} onPress={() => router.push({ pathname: slide.route, params: slide.ctaParams } as any)}>
-           <Text style={bn.ctaText}>{slide.cta}</Text>
-           <Feather name="arrow-right" size={13} color="#ffffff" />
-         </Pressable>
-       </Animated.View>
-      {/* Glass watermark — top-left corner */}
-      <View style={bn.watermark}>
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.25)' }]} />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(11,31,58,0.30)', borderRadius: 20 }]} />
-        <View style={bn.watermarkDot} />
-        <Text style={bn.watermarkText}>OG Landmark</Text>
-      </View>
     </Animated.View>
   );
 }
@@ -565,17 +529,7 @@ const bn = StyleSheet.create({
   slide:      { width: SCREEN_W, height: BANNER_H },
   image:      { width: SCREEN_W, height: BANNER_H },
   accentLine: { position: 'absolute', top: 0, left: 20, right: 20, height: 1.5, backgroundColor: '#c8a45a99', borderRadius: 1 },
-  content:    { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 22, paddingBottom: 18 },
-  eyebrow:    { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#c8a45a', letterSpacing: 2.4, marginBottom: 6 },
-  title:      { fontFamily: 'Inter_700Bold', fontSize: 26, color: '#ffffff', lineHeight: 31, marginBottom: 6 },
-  subtitle:   { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#ffffffaa', marginBottom: 14 },
-  cta:        { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#c8a45a', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 },
-  ctaText:    { fontFamily: 'Inter_700Bold', fontSize: 12, color: '#ffffff' },
-  // Glass watermark — top-left corner on video slides
-  watermark:     { position: 'absolute', top: 12, left: 14, zIndex: 20, borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(200,164,90,0.45)', paddingHorizontal: 10, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 5 },
-  watermarkDot:  { width: 5, height: 5, borderRadius: 3, backgroundColor: '#C8A45A', zIndex: 1 },
-  watermarkText: { fontFamily: 'Inter_700Bold', fontSize: 11, color: 'rgba(255,255,255,0.92)', letterSpacing: 1.4, zIndex: 1 },
-  // Mute button — top-right corner, inside banner, above gradient
+  // Mute button — top-right corner, inside banner
   muteBtn:    { position: 'absolute', top: 10, right: 12, zIndex: 20, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 16, padding: 7 },
   dots:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 10 },
   dot:        { width: 6, height: 6, borderRadius: 3, backgroundColor: '#c8a45a55' },

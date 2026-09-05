@@ -46,6 +46,19 @@
           "origin": "https://replit.com/"
         }
       ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#102A43",
+          "image": "./assets/images/og-landmark-splash.png",
+          "imageWidth": 210,
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#102A43",
+            "image": "./assets/images/og-landmark-splash.png"
+          }
+        }
+      ],
       "expo-font",
       "expo-web-browser",
       "expo-notifications",

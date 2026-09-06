@@ -51,6 +51,12 @@ const colors = {
     actionGlassHighlight: '#ffffff24',
     actionGlow: '#9bc6df',
 
+    // Premium selected-state treatment for category/filter/tab/chip controls
+    selectionBackground: '#fbfcfd',
+    selectionTint: '#f3f7fa',
+    selectionBorder: '#102F49',
+    selectionForeground: '#102F49',
+
     // Secondary / less-emphasis interactive surfaces
     secondary: '#ebe6da',
     secondaryForeground: '#1c2024',

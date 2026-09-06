@@ -116,12 +116,13 @@ function OptionChips({
             style={[
               styles.chip,
               {
-                backgroundColor: active ? colors.action : colors.secondary,
-                borderColor: active ? colors.action : colors.border,
+                backgroundColor: active ? colors.selectionBackground : colors.secondary,
+                borderColor: active ? colors.selectionBorder : colors.border,
+                borderWidth: active ? 2 : 1,
               },
             ]}
           >
-            <Text style={[styles.chipText, { color: active ? colors.actionForeground : colors.foreground }]}>
+            <Text style={[styles.chipText, { color: active ? colors.selectionForeground : colors.foreground, fontWeight: active ? '600' : '400' }]}>
               {option.label}
             </Text>
           </Pressable>

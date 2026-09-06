@@ -560,23 +560,23 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
               }}
               style={[
                 mod.catChip,
-                sel
-                   ? { backgroundColor: colors.action, borderColor: colors.action }
+                 sel
+                    ? { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 2 }
                   : { backgroundColor: colors.glassOverlay, borderColor: colors.glassBorder },
               ]}
             >
               <View style={[
                 mod.catIcon,
                 {
-                   backgroundColor: sel ? colors.accent : colors.glassOverlay,
-                  borderColor: sel ? colors.goldGlassBorder : colors.glassBorder,
+                    backgroundColor: sel ? colors.selectionTint : colors.glassOverlay,
+                   borderColor: sel ? colors.selectionBorder : colors.glassBorder,
                 },
               ]}>
-                <Feather name={cat.icon} size={17} color={sel ? colors.primary : colors.mutedForeground} />
+                <Feather name={cat.icon} size={17} color={sel ? colors.selectionForeground : colors.mutedForeground} />
               </View>
               <Text style={[
                 mod.catLabel,
-                { color: sel ? colors.actionForeground : colors.foreground },
+                { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '500' },
               ]}>
                  {(categoryLabels as any)?.[cat.key.toLowerCase()] || cat.label}
               </Text>
@@ -612,12 +612,14 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
               onPress={() => goToTab(tab)}
               style={[
                 mod.tabPill,
-                sel ? { backgroundColor: colors.action } : { backgroundColor: 'transparent' },
+                 sel
+                   ? { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }
+                   : { backgroundColor: 'transparent' },
               ]}
             >
               <Text style={[
                 mod.tabText,
-                { color: sel ? colors.actionForeground : colors.mutedForeground,
+                { color: sel ? colors.selectionForeground : colors.mutedForeground,
                   fontWeight: sel ? '600' : '400' },
               ]}>
                 {tab}

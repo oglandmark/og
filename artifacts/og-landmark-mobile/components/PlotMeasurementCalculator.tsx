@@ -257,8 +257,8 @@ export function PlotMeasurementCalculator({
         <View style={styles.chipRow}>
           {CORNERS.map((value) => (
             <Pressable key={value} onPress={() => switchCorners(value)}
-              style={[styles.chip, { backgroundColor: value === corners ? colors.action : colors.secondary, borderColor: value === corners ? colors.action : colors.border }]}>
-              <Text style={[styles.chipText, { color: value === corners ? colors.actionForeground : colors.foreground }]}>{value}</Text>
+              style={[styles.chip, { backgroundColor: value === corners ? colors.selectionBackground : colors.secondary, borderColor: value === corners ? colors.selectionBorder : colors.border, borderWidth: value === corners ? 2 : 1 }]}>
+              <Text style={[styles.chipText, { color: value === corners ? colors.selectionForeground : colors.foreground, fontWeight: value === corners ? '600' : '400' }]}>{value}</Text>
             </Pressable>
           ))}
         </View>
@@ -268,8 +268,8 @@ export function PlotMeasurementCalculator({
             <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>INPUT UNIT</Text>
             <View style={[styles.segment, { backgroundColor: colors.secondary }]}>
               {(['ft', 'm'] as CalcUnit[]).map((value) => (
-                <Pressable key={value} onPress={() => switchUnit(value)} style={[styles.segmentButton, value === unit && { backgroundColor: colors.action }]}>
-                  <Text style={[styles.segmentText, { color: value === unit ? colors.actionForeground : colors.mutedForeground }]}>{value === 'ft' ? 'Feet' : 'Meters'}</Text>
+                <Pressable key={value} onPress={() => switchUnit(value)} style={[styles.segmentButton, value === unit && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }]}>
+                  <Text style={[styles.segmentText, { color: value === unit ? colors.selectionForeground : colors.mutedForeground, fontWeight: value === unit ? '600' : '400' }]}>{value === 'ft' ? 'Feet' : 'Meters'}</Text>
                 </Pressable>
               ))}
             </View>
@@ -279,8 +279,8 @@ export function PlotMeasurementCalculator({
         <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>CALCULATION MODE</Text>
         <View style={[styles.modeRow, { backgroundColor: colors.secondary }]}>
           {MODES.map((item) => (
-            <Pressable key={item.key} onPress={() => switchMode(item.key)} style={[styles.modeButton, mode === item.key && { backgroundColor: colors.action }]}>
-              <Text style={[styles.modeText, { color: mode === item.key ? colors.actionForeground : colors.mutedForeground }]}>{item.label}</Text>
+            <Pressable key={item.key} onPress={() => switchMode(item.key)} style={[styles.modeButton, mode === item.key && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }]}>
+              <Text style={[styles.modeText, { color: mode === item.key ? colors.selectionForeground : colors.mutedForeground, fontWeight: mode === item.key ? '600' : '400' }]}>{item.label}</Text>
             </Pressable>
           ))}
         </View>

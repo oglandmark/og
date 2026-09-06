@@ -392,6 +392,77 @@ app.use('/api/auth', (req, res, next) => {
   authAttempts.set(key, state); next();
 });
 
+// ─── Mobile agent directory ────────────────────────────────────────────────────
+// These records are the former mobile-only demo profiles. Keeping them in the
+// shared data document lets the admin dashboard become the single source of
+// truth without breaking existing installs that already have app_data.
+function getDefaultMobileAgents() {
+  return [
+    {
+      id: 2001, name: 'Ahmed Property Consultants', displayName: 'Ahmed Property Consultants',
+      initials: 'AC', agency: 'Ahmed Real Estate', verified: true, approvalStatus: 'Approved',
+      status: 'Active', visible: true, rating: 4.9, reviewCount: 126, years: 12, listings: 48,
+      areas: ['Okara City', 'Depalpur'], color: '#1a6b3a', phone: '03012345678',
+      specialties: ['Residential', 'Agricultural Land', 'Plots'], photo: '/images/agents/ahmed.jpg',
+      about: 'With over 12 years of experience in Okara District real estate, Ahmed Property Consultants specialises in residential plots, houses, and agricultural land across Okara and Depalpur. Trusted by hundreds of satisfied buyers and sellers with transparent, professional service.',
+      createdAt: '2025-01-01T00:00:00.000Z',
+    },
+    {
+      id: 2002, name: 'Malik Properties', displayName: 'Malik Properties',
+      initials: 'MP', agency: 'Malik & Sons Real Estate', verified: true, approvalStatus: 'Approved',
+      status: 'Active', visible: true, rating: 4.8, reviewCount: 94, years: 8, listings: 32,
+      areas: ['Renala Khurd', 'Okara City'], color: '#102a43', phone: '03042569000',
+      specialties: ['Commercial', 'Residential', 'Rentals'], photo: '/images/agents/malik.jpg',
+      about: 'Malik Properties has been serving clients in Renala Khurd and Okara since 2016. Specialising in residential and commercial properties with a strong focus on client satisfaction and straightforward dealings.',
+      createdAt: '2025-01-01T00:00:00.000Z',
+    },
+    {
+      id: 2003, name: 'Ch. Property Services', displayName: 'Ch. Property Services',
+      initials: 'CS', agency: 'Chaudhry Property Group', verified: true, approvalStatus: 'Approved',
+      status: 'Active', visible: true, rating: 4.9, reviewCount: 173, years: 15, listings: 61,
+      areas: ['Depalpur', 'Hujra Shah Muqeem'], color: '#8b6c2a', phone: '03331234567',
+      specialties: ['Agricultural Land', 'Plots', 'Commercial', 'Investment'], photo: '/images/agents/chaudhry.jpg',
+      about: 'Chaudhry Property Group is one of the most experienced real estate firms in the Depalpur area. With 15+ years of serving buyers, sellers, and investors, the group is expert in agricultural land deals, residential plots, and large-scale commercial transactions.',
+      createdAt: '2025-01-01T00:00:00.000Z',
+    },
+    {
+      id: 2004, name: 'Baig Property Advisors', displayName: 'Baig Property Advisors',
+      initials: 'BA', agency: 'Baig & Associates', verified: true, approvalStatus: 'Approved',
+      status: 'Active', visible: true, rating: 4.7, reviewCount: 68, years: 5, listings: 21,
+      areas: ['Okara City', 'Renala Khurd'], color: '#4a2d6b', phone: '03156789012',
+      specialties: ['Residential', 'Rentals', 'Plots'], photo: null,
+      about: 'Baig Property Advisors is a young and energetic firm based in Okara City, known for fast, honest dealing in residential rentals and plot sales. With 5 years in the market, the team has built a reputation for clear communication and follow-through.',
+      createdAt: '2025-01-01T00:00:00.000Z',
+    },
+    {
+      id: 2005, name: 'Raza Industrial & Commercial', displayName: 'Raza Industrial & Commercial',
+      initials: 'RI', agency: 'Raza Enterprises Real Estate', verified: true, approvalStatus: 'Approved',
+      status: 'Active', visible: true, rating: 4.8, reviewCount: 82, years: 9, listings: 27,
+      areas: ['Okara City', 'Depalpur', 'Renala Khurd'], color: '#374151', phone: '03219876543',
+      specialties: ['Commercial', 'Industrial', 'Investment'], photo: null,
+      about: 'Raza Enterprises specialises in commercial shops, offices, warehouses, and industrial plots across Okara District. With 9 years of experience in the commercial sector, the firm is the go-to for investors and business owners seeking premium commercial space.',
+      createdAt: '2025-01-01T00:00:00.000Z',
+    },
+  ];
+}
+
+function ensureMobileAgents(data) {
+  if (!Array.isArray(data.mobileAgents)) {
+    data.mobileAgents = getDefaultMobileAgents();
+    return true;
+  }
+  return false;
+}
+
+function safeMobileAgent(agent) {
+  const { password: _password, ...safe } = agent;
+  return {
+    ...safe,
+    displayName: safe.displayName || safe.name || '',
+    profilePhoto: safe.photo || safe.profilePhoto || null,
+  };
+}
+
 // ─── Seed Data ─────────────────────────────────────────────────────────────────
 function getSeedData() {
   return {
@@ -466,6 +537,7 @@ function getSeedData() {
       { id: 3, title: 'Agricultural Land Investment in Punjab: A Growing Opportunity', excerpt: 'Why agricultural land in Punjab districts like Okara, Sahiwal, and Faisalabad is attracting urban investors.', content: "<p>Agricultural land in Okara district, known for its fertile soil and canal irrigation, has appreciated 25% in three years. OG Landmark specializes in agricultural land in the Depalpur-Okara region.</p>", author: 'OG Landmark', category: 'Investment', image: '/images/blog-1.jpg', published: true, views: 560, createdAt: '2024-02-01' },
     ],
     savedProperties: {},  // { userId: [propertyId, ...] }
+    mobileAgents: getDefaultMobileAgents(),
     cityAgents: [
       { id: 1, city: 'Okara',               name: 'Muhammad Asif',   phone: '03001234567', whatsapp: '923001234567', active: true },
       { id: 2, city: 'Depalpur',            name: 'Zahid Hussain',   phone: '03011234567', whatsapp: '923011234567', active: true },
@@ -542,11 +614,12 @@ async function initDb() {
     console.log('✅ Database seeded with initial data');
   } else {
     // Update admin email/password from env vars if set (runtime override)
+    const data = typeof existing.data === 'string' ? JSON.parse(existing.data) : existing.data;
+    let dataChanged = ensureMobileAgents(data);
     if (process.env.ADMIN_EMAIL || process.env.ADMIN_PASSWORD) {
-      const data = typeof existing.data === 'string' ? JSON.parse(existing.data) : existing.data;
       const adminUser = data.users.find(u => u.role === 'Admin');
       if (adminUser) {
-        let changed = false;
+        let changed = dataChanged;
         if (process.env.ADMIN_EMAIL && adminUser.email !== process.env.ADMIN_EMAIL) {
           adminUser.email = process.env.ADMIN_EMAIL;
           changed = true;
@@ -564,6 +637,10 @@ async function initDb() {
         }
       }
     }
+    if (dataChanged && !(process.env.ADMIN_EMAIL || process.env.ADMIN_PASSWORD)) {
+      await neonDb`UPDATE app_data SET data = ${JSON.stringify(data)}::jsonb, updated_at = NOW() WHERE id = 1`;
+      console.log('✅ Mobile agent directory migrated into existing database data');
+    }
     console.log('✅ Database already has data — skipping seed');
   }
 }
@@ -573,6 +650,7 @@ async function readData() {
   if (!neonDb) {
     if (!localPreview) throw new Error('Neon is not configured for production.');
     const data = JSON.parse(fs.readFileSync(fallbackFile, 'utf8'));
+    ensureMobileAgents(data);
     return data;
   }
   const rows = await neonDb`SELECT data FROM app_data WHERE id = 1 LIMIT 1`;
@@ -586,6 +664,7 @@ async function readData() {
     return seed;
   }
   const data = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+  const mobileAgentsAdded = ensureMobileAgents(data);
   // Migrate plain-text passwords to hashed on first read (backwards compat)
   let migrated = false;
   data.users.forEach(u => {
@@ -594,7 +673,7 @@ async function readData() {
       migrated = true;
     }
   });
-  if (migrated) await writeData(data);
+  if (migrated || mobileAgentsAdded) await writeData(data);
   return data;
 }
 
@@ -1255,6 +1334,128 @@ app.patch('/api/users/:id/status', requireAdmin, async (req, res) => {
 
 // ─── AGENT MANAGEMENT (Admin only) ───────────────────────────────────────────
 
+// Public mobile directory. Suspended, rejected, or hidden records never leave
+// the server, while the admin endpoint below still returns them for management.
+app.get('/api/mobile-agents', async (req, res) => {
+  try {
+    const data = await readData();
+    let agents = (data.mobileAgents || []).filter(a =>
+      a.visible !== false && a.status !== 'Suspended' && a.approvalStatus !== 'Rejected'
+    );
+    if (req.query.city) {
+      const city = String(req.query.city).toLowerCase();
+      agents = agents.filter(a => (a.areas || []).some(area => String(area).toLowerCase() === city));
+    }
+    if (req.query.limit) agents = agents.slice(0, Math.max(0, Number(req.query.limit) || 0));
+    res.json(agents.map(safeMobileAgent));
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+});
+
+app.get('/api/admin/mobile-agents', requireAdmin, async (req, res) => {
+  try {
+    const data = await readData();
+    res.json((data.mobileAgents || []).map(safeMobileAgent));
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+});
+
+app.post('/api/admin/mobile-agents', requireAdmin, async (req, res) => {
+  try {
+    const data = await readData();
+    const body = req.body || {};
+    const name = String(body.name || body.displayName || '').trim();
+    if (!name) return res.status(400).json({ error: 'Agent name is required' });
+    const now = new Date().toISOString();
+    const agent = {
+      id: nextId(data),
+      name,
+      displayName: name,
+      initials: String(body.initials || name.split(/\s+/).map(part => part[0]).join('').slice(0, 2)).toUpperCase(),
+      agency: String(body.agency || '').trim(),
+      verified: body.verified !== false,
+      approvalStatus: body.approvalStatus || 'Approved',
+      status: body.status || 'Active',
+      visible: body.visible !== false,
+      rating: Number(body.rating) || 0,
+      reviewCount: Number(body.reviewCount) || 0,
+      years: Number(body.years) || 0,
+      listings: Number(body.listings) || 0,
+      areas: Array.isArray(body.areas) ? body.areas.filter(Boolean) : String(body.areas || '').split(',').map(v => v.trim()).filter(Boolean),
+      color: body.color || '#102a43',
+      phone: String(body.phone || '').trim(),
+      specialties: Array.isArray(body.specialties) ? body.specialties.filter(Boolean) : String(body.specialties || '').split(',').map(v => v.trim()).filter(Boolean),
+      photo: body.photo || null,
+      about: String(body.about || '').trim(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    data.mobileAgents = data.mobileAgents || [];
+    data.mobileAgents.push(agent);
+    await writeData(data);
+    res.status(201).json(safeMobileAgent(agent));
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+});
+
+app.put('/api/admin/mobile-agents/:id', requireAdmin, async (req, res) => {
+  try {
+    const data = await readData();
+    const agent = (data.mobileAgents || []).find(item => String(item.id) === String(req.params.id));
+    if (!agent) return res.status(404).json({ error: 'Mobile agent not found' });
+    const body = req.body || {};
+    const textFields = ['name', 'displayName', 'agency', 'phone', 'about', 'photo', 'color'];
+    for (const key of textFields) if (body[key] !== undefined) agent[key] = body[key];
+    if (body.name !== undefined && body.displayName === undefined) agent.displayName = body.name;
+    if (body.initials !== undefined) agent.initials = String(body.initials).toUpperCase();
+    for (const key of ['verified', 'visible']) if (body[key] !== undefined) agent[key] = Boolean(body[key]);
+    for (const key of ['rating', 'reviewCount', 'years', 'listings']) if (body[key] !== undefined) agent[key] = Number(body[key]) || 0;
+    for (const key of ['areas', 'specialties']) {
+      if (body[key] !== undefined) agent[key] = Array.isArray(body[key])
+        ? body[key].filter(Boolean)
+        : String(body[key] || '').split(',').map(v => v.trim()).filter(Boolean);
+    }
+    if (body.status !== undefined) agent.status = body.status;
+    if (body.approvalStatus !== undefined) agent.approvalStatus = body.approvalStatus;
+    agent.updatedAt = new Date().toISOString();
+    await writeData(data);
+    res.json(safeMobileAgent(agent));
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+});
+
+app.patch('/api/admin/mobile-agents/:id/status', requireAdmin, async (req, res) => {
+  try {
+    const data = await readData();
+    const agent = (data.mobileAgents || []).find(item => String(item.id) === String(req.params.id));
+    if (!agent) return res.status(404).json({ error: 'Mobile agent not found' });
+    agent.status = req.body.status || (agent.status === 'Active' ? 'Suspended' : 'Active');
+    agent.updatedAt = new Date().toISOString();
+    await writeData(data);
+    res.json({ success: true, agent: safeMobileAgent(agent) });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+});
+
+app.patch('/api/admin/mobile-agents/:id/approval', requireAdmin, async (req, res) => {
+  try {
+    const data = await readData();
+    const agent = (data.mobileAgents || []).find(item => String(item.id) === String(req.params.id));
+    if (!agent) return res.status(404).json({ error: 'Mobile agent not found' });
+    agent.approvalStatus = req.body.approvalStatus || 'Approved';
+    agent.status = agent.approvalStatus === 'Rejected' ? 'Suspended' : 'Active';
+    agent.updatedAt = new Date().toISOString();
+    await writeData(data);
+    res.json({ success: true, agent: safeMobileAgent(agent) });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+});
+
+app.delete('/api/admin/mobile-agents/:id', requireAdmin, async (req, res) => {
+  try {
+    const data = await readData();
+    const before = (data.mobileAgents || []).length;
+    data.mobileAgents = (data.mobileAgents || []).filter(item => String(item.id) !== String(req.params.id));
+    if (data.mobileAgents.length === before) return res.status(404).json({ error: 'Mobile agent not found' });
+    await writeData(data);
+    res.json({ success: true });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+});
+
 // GET all agents (with filter by approvalStatus)
 app.get('/api/agents', async (req, res) => {
   try {
@@ -1263,7 +1464,15 @@ app.get('/api/agents', async (req, res) => {
     if (req.query.approvalStatus) agents = agents.filter(a => a.approvalStatus === req.query.approvalStatus);
     if (req.query.city) agents = agents.filter(a => String(a.city || '').toLowerCase() === String(req.query.city).toLowerCase());
     if (req.query.limit) agents = agents.slice(0, Math.max(0, Number(req.query.limit) || 0));
-    res.json(agents.map(({ password: _, ...safe }) => safe));
+    // The supplied public website already consumes this approved-agent route.
+    // Include the admin-managed mobile directory there as well, without
+    // changing the admin account list returned when no approval filter exists.
+    if (req.query.approvalStatus === 'Approved') {
+      agents = agents.concat((data.mobileAgents || []).filter(a =>
+        a.approvalStatus === 'Approved' && a.status === 'Active' && a.visible !== false
+      ));
+    }
+    res.json(agents.map(safeMobileAgent));
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 

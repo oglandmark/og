@@ -537,13 +537,13 @@ tr:hover td{background:#f8fafc}
       </table>
     </div>
 
-    <!-- React Bundle Agents Management -->
+    <!-- Mobile App Agents Management -->
     <div style="margin-top:24px;background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <h4 style="font-size:14px;font-weight:700;color:var(--text)"> Website Bundle Agents</h4>
-        <span style="font-size:11px;color:var(--muted);background:#f1f5f9;padding:3px 10px;border-radius:999px">Hardcoded in React SPA</span>
+        <h4 style="font-size:14px;font-weight:700;color:var(--text)"> Mobile App Agents</h4>
+        <button class="btn btn-red btn-sm" onclick="openAddMobileAgentModal()">+ Add Mobile Agent</button>
       </div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">These agents are built into the website's React bundle. Toggle visibility to hide/show them on the public site.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">These profiles control the Agents screen, homepage carousel and agent details in the OG Landmark mobile app. Add, edit, hide, suspend or remove them here.</p>
       <div id="bundle-agents-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px"></div>
     </div>
   </div>
@@ -923,6 +923,51 @@ tr:hover td{background:#f8fafc}
   </div>
 </div>
 
+<!-- MOBILE APP AGENT MODAL -->
+<div class="modal-overlay" id="mobile-agent-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head"><h3 id="mobile-agent-modal-title">Add Mobile Agent</h3><button class="modal-close" onclick="closeMobileAgentModal()">&times;</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="mobile-agent-id"/>
+      <div class="form-group"><label>Full Name *</label><input id="mobile-agent-name" type="text" placeholder="e.g. Ahmed Property Consultants"/></div>
+      <div class="form-group"><label>Agency / Business</label><input id="mobile-agent-agency" type="text" placeholder="e.g. Ahmed Real Estate"/></div>
+      <div class="form-group"><label>Phone</label><input id="mobile-agent-phone" type="tel" placeholder="03001234567"/></div>
+      <div class="form-group"><label>Areas Served <small style="color:var(--muted)">(comma separated)</small></label><input id="mobile-agent-areas" type="text" placeholder="Okara City, Depalpur"/></div>
+      <div class="form-group"><label>Specialties <small style="color:var(--muted)">(comma separated)</small></label><input id="mobile-agent-specialties" type="text" placeholder="Residential, Plots"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label>Experience (years)</label><input id="mobile-agent-years" type="number" min="0" placeholder="5"/></div>
+        <div class="form-group"><label>Active listings</label><input id="mobile-agent-listings" type="number" min="0" placeholder="12"/></div>
+      </div>
+      <div class="form-group"><label>Rating (1–5)</label><input id="mobile-agent-rating" type="number" min="0" max="5" step="0.1" placeholder="4.8"/></div>
+      <div class="form-group">
+        <label>Agent Photo</label>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+          <div id="mobile-agent-photo-preview" style="width:64px;height:64px;border-radius:50%;border:2px solid var(--border);background:#f1f5f9;overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:22px">?</div>
+          <div style="flex:1">
+            <input type="hidden" id="mobile-agent-photo-url"/>
+            <label style="display:inline-block;padding:8px 14px;background:var(--navy);color:#fff;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600" for="mobile-agent-photo-file"> Upload Photo</label>
+            <input type="file" id="mobile-agent-photo-file" accept=".jpg,.jpeg,.png,.webp" style="display:none" onchange="uploadMobileAgentPhoto(this)"/>
+            <div id="mobile-agent-photo-status" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group"><label>Profile Bio</label><textarea id="mobile-agent-about" rows="3" placeholder="Short profile description shown in the mobile app..."></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label>Approval</label><select id="mobile-agent-approval"><option value="Approved">Approved</option><option value="Pending">Pending</option><option value="Rejected">Rejected</option></select></div>
+        <div class="form-group"><label>Account status</label><select id="mobile-agent-status"><option value="Active">Active</option><option value="Suspended">Suspended</option></select></div>
+      </div>
+      <div class="form-group" style="flex-direction:row;align-items:center;gap:10px">
+        <input type="checkbox" id="mobile-agent-visible" style="width:16px;height:16px;accent-color:var(--red)"/>
+        <label for="mobile-agent-visible" style="font-size:13px;font-weight:600">Show this agent in the mobile app</label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeMobileAgentModal()">Cancel</button>
+      <button class="btn btn-red" onclick="saveMobileAgent()">Save Mobile Agent</button>
+    </div>
+  </div>
+</div>
+
 <!-- AGENT REJECT MODAL -->
 <div class="modal-overlay" id="agent-reject-modal">
   <div class="modal" style="max-width:420px">
@@ -1286,7 +1331,7 @@ tr:hover td{background:#f8fafc}
 
 <script>
 const API='';
-let token='', currentUser=null, allProps=[], allUsers=[], allAgents=[], allInqs=[], allBlog=[], hiddenReactAgents=[];
+let token='', currentUser=null, allProps=[], allUsers=[], allAgents=[], allMobileAgents=[], allInqs=[], allBlog=[], hiddenReactAgents=[];
 let rejectTargetId=null, editUserId=null, editBlogId=null, usersFilter='all', agentsFilter='all';
 
 
@@ -1826,6 +1871,7 @@ async function loadAll(){
     ['blog',()=>api('GET','/api/blog')],
     ['hidden website agents',()=>api('GET','/api/settings/hidden-react-agents')],
     ['city agents',()=>api('GET','/api/city-agents')],
+    ['mobile agents',()=>api('GET','/api/admin/mobile-agents')],
   ];
   const results=await Promise.all(sources.map(async ([label,request])=>{
     try{return {label,value:await request()};}
@@ -1846,6 +1892,7 @@ async function loadAll(){
   if(Array.isArray(values[4])) allBlog=values[4];
   if(Array.isArray(values[5])) hiddenReactAgents=values[5];
   if(Array.isArray(values[6])) allCityAgents=values[6];
+  if(Array.isArray(values[7])) allMobileAgents=values[7];
   renderAll();
   if(failures.length){
     showToast('Some dashboard data could not be refreshed: '+failures.map(result=>result.label).join(', '),'error');
@@ -1871,60 +1918,128 @@ async function refreshDashboard(showMessage=false){
 
 function renderAll(){
   updateDashStats(); renderDashPending(); renderDashUsers(); renderDashAgentPending(); renderApprovals();
-  renderAllProps(); renderPropertiesPage(); renderAgents(); renderBundleAgents(); renderUsers(); renderInquiries(); renderBlog(); renderSettings(); renderCityAgents();
+  renderAllProps(); renderPropertiesPage(); renderAgents(); renderMobileAgents(); renderUsers(); renderInquiries(); renderBlog(); renderSettings(); renderCityAgents();
 }
 
-// ── React Bundle Agents Management ──────────────────────────────────────────
-const BUNDLE_AGENTS = [
-  {name:'Ahmed Hassan', role:'Senior Property Consultant'},
-  {name:'Fatima Khan',  role:'Commercial Real Estate Specialist'},
-  {name:'Bilal Rashid', role:'Residential Property Expert'},
-  {name:'Sara Ali',     role:'Luxury Property Advisor'},
-  {name:'Imran Malik',  role:'Investment Property Consultant'},
-  {name:'Ayesha Siddiqui', role:'Property Investment Advisor'},
-];
-
-function renderBundleAgents(){
+// ── Mobile App Agents Management ────────────────────────────────────────────
+function renderMobileAgents(){
   const list=document.getElementById('bundle-agents-list');
   if(!list) return;
-  list.innerHTML=BUNDLE_AGENTS.map(ag=>{
-    const hidden=hiddenReactAgents.includes(ag.name);
-    return `<div style="background:#f8fafc;border:1px solid ${hidden?'#fee2e2':'#e2e8f0'};border-radius:10px;padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
-      <div>
-        <div style="font-weight:600;font-size:14px;color:var(--text)">${ag.name}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">${ag.role}</div>
-        <div style="margin-top:6px">
-          ${hidden
-            ?'<span style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px"> Hidden</span>'
-            :'<span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px"> Visible</span>'}
+  if(!allMobileAgents.length){
+    list.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--muted)">No mobile agents yet. Add the first profile above.</div>';
+    return;
+  }
+  list.innerHTML=allMobileAgents.map(ag=>{
+    const live=ag.visible!==false && ag.status==='Active' && ag.approvalStatus!=='Rejected';
+    const photo=ag.photo||ag.profilePhoto;
+    const status=ag.status==='Suspended'?'Suspended':(ag.approvalStatus||'Approved');
+    return `<div style="background:#f8fafc;border:1px solid ${live?'#e2e8f0':'#fee2e2'};border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px">
+      ${photo?`<img src="${photo}" alt="" style="width:52px;height:52px;border-radius:14px;object-fit:cover;flex-shrink:0"/>`:`<div style="width:52px;height:52px;border-radius:14px;background:${ag.color||'#102a43'};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">${(ag.initials||ag.name||'A').slice(0,2)}</div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ag.displayName||ag.name||'Unnamed agent'}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ag.agency||'No agency'}${ag.phone?' · '+ag.phone:''}</div>
+        <div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">
+          <span style="background:${live?'#dcfce7':'#fee2e2'};color:${live?'#16a34a':'#dc2626'};font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px">${live?'Live in App':status}</span>
+          ${ag.visible===false?'<span style="background:#f1f5f9;color:#64748b;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px">Hidden</span>':''}
         </div>
       </div>
-      <button onclick="toggleBundleAgent('${ag.name}',${!hidden})"
-        style="padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;
-          background:${hidden?'#16a34a':'#dc2626'};color:#fff;font-family:inherit;transition:.2s"
-        onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-        ${hidden?' Show':' Hide'}
-      </button>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
+        ${ag.approvalStatus==='Pending'?`<button class="btn btn-green btn-sm" onclick="setMobileAgentApproval(${JSON.stringify(ag.id)},'Approved')">Approve</button><button class="btn btn-danger btn-sm" onclick="setMobileAgentApproval(${JSON.stringify(ag.id)},'Rejected')">Reject</button>`:''}
+        <button class="btn btn-outline btn-sm" onclick="openEditMobileAgentModal(${JSON.stringify(ag.id)})">Edit</button>
+        <button class="btn btn-${live?'warn':'green'} btn-sm" onclick="toggleMobileAgentStatus(${JSON.stringify(ag.id)})">${ag.status==='Active'?'Suspend':'Activate'}</button>
+        <button class="btn btn-outline btn-sm" onclick="toggleMobileAgentVisibility(${JSON.stringify(ag.id)})">${ag.visible===false?'Show':'Hide'}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMobileAgent(${JSON.stringify(ag.id)})">Delete</button>
+      </div>
     </div>`;
   }).join('');
 }
 
-async function toggleBundleAgent(name, hide){
+function resetMobileAgentPhoto(url){
+  document.getElementById('mobile-agent-photo-url').value=url||'';
+  document.getElementById('mobile-agent-photo-file').value='';
+  document.getElementById('mobile-agent-photo-status').textContent='';
+  document.getElementById('mobile-agent-photo-preview').innerHTML=url?`<img src="${url}" style="width:100%;height:100%;object-fit:cover"/>`:'?';
+}
+async function uploadMobileAgentPhoto(input){
+  const file=input.files[0]; if(!file) return;
+  const status=document.getElementById('mobile-agent-photo-status');
+  status.textContent='Uploading...'; status.style.color='var(--muted)';
+  const fd=new FormData(); fd.append('image',file);
   try{
-    const r=await fetch('/api/settings/hidden-react-agents',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({name,hidden:hide})
-    });
-    const data=await r.json();
-    if(data.success){
-      hiddenReactAgents=data.hiddenReactAgents||[];
-      renderBundleAgents();
-      showToast(hide?`${name} hidden from website`:`${name} now visible on website`,'success');
-    } else {
-      showToast(data.error||'Failed','error');
-    }
-  } catch(e){ showToast('Error: '+e.message,'error'); }
+    const r=await fetch('/api/upload/single',{method:'POST',headers:{'Authorization':'Bearer '+token},body:fd});
+    const d=await r.json();
+    if(!r.ok||!d.url) throw new Error(d.error||'Upload failed');
+    resetMobileAgentPhoto(d.url);
+    status.textContent='Photo uploaded'; status.style.color='#16a34a';
+  }catch(e){ status.textContent=' '+e.message; status.style.color='var(--danger)'; }
+}
+function fillMobileAgentModal(a){
+  document.getElementById('mobile-agent-id').value=a?.id??'';
+  document.getElementById('mobile-agent-modal-title').textContent=a?'Edit Mobile Agent':'Add Mobile Agent';
+  document.getElementById('mobile-agent-name').value=a?.displayName||a?.name||'';
+  document.getElementById('mobile-agent-agency').value=a?.agency||'';
+  document.getElementById('mobile-agent-phone').value=a?.phone||'';
+  document.getElementById('mobile-agent-areas').value=(a?.areas||[]).join(', ');
+  document.getElementById('mobile-agent-specialties').value=(a?.specialties||[]).join(', ');
+  document.getElementById('mobile-agent-years').value=a?.years??'';
+  document.getElementById('mobile-agent-listings').value=a?.listings??'';
+  document.getElementById('mobile-agent-rating').value=a?.rating||'';
+  document.getElementById('mobile-agent-about').value=a?.about||'';
+  document.getElementById('mobile-agent-approval').value=a?.approvalStatus||'Approved';
+  document.getElementById('mobile-agent-status').value=a?.status||'Active';
+  document.getElementById('mobile-agent-visible').checked=a?.visible!==false;
+  resetMobileAgentPhoto(a?.photo||a?.profilePhoto||'');
+}
+function openAddMobileAgentModal(){ fillMobileAgentModal(null); document.getElementById('mobile-agent-modal').classList.add('open'); }
+function openEditMobileAgentModal(id){
+  const agent=allMobileAgents.find(a=>String(a.id)===String(id)); if(!agent) return;
+  fillMobileAgentModal(agent); document.getElementById('mobile-agent-modal').classList.add('open');
+}
+function closeMobileAgentModal(){ document.getElementById('mobile-agent-modal').classList.remove('open'); }
+async function saveMobileAgent(){
+  const id=document.getElementById('mobile-agent-id').value;
+  const body={
+    name:document.getElementById('mobile-agent-name').value.trim(),
+    agency:document.getElementById('mobile-agent-agency').value.trim(),
+    phone:document.getElementById('mobile-agent-phone').value.trim(),
+    areas:document.getElementById('mobile-agent-areas').value.split(',').map(v=>v.trim()).filter(Boolean),
+    specialties:document.getElementById('mobile-agent-specialties').value.split(',').map(v=>v.trim()).filter(Boolean),
+    years:Number(document.getElementById('mobile-agent-years').value)||0,
+    listings:Number(document.getElementById('mobile-agent-listings').value)||0,
+    rating:Number(document.getElementById('mobile-agent-rating').value)||0,
+    photo:document.getElementById('mobile-agent-photo-url').value.trim()||null,
+    about:document.getElementById('mobile-agent-about').value.trim(),
+    approvalStatus:document.getElementById('mobile-agent-approval').value,
+    status:document.getElementById('mobile-agent-status').value,
+    visible:document.getElementById('mobile-agent-visible').checked,
+  };
+  if(!body.name){ showToast('Agent name is required','error'); return; }
+  try{
+    await api(id?'PUT':'POST',id?`/api/admin/mobile-agents/${id}`:'/api/admin/mobile-agents',body);
+    closeMobileAgentModal(); await loadAll(); showToast(id?'Mobile agent updated':'Mobile agent added','success');
+  }catch(e){ showToast(e.message,'error'); }
+}
+async function toggleMobileAgentStatus(id){
+  const agent=allMobileAgents.find(a=>String(a.id)===String(id)); if(!agent) return;
+  try{ await api('PATCH',`/api/admin/mobile-agents/${id}/status`,{status:agent.status==='Active'?'Suspended':'Active'}); await loadAll(); showToast('Mobile agent status updated','success'); }
+  catch(e){ showToast(e.message,'error'); }
+}
+async function toggleMobileAgentVisibility(id){
+  const agent=allMobileAgents.find(a=>String(a.id)===String(id)); if(!agent) return;
+  try{ await api('PUT',`/api/admin/mobile-agents/${id}`,{visible:agent.visible===false}); await loadAll(); showToast(agent.visible===false?'Agent shown in mobile app':'Agent hidden from mobile app','success'); }
+  catch(e){ showToast(e.message,'error'); }
+}
+async function setMobileAgentApproval(id, approvalStatus){
+  const label=approvalStatus==='Approved'?'approve':'reject';
+  if(!confirm(`Are you sure you want to ${label} this mobile agent?`)) return;
+  try{ await api('PATCH',`/api/admin/mobile-agents/${id}/approval`,{approvalStatus}); await loadAll(); showToast(`Mobile agent ${approvalStatus.toLowerCase()}`,'success'); }
+  catch(e){ showToast(e.message,'error'); }
+}
+async function deleteMobileAgent(id){
+  const agent=allMobileAgents.find(a=>String(a.id)===String(id)); if(!agent) return;
+  if(!confirm(`Delete "${agent.displayName||agent.name}" from the mobile app? This cannot be undone.`)) return;
+  try{ await api('DELETE',`/api/admin/mobile-agents/${id}`); await loadAll(); showToast('Mobile agent deleted','success'); }
+  catch(e){ showToast(e.message,'error'); }
 }
 
 function updateDashStats(){

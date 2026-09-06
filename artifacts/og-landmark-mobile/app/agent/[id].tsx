@@ -12,7 +12,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
-import { SAMPLE_AGENTS, SampleAgent } from '@/lib/agentsData';
+import { apiAgentToSample, SampleAgent } from '@/lib/agentsData';
+import { getAgents } from '@/lib/api';
 import { addInquiry } from '@/lib/inquiriesStore';
 import { getMyListings, UserListing } from '@/lib/listingsStore';
 import { PropertyCard } from '@/components/PropertyCard';
@@ -154,6 +155,7 @@ type AgentProfile = {
   id: string;
   displayName: string;
   initials: string;
+  profileImage?: SampleAgent['profileImage'];
   agency: string;
   verified: boolean;
   years: number;
@@ -167,7 +169,7 @@ type AgentProfile = {
 };
 
 function toProfile(a: SampleAgent): AgentProfile {
-  return { ...a, displayName: a.displayName, isSample: true };
+  return { ...a, displayName: a.displayName, isSample: false };
 }
 
 // ── Main screen ───────────────────────────────────────────────────────────────
@@ -184,11 +186,27 @@ export default function AgentProfileScreen() {
   const [visitOpen,     setVisitOpen]     = useState(false);
   const [agentListings, setAgentListings] = useState<UserListing[]>([]);
   const [activeTab,     setActiveTab]     = useState<'For Sale' | 'For Rent' | 'Featured'>('For Sale');
+  const [managedAgent, setManagedAgent] = useState<SampleAgent | null>(null);
+  const [agentLoading, setAgentLoading] = useState(true);
 
-  // Find agent — sample agents first, then fall back to logged-in agent
-  const sampleAgent = SAMPLE_AGENTS.find((a) => a.id === id);
-  const agent: AgentProfile | null = sampleAgent
-    ? toProfile(sampleAgent)
+  useEffect(() => {
+    let mounted = true;
+    setAgentLoading(true);
+    getAgents()
+      .then((records) => {
+        if (!mounted) return;
+        const record = records.find((item) => String(item.id) === String(id));
+        setManagedAgent(record ? apiAgentToSample(record) : null);
+      })
+      .catch(() => { if (mounted) setManagedAgent(null); })
+      .finally(() => { if (mounted) setAgentLoading(false); });
+    return () => { mounted = false; };
+  }, [id]);
+
+  // Resolve from the admin-managed directory first, then support the logged-in
+  // agent's private profile route as before.
+  const agent: AgentProfile | null = managedAgent
+    ? toProfile(managedAgent)
     : user?.role === 'agent'
     ? {
         id: user.id,
@@ -215,6 +233,14 @@ export default function AgentProfileScreen() {
       setAgentListings(all.filter((l) => l.listingStatus === 'Active'));
     })();
   }, [id]);
+
+  if (agentLoading) {
+    return (
+      <View style={[styles.screen, { backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }]}>
+        <Text style={[styles.notFoundText, { color: colors.mutedForeground }]}>Loading agent profile…</Text>
+      </View>
+    );
+  }
 
   if (!agent) {
     return (
@@ -254,7 +280,11 @@ export default function AgentProfileScreen() {
         {/* avatar */}
         <View style={styles.avatarWrap}>
           <View style={[styles.avatar, { backgroundColor: agent.color }]}>
-            <Text style={styles.avatarInitials}>{agent.initials}</Text>
+            {agent.profileImage ? (
+              <Image source={agent.profileImage} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarInitials}>{agent.initials}</Text>
+            )}
           </View>
           {agent.verified && (
             <View style={styles.verifiedDot}>
@@ -482,6 +512,7 @@ const styles = StyleSheet.create({
   shareCircle:    { position: 'absolute', right: 18, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
   avatarWrap:     { position: 'relative', marginBottom: 12, marginTop: 8 },
   avatar:         { width: 88, height: 88, borderRadius: 28, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: 'rgba(255,255,255,0.3)' },
+  avatarImage:    { width: '100%', height: '100%', borderRadius: 25 },
   avatarInitials: { fontFamily: 'Inter_700Bold', fontSize: 32, color: '#ffffff' },
   verifiedDot:    { position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: '#1a6b3a', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#ffffff' },
   agentName:      { fontFamily: 'Inter_700Bold', fontSize: 22, color: '#ffffff', textAlign: 'center', letterSpacing: -0.3 },

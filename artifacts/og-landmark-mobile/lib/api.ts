@@ -704,18 +704,35 @@ export async function getBlogPost(id: number): Promise<ApiBlogPost> {
 
 // ─── Agents (public listing) ───────────────────────────────────────────────────
 export type ApiAgent = {
-  id: number;
+  id: number | string;
   name: string;
+  displayName?: string;
   phone?: string;
   email?: string;
+  agency?: string;
   agencyName?: string;
   city?: string;
   specialization?: string;
   experience?: string;
   verificationStatus?: string;
+  verified?: boolean;
+  rating?: number;
+  reviewCount?: number;
+  years?: number;
+  listings?: number;
+  areas?: string[];
+  color?: string;
+  specialties?: string[];
+  about?: string;
+  photo?: string;
   profilePhoto?: string;
   createdAt?: string;
 };
+
+function resolveAgentPhoto(value?: string | null): string | undefined {
+  if (!value) return undefined;
+  return /^https?:\/\//i.test(value) ? value : `${API_BASE}${value.startsWith('/') ? value : `/${value}`}`;
+}
 
 export async function getAgents(
   params: { city?: string; limit?: number } = {},
@@ -723,11 +740,16 @@ export async function getAgents(
   const qs = new URLSearchParams();
   if (params.city) qs.set('city', params.city);
   if (params.limit) qs.set('limit', String(params.limit));
-  return apiFetch<ApiAgent[]>(
-    `/api/agents${qs.toString() ? `?${qs}` : ''}`,
+  const agents = await apiFetch<ApiAgent[]>(
+    `/api/mobile-agents${qs.toString() ? `?${qs}` : ''}`,
     {},
     false,
-  ).catch(() => []);
+  );
+  return agents.map((agent) => ({
+    ...agent,
+    profilePhoto: resolveAgentPhoto(agent.profilePhoto || agent.photo),
+    photo: resolveAgentPhoto(agent.photo || agent.profilePhoto),
+  }));
 }
 
 // ─── Admin operations ─────────────────────────────────────────────────────────

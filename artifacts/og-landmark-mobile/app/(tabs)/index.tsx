@@ -27,7 +27,7 @@ import { BrandMark } from '@/components/BrandMark';
 import { BrowseDiscoveryModule } from '@/components/BrowseDiscoveryModule';
 import { PropertyDemoBadge } from '@/components/PropertyDemoBadge';
 import { VideoWatermark } from '@/components/VideoWatermark';
-import { getBanners, getMobileSettings, getProperties, API_BASE, type BannerSlide as ApiBannerSlide, type MobileContent } from '@/lib/api';
+import { getAgents, getBanners, getMobileSettings, getProperties, API_BASE, type BannerSlide as ApiBannerSlide, type MobileContent } from '@/lib/api';
 import { apiPropertyToProperty } from '@/lib/properties';
 import { ExploreMapView } from '@/components/ExploreMapView';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
@@ -36,7 +36,7 @@ import { getUserListings, UserListing } from '@/lib/listingsStore';
 import { useAuth } from '@/context/AuthContext';
 import { getDevProjects, DeveloperProject } from '@/lib/developerStore';
 import { projects } from '@/lib/projects';
-import { SAMPLE_AGENTS } from '@/lib/agentsData';
+import { apiAgentToSample, SampleAgent } from '@/lib/agentsData';
 import { useSaved } from '@/context/SavedContext';
 import {
   CalcCorners as SharedCalcCorners,
@@ -923,14 +923,13 @@ const fp = StyleSheet.create({
 
 // ─── Agent Card (premium) ─────────────────────────────────────────────────────
 
-function AgentCarousel({ colors, onAgentPress }: { colors: Colors; onAgentPress: (id: string) => void }) {
+function AgentCarousel({ agents, colors, onAgentPress }: { agents: SampleAgent[]; colors: Colors; onAgentPress: (id: string) => void }) {
   const translation = useSharedValue(0);
   const pausedRef = useRef(false);
   const gestureStartRef = useRef(0);
-  const visibleAgents = Array.from(
-    { length: 18 },
-    (_, index) => SAMPLE_AGENTS[index % SAMPLE_AGENTS.length],
-  );
+  const visibleAgents = agents.length
+    ? Array.from({ length: Math.max(6, agents.length * 3) }, (_, index) => agents[index % agents.length])
+    : [];
   const cardStep = 264;
   const loopWidth = visibleAgents.length * cardStep;
   const loopDuration = loopWidth * 42;
@@ -1030,7 +1029,7 @@ function AgentCarousel({ colors, onAgentPress }: { colors: Colors; onAgentPress:
   );
 }
 
-function AgentCard({ agent, colors, onPress }: { agent: typeof SAMPLE_AGENTS[number]; colors: Colors; onPress: () => void }) {
+function AgentCard({ agent, colors, onPress }: { agent: SampleAgent; colors: Colors; onPress: () => void }) {
   const scale = useSharedValue(1);
   const scaleStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -1730,6 +1729,7 @@ export default function HomeScreen() {
   const [apiLoading,       setApiLoading]       = useState(true);
   const [userListings,     setUserListings]     = useState<Property[]>([]);
   const [devProjects,      setDevProjects]      = useState<DeveloperProject[]>([]);
+  const [managedAgents,    setManagedAgents]    = useState<SampleAgent[]>([]);
   const [mobileContent,    setMobileContent]    = useState<MobileContent | null>(null);
   const homeContent = mobileContent?.homepage;
   const homeSections = homeContent?.sections ?? {};
@@ -1793,6 +1793,12 @@ export default function HomeScreen() {
         if (mapped.length) setApiBannerSlides(mapped);
       })
       .catch(() => undefined);
+  }, []));
+
+  useFocusEffect(useCallback(() => {
+    getAgents()
+      .then((records) => setManagedAgents(records.map(apiAgentToSample)))
+      .catch(() => setManagedAgents([]));
   }, []));
 
   // Fetch live properties from API on every focus; fall back to local mock silently
@@ -2064,6 +2070,7 @@ export default function HomeScreen() {
         </View>
         {/* Agent cards — 18-card slow marquee */}
         <AgentCarousel
+          agents={managedAgents}
           colors={colors}
           onAgentPress={(agentId) => router.push(`/agent/${agentId}` as any)}
         />

@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Linking, Platform, Pressable, ScrollView,
+  ActivityIndicator, Image, Linking, Platform, Pressable, ScrollView,
   StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -11,7 +11,8 @@ import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { GlassCard } from '@/components/GlassCard';
 import { useColors } from '@/hooks/useColors';
-import { SAMPLE_AGENTS, SampleAgent } from '@/lib/agentsData';
+import { apiAgentToSample, SampleAgent } from '@/lib/agentsData';
+import { getAgents } from '@/lib/api';
 
 // ── Filter data ────────────────────────────────────────────────────────────────
 
@@ -19,10 +20,6 @@ const ALL_SPECIALTIES = [
   'All', 'Residential', 'Agricultural Land', 'Plots',
   'Commercial', 'Industrial', 'Investment', 'Rentals',
 ];
-
-const ALL_LOCATIONS = Array.from(
-  new Set(SAMPLE_AGENTS.flatMap((a) => a.areas)),
-).sort();
 
 type ExpBucket = 'All' | 'Under 5 yrs' | '5–10 yrs' | '10+ yrs';
 const EXP_BUCKETS: ExpBucket[] = ['All', 'Under 5 yrs', '5–10 yrs', '10+ yrs'];
@@ -47,10 +44,31 @@ export default function FindAgentScreen() {
   const [location, setLocation] = useState('All');
   const [expBucket, setExpBucket] = useState<ExpBucket>('All');
   const [verifiedOnly, setVerifiedOnly] = useState(true);
+  const [agents, setAgents] = useState<SampleAgent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  const loadAgents = () => {
+    setLoading(true);
+    setLoadError('');
+    getAgents()
+      .then((records) => setAgents(records.map(apiAgentToSample)))
+      .catch((error: unknown) => {
+        setAgents([]);
+        setLoadError(error instanceof Error ? error.message : 'Could not load agents.');
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { loadAgents(); }, []);
+
+  const allLocations = useMemo(() => Array.from(
+    new Set(agents.flatMap((agent) => agent.areas)),
+  ).sort(), [agents]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return SAMPLE_AGENTS.filter((a) => {
+    return agents.filter((a) => {
       if (verifiedOnly && !a.verified) return false;
       if (specialty !== 'All' && !a.specialties.includes(specialty)) return false;
       if (location !== 'All' && !a.areas.includes(location)) return false;
@@ -59,7 +77,7 @@ export default function FindAgentScreen() {
       const haystack = `${a.displayName} ${a.agency} ${a.areas.join(' ')} ${a.specialties.join(' ')}`.toLowerCase();
       return q.split(/\s+/).every((token) => haystack.includes(token));
     });
-  }, [query, specialty, location, expBucket, verifiedOnly]);
+  }, [agents, query, specialty, location, expBucket, verifiedOnly]);
 
   const hasFilters = specialty !== 'All' || location !== 'All' || expBucket !== 'All';
 
@@ -167,7 +185,7 @@ export default function FindAgentScreen() {
       <AnimatedReveal delay={130} distance={8}>
         <Text style={[st.filterLabel, { color: colors.mutedForeground }]}>AREA SERVED</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.chipRow}>
-          {['All', ...ALL_LOCATIONS].map((loc) => (
+          {['All', ...allLocations].map((loc) => (
             <Pressable
               key={loc}
               onPress={() => setLocation(loc)}
@@ -225,7 +243,23 @@ export default function FindAgentScreen() {
       </AnimatedReveal>
 
       {/* ── Agent cards ── */}
-      {filtered.length > 0 ? (
+      {loading ? (
+        <GlassCard style={st.empty} contentStyle={st.emptyContent}>
+          <ActivityIndicator size="small" color={colors.action} />
+          <Text style={[st.emptyText, { color: colors.mutedForeground }]}>Loading agents…</Text>
+        </GlassCard>
+      ) : loadError ? (
+        <GlassCard style={st.empty} contentStyle={st.emptyContent}>
+          <View style={[st.emptyIcon, { backgroundColor: colors.accent }]}>
+            <Feather name="wifi-off" size={24} color={colors.accentForeground} />
+          </View>
+          <Text style={[st.emptyTitle, { color: colors.foreground }]}>Could not load agents</Text>
+          <Text style={[st.emptyText, { color: colors.mutedForeground }]}>{loadError}</Text>
+          <Pressable onPress={loadAgents} style={[st.emptyBtn, { backgroundColor: colors.action }]}>
+            <Text style={[st.emptyBtnText, { color: colors.actionForeground }]}>Try again</Text>
+          </Pressable>
+        </GlassCard>
+      ) : filtered.length > 0 ? (
         filtered.map((agent, index) => (
           <AnimatedReveal key={agent.id} delay={200 + index * 55} distance={14}>
             <AgentListCard agent={agent} colors={colors} onPress={() => router.push(`/agent/${agent.id}` as any)} />
@@ -267,7 +301,11 @@ function AgentListCard({
       {/* Top row: avatar + name + verified */}
       <View style={lc.topRow}>
         <View style={[lc.avatar, { backgroundColor: agent.color }]}>
-          <Text style={lc.initials}>{agent.initials}</Text>
+            {agent.profileImage ? (
+              <Image source={agent.profileImage} style={lc.avatarImage} />
+            ) : (
+              <Text style={lc.initials}>{agent.initials}</Text>
+            )}
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <View style={lc.nameRow}>
@@ -392,6 +430,7 @@ const lc = StyleSheet.create({
   card:         { borderRadius: 18, borderWidth: 1, padding: 18, marginBottom: 14, gap: 14 },
   topRow:       { flexDirection: 'row', alignItems: 'flex-start', gap: 14 },
   avatar:       { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  avatarImage:  { width: '100%', height: '100%', borderRadius: 16 },
   initials:     { fontFamily: 'Inter_700Bold', fontSize: 18, color: '#ffffff' },
   nameRow:      { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   name:         { fontFamily: 'Inter_700Bold', fontSize: 16 },

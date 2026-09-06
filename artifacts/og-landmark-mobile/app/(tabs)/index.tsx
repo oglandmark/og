@@ -1402,12 +1402,12 @@ function LocationSheet({ visible, selected, onSelect, onClose, colors, insets, m
   useEffect(() => {
     if (visible) {
       setMounted(true);
-      translateY.value = withSpring(0, { damping: 22, stiffness: 220 });
-      opacity.value    = withTiming(1, { duration: 200 });
+      translateY.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) });
+      opacity.value    = withTiming(1, { duration: 180, easing: Easing.out(Easing.cubic) });
     } else {
-      translateY.value = withTiming(400, { duration: 220 });
-      opacity.value    = withTiming(0, { duration: 180 });
-      const t = setTimeout(() => setMounted(false), 230);
+      translateY.value = withTiming(400, { duration: 210, easing: Easing.in(Easing.cubic) });
+      opacity.value    = withTiming(0, { duration: 160, easing: Easing.in(Easing.cubic) });
+      const t = setTimeout(() => setMounted(false), 220);
       return () => clearTimeout(t);
     }
   }, [visible, translateY, opacity]);
@@ -1472,9 +1472,9 @@ function LocationSheet({ visible, selected, onSelect, onClose, colors, insets, m
 }
 
 const ls = StyleSheet.create({
-  sheet:    { maxHeight: '92%', borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1, paddingTop: 12, paddingHorizontal: 20 },
+  sheet:    { maxHeight: '92%', borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1, paddingTop: 12, paddingHorizontal: 20, shadowColor: '#102a43', shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: -6 }, elevation: 12 },
   scrollContent: { paddingBottom: 4 },
-  handle:   { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
+  handle:   { width: 36, height: 3, borderRadius: 2, alignSelf: 'center', marginBottom: 18 },
   heading:  { fontFamily: 'Inter_700Bold', fontSize: 20, marginBottom: 4 },
   sub:      { fontFamily: 'Inter_400Regular', fontSize: 12, marginBottom: 18 },
   row:      { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, borderBottomWidth: 1, borderRadius: 4 },

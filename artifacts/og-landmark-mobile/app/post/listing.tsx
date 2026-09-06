@@ -1,12 +1,12 @@
 /**
  * OG Landmark — Property Listing Wizard (Full Spec)
- * 8-step flow: Type → Location → Basic → Type-Specific → Features → Media → Docs → Preview
+ * Single-page flow: Type → Location → Basic → Type-Specific → Features → Media → Docs → Preview
  * 20 property types with per-type dynamic fields.
  */
 import React, { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {
-  Alert, Image, KeyboardAvoidingView, Platform,
+  Alert, Image, Platform,
   Pressable, ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -20,21 +20,10 @@ import { uploadMultipleImages, uploadVideo } from '@/lib/api';
 import { LocationPicker } from '@/components/LocationPicker';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
+import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { okaraDistrict } from '@/lib/cities';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-
-const TOTAL_STEPS = 8;
-const STEP_TITLES = [
-  'Property Type',
-  'Location',
-  'Basic Details',
-  'Specific Details',
-  'Features',
-  'Photos & Media',
-  'Description & Docs',
-  'Preview & Publish',
-];
 
 type PropCategory =
   | 'residential'
@@ -342,7 +331,6 @@ export default function ListingWizard() {
 
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
-  const [step, setStep] = useState(1);
   const [form, setForm] = useState<Form>(() => {
     const f = defaultForm();
     if (params.purpose === 'rent') f.purpose = 'Rent';
@@ -360,26 +348,19 @@ export default function ListingWizard() {
 
   const validate = (): boolean => {
     const e: Record<string, string> = {};
-    if (step === 2) {
-      if (!form.city) e.city = 'Select a city';
-      if (form.latitude == null || form.longitude == null) {
-        e.location = 'Set the exact property pin using search, GPS, the map, or coordinates';
-      } else if (!locationConfirmed) {
-        e.location = 'Confirm the exact property pin before continuing';
-      }
+    if (!form.city) e.city = 'Select a city';
+    if (form.latitude == null || form.longitude == null) {
+      e.location = 'Set the exact property pin using search, GPS, the map, or coordinates';
+    } else if (!locationConfirmed) {
+      e.location = 'Confirm the exact property pin before submitting';
     }
-    if (step === 3) {
-      if (!form.price.trim() || isNaN(Number(form.price.replace(/[^0-9]/g, '')))) e.price = 'Enter a valid price';
-      if (!form.area.trim() || isNaN(Number(form.area))) e.area = 'Enter a valid area';
-    }
-    if (step === 6 && form.photos.length === 0) e.photos = 'Add at least one photo';
-    if (step === 7 && form.description.trim().length < 20) e.description = 'Description must be at least 20 characters';
+    if (!form.price.trim() || isNaN(Number(form.price.replace(/[^0-9]/g, '')))) e.price = 'Enter a valid price';
+    if (!form.area.trim() || isNaN(Number(form.area))) e.area = 'Enter a valid area';
+    if (form.photos.length === 0) e.photos = 'Add at least one photo';
+    if (form.description.trim().length < 20) e.description = 'Description must be at least 20 characters';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
-
-  const goNext = () => { if (validate() && step < TOTAL_STEPS) setStep(step + 1); };
-  const goBack = () => { if (step > 1) setStep(step - 1); else router.back(); };
 
   // ── Media pickers ──────────────────────────────────────────────────────────
 
@@ -413,10 +394,12 @@ export default function ListingWizard() {
   // ── Submit ─────────────────────────────────────────────────────────────────
 
   const submit = async () => {
-    if (!validate()) return;
+    if (!validate()) {
+      Alert.alert('Complete your listing', 'Please fill in the highlighted required details before submitting.');
+      return;
+    }
     if (form.latitude == null || form.longitude == null || !locationConfirmed) {
       setErrors((prev) => ({ ...prev, location: 'Confirm the exact property pin before publishing' }));
-      setStep(2);
       Alert.alert('Confirm Property Location', 'Please set and confirm the exact property pin before publishing this listing.');
       return;
     }
@@ -508,20 +491,18 @@ export default function ListingWizard() {
     );
   }
 
-  const progressPct = ((step - 1) / (TOTAL_STEPS - 1)) * 100;
-
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* ── Fixed header ─────────────────────────────────────────────────── */}
       <View style={[s.header, { backgroundColor: colors.background, paddingTop: topInset + 8, borderBottomColor: colors.border }]}>
-        <Pressable onPress={goBack} hitSlop={12} style={[s.backBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           <Feather name="arrow-left" size={16} color={colors.foreground} />
         </Pressable>
         <View style={{ flex: 1, paddingHorizontal: 12 }}>
-          <Text style={[s.headerStep, { color: colors.mutedForeground }]}>Step {step} of {TOTAL_STEPS}</Text>
-          <Text style={[s.headerTitle, { color: colors.foreground }]}>{STEP_TITLES[step - 1]}</Text>
+          <Text style={[s.headerStep, { color: colors.mutedForeground }]}>CREATE PROPERTY LISTING</Text>
+          <Text style={[s.headerTitle, { color: colors.foreground }]}>Complete all details in one form</Text>
           <View style={[s.progressTrack, { backgroundColor: colors.border }]}>
-            <View style={[s.progressFill, { width: `${progressPct}%`, backgroundColor: colors.action }]} />
+            <View style={[s.progressFill, { width: '100%', backgroundColor: colors.action }]} />
           </View>
         </View>
         <View style={[s.purposeBadge, { backgroundColor: form.purpose === 'Rent' ? '#1a6b3a' : form.purpose === 'Lease' ? '#8b6c2a' : colors.action }]}>
@@ -529,15 +510,27 @@ export default function ListingWizard() {
         </View>
       </View>
 
-      {/* ── Step content ──────────────────────────────────────────────────── */}
-      <ScrollView
+      {/* ── Single-page form ──────────────────────────────────────────────── */}
+      <KeyboardAwareScrollViewCompat
         style={{ flex: 1, backgroundColor: colors.background }}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 120 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 18, paddingBottom: insets.bottom + 34 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        bottomOffset={28}
       >
-        {step === 1 && <StepType form={form} update={update} colors={colors} />}
-        {step === 2 && (
+        {Object.keys(errors).length > 0 && (
+          <View style={[s.validationBanner, { backgroundColor: '#e53e3e12', borderColor: '#e53e3e55' }]}>
+            <Feather name="alert-circle" size={16} color="#e53e3e" />
+            <Text style={[s.validationText, { color: '#b42318' }]}>
+              Please review the highlighted required fields before submitting.
+            </Text>
+          </View>
+        )}
+
+        <View style={[s.formSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <StepType form={form} update={update} colors={colors} />
+        </View>
+        <View style={[s.formSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <StepLocation
             form={form}
             update={update}
@@ -545,38 +538,53 @@ export default function ListingWizard() {
             errors={errors}
             onConfirmationChange={setLocationConfirmed}
           />
-        )}
-        {step === 3 && <StepBasic form={form} update={update} colors={colors} errors={errors} />}
-        {step === 4 && <StepSpecific form={form} update={update} colors={colors} category={category} />}
-        {step === 5 && <StepFeatures form={form} update={update} colors={colors} category={category} />}
-        {step === 6 && <StepMedia form={form} update={update} colors={colors} errors={errors} pickPhotos={pickPhotos} pickVideo={pickVideo} />}
-        {step === 7 && <StepDocs form={form} update={update} colors={colors} errors={errors} user={user} category={category} />}
-        {step === 8 && <StepPreview form={form} colors={colors} category={category} />}
-      </ScrollView>
+        </View>
+        <View style={[s.formSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <StepBasic form={form} update={update} colors={colors} errors={errors} />
+        </View>
+        <View style={[s.formSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <StepSpecific form={form} update={update} colors={colors} category={category} />
+        </View>
+        <View style={[s.formSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <StepFeatures form={form} update={update} colors={colors} category={category} />
+        </View>
+        <View style={[s.formSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <StepMedia form={form} update={update} colors={colors} errors={errors} pickPhotos={pickPhotos} pickVideo={pickVideo} />
+        </View>
+        <View style={[s.formSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <StepDocs form={form} update={update} colors={colors} errors={errors} user={user} category={category} />
+        </View>
+        <View style={[s.formSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <StepPreview form={form} colors={colors} category={category} />
+        </View>
 
-      {/* ── Bottom nav ───────────────────────────────────────────────────── */}
-      <View style={[s.bottom, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: insets.bottom + 12 }]}>
-        {step > 1 && (
-          <Pressable onPress={goBack} style={[s.backStepBtn, { borderColor: colors.border, backgroundColor: colors.secondary }]}>
-            <Feather name="arrow-left" size={16} color={colors.foreground} />
-            <Text style={[s.backStepText, { color: colors.foreground }]}>Back</Text>
-          </Pressable>
-        )}
-        <AnimatedPressable
-          onPress={step === TOTAL_STEPS ? submit : goNext}
-          style={[s.nextBtn, { backgroundColor: colors.action, flex: step > 1 ? 1 : undefined, opacity: submitting ? 0.7 : 1 }]}
-        >
-          <Text style={[s.nextBtnText, { color: colors.actionForeground }]}>
-            {step === TOTAL_STEPS ? (submitting ? 'Submitting…' : 'Submit for Review') : `Next: ${STEP_TITLES[step]}`}
+        <View style={[s.submitSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[s.submitIcon, { backgroundColor: colors.action + '16' }]}>
+            <Feather name="check-circle" size={22} color={colors.action} />
+          </View>
+          <Text style={[s.submitTitle, { color: colors.foreground }]}>Ready to submit?</Text>
+          <Text style={[s.submitHint, { color: colors.mutedForeground }]}>
+            Review your details above. Your property will go to the OG Landmark team for approval before it becomes public.
           </Text>
-          <Feather name={step === TOTAL_STEPS ? 'check' : 'arrow-right'} size={16} color={colors.actionForeground} />
-        </AnimatedPressable>
-      </View>
-    </KeyboardAvoidingView>
+          <AnimatedPressable
+            onPress={submitting ? undefined : submit}
+            style={[s.submitBtn, { backgroundColor: colors.action, opacity: submitting ? 0.65 : 1 }]}
+          >
+            <Text style={[s.submitBtnText, { color: colors.actionForeground }]}>
+              {submitting ? 'Submitting…' : 'Submit Property for Review'}
+            </Text>
+            <Feather name="arrow-up-right" size={17} color={colors.actionForeground} />
+          </AnimatedPressable>
+          <Text style={[s.submitFootnote, { color: colors.mutedForeground }]}>
+            Required fields are marked with *
+          </Text>
+        </View>
+      </KeyboardAwareScrollViewCompat>
+    </View>
   );
 }
 
-// ── STEP 1: Property Type ──────────────────────────────────────────────────────
+// ── SECTION 1: Property Type ───────────────────────────────────────────────────
 
 function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Form>) => void; colors: any }) {
   const [activeGroup, setActiveGroup] = useState<PropCategory>(categoryOf(form.propertyType));
@@ -591,7 +599,7 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
 
   return (
     <AnimatedReveal>
-      <Text style={[s.stepEyebrow, { color: colors.action }]}>STEP 1</Text>
+      <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 1</Text>
       <Text style={[s.stepTitle, { color: colors.foreground }]}>What are you listing?</Text>
 
       {/* Category tabs */}
@@ -648,13 +656,13 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
   );
 }
 
-// ── STEP 2: Location ───────────────────────────────────────────────────────────
+// ── SECTION 2: Location ─────────────────────────────────────────────────────────
 
 function StepLocation({ form, update, colors, errors, onConfirmationChange }: any) {
   const neighborhoods = okaraDistrict.areas[form.city] ?? [];
   return (
     <AnimatedReveal>
-      <Text style={[s.stepEyebrow, { color: colors.action }]}>STEP 2</Text>
+      <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 2</Text>
       <Text style={[s.stepTitle, { color: colors.foreground }]}>Location</Text>
 
       <Label colors={colors}>City *</Label>
@@ -736,13 +744,13 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
   );
 }
 
-// ── STEP 3: Basic Details ──────────────────────────────────────────────────────
+// ── SECTION 3: Basic Details ────────────────────────────────────────────────────
 
 function StepBasic({ form, update, colors, errors }: any) {
   const isRent = form.purpose === 'Rent';
   return (
     <AnimatedReveal>
-      <Text style={[s.stepEyebrow, { color: colors.action }]}>STEP 3</Text>
+      <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 3</Text>
       <Text style={[s.stepTitle, { color: colors.foreground }]}>Basic Details</Text>
 
       <WizField label="Listing Title" optional
@@ -778,14 +786,14 @@ function StepBasic({ form, update, colors, errors }: any) {
   );
 }
 
-// ── STEP 4: Type-Specific Fields ───────────────────────────────────────────────
+// ── SECTION 4: Type-Specific Fields ────────────────────────────────────────────
 
 function StepSpecific({ form, update, colors, category }: any) {
   const type = form.propertyType;
 
   return (
     <AnimatedReveal>
-      <Text style={[s.stepEyebrow, { color: colors.action }]}>STEP 4</Text>
+      <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 4</Text>
       <Text style={[s.stepTitle, { color: colors.foreground }]}>Property Details</Text>
       <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Specific fields for {type}. Optional unless marked *.</Text>
 
@@ -1331,7 +1339,7 @@ function AptProjectFields({ form, update, colors }: any) {
   );
 }
 
-// ── STEP 5: Features ───────────────────────────────────────────────────────────
+// ── SECTION 5: Features ─────────────────────────────────────────────────────────
 
 function StepFeatures({ form, update, colors, category }: any) {
   const available = FEATURES_BY_CAT[category as PropCategory] ?? FEATURES_BY_CAT.residential;
@@ -1341,7 +1349,7 @@ function StepFeatures({ form, update, colors, category }: any) {
   };
   return (
     <AnimatedReveal>
-      <Text style={[s.stepEyebrow, { color: colors.action }]}>STEP 5</Text>
+      <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 5</Text>
       <Text style={[s.stepTitle, { color: colors.foreground }]}>Features & Amenities</Text>
       <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Select all that apply. These appear as highlighted tags on your listing.</Text>
       <View style={s.featureGrid}>
@@ -1361,12 +1369,12 @@ function StepFeatures({ form, update, colors, category }: any) {
   );
 }
 
-// ── STEP 6: Photos & Media ─────────────────────────────────────────────────────
+// ── SECTION 6: Photos & Media ───────────────────────────────────────────────────
 
 function StepMedia({ form, update, colors, errors, pickPhotos, pickVideo }: any) {
   return (
     <AnimatedReveal>
-      <Text style={[s.stepEyebrow, { color: colors.action }]}>STEP 6</Text>
+      <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 6</Text>
       <Text style={[s.stepTitle, { color: colors.foreground }]}>Photos & Media</Text>
       <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Properties with 5+ photos get 3× more enquiries. Add up to 30 photos.</Text>
 
@@ -1439,7 +1447,7 @@ function StepMedia({ form, update, colors, errors, pickPhotos, pickVideo }: any)
   );
 }
 
-// ── STEP 7: Description + Documents ───────────────────────────────────────────
+// ── SECTION 7: Description + Documents ─────────────────────────────────────────
 
 function StepDocs({ form, update, colors, errors, user, category }: any) {
   const docOptions = DOCUMENTS_BY_CAT[category as PropCategory] ?? DOCUMENTS_BY_CAT.residential;
@@ -1449,7 +1457,7 @@ function StepDocs({ form, update, colors, errors, user, category }: any) {
   };
   return (
     <AnimatedReveal>
-      <Text style={[s.stepEyebrow, { color: colors.action }]}>STEP 7</Text>
+      <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 7</Text>
       <Text style={[s.stepTitle, { color: colors.foreground }]}>Description & Docs</Text>
 
       {/* Description */}
@@ -1520,7 +1528,7 @@ function StepDocs({ form, update, colors, errors, user, category }: any) {
   );
 }
 
-// ── STEP 8: Preview & Publish ──────────────────────────────────────────────────
+// ── SECTION 8: Preview ──────────────────────────────────────────────────────────
 
 function StepPreview({ form, colors, category }: any) {
   const priceLabel = form.purpose === 'Rent'
@@ -1531,7 +1539,7 @@ function StepPreview({ form, colors, category }: any) {
 
   return (
     <AnimatedReveal>
-      <Text style={[s.stepEyebrow, { color: colors.action }]}>STEP 8</Text>
+      <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 8</Text>
       <Text style={[s.stepTitle, { color: colors.foreground }]}>Preview & Publish</Text>
       <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Review your listing before submitting it for approval.</Text>
 
@@ -1699,19 +1707,16 @@ const s = StyleSheet.create({
   // Header
   header:               { borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 12 },
   backBtn:              { width: 34, height: 34, borderRadius: 11, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  headerStep:           { fontFamily: 'Inter_400Regular', fontSize: 11, marginBottom: 1 },
+  headerStep:           { fontFamily: 'Inter_700Bold', fontSize: 10, letterSpacing: 1.2, marginBottom: 3 },
   headerTitle:          { fontFamily: 'Inter_700Bold', fontSize: 15, marginBottom: 6 },
   progressTrack:        { height: 3, borderRadius: 2, overflow: 'hidden' },
   progressFill:         { height: 3, borderRadius: 2 },
   purposeBadge:         { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 5 },
   purposeBadgeText:     { fontFamily: 'Inter_700Bold', fontSize: 10 },
-  // Bottom nav
-  bottom:               { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', gap: 10, padding: 16, borderTopWidth: 1 },
-  backStepBtn:          { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14 },
-  backStepText:         { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
-  nextBtn:              { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 20, minWidth: 160 },
-  nextBtnText:          { fontFamily: 'Inter_700Bold', fontSize: 14 },
-  // Step content
+  // Single-page sections
+  formSection:          { borderWidth: 1, borderRadius: 20, padding: 16, marginBottom: 14, overflow: 'hidden' },
+  validationBanner:      { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 14 },
+  validationText:        { fontFamily: 'Inter_500Medium', fontSize: 12, lineHeight: 17, flex: 1 },
   stepEyebrow:          { fontFamily: 'Inter_700Bold', fontSize: 10, letterSpacing: 1.4, marginBottom: 4 },
   stepTitle:            { fontFamily: 'Inter_700Bold', fontSize: 22, marginBottom: 6 },
   stepSub:              { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, marginBottom: 14 },
@@ -1788,6 +1793,14 @@ const s = StyleSheet.create({
   previewReviewText:    { fontFamily: 'Inter_500Medium', fontSize: 11, flex: 1 },
   statusBadge:          { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   statusBadgeText:      { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#ffffff' },
+  // Submit
+  submitSection:        { alignItems: 'center', borderWidth: 1, borderRadius: 20, padding: 18, marginTop: 2 },
+  submitIcon:           { width: 46, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
+  submitTitle:          { fontFamily: 'Inter_700Bold', fontSize: 18, marginBottom: 6 },
+  submitHint:           { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, textAlign: 'center', marginBottom: 16 },
+  submitBtn:            { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 14, paddingVertical: 15, paddingHorizontal: 18 },
+  submitBtnText:        { fontFamily: 'Inter_700Bold', fontSize: 14 },
+  submitFootnote:        { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 10 },
   // Hint
   hintBox:              { flexDirection: 'row', gap: 8, alignItems: 'flex-start', borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 6 },
   hintText:             { fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 15, flex: 1 },

@@ -20,11 +20,6 @@ export const API_BASE: string =
   configuredApiUrl ||
   (injectedDomain ? `https://${injectedDomain}` : 'https://oglandmark.com');
 
-// ─── Local API server URL (social auth lives here) ─────────────────────────────
-// EXPO_PUBLIC_DOMAIN is injected in dev script as $REPLIT_DEV_DOMAIN.
-// Keep social auth on the same API host as the rest of the client.
-const LOCAL_API_BASE: string = `${API_BASE}/api`;
-
 const TOKEN_KEY = '@og-landmark/api-token';
 
 // ─── Token helpers ─────────────────────────────────────────────────────────────
@@ -41,6 +36,19 @@ export async function clearToken(): Promise<void> {
 // ─── Core fetch wrapper ────────────────────────────────────────────────────────
 const FETCH_TIMEOUT_MS       = 45_000; // 45s — handles slow mobile connections
 const AUTH_FETCH_TIMEOUT_MS  = 60_000; // 60s — login/register on slow networks
+const SESSION_FETCH_TIMEOUT_MS = 10_000;
+
+export class ApiRequestError extends Error {
+  readonly status: number;
+  readonly code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = 'ApiRequestError';
+    this.status = status;
+    this.code = code;
+  }
+}
 
 export async function apiRequest<T>(
   path: string,
@@ -74,7 +82,11 @@ export async function apiRequest<T>(
           || (err as { message?: string }).message
           || (err as { detail?: string }).detail
         : undefined;
-      throw new Error(message || `HTTP ${res.status}`);
+      throw new ApiRequestError(
+        message || `HTTP ${res.status}`,
+        res.status,
+        typeof err === 'object' && err !== null ? (err as { code?: string }).code : undefined,
+      );
     }
     return res.json() as Promise<T>;
   } catch (e: unknown) {
@@ -175,6 +187,10 @@ export type ApiUser = {
   city?: string;
   agencyName?: string;
   companyName?: string;
+  authProvider?: string;
+  facebookId?: string;
+  googleId?: string;
+  avatarUrl?: string;
 };
 
 // Server returns { user, token } on success (no `success` field)
@@ -195,6 +211,14 @@ export async function loginWithAPI(email: string, password: string): Promise<Log
   return res;
 }
 
+export async function logoutAPI(): Promise<void> {
+  try {
+    await apiFetch<{ success: boolean }>('/api/auth/logout', { method: 'POST' }, true, 10_000);
+  } finally {
+    await clearToken();
+  }
+}
+
 // ─── Social login (Google / Facebook) ─────────────────────────────────────────
 // Sends the OAuth access token to the LOCAL api-server which verifies it
 // with Google/Facebook and returns a user + JWT.
@@ -202,25 +226,17 @@ export async function loginWithSocial(
   provider: 'google' | 'facebook',
   accessToken: string,
 ): Promise<LoginResponse> {
-  const res = await fetch(`${LOCAL_API_BASE}/auth/social`, {
+  const res = await apiFetch<LoginResponse>('/api/auth/social', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ provider, accessToken }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Social login failed' })) as { error?: string };
-    throw new Error(err?.error ?? 'Social login failed');
-  }
-
-  const data = await res.json() as LoginResponse;
-  if (data.token) await setToken(data.token);
-  return data;
+  }, false, AUTH_FETCH_TIMEOUT_MS);
+  if (res.token) await setToken(res.token);
+  return res;
 }
 
 export async function registerWithAPI(payload: {
   name: string; email: string; password: string; phone: string; role: string;
-  agencyName?: string; companyName?: string; city?: string;
+  confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
 }): Promise<LoginResponse> {
   // Server expects firstName / lastName separately
   const parts = payload.name.trim().split(' ');
@@ -235,6 +251,7 @@ export async function registerWithAPI(payload: {
       email:         payload.email,
       phone:         payload.phone,
       password:      payload.password,
+      confirmPassword: payload.confirmPassword ?? payload.password,
       role:          payload.role.toLowerCase(),
       city:          payload.city,
       // extra fields agents/sellers use
@@ -246,7 +263,7 @@ export async function registerWithAPI(payload: {
 }
 
 export async function getMe(): Promise<ApiUser> {
-  return apiFetch<ApiUser>('/api/auth/me');
+  return apiFetch<ApiUser>('/api/auth/me', {}, true, SESSION_FETCH_TIMEOUT_MS);
 }
 
 export async function requestPasswordReset(email: string): Promise<{ success: boolean; message?: string; smtpOff?: boolean }> {

@@ -274,6 +274,7 @@ async function sendOtpEmail(toEmail, otp) {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const authRateBuckets = new Map();
 
 // ─── DB-guard middleware — returns 503 with clear message if DB not yet ready ──
 app.use('/api/auth', (req, res, next) => {
@@ -282,6 +283,28 @@ app.use('/api/auth', (req, res, next) => {
       error: 'Database is not ready. Check the Neon settings and application log.',
       code: 'DB_NOT_READY',
     });
+  }
+  next();
+});
+
+// Keep credential, OTP, and social endpoints resistant to repeated abuse
+// without adding a new dependency. Successful sessions are still persisted
+// in Neon; this is only a short-lived request throttle at the API edge.
+app.use('/api/auth', (req, res, next) => {
+  if (req.method !== 'POST') return next();
+  const now = Date.now();
+  const key = `${req.ip}:${req.path}`;
+  const windowMs = 15 * 60 * 1000;
+  const maxRequests = req.path === '/forgot-password' ? 5 : 15;
+  const bucket = authRateBuckets.get(key);
+  if (!bucket || now - bucket.startedAt >= windowMs) {
+    authRateBuckets.set(key, { startedAt: now, count: 1 });
+    return next();
+  }
+  bucket.count += 1;
+  if (bucket.count > maxRequests) {
+    res.setHeader('Retry-After', String(Math.ceil((windowMs - (now - bucket.startedAt)) / 1000)));
+    return res.status(429).json({ error: 'Too many authentication attempts. Please try again later.' });
   }
   next();
 });
@@ -302,20 +325,46 @@ function hashPassword(password) {
 }
 
 function verifyPassword(plain, stored) {
-  if (!stored || !stored.startsWith('pbkdf2:')) {
-    return plain === stored; // fallback for plain-text seed passwords
+  if (!stored || !stored.startsWith('pbkdf2:')) return false;
+  try {
+    const [, salt, hash] = stored.split(':');
+    const verify = crypto.pbkdf2Sync(plain, salt, 100000, 64, 'sha512').toString('hex');
+    const storedBuffer = Buffer.from(hash, 'hex');
+    const verifyBuffer = Buffer.from(verify, 'hex');
+    return storedBuffer.length === verifyBuffer.length
+      && crypto.timingSafeEqual(storedBuffer, verifyBuffer);
+  } catch {
+    return false;
   }
-  const [, salt, hash] = stored.split(':');
-  const verify = crypto.pbkdf2Sync(plain, salt, 100000, 64, 'sha512').toString('hex');
-  return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(verify, 'hex'));
 }
 
 function generateToken(userId) {
   return crypto.randomBytes(48).toString('base64url');
 }
 
+function normalizeEmail(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeEmail(value));
+}
+
+function passwordValidationError(value) {
+  const password = String(value || '');
+  if (password.length < 8) return 'Password must be at least 8 characters';
+  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+    return 'Password must include at least one letter and one number';
+  }
+  return null;
+}
+
 // ─── Auth Middleware ──────────────────────────────────────────────────────────
 const tokenDigest = token => crypto.createHash('sha256').update(token).digest('hex');
+function getBearerToken(req) {
+  const authHeader = req.headers['authorization'] || '';
+  return authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+}
 async function createSession(user) {
   const token = generateToken(user.id);
   const expiry = new Date(Date.now() + Number(process.env.SESSION_TTL_HOURS || 168) * 3600000);
@@ -331,9 +380,17 @@ async function createSession(user) {
   }
   return token;
 }
+async function invalidateUserSessions(userId) {
+  if (neonDb) {
+    await neonDb`DELETE FROM auth_sessions WHERE user_id = ${userId}`;
+  } else if (localPreview) {
+    for (const [token, session] of tokenStore.entries()) {
+      if (session.userId === userId) tokenStore.delete(token);
+    }
+  }
+}
 async function getRequestUser(req) {
-  const authHeader = req.headers['authorization'] || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+  const token = getBearerToken(req);
   if (!token) return null;
   let userId;
   try {
@@ -1658,10 +1715,12 @@ app.put('/api/appointments/:id', requireAuth, async (req, res) => {
 // ─── AUTH ──────────────────────────────────────────────────────────────────────
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = normalizeEmail(req.body.email);
+    const { password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    if (!isValidEmail(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
     const data = await readData();
-    const user = data.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const user = data.users.find(u => normalizeEmail(u.email) === email);
     if (!user || !verifyPassword(password, user.password)) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
@@ -1688,7 +1747,24 @@ app.post('/api/auth/login', async (req, res) => {
     res.json({ user: safe, token });
   } catch (err) {
     console.error('LOGIN ERROR:', err.message);
-    res.status(500).json({ error: 'Server error', detail: err.message });
+    res.status(500).json({ error: 'Unable to sign in right now. Please try again.' });
+  }
+});
+
+app.post('/api/auth/logout', async (req, res) => {
+  try {
+    const token = getBearerToken(req);
+    if (token) {
+      if (neonDb) {
+        await neonDb`DELETE FROM auth_sessions WHERE token_hash = ${tokenDigest(token)}`;
+      } else if (localPreview) {
+        tokenStore.delete(token);
+      }
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('LOGOUT ERROR:', err.message);
+    res.status(500).json({ error: 'Unable to log out right now.' });
   }
 });
 
@@ -1766,13 +1842,16 @@ app.get('/api/debug/db', async (req, res) => {
 
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, password, role } = req.body;
+    const { firstName, lastName, phone, password, role } = req.body;
+    const email = normalizeEmail(req.body.email);
     if (!firstName || !email || !phone || !password) {
       return res.status(400).json({ error: 'First name, email, phone and password are required' });
     }
-    if (password.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters' });
-    }
+    if (!isValidEmail(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
+    const passwordError = passwordValidationError(password);
+    if (passwordError) return res.status(400).json({ error: passwordError });
+    const confirmPassword = req.body.confirmPassword ?? req.body.passwordConfirmation ?? password;
+    if (confirmPassword !== password) return res.status(400).json({ error: 'Passwords do not match.' });
     // ── Developers cannot self-register ─────────────────────────────────────
     const requestedRole = (role || '').toLowerCase();
     if (requestedRole === 'developer') {
@@ -1782,7 +1861,7 @@ app.post('/api/auth/register', async (req, res) => {
       });
     }
     const data = await readData();
-    const exists = data.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const exists = data.users.find(u => normalizeEmail(u.email) === email);
     if (exists) return res.status(409).json({ error: 'An account with this email already exists' });
 
     const { city, specialization, experience } = req.body;
@@ -1810,17 +1889,17 @@ app.post('/api/auth/register', async (req, res) => {
     res.status(201).json({ user: safe, token });
   } catch (err) {
     console.error('REGISTER ERROR:', err.message);
-    res.status(500).json({ error: 'Server error', detail: err.message });
+    res.status(500).json({ error: 'Unable to create your account right now. Please try again.' });
   }
 });
 
 // ─── FORGOT / RESET PASSWORD ───────────────────────────────────────────────────
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = normalizeEmail(req.body.email);
     if (!email) return res.status(400).json({ error: 'Email is required' });
     const data = await readData();
-    const user = data.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const user = data.users.find(u => normalizeEmail(u.email) === email);
     // Always return success to prevent email enumeration
     if (!user) return res.json({ success: true, message: 'If an account exists with this email, a reset code has been sent.' });
 
@@ -1852,18 +1931,22 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
 app.post('/api/auth/reset-password', async (req, res) => {
   try {
-    const { email, code, newPassword } = req.body;
+    const email = normalizeEmail(req.body.email);
+    const code = String(req.body.code || '').trim();
+    const { newPassword } = req.body;
     if (!email || !code || !newPassword) return res.status(400).json({ error: 'Email, code and new password are required' });
-    if (newPassword.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    const passwordError = passwordValidationError(newPassword);
+    if (passwordError) return res.status(400).json({ error: passwordError });
 
     const data = await readData();
-    const user = data.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const user = data.users.find(u => normalizeEmail(u.email) === email);
     if (!user) return res.status(400).json({ error: 'Invalid or expired reset code' });
     const challenge = await consumeChallenge(email.toLowerCase(), 'password-reset', code);
     if (!challenge.ok) return res.status(400).json({ error: challenge.reason === 'expired' ? 'Reset code has expired. Please request a new one.' : 'Incorrect reset code. Please try again.' });
 
     user.password = hashPassword(newPassword);
     await writeData(data);
+    await invalidateUserSessions(user.id);
 
     res.json({ success: true });
   } catch (err) {
@@ -1932,22 +2015,81 @@ async function socialAuthHandler(req, res) {
       if (!response.ok) return res.status(401).json({ error: 'Invalid Google access token' });
       profile = await response.json();
     } else {
-      const response = await fetch(`https://graph.facebook.com/me?fields=id,name,email&access_token=${encodeURIComponent(accessToken)}`);
-      if (!response.ok) return res.status(401).json({ error: 'Invalid Facebook access token' });
+      const facebookAppId = String(process.env.FACEBOOK_APP_ID || '').trim();
+      const facebookAppSecret = String(process.env.FACEBOOK_APP_SECRET || '').trim();
+      if (!facebookAppId || !facebookAppSecret) {
+        return res.status(503).json({
+          error: 'Facebook login is not configured on the server yet.',
+          code: 'FACEBOOK_NOT_CONFIGURED',
+        });
+      }
+      const debugUrl = new URL('https://graph.facebook.com/debug_token');
+      debugUrl.searchParams.set('input_token', accessToken);
+      debugUrl.searchParams.set('access_token', `${facebookAppId}|${facebookAppSecret}`);
+      const debugResponse = await fetch(debugUrl);
+      const debugPayload = await debugResponse.json().catch(() => ({}));
+      const tokenData = debugPayload?.data;
+      if (
+        !debugResponse.ok ||
+        !tokenData?.is_valid ||
+        String(tokenData.app_id) !== facebookAppId ||
+        !tokenData.user_id
+      ) {
+        return res.status(401).json({ error: 'Invalid Facebook access token. Please try again.' });
+      }
+      const profileUrl = new URL('https://graph.facebook.com/me');
+      profileUrl.searchParams.set('fields', 'id,name,email,picture.type(large)');
+      profileUrl.searchParams.set('access_token', accessToken);
+      const response = await fetch(profileUrl);
+      if (!response.ok) return res.status(401).json({ error: 'Unable to verify Facebook profile.' });
       profile = await response.json();
+      if (String(profile.id) !== String(tokenData.user_id)) {
+        return res.status(401).json({ error: 'Facebook identity verification failed.' });
+      }
+      profile.providerId = String(tokenData.user_id);
+      profile.avatarUrl = profile.picture?.data?.url || '';
     }
-    if (!profile.email) return res.status(400).json({ error: 'Your social provider did not return an email address' });
+
     const data = await readData();
-    let user = data.users.find(u => u.email.toLowerCase() === String(profile.email).toLowerCase());
+    const providerId = String(profile.providerId || profile.sub || profile.id || '');
+    const normalizedEmail = normalizeEmail(profile.email);
+    const providerField = provider === 'facebook' ? 'facebookId' : 'googleId';
+    let user = providerId
+      ? data.users.find(u => String(u[providerField] || '') === providerId)
+      : null;
+    if (!user && normalizedEmail) {
+      user = data.users.find(u => normalizeEmail(u.email) === normalizedEmail);
+    }
+    if (user && user[providerField] && String(user[providerField]) !== providerId) {
+      return res.status(409).json({ error: 'This email is already linked to another social account.' });
+    }
     if (!user) {
+      const socialEmail = normalizedEmail || `${provider}-${providerId}@accounts.oglandmark.invalid`;
       user = {
         id: nextId(data), name: profile.name || String(profile.email).split('@')[0],
-        email: profile.email, phone: '', role: 'Buyer', status: 'Active',
+        email: socialEmail, phone: '', role: 'Buyer', status: 'Active',
         password: hashPassword(crypto.randomBytes(32).toString('hex')),
+        authProvider: provider, [providerField]: providerId,
+        ...(profile.avatarUrl ? { avatarUrl: profile.avatarUrl } : {}),
         joinedDate: new Date().toISOString().split('T')[0],
       };
       data.users.push(user);
       await writeData(data);
+    } else {
+      let changed = false;
+      if (providerId && user[providerField] !== providerId) {
+        user[providerField] = providerId;
+        changed = true;
+      }
+      if (user.authProvider !== provider && user.authProvider !== `${provider}+email`) {
+        user.authProvider = user.authProvider ? `${user.authProvider}+${provider}` : provider;
+        changed = true;
+      }
+      if (profile.avatarUrl && user.avatarUrl !== profile.avatarUrl) {
+        user.avatarUrl = profile.avatarUrl;
+        changed = true;
+      }
+      if (changed) await writeData(data);
     }
     if (['Inactive', 'Suspended', 'Deleted'].includes(user.status)) {
       return res.status(403).json({ error: 'Account is unavailable. Please contact support.' });

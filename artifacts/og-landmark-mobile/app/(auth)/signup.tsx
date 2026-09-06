@@ -3,7 +3,7 @@
  * Agent / Developer accounts are created by admin.
  * Design mirrors the Sign In screen exactly.
  */
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -21,6 +21,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
+import { useFacebookAuth } from '@/lib/facebookAuth';
 
 const ACTION = '#102a43';
 const GOLD   = '#c8a45a';
@@ -29,24 +30,40 @@ const BORDER = '#e4e6ea';
 
 export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
-  const { registerAPI } = useAuth();
+  const { registerAPI, loginSocial } = useAuth();
   const { tr, isRTL } = useLanguage();
 
   const [name,     setName]     = useState('');
   const [email,    setEmail]    = useState('');
   const [phone,    setPhone]    = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPwd,  setShowPwd]  = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState('');
 
   const rtl = isRTL ? 'right' as const : 'left' as const;
 
+  const handleFacebookSignup = useCallback(async (accessToken: string) => {
+    const result = await loginSocial('facebook', accessToken);
+    if (result.success) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace('/(tabs)');
+    }
+    return result;
+  }, [loginSocial]);
+  const facebook = useFacebookAuth(handleFacebookSignup);
+
   async function handleRegister() {
     if (!name.trim())                                          { setError('Full name is required.');                              return; }
     if (!email.includes('@'))                                  { setError('Enter a valid email address.');                        return; }
     if (!phone.trim() || phone.replace(/\D/g,'').length < 10) { setError('Enter a valid phone number (e.g. 0300-1234567).');     return; }
-    if (password.length < 8)                                   { setError('Password must be at least 8 characters.');            return; }
+    if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+      setError('Password must be at least 8 characters and include a letter and number.');
+      return;
+    }
+    if (password !== confirmPassword)                          { setError('Passwords do not match.');                           return; }
 
     setError('');
     setLoading(true);
@@ -56,6 +73,7 @@ export default function SignUpScreen() {
       email:   email.trim().toLowerCase(),
       phone:   phone.trim(),
       password,
+      confirmPassword,
       role:    'buyer',
     });
 
@@ -104,10 +122,10 @@ export default function SignUpScreen() {
           <Text style={[styles.title, { textAlign: 'center' }]}>Create Account</Text>
 
           {/* Error banner */}
-          {!!error && (
+          {!!(error || facebook.error) && (
             <View style={styles.errorBox}>
               <Feather name="alert-circle" size={13} color="#b94b42" />
-              <Text style={[styles.errorText, { textAlign: rtl }]}>{error}</Text>
+              <Text style={[styles.errorText, { textAlign: rtl }]}>{error || facebook.error}</Text>
             </View>
           )}
 
@@ -174,6 +192,26 @@ export default function SignUpScreen() {
             <View style={[styles.underlineLine, { borderColor: BORDER }]} />
           </View>
 
+          {/* Confirm password */}
+          <View style={styles.fieldWrap}>
+            <Text style={[styles.label, { textAlign: rtl }]}>CONFIRM PASSWORD</Text>
+            <View style={styles.passRow}>
+              <TextInput
+                value={confirmPassword}
+                onChangeText={(v) => { setConfirmPassword(v); setError(''); }}
+                secureTextEntry={!showConfirmPwd}
+                placeholder="Re-enter your password"
+                placeholderTextColor={MUTED}
+                textAlign={rtl}
+                style={[styles.underlineInput, { flex: 1, borderBottomWidth: 0 }]}
+              />
+              <Pressable onPress={() => setShowConfirmPwd(v => !v)} hitSlop={8} style={styles.eyeBtn}>
+                <Feather name={showConfirmPwd ? 'eye' : 'eye-off'} size={18} color={MUTED} />
+              </Pressable>
+            </View>
+            <View style={[styles.underlineLine, { borderColor: BORDER }]} />
+          </View>
+
           {/* Create Account button */}
           <Pressable
             onPress={() => { void handleRegister(); }}
@@ -199,15 +237,19 @@ export default function SignUpScreen() {
           {/* Social buttons — matching login exactly */}
           <View style={styles.socialRow}>
             <Pressable
-              onPress={() => {}}
-              style={({ pressed }) => [styles.socialBtn, { opacity: pressed ? 0.5 : 1 }]}
+              onPress={() => { void facebook.signIn(); }}
+              disabled={loading || facebook.loading}
+              style={({ pressed }) => [styles.socialBtn, { opacity: pressed || facebook.loading ? 0.5 : 1 }]}
             >
-              <FontAwesome5 name="facebook" size={18} color="#1877f2" />
+              {facebook.loading
+                ? <ActivityIndicator size="small" color="#1877f2" />
+                : <FontAwesome5 name="facebook" size={18} color="#1877f2" />}
               <Text style={styles.socialText}>Facebook</Text>
             </Pressable>
 
             <Pressable
-              onPress={() => {}}
+              onPress={() => { void handleRegister(); }}
+              disabled={loading || facebook.loading}
               style={({ pressed }) => [styles.socialBtn, { opacity: pressed ? 0.5 : 1 }]}
             >
               <Feather name="mail" size={18} color={ACTION} />
@@ -215,7 +257,7 @@ export default function SignUpScreen() {
             </Pressable>
 
             <Pressable
-              onPress={() => {}}
+              onPress={() => setError('Apple sign in is not configured yet. Please use Facebook or email sign up.')}
               style={({ pressed }) => [styles.socialBtn, { opacity: pressed ? 0.5 : 1 }]}
             >
               <FontAwesome5 name="apple" size={18} color="#000" />

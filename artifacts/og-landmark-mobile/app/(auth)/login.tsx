@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -16,6 +16,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
+import { useFacebookAuth } from '@/lib/facebookAuth';
 
 const ACTION = '#102a43';
 const GOLD   = '#c8a45a';
@@ -25,7 +26,7 @@ const BG     = '#ffffff';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
-  const { loginAPI } = useAuth();
+  const { loginAPI, loginSocial } = useAuth();
   const { tr, isRTL } = useLanguage();
 
   const [email, setEmail]         = useState('');
@@ -36,6 +37,16 @@ export default function LoginScreen() {
   const [error, setError]         = useState('');
 
   const rtl = isRTL ? 'right' as const : 'left' as const;
+
+  const handleFacebookLogin = useCallback(async (accessToken: string) => {
+    const result = await loginSocial('facebook', accessToken);
+    if (result.success) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace('/(tabs)');
+    }
+    return result;
+  }, [loginSocial]);
+  const facebook = useFacebookAuth(handleFacebookLogin);
 
   const handleLogin = async () => {
     if (!email.trim() || !email.includes('@')) { setError(tr('loginErrEmail')); return; }
@@ -79,10 +90,10 @@ export default function LoginScreen() {
           <Text style={[styles.title, { textAlign: 'center' }]}>{tr('loginTitle')}</Text>
 
           {/* Error banner */}
-          {!!error && (
+          {!!(error || facebook.error) && (
             <View style={styles.errorBox}>
               <Feather name="alert-circle" size={13} color="#b94b42" />
-              <Text style={[styles.errorText, { textAlign: rtl }]}>{error}</Text>
+              <Text style={[styles.errorText, { textAlign: rtl }]}>{error || facebook.error}</Text>
             </View>
           )}
 
@@ -160,18 +171,22 @@ export default function LoginScreen() {
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Social buttons — Coming Soon */}
+          {/* Social buttons */}
           <View style={styles.socialRow}>
             <Pressable
-              onPress={() => {}}
-              style={({ pressed }) => [styles.socialBtn, { opacity: pressed ? 0.5 : 1 }]}
+              onPress={() => { void facebook.signIn(); }}
+              disabled={loading || facebook.loading}
+              style={({ pressed }) => [styles.socialBtn, { opacity: pressed || facebook.loading ? 0.5 : 1 }]}
             >
-              <FontAwesome5 name="facebook" size={18} color="#1877f2" />
+              {facebook.loading
+                ? <ActivityIndicator size="small" color="#1877f2" />
+                : <FontAwesome5 name="facebook" size={18} color="#1877f2" />}
               <Text style={styles.socialText}>Facebook</Text>
             </Pressable>
 
             <Pressable
-              onPress={() => {}}
+              onPress={() => { void handleLogin(); }}
+              disabled={loading || facebook.loading}
               style={({ pressed }) => [styles.socialBtn, { opacity: pressed ? 0.5 : 1 }]}
             >
               <Feather name="mail" size={18} color={ACTION} />
@@ -179,7 +194,7 @@ export default function LoginScreen() {
             </Pressable>
 
             <Pressable
-              onPress={() => {}}
+              onPress={() => setError('Apple sign in is not configured yet. Please use Facebook or email login.')}
               style={({ pressed }) => [styles.socialBtn, { opacity: pressed ? 0.5 : 1 }]}
             >
               <FontAwesome5 name="apple" size={18} color="#000" />

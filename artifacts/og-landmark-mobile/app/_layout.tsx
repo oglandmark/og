@@ -132,7 +132,12 @@ function RootLayoutNav() {
     // Allow registration routes even when onboarding is already completed
     const isRegisterRoute = inOnboarding && ['select-role', 'register-buyer', 'register-agent', 'register-developer'].includes(segments[1] as string);
 
-    if (!hasCompletedOnboarding && !inOnboarding) {
+    if (isLoggedIn && inAuth) {
+      // Keep authenticated users out of login, signup, and reset-password
+      // screens after a session is restored or created.
+      router.replace('/(tabs)');
+      setTimeout(() => setNavigationReady(true), 120);
+    } else if (!hasCompletedOnboarding && !inOnboarding) {
       router.replace('/onboarding');
       // Reveal after short delay to let navigation commit
       setTimeout(() => setNavigationReady(true), 120);
@@ -141,6 +146,11 @@ function RootLayoutNav() {
       setTimeout(() => setNavigationReady(true), 120);
     } else if (isLoggedIn && inOnboarding) {
       router.replace('/(tabs)');
+      setTimeout(() => setNavigationReady(true), 120);
+    } else if (inAdmin && (!isLoggedIn || user?.role !== 'admin')) {
+      // Admin screens are never reachable by an unauthenticated user or by
+      // a normal buyer/agent account, even if they manually enter the route.
+      router.replace(isLoggedIn ? '/(tabs)' : '/(auth)/login');
       setTimeout(() => setNavigationReady(true), 120);
     } else if (!inKnownRoute && !inOnboarding) {
       // Guest or anyone at an unknown/root route → send to tabs directly

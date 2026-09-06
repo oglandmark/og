@@ -1,6 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { loginWithAPI, loginWithSocial, registerWithAPI, clearToken, setToken, adminVerify, adminOtpLogin } from '@/lib/api';
+import {
+  ApiRequestError,
+  adminOtpLogin,
+  adminVerify,
+  clearToken,
+  getMe,
+  getToken,
+  loginWithAPI,
+  loginWithSocial,
+  logoutAPI,
+  registerWithAPI,
+  setToken,
+} from '@/lib/api';
 import { clearLocalAccountData } from '@/lib/accountCleanup';
 
 export type Role = 'buyer' | 'agent' | 'developer' | 'admin';
@@ -32,6 +44,8 @@ export type User = {
   designation?: string;
   verificationStatus: 'pending' | 'verified' | 'rejected';
   joinedAt: string;
+  authProvider?: string;
+  avatarUrl?: string;
 };
 
 type AuthContextValue = {
@@ -47,7 +61,7 @@ type AuthContextValue = {
   verifyAdminOtp: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
   registerAPI: (payload: {
     name: string; email: string; password: string; phone: string; role: Role;
-    agencyName?: string; companyName?: string; city?: string;
+    confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
   }) => Promise<{ success: boolean; error?: string; pendingApproval?: boolean; pendingMessage?: string }>;
   logout: () => Promise<void>;
 };
@@ -63,15 +77,82 @@ function mapRole(r: string): Role {
   return 'buyer';
 }
 
+function mapApiUser(apiU: {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  city?: string;
+  agencyName?: string;
+  companyName?: string;
+  verificationStatus?: string;
+  joinedDate?: string;
+  authProvider?: string;
+  avatarUrl?: string;
+}): User {
+  return {
+    id: String(apiU.id),
+    name: apiU.name,
+    email: apiU.email,
+    phone: apiU.phone || '',
+    role: mapRole(apiU.role),
+    city: apiU.city,
+    agencyName: apiU.agencyName,
+    companyName: apiU.companyName,
+    verificationStatus: (apiU.verificationStatus as User['verificationStatus']) || 'pending',
+    joinedAt: apiU.joinedDate || new Date().toISOString(),
+    authProvider: apiU.authProvider,
+    avatarUrl: apiU.avatarUrl,
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((raw) => { if (raw) setUser(JSON.parse(raw) as User); })
-      .catch(() => undefined)
-      .finally(() => setIsLoading(false));
+    let mounted = true;
+    (async () => {
+      const [raw, token] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEY).catch(() => null),
+        getToken(),
+      ]);
+      if (!token) {
+        await AsyncStorage.removeItem(STORAGE_KEY).catch(() => undefined);
+        if (mounted) {
+          setUser(null);
+          setIsLoading(false);
+        }
+        return;
+      }
+      try {
+        const apiU = await getMe();
+        if (!mounted) return;
+        const restored = mapApiUser(apiU);
+        setUser(restored);
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(restored)).catch(() => undefined);
+      } catch (error: unknown) {
+        // A 401 means the token is definitely invalid/expired. For a
+        // temporary network failure, keep the local identity but protected
+        // API calls will still fail until connectivity returns.
+        if (error instanceof ApiRequestError && error.status === 401) {
+          await clearToken();
+          await AsyncStorage.removeItem(STORAGE_KEY).catch(() => undefined);
+          if (mounted) setUser(null);
+        } else if (mounted && raw) {
+          try { setUser(JSON.parse(raw) as User); } catch { setUser(null); }
+        }
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    })().catch(() => {
+      if (mounted) {
+        setUser(null);
+        setIsLoading(false);
+      }
+    });
+    return () => { mounted = false; };
   }, []);
 
   const login = useCallback(async (newUser: User) => {
@@ -86,19 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await loginWithAPI(email, password);
       if (!res.user) return { success: false, error: 'Invalid credentials' };
-      const apiU = res.user;
-      const mapped: User = {
-        id:                 String(apiU.id),
-        name:               apiU.name,
-        email:              apiU.email,
-        phone:              apiU.phone || '',
-        role:               mapRole(apiU.role),
-        city:               apiU.city,
-        agencyName:         apiU.agencyName,
-        companyName:        apiU.companyName,
-        verificationStatus: (apiU.verificationStatus as User['verificationStatus']) || 'pending',
-        joinedAt:           apiU.joinedDate || new Date().toISOString(),
-      };
+      const mapped = mapApiUser(res.user);
       await login(mapped);
       if (res.token) await setToken(res.token);
       return { success: true };
@@ -129,16 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await adminOtpLogin(email, otp);
       if (!res.success || !res.user) return { success: false, error: 'OTP verification failed' };
-      const apiU = res.user;
-      const mapped: User = {
-        id:                 String(apiU.id),
-        name:               apiU.name,
-        email:              apiU.email,
-        phone:              apiU.phone || '',
-        role:               'admin',
-        verificationStatus: 'verified',
-        joinedAt:           new Date().toISOString(),
-      };
+      const mapped = { ...mapApiUser(res.user), role: 'admin' as const, verificationStatus: 'verified' as const };
       await login(mapped);
       if (res.token) await setToken(res.token);
       return { success: true };
@@ -154,16 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await loginWithSocial(provider, accessToken);
       if (!res.user) return { success: false, error: 'Social login failed' };
-      const apiU = res.user;
-      const mapped: User = {
-        id:                 (apiU as { socialId?: string }).socialId ?? String(apiU.id),
-        name:               apiU.name,
-        email:              apiU.email,
-        phone:              apiU.phone || '',
-        role:               mapRole(apiU.role),
-        verificationStatus: 'verified',
-        joinedAt:           apiU.joinedDate || new Date().toISOString(),
-      };
+      const mapped = { ...mapApiUser(res.user), verificationStatus: 'verified' as const };
       await login(mapped);
       if (res.token) await setToken(res.token);
       return { success: true };
@@ -174,7 +225,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const registerAPI = useCallback(async (payload: {
     name: string; email: string; password: string; phone: string; role: Role;
-    agencyName?: string; companyName?: string; city?: string;
+    confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
   }): Promise<{ success: boolean; error?: string; pendingApproval?: boolean; pendingMessage?: string }> => {
     try {
       const backendRole = payload.role === 'agent' ? 'Agent'
@@ -185,18 +236,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: true, pendingApproval: true, pendingMessage: res.message ?? 'Your account is under review.' };
       }
       if (!res.user) return { success: false, error: 'Registration failed' };
-      const apiU = res.user;
-      const mapped: User = {
-        id:                 String(apiU.id),
-        name:               apiU.name,
-        email:              apiU.email,
-        phone:              apiU.phone || payload.phone,
-        role:               payload.role,
-        city:               apiU.city || payload.city,
-        agencyName:         payload.agencyName,
-        companyName:        payload.companyName,
-        verificationStatus: 'pending',
-        joinedAt:           new Date().toISOString(),
+      const mapped = {
+        ...mapApiUser(res.user),
+        phone: res.user.phone || payload.phone,
+        role: payload.role,
+        city: res.user.city || payload.city,
+        agencyName: payload.agencyName,
+        companyName: payload.companyName,
+        verificationStatus: 'pending' as const,
       };
       await login(mapped);
       if (res.token) await setToken(res.token);
@@ -210,7 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     await Promise.all([
       AsyncStorage.removeItem(STORAGE_KEY).catch(() => undefined),
-      clearToken(),
+      logoutAPI().catch(() => clearToken()),
       clearLocalAccountData(),
     ]);
   }, []);

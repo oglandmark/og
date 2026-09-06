@@ -1,7 +1,7 @@
 /**
  * OG Landmark — Forgot Password
  * Step 1: Enter email  →  Step 2: 6-digit code  →  Step 3: New password
- * (Simulated: code shown in an alert for demo; swap sendResetEmail() for real API)
+ * Uses the production API and SMTP-backed OTP flow.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -50,6 +50,7 @@ export default function ForgotPasswordScreen() {
   // ── Step 1: Send code ──────────────────────────────────────────────────────
 
   const sendCode = async () => {
+    if (loading) return;
     if (!email.trim() || !email.includes('@')) {
       setError('Please enter a valid email address.');
       return;
@@ -67,9 +68,10 @@ export default function ForgotPasswordScreen() {
         );
         return;
       }
-    } catch {
-      // Backend returns success even for unknown emails (anti-enumeration).
-      // Only hard network errors reach here — still proceed to step 2.
+    } catch (err: unknown) {
+      setLoading(false);
+      setError(err instanceof Error ? err.message : 'Unable to send the code. Please try again.');
+      return;
     }
     setResendSecs(60);
     setLoading(false);
@@ -91,9 +93,16 @@ export default function ForgotPasswordScreen() {
     if (resendSecs > 0) return;
     setLoading(true);
     try {
-      await requestPasswordReset(email.trim().toLowerCase());
-    } catch {
-      // silent — same reasoning as sendCode
+      const res = await requestPasswordReset(email.trim().toLowerCase());
+      if (res?.smtpOff) {
+        setError('Email service is unavailable right now. Please contact admin for help.');
+        setLoading(false);
+        return;
+      }
+    } catch (err: unknown) {
+      setLoading(false);
+      setError(err instanceof Error ? err.message : 'Unable to resend the code. Please try again.');
+      return;
     }
     setCode(['', '', '', '', '', '']);
     setResendSecs(60);
@@ -103,7 +112,10 @@ export default function ForgotPasswordScreen() {
   // ── Step 3: Reset password ─────────────────────────────────────────────────
 
   const resetPassword = async () => {
-    if (newPass.length < 8) { setError('Password must be at least 8 characters.'); return; }
+    if (newPass.length < 8 || !/[A-Za-z]/.test(newPass) || !/\d/.test(newPass)) {
+      setError('Password must be at least 8 characters and include a letter and number.');
+      return;
+    }
     if (newPass !== confirmPass) { setError('Passwords do not match.'); return; }
     setError('');
     setLoading(true);
@@ -225,7 +237,7 @@ export default function ForgotPasswordScreen() {
             <Text style={[st.sub, { color: colors.mutedForeground }]}>
               A verification code was sent to{' '}
               <Text style={{ color: colors.foreground, fontFamily: 'Inter_600SemiBold' }}>{email}</Text>.
-              {'\n'}The code expires in 10 minutes.
+              {'\n'}The code expires in 15 minutes.
             </Text>
 
             {error ? <ErrorBox error={error} colors={colors} /> : null}

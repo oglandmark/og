@@ -34,8 +34,8 @@ export default function SignUpScreen() {
   const { tr, isRTL } = useLanguage();
 
   const [name,     setName]     = useState('');
-  const [email,    setEmail]    = useState('');
-  const [phone,    setPhone]    = useState('');
+  const [identifier, setIdentifier] = useState('');
+  const [signupMethod, setSignupMethod] = useState<'email' | 'username' | 'mobile'>('email');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPwd,  setShowPwd]  = useState(false);
@@ -44,6 +44,9 @@ export default function SignUpScreen() {
   const [error,    setError]    = useState('');
 
   const rtl = isRTL ? 'right' as const : 'left' as const;
+  const signupPlaceholder = signupMethod === 'email'
+    ? tr('signupEmailPlaceholder')
+    : signupMethod === 'username' ? tr('signupUsernamePlaceholder') : tr('signupMobilePlaceholder');
 
   const handleFacebookSignup = useCallback(async (accessToken: string) => {
     const result = await loginSocial('facebook', accessToken);
@@ -57,8 +60,15 @@ export default function SignUpScreen() {
 
   async function handleRegister() {
     if (!name.trim())                                          { setError('Full name is required.');                              return; }
-    if (!email.includes('@'))                                  { setError('Enter a valid email address.');                        return; }
-    if (!phone.trim() || phone.replace(/\D/g,'').length < 10) { setError('Enter a valid phone number (e.g. 0300-1234567).');     return; }
+    const value = identifier.trim();
+    if (!value)                                                 { setError(tr('signupIdentifierRequired'));                      return; }
+    if (signupMethod === 'email' && !value.includes('@'))      { setError(tr('signupEmailError'));                              return; }
+    if (signupMethod === 'username' && !/^[A-Za-z][A-Za-z0-9._-]{2,29}$/.test(value)) {
+      setError(tr('signupUsernameError')); return;
+    }
+    if (signupMethod === 'mobile' && value.replace(/\D/g,'').length < 10) {
+      setError(tr('signupMobileError')); return;
+    }
     if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
       setError('Password must be at least 8 characters and include a letter and number.');
       return;
@@ -70,8 +80,9 @@ export default function SignUpScreen() {
 
     const res = await registerAPI({
       name:    name.trim(),
-      email:   email.trim().toLowerCase(),
-      phone:   phone.trim(),
+      email:   signupMethod === 'email' ? value.toLowerCase() : undefined,
+      username: signupMethod === 'username' ? value.toLowerCase() : undefined,
+      phone:   signupMethod === 'mobile' ? value : undefined,
       password,
       confirmPassword,
       role:    'buyer',
@@ -143,29 +154,35 @@ export default function SignUpScreen() {
             />
           </View>
 
-          {/* Email */}
+          {/* Signup method */}
           <View style={styles.fieldWrap}>
-            <Text style={[styles.label, { textAlign: rtl }]}>EMAIL ADDRESS</Text>
-            <TextInput
-              value={email}
-              onChangeText={(v) => { setEmail(v); setError(''); }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              placeholder="you@example.com"
-              placeholderTextColor={MUTED}
-              textAlign={rtl}
-              style={styles.underlineInput}
-            />
+            <Text style={[styles.label, { textAlign: rtl }]}>{tr('signupMethodLabel')}</Text>
+            <View style={[styles.methodRow, isRTL && { flexDirection: 'row-reverse' }]}>
+              {([
+                ['email', tr('signupMethodEmail')],
+                ['username', tr('signupMethodUsername')],
+                ['mobile', tr('signupMethodMobile')],
+              ] as const).map(([method, label]) => (
+                <Pressable
+                  key={method}
+                  onPress={() => { setSignupMethod(method); setIdentifier(''); setError(''); }}
+                  style={[styles.methodBtn, signupMethod === method && styles.methodBtnActive]}
+                >
+                  <Text style={[styles.methodText, signupMethod === method && styles.methodTextActive]}>{label}</Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
 
-          {/* Phone */}
+          {/* Account identifier */}
           <View style={styles.fieldWrap}>
-            <Text style={[styles.label, { textAlign: rtl }]}>PHONE NUMBER</Text>
+            <Text style={[styles.label, { textAlign: rtl }]}>{tr('signupIdentifierLabel')}</Text>
             <TextInput
-              value={phone}
-              onChangeText={(v) => { setPhone(v); setError(''); }}
-              keyboardType="phone-pad"
-              placeholder="0300-1234567"
+              value={identifier}
+              onChangeText={(v) => { setIdentifier(v); setError(''); }}
+              keyboardType={signupMethod === 'mobile' ? 'phone-pad' : signupMethod === 'email' ? 'email-address' : 'default'}
+              autoCapitalize="none"
+              placeholder={signupPlaceholder}
               placeholderTextColor={MUTED}
               textAlign={rtl}
               style={styles.underlineInput}
@@ -296,6 +313,12 @@ const styles = StyleSheet.create({
 
   fieldWrap:      { marginBottom: 20 },
   label:          { fontFamily: 'Inter_500Medium', fontSize: 12, color: MUTED, marginBottom: 8, letterSpacing: 0.5 },
+  methodRow:      { flexDirection: 'row', gap: 6 },
+  methodBtn:      { flex: 1, minHeight: 38, borderRadius: 9, borderWidth: 1, borderColor: BORDER,
+                    alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5, backgroundColor: '#fff' },
+  methodBtnActive:{ backgroundColor: ACTION, borderColor: ACTION },
+  methodText:     { fontFamily: 'Inter_500Medium', fontSize: 11, color: MUTED },
+  methodTextActive:{ color: '#fff' },
   underlineInput: { fontFamily: 'Inter_400Regular', fontSize: 14, color: '#1c2024',
                     borderBottomWidth: 1, borderBottomColor: BORDER, paddingBottom: 10, paddingTop: 2 },
   passRow:        { flexDirection: 'row', alignItems: 'center' },

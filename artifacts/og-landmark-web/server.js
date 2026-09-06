@@ -1891,14 +1891,14 @@ app.post('/api/auth/register', async (req, res) => {
     const { firstName, lastName, phone, password, role } = req.body;
     const email = normalizeEmail(req.body.email);
     const requestedUsername = normalizeUsername(req.body.username);
-    if (!firstName || !email || !phone || !password) {
-      return res.status(400).json({ error: 'First name, email, phone and password are required' });
+    if (!firstName || !password || (!email && !requestedUsername && !phone)) {
+      return res.status(400).json({ error: 'Name, password and an email, username or mobile number are required' });
     }
-    if (!isValidEmail(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
+    if (email && !isValidEmail(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
     if (requestedUsername && !isValidUsername(requestedUsername)) {
       return res.status(400).json({ error: 'Username must start with a letter and use 3-30 letters, numbers, dots, underscores or hyphens.' });
     }
-    if (!isValidPhone(phone)) return res.status(400).json({ error: 'Please enter a valid mobile number.' });
+    if (phone && !isValidPhone(phone)) return res.status(400).json({ error: 'Please enter a valid mobile number.' });
     const passwordError = passwordValidationError(password);
     if (passwordError) return res.status(400).json({ error: passwordError });
     const confirmPassword = req.body.confirmPassword ?? req.body.passwordConfirmation ?? password;
@@ -1913,10 +1913,10 @@ app.post('/api/auth/register', async (req, res) => {
     }
     const data = await readData();
     const phoneKey = normalizePhone(phone);
-    const username = uniqueUsername(data.users, requestedUsername, email);
-    const duplicateEmail = data.users.some(u => normalizeEmail(u.email) === email);
+    const username = uniqueUsername(data.users, requestedUsername, email || firstName || phone);
+    const duplicateEmail = Boolean(email) && data.users.some(u => normalizeEmail(u.email) === email);
     const duplicateUsername = requestedUsername && data.users.some(u => normalizeUsername(u.username) === requestedUsername);
-    const duplicatePhone = data.users.some(u => normalizePhone(u.phone) === phoneKey);
+    const duplicatePhone = Boolean(phoneKey) && data.users.some(u => normalizePhone(u.phone) === phoneKey);
     if (duplicateEmail) return res.status(409).json({ error: 'An account with this email already exists' });
     if (duplicateUsername) return res.status(409).json({ error: 'This username is already in use. Please choose another.' });
     if (duplicatePhone) return res.status(409).json({ error: 'This mobile number is already registered.' });
@@ -1928,8 +1928,8 @@ app.post('/api/auth/register', async (req, res) => {
       id: nextId(data),
       name: `${firstName} ${lastName || ''}`.trim(),
       username,
-      email,
-      phone: String(phone).trim(),
+      email: email || '',
+      phone: phone ? String(phone).trim() : '',
       role: roleMap[requestedRole] || 'Buyer',
       status: isAgent ? 'Pending' : 'Active',
       ...(isAgent && { approvalStatus: 'Pending', city: city || '', specialization: specialization || '', experience: experience || '', createdByAdmin: false }),

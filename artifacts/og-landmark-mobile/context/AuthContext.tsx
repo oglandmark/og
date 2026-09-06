@@ -61,7 +61,7 @@ type AuthContextValue = {
   loginAdmin: (email: string, password: string) => Promise<{ success: boolean; error?: string; otpRequired?: boolean }>;
   verifyAdminOtp: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
   registerAPI: (payload: {
-    name: string; username?: string; email: string; password: string; phone: string; role: Role;
+    name: string; username?: string; email?: string; password: string; phone?: string; role: Role;
     confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
   }) => Promise<{ success: boolean; error?: string; pendingApproval?: boolean; pendingMessage?: string }>;
   logout: () => Promise<void>;
@@ -227,7 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [login]);
 
   const registerAPI = useCallback(async (payload: {
-    name: string; username?: string; email: string; password: string; phone: string; role: Role;
+    name: string; username?: string; email?: string; password: string; phone?: string; role: Role;
     confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
   }): Promise<{ success: boolean; error?: string; pendingApproval?: boolean; pendingMessage?: string }> => {
     try {

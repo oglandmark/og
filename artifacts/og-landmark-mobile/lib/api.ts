@@ -236,7 +236,7 @@ export async function loginWithSocial(
 }
 
 export async function registerWithAPI(payload: {
-  name: string; username?: string; email: string; password: string; phone: string; role: string;
+  name: string; username?: string; email?: string; password: string; phone?: string; role: string;
   confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
 }): Promise<LoginResponse> {
   // Server expects firstName / lastName separately
@@ -250,8 +250,8 @@ export async function registerWithAPI(payload: {
       firstName,
       lastName,
       username:       payload.username,
-      email:         payload.email,
-      phone:         payload.phone,
+      email:         payload.email || undefined,
+      phone:         payload.phone || undefined,
       password:      payload.password,
       confirmPassword: payload.confirmPassword ?? payload.password,
       role:          payload.role.toLowerCase(),

@@ -56,3 +56,17 @@ mtime_ms = 1788686456195
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/5ec31095-e3f6-46fa-9724-e490f87f767f/0427b768-fd0d-4508-bfd7-e434dcbef664"
 storage_version_token = "1788686489505936"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "yD0L3LaH3NSwQmm6IvW1M"
+uri = "file://exports/OG%20Landmark%20Mobile%2006.09.2:28PM.zip"
+type = "unspecified"
+title = "OG Landmark Mobile 06.09.2:28PM"
+description = "Complete latest OG Landmark Expo mobile app source package. Includes app screens, assets, API/auth code, components, tests, Expo config, EAS config, and build scripts. Excludes node_modules, generated build caches, Replit metadata, logs, and secrets."
+logical_id = "0b4f353c-f4c9-4e0b-be7f-9ec24ea9d100"
+content_hash = "sha256:835f9cc908376d31463faee8bb307834041c9e078f1f08fa5a1a94d6613c0465"
+size = 25990090
+mtime_ms = 1788686970807
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/0b4f353c-f4c9-4e0b-be7f-9ec24ea9d100/b0ada59e-a2a0-4f04-9c63-322512e3c0f5"
+storage_version_token = "1788686980833096"
+content_type = "application/octet-stream"

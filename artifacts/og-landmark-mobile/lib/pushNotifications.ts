@@ -18,6 +18,12 @@ export type PushRegistrationResult =
   | { status: 'skipped' }
   | { status: 'unsupported' };
 
+export type NotificationPermissionState = {
+  status: 'granted' | 'denied' | 'undetermined' | 'unsupported';
+  granted: boolean;
+  canAskAgain: boolean;
+};
+
 export type PushConfigurationResult =
   | { status: 'configured' }
   | { status: 'unsupported' };
@@ -87,10 +93,28 @@ export async function clearLastNotificationResponse(): Promise<void> {
   if (Notifications) await Notifications.clearLastNotificationResponseAsync();
 }
 
-export async function hasNotificationPermission(): Promise<boolean> {
+export async function getNotificationPermissionState(): Promise<NotificationPermissionState> {
   const Notifications = await getNotificationsModule();
-  if (!Notifications) return false;
-  return (await Notifications.getPermissionsAsync()).granted;
+  if (!Notifications) {
+    return { status: 'unsupported', granted: false, canAskAgain: false };
+  }
+
+  const permission = await Notifications.getPermissionsAsync();
+  const status = permission.granted
+    ? 'granted'
+    : permission.status === 'denied'
+      ? 'denied'
+      : 'undetermined';
+
+  return {
+    status,
+    granted: permission.granted,
+    canAskAgain: permission.canAskAgain,
+  };
+}
+
+export async function hasNotificationPermission(): Promise<boolean> {
+  return (await getNotificationPermissionState()).granted;
 }
 
 /**

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Alert, Image, Linking, Modal, Platform, Pressable,
+  Alert, AppState, Image, Linking, Modal, Platform, Pressable,
   ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -27,6 +27,11 @@ import { getSiteVisitsByBuyer, visitStatusColor as siteVisitStatusColor } from '
 import { getAgentVisitsByBuyer, visitStatusColor as agentVisitStatusColor } from '@/lib/agentVisitsStore';
 import { deleteMyAccount } from '@/lib/api';
 import { clearLocalAccountData } from '@/lib/accountCleanup';
+import {
+  getNotificationPermissionState,
+  registerPushTokenForUser,
+  type NotificationPermissionState,
+} from '@/lib/pushNotifications';
 
 // ── Role helpers ───────────────────────────────────────────────────────────────
 
@@ -721,6 +726,88 @@ const rl = StyleSheet.create({
   badgeText: { fontFamily: 'Inter_700Bold', fontSize: 10 },
 });
 
+function NotificationSettingsPanel({
+  colors,
+  permission,
+  busy,
+  message,
+  onAction,
+}: {
+  colors: ReturnType<typeof useColors>;
+  permission: NotificationPermissionState | null;
+  busy: boolean;
+  message: string | null;
+  onAction: () => void;
+}) {
+  const isBlocked = permission?.status === 'denied' && !permission.canAskAgain;
+  const isUnsupported = permission?.status === 'unsupported';
+  const statusLabel = permission === null
+    ? 'Checking permission…'
+    : permission.status === 'granted'
+      ? 'Enabled'
+      : isUnsupported
+        ? 'Unavailable in this build'
+        : isBlocked
+          ? 'Blocked'
+          : 'Not enabled';
+
+  const actionLabel = isBlocked
+    ? Platform.OS === 'android' ? 'Open Android Settings' : 'Open Device Settings'
+    : 'Enable Notifications';
+
+  return (
+    <View style={[notificationPanel.container, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+      <View style={notificationPanel.statusRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={[notificationPanel.title, { color: colors.foreground }]}>Notification access</Text>
+          <Text style={[notificationPanel.description, { color: colors.mutedForeground }]}>
+            Get property approvals and OG Landmark announcements.
+          </Text>
+        </View>
+        <View style={[notificationPanel.statusPill, { backgroundColor: permission?.granted ? colors.action + '18' : colors.muted }]}>
+          <Text style={[notificationPanel.statusText, { color: permission?.granted ? colors.action : colors.mutedForeground }]}>
+            {statusLabel}
+          </Text>
+        </View>
+      </View>
+
+      {message ? (
+        <Text style={[notificationPanel.message, { color: message.startsWith('Notifications enabled') ? colors.action : colors.destructive }]}>
+          {message}
+        </Text>
+      ) : null}
+
+      {!isUnsupported && permission?.status !== 'granted' ? (
+        <Pressable
+          onPress={onAction}
+          disabled={busy}
+          style={({ pressed }) => [
+            notificationPanel.action,
+            { backgroundColor: colors.action, opacity: busy ? 0.55 : pressed ? 0.82 : 1 },
+          ]}
+        >
+          <Feather name={isBlocked ? 'settings' : 'bell'} size={14} color={colors.actionForeground} />
+          <Text style={[notificationPanel.actionText, { color: colors.actionForeground }]}>
+            {busy ? 'Updating…' : actionLabel}
+          </Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+const notificationPanel = StyleSheet.create({
+  container:    { borderRadius: 14, borderWidth: 1, padding: 14, gap: 12, marginTop: -2 },
+  statusRow:    { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  title:        { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  description:  { fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 16, marginTop: 3 },
+  statusPill:   { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 5 },
+  statusText:   { fontFamily: 'Inter_600SemiBold', fontSize: 10 },
+  message:      { fontFamily: 'Inter_500Medium', fontSize: 11, lineHeight: 16 },
+  action:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 10, paddingVertical: 11 },
+  actionText:   { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
+});
+
 // ── Profile Completion Card ────────────────────────────────────────────────────
 
 function ProfileCompletionCard({
@@ -899,9 +986,31 @@ export default function ProfileScreen() {
   const { savedIds } = useSaved();
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [profileContent, setProfileContent] = useState<any>(null);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermissionState | null>(null);
+  const [notificationSettingsOpen, setNotificationSettingsOpen] = useState(false);
+  const [notificationBusy, setNotificationBusy] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState<string | null>(null);
   useEffect(() => {
     getMobileSettings().then((settings) => setProfileContent(settings.content?.screens?.profile)).catch(() => undefined);
   }, []);
+
+  const refreshNotificationPermission = useCallback(async () => {
+    try {
+      setNotificationPermission(await getNotificationPermissionState());
+    } catch {
+      setNotificationPermission(null);
+      setNotificationMessage('Could not check notification access right now.');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    void refreshNotificationPermission();
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') void refreshNotificationPermission();
+    });
+    return () => appStateSubscription.remove();
+  }, [isLoggedIn, refreshNotificationPermission]);
 
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
@@ -934,6 +1043,7 @@ export default function ProfileScreen() {
         return;
       }
 
+      void refreshNotificationPermission();
       void getProfilePhoto()
         .then(setPhotoUri)
         .catch(() => setPhotoUri(null));
@@ -995,7 +1105,7 @@ export default function ProfileScreen() {
           setMyVisits([]);
         }
       }
-    }, [isLoggedIn, role, user?.id]),
+    }, [isLoggedIn, refreshNotificationPermission, role, user?.id]),
   );
 
   // ── Handlers ───────────────────────────────────────────────────────────────
@@ -1058,6 +1168,58 @@ export default function ProfileScreen() {
         },
       ],
     );
+  };
+
+  const notificationSummary = notificationPermission === null
+    ? 'Checking notification access…'
+    : notificationPermission.status === 'granted'
+      ? 'Enabled for approvals and announcements'
+      : notificationPermission.status === 'unsupported'
+        ? 'Unavailable in this build'
+        : notificationPermission.status === 'denied' && !notificationPermission.canAskAgain
+          ? Platform.OS === 'android' ? 'Blocked · Open Android Settings' : 'Blocked · Update device settings'
+          : 'Off · Tap to enable';
+
+  const handleNotificationAction = async () => {
+    if (notificationBusy || !user?.id) return;
+    setNotificationMessage(null);
+
+    if (notificationPermission?.status === 'denied' && !notificationPermission.canAskAgain) {
+      if (Platform.OS === 'web') {
+        setNotificationMessage('Notifications are blocked in this browser. Update your browser settings.');
+        return;
+      }
+      try {
+        await Linking.openSettings();
+      } catch {
+        setNotificationMessage('Could not open device settings. Please enable notifications there.');
+      }
+      return;
+    }
+
+    setNotificationBusy(true);
+    try {
+      const result = await registerPushTokenForUser(String(user.id));
+      if (result.status === 'registered') {
+        setNotificationMessage('Notifications enabled for approvals and announcements.');
+      } else if (result.status === 'denied') {
+        setNotificationMessage(
+          result.canAskAgain
+            ? 'Notifications are still off. Tap Enable Notifications to try again.'
+            : 'Notifications are blocked. Open device settings to enable them.',
+        );
+      } else if (result.status === 'unsupported') {
+        setNotificationMessage('Push notifications are unavailable in this build.');
+      } else {
+        setNotificationMessage('Could not register notifications for this account.');
+      }
+      await refreshNotificationPermission();
+    } catch {
+      setNotificationMessage('Could not enable notifications right now. Please try again.');
+      await refreshNotificationPermission();
+    } finally {
+      setNotificationBusy(false);
+    }
   };
 
   // ── Guest: show dedicated screen with no activity counts ─────────────────
@@ -1292,7 +1454,31 @@ export default function ProfileScreen() {
       <AnimatedReveal delay={260}>
         <SectionHeader title="Settings & Support" colors={colors} />
         <View style={styles.menuGroup}>
-          {commonSettings.map((item) => (
+          {commonSettings.map((item) => item.label === 'Notifications' ? (
+            <React.Fragment key={item.label}>
+              <RowLink
+                icon={item.icon}
+                label={item.label}
+                sublabel={notificationSummary}
+                onPress={() => {
+                  setNotificationSettingsOpen((open) => !open);
+                  setNotificationMessage(null);
+                }}
+                colors={colors}
+                iconColor={colors.action}
+                testID="profile-notifications-setting"
+              />
+              {notificationSettingsOpen ? (
+                <NotificationSettingsPanel
+                  colors={colors}
+                  permission={notificationPermission}
+                  busy={notificationBusy}
+                  message={notificationMessage}
+                  onAction={() => { void handleNotificationAction(); }}
+                />
+              ) : null}
+            </React.Fragment>
+          ) : (
             <RowLink
               key={item.label}
               icon={item.icon}

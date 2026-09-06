@@ -288,8 +288,8 @@ export function PlotMeasurementCalculator({
           <Feather name="info" size={12} color={colors.action} />
           <Text style={[styles.infoText, { color: colors.mutedForeground }]}>
             {mode === 'basic'
-              ? corners === 3 ? 'Triangle area is calculated exactly from the three sides.' : 'Basic mode is for rectangle-like plots. Side-only irregular plots need diagonals.'
-              : corners === 3 ? 'Triangle area is calculated exactly from the three sides.' : `Enter boundary sides plus ${corners - 3} diagonal${corners - 3 > 1 ? 's' : ''} from corner A for accurate triangulation.`}
+              ? corners === 3 ? 'Valid triangle sides are exact; other values receive an approximate estimate.' : 'Basic mode uses all entered sides for an estimate. Accurate irregular plots need diagonals.'
+              : corners === 3 ? 'Valid triangle sides are exact; other values receive an approximate estimate.' : `Enter boundary sides plus ${corners - 3} diagonal${corners - 3 > 1 ? 's' : ''} from corner A for accurate triangulation.`}
           </Text>
         </View>
 

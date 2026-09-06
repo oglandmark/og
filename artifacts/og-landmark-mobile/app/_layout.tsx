@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ActivityIndicator, Alert, AppState, Linking, Platform, View } from 'react-native';
+import { ActivityIndicator, AppState, Platform, View } from 'react-native';
 import { setAudioModeAsync } from 'expo-audio';
 import type { NotificationResponse } from 'expo-notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -39,7 +39,6 @@ function RootLayoutNav({ splashDone }: { splashDone: boolean }) {
   const router = useRouter();
   const [navigationReady, setNavigationReady] = React.useState(false);
   const handledNotificationResponses = React.useRef(new Set<string>());
-  const notificationDenialAlertShown = React.useRef(false);
 
   useEffect(() => {
     void configurePushNotifications().catch((error: unknown) => {
@@ -88,74 +87,27 @@ function RootLayoutNav({ splashDone }: { splashDone: boolean }) {
   useEffect(() => {
     if (!user?.id || Platform.OS === 'web') return;
     let mounted = true;
-    notificationDenialAlertShown.current = false;
 
-    const showRegistrationError = (error: unknown) => {
-      if (!mounted) return;
-      console.warn('[push] Could not register this device for notifications.', error);
-      Alert.alert(
-        'Notifications unavailable',
-        'We could not register this device for notifications. Please check your connection and try again.',
-      );
-    };
-
-    const attemptRegistration = async (showDeniedAlert: boolean) => {
+    const syncPushTokenIfAllowed = async () => {
       try {
+        // Push permission is opt-in. Never interrupt the main app flow with a
+        // permission prompt or an error alert during startup.
+        if (!(await hasNotificationPermission())) return;
         const result = await registerPushTokenForUser(user.id);
         if (!mounted) return;
-        if (result.status === 'registered') {
-          notificationDenialAlertShown.current = false;
-          return;
+        if (result.status !== 'registered' && result.status !== 'unsupported') {
+          console.warn('[push] Push token was not registered.', result.status);
         }
-        if (
-          result.status !== 'denied' ||
-          !showDeniedAlert ||
-          notificationDenialAlertShown.current
-        ) {
-          return;
-        }
-
-        notificationDenialAlertShown.current = true;
-        Alert.alert(
-          'Notifications are off',
-          result.canAskAgain
-            ? 'Allow notifications to receive property approvals and announcements while the app is closed.'
-            : 'Notifications are blocked for OG Landmark. Open your device settings to enable property approvals and announcements.',
-          result.canAskAgain
-            ? [
-                { text: 'Not now', style: 'cancel' },
-                { text: 'Try again', onPress: () => { void attemptRegistration(false); } },
-              ]
-            : [
-                { text: 'Not now', style: 'cancel' },
-                {
-                  text: 'Open Settings',
-                  onPress: () => {
-                    Linking.openSettings().catch((error: unknown) => {
-                      console.warn('[push] Could not open notification settings.', error);
-                    });
-                  },
-                },
-              ],
-        );
       } catch (error: unknown) {
-        showRegistrationError(error);
+        console.warn('[push] Could not sync the existing notification permission.', error);
       }
     };
 
-    void attemptRegistration(true);
+    void syncPushTokenIfAllowed();
 
     const appStateSubscription = AppState.addEventListener('change', (nextState) => {
       if (nextState !== 'active') return;
-      hasNotificationPermission()
-        .then((granted) => {
-          if (granted) {
-            void attemptRegistration(false);
-          }
-        })
-        .catch((error: unknown) => {
-          console.warn('[push] Could not refresh notification permission state.', error);
-        });
+      void syncPushTokenIfAllowed();
     });
 
     return () => {

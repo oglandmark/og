@@ -67,6 +67,21 @@ function triangleArea(a: number, b: number, c: number): number | null {
   return Math.sqrt(squaredArea);
 }
 
+type TriangleCalculation = { area: number; isEstimate: boolean };
+
+function estimateTriangleArea(a: number, b: number, c: number): number {
+  const [base, sideA, sideB] = [a, b, c].sort((left, right) => right - left);
+  // When side lengths cannot form a triangle, use the longest side as the
+  // baseline and the average of the other measurements as an estimated height.
+  return (base * (sideA + sideB)) / 4;
+}
+
+function calculateTriangleArea(a: number, b: number, c: number): TriangleCalculation {
+  const exactArea = triangleArea(a, b, c);
+  if (exactArea !== null) return { area: exactArea, isEstimate: false };
+  return { area: estimateTriangleArea(a, b, c), isEstimate: true };
+}
+
 function makeResult(sqft: number, isEstimate = false, note?: string): CalcResult {
   return {
     sqft,
@@ -114,8 +129,14 @@ export function computePlotArea(
   const value = (key: string) => parseMeasurement(raw, key, unit)!;
 
   if (corners === 3) {
-    const area = triangleArea(value('A'), value('B'), value('C'));
-    return area == null ? 'These measurements cannot form a valid triangle.' : makeResult(area);
+    const calculation = calculateTriangleArea(value('A'), value('B'), value('C'));
+    return makeResult(
+      calculation.area,
+      calculation.isEstimate,
+      calculation.isEstimate
+        ? 'Approximate estimate because the entered side lengths do not form a geometric triangle.'
+        : undefined,
+    );
   }
 
   if (mode === 'basic') {
@@ -124,11 +145,14 @@ export function computePlotArea(
     }
     const [a, b, c, d] = sideKeys.map(value);
     const oppositeMismatch = Math.max(Math.abs(a - c) / Math.max(a, c), Math.abs(b - d) / Math.max(b, d));
-    if (oppositeMismatch > 0.15) {
-      return 'Basic mode needs a rectangle-like plot. For an irregular four-sided plot, switch to Accurate mode and enter diagonal AC.';
-    }
     const area = ((a + c) / 2) * ((b + d) / 2);
-    return makeResult(area, true, 'Basic estimate using the average of opposite sides. Use Accurate mode for an irregular plot.');
+    return makeResult(
+      area,
+      true,
+      oppositeMismatch > 0.15
+        ? 'Approximate estimate using the average of the entered opposite-side measurements.'
+        : 'Basic estimate using the average of opposite sides. Use Accurate mode for an irregular plot.',
+    );
   }
 
   const diagonalKeys = Array.from(
@@ -136,24 +160,36 @@ export function computePlotArea(
     (_, index) => `A${String.fromCharCode(67 + index)}`,
   );
   let sqft = 0;
-  const firstTriangle = triangleArea(value('A'), value('B'), value(diagonalKeys[0]!));
-  if (firstTriangle == null) return 'The entered sides and diagonals cannot form a valid triangle.';
-  sqft += firstTriangle;
+  let isEstimate = false;
+  const firstTriangle = calculateTriangleArea(value('A'), value('B'), value(diagonalKeys[0]!));
+  sqft += firstTriangle.area;
+  isEstimate ||= firstTriangle.isEstimate;
 
   for (let index = 1; index < diagonalKeys.length; index += 1) {
-    const middleTriangle = triangleArea(
+    const middleTriangle = calculateTriangleArea(
       value(diagonalKeys[index - 1]!),
       value(sideKeys[index + 1]!),
       value(diagonalKeys[index]!),
     );
-    if (middleTriangle == null) return 'The entered sides and diagonals cannot form a valid triangle.';
-    sqft += middleTriangle;
+    sqft += middleTriangle.area;
+    isEstimate ||= middleTriangle.isEstimate;
   }
 
   const lastDiagonal = diagonalKeys[diagonalKeys.length - 1]!;
-  const lastTriangle = triangleArea(value(lastDiagonal), value(sideKeys[corners - 2]!), value(sideKeys[corners - 1]!));
-  if (lastTriangle == null) return 'The entered sides and diagonals cannot form a valid triangle.';
-  return makeResult(sqft, false, 'Accurate triangulation from the entered boundary measurements.');
+  const lastTriangle = calculateTriangleArea(
+    value(lastDiagonal),
+    value(sideKeys[corners - 2]!),
+    value(sideKeys[corners - 1]!),
+  );
+  sqft += lastTriangle.area;
+  isEstimate ||= lastTriangle.isEstimate;
+  return makeResult(
+    sqft,
+    isEstimate,
+    isEstimate
+      ? 'Approximate estimate because one or more entered measurements do not form valid triangle geometry.'
+      : 'Accurate triangulation from the entered boundary measurements.',
+  );
 }
 
 function makeCalcFields(corners: CalcCorners): CalcField[] {

@@ -650,10 +650,6 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
 }) {
   const { isSaved } = useSaved();
   const saved        = isSaved(property.id);
-  const scale        = useSharedValue(1);
-  const heartScale   = useSharedValue(1);
-  const scaleStyle   = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  const heartStyle   = useAnimatedStyle(() => ({ transform: [{ scale: heartScale.value }] }));
   const images       = propertyImages(property);
   const [activeImage, setActiveImage] = useState(0);
   const imageSwipeResponder = useMemo(() => PanResponder.create({
@@ -713,24 +709,18 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
   const handleSave = (e: any) => {
     e.stopPropagation(); onSave();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    heartScale.value = withSpring(1.45, { damping: 10, stiffness: 280 }, () => {
-      heartScale.value = withSpring(1, { damping: 14, stiffness: 260 });
-    });
   };
 
   return (
     <>
     <Pressable
       onPress={onPress}
-      onPressIn={() => { scale.value = withSpring(0.975, { damping: 18, stiffness: 260 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 18, stiffness: 260 }); }}
     >
-      <Animated.View style={[fp.card, scaleStyle]} {...imageSwipeResponder.panHandlers}>
+      <View style={fp.card} {...imageSwipeResponder.panHandlers}>
         <ExpoImage
           source={images[activeImage] ?? property.image}
           style={[fp.image, { backgroundColor: '#1a2e42' }]}
           contentFit="cover"
-          transition={300}
           cachePolicy="memory-disk"
         />
         {images.length > 1 && (
@@ -760,9 +750,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
           </View>
           <View style={{ flex: 1 }} />
           <Pressable onPress={handleSave} style={[fp.saveBtn, { backgroundColor: saved ? '#ef444488' : '#ffffff22', borderColor: saved ? '#ef4444aa' : '#ffffff55' }]}>
-            <Animated.View style={heartStyle}>
-              <Feather name="heart" size={14} color={saved ? '#ef4444' : '#ffffff'} />
-            </Animated.View>
+            <Feather name="heart" size={14} color={saved ? '#ef4444' : '#ffffff'} />
           </Pressable>
         </View>
 
@@ -805,13 +793,13 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
             </View>
           </View>
         </View>
-      </Animated.View>
+      </View>
     </Pressable>
 
     {/* ── Fullscreen Video Player Modal ── */}
     <Modal
       visible={videoVisible}
-      animationType="fade"
+      animationType="none"
       statusBarTranslucent
       supportedOrientations={['portrait', 'landscape']}
       onRequestClose={closeVideo}
@@ -1942,7 +1930,7 @@ export default function HomeScreen() {
       </AnimatedReveal>
 
       {/* ─── FEATURED PROPERTIES ────────────────────────────────────────── */}
-      <AnimatedReveal delay={100}>
+      <View>
         <SectionHeader eyebrow={homeSections.featuredEyebrow || 'HANDPICKED FOR YOU'} title={homeSections.featuredTitle || 'Featured properties'} onViewAll={() => router.push({ pathname: '/explore', params: { type: transaction } })} colors={colors} />
         {apiLoading ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.hRow}>
@@ -1963,7 +1951,7 @@ export default function HomeScreen() {
             ))}
           </ScrollView>
         ) : null}
-      </AnimatedReveal>
+      </View>
 
       {/* ─── RECOMMENDED FOR YOU ─────────────────────────────────────────── */}
       {recommendedProps.length > 0 && (

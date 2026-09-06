@@ -12,7 +12,7 @@
       "bundleIdentifier": "com.oglandmark.app"
     },
     "android": {
-      "package": "com.oglandmarknew",
+      "package": "com.oglandmark.app",
       "versionCode": 12,
       "softwareKeyboardLayoutMode": "resize",
       "icon": "./assets/images/app-icon-professional.png",
@@ -79,9 +79,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "7870c45d-d618-4d3e-a411-8043469b72eb"
+        "projectId": "e1d0d001-f2f1-47d6-ac6a-480298d77e2d"
       }
     },
-    "owner": "ogmark26"
+    "owner": "oglandmark26"
   }
 }

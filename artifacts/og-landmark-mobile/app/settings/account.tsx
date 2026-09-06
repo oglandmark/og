@@ -43,10 +43,27 @@ export default function AccountSettingsScreen() {
 
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
-  // Load persisted photo on mount
+  // Profile photos are server-backed and require an authenticated session.
+  // Settings should still render if a guest or expired session reaches this
+  // route, so treat an unavailable photo as an empty avatar instead of an
+  // unhandled promise rejection.
   useEffect(() => {
-    getProfilePhoto().then(setPhotoUri);
-  }, []);
+    let active = true;
+    if (!user?.id) {
+      setPhotoUri(null);
+      return () => { active = false; };
+    }
+
+    void getProfilePhoto()
+      .then((uri) => {
+        if (active) setPhotoUri(uri);
+      })
+      .catch(() => {
+        if (active) setPhotoUri(null);
+      });
+
+    return () => { active = false; };
+  }, [user?.id]);
 
   const initials = form.name
     ? form.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()

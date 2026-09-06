@@ -42,3 +42,17 @@ mtime_ms = 1788618432146
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/193a7bc4-161b-44eb-9dbf-6b7e5498a4cd/6b2a9ec8-6c41-4652-ba43-ebc9bd462cdd"
 storage_version_token = "1788618533448654"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "0J6wnlQmECeexBRNynntW"
+uri = "file://exports/og-landmark-hostinger-updated-2026-09-06.zip"
+type = "unspecified"
+title = "OG Landmark Hostinger Updated Package"
+description = "Latest Hostinger-ready website ZIP with updated server, admin portal, public assets, Neon schema/import script, SMTP guidance, and registry-safe npm configuration. Replit lockfiles, local fallback data, credentials, and internal metadata are excluded."
+logical_id = "5ec31095-e3f6-46fa-9724-e490f87f767f"
+content_hash = "sha256:e2cbcb44bb8ee5b524f1bca8cb5c0d3e7584665a2816326983145d63dc10ca8b"
+size = 10959567
+mtime_ms = 1788686456195
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/5ec31095-e3f6-46fa-9724-e490f87f767f/0427b768-fd0d-4508-bfd7-e434dcbef664"
+storage_version_token = "1788686489505936"
+content_type = "application/octet-stream"

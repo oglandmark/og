@@ -476,16 +476,16 @@ function AgentForm({ colors, topInset, user, router }: any) {
                   borderColor: category === c
                     ? c === 'Agricultural' ? '#1a6b3a'
                     : c === 'Industrial' ? INDUSTRIAL_COLOR
-                    : colors.action
+                     : colors.selectionBorder
                     : colors.border,
                   backgroundColor: category === c
                     ? c === 'Agricultural' ? '#1a6b3a'
                     : c === 'Industrial' ? INDUSTRIAL_COLOR
-                    : colors.action
+                     : colors.selectionBackground
                     : colors.glassCard,
                 }]}
               >
-                <Text style={[styles.pillText, { color: category === c ? '#ffffff' : colors.mutedForeground }]}>{c}</Text>
+                 <Text style={[styles.pillText, { color: category === c ? colors.selectionForeground : colors.mutedForeground, fontWeight: category === c ? '600' : '400' }]}>{c}</Text>
               </Pressable>
             ))}
           </View>
@@ -500,11 +500,11 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 key={t}
                 onPress={() => setPropType(t)}
                 style={[styles.pill, {
-                  borderColor: propType === t ? (isAgri ? '#1a6b3a' : colors.action) : colors.border,
-                  backgroundColor: propType === t ? (isAgri ? '#1a6b3a' : colors.action) : colors.glassCard,
+                   borderColor: propType === t ? colors.selectionBorder : colors.border,
+                   backgroundColor: propType === t ? colors.selectionBackground : colors.glassCard,
                 }]}
               >
-                <Text style={[styles.pillText, { color: propType === t ? '#ffffff' : colors.mutedForeground }]}>{t}</Text>
+                 <Text style={[styles.pillText, { color: propType === t ? colors.selectionForeground : colors.mutedForeground, fontWeight: propType === t ? '600' : '400' }]}>{t}</Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -726,8 +726,8 @@ function AgentForm({ colors, topInset, user, router }: any) {
               <View style={styles.pillRow}>
                 {STATUSES.map((s) => (
                   <Pressable key={s} onPress={() => setStatus(s)}
-                    style={[styles.pill, { borderColor: status === s ? INDUSTRIAL_COLOR : colors.border, backgroundColor: status === s ? INDUSTRIAL_COLOR : colors.glassCard }]}>
-                    <Text style={[styles.pillText, { color: status === s ? '#ffffff' : colors.mutedForeground }]}>{s}</Text>
+                     style={[styles.pill, { borderColor: status === s ? colors.selectionBorder : colors.border, backgroundColor: status === s ? colors.selectionBackground : colors.glassCard }]}>
+                     <Text style={[styles.pillText, { color: status === s ? colors.selectionForeground : colors.mutedForeground, fontWeight: status === s ? '600' : '400' }]}>{s}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -752,8 +752,8 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, alignItems: 'center' }}>
                   {AREA_UNITS.map((u) => (
                     <Pressable key={u} onPress={() => setAreaUnit(u as any)}
-                      style={[styles.pill, { borderColor: areaUnit === u ? INDUSTRIAL_COLOR : colors.border, backgroundColor: areaUnit === u ? INDUSTRIAL_COLOR : colors.glassCard }]}>
-                      <Text style={[styles.pillText, { color: areaUnit === u ? '#ffffff' : colors.mutedForeground }]}>{u}</Text>
+                       style={[styles.pill, { borderColor: areaUnit === u ? colors.selectionBorder : colors.border, backgroundColor: areaUnit === u ? colors.selectionBackground : colors.glassCard }]}>
+                       <Text style={[styles.pillText, { color: areaUnit === u ? colors.selectionForeground : colors.mutedForeground, fontWeight: areaUnit === u ? '600' : '400' }]}>{u}</Text>
                     </Pressable>
                   ))}
                 </ScrollView>
@@ -772,8 +772,8 @@ function AgentForm({ colors, topInset, user, router }: any) {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
                 {CITIES.map((c) => (
                   <Pressable key={c} onPress={() => { setCity(c); setNeighborhood(''); }}
-                    style={[styles.pill, { borderColor: city === c ? INDUSTRIAL_COLOR : colors.border, backgroundColor: city === c ? INDUSTRIAL_COLOR : colors.glassCard }]}>
-                    <Text style={[styles.pillText, { color: city === c ? '#ffffff' : colors.mutedForeground }]}>{c}</Text>
+                     style={[styles.pill, { borderColor: city === c ? colors.selectionBorder : colors.border, backgroundColor: city === c ? colors.selectionBackground : colors.glassCard }]}>
+                     <Text style={[styles.pillText, { color: city === c ? colors.selectionForeground : colors.mutedForeground, fontWeight: city === c ? '600' : '400' }]}>{c}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -855,8 +855,8 @@ function AgentForm({ colors, topInset, user, router }: any) {
               <View style={styles.pillRow}>
                 {STATUSES.map((s) => (
                   <Pressable key={s} onPress={() => setStatus(s)}
-                    style={[styles.pill, { borderColor: status === s ? colors.action : colors.border, backgroundColor: status === s ? colors.action : colors.glassCard }]}>
-                    <Text style={[styles.pillText, { color: status === s ? colors.actionForeground : colors.mutedForeground }]}>{s}</Text>
+                     style={[styles.pill, { borderColor: status === s ? colors.selectionBorder : colors.border, backgroundColor: status === s ? colors.selectionBackground : colors.glassCard }]}>
+                     <Text style={[styles.pillText, { color: status === s ? colors.selectionForeground : colors.mutedForeground, fontWeight: status === s ? '600' : '400' }]}>{s}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -890,8 +890,8 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, alignItems: 'center' }}>
                   {AREA_UNITS.map((u) => (
                     <Pressable key={u} onPress={() => setAreaUnit(u as any)}
-                      style={[styles.pill, { borderColor: areaUnit === u ? colors.action : colors.border, backgroundColor: areaUnit === u ? colors.action : colors.glassCard }]}>
-                      <Text style={[styles.pillText, { color: areaUnit === u ? colors.actionForeground : colors.mutedForeground }]}>{u}</Text>
+                       style={[styles.pill, { borderColor: areaUnit === u ? colors.selectionBorder : colors.border, backgroundColor: areaUnit === u ? colors.selectionBackground : colors.glassCard }]}>
+                       <Text style={[styles.pillText, { color: areaUnit === u ? colors.selectionForeground : colors.mutedForeground, fontWeight: areaUnit === u ? '600' : '400' }]}>{u}</Text>
                     </Pressable>
                   ))}
                 </ScrollView>
@@ -905,8 +905,8 @@ function AgentForm({ colors, topInset, user, router }: any) {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
                 {CITIES.map((c) => (
                   <Pressable key={c} onPress={() => { setCity(c); setNeighborhood(''); }}
-                    style={[styles.pill, { borderColor: city === c ? colors.action : colors.border, backgroundColor: city === c ? colors.action : colors.glassCard }]}>
-                    <Text style={[styles.pillText, { color: city === c ? colors.actionForeground : colors.mutedForeground }]}>{c}</Text>
+                     style={[styles.pill, { borderColor: city === c ? colors.selectionBorder : colors.border, backgroundColor: city === c ? colors.selectionBackground : colors.glassCard }]}>
+                     <Text style={[styles.pillText, { color: city === c ? colors.selectionForeground : colors.mutedForeground, fontWeight: city === c ? '600' : '400' }]}>{c}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -919,8 +919,8 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
                   {neighborhoods.map((a) => (
                     <Pressable key={a} onPress={() => setNeighborhood(a)}
-                      style={[styles.pill, { borderColor: neighborhood === a ? colors.action : colors.border, backgroundColor: neighborhood === a ? colors.action : colors.glassCard }]}>
-                      <Text style={[styles.pillText, { color: neighborhood === a ? colors.actionForeground : colors.mutedForeground }]}>{a}</Text>
+                       style={[styles.pill, { borderColor: neighborhood === a ? colors.selectionBorder : colors.border, backgroundColor: neighborhood === a ? colors.selectionBackground : colors.glassCard }]}>
+                       <Text style={[styles.pillText, { color: neighborhood === a ? colors.selectionForeground : colors.mutedForeground, fontWeight: neighborhood === a ? '600' : '400' }]}>{a}</Text>
                     </Pressable>
                   ))}
                 </ScrollView>
@@ -1233,8 +1233,8 @@ function BuyerForm({ colors, topInset, user, router }: any) {
       <View style={styles.pillRow}>
         {BUYER_TYPES.map((t) => (
           <Pressable key={t} onPress={() => setBuyerType(t)}
-            style={[styles.pill, { borderColor: buyerType === t ? colors.action : colors.border, backgroundColor: buyerType === t ? colors.action : colors.glassCard }]}>
-            <Text style={[styles.pillText, { color: buyerType === t ? colors.actionForeground : colors.mutedForeground }]}>{t}</Text>
+            style={[styles.pill, { borderColor: buyerType === t ? colors.selectionBorder : colors.border, backgroundColor: buyerType === t ? colors.selectionBackground : colors.glassCard }]}>
+            <Text style={[styles.pillText, { color: buyerType === t ? colors.selectionForeground : colors.mutedForeground, fontWeight: buyerType === t ? '600' : '400' }]}>{t}</Text>
           </Pressable>
         ))}
       </View>
@@ -1246,8 +1246,8 @@ function BuyerForm({ colors, topInset, user, router }: any) {
       <View style={styles.pillRow}>
         {CITIES.map((c) => (
           <Pressable key={c} onPress={() => { setCity(c); setNeighborhood(''); }}
-            style={[styles.pill, { borderColor: city === c ? colors.action : colors.border, backgroundColor: city === c ? colors.action : colors.glassCard }]}>
-            <Text style={[styles.pillText, { color: city === c ? colors.actionForeground : colors.mutedForeground }]}>{c}</Text>
+            style={[styles.pill, { borderColor: city === c ? colors.selectionBorder : colors.border, backgroundColor: city === c ? colors.selectionBackground : colors.glassCard }]}>
+            <Text style={[styles.pillText, { color: city === c ? colors.selectionForeground : colors.mutedForeground, fontWeight: city === c ? '600' : '400' }]}>{c}</Text>
           </Pressable>
         ))}
       </View>
@@ -1259,8 +1259,8 @@ function BuyerForm({ colors, topInset, user, router }: any) {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
             {areas.map((a) => (
               <Pressable key={a} onPress={() => setNeighborhood(a)}
-                style={[styles.pill, { borderColor: neighborhood === a ? colors.action : colors.border, backgroundColor: neighborhood === a ? colors.action : colors.glassCard }]}>
-                <Text style={[styles.pillText, { color: neighborhood === a ? colors.actionForeground : colors.mutedForeground }]}>{a}</Text>
+                style={[styles.pill, { borderColor: neighborhood === a ? colors.selectionBorder : colors.border, backgroundColor: neighborhood === a ? colors.selectionBackground : colors.glassCard }]}>
+                <Text style={[styles.pillText, { color: neighborhood === a ? colors.selectionForeground : colors.mutedForeground, fontWeight: neighborhood === a ? '600' : '400' }]}>{a}</Text>
               </Pressable>
             ))}
           </ScrollView>

@@ -293,17 +293,18 @@ function Step3({
               key={area.key}
               onPress={() => toggleArea(area.key)}
               style={[s.areaCard, {
-                borderColor:     selected ? colors.action  : colors.border,
-                backgroundColor: selected ? colors.action  : colors.card,
+                borderColor:     selected ? colors.selectionBorder  : colors.border,
+                backgroundColor: selected ? colors.selectionBackground  : colors.card,
+                borderWidth:     selected ? 2 : 1,
               }]}
             >
-              <View style={[s.areaIconWrap, { backgroundColor: selected ? '#ffffff22' : colors.action + '15' }]}>
-                <Feather name={area.icon} size={20} color={selected ? '#fff' : colors.action} />
+              <View style={[s.areaIconWrap, { backgroundColor: selected ? colors.selectionTint : colors.action + '15' }]}>
+                <Feather name={area.icon} size={20} color={selected ? colors.selectionForeground : colors.action} />
               </View>
-              <Text style={[s.areaLabel, { color: selected ? '#fff' : colors.foreground }]}>{area.label}</Text>
+              <Text style={[s.areaLabel, { color: selected ? colors.selectionForeground : colors.foreground, fontWeight: selected ? '600' : '400' }]}>{area.label}</Text>
               {selected && (
                 <View style={s.areaCheck}>
-                  <Feather name="check-circle" size={16} color="#fff" />
+                  <Feather name="check-circle" size={16} color={colors.selectionForeground} />
                 </View>
               )}
             </Pressable>

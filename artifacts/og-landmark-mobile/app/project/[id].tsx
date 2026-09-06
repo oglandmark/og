@@ -483,8 +483,8 @@ export default function ProjectDetailScreen() {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
                 {unitTypes.map((t) => (
                   <Pressable key={t} onPress={() => setUnitFilter(t)}
-                    style={[styles.filterTab, unitFilter === t ? { backgroundColor: colors.action } : { backgroundColor: colors.secondary, borderColor: colors.border, borderWidth: 1 }]}>
-                    <Text style={[styles.filterTabText, { color: unitFilter === t ? colors.actionForeground : colors.mutedForeground }]}>{t}</Text>
+                    style={[styles.filterTab, unitFilter === t ? { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 } : { backgroundColor: colors.secondary, borderColor: colors.border, borderWidth: 1 }]}>
+                    <Text style={[styles.filterTabText, { color: unitFilter === t ? colors.selectionForeground : colors.mutedForeground, fontWeight: unitFilter === t ? '600' : '400' }]}>{t}</Text>
                   </Pressable>
                 ))}
               </ScrollView>

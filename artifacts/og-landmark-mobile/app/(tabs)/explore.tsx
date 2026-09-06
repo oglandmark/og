@@ -780,9 +780,9 @@ export default function ExploreScreen() {
             <Pressable
               key={p}
               onPress={() => setFilters((prev) => ({ ...prev, purpose: p }))}
-              style={[ex.purposeTab, filters.purpose === p && { backgroundColor: colors.action }]}
+               style={[ex.purposeTab, filters.purpose === p && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }]}
             >
-              <Text style={[ex.purposeTabText, { color: filters.purpose === p ? colors.actionForeground : colors.mutedForeground }]}>{p}</Text>
+               <Text style={[ex.purposeTabText, { color: filters.purpose === p ? colors.selectionForeground : colors.mutedForeground, fontWeight: filters.purpose === p ? '600' : '400' }]}>{p}</Text>
             </Pressable>
           ))}
         </View>
@@ -812,9 +812,9 @@ export default function ExploreScreen() {
           </View>
 
           {/* Filter button */}
-          <Pressable onPress={() => openFilterSheet()} style={[ex.filterBtn, { backgroundColor: hasActiveFilters ? colors.action : colors.glassCard, borderColor: hasActiveFilters ? colors.action : colors.glassBorder }]}>
+           <Pressable onPress={() => openFilterSheet()} style={[ex.filterBtn, { backgroundColor: hasActiveFilters ? colors.selectionBackground : colors.glassCard, borderColor: hasActiveFilters ? colors.selectionBorder : colors.glassBorder, borderWidth: hasActiveFilters ? 1.5 : 1 }]}>
             <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
-            <Feather name="sliders" size={17} color={hasActiveFilters ? colors.actionForeground : colors.foreground} />
+             <Feather name="sliders" size={17} color={hasActiveFilters ? colors.selectionForeground : colors.foreground} />
             {hasActiveFilters && <View style={[ex.filterDot, { backgroundColor: colors.gold }]}><Text style={[ex.filterDotText, { color: '#1c2024' }]}>{activeChips.length}</Text></View>}
           </Pressable>
 
@@ -822,8 +822,8 @@ export default function ExploreScreen() {
           <View style={[ex.viewToggle, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
             <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
             {(['list', 'map'] as const).map((m) => (
-              <Pressable key={m} onPress={() => setViewMode(m)} style={[ex.viewToggleBtn, viewMode === m && { backgroundColor: colors.action }]}>
-                <Feather name={m === 'list' ? 'list' : 'map'} size={15} color={viewMode === m ? colors.actionForeground : colors.mutedForeground} />
+               <Pressable key={m} onPress={() => setViewMode(m)} style={[ex.viewToggleBtn, viewMode === m && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }]}>
+                 <Feather name={m === 'list' ? 'list' : 'map'} size={15} color={viewMode === m ? colors.selectionForeground : colors.mutedForeground} />
               </Pressable>
             ))}
           </View>
@@ -906,10 +906,10 @@ export default function ExploreScreen() {
           <Pressable
             onPress={handleNearMe}
             disabled={nearMeLoading}
-            style={[ex.quickChip, { backgroundColor: nearMe ? colors.action : colors.glassCard, borderColor: nearMe ? colors.action : colors.glassBorder, opacity: nearMeLoading ? 0.65 : 1 }]}
+             style={[ex.quickChip, { backgroundColor: nearMe ? colors.selectionBackground : colors.glassCard, borderColor: nearMe ? colors.selectionBorder : colors.glassBorder, borderWidth: nearMe ? 1.5 : 1, opacity: nearMeLoading ? 0.65 : 1 }]}
           >
-            <Feather name="crosshair" size={12} color={nearMe ? colors.actionForeground : colors.mutedForeground} />
-            <Text style={[ex.quickChipText, { color: nearMe ? colors.actionForeground : colors.foreground }]}>
+             <Feather name="crosshair" size={12} color={nearMe ? colors.selectionForeground : colors.mutedForeground} />
+             <Text style={[ex.quickChipText, { color: nearMe ? colors.selectionForeground : colors.foreground, fontWeight: nearMe ? '600' : '400' }]}>
               {nearMeLoading ? 'Locating…' : nearMe ? 'Near Me ✓' : 'Near Me'}
             </Text>
           </Pressable>
@@ -922,11 +922,12 @@ export default function ExploreScreen() {
                   key={km}
                   onPress={() => setNearMe((prev) => prev ? { ...prev, radiusKm: km } : null)}
                   style={[ex.quickChip, {
-                    backgroundColor: nearMe.radiusKm === km ? colors.action + 'dd' : colors.glassCard,
-                    borderColor: nearMe.radiusKm === km ? colors.action : colors.glassBorder,
+                     backgroundColor: nearMe.radiusKm === km ? colors.selectionBackground : colors.glassCard,
+                     borderColor: nearMe.radiusKm === km ? colors.selectionBorder : colors.glassBorder,
+                     borderWidth: nearMe.radiusKm === km ? 1.5 : 1,
                   }]}
                 >
-                  <Text style={[ex.quickChipText, { color: nearMe.radiusKm === km ? colors.actionForeground : colors.foreground }]}>{km} km</Text>
+                   <Text style={[ex.quickChipText, { color: nearMe.radiusKm === km ? colors.selectionForeground : colors.foreground, fontWeight: nearMe.radiusKm === km ? '600' : '400' }]}>{km} km</Text>
                 </Pressable>
               ))}
             </>
@@ -935,22 +936,22 @@ export default function ExploreScreen() {
           {searchedPlace && (
             <Pressable
               onPress={() => { setSearchedPlace(null); setQuery(''); }}
-              style={[ex.quickChip, { backgroundColor: colors.action, borderColor: colors.action }]}
+               style={[ex.quickChip, { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }]}
             >
-              <Feather name="map-pin" size={12} color={colors.actionForeground} />
-              <Text style={[ex.quickChipText, { color: colors.actionForeground }]} numberOfLines={1}>
+               <Feather name="map-pin" size={12} color={colors.selectionForeground} />
+               <Text style={[ex.quickChipText, { color: colors.selectionForeground, fontWeight: '600' }]} numberOfLines={1}>
                 {searchedPlace.label} · 25 km
               </Text>
-              <Feather name="x" size={11} color={colors.actionForeground} />
+               <Feather name="x" size={11} color={colors.selectionForeground} />
             </Pressable>
           )}
 
           {/* Projects pill */}
           <Pressable
             onPress={() => { setIsProjectsMode((v) => !v); }}
-            style={[ex.quickChip, { backgroundColor: isProjectsMode ? colors.action : colors.glassCard, borderColor: isProjectsMode ? colors.action : colors.glassBorder }]}
+             style={[ex.quickChip, { backgroundColor: isProjectsMode ? colors.selectionBackground : colors.glassCard, borderColor: isProjectsMode ? colors.selectionBorder : colors.glassBorder, borderWidth: isProjectsMode ? 1.5 : 1 }]}
           >
-            <Text style={[ex.quickChipText, { color: isProjectsMode ? colors.actionForeground : colors.foreground }]}>Projects</Text>
+             <Text style={[ex.quickChipText, { color: isProjectsMode ? colors.selectionForeground : colors.foreground, fontWeight: isProjectsMode ? '600' : '400' }]}>Projects</Text>
           </Pressable>
           {QUICK_FILTERS.map((qf) => {
             const isActive = activeFilterSections.has(qf.section);
@@ -959,13 +960,14 @@ export default function ExploreScreen() {
                 key={qf.label}
                 onPress={() => openFilterSheet(qf.section)}
                 style={[ex.quickChip, {
-                  backgroundColor: isActive ? colors.action + '1a' : colors.glassCard,
-                  borderColor: isActive ? colors.action : colors.glassBorder,
+                  backgroundColor: isActive ? colors.selectionBackground : colors.glassCard,
+                  borderColor: isActive ? colors.selectionBorder : colors.glassBorder,
+                  borderWidth: isActive ? 1.5 : 1,
                 }]}
               >
-                <Feather name={qf.icon as any} size={12} color={isActive ? colors.action : colors.mutedForeground} />
-                <Text style={[ex.quickChipText, { color: isActive ? colors.action : colors.foreground, fontFamily: isActive ? 'Inter_600SemiBold' : 'Inter_400Regular' }]}>{qf.label}</Text>
-                {isActive && <View style={[ex.quickChipDot, { backgroundColor: colors.action }]} />}
+                <Feather name={qf.icon as any} size={12} color={isActive ? colors.selectionForeground : colors.mutedForeground} />
+                <Text style={[ex.quickChipText, { color: isActive ? colors.selectionForeground : colors.foreground, fontFamily: isActive ? 'Inter_600SemiBold' : 'Inter_400Regular' }]}>{qf.label}</Text>
+                {isActive && <View style={[ex.quickChipDot, { backgroundColor: colors.selectionForeground }]} />}
               </Pressable>
             );
           })}
@@ -1178,8 +1180,8 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
                     <Pressable key={t} onPress={() => {
                       const next = sel ? draft.propertyTypes.filter((x) => x !== t) : [...draft.propertyTypes, t];
                       set({ propertyTypes: next });
-                    }} style={[fs.typeChip, { backgroundColor: sel ? colors.action : colors.glassCard, borderColor: sel ? colors.action : colors.glassBorder }]}>
-                      <Text style={[fs.typeChipText, { color: sel ? colors.actionForeground : colors.foreground }]}>{t}</Text>
+                    }} style={[fs.typeChip, { backgroundColor: sel ? colors.selectionBackground : colors.glassCard, borderColor: sel ? colors.selectionBorder : colors.glassBorder, borderWidth: sel ? 1.5 : 1 }]}>
+                      <Text style={[fs.typeChipText, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{t}</Text>
                       {sel && <Feather name="check" size={11} color={colors.actionForeground} />}
                     </Pressable>
                   );
@@ -1197,9 +1199,9 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
                     <Pressable key={c} onPress={() => {
                       const next = sel ? draft.cities.filter((x) => x !== c) : [...draft.cities, c];
                       set({ cities: next });
-                    }} style={[fs.cityChip, { backgroundColor: sel ? colors.action : colors.glassCard, borderColor: sel ? colors.action : colors.glassBorder }]}>
-                      <Feather name="map-pin" size={11} color={sel ? colors.actionForeground : colors.mutedForeground} />
-                      <Text style={[fs.cityChipText, { color: sel ? colors.actionForeground : colors.foreground }]}>{c}</Text>
+                     }} style={[fs.cityChip, { backgroundColor: sel ? colors.selectionBackground : colors.glassCard, borderColor: sel ? colors.selectionBorder : colors.glassBorder, borderWidth: sel ? 1.5 : 1 }]}>
+                       <Feather name="map-pin" size={11} color={sel ? colors.selectionForeground : colors.mutedForeground} />
+                       <Text style={[fs.cityChipText, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{c}</Text>
                     </Pressable>
                   );
                 })}
@@ -1213,8 +1215,8 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
                   const active = Number(draft.minPrice) === p.min && Number(draft.maxPrice) === p.max;
                   return (
                     <Pressable key={p.label} onPress={() => set({ minPrice: p.min ? String(p.min) : '', maxPrice: p.max ? String(p.max) : '' })}
-                      style={[fs.presetChip, { backgroundColor: active ? colors.action : colors.glassCard, borderColor: active ? colors.action : colors.glassBorder }]}>
-                      <Text style={[fs.presetChipText, { color: active ? colors.actionForeground : colors.foreground }]}>{p.label}</Text>
+                       style={[fs.presetChip, { backgroundColor: active ? colors.selectionBackground : colors.glassCard, borderColor: active ? colors.selectionBorder : colors.glassBorder, borderWidth: active ? 1.5 : 1 }]}>
+                       <Text style={[fs.presetChipText, { color: active ? colors.selectionForeground : colors.foreground, fontWeight: active ? '600' : '400' }]}>{p.label}</Text>
                     </Pressable>
                   );
                 })}
@@ -1387,9 +1389,9 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
               <View style={fs.sortGrid}>
                 {SORT_OPTIONS.map((s) => (
                   <Pressable key={s.value} onPress={() => set({ sortBy: s.value })}
-                    style={[fs.sortChip, { backgroundColor: draft.sortBy === s.value ? colors.action : colors.glassCard, borderColor: draft.sortBy === s.value ? colors.action : colors.glassBorder }]}>
-                    <Feather name={s.icon as any} size={13} color={draft.sortBy === s.value ? colors.actionForeground : colors.mutedForeground} />
-                    <Text style={[fs.sortChipText, { color: draft.sortBy === s.value ? colors.actionForeground : colors.foreground }]}>{s.label}</Text>
+                     style={[fs.sortChip, { backgroundColor: draft.sortBy === s.value ? colors.selectionBackground : colors.glassCard, borderColor: draft.sortBy === s.value ? colors.selectionBorder : colors.glassBorder, borderWidth: draft.sortBy === s.value ? 1.5 : 1 }]}>
+                     <Feather name={s.icon as any} size={13} color={draft.sortBy === s.value ? colors.selectionForeground : colors.mutedForeground} />
+                     <Text style={[fs.sortChipText, { color: draft.sortBy === s.value ? colors.selectionForeground : colors.foreground, fontWeight: draft.sortBy === s.value ? '600' : '400' }]}>{s.label}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -1438,8 +1440,8 @@ function PillRow({ options, selected, onSelect, colors }: { options: string[]; s
     <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
       {options.map((o) => (
         <Pressable key={o} onPress={() => onSelect(o)}
-          style={[fs.pill, { backgroundColor: selected === o ? colors.action : colors.glassCard, borderColor: selected === o ? colors.action : colors.glassBorder }]}>
-          <Text style={[fs.pillText, { color: selected === o ? colors.actionForeground : colors.foreground }]}>{o}</Text>
+           style={[fs.pill, { backgroundColor: selected === o ? colors.selectionBackground : colors.glassCard, borderColor: selected === o ? colors.selectionBorder : colors.glassBorder, borderWidth: selected === o ? 1.5 : 1 }]}>
+           <Text style={[fs.pillText, { color: selected === o ? colors.selectionForeground : colors.foreground, fontWeight: selected === o ? '600' : '400' }]}>{o}</Text>
         </Pressable>
       ))}
     </ScrollView>

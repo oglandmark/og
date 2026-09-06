@@ -71,37 +71,38 @@ export default function SelectRoleScreen() {
                 <Pressable
                   onPress={() => setSelected(item.role)}
                   style={[styles.card, {
-                    backgroundColor: isSelected ? colors.action : colors.card,
-                    borderColor: isSelected ? colors.action : colors.border,
+                     backgroundColor: isSelected ? colors.selectionBackground : colors.card,
+                     borderColor: isSelected ? colors.selectionBorder : colors.border,
+                     borderWidth: isSelected ? 2 : 1,
                   }]}
                 >
                   <View style={styles.cardTop}>
-                    <View style={[styles.iconWrap, { backgroundColor: isSelected ? '#ffffff22' : colors.secondary }]}>
-                      <Feather name={item.icon} size={22} color={isSelected ? '#ffffff' : colors.action} />
+                     <View style={[styles.iconWrap, { backgroundColor: isSelected ? colors.selectionTint : colors.secondary }]}>
+                       <Feather name={item.icon} size={22} color={isSelected ? colors.selectionForeground : colors.action} />
                     </View>
                     <View style={styles.cardTitles}>
-                      <Text style={[styles.cardTitle, { color: isSelected ? '#ffffff' : colors.foreground }]}>
+                       <Text style={[styles.cardTitle, { color: isSelected ? colors.selectionForeground : colors.foreground, fontWeight: isSelected ? '600' : '500' }]}>
                         {tr(item.titleKey)}
                       </Text>
-                      <Text style={[styles.cardUrdu, { color: isSelected ? '#ffffffbb' : colors.mutedForeground }]}>
+                       <Text style={[styles.cardUrdu, { color: isSelected ? colors.selectionForeground : colors.mutedForeground }]}>
                         {tr(item.subtitleKey)}
                       </Text>
                     </View>
                     <View style={[styles.radio, {
-                      borderColor: isSelected ? '#ffffff' : colors.border,
-                      backgroundColor: isSelected ? '#ffffff' : 'transparent',
+                       borderColor: isSelected ? colors.selectionBorder : colors.border,
+                       backgroundColor: isSelected ? colors.selectionTint : 'transparent',
                     }]}>
-                      {isSelected && <View style={[styles.radioDot, { backgroundColor: colors.action }]} />}
+                       {isSelected && <View style={[styles.radioDot, { backgroundColor: colors.selectionForeground }]} />}
                     </View>
                   </View>
-                  <Text style={[styles.cardDesc, { color: isSelected ? '#ffffffcc' : colors.mutedForeground, textAlign: isRTL ? 'right' : 'left' }]}>
+                   <Text style={[styles.cardDesc, { color: isSelected ? colors.selectionForeground : colors.mutedForeground, textAlign: isRTL ? 'right' : 'left' }]}>
                     {tr(item.descKey)}
                   </Text>
                   <View style={styles.points}>
                     {item.points.map((pk) => (
                       <View key={pk} style={[styles.pointRow, isRTL && { flexDirection: 'row-reverse' }]}>
-                        <Feather name="check" size={12} color={isSelected ? colors.primary : colors.action} />
-                        <Text style={[styles.pointText, { color: isSelected ? '#ffffffcc' : colors.mutedForeground }]}>
+                         <Feather name="check" size={12} color={isSelected ? colors.selectionForeground : colors.action} />
+                         <Text style={[styles.pointText, { color: isSelected ? colors.selectionForeground : colors.mutedForeground }]}>
                           {tr(pk as Parameters<typeof tr>[0])}
                         </Text>
                       </View>

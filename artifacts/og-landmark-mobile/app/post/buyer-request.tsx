@@ -147,8 +147,8 @@ export default function BuyerRequestScreen() {
           <View style={st.pillWrap}>
             {PROPERTY_TYPES.map((t) => (
               <Pressable key={t} onPress={() => setPropertyType(t)}
-                style={[st.pill, { backgroundColor: propertyType === t ? colors.action : colors.glassCard, borderColor: propertyType === t ? colors.action : colors.glassBorder }]}>
-                <Text style={[st.pillText, { color: propertyType === t ? colors.actionForeground : colors.foreground }]}>{t}</Text>
+                style={[st.pill, { backgroundColor: propertyType === t ? colors.selectionBackground : colors.glassCard, borderColor: propertyType === t ? colors.selectionBorder : colors.glassBorder, borderWidth: propertyType === t ? 1.5 : 1 }]}>
+                <Text style={[st.pillText, { color: propertyType === t ? colors.selectionForeground : colors.foreground, fontWeight: propertyType === t ? '600' : '400' }]}>{t}</Text>
               </Pressable>
             ))}
           </View>
@@ -160,8 +160,8 @@ export default function BuyerRequestScreen() {
           <View style={st.pillWrap}>
             {PURPOSE_OPTIONS.map((p) => (
               <Pressable key={p} onPress={() => setPurpose(p)}
-                style={[st.pill, { backgroundColor: purpose === p ? colors.primary : colors.glassCard, borderColor: purpose === p ? colors.primary : colors.glassBorder }]}>
-                <Text style={[st.pillText, { color: purpose === p ? '#ffffff' : colors.foreground }]}>{p}</Text>
+                style={[st.pill, { backgroundColor: purpose === p ? colors.selectionBackground : colors.glassCard, borderColor: purpose === p ? colors.selectionBorder : colors.glassBorder, borderWidth: purpose === p ? 1.5 : 1 }]}>
+                <Text style={[st.pillText, { color: purpose === p ? colors.selectionForeground : colors.foreground, fontWeight: purpose === p ? '600' : '400' }]}>{p}</Text>
               </Pressable>
             ))}
           </View>
@@ -179,8 +179,8 @@ export default function BuyerRequestScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
             {CITIES.map((c) => (
               <Pressable key={c} onPress={() => { setCity(c); setLocality(''); }}
-                style={[st.pill, { backgroundColor: city === c ? colors.action : colors.glassCard, borderColor: city === c ? colors.action : colors.glassBorder }]}>
-                <Text style={[st.pillText, { color: city === c ? colors.actionForeground : colors.foreground }]}>{c}</Text>
+                style={[st.pill, { backgroundColor: city === c ? colors.selectionBackground : colors.glassCard, borderColor: city === c ? colors.selectionBorder : colors.glassBorder, borderWidth: city === c ? 1.5 : 1 }]}>
+                <Text style={[st.pillText, { color: city === c ? colors.selectionForeground : colors.foreground, fontWeight: city === c ? '600' : '400' }]}>{c}</Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -194,8 +194,8 @@ export default function BuyerRequestScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
               {areas.map((a) => (
                 <Pressable key={a} onPress={() => setLocality(locality === a ? '' : a)}
-                  style={[st.pill, { backgroundColor: locality === a ? colors.action : colors.glassCard, borderColor: locality === a ? colors.action : colors.glassBorder }]}>
-                  <Text style={[st.pillText, { color: locality === a ? colors.actionForeground : colors.foreground }]}>{a}</Text>
+                  style={[st.pill, { backgroundColor: locality === a ? colors.selectionBackground : colors.glassCard, borderColor: locality === a ? colors.selectionBorder : colors.glassBorder, borderWidth: locality === a ? 1.5 : 1 }]}>
+                  <Text style={[st.pillText, { color: locality === a ? colors.selectionForeground : colors.foreground, fontWeight: locality === a ? '600' : '400' }]}>{a}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -222,8 +222,8 @@ export default function BuyerRequestScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center' }}>
               {AREA_UNITS.map((u) => (
                 <Pressable key={u} onPress={() => setSizeUnit(u)}
-                  style={[st.unitChip, { backgroundColor: sizeUnit === u ? colors.action : colors.glassCard, borderColor: sizeUnit === u ? colors.action : colors.glassBorder }]}>
-                  <Text style={[st.unitText, { color: sizeUnit === u ? colors.actionForeground : colors.foreground }]}>{u}</Text>
+                  style={[st.unitChip, { backgroundColor: sizeUnit === u ? colors.selectionBackground : colors.glassCard, borderColor: sizeUnit === u ? colors.selectionBorder : colors.glassBorder, borderWidth: sizeUnit === u ? 1.5 : 1 }]}>
+                  <Text style={[st.unitText, { color: sizeUnit === u ? colors.selectionForeground : colors.foreground, fontWeight: sizeUnit === u ? '600' : '400' }]}>{u}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -238,8 +238,8 @@ export default function BuyerRequestScreen() {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 4 }}>
                 {BED_OPTIONS.map((b) => (
                   <Pressable key={b} onPress={() => setBedrooms(b)}
-                    style={[st.unitChip, { backgroundColor: bedrooms === b ? colors.action : colors.glassCard, borderColor: bedrooms === b ? colors.action : colors.glassBorder }]}>
-                    <Text style={[st.unitText, { color: bedrooms === b ? colors.actionForeground : colors.foreground }]}>{b}</Text>
+                    style={[st.unitChip, { backgroundColor: bedrooms === b ? colors.selectionBackground : colors.glassCard, borderColor: bedrooms === b ? colors.selectionBorder : colors.glassBorder, borderWidth: bedrooms === b ? 1.5 : 1 }]}>
+                    <Text style={[st.unitText, { color: bedrooms === b ? colors.selectionForeground : colors.foreground, fontWeight: bedrooms === b ? '600' : '400' }]}>{b}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -250,8 +250,8 @@ export default function BuyerRequestScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 4 }}>
               {BATH_OPTIONS.map((b) => (
                 <Pressable key={b} onPress={() => setBathrooms(b)}
-                  style={[st.unitChip, { backgroundColor: bathrooms === b ? colors.action : colors.glassCard, borderColor: bathrooms === b ? colors.action : colors.glassBorder }]}>
-                  <Text style={[st.unitText, { color: bathrooms === b ? colors.actionForeground : colors.foreground }]}>{b}</Text>
+                  style={[st.unitChip, { backgroundColor: bathrooms === b ? colors.selectionBackground : colors.glassCard, borderColor: bathrooms === b ? colors.selectionBorder : colors.glassBorder, borderWidth: bathrooms === b ? 1.5 : 1 }]}>
+                  <Text style={[st.unitText, { color: bathrooms === b ? colors.selectionForeground : colors.foreground, fontWeight: bathrooms === b ? '600' : '400' }]}>{b}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -280,9 +280,9 @@ export default function BuyerRequestScreen() {
               const sel = contactPref === c;
               return (
                 <Pressable key={c} onPress={() => setContactPref(c)}
-                  style={[st.contactChip, { backgroundColor: sel ? colors.action : colors.glassCard, borderColor: sel ? colors.action : colors.glassBorder }]}>
+                  style={[st.contactChip, { backgroundColor: sel ? colors.selectionBackground : colors.glassCard, borderColor: sel ? colors.selectionBorder : colors.glassBorder, borderWidth: sel ? 1.5 : 1 }]}>
                   <Feather name={icons[c] ?? 'message-square'} size={13} color={sel ? colors.actionForeground : colors.mutedForeground} />
-                  <Text style={[st.pillText, { color: sel ? colors.actionForeground : colors.foreground }]}>{c}</Text>
+                  <Text style={[st.pillText, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{c}</Text>
                 </Pressable>
               );
             })}

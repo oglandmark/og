@@ -608,9 +608,9 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
           const active = g.category === activeGroup;
           return (
             <Pressable key={g.category} onPress={() => setActiveGroup(g.category)}
-              style={[s.groupTab, { backgroundColor: active ? colors.action : colors.secondary, borderColor: active ? colors.action : colors.border }]}>
+               style={[s.groupTab, { backgroundColor: active ? colors.selectionBackground : colors.secondary, borderColor: active ? colors.selectionBorder : colors.border, borderWidth: active ? 1.5 : 1 }]}>
               <Text style={{ fontSize: 12 }}>{g.emoji}</Text>
-              <Text style={[s.groupTabText, { color: active ? '#ffffff' : colors.foreground }]}>{g.label}</Text>
+               <Text style={[s.groupTabText, { color: active ? colors.selectionForeground : colors.foreground, fontWeight: active ? '600' : '400' }]}>{g.label}</Text>
             </Pressable>
           );
         })}
@@ -622,9 +622,9 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
           const sel = form.propertyType === t.key;
           return (
             <Pressable key={t.key} onPress={() => handleTypeSelect(t.key)}
-              style={[s.typeCard, { backgroundColor: sel ? colors.action : colors.card, borderColor: sel ? colors.action : colors.border }]}>
+               style={[s.typeCard, { backgroundColor: sel ? colors.selectionBackground : colors.card, borderColor: sel ? colors.selectionBorder : colors.border, borderWidth: sel ? 2 : 1 }]}>
               <Text style={{ fontSize: 20 }}>{t.emoji}</Text>
-              <Text style={[s.typeLabel, { color: sel ? '#ffffff' : colors.foreground }]}>{t.label}</Text>
+               <Text style={[s.typeLabel, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{t.label}</Text>
             </Pressable>
           );
         })}
@@ -636,11 +636,12 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
         {availablePurposes.map((p) => (
           <Pressable key={p} onPress={() => update({ purpose: p })}
             style={[s.purposeBtn, {
-              backgroundColor: form.purpose === p ? colors.action : colors.secondary,
-              borderColor: form.purpose === p ? colors.action : colors.border,
+               backgroundColor: form.purpose === p ? colors.selectionBackground : colors.secondary,
+               borderColor: form.purpose === p ? colors.selectionBorder : colors.border,
+               borderWidth: form.purpose === p ? 1.5 : 1,
               flex: 1,
             }]}>
-            <Text style={[s.purposeBtnText, { color: form.purpose === p ? '#ffffff' : colors.foreground }]}>{p}</Text>
+             <Text style={[s.purposeBtnText, { color: form.purpose === p ? colors.selectionForeground : colors.foreground, fontWeight: form.purpose === p ? '600' : '400' }]}>{p}</Text>
           </Pressable>
         ))}
       </View>
@@ -680,8 +681,8 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
             locationAccuracy: null,
             locationSource: '',
           })}
-            style={[s.chip, { backgroundColor: form.city === c ? colors.action : colors.secondary, borderColor: form.city === c ? colors.action : colors.border }]}>
-            <Text style={[s.chipText, { color: form.city === c ? '#ffffff' : colors.foreground }]}>{c}</Text>
+             style={[s.chip, { backgroundColor: form.city === c ? colors.selectionBackground : colors.secondary, borderColor: form.city === c ? colors.selectionBorder : colors.border, borderWidth: form.city === c ? 1.5 : 1 }]}>
+             <Text style={[s.chipText, { color: form.city === c ? colors.selectionForeground : colors.foreground, fontWeight: form.city === c ? '600' : '400' }]}>{c}</Text>
           </Pressable>
         ))}
       </ScrollView>
@@ -693,8 +694,8 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 14 }}>
             {neighborhoods.map((n: string) => (
               <Pressable key={n} onPress={() => update({ locality: n })}
-                style={[s.chip, { backgroundColor: form.locality === n ? colors.action : colors.secondary, borderColor: form.locality === n ? colors.action : colors.border }]}>
-                <Text style={[s.chipText, { color: form.locality === n ? '#ffffff' : colors.foreground }]}>{n}</Text>
+                 style={[s.chip, { backgroundColor: form.locality === n ? colors.selectionBackground : colors.secondary, borderColor: form.locality === n ? colors.selectionBorder : colors.border, borderWidth: form.locality === n ? 1.5 : 1 }]}>
+                 <Text style={[s.chipText, { color: form.locality === n ? colors.selectionForeground : colors.foreground, fontWeight: form.locality === n ? '600' : '400' }]}>{n}</Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -775,8 +776,8 @@ function StepBasic({ form, update, colors, errors }: any) {
           <View style={s.unitSeg}>
             {AREA_UNITS.map((u) => (
               <Pressable key={u} onPress={() => update({ areaUnit: u })}
-                style={[s.unitBtn, { backgroundColor: form.areaUnit === u ? colors.action : 'transparent' }]}>
-                <Text style={[s.unitText, { color: form.areaUnit === u ? '#ffffff' : colors.mutedForeground }]}>{u}</Text>
+                 style={[s.unitBtn, { backgroundColor: form.areaUnit === u ? colors.selectionBackground : 'transparent', borderColor: form.areaUnit === u ? colors.selectionBorder : 'transparent', borderWidth: form.areaUnit === u ? 1.5 : 0 }]}>
+                 <Text style={[s.unitText, { color: form.areaUnit === u ? colors.selectionForeground : colors.mutedForeground, fontWeight: form.areaUnit === u ? '600' : '400' }]}>{u}</Text>
               </Pressable>
             ))}
           </View>
@@ -1357,9 +1358,9 @@ function StepFeatures({ form, update, colors, category }: any) {
           const sel = form.features.includes(f);
           return (
             <Pressable key={f} onPress={() => toggle(f)}
-              style={[s.featureChip, { backgroundColor: sel ? colors.action : colors.secondary, borderColor: sel ? colors.action : colors.border }]}>
-              {sel && <Feather name="check" size={11} color="#ffffff" />}
-              <Text style={[s.featureText, { color: sel ? '#ffffff' : colors.foreground }]}>{f}</Text>
+              style={[s.featureChip, { backgroundColor: sel ? colors.selectionBackground : colors.secondary, borderColor: sel ? colors.selectionBorder : colors.border, borderWidth: sel ? 1.5 : 1 }]}>
+              {sel && <Feather name="check" size={11} color={colors.selectionForeground} />}
+              <Text style={[s.featureText, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{f}</Text>
             </Pressable>
           );
         })}
@@ -1491,9 +1492,9 @@ function StepDocs({ form, update, colors, errors, user, category }: any) {
           const sel = form.documents.includes(d);
           return (
             <Pressable key={d} onPress={() => toggleDoc(d)}
-              style={[s.featureChip, { backgroundColor: sel ? colors.action : colors.secondary, borderColor: sel ? colors.action : colors.border }]}>
-              {sel && <Feather name="check" size={11} color="#ffffff" />}
-              <Text style={[s.featureText, { color: sel ? '#ffffff' : colors.foreground }]}>{d}</Text>
+              style={[s.featureChip, { backgroundColor: sel ? colors.selectionBackground : colors.secondary, borderColor: sel ? colors.selectionBorder : colors.border, borderWidth: sel ? 1.5 : 1 }]}>
+              {sel && <Feather name="check" size={11} color={colors.selectionForeground} />}
+              <Text style={[s.featureText, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{d}</Text>
             </Pressable>
           );
         })}
@@ -1641,8 +1642,8 @@ function ChipRow({ options, selected, onSelect, colors }: { options: string[]; s
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
       {options.map((o) => (
         <Pressable key={o} onPress={() => onSelect(o)}
-          style={[s.chip, { backgroundColor: selected === o ? colors.action : colors.secondary, borderColor: selected === o ? colors.action : colors.border }]}>
-          <Text style={[s.chipText, { color: selected === o ? '#ffffff' : colors.foreground }]}>{o}</Text>
+           style={[s.chip, { backgroundColor: selected === o ? colors.selectionBackground : colors.secondary, borderColor: selected === o ? colors.selectionBorder : colors.border, borderWidth: selected === o ? 1.5 : 1 }]}>
+           <Text style={[s.chipText, { color: selected === o ? colors.selectionForeground : colors.foreground, fontWeight: selected === o ? '600' : '400' }]}>{o}</Text>
         </Pressable>
       ))}
     </ScrollView>
@@ -1690,9 +1691,9 @@ function BoolGrid({ items, form, update, colors, tristate }: { items: { key: str
         return (
           <Pressable key={it.key}
             onPress={() => update({ [it.key]: tristate ? (val === null ? true : val === true ? false : null) : !val })}
-            style={[s.featureChip, { backgroundColor: sel ? colors.action : colors.secondary, borderColor: sel ? colors.action : colors.border }]}>
-            {sel && <Feather name="check" size={11} color="#ffffff" />}
-            <Text style={[s.featureText, { color: sel ? '#ffffff' : colors.foreground }]}>{it.label}</Text>
+            style={[s.featureChip, { backgroundColor: sel ? colors.selectionBackground : colors.secondary, borderColor: sel ? colors.selectionBorder : colors.border, borderWidth: sel ? 1.5 : 1 }]}>
+            {sel && <Feather name="check" size={11} color={colors.selectionForeground} />}
+            <Text style={[s.featureText, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{it.label}</Text>
           </Pressable>
         );
       })}

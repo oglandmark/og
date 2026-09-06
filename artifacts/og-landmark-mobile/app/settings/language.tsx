@@ -79,16 +79,16 @@ export default function LanguageSettingsScreen() {
                   onPress={() => void handleSelect(lang.code)}
                   style={({ pressed }) => [
                     styles.optionRow,
-                    isActive && { backgroundColor: colors.action + '08' },
+                    isActive && { backgroundColor: colors.selectionTint, borderColor: colors.selectionBorder, borderWidth: 1.5 },
                     { opacity: pressed ? 0.75 : 1 },
                   ]}
                 >
                   {/* Script icon */}
                   <View style={[styles.scriptBadge, {
-                    backgroundColor: isActive ? colors.action : colors.secondary,
+                    backgroundColor: isActive ? colors.selectionBackground : colors.secondary,
                   }]}>
                     <Text style={[styles.scriptChar, {
-                      color: isActive ? '#ffffff' : colors.mutedForeground,
+                      color: isActive ? colors.selectionForeground : colors.mutedForeground,
                       fontFamily: lang.dir === 'rtl' ? 'Inter_400Regular' : 'Inter_700Bold',
                       fontSize: lang.dir === 'rtl' ? 22 : 18,
                     }]}>

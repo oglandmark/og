@@ -68,8 +68,8 @@ function ChipRow({
         const active = item === selected;
         return (
           <Pressable key={item} onPress={() => onSelect(item)}
-            style={[lc.chip, { backgroundColor: active ? colors.action : colors.secondary, borderColor: active ? colors.action : colors.border, borderWidth: 1 }]}>
-            <Text style={[lc.chipText, { color: active ? '#ffffff' : colors.foreground }]}>{item}</Text>
+            style={[lc.chip, { backgroundColor: active ? colors.selectionBackground : colors.secondary, borderColor: active ? colors.selectionBorder : colors.border, borderWidth: active ? 1.5 : 1 }]}>
+            <Text style={[lc.chipText, { color: active ? colors.selectionForeground : colors.foreground, fontWeight: active ? '600' : '400' }]}>{item}</Text>
           </Pressable>
         );
       })}
@@ -89,8 +89,8 @@ function SegRow({
         const active = it.key === selected;
         return (
           <Pressable key={it.key} onPress={() => onSelect(it.key)}
-            style={[lc.segBtn, { backgroundColor: active ? colors.action : 'transparent' }]}>
-            <Text style={[lc.segText, { color: active ? '#ffffff' : colors.mutedForeground }]}>{it.label}</Text>
+            style={[lc.segBtn, { backgroundColor: active ? colors.selectionBackground : 'transparent', borderColor: active ? colors.selectionBorder : 'transparent', borderWidth: active ? 1.5 : 0 }]}>
+            <Text style={[lc.segText, { color: active ? colors.selectionForeground : colors.mutedForeground, fontWeight: active ? '600' : '400' }]}>{it.label}</Text>
           </Pressable>
         );
       })}

@@ -292,9 +292,9 @@ function InquiryModal({
                   <View style={iq.typeRow}>
                     {(['Site Visit', 'Video Call'] as const).map((t) => (
                       <Pressable key={t} onPress={() => setVisitType(t)}
-                        style={[iq.typeChip, { borderColor: visitType === t ? colors.action : colors.border, backgroundColor: visitType === t ? colors.action + '14' : 'transparent' }]}>
+                        style={[iq.typeChip, { borderColor: visitType === t ? colors.selectionBorder : colors.border, backgroundColor: visitType === t ? colors.selectionBackground : 'transparent', borderWidth: visitType === t ? 1.5 : 1 }]}>
                         <Feather name={t === 'Site Visit' ? 'map-pin' : 'video'} size={11} color={visitType === t ? colors.action : colors.mutedForeground} />
-                        <Text style={[iq.typeChipText, { color: visitType === t ? colors.action : colors.mutedForeground }]}>{t}</Text>
+                        <Text style={[iq.typeChipText, { color: visitType === t ? colors.selectionForeground : colors.mutedForeground, fontWeight: visitType === t ? '600' : '400' }]}>{t}</Text>
                       </Pressable>
                     ))}
                   </View>
@@ -304,8 +304,8 @@ function InquiryModal({
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }} contentContainerStyle={{ gap: 8 }}>
                     {dates.map((d) => (
                       <Pressable key={d.iso} onPress={() => setSelectedDate(d.iso)}
-                        style={[iq.dateChip, { borderColor: selectedDate === d.iso ? colors.action : colors.border, backgroundColor: selectedDate === d.iso ? colors.action : colors.secondary }]}>
-                        <Text style={[iq.dateChipText, { color: selectedDate === d.iso ? colors.actionForeground : colors.foreground }]}>{d.label}</Text>
+                        style={[iq.dateChip, { borderColor: selectedDate === d.iso ? colors.selectionBorder : colors.border, backgroundColor: selectedDate === d.iso ? colors.selectionBackground : colors.secondary, borderWidth: selectedDate === d.iso ? 1.5 : 1 }]}>
+                        <Text style={[iq.dateChipText, { color: selectedDate === d.iso ? colors.selectionForeground : colors.foreground, fontWeight: selectedDate === d.iso ? '600' : '400' }]}>{d.label}</Text>
                       </Pressable>
                     ))}
                   </ScrollView>
@@ -315,8 +315,8 @@ function InquiryModal({
                   <View style={iq.timeGrid}>
                     {TIME_SLOTS.map((t) => (
                       <Pressable key={t} onPress={() => setSelectedTime(t)}
-                        style={[iq.timeChip, { borderColor: selectedTime === t ? colors.action : colors.border, backgroundColor: selectedTime === t ? colors.action : 'transparent' }]}>
-                        <Text style={[iq.timeChipText, { color: selectedTime === t ? colors.actionForeground : colors.foreground }]}>{t}</Text>
+                        style={[iq.timeChip, { borderColor: selectedTime === t ? colors.selectionBorder : colors.border, backgroundColor: selectedTime === t ? colors.selectionBackground : 'transparent', borderWidth: selectedTime === t ? 1.5 : 1 }]}>
+                        <Text style={[iq.timeChipText, { color: selectedTime === t ? colors.selectionForeground : colors.foreground, fontWeight: selectedTime === t ? '600' : '400' }]}>{t}</Text>
                       </Pressable>
                     ))}
                   </View>
@@ -452,16 +452,18 @@ function AppointmentModal({
                 {(['Site Visit', 'Video Call'] as const).map((t) => (
                   <Pressable key={t} onPress={() => setVisitType(t)}
                     style={[ap.typeBtn, {
-                      backgroundColor: visitType === t ? colors.action : colors.secondary,
-                      borderColor: visitType === t ? colors.action : colors.border,
+                       backgroundColor: visitType === t ? colors.selectionBackground : colors.secondary,
+                       borderColor: visitType === t ? colors.selectionBorder : colors.border,
+                       borderWidth: visitType === t ? 1.5 : 1,
                     }]}>
                     <Feather
                       name={t === 'Site Visit' ? 'map-pin' : 'video'}
                       size={14}
-                      color={visitType === t ? colors.actionForeground : colors.mutedForeground}
+                       color={visitType === t ? colors.selectionForeground : colors.mutedForeground}
                     />
                     <Text style={[ap.typeBtnText, {
-                      color: visitType === t ? colors.actionForeground : colors.foreground,
+                       color: visitType === t ? colors.selectionForeground : colors.foreground,
+                       fontWeight: visitType === t ? '600' : '400',
                     }]}>{t}</Text>
                   </Pressable>
                 ))}
@@ -474,11 +476,13 @@ function AppointmentModal({
                 {DAYS.map((d) => (
                   <Pressable key={d.iso} onPress={() => setSelectedDate(d.iso)}
                     style={[ap.datePill, {
-                      backgroundColor: selectedDate === d.iso ? colors.action : colors.secondary,
-                      borderColor: selectedDate === d.iso ? colors.action : colors.border,
+                       backgroundColor: selectedDate === d.iso ? colors.selectionBackground : colors.secondary,
+                       borderColor: selectedDate === d.iso ? colors.selectionBorder : colors.border,
+                       borderWidth: selectedDate === d.iso ? 1.5 : 1,
                     }]}>
                     <Text style={[ap.datePillText, {
-                      color: selectedDate === d.iso ? colors.actionForeground : colors.foreground,
+                       color: selectedDate === d.iso ? colors.selectionForeground : colors.foreground,
+                       fontWeight: selectedDate === d.iso ? '600' : '400',
                     }]}>{d.label}</Text>
                   </Pressable>
                 ))}
@@ -490,11 +494,13 @@ function AppointmentModal({
                 {TIME_SLOTS.map((t) => (
                   <Pressable key={t} onPress={() => setSelectedTime(t)}
                     style={[ap.timeSlot, {
-                      backgroundColor: selectedTime === t ? colors.action : colors.secondary,
-                      borderColor: selectedTime === t ? colors.action : colors.border,
+                       backgroundColor: selectedTime === t ? colors.selectionBackground : colors.secondary,
+                       borderColor: selectedTime === t ? colors.selectionBorder : colors.border,
+                       borderWidth: selectedTime === t ? 1.5 : 1,
                     }]}>
                     <Text style={[ap.timeSlotText, {
-                      color: selectedTime === t ? colors.actionForeground : colors.foreground,
+                       color: selectedTime === t ? colors.selectionForeground : colors.foreground,
+                       fontWeight: selectedTime === t ? '600' : '400',
                     }]}>{t}</Text>
                   </Pressable>
                 ))}

@@ -965,7 +965,11 @@ function GuestScreen({
           <RowLink icon="help-circle" label="Help & Support" sublabel="FAQs, contact us"
             onPress={() => router.push('/settings/help' as any)} colors={colors} iconColor={colors.action} />
           <RowLink icon="info" label="About OG Landmark" sublabel="Version 1.0"
-            onPress={() => Alert.alert('OG Landmark', 'Version 1.0.0\nPremium real estate for Okara District.')} colors={colors} iconColor={colors.action} />
+            onPress={() => router.push('/settings/legal?section=about' as any)} colors={colors} iconColor={colors.action} />
+          <RowLink icon="shield" label="Privacy & Security" sublabel="How we protect your account"
+            onPress={() => router.push('/settings/legal?section=security' as any)} colors={colors} iconColor={colors.action} />
+          <RowLink icon="file-text" label="Terms & Privacy" sublabel="Legal information"
+            onPress={() => router.push('/settings/legal?section=legal' as any)} colors={colors} iconColor={colors.action} />
         </View>
       </AnimatedReveal>
 
@@ -1244,13 +1248,13 @@ export default function ProfileScreen() {
     { icon: 'smartphone'   as const, label: 'Phone & Email',        sub: userPhone || userEmail || 'Update contact details', route: '/settings/account' },
     { icon: 'lock'         as const, label: 'Change Password',      sub: 'Update your password',          route: null },
     { icon: 'bell'         as const, label: 'Notifications',        sub: 'Alerts, emails, push',          route: null },
-    { icon: 'shield'       as const, label: 'Privacy & Security',   sub: 'Manage your data & access',     route: null },
+    { icon: 'shield'       as const, label: 'Privacy & Security',   sub: 'How we protect your account',  route: '/settings/legal?section=security' },
     { icon: 'globe'        as const, label: 'Language',             sub: 'English / اردو',                route: '/settings/language' },
     { icon: 'dollar-sign'  as const, label: 'Currency',             sub: 'PKR · Pakistani Rupee',         route: null },
     { icon: 'map-pin'      as const, label: 'Location',             sub: 'Okara District, Punjab',        route: null },
     { icon: 'help-circle'  as const, label: 'Help & Support',       sub: 'FAQs, contact us',              route: '/settings/help' },
-    { icon: 'file-text'    as const, label: 'Terms & Privacy',      sub: 'Legal information',             route: null },
-    { icon: 'info'         as const, label: 'About OG Landmark',    sub: 'Version 1.0',                   route: null },
+    { icon: 'file-text'    as const, label: 'Terms & Privacy',      sub: 'Terms of use and privacy policy', route: '/settings/legal?section=legal' },
+    { icon: 'info'         as const, label: 'About OG Landmark',    sub: 'Our platform and principles',    route: '/settings/legal?section=about' },
   ];
 
   return (

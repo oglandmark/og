@@ -346,6 +346,53 @@ function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
 }
 
+function normalizeUsername(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function normalizePhone(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (digits.startsWith('0092')) return `92${digits.slice(4)}`;
+  if (digits.startsWith('0') && digits.length >= 10) return `92${digits.slice(1)}`;
+  return digits;
+}
+
+function isValidUsername(value) {
+  return /^[a-z][a-z0-9._-]{2,29}$/.test(normalizeUsername(value));
+}
+
+function isValidPhone(value) {
+  const digits = normalizePhone(value);
+  return digits.length >= 10 && digits.length <= 15;
+}
+
+function uniqueUsername(users, preferred, fallbackEmail) {
+  const preferredBase = normalizeUsername(preferred).replace(/[^a-z0-9._-]/g, '');
+  const emailBase = normalizeEmail(fallbackEmail).split('@')[0].replace(/[^a-z0-9._-]/g, '');
+  let base = preferredBase || emailBase || 'user';
+  if (!/^[a-z]/.test(base)) base = `user${base}`;
+  base = base.slice(0, 24);
+  let candidate = base;
+  let suffix = 1;
+  while (users.some(user => normalizeUsername(user.username) === candidate)) {
+    candidate = `${base.slice(0, 24 - String(suffix).length)}${suffix}`;
+    suffix += 1;
+  }
+  return candidate;
+}
+
+function findUserByLoginIdentifier(users, identifier) {
+  const value = String(identifier || '').trim();
+  const email = normalizeEmail(value);
+  const username = normalizeUsername(value);
+  const phone = normalizePhone(value);
+  return users.find(user => (
+    (email && normalizeEmail(user.email) === email)
+    || (username && normalizeUsername(user.username) === username)
+    || (phone && normalizePhone(user.phone) === phone)
+  ));
+}
+
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeEmail(value));
 }
@@ -1715,14 +1762,13 @@ app.put('/api/appointments/:id', requireAuth, async (req, res) => {
 // ─── AUTH ──────────────────────────────────────────────────────────────────────
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const email = normalizeEmail(req.body.email);
+    const identifier = String(req.body.identifier ?? req.body.email ?? '').trim();
     const { password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
-    if (!isValidEmail(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
+    if (!identifier || !password) return res.status(400).json({ error: 'Email, username or mobile number and password are required' });
     const data = await readData();
-    const user = data.users.find(u => normalizeEmail(u.email) === email);
+    const user = findUserByLoginIdentifier(data.users, identifier);
     if (!user || !verifyPassword(password, user.password)) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Invalid email, username, mobile number or password' });
     }
     if (user.status === 'Inactive' || user.status === 'Suspended') {
       return res.status(403).json({ error: 'Account is suspended. Please contact admin.' });
@@ -1844,10 +1890,15 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const { firstName, lastName, phone, password, role } = req.body;
     const email = normalizeEmail(req.body.email);
+    const requestedUsername = normalizeUsername(req.body.username);
     if (!firstName || !email || !phone || !password) {
       return res.status(400).json({ error: 'First name, email, phone and password are required' });
     }
     if (!isValidEmail(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
+    if (requestedUsername && !isValidUsername(requestedUsername)) {
+      return res.status(400).json({ error: 'Username must start with a letter and use 3-30 letters, numbers, dots, underscores or hyphens.' });
+    }
+    if (!isValidPhone(phone)) return res.status(400).json({ error: 'Please enter a valid mobile number.' });
     const passwordError = passwordValidationError(password);
     if (passwordError) return res.status(400).json({ error: passwordError });
     const confirmPassword = req.body.confirmPassword ?? req.body.passwordConfirmation ?? password;
@@ -1861,8 +1912,14 @@ app.post('/api/auth/register', async (req, res) => {
       });
     }
     const data = await readData();
-    const exists = data.users.find(u => normalizeEmail(u.email) === email);
-    if (exists) return res.status(409).json({ error: 'An account with this email already exists' });
+    const phoneKey = normalizePhone(phone);
+    const username = uniqueUsername(data.users, requestedUsername, email);
+    const duplicateEmail = data.users.some(u => normalizeEmail(u.email) === email);
+    const duplicateUsername = requestedUsername && data.users.some(u => normalizeUsername(u.username) === requestedUsername);
+    const duplicatePhone = data.users.some(u => normalizePhone(u.phone) === phoneKey);
+    if (duplicateEmail) return res.status(409).json({ error: 'An account with this email already exists' });
+    if (duplicateUsername) return res.status(409).json({ error: 'This username is already in use. Please choose another.' });
+    if (duplicatePhone) return res.status(409).json({ error: 'This mobile number is already registered.' });
 
     const { city, specialization, experience } = req.body;
     const roleMap = { buyer: 'Buyer', seller: 'Seller', farmer: 'Buyer', agent: 'Agent' };
@@ -1870,8 +1927,9 @@ app.post('/api/auth/register', async (req, res) => {
     const newUser = {
       id: nextId(data),
       name: `${firstName} ${lastName || ''}`.trim(),
+      username,
       email,
-      phone,
+      phone: String(phone).trim(),
       role: roleMap[requestedRole] || 'Buyer',
       status: isAgent ? 'Pending' : 'Active',
       ...(isAgent && { approvalStatus: 'Pending', city: city || '', specialization: specialization || '', experience: experience || '', createdByAdmin: false }),

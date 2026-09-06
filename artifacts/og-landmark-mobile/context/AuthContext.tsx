@@ -20,6 +20,7 @@ export type Role = 'buyer' | 'agent' | 'developer' | 'admin';
 export type User = {
   id: string;
   name: string;
+  username?: string;
   email: string;
   phone: string;
   role: Role;
@@ -55,12 +56,12 @@ type AuthContextValue = {
   isLoading: boolean;
   isAdmin: boolean;
   login: (user: User) => Promise<void>;
-  loginAPI: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginAPI: (identifier: string, password: string) => Promise<{ success: boolean; error?: string }>;
   loginSocial: (provider: 'google' | 'facebook', accessToken: string) => Promise<{ success: boolean; error?: string }>;
   loginAdmin: (email: string, password: string) => Promise<{ success: boolean; error?: string; otpRequired?: boolean }>;
   verifyAdminOtp: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
   registerAPI: (payload: {
-    name: string; email: string; password: string; phone: string; role: Role;
+    name: string; username?: string; email: string; password: string; phone: string; role: Role;
     confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
   }) => Promise<{ success: boolean; error?: string; pendingApproval?: boolean; pendingMessage?: string }>;
   logout: () => Promise<void>;
@@ -80,6 +81,7 @@ function mapRole(r: string): Role {
 function mapApiUser(apiU: {
   id: number;
   name: string;
+  username?: string;
   email: string;
   phone?: string;
   role: string;
@@ -94,6 +96,7 @@ function mapApiUser(apiU: {
   return {
     id: String(apiU.id),
     name: apiU.name,
+    username: apiU.username,
     email: apiU.email,
     phone: apiU.phone || '',
     role: mapRole(apiU.role),
@@ -161,11 +164,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loginAPI = useCallback(async (
-    email: string,
+    identifier: string,
     password: string,
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await loginWithAPI(email, password);
+      const res = await loginWithAPI(identifier, password);
       if (!res.user) return { success: false, error: 'Invalid credentials' };
       const mapped = mapApiUser(res.user);
       await login(mapped);
@@ -224,7 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [login]);
 
   const registerAPI = useCallback(async (payload: {
-    name: string; email: string; password: string; phone: string; role: Role;
+    name: string; username?: string; email: string; password: string; phone: string; role: Role;
     confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
   }): Promise<{ success: boolean; error?: string; pendingApproval?: boolean; pendingMessage?: string }> => {
     try {

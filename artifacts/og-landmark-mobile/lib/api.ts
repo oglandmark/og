@@ -177,6 +177,7 @@ export async function checkHealth(): Promise<{ status: string }> {
 export type ApiUser = {
   id: number;
   name: string;
+  username?: string;
   email: string;
   phone: string;
   role: string;
@@ -202,10 +203,10 @@ export type LoginResponse = {
   message?: string;
 };
 
-export async function loginWithAPI(email: string, password: string): Promise<LoginResponse> {
+export async function loginWithAPI(identifier: string, password: string): Promise<LoginResponse> {
   const res = await apiFetch<LoginResponse>('/api/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ identifier, password }),
   }, false, AUTH_FETCH_TIMEOUT_MS);
   if (res.token) await setToken(res.token);
   return res;
@@ -235,7 +236,7 @@ export async function loginWithSocial(
 }
 
 export async function registerWithAPI(payload: {
-  name: string; email: string; password: string; phone: string; role: string;
+  name: string; username?: string; email: string; password: string; phone: string; role: string;
   confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
 }): Promise<LoginResponse> {
   // Server expects firstName / lastName separately
@@ -248,6 +249,7 @@ export async function registerWithAPI(payload: {
     body: JSON.stringify({
       firstName,
       lastName,
+      username:       payload.username,
       email:         payload.email,
       phone:         payload.phone,
       password:      payload.password,

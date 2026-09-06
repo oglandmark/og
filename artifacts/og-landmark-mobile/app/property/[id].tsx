@@ -153,8 +153,13 @@ function InquiryModal({
 
       setSentAppt(apptBooked);
       setSent(true);
-    } catch {
-      Alert.alert('Error', 'Could not submit. Please try again or call the agent directly.');
+    } catch (error) {
+      Alert.alert(
+        'Could not submit',
+        error instanceof Error && error.message
+          ? error.message
+          : 'Please try again or call the agent directly.',
+      );
     } finally {
       setSending(false);
     }
@@ -384,8 +389,13 @@ function AppointmentModal({
         buyerId:         user?.id ? Number(user.id) : undefined,
       });
       setBooked(true);
-    } catch {
-      Alert.alert('Error', 'Could not book the visit. Please try again.');
+    } catch (error) {
+      Alert.alert(
+        'Could not book visit',
+        error instanceof Error && error.message
+          ? error.message
+          : 'Please try again or call the agent directly.',
+      );
     } finally {
       setBooking(false);
     }
@@ -629,6 +639,27 @@ function PropertyDetailScreen() {
   const smsUrl = `sms:${agentPhone}`;
   const bottomBarH = insets.bottom + 70;
 
+  const requireSignIn = (action: 'inquiry' | 'visit') => {
+    if (isLoggedIn) return true;
+    Alert.alert(
+      'Sign in required',
+      `Please sign in to ${action === 'visit' ? 'schedule a visit' : 'send an inquiry'} and track the response in your profile.`,
+      [
+        { text: 'Not now', style: 'cancel' },
+        { text: 'Sign in', onPress: () => router.push('/(auth)/login') },
+      ],
+    );
+    return false;
+  };
+
+  const openInquiry = () => {
+    if (requireSignIn('inquiry')) setInquiryOpen(true);
+  };
+
+  const openBooking = () => {
+    if (requireSignIn('visit')) setBookingOpen(true);
+  };
+
   return (
     <>
     <ScrollView style={[styles.screen, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: bottomBarH + 16 }} showsVerticalScrollIndicator={false}>
@@ -771,14 +802,14 @@ function PropertyDetailScreen() {
         {/* Primary actions: Schedule Visit + Inquire */}
         <View style={styles.actionRow}>
           <Pressable
-            onPress={() => setBookingOpen(true)}
+            onPress={openBooking}
             style={({ pressed }) => [styles.cta, styles.primaryCta, { backgroundColor: '#102a43', opacity: pressed ? 0.85 : 1 }]}
           >
             <Feather name="calendar" size={16} color="#ffffff" />
             <Text style={[styles.ctaText, { color: '#ffffff' }]}>Schedule a Visit</Text>
           </Pressable>
           <Pressable
-            onPress={() => setInquiryOpen(true)}
+            onPress={openInquiry}
             style={({ pressed }) => [styles.cta, styles.secondaryCta, { borderColor: '#102a43', backgroundColor: '#102a4312', opacity: pressed ? 0.8 : 1 }]}
           >
             <Feather name="message-circle" size={16} color="#102a43" />
@@ -984,9 +1015,18 @@ function PropertyDetailScreen() {
         <Feather name="phone" size={20} color={colors.action} />
       </Pressable>
 
+      {/* Inquiry — always reachable above the Android home indicator */}
+      <Pressable
+        onPress={openInquiry}
+        style={({ pressed }) => [styles.fixedInquiryBtn, { borderColor: colors.action + '55', backgroundColor: colors.action + '10', opacity: pressed ? 0.75 : 1 }]}
+        accessibilityRole="button" accessibilityLabel="Send an inquiry"
+      >
+        <Feather name="message-circle" size={19} color={colors.action} />
+      </Pressable>
+
       {/* Schedule Visit — primary navy CTA */}
       <Pressable
-        onPress={() => setBookingOpen(true)}
+        onPress={openBooking}
         style={({ pressed }) => [styles.fixedCallBtn, { backgroundColor: '#102a43', opacity: pressed ? 0.85 : 1 }]}
         accessibilityRole="button" accessibilityLabel="Schedule a site visit"
       >
@@ -1271,6 +1311,7 @@ const styles = StyleSheet.create({
   // ── Fixed bottom contact bar ────────────────────────────────────────────────
   fixedBar:     { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: -3 }, elevation: 8 },
   fixedIconBtn: { width: 46, height: 46, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  fixedInquiryBtn: { width: 46, height: 46, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   fixedCallBtn: { flex: 1, height: 46, borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   fixedCallTxt: { fontFamily: 'Inter_700Bold', fontSize: 15 },
   fixedWaBtn:   { width: 46, height: 46, alignItems: 'center', justifyContent: 'center' },

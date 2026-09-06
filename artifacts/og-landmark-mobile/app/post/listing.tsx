@@ -498,15 +498,16 @@ export default function ListingWizard() {
         <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           <Feather name="arrow-left" size={16} color={colors.foreground} />
         </Pressable>
-        <View style={{ flex: 1, paddingHorizontal: 12 }}>
+        <View style={{ flex: 1, minWidth: 0, paddingHorizontal: 4 }}>
           <Text style={[s.headerStep, { color: colors.mutedForeground }]}>CREATE PROPERTY LISTING</Text>
           <Text style={[s.headerTitle, { color: colors.foreground }]}>Complete all details in one form</Text>
           <View style={[s.progressTrack, { backgroundColor: colors.border }]}>
             <View style={[s.progressFill, { width: '100%', backgroundColor: colors.action }]} />
           </View>
         </View>
-        <View style={[s.purposeBadge, { backgroundColor: form.purpose === 'Rent' ? '#1a6b3a' : form.purpose === 'Lease' ? '#8b6c2a' : colors.action }]}>
-          <Text style={[s.purposeBadgeText, { color: '#ffffff' }]}>{form.purpose.toUpperCase()}</Text>
+        <View style={[s.purposeBadge, { backgroundColor: colors.accent, borderColor: colors.goldGlassBorder }]}>
+          <Feather name="tag" size={11} color={colors.accentForeground} />
+          <Text style={[s.purposeBadgeText, { color: colors.accentForeground }]}>FOR {form.purpose.toUpperCase()}</Text>
         </View>
       </View>
 
@@ -1706,14 +1707,14 @@ function BoolGrid({ items, form, update, colors, tristate }: { items: { key: str
 const s = StyleSheet.create({
   screen:               { flex: 1 },
   // Header
-  header:               { borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 12 },
+  header:               { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 12 },
   backBtn:              { width: 34, height: 34, borderRadius: 11, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   headerStep:           { fontFamily: 'Inter_700Bold', fontSize: 10, letterSpacing: 1.2, marginBottom: 3 },
   headerTitle:          { fontFamily: 'Inter_700Bold', fontSize: 15, marginBottom: 6 },
   progressTrack:        { height: 3, borderRadius: 2, overflow: 'hidden' },
   progressFill:         { height: 3, borderRadius: 2 },
-  purposeBadge:         { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 5 },
-  purposeBadgeText:     { fontFamily: 'Inter_700Bold', fontSize: 10 },
+  purposeBadge:         { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, marginTop: 1 },
+  purposeBadgeText:     { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 0.4 },
   // Single-page sections
   formSection:          { borderWidth: 1, borderRadius: 20, padding: 16, marginBottom: 14, overflow: 'hidden' },
   validationBanner:      { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 14 },

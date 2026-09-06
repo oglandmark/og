@@ -16,7 +16,6 @@ import { SavedProvider } from '@/context/SavedContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
 import { OnboardingProvider, useOnboarding } from '@/context/OnboardingContext';
-import { OpeningSplash } from '@/components/OpeningSplash';
 import { useColors } from '@/hooks/useColors';
 import {
   configurePushNotifications,
@@ -30,7 +29,7 @@ import {
 SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
-function RootLayoutNav({ splashDone }: { splashDone: boolean }) {
+function RootLayoutNav() {
   const colors = useColors();
   const { isRTL } = useLanguage();
   const { isLoggedIn, isLoading, user } = useAuth();
@@ -117,7 +116,7 @@ function RootLayoutNav({ splashDone }: { splashDone: boolean }) {
   }, [user?.id]);
 
   useEffect(() => {
-    if (isLoading || onboardingLoading || !splashDone) return;
+    if (isLoading || onboardingLoading) return;
     const inOnboarding = segments[0] === 'onboarding';
     const inAuth      = segments[0] === '(auth)';
     const inTabs      = segments[0] === '(tabs)';
@@ -150,7 +149,7 @@ function RootLayoutNav({ splashDone }: { splashDone: boolean }) {
     } else {
       setNavigationReady(true);
     }
-  }, [hasCompletedOnboarding, isLoggedIn, isLoading, onboardingLoading, segments, router, splashDone]);
+  }, [hasCompletedOnboarding, isLoggedIn, isLoading, onboardingLoading, segments, router]);
 
   if (isLoading) {
     return (
@@ -189,11 +188,11 @@ function RootLayoutNav({ splashDone }: { splashDone: boolean }) {
   );
 }
 
-function DirectionalApp({ splashDone }: { splashDone: boolean }) {
+function DirectionalApp() {
   const { isRTL } = useLanguage();
   return (
     <View style={{ flex: 1, direction: isRTL ? 'rtl' : 'ltr' }}>
-      <RootLayoutNav splashDone={splashDone} />
+      <RootLayoutNav />
     </View>
   );
 }
@@ -204,8 +203,6 @@ export default function RootLayout() {
     PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold,
   });
   const [fontGateTimedOut, setFontGateTimedOut] = React.useState(false);
-  // On web (browser preview), skip the splash animation entirely so the app loads immediately
-  const [splashDone, setSplashDone] = React.useState(Platform.OS === 'web');
   useEffect(() => {
     if (fontsLoaded || fontError || fontGateTimedOut) SplashScreen.hideAsync();
   }, [fontsLoaded, fontError, fontGateTimedOut]);
@@ -241,12 +238,11 @@ export default function RootLayout() {
                 <SavedProvider>
                   <GestureHandlerRootView style={{ flex: 1 }}>
                      <KeyboardProvider>
-                       <DirectionalApp splashDone={splashDone} />
+                       <DirectionalApp />
                      </KeyboardProvider>
                   </GestureHandlerRootView>
                 </SavedProvider>
               </AuthProvider>
-              {Platform.OS !== 'web' && <OpeningSplash onFinished={() => setSplashDone(true)} />}
             </LanguageProvider>
           </OnboardingProvider>
         </QueryClientProvider>

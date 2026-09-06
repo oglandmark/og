@@ -877,8 +877,10 @@ app.get('/api/my-properties', requireAuth, async (req, res) => {
 
 app.post('/api/properties', requireAuth, async (req, res) => {
   try {
-    if (!['Seller', 'Agent', 'Admin'].includes(req.currentUser.role)) {
-      return res.status(403).json({ error: 'Seller, agent, or admin access required to create a property.' });
+    // A newly registered account starts as Buyer, but buyers may also submit
+    // a property they own. The listing remains Pending until admin review.
+    if (!['Buyer', 'Seller', 'Agent', 'Admin'].includes(req.currentUser.role)) {
+      return res.status(403).json({ error: 'Your account is not allowed to submit a property listing.' });
     }
     const data = await readData();
     // Always force Pending on new submissions — admin must review before going public

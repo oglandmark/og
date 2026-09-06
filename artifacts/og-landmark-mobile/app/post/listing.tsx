@@ -471,8 +471,11 @@ export default function ListingWizard() {
         ...(category === 'agricultural' && { nehriWater: form.nehriWater, tubeWell: form.tubeWell, soilType: form.soilType, mainCrop: form.currentCrop }),
       });
       setSubmitted(true);
-    } catch {
-      Alert.alert('Error', 'Could not save listing. Please try again.');
+    } catch (error) {
+      const message = error instanceof Error && error.message
+        ? error.message
+        : 'Could not save listing. Please try again.';
+      Alert.alert('Could not save listing', message);
     } finally {
       setSubmitting(false);
     }

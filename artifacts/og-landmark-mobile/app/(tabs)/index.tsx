@@ -512,13 +512,17 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible }: {
   return (
     <Animated.View style={[bn.slide, StyleSheet.absoluteFill, slideStyle]} pointerEvents={isActive ? 'auto' : 'none'}>
       {/* Remote video only on native — web uses image fallback (avoids byte-range 422 errors) */}
-      {(slide.localVideo && Platform.OS !== 'web') ? (
-        <VideoView player={player} style={bn.image} contentFit="cover" nativeControls={false} />
-      ) : slide.videoUri && Platform.OS !== 'web' ? (
-        <VideoView player={player} style={bn.image} contentFit="cover" nativeControls={false} />
-      ) : (
+      {isActive && (slide.localVideo || slide.videoUri) && Platform.OS !== 'web' ? (
+        <VideoView
+          player={player}
+          style={bn.image}
+          contentFit="cover"
+          nativeControls={false}
+          surfaceType={Platform.OS === 'android' ? 'textureView' : undefined}
+        />
+      ) : isActive ? (
         <Image source={slide.image ?? require('@/assets/images/property-1.jpg')} style={bn.image} resizeMode="cover" />
-      )}
+      ) : null}
     </Animated.View>
   );
 }

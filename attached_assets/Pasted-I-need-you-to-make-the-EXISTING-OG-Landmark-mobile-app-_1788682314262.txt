@@ -1,0 +1,548 @@
+I need you to make the EXISTING OG Landmark mobile app authentication system fully functional and production-ready.
+
+IMPORTANT CONTEXT:
+
+* The Login and Sign Up screens already exist in the app.
+* The Login screen already has Email/Password and Facebook login options.
+* The Sign Up screen already has the required UI/options.
+* The Neon PostgreSQL database was created and configured by you.
+* The backend/API was also created by you.
+* Do NOT replace the existing database with Supabase, Firebase, MongoDB, or any other database.
+* Continue using the existing Neon PostgreSQL database and existing backend architecture.
+* Do NOT redesign the existing Login or Sign Up screens.
+* Do NOT unnecessarily change the OG Landmark design, colors, typography, navigation, or existing app features.
+
+YOUR JOB:
+Make the existing authentication system actually work from the mobile UI all the way through the backend and Neon database.
+
+Do not give me a mock/demo authentication system.
+Do not use fake users.
+Do not simply make buttons appear functional.
+Everything must work end-to-end.
+
+==================================================
+PHASE 1 — INSPECT THE EXISTING PROJECT FIRST
+
+Before changing anything, inspect the complete project.
+
+Find and understand:
+
+1. Existing Expo/React Native configuration
+2. Existing Login screen
+3. Existing Sign Up screen
+4. Existing Forgot Password screen/functionality
+5. Existing Facebook Login button/functionality
+6. Existing authentication code
+7. Existing API/backend
+8. Existing Neon PostgreSQL connection
+9. Existing database schema
+10. Existing users table
+11. Existing session/token implementation
+12. Existing navigation
+13. Existing protected routes/screens
+14. Existing environment variables
+15. Existing packages/dependencies
+
+DO NOT create duplicate systems if equivalent functionality already exists.
+
+Reuse the existing code and architecture whenever possible.
+
+After inspection, implement the missing pieces instead of rebuilding everything from scratch.
+
+==================================================
+PHASE 2 — EMAIL SIGN UP
+
+Make the EXISTING Sign Up screen fully functional.
+
+When a user submits the existing signup form:
+
+1. Validate all required fields.
+2. Validate email format.
+3. Validate password strength.
+4. Confirm password matches.
+5. Check whether the email already exists.
+6. If email already exists, show a professional error.
+7. Hash the password securely using bcrypt or Argon2.
+8. NEVER store plaintext passwords.
+9. Create the user in the existing Neon database.
+10. Create the user’s profile using the existing database structure.
+11. Assign the correct default user role according to the existing OG Landmark system.
+12. Create a secure authentication session.
+13. Store the session securely on the mobile device.
+14. Update the application authentication state.
+15. Navigate the user to the appropriate authenticated screen.
+
+The signup button must show a loading state while the request is processing.
+
+Prevent duplicate submissions.
+
+Handle network/server errors gracefully.
+
+==================================================
+PHASE 3 — EMAIL LOGIN
+
+Make the EXISTING Login screen fully functional.
+
+User enters:
+
+Email
+Password
+
+On Login:
+
+1. Send credentials securely to the backend.
+2. Find the user in Neon.
+3. Verify the password against the stored password hash.
+4. Never compare/store plaintext passwords.
+5. Create a secure authentication session/token.
+6. Store the session securely on the device.
+7. Update the global authentication state.
+8. Navigate to the correct dashboard based on the existing user role.
+
+Handle:
+
+* Incorrect email
+* Incorrect password
+* Account not found
+* Network error
+* Server error
+* Invalid/expired session
+* Disabled account if the existing system supports it
+
+Use professional user-friendly error messages.
+
+==================================================
+PHASE 4 — SESSION PERSISTENCE
+
+Authentication must persist properly.
+
+When the user closes and reopens OG Landmark:
+
+1. Check whether a valid session exists.
+2. Restore the authenticated user.
+3. Do NOT force the user to login again if the session is valid.
+4. If the session is expired/invalid, clear it and show Login.
+5. Show the Splash screen while checking authentication state.
+6. Prevent protected screens from flashing before authentication is resolved.
+
+Logout must:
+
+1. Invalidate the backend session/token.
+2. Clear local authentication credentials.
+3. Clear user state.
+4. Return the user to Login.
+5. Prevent access to protected screens after logout.
+
+==================================================
+PHASE 5 — FORGOT PASSWORD
+
+Make the existing Forgot Password functionality completely operational.
+
+Required flow:
+
+Login
+→ Forgot Password
+→ Enter Email
+→ Request Reset
+→ Secure Reset Token
+→ Password Reset
+→ New Password
+→ Confirm Password
+→ Update Password
+→ Invalidate Reset Token
+→ Return to Login
+
+Requirements:
+
+* Reset token must be cryptographically secure.
+* Token must expire.
+* Token must be single-use.
+* Do not store raw reset tokens if the existing architecture can securely hash them.
+* Do not expose passwords in logs.
+* New password must be securely hashed.
+* Old password must no longer work after reset.
+
+If email sending is not yet configured, implement the backend completely and clearly identify the ONLY environment variables/service configuration I need to provide.
+
+==================================================
+PHASE 6 — FACEBOOK LOGIN
+
+The existing Login/Signup screens already contain Facebook Login.
+
+Make it a REAL production Facebook authentication system.
+
+Do NOT create fake Facebook authentication.
+
+Implement:
+
+Facebook button
+→ Facebook OAuth
+→ Backend authentication
+→ Verify Facebook identity
+→ Find existing user OR create new user
+→ Neon PostgreSQL
+→ Create OG Landmark session
+→ Login user
+→ Correct dashboard
+
+For a first-time Facebook user:
+
+* Create a new user in Neon.
+* Store available verified Facebook identity information.
+* Store name.
+* Store email when provided.
+* Store avatar/profile image URL when available.
+* Store Facebook provider ID.
+* Assign the correct default role.
+* Create a secure session.
+
+For an existing Facebook user:
+
+* Identify the existing account.
+* Authenticate them.
+* Do NOT create a duplicate user.
+* Create a new session.
+
+IMPORTANT SECURITY:
+
+* Facebook App Secret MUST remain server-side.
+* Never put Facebook App Secret inside the Expo/React Native application.
+* Never put Neon database credentials inside the mobile app.
+* Use environment variables for secrets.
+* Validate Facebook authentication on the backend.
+* Never trust a user ID supplied directly by the mobile client.
+
+If Facebook Developer configuration requires manual setup, implement everything possible in code first and then give me the exact remaining Meta/Facebook configuration steps.
+
+==================================================
+PHASE 7 — ACCOUNT LINKING
+
+Prevent duplicate accounts.
+
+Example:
+
+If a user already has an account with:
+
+user@email.com
+
+and later authenticates through Facebook using the same verified email, do not automatically create an unrelated duplicate account.
+
+Use the existing authentication architecture to safely handle account linking or clearly handle the conflict.
+
+Facebook provider ID must also be unique.
+
+==================================================
+PHASE 8 — NEON DATABASE
+
+Continue using the EXISTING Neon PostgreSQL database.
+
+FIRST inspect the current schema.
+
+Do not create duplicate tables if equivalent tables already exist.
+
+If changes are required, create proper database migrations.
+
+Authentication must support at minimum:
+
+* User ID
+* Full name
+* Email
+* Password hash
+* Avatar URL
+* Role
+* Authentication provider
+* Provider ID
+* Created timestamp
+* Updated timestamp
+
+Also support secure sessions and password-reset tokens using the existing architecture.
+
+Add appropriate:
+
+* UNIQUE constraints
+* indexes
+* foreign keys
+* timestamps
+* cascading behavior where appropriate
+
+Never store:
+
+* plaintext passwords
+* Facebook App Secret
+* database credentials
+
+==================================================
+PHASE 9 — USER PROFILE
+
+After successful registration/login, the authenticated user must have a valid profile.
+
+The profile system must remain connected to the authenticated user ID.
+
+If the existing OG Landmark application already has profile fields, preserve them.
+
+Do not delete existing profile information.
+
+Facebook users should also receive a valid profile.
+
+==================================================
+PHASE 10 — ROLE SYSTEM
+
+Use the EXISTING OG Landmark role system.
+
+Do not invent a new role architecture if one already exists.
+
+If the existing system has:
+
+Buyer
+Seller
+Agent
+Admin
+
+or equivalent roles, preserve it.
+
+Normal public signup must NOT allow a user to make themselves Admin.
+
+Roles must be determined server-side.
+
+The mobile client must never be trusted to grant itself Admin privileges.
+
+After login, route the user to the correct existing portal/dashboard according to their role.
+
+==================================================
+PHASE 11 — NAVIGATION PROTECTION
+
+Make authentication-aware navigation fully functional.
+
+Public screens should include the existing:
+
+* Splash
+* Welcome
+* Login
+* Signup
+* Forgot Password
+* Authentication-related screens
+
+Protected screens should require a valid authenticated session.
+
+If an unauthenticated user tries to access a protected screen:
+
+→ redirect to Login.
+
+If an authenticated user opens Login or Signup:
+
+→ redirect them to the appropriate authenticated dashboard instead of allowing duplicate authentication flows.
+
+Do not break the existing navigation structure.
+
+==================================================
+PHASE 12 — SECURITY
+
+This is a production mobile application.
+
+Implement proper authentication security.
+
+Requirements:
+
+* Secure password hashing
+* Secure session/token handling
+* Secure mobile storage
+* Server-side authentication
+* Server-side authorization
+* Input validation
+* Rate limiting where appropriate
+* Protection against brute-force login attempts where practical
+* Proper CORS configuration for the existing architecture
+* Secure cookies/tokens according to the existing mobile architecture
+* No sensitive secrets in client code
+* No Neon credentials in the mobile app
+* No Facebook App Secret in the mobile app
+* No passwords in logs
+* No authentication tokens in logs
+* Proper error handling without exposing sensitive backend information
+
+==================================================
+PHASE 13 — ENVIRONMENT VARIABLES
+
+Inspect the existing environment configuration.
+
+Use the existing variables if they already exist.
+
+Do not expose server-only secrets to Expo/React Native.
+
+Separate:
+
+CLIENT-SAFE variables
+from
+SERVER-ONLY secrets.
+
+At the end, provide me with an exact list of any environment variables that are missing.
+
+==================================================
+PHASE 14 — ERROR HANDLING
+
+Every authentication action must have:
+
+* Loading state
+* Success state
+* Error state
+* Network failure handling
+* Server failure handling
+* Validation errors
+
+Use professional OG Landmark messaging.
+
+Examples:
+
+“Invalid email or password.”
+
+“An account with this email already exists.”
+
+“Please enter a valid email address.”
+
+“Passwords do not match.”
+
+“Your session has expired. Please log in again.”
+
+“Something went wrong. Please try again.”
+
+Do not expose technical stack traces to users.
+
+==================================================
+PHASE 15 — DO NOT BREAK EXISTING APP
+
+This is extremely important.
+
+Do NOT:
+
+* Replace Neon
+* Replace the existing backend unnecessarily
+* Replace the existing navigation
+* Redesign Login
+* Redesign Signup
+* Remove existing screens
+* Remove existing features
+* Change unrelated database tables
+* Change unrelated APIs
+* Break Buyer Portal
+* Break Seller Portal
+* Break Agent Portal
+* Break Admin Portal
+* Break existing property features
+* Break existing favorites/search/map features
+
+Only modify what is necessary to make authentication production-ready.
+
+==================================================
+PHASE 16 — END-TO-END TESTING
+
+Do not consider the task complete until you test the complete authentication flow.
+
+TEST EMAIL SIGNUP:
+
+✓ New account
+✓ Duplicate email
+✓ Invalid email
+✓ Empty fields
+✓ Weak password
+✓ Password mismatch
+✓ Database user creation
+✓ Profile creation
+✓ Session creation
+✓ Navigation after signup
+
+TEST LOGIN:
+
+✓ Correct email/password
+✓ Wrong password
+✓ Unknown email
+✓ Empty fields
+✓ Session creation
+✓ Dashboard navigation
+
+TEST SESSION:
+
+✓ Close/reopen app
+✓ Session restoration
+✓ Expired session
+✓ Invalid session
+✓ Logout
+✓ Protected screen access
+
+TEST PASSWORD RESET:
+
+✓ Existing email
+✓ Non-existing email
+✓ Reset request
+✓ Reset token
+✓ Expired token
+✓ New password
+✓ Password confirmation
+✓ Old password rejected
+
+TEST FACEBOOK:
+
+✓ First-time Facebook login
+✓ Existing Facebook user
+✓ Facebook email available
+✓ Facebook email unavailable
+✓ Facebook login cancelled
+✓ Facebook authentication failure
+✓ Duplicate-account prevention
+✓ Session creation
+✓ Logout
+
+TEST SECURITY:
+
+✓ Password never stored plaintext
+✓ Secrets never exposed to client
+✓ User cannot modify another user’s profile
+✓ User cannot grant themselves Admin
+✓ Protected API routes require authentication
+
+==================================================
+PHASE 17 — BUILD VERIFICATION
+
+After implementation:
+
+1. Run the project’s existing lint/type checks.
+2. Run tests if available.
+3. Fix TypeScript errors.
+4. Fix runtime errors.
+5. Verify API endpoints.
+6. Verify database migrations.
+7. Verify Neon connectivity.
+8. Verify Expo/React Native authentication flow.
+9. Verify production build compatibility.
+
+Do not stop at “code implemented”.
+
+The goal is WORKING END-TO-END AUTHENTICATION.
+
+==================================================
+FINAL REPORT
+
+When finished, give me a clear report containing:
+
+1. Authentication features completed
+2. Files created/modified
+3. Neon database changes
+4. API endpoints created/modified
+5. Packages added
+6. Environment variables required
+7. Facebook Developer settings still required
+8. Any email/password reset service configuration required
+9. Tests performed
+10. Any remaining issue that genuinely requires manual configuration
+
+IMPORTANT:
+If something cannot be completed because an external credential/configuration is required, do NOT fake it and do NOT mark it as complete.
+
+Instead:
+
+* Complete everything possible in the Replit project.
+* Clearly identify the exact manual configuration required.
+* Tell me exactly where to add it.
+
+Do not ask me to redesign or rebuild the existing authentication screens.
+
+Make the existing OG Landmark Login and Sign Up system fully functional using the existing Neon database and backend.

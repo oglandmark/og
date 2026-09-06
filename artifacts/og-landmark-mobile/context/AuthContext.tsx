@@ -241,7 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!res.user) return { success: false, error: 'Registration failed' };
       const mapped = {
         ...mapApiUser(res.user),
-        phone: res.user.phone || payload.phone,
+        phone: res.user.phone || payload.phone || '',
         role: payload.role,
         city: res.user.city || payload.city,
         agencyName: payload.agencyName,

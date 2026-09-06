@@ -8,3 +8,4 @@
 - [Expo GitHub build dispatch](expo-github-build-dispatch.md) — after repository linking, EAS dispatch can still return transient 503s; verify no queued build before retrying.
 - [Plot calculator geometry](plot-calculator-geometry.md) — irregular plots need diagonals for exact triangulation; side-only results must be labelled estimates or declined.
 - [EAS cloud monorepo builds](eas-cloud-monorepo-build.md) — direct CLI uploads bypass GitHub, but remote pnpm can fail on esbuild build-script policy in this workspace.
+- [Native splash provider order](native-splash-provider-order.md) — native-only startup overlays must render inside every context provider they consume; web previews may hide this class of crash.

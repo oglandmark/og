@@ -10,6 +10,7 @@
       }
     },
     "production": {
+      "node": "20.19.4",
       "distribution": "store",
       "android": {
         "buildType": "app-bundle"

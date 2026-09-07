@@ -1,0 +1,87 @@
+{
+  "expo": {
+    "name": "OG Landmark",
+    "slug": "og-land-mobile",
+    "version": "2.0.7",
+    "orientation": "portrait",
+    "icon": "./assets/images/app-icon-professional.png",
+    "scheme": "og-land-mobile",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.oglandmark.app"
+    },
+    "android": {
+      "package": "com.oglandmark.app",
+      "versionCode": 12,
+      "softwareKeyboardLayoutMode": "resize",
+      "icon": "./assets/images/app-icon-professional.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/app-icon-adaptive-foreground.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "config": {
+        "googleMaps": {
+          "apiKey": ""
+        }
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/images/app-icon-professional.png"
+    },
+    "assetBundlePatterns": [
+      "assets/images/*",
+      "assets/videos/*"
+    ],
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://replit.com/"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#102A43",
+          "image": "./assets/images/og-landmark-splash-brand.png",
+          "imageWidth": 280,
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#102A43",
+            "image": "./assets/images/og-landmark-splash-brand.png"
+          }
+        }
+      ],
+      "expo-font",
+      "expo-web-browser",
+      "expo-notifications",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "OG Landmark uses your location to show nearby properties.",
+          "locationWhenInUsePermission": "OG Landmark uses your location to show nearby properties."
+        }
+      ],
+      "expo-video",
+      "expo-audio",
+      "expo-asset"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e1d0d001-f2f1-47d6-ac6a-480298d77e2d"
+      }
+    },
+    "owner": "oglandmark26"
+  }
+}

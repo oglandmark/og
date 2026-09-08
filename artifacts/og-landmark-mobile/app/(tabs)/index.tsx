@@ -523,7 +523,6 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible }: {
       ) : isActive ? (
         <Image source={slide.image ?? require('@/assets/images/property-1.jpg')} style={bn.image} resizeMode="cover" />
       ) : null}
-      {isActive && <VideoWatermark placement="top-left" compact />}
     </Animated.View>
   );
 }

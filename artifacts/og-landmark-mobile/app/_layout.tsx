@@ -9,7 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold } from '@expo-google-fonts/playfair-display';
-import { useFonts } from 'expo-font';
+import { useFonts, type FontSource } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { SavedProvider } from '@/context/SavedContext';
@@ -208,10 +208,14 @@ function DirectionalApp() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({
+  // Expo Web can spend 12 seconds waiting for remote font-face assets in the
+  // preview proxy. Web already has safe browser fallbacks, while native must
+  // keep the bundled fonts for the branded startup screen.
+  const fontDefinitions: Record<string, FontSource> = Platform.OS === 'web' ? {} : {
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
     PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold,
-  });
+  };
+  const [fontsLoaded, fontError] = useFonts(fontDefinitions);
   const [fontGateTimedOut, setFontGateTimedOut] = React.useState(false);
   useEffect(() => {
     if (fontsLoaded || fontError || fontGateTimedOut) SplashScreen.hideAsync();

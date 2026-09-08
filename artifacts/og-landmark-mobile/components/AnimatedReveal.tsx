@@ -5,6 +5,7 @@
  *  - All animation runs on the UI thread via Reanimated worklets.
  *  - 280ms duration: fast enough to feel snappy, slow enough to feel premium.
  *  - Respects reduced-motion (collapses to instant snap when true).
+ *  - Starts visible so a missed navigation-focus callback can never hide content.
  *  - On tab return (progress ≥ 0.95) snaps to 1 — no re-animation.
  */
 import React, { useCallback } from 'react';
@@ -32,7 +33,10 @@ export function AnimatedReveal({
   distance = 8,
   style,
 }: AnimatedRevealProps) {
-  const progress = useSharedValue(0);
+  // Navigation focus events are not guaranteed to reach nested children on
+  // every Android lifecycle path. Start visible as a safety fallback; the
+  // focus effect still preserves the existing reveal behavior when available.
+  const progress = useSharedValue(1);
   const reducedMotion = useReducedMotion();
 
   useFocusEffect(

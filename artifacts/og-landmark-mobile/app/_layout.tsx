@@ -208,10 +208,14 @@ function DirectionalApp() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({
+  // Expo Web can spend 12 seconds waiting for remote font-face assets in the
+  // preview proxy. Web already has safe browser fallbacks, while native must
+  // keep the bundled fonts for the branded startup screen.
+  const fontDefinitions = Platform.OS === 'web' ? {} : {
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
     PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold,
-  });
+  };
+  const [fontsLoaded, fontError] = useFonts(fontDefinitions);
   const [fontGateTimedOut, setFontGateTimedOut] = React.useState(false);
   useEffect(() => {
     if (fontsLoaded || fontError || fontGateTimedOut) SplashScreen.hideAsync();

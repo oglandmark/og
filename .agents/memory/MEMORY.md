@@ -10,3 +10,4 @@
 - [EAS cloud monorepo builds](eas-cloud-monorepo-build.md) — direct CLI uploads bypass GitHub, but remote pnpm can fail on esbuild build-script policy in this workspace.
 - [Native splash provider order](native-splash-provider-order.md) — native-only startup overlays must render inside every context provider they consume; web previews may hide this class of crash.
 - [Android video compositing](android-video-compositing.md) — stacked Expo video surfaces can blank sibling content; use texture views and mount only the active banner video.
+- [GitHub connector write fallback](github-connector-write-fallback.md) — selected source-file writes may hit Cloudflare 403; publish through credential-injected Git data APIs.

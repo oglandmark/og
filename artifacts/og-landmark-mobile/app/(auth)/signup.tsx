@@ -35,7 +35,7 @@ export default function SignUpScreen() {
 
   const [name,     setName]     = useState('');
   const [identifier, setIdentifier] = useState('');
-  const [signupMethod, setSignupMethod] = useState<'email' | 'username' | 'mobile'>('email');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPwd,  setShowPwd]  = useState(false);
@@ -44,9 +44,9 @@ export default function SignUpScreen() {
   const [error,    setError]    = useState('');
 
   const rtl = isRTL ? 'right' as const : 'left' as const;
-  const signupPlaceholder = signupMethod === 'email'
-    ? tr('signupEmailPlaceholder')
-    : signupMethod === 'username' ? tr('signupUsernamePlaceholder') : tr('signupMobilePlaceholder');
+  const identifierValue = identifier.trim();
+  const isMobileIdentifier = identifierValue.length > 0
+    && /^[+\d\s().-]+$/.test(identifierValue);
 
   const handleFacebookSignup = useCallback(async (accessToken: string) => {
     const result = await loginSocial('facebook', accessToken);
@@ -62,11 +62,17 @@ export default function SignUpScreen() {
     if (!name.trim())                                          { setError('Full name is required.');                              return; }
     const value = identifier.trim();
     if (!value)                                                 { setError(tr('signupIdentifierRequired'));                      return; }
-    if (signupMethod === 'email' && !value.includes('@'))      { setError(tr('signupEmailError'));                              return; }
-    if (signupMethod === 'username' && !/^[A-Za-z][A-Za-z0-9._-]{2,29}$/.test(value)) {
+    if (isMobileIdentifier && value.replace(/\D/g,'').length < 10) {
+      setError(tr('signupMobileError')); return;
+    }
+    if (!isMobileIdentifier && value.includes('@') && !value.includes('.')) {
+      setError(tr('signupEmailError')); return;
+    }
+    if (!isMobileIdentifier && !value.includes('@') && !/^[A-Za-z][A-Za-z0-9._-]{2,29}$/.test(value)) {
       setError(tr('signupUsernameError')); return;
     }
-    if (signupMethod === 'mobile' && value.replace(/\D/g,'').length < 10) {
+    const secondaryPhone = mobileNumber.trim();
+    if (!isMobileIdentifier && secondaryPhone && secondaryPhone.replace(/\D/g, '').length < 10) {
       setError(tr('signupMobileError')); return;
     }
     if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
@@ -80,9 +86,9 @@ export default function SignUpScreen() {
 
     const res = await registerAPI({
       name:    name.trim(),
-      email:   signupMethod === 'email' ? value.toLowerCase() : undefined,
-      username: signupMethod === 'username' ? value.toLowerCase() : undefined,
-      phone:   signupMethod === 'mobile' ? value : undefined,
+      email:   !isMobileIdentifier && value.includes('@') ? value.toLowerCase() : undefined,
+      username: !isMobileIdentifier && !value.includes('@') ? value.toLowerCase() : undefined,
+      phone:   isMobileIdentifier ? value : secondaryPhone || undefined,
       password,
       confirmPassword,
       role:    'buyer',
@@ -154,40 +160,36 @@ export default function SignUpScreen() {
             />
           </View>
 
-          {/* Signup method */}
-          <View style={styles.fieldWrap}>
-            <Text style={[styles.label, { textAlign: rtl }]}>{tr('signupMethodLabel')}</Text>
-            <View style={[styles.methodRow, isRTL && { flexDirection: 'row-reverse' }]}>
-              {([
-                ['email', tr('signupMethodEmail')],
-                ['username', tr('signupMethodUsername')],
-                ['mobile', tr('signupMethodMobile')],
-              ] as const).map(([method, label]) => (
-                <Pressable
-                  key={method}
-                  onPress={() => { setSignupMethod(method); setIdentifier(''); setError(''); }}
-                  style={[styles.methodBtn, signupMethod === method && styles.methodBtnActive]}
-                >
-                  <Text style={[styles.methodText, signupMethod === method && styles.methodTextActive]}>{label}</Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
           {/* Account identifier */}
           <View style={styles.fieldWrap}>
             <Text style={[styles.label, { textAlign: rtl }]}>{tr('signupIdentifierLabel')}</Text>
             <TextInput
               value={identifier}
               onChangeText={(v) => { setIdentifier(v); setError(''); }}
-              keyboardType={signupMethod === 'mobile' ? 'phone-pad' : signupMethod === 'email' ? 'email-address' : 'default'}
+              keyboardType={isMobileIdentifier ? 'phone-pad' : 'default'}
               autoCapitalize="none"
-              placeholder={signupPlaceholder}
+              placeholder={tr('signupEmailPlaceholder')}
               placeholderTextColor={MUTED}
-              textAlign={rtl}
-              style={styles.underlineInput}
+              textAlign="left"
+              style={[styles.underlineInput, styles.identifierInput]}
             />
           </View>
+
+          {/* Optional secondary mobile number. A mobile identifier already fills this value. */}
+          {!isMobileIdentifier && (
+            <View style={styles.fieldWrap}>
+              <Text style={[styles.label, { textAlign: rtl }]}>{tr('signupMobileLabel')}</Text>
+              <TextInput
+                value={mobileNumber}
+                onChangeText={(v) => { setMobileNumber(v); setError(''); }}
+                keyboardType="phone-pad"
+                placeholder={tr('signupMobilePlaceholder')}
+                placeholderTextColor={MUTED}
+                textAlign="left"
+                style={[styles.underlineInput, styles.identifierInput]}
+              />
+            </View>
+          )}
 
           {/* Password */}
           <View style={styles.fieldWrap}>
@@ -313,14 +315,9 @@ const styles = StyleSheet.create({
 
   fieldWrap:      { marginBottom: 20 },
   label:          { fontFamily: 'Inter_500Medium', fontSize: 12, color: MUTED, marginBottom: 8, letterSpacing: 0.5 },
-  methodRow:      { flexDirection: 'row', gap: 6 },
-  methodBtn:      { flex: 1, minHeight: 38, borderRadius: 9, borderWidth: 1, borderColor: BORDER,
-                    alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5, backgroundColor: '#fff' },
-  methodBtnActive:{ backgroundColor: ACTION, borderColor: ACTION },
-  methodText:     { fontFamily: 'Inter_500Medium', fontSize: 11, color: MUTED },
-  methodTextActive:{ color: '#fff' },
   underlineInput: { fontFamily: 'Inter_400Regular', fontSize: 14, color: '#1c2024',
                     borderBottomWidth: 1, borderBottomColor: BORDER, paddingBottom: 10, paddingTop: 2 },
+  identifierInput: { writingDirection: 'ltr' },
   passRow:        { flexDirection: 'row', alignItems: 'center' },
   eyeBtn:         { paddingLeft: 8 },
   underlineLine:  { borderBottomWidth: 1, marginTop: 0 },

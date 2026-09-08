@@ -21,8 +21,8 @@ import MapView, {
   type MarkerDragStartEndEvent,
   type Region,
 } from 'react-native-maps';
-import * as Location from 'expo-location';
 import { Feather } from '@expo/vector-icons';
+import { getCurrentPosition } from '@/lib/locationService';
 
 // ─── OG Landmark dark-gold map style (Google Maps) ────────────────────────────
 const OG_MAP_STYLE = [
@@ -242,10 +242,9 @@ function InteractiveMapWithGoogleMaps({
     if (locating) return;
     setLocating(true);
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      const coord = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+      const pos = await getCurrentPosition();
+      if (!pos) return;
+      const coord = { latitude: pos.latitude, longitude: pos.longitude };
       setUserCoord(coord);
       mapRef.current?.animateToRegion(
         { ...coord, latitudeDelta: 0.01, longitudeDelta: 0.01 },

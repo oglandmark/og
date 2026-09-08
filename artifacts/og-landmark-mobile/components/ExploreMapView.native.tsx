@@ -9,7 +9,7 @@
  *  • Dark map style on Android (PROVIDER_GOOGLE)
  *  • Apple Maps dark on iOS (PROVIDER_DEFAULT + userInterfaceStyle)
  */
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import MapView, {
@@ -203,6 +203,18 @@ function ExploreMapViewWithGoogleMaps({
     latitudeDelta: userLat != null && userLng != null ? 0.1 : 0.22,
     longitudeDelta: userLat != null && userLng != null ? 0.1 : 0.22,
   };
+
+  // initialRegion is only read on the first native render. Recenter explicitly
+  // whenever Near Me obtains a fresh GPS coordinate while the map is already open.
+  useEffect(() => {
+    if (userLat == null || userLng == null || !isFinite(userLat) || !isFinite(userLng)) return;
+    const coordinate = { latitude: userLat, longitude: userLng };
+    setAreaCenter(coordinate);
+    mapRef.current?.animateToRegion(
+      { ...coordinate, latitudeDelta: 0.1, longitudeDelta: 0.1 },
+      550,
+    );
+  }, [userLat, userLng]);
 
   const handleAreaRadiusChange = useCallback((nextRadiusKm: number) => {
     setAreaRadiusKm(nextRadiusKm);

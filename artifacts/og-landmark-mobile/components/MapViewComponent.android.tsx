@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import * as Location from 'expo-location';
 import {
   AndroidLeafletMap,
   type AndroidMapBounds,
 } from '@/components/AndroidLeafletMap';
 import { useColors } from '@/hooks/useColors';
+import { getCurrentPosition } from '@/lib/locationService';
 
 interface StaticMapProps {
   latitude?: number;
@@ -119,12 +119,11 @@ export function InteractiveMap({
     if (locating) return;
     setLocating(true);
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-      const result = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      const result = await getCurrentPosition();
+      if (!result) return;
       const coordinate = {
-        latitude: result.coords.latitude,
-        longitude: result.coords.longitude,
+        latitude: result.latitude,
+        longitude: result.longitude,
       };
       ignoreMapPressUntil.current = Date.now() + 700;
       setUserCoordinate(coordinate);

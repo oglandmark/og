@@ -325,9 +325,21 @@ function buildMapHtml({
         if (!item.userLocation) bounds.push([item.latitude, item.longitude]);
       });
        if (clusterGroup && clusterGroup.getLayers().length) clusterGroup.addTo(map);
-      if (bounds.length > 1) {
+       // When GPS is active, the user marker is the requested center. Do not
+       // let the initial property fitBounds call move the map back to the
+       // property cluster.
+       var hasUserLocation = markers.some(function (item) { return item.userLocation; });
+       if (!hasUserLocation && bounds.length > 1) {
         map.fitBounds(bounds, { padding: [42, 42], maxZoom: 8 });
       }
+
+      window.__ogSetMapCenter = function (latitude, longitude, nextZoom) {
+        if (!isFinite(latitude) || !isFinite(longitude)) return;
+        map.setView([latitude, longitude], Number(nextZoom) || map.getZoom(), { animate: true });
+        setTimeout(function () { map.invalidateSize(true); }, 80);
+        sendBounds();
+        sendAreaCount();
+      };
 
       function sendBounds() {
         var b = map.getBounds();
@@ -382,6 +394,22 @@ export function AndroidLeafletMap(props: Props) {
   useEffect(() => {
     if (readyRef.current) syncAreaRadius(true);
   }, [props.areaRadiusKm]);
+
+  // Keep the embedded Leaflet camera in sync when the parent receives a new GPS
+  // position without relying on a WebView remount.
+  useEffect(() => {
+    if (!readyRef.current) return;
+    const latitude = Number(props.center.latitude);
+    const longitude = Number(props.center.longitude);
+    const zoom = Number(props.zoom ?? 10);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+    webViewRef.current?.injectJavaScript(`
+      if (window.__ogSetMapCenter) {
+        window.__ogSetMapCenter(${latitude}, ${longitude}, ${zoom});
+      }
+      true;
+    `);
+  }, [props.center.latitude, props.center.longitude, props.zoom]);
 
   useEffect(() => {
     readyRef.current = false;

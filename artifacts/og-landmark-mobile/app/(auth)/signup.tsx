@@ -166,12 +166,12 @@ export default function SignUpScreen() {
             <TextInput
               value={identifier}
               onChangeText={(v) => { setIdentifier(v); setError(''); }}
-              keyboardType={isMobileIdentifier ? 'phone-pad' : 'email-address'}
+              keyboardType={isMobileIdentifier ? 'phone-pad' : 'default'}
               autoCapitalize="none"
               placeholder={tr('signupEmailPlaceholder')}
               placeholderTextColor={MUTED}
-              textAlign={rtl}
-              style={styles.underlineInput}
+              textAlign="left"
+              style={[styles.underlineInput, styles.identifierInput]}
             />
           </View>
 
@@ -185,8 +185,8 @@ export default function SignUpScreen() {
                 keyboardType="phone-pad"
                 placeholder={tr('signupMobilePlaceholder')}
                 placeholderTextColor={MUTED}
-                textAlign={rtl}
-                style={styles.underlineInput}
+                textAlign="left"
+                style={[styles.underlineInput, styles.identifierInput]}
               />
             </View>
           )}
@@ -317,6 +317,7 @@ const styles = StyleSheet.create({
   label:          { fontFamily: 'Inter_500Medium', fontSize: 12, color: MUTED, marginBottom: 8, letterSpacing: 0.5 },
   underlineInput: { fontFamily: 'Inter_400Regular', fontSize: 14, color: '#1c2024',
                     borderBottomWidth: 1, borderBottomColor: BORDER, paddingBottom: 10, paddingTop: 2 },
+  identifierInput: { writingDirection: 'ltr' },
   passRow:        { flexDirection: 'row', alignItems: 'center' },
   eyeBtn:         { paddingLeft: 8 },
   underlineLine:  { borderBottomWidth: 1, marginTop: 0 },

@@ -30,7 +30,6 @@ export default function LoginScreen() {
   const { tr, isRTL } = useLanguage();
 
   const [identifier, setIdentifier] = useState('');
-  const [loginMethod, setLoginMethod] = useState<'email' | 'username' | 'mobile'>('email');
   const [password, setPassword]   = useState('');
   const [showPass, setShowPass]   = useState(false);
   const [rememberMe, setRemember] = useState(false);
@@ -38,12 +37,9 @@ export default function LoginScreen() {
   const [error, setError]         = useState('');
 
   const rtl = isRTL ? 'right' as const : 'left' as const;
-  const identifierLabel = loginMethod === 'email'
-    ? tr('emailLabel')
-    : loginMethod === 'username' ? tr('usernameLabel') : tr('mobileNumber');
-  const identifierPlaceholder = loginMethod === 'email'
-    ? tr('emailPlaceholderLogin')
-    : loginMethod === 'username' ? tr('usernamePlaceholderLogin') : tr('mobilePlaceholderLogin');
+  const identifierValue = identifier.trim();
+  const isMobileIdentifier = identifierValue.length > 0
+    && /^[+\d\s().-]+$/.test(identifierValue);
 
   const handleFacebookLogin = useCallback(async (accessToken: string) => {
     const result = await loginSocial('facebook', accessToken);
@@ -57,13 +53,16 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     const value = identifier.trim();
-    if (loginMethod === 'email' && (!value || !value.includes('@'))) { setError(tr('loginErrEmail')); return; }
-    if (loginMethod === 'username' && !/^[A-Za-z][A-Za-z0-9._-]{2,29}$/.test(value)) { setError(tr('loginErrUsername')); return; }
-    if (loginMethod === 'mobile' && value.replace(/\D/g, '').length < 10) { setError(tr('loginErrMobile')); return; }
+    if (!value) { setError(tr('loginErrEmail')); return; }
+    if (isMobileIdentifier && value.replace(/\D/g, '').length < 10) { setError(tr('loginErrMobile')); return; }
+    if (!isMobileIdentifier && value.includes('@') && !value.includes('.')) { setError(tr('loginErrEmail')); return; }
+    if (!isMobileIdentifier && !value.includes('@') && !/^[A-Za-z][A-Za-z0-9._-]{2,29}$/.test(value)) {
+      setError(tr('loginErrUsername')); return;
+    }
     if (!password || password.length < 4)       { setError(tr('loginErrPassword')); return; }
     setError('');
     setLoading(true);
-    const normalizedIdentifier = loginMethod === 'mobile' ? value : value.toLowerCase();
+    const normalizedIdentifier = isMobileIdentifier ? value : value.toLowerCase();
     const result = await loginAPI(normalizedIdentifier, password);
     setLoading(false);
     if (!result.success) {
@@ -108,38 +107,18 @@ export default function LoginScreen() {
             </View>
           )}
 
-          {/* Login method */}
-          <View style={styles.methodSection}>
-            <Text style={[styles.label, { textAlign: rtl }]}>{tr('loginIdentifierLabel')}</Text>
-            <View style={[styles.methodRow, isRTL && { flexDirection: 'row-reverse' }]}>
-              {([
-                ['email', tr('loginMethodEmail')],
-                ['username', tr('loginMethodUsername')],
-                ['mobile', tr('loginMethodMobile')],
-              ] as const).map(([method, label]) => (
-                <Pressable
-                  key={method}
-                  onPress={() => { setLoginMethod(method); setIdentifier(''); setError(''); }}
-                  style={[styles.methodBtn, loginMethod === method && styles.methodBtnActive]}
-                >
-                  <Text style={[styles.methodText, loginMethod === method && styles.methodTextActive]}>{label}</Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
           {/* Identifier */}
           <View style={styles.fieldWrap}>
-            <Text style={[styles.label, { textAlign: rtl }]}>{identifierLabel}</Text>
+            <Text style={[styles.label, { textAlign: rtl }]}>{tr('loginIdentifierLabel')}</Text>
             <TextInput
               value={identifier}
               onChangeText={(v) => { setIdentifier(v); setError(''); }}
-              keyboardType={loginMethod === 'mobile' ? 'phone-pad' : loginMethod === 'email' ? 'email-address' : 'default'}
-              autoCapitalize={loginMethod === 'username' ? 'none' : 'none'}
-              placeholder={identifierPlaceholder}
+              keyboardType={isMobileIdentifier ? 'phone-pad' : 'default'}
+              autoCapitalize="none"
+              placeholder={tr('loginIdentifierLabel')}
               placeholderTextColor={MUTED}
-              textAlign={rtl}
-              style={styles.underlineInput}
+              textAlign="left"
+              style={[styles.underlineInput, styles.identifierInput]}
             />
           </View>
 
@@ -263,16 +242,10 @@ const styles = StyleSheet.create({
   errorText:     { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#b94b42', flex: 1 },
 
   fieldWrap:     { marginBottom: 20 },
-  methodSection: { marginBottom: 16 },
   label:         { fontFamily: 'Inter_500Medium', fontSize: 12, color: MUTED, marginBottom: 8 },
-  methodRow:     { flexDirection: 'row', gap: 6 },
-  methodBtn:     { flex: 1, minHeight: 38, borderRadius: 9, borderWidth: 1, borderColor: BORDER,
-                   alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5, backgroundColor: '#fff' },
-  methodBtnActive:{ backgroundColor: ACTION, borderColor: ACTION },
-  methodText:    { fontFamily: 'Inter_500Medium', fontSize: 11, color: MUTED },
-  methodTextActive:{ color: '#fff' },
   underlineInput:{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#1c2024',
                    borderBottomWidth: 1, borderBottomColor: BORDER, paddingBottom: 10, paddingTop: 2 },
+  identifierInput: { writingDirection: 'ltr' },
   passRow:       { flexDirection: 'row', alignItems: 'center' },
   eyeBtn:        { paddingLeft: 8 },
   underlineLine: { borderBottomWidth: 1, marginTop: 0 },

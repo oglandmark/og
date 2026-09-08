@@ -4277,10 +4277,20 @@ app.get('/properties/:id', async (req, res) => {
       const m = prop.videoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
       if (m) ytEmbed = m[1];
     }
-    // Agent lookup
-    const agent = prop.agentId
-      ? (data.agents || []).find(a => a.id === prop.agentId && a.approvalStatus === 'Approved')
+    // Agent lookup. Admin assignments are stored as a snapshot on the
+    // property so a manually entered or city-agent contact remains stable
+    // even when the agent directory changes. Fall back to the legacy
+    // agentId directory for older listings.
+    const assignedAgent = prop.assignedAgent && prop.assignedAgent.name
+      ? {
+          ...prop.assignedAgent,
+          title: prop.assignedAgent.title || 'Property Consultant',
+          id: prop.assignedAgent.id || null,
+        }
       : null;
+    const agent = assignedAgent || (prop.agentId
+      ? (data.agents || []).find(a => a.id === prop.agentId && a.approvalStatus === 'Approved')
+      : null);
     // Similar properties (same type or city, max 3, exclude self)
     const similar = data.properties
       .filter(p => p.id !== prop.id && p.approvalStatus === 'Active' && (p.type === prop.type || p.city === prop.city))
@@ -4582,7 +4592,7 @@ app.get('/properties/:id', async (req, res) => {
         ${agent.phone ? `<div class="agent-contact">📞 ${agent.phone}</div>` : ''}
         ${agent.email ? `<div class="agent-contact">✉ ${agent.email}</div>` : ''}
         <div class="agent-btns">
-          <button class="btn-agent btn-agent-prim" onclick="window.location.href='/agents/${agent.id}'">View Profile</button>
+          ${agent.id ? `<button class="btn-agent btn-agent-prim" onclick="window.location.href='/agents/${agent.id}'">View Profile</button>` : ''}
           <a href="tel:${(agent.phone||'').replace(/\s/g,'')}" class="btn-agent btn-agent-sec" style="display:flex;align-items:center;justify-content:center">📞 Contact</a>
         </div>
       </div>` : ''}

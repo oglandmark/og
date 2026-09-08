@@ -12,13 +12,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // ─── Base URL ──────────────────────────────────────────────────────────────────
 // Override via EXPO_PUBLIC_API_URL in .env.local (no trailing /api)
 // e.g.  EXPO_PUBLIC_API_URL=https://oglandmark.com
-// The explicit URL must win over the injected preview domain so production
-// builds cannot accidentally keep calling a temporary Replit dev host.
+// The mobile app's API must use the live OG Landmark backend by default.
+// EXPO_PUBLIC_DOMAIN is the Expo preview host, not the product API host, so
+// it must never silently redirect authentication requests to a temporary
+// Replit domain.
 const configuredApiUrl = String(process.env.EXPO_PUBLIC_API_URL || '').trim().replace(/\/+$/, '');
-const injectedDomain = String(process.env.EXPO_PUBLIC_DOMAIN || '').trim();
 export const API_BASE: string =
   configuredApiUrl ||
-  (injectedDomain ? `https://${injectedDomain}` : 'https://oglandmark.com');
+  'https://oglandmark.com';
 
 const TOKEN_KEY = '@og-landmark/api-token';
 

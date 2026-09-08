@@ -68,7 +68,16 @@ export function accuracyColor(level: AccuracyLevel): string {
  */
 export async function requestLocationPermission(): Promise<boolean> {
   try {
-    const { status, canAskAgain } = await ExpoLocation.requestForegroundPermissionsAsync();
+    // Check the existing permission first. Calling requestForegroundPermissionsAsync
+    // on every tap can make Android repeat its permission flow even after access
+    // has already been granted.
+    const existing = await ExpoLocation.getForegroundPermissionsAsync();
+    if (existing.granted) return true;
+
+    const permission = existing.status === 'undetermined' || existing.canAskAgain
+      ? await ExpoLocation.requestForegroundPermissionsAsync()
+      : existing;
+    const { status, canAskAgain } = permission;
     if (status === 'granted') return true;
 
     if (!canAskAgain) {
@@ -103,11 +112,42 @@ export async function getCurrentPosition(): Promise<GPSResult | null> {
   if (!granted) return null;
 
   try {
+    if (Platform.OS === 'web') {
+      if (!navigator.geolocation) {
+        Alert.alert('Location Unavailable', 'This browser does not provide location services.');
+        return null;
+      }
+
+      const position = await new Promise<GeolocationPosition | null>((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          () => resolve(null),
+          { enableHighAccuracy: true, maximumAge: 30_000, timeout: 15_000 },
+        );
+      });
+      if (!position) {
+        Alert.alert('Location Unavailable', 'Could not get your current location. Check browser location access and try again.');
+        return null;
+      }
+
+      const accuracy = position.coords.accuracy ?? 999;
+      return {
+        latitude: parseFloat(position.coords.latitude.toFixed(7)),
+        longitude: parseFloat(position.coords.longitude.toFixed(7)),
+        accuracy,
+        accuracyLevel: classifyAccuracy(accuracy),
+      };
+    }
+
     const servicesEnabled = await ExpoLocation.hasServicesEnabledAsync();
     if (!servicesEnabled) {
       Alert.alert(
         'Turn On Location Services',
         'GPS is currently disabled. Turn on Location Services, then try again. You can also search an address or enter coordinates manually.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ],
       );
       return null;
     }

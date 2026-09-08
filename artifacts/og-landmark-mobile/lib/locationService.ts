@@ -108,9 +108,6 @@ export async function requestLocationPermission(): Promise<boolean> {
  * Tries high accuracy first; falls back to balanced if it times out.
  */
 export async function getCurrentPosition(): Promise<GPSResult | null> {
-  const granted = await requestLocationPermission();
-  if (!granted) return null;
-
   try {
     if (Platform.OS === 'web') {
       if (!navigator.geolocation) {
@@ -138,6 +135,9 @@ export async function getCurrentPosition(): Promise<GPSResult | null> {
         accuracyLevel: classifyAccuracy(accuracy),
       };
     }
+
+    const granted = await requestLocationPermission();
+    if (!granted) return null;
 
     const servicesEnabled = await ExpoLocation.hasServicesEnabledAsync();
     if (!servicesEnabled) {

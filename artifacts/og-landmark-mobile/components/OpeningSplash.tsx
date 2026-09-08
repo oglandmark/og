@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -102,17 +101,9 @@ export function OpeningSplash({ onFinished }: { onFinished?: () => void }) {
   return (
     <Animated.View
       pointerEvents="auto"
-      style={[StyleSheet.absoluteFill, styles.overlay, { backgroundColor: colors.action }, overlayStyle]}
+      style={[StyleSheet.absoluteFill, styles.overlay, { backgroundColor: colors.card }, overlayStyle]}
     >
-      <StatusBar style="light" />
-      <LinearGradient
-        pointerEvents="none"
-        colors={[colors.actionSoft, colors.action, colors.actionDeep]}
-        locations={[0, 0.42, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-      <View pointerEvents="none" style={[styles.glow, styles.glowTop, { backgroundColor: colors.actionGlassSoft }]} />
-      <View pointerEvents="none" style={[styles.glow, styles.glowBottom, { backgroundColor: colors.actionGlassSoft }]} />
+      <StatusBar style="dark" />
 
       {/* ── Centered logo block ── */}
       <View style={styles.center}>
@@ -121,7 +112,7 @@ export function OpeningSplash({ onFinished }: { onFinished?: () => void }) {
         </Animated.View>
 
         <Animated.View style={[styles.wordmark, wordmarkStyle]}>
-          <Text style={[styles.name, { color: colors.background }]}>OG Landmark</Text>
+          <Text style={[styles.name, { color: colors.action }]}>OG Landmark</Text>
           <Text style={[styles.category, { color: colors.primary }]}>REAL ESTATE</Text>
         </Animated.View>
       </View>
@@ -131,7 +122,7 @@ export function OpeningSplash({ onFinished }: { onFinished?: () => void }) {
         <Animated.View style={[styles.rule, { backgroundColor: colors.primary }, ruleStyle]} />
         <Animated.View style={taglineStyle}>
           <Text style={[styles.headline, { color: colors.primary }]}>FIND YOUR PLACE</Text>
-          <Text style={[styles.subheadline, { color: colors.background }]}>
+          <Text style={[styles.subheadline, { color: colors.action }]}>
             Verified property. Better living.
           </Text>
         </Animated.View>
@@ -142,15 +133,6 @@ export function OpeningSplash({ onFinished }: { onFinished?: () => void }) {
 
 const styles = StyleSheet.create({
   overlay: { zIndex: 100, elevation: 100 },
-  glow: {
-    position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    opacity: 0.35,
-  },
-  glowTop: { top: -100, right: -120 },
-  glowBottom: { bottom: -120, left: -130 },
 
   center: {
     flex: 1,

@@ -1052,16 +1052,16 @@ export default function ProfileScreen() {
         .then(setPhotoUri)
         .catch(() => setPhotoUri(null));
 
+      if (role === 'agent' || role === 'buyer') {
+        void getMyListings(user?.id ?? '')
+          .then((myL) => setListingsCount(myL.length))
+          .catch(() => setListingsCount(0));
+      }
+
       if (role === 'agent') {
-        void Promise.all([getMyListings(user?.id ?? ''), getLeads()])
-          .then(([myL, leads]) => {
-            setListingsCount(myL.length);
-            setAgentLeadsCount(leads.length);
-          })
-          .catch(() => {
-            setListingsCount(0);
-            setAgentLeadsCount(0);
-          });
+        void getLeads()
+          .then((leads) => setAgentLeadsCount(leads.length))
+          .catch(() => setAgentLeadsCount(0));
       }
 
       if (role === 'buyer' || role === null) {
@@ -1364,6 +1364,9 @@ export default function ProfileScreen() {
           {/* Shortcuts */}
           <AnimatedReveal delay={200}>
             <View style={styles.menuGroup}>
+              <RowLink icon="home" label="My Listed Properties"
+                sublabel={listingsCount > 0 ? `${listingsCount} propert${listingsCount !== 1 ? 'ies' : 'y'} listed` : 'View properties you have listed'}
+                onPress={() => router.push('/(tabs)/listings' as any)} colors={colors} iconColor={colors.action} />
               <RowLink icon="heart" label="Saved Properties"
                 sublabel={savedIds.length > 0 ? `${savedIds.length} propert${savedIds.length !== 1 ? 'ies' : 'y'} shortlisted` : 'Your favourites'}
                 onPress={() => router.push('/(tabs)/saved')} colors={colors} iconColor="#e71616" />

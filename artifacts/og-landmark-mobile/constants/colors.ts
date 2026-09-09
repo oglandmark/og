@@ -78,9 +78,34 @@ const colors = {
     input: '#ded9cf',
   },
 
-  // Border radius (in px). Sync from the sibling web artifact's --radius
-  // CSS variable. This value applies to cards, buttons, inputs, and modals.
+  // Shared layout tokens. Keeping these beside the semantic palette prevents
+  // screen-level style drift as new mobile flows are added.
   radius: 16,
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 20,
+    xxl: 24,
+    xxxl: 32,
+  },
+  radii: {
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 22,
+    pill: 999,
+  },
+  typography: {
+    caption: 11,
+    label: 12,
+    body: 14,
+    bodyLarge: 16,
+    screenTitle: 22,
+    display: 32,
+  },
+  controlHeight: 48,
 };
 
 export default colors;

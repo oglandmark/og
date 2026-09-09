@@ -14,6 +14,18 @@ export type Property = {
   address: string;
   lat: number;
   lng: number;
+  /** Structured backend location; lat/lng remain compatibility fields. */
+  location?: {
+    latitude?: number;
+    longitude?: number;
+    city?: string;
+    district?: string;
+    tehsil?: string;
+    locality?: string;
+    address?: string;
+    province?: string;
+    country?: string;
+  };
   description: string;
   image: ImageSourcePropType;
   gallery: ImageSourcePropType[];
@@ -865,6 +877,12 @@ export function apiPropertyToProperty(ap: {
   createdAt?: string | null; tags?: string[] | null;
   propertyScore?: { overall?: number | null } | null;
   lat?: number | null; lng?: number | null;
+   location?: {
+     latitude?: number | null; longitude?: number | null;
+     city?: string | null; district?: string | null; tehsil?: string | null;
+     locality?: string | null; address?: string | null; province?: string | null;
+     country?: string | null;
+   } | null;
   agentId?: number | null; sellerId?: number | null;
 }): Property {
   const safeId   = typeof ap.id === 'number' && isFinite(ap.id) ? ap.id : 0;
@@ -875,11 +893,18 @@ export function apiPropertyToProperty(ap: {
     (u) => ({ uri: resolveImageUrl(u) } as ImageSourcePropType),
   );
 
-  // Use backend-provided coords if valid, otherwise default to Okara city centre
+  // Structured coordinates are authoritative. Legacy lat/lng remain a
+  // compatibility fallback for older API rows and bundled demo properties.
   const rawLat = typeof ap.lat === 'number' ? ap.lat : NaN;
   const rawLng = typeof ap.lng === 'number' ? ap.lng : NaN;
-  const lat = isFinite(rawLat) && rawLat !== 0 ? rawLat : 30.8094;
-  const lng = isFinite(rawLng) && rawLng !== 0 ? rawLng : 73.4537;
+  const structuredLat = typeof ap.location?.latitude === 'number' ? ap.location.latitude : NaN;
+  const structuredLng = typeof ap.location?.longitude === 'number' ? ap.location.longitude : NaN;
+  const lat = isFinite(structuredLat) && structuredLat !== 0
+    ? structuredLat
+    : isFinite(rawLat) && rawLat !== 0 ? rawLat : 30.8094;
+  const lng = isFinite(structuredLng) && structuredLng !== 0
+    ? structuredLng
+    : isFinite(rawLng) && rawLng !== 0 ? rawLng : 73.4537;
 
   return {
     id:          safeId,
@@ -895,6 +920,24 @@ export function apiPropertyToProperty(ap: {
     address:     ap.address?.trim() || '',
     lat,
     lng,
+    location: {
+      latitude: lat,
+      longitude: lng,
+      city: ap.location?.city?.trim() || ap.city?.trim() || undefined,
+      district: ap.location?.district?.trim() || undefined,
+      tehsil: ap.location?.tehsil?.trim() || undefined,
+      locality: ap.location?.locality?.trim() || undefined,
+      address: ap.location?.address?.trim() || ap.address?.trim() || undefined,
+      province: ap.location?.province?.trim() || undefined,
+      country: ap.location?.country?.trim() || undefined,
+    },
+    locationDetails: {
+      province: ap.location?.province?.trim() || '',
+      district: ap.location?.district?.trim() || '',
+      tehsil: ap.location?.tehsil?.trim() || '',
+      village: ap.location?.locality?.trim() || '',
+      gps: `${lat}, ${lng}`,
+    },
     description: ap.description?.trim() || '',
     image,
     gallery,

@@ -143,6 +143,48 @@ export async function fetchPlaceDetails(
   };
 }
 
+/**
+ * Resolve a selected city/locality to a map center before the user drops an
+ * exact property pin. Google Places is preferred when configured; Nominatim is
+ * a public fallback for builds that use the Leaflet map without a Google key.
+ */
+export async function geocodeLocality(
+  locality: string,
+  city: string,
+): Promise<{ latitude: number; longitude: number } | null> {
+  const query = `${locality}, ${city}, Pakistan`;
+
+  if (API_KEY) {
+    const suggestions = await fetchAutocompleteSuggestions(query);
+    const first = suggestions[0];
+    if (first) {
+      const details = await fetchPlaceDetails(first.placeId);
+      if (details) return { latitude: details.latitude, longitude: details.longitude };
+    }
+  }
+
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=pk&accept-language=en&q=${encodeURIComponent(query)}`,
+      {
+        headers: {
+          Accept: 'application/json',
+          'User-Agent': 'OG-Landmark-Mobile/1.0',
+        },
+      },
+    );
+    if (!response.ok) return null;
+    const results = await response.json() as Array<{ lat?: string; lon?: string }>;
+    const result = results[0];
+    const latitude = Number(result?.lat);
+    const longitude = Number(result?.lon);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+    return { latitude, longitude };
+  } catch {
+    return null;
+  }
+}
+
 // ─── Reverse Geocoding ─────────────────────────────────────────────────────────
 
 /**

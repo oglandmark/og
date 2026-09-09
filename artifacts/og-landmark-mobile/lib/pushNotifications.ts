@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type * as Notifications from 'expo-notifications';
 import { updatePushToken } from '@/lib/api';
 
@@ -55,11 +56,13 @@ export async function configurePushNotifications(): Promise<PushConfigurationRes
 
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
+      // The notification center is the source of truth while the app is open.
+      // Background/closed delivery remains a native push notification.
+      shouldShowAlert: false,
+      shouldShowBanner: false,
+      shouldShowList: false,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
     }),
   });
   handlerConfigured = true;
@@ -129,13 +132,22 @@ export async function getExpoPushToken(): Promise<string | null> {
   // Android 13+ requires at least one notification channel before the runtime
   // permission prompt can be shown on a fresh installation.
   if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'OG Landmark',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#C8A45A',
-      sound: 'default',
-    });
+    const channels = [
+      ['properties', 'OG Landmark — Properties', Notifications.AndroidImportance.DEFAULT],
+      ['projects', 'OG Landmark — Projects', Notifications.AndroidImportance.DEFAULT],
+      ['announcements', 'OG Landmark — Announcements', Notifications.AndroidImportance.HIGH],
+      ['account', 'OG Landmark — Account', Notifications.AndroidImportance.HIGH],
+      ['system', 'OG Landmark — System', Notifications.AndroidImportance.MAX],
+    ] as const;
+    await Promise.all(channels.map(([id, name, importance]) =>
+      Notifications.setNotificationChannelAsync(id, {
+        name,
+        importance,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#C8A45A',
+        sound: 'default',
+      }),
+    ));
   }
 
   const existing = await Notifications.getPermissionsAsync();
@@ -176,7 +188,17 @@ export async function registerPushTokenForUser(userId: string): Promise<PushRegi
     return { status: 'denied', canAskAgain: permission.canAskAgain };
   }
 
-  await updatePushToken(numericUserId, token);
+  const deviceStorageKey = '@og-landmark/notification-device-id';
+  let deviceId = await AsyncStorage.getItem(deviceStorageKey).catch(() => null);
+  if (!deviceId) {
+    deviceId = `${Platform.OS}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    await AsyncStorage.setItem(deviceStorageKey, deviceId).catch(() => undefined);
+  }
+  await updatePushToken(numericUserId, token, {
+    deviceId,
+    platform: Platform.OS,
+    appVersion: String(Constants.expoConfig?.version || ''),
+  });
   return { status: 'registered' };
 }
 

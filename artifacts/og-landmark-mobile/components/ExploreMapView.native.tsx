@@ -6,16 +6,15 @@
  *  • Numbered clusters at overview zoom, price pills when zoomed in
  *  • Area circle follows the current map center while the user pans
  *  • User location dot
- *  • Dark map style on Android (PROVIDER_GOOGLE)
- *  • Apple Maps dark on iOS (PROVIDER_DEFAULT + userInterfaceStyle)
+ *  • Google Maps provider on both iOS and Android
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
+import Constants from 'expo-constants';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import MapView, {
   Circle,
   Marker,
-  PROVIDER_DEFAULT,
   PROVIDER_GOOGLE,
   type Region,
 } from 'react-native-maps';
@@ -37,6 +36,9 @@ interface MapProperty {
   price?: string | number;
   title?: string;
   type?: string;
+  address?: string;
+  city?: string;
+  image?: string;
 }
 
 interface Props {
@@ -46,13 +48,15 @@ interface Props {
   selectedId?: string | number;
   userLat?: number;
   userLng?: number;
+  centerLat?: number;
+  centerLng?: number;
   count?: number;
   colors?: any;
 }
 
 const OKARA_DISTRICT_CENTER = { latitude: 30.8105, longitude: 73.4597 };
 
-// ─── OG Landmark dark-gold map style (Android PROVIDER_GOOGLE only) ───────────
+// ─── OG Landmark dark-gold Google Maps style ──────────────────────────────────
 const OG_MAP_STYLE = [
   { elementType: 'geometry', stylers: [{ color: '#0e1e33' }] },
   { elementType: 'labels.text.stroke', stylers: [{ color: '#0e1e33' }] },
@@ -71,11 +75,15 @@ const OG_MAP_STYLE = [
   { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#3d4a5c' }] },
 ];
 
-const PROVIDER = Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT;
-// Do not mount the native Google provider in an APK made without its Maps SDK key.
-// It can crash Android during MapView initialization instead of showing an error.
-const HAS_ANDROID_MAPS_KEY =
-  Platform.OS !== 'android' || Boolean(process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim());
+const PROVIDER = PROVIDER_GOOGLE;
+// Do not mount the native Google provider in a build made without its SDK key.
+// It can crash during MapView initialization instead of showing an error.
+const GOOGLE_MAPS_KEY =
+  process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ||
+  Constants.expoConfig?.android?.config?.googleMaps?.apiKey?.trim() ||
+  Constants.expoConfig?.ios?.config?.googleMapsApiKey?.trim() ||
+  '';
+const HAS_GOOGLE_MAPS_KEY = Boolean(GOOGLE_MAPS_KEY);
 
 function GoogleMapsUnavailable() {
   return (
@@ -83,7 +91,7 @@ function GoogleMapsUnavailable() {
       <Feather name="map" size={28} color="#c8a45a" />
       <Text style={styles.mapsUnavailableTitle}>Google Maps unavailable</Text>
       <Text style={styles.mapsUnavailableText}>
-        This build needs its Android Maps API key.
+        This build needs its Google Maps API key.
       </Text>
     </View>
   );
@@ -164,7 +172,7 @@ const udot = StyleSheet.create({
 // ─── Region → bbox helper ──────────────────────────────────────────────────────
 // ─── Main component ────────────────────────────────────────────────────────────
 export function ExploreMapView(props: Props) {
-  if (!HAS_ANDROID_MAPS_KEY) return <GoogleMapsUnavailable />;
+  if (!HAS_GOOGLE_MAPS_KEY) return <GoogleMapsUnavailable />;
   return <ExploreMapViewWithGoogleMaps {...props} />;
 }
 
@@ -174,10 +182,25 @@ function ExploreMapViewWithGoogleMaps({
   selectedId,
   userLat,
   userLng,
+  centerLat,
+  centerLng,
+  onSearchArea,
 }: Props) {
   const [areaRadiusKm, setAreaRadiusKm] = useState(4);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
+  const [showSearchArea, setShowSearchArea] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState<MapProperty | null>(null);
+  const [mapReady, setMapReady] = useState(false);
+  const [mapError, setMapError] = useState(false);
+  const [mapAttempt, setMapAttempt] = useState(0);
+  const mapInitialized = useRef(false);
   const mapRef = useRef<MapView>(null);
+
+  useEffect(() => {
+    if (mapReady) return;
+    const timeout = setTimeout(() => setMapError(true), 15000);
+    return () => clearTimeout(timeout);
+  }, [mapReady, mapAttempt]);
 
   // Valid properties only
   const validProps = useMemo(() =>
@@ -190,8 +213,8 @@ function ExploreMapViewWithGoogleMaps({
   );
 
   // Initial region
-  const cLat = userLat ?? OKARA_DISTRICT_CENTER.latitude;
-  const cLng = userLng ?? OKARA_DISTRICT_CENTER.longitude;
+  const cLat = centerLat ?? userLat ?? OKARA_DISTRICT_CENTER.latitude;
+  const cLng = centerLng ?? userLng ?? OKARA_DISTRICT_CENTER.longitude;
   const [areaCenter, setAreaCenter] = useState({ latitude: cLat, longitude: cLng });
   const areaPropertyCount = useMemo(
     () => countPointsWithinRadius(validProps, areaCenter, areaRadiusKm),
@@ -207,14 +230,16 @@ function ExploreMapViewWithGoogleMaps({
   // initialRegion is only read on the first native render. Recenter explicitly
   // whenever Near Me obtains a fresh GPS coordinate while the map is already open.
   useEffect(() => {
-    if (userLat == null || userLng == null || !isFinite(userLat) || !isFinite(userLng)) return;
-    const coordinate = { latitude: userLat, longitude: userLng };
+    const nextLat = centerLat ?? userLat;
+    const nextLng = centerLng ?? userLng;
+    if (nextLat == null || nextLng == null || !isFinite(nextLat) || !isFinite(nextLng)) return;
+    const coordinate = { latitude: nextLat, longitude: nextLng };
     setAreaCenter(coordinate);
     mapRef.current?.animateToRegion(
       { ...coordinate, latitudeDelta: 0.1, longitudeDelta: 0.1 },
       550,
     );
-  }, [userLat, userLng]);
+  }, [centerLat, centerLng, userLat, userLng]);
 
   const handleAreaRadiusChange = useCallback((nextRadiusKm: number) => {
     setAreaRadiusKm(nextRadiusKm);
@@ -259,7 +284,22 @@ function ExploreMapViewWithGoogleMaps({
   const handleRegionChangeComplete = useCallback((region: Region) => {
     setCurrentRegion(region);
     setAreaCenter({ latitude: region.latitude, longitude: region.longitude });
+    if (mapInitialized.current) setShowSearchArea(true);
+    else mapInitialized.current = true;
   }, []);
+
+  const handleSearchArea = useCallback(() => {
+    if (!currentRegion || !onSearchArea) return;
+    onSearchArea({
+      north: currentRegion.latitude + currentRegion.latitudeDelta / 2,
+      south: currentRegion.latitude - currentRegion.latitudeDelta / 2,
+      east: currentRegion.longitude + currentRegion.longitudeDelta / 2,
+      west: currentRegion.longitude - currentRegion.longitudeDelta / 2,
+      centerLat: currentRegion.latitude,
+      centerLng: currentRegion.longitude,
+    });
+    setShowSearchArea(false);
+  }, [currentRegion, onSearchArea]);
 
   // Render individual property price markers.
   const renderedMarkers = useMemo(() =>
@@ -283,12 +323,16 @@ function ExploreMapViewWithGoogleMaps({
       }
 
       const id = feature.properties.id;
-      const selected = String(id) === String(selectedId);
+      const selected = String(id) === String(selectedId)
+        || String(id) === String(selectedProperty?.id);
       return (
         <Marker
           key={`prop-${id}`}
           coordinate={{ latitude: lat, longitude: lng }}
-          onPress={() => onSelect(id)}
+          onPress={() => {
+            const property = validProps.find((item) => String(item.id) === String(id));
+            setSelectedProperty(property ?? null);
+          }}
           anchor={{ x: 0.5, y: 0.5 }}
           tracksViewChanges={false}
           zIndex={selected ? 10 : 1}
@@ -297,16 +341,18 @@ function ExploreMapViewWithGoogleMaps({
         </Marker>
       );
     }),
-    [markers, selectedId, onSelect],
+    [markers, selectedId, selectedProperty?.id, validProps],
   );
 
   return (
     <View style={styles.container}>
       <MapView
         ref={mapRef}
+        key={`google-map-${mapAttempt}`}
         style={styles.map}
         provider={PROVIDER}
         initialRegion={initialRegion}
+        customMapStyle={OG_MAP_STYLE}
         onRegionChange={(region) => setAreaCenter({
           latitude: region.latitude,
           longitude: region.longitude,
@@ -317,6 +363,10 @@ function ExploreMapViewWithGoogleMaps({
         showsMyLocationButton={false}
         toolbarEnabled={false}
         moveOnMarkerPress={false}
+        onMapReady={() => {
+          setMapReady(true);
+          setMapError(false);
+        }}
       >
         <Circle
           center={areaCenter}
@@ -339,6 +389,40 @@ function ExploreMapViewWithGoogleMaps({
         )}
       </MapView>
 
+      {mapError ? (
+        <View style={styles.mapError}>
+          <Feather name="wifi-off" size={22} color="#c8a45a" />
+          <Text style={styles.mapErrorTitle}>Google Maps could not load</Text>
+          <Text style={styles.mapErrorText}>Check your connection and try again.</Text>
+          <Pressable
+            style={styles.retryButton}
+            onPress={() => {
+              setMapError(false);
+              setMapReady(false);
+              setMapAttempt((attempt) => attempt + 1);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Retry Google Maps"
+          >
+            <Text style={styles.retryButtonText}>Retry map</Text>
+          </Pressable>
+        </View>
+      ) : !mapReady && (
+        <View style={styles.mapLoading}>
+          <Text style={styles.mapLoadingText}>Loading Google Maps…</Text>
+        </View>
+      )}
+      {showSearchArea && onSearchArea && (
+        <Pressable
+          style={styles.searchAreaButton}
+          onPress={handleSearchArea}
+          accessibilityRole="button"
+          accessibilityLabel="Search properties in this map area"
+        >
+          <Feather name="search" size={14} color="#102a43" />
+          <Text style={styles.searchAreaText}>Search this area</Text>
+        </Pressable>
+      )}
       <View style={styles.rangeOverlay}>
         <MapAreaRange
           value={areaRadiusKm}
@@ -359,6 +443,47 @@ function ExploreMapViewWithGoogleMaps({
         <Text style={styles.countText}>{areaPropertyCount} on map</Text>
       </View>
 
+      {selectedProperty && (
+        <View style={styles.previewCard}>
+          {selectedProperty.image ? (
+            <Image source={{ uri: selectedProperty.image }} style={styles.previewImage} />
+          ) : (
+            <View style={styles.previewImagePlaceholder}>
+              <Feather name="home" size={22} color="#c8a45a" />
+            </View>
+          )}
+          <View style={styles.previewBody}>
+            <Text style={styles.previewTitle} numberOfLines={1}>
+              {selectedProperty.title || selectedProperty.type || 'Property'}
+            </Text>
+            <Text style={styles.previewAddress} numberOfLines={1}>
+              {selectedProperty.address || selectedProperty.city || 'Exact location available'}
+            </Text>
+            <Text style={styles.previewPrice} numberOfLines={1}>
+              {fmt(selectedProperty.price) || 'Price on request'}
+            </Text>
+          </View>
+          <Pressable
+            style={styles.previewButton}
+            onPress={() => {
+              onSelect(selectedProperty.id);
+              setSelectedProperty(null);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="View selected property"
+          >
+            <Text style={styles.previewButtonText}>View</Text>
+          </Pressable>
+          <Pressable
+            style={styles.previewClose}
+            onPress={() => setSelectedProperty(null)}
+            accessibilityRole="button"
+            accessibilityLabel="Close property preview"
+          >
+            <Feather name="x" size={15} color="#587089" />
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
@@ -371,6 +496,49 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   map:       { flex: 1 },
+  mapLoading: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(232,240,247,0.78)',
+  },
+  mapLoadingText: { color: '#587089', fontSize: 13, fontWeight: '700' },
+  mapError: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: '#e8f0f7',
+    gap: 7,
+  },
+  mapErrorTitle: { color: '#102a43', fontSize: 15, fontWeight: '800' },
+  mapErrorText: { color: '#587089', fontSize: 12, textAlign: 'center' },
+  retryButton: {
+    marginTop: 5,
+    borderRadius: 9,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#c8a45a',
+  },
+  retryButtonText: { color: '#102a43', fontSize: 11, fontWeight: '800' },
+  searchAreaButton: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    borderRadius: 17,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    backgroundColor: '#ffffff',
+    shadowColor: '#102a43',
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+  },
+  searchAreaText: { color: '#102a43', fontSize: 12, fontWeight: '800' },
   mapsUnavailable: {
     flex: 1, backgroundColor: '#e8f0f7', alignItems: 'center',
     justifyContent: 'center', padding: 24, gap: 7,
@@ -404,4 +572,43 @@ const styles = StyleSheet.create({
     right: 14,
     bottom: 14,
   },
+  previewCard: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: 72,
+    minHeight: 78,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 10,
+    borderRadius: 14,
+    backgroundColor: '#ffffff',
+    shadowColor: '#102a43',
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
+  },
+  previewImage: { width: 58, height: 58, borderRadius: 10, backgroundColor: '#e8f0f7' },
+  previewImagePlaceholder: {
+    width: 58,
+    height: 58,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#102a43',
+  },
+  previewBody: { flex: 1, minWidth: 0 },
+  previewTitle: { color: '#102a43', fontSize: 13, fontWeight: '800' },
+  previewAddress: { color: '#587089', fontSize: 11, marginTop: 3 },
+  previewPrice: { color: '#b58c34', fontSize: 12, fontWeight: '800', marginTop: 4 },
+  previewButton: {
+    borderRadius: 9,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: '#c8a45a',
+  },
+  previewButtonText: { color: '#102a43', fontSize: 11, fontWeight: '800' },
+  previewClose: { position: 'absolute', top: 6, right: 6, padding: 2 },
 });

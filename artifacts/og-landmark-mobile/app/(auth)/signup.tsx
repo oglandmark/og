@@ -6,6 +6,7 @@
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -22,6 +23,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { useFacebookAuth } from '@/lib/facebookAuth';
+import { Button } from '@/components/PolishedUI';
 
 const ACTION = '#102a43';
 const GOLD   = '#c8a45a';
@@ -98,8 +100,11 @@ export default function SignUpScreen() {
 
     if (res.pendingApproval) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      // Still let them in; show message
-      router.replace('/(tabs)');
+      Alert.alert(
+        'Account submitted',
+        'Your account is awaiting approval. You can continue exploring while we review your details.',
+        [{ text: 'Continue', onPress: () => router.replace('/(tabs)') }],
+      );
       return;
     }
 
@@ -232,19 +237,14 @@ export default function SignUpScreen() {
           </View>
 
           {/* Create Account button */}
-          <Pressable
+          <Button
             onPress={() => { void handleRegister(); }}
-            disabled={loading}
-            style={({ pressed }) => [
-              styles.submitBtn,
-              { backgroundColor: loading ? '#8fa8c0' : ACTION, opacity: pressed ? 0.88 : 1 },
-            ]}
+            loading={loading}
+            accessibilityLabel="Create Account"
+            style={styles.submitBtn}
           >
-            {loading
-              ? <ActivityIndicator size="small" color="#fff" />
-              : <Text style={styles.submitText}>Create Account</Text>
-            }
-          </Pressable>
+            Create Account
+          </Button>
 
           {/* Divider */}
           <View style={styles.dividerRow}>
@@ -253,7 +253,7 @@ export default function SignUpScreen() {
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Social buttons — matching login exactly */}
+          {/* Supported social sign-up only. */}
           <View style={styles.socialRow}>
             <Pressable
               onPress={() => { void facebook.signIn(); }}
@@ -266,22 +266,6 @@ export default function SignUpScreen() {
               <Text style={styles.socialText}>Facebook</Text>
             </Pressable>
 
-            <Pressable
-              onPress={() => { void handleRegister(); }}
-              disabled={loading || facebook.loading}
-              style={({ pressed }) => [styles.socialBtn, { opacity: pressed ? 0.5 : 1 }]}
-            >
-              <Feather name="mail" size={18} color={ACTION} />
-              <Text style={styles.socialText}>Email</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setError('Apple sign in is not configured yet. Please use Facebook or email sign up.')}
-              style={({ pressed }) => [styles.socialBtn, { opacity: pressed ? 0.5 : 1 }]}
-            >
-              <FontAwesome5 name="apple" size={18} color="#000" />
-              <Text style={styles.socialText}>Apple</Text>
-            </Pressable>
           </View>
 
           {/* Sign in link */}

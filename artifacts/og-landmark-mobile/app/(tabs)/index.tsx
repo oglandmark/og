@@ -24,6 +24,7 @@ import { PropertyCard } from '@/components/PropertyCard';
 import { useColors } from '@/hooks/useColors';
 import { useLanguage } from '@/context/LanguageContext';
 import { BrandMark } from '@/components/BrandMark';
+import { NotificationBell } from '@/components/NotificationBell';
 import { BrowseDiscoveryModule } from '@/components/BrowseDiscoveryModule';
 import { PropertyDemoBadge } from '@/components/PropertyDemoBadge';
 import { VideoWatermark } from '@/components/VideoWatermark';
@@ -46,6 +47,7 @@ import {
   CALC_FIELDS as SHARED_CALC_FIELDS,
 } from '@/lib/plotCalculator';
 import { PlotMeasurementCalculator } from '@/components/PlotMeasurementCalculator';
+import { StatusNotice } from '@/components/PolishedUI';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -1779,6 +1781,7 @@ export default function HomeScreen() {
 
   // ── Fetch banner slides on every focus so newly-uploaded banners appear ──────
   const [apiBannerSlides, setApiBannerSlides] = useState<BannerSlideData[]>([]);
+  const [propertyError, setPropertyError] = useState('');
   useFocusEffect(useCallback(() => {
     getMobileSettings()
       .then((settings) => setMobileContent(settings.content))
@@ -1803,9 +1806,10 @@ export default function HomeScreen() {
   // Fetch live properties from API on every focus; fall back to local mock silently
   useFocusEffect(useCallback(() => {
     setApiLoading(true);
+    setPropertyError('');
     getProperties({ limit: 60 })
       .then((ps) => { if (ps.length) setApiProps(ps.map(apiPropertyToProperty)); })
-      .catch(() => undefined)
+      .catch(() => setPropertyError('Live properties are temporarily unavailable. Showing curated examples instead.'))
       .finally(() => setApiLoading(false));
   }, []));
 
@@ -1866,6 +1870,7 @@ export default function HomeScreen() {
             </Animated.View>
           </Pressable>
           <BrandMark />
+          {user ? <NotificationBell compact /> : <View style={{ width: 36 }} />}
         </View>
 
         {/* Buy / Rent toggle — animated sliding pill */}
@@ -1956,7 +1961,16 @@ export default function HomeScreen() {
               />
             ))}
           </ScrollView>
-        ) : null}
+        ) : (
+          <StatusNotice
+            icon={propertyError ? 'wifi-off' : 'search'}
+            title={propertyError ? 'Unable to load live properties' : 'No featured properties yet'}
+            message={propertyError || 'Newly approved properties will appear here.'}
+            actionLabel={propertyError ? 'Try again' : undefined}
+            onAction={propertyError ? () => { setApiLoading(true); getProperties({ limit: 60 }).then((ps) => setApiProps(ps.map(apiPropertyToProperty))).catch(() => setPropertyError('Please check your connection and try again.')).finally(() => setApiLoading(false)); } : undefined}
+            tone={propertyError ? 'error' : 'neutral'}
+          />
+        )}
       </View>
 
       {/* ─── RECOMMENDED FOR YOU ─────────────────────────────────────────── */}

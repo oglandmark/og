@@ -4,10 +4,13 @@
 import {
   createProperty,
   updateProperty,
+  updatePropertyListingStatus,
   deleteProperty,
   getMyProperties,
+  resubmitProperty,
   type CreatePropertyPayload,
 } from '@/lib/api';
+import { buildCreatePropertyPayload } from '@/lib/listingPayload';
 
 export type ListingStatus = 'Active' | 'Pending' | 'Draft' | 'Paused' | 'Sold' | 'Rented';
 
@@ -25,6 +28,8 @@ export type UserListing = {
   area: number;
   areaUnit: string;
   city: string;
+  district?: string;
+  locality?: string;
   neighborhood: string;
   description: string;
   bedrooms: number;
@@ -32,6 +37,8 @@ export type UserListing = {
   postedAt: string;
   updatedAt?: string;
   listingStatus: ListingStatus;
+  reviewStatus?: string;
+  reviewReason?: string;
   expiresAt?: string;
   views: number;
   saves: number;
@@ -51,8 +58,26 @@ export type UserListing = {
   placeId?: string;        // Google Place ID
   locationAccuracy?: number;
   locationSource?: string;
+  location?: {
+    latitude?: number | null;
+    longitude?: number | null;
+    city?: string;
+    district?: string;
+    tehsil?: string;
+    locality?: string;
+    address?: string;
+    province?: string;
+    country?: string;
+    postalCode?: string;
+    source?: string;
+    accuracy?: number | null;
+    placeId?: string | null;
+  };
   images?: string[];       // backend URLs after upload
   videoUrl?: string;       // backend URL after upload
+  features?: string[];
+  documents?: string[];
+  propertyDetails?: Record<string, unknown>;
 };
 
 function migrateListing(l: Partial<UserListing> & { id: string; postedBy: string }): UserListing {
@@ -83,15 +108,25 @@ function mapApiPropToListing(p: Awaited<ReturnType<typeof getMyProperties>>[numb
     area:         p.area,
     areaUnit:     p.areaUnit ?? 'Marla',
     city:         p.city,
+    district:     p.district ?? p.location?.district,
+    locality:     p.locality ?? p.location?.locality,
     neighborhood: p.address ?? '',
     description:  p.description ?? '',
     bedrooms:     p.bedrooms ?? 0,
     bathrooms:    p.bathrooms ?? 0,
     postedAt:     p.createdAt ?? new Date().toISOString(),
     listingStatus: (
+      p.listingStatus === 'Active'    ? 'Active'  :
+      p.listingStatus === 'Draft'     ? 'Draft'   :
+      p.listingStatus === 'Paused'    ? 'Paused'  :
+      p.listingStatus === 'Sold'      ? 'Sold'    :
+      p.listingStatus === 'Rented'    ? 'Rented'  :
       p.approvalStatus === 'Active'   ? 'Active'  :
+      p.approvalStatus === 'Draft'    ? 'Draft'   :
       p.approvalStatus === 'Rejected' ? 'Paused'  : 'Pending'
     ) as ListingStatus,
+    reviewStatus: p.approvalStatus,
+    reviewReason: p.rejectionReason || p.changeRequest || undefined,
     views:      p.views ?? 0,
     saves:      0,
     leadsCount: p.inquiryCount ?? 0,
@@ -100,6 +135,10 @@ function mapApiPropToListing(p: Awaited<ReturnType<typeof getMyProperties>>[numb
     latitude:   p.lat,
     longitude:  p.lng,
     fullAddress: p.address ?? '',
+    location: p.location,
+    features: p.features ?? p.amenities ?? [],
+    documents: p.documents ?? p.media?.documents?.map(d => d.name || d.url || '').filter(Boolean) ?? [],
+    propertyDetails: p.propertyDetails ?? {},
   };
 }
 
@@ -125,13 +164,7 @@ export async function addUserListing(listing: UserListing): Promise<void> {
     updatedAt: now,
   };
 
-  const payload: CreatePropertyPayload = {
-    title: newEntry.title, type: newEntry.type, status: newEntry.status,
-    price: newEntry.price, area: newEntry.area, areaUnit: newEntry.areaUnit,
-    bedrooms: newEntry.bedrooms, bathrooms: newEntry.bathrooms, city: newEntry.city,
-    address: newEntry.fullAddress || newEntry.neighborhood, description: newEntry.description,
-    lat: newEntry.latitude, lng: newEntry.longitude, images: newEntry.images, videoUrl: newEntry.videoUrl,
-  };
+  const payload: CreatePropertyPayload = buildCreatePropertyPayload(newEntry);
   await createProperty(payload);
 }
 
@@ -145,7 +178,22 @@ export async function updateUserListing(updated: UserListing): Promise<void> {
     area: entry.area, areaUnit: entry.areaUnit, bedrooms: entry.bedrooms, bathrooms: entry.bathrooms,
     city: entry.city, address: entry.fullAddress || entry.neighborhood, description: entry.description,
     lat: entry.latitude, lng: entry.longitude,
+    district: entry.district,
+    locality: entry.locality ?? entry.neighborhood,
+    tehsil: entry.tehsil,
+    features: entry.features,
+    documents: entry.documents,
+    propertyDetails: entry.propertyDetails,
+    location: entry.location,
+    ...(entry.listingStatus === 'Pending' ? { submissionState: 'submitted' as const } : {}),
   });
+}
+
+export async function resubmitUserListing(id: string): Promise<UserListing[]> {
+  const listing = (await getUserListings()).find((item) => item.id === id);
+  if (!listing?.apiId) throw new Error('Listing is not available on the server.');
+  await resubmitProperty(listing.apiId);
+  return getUserListings();
 }
 
 export async function updateListingStatus(
@@ -153,7 +201,7 @@ export async function updateListingStatus(
 ): Promise<UserListing[]> {
   const listing = (await getUserListings()).find((item) => item.id === id);
   if (!listing?.apiId) throw new Error('Listing is not available on the server.');
-  await updateProperty(listing.apiId, { status: listingStatus });
+  await updatePropertyListingStatus(listing.apiId, listingStatus);
   return getUserListings();
 }
 

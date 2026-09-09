@@ -5,17 +5,23 @@
  */
 import * as ExpoLocation from 'expo-location';
 import { Alert, Linking, Platform } from 'react-native';
+import {
+  accuracyColor,
+  accuracyLabel,
+  classifyAccuracy,
+  getCurrentPositionFromProvider,
+} from './locationFlow';
+import type { GPSResult } from './locationFlow';
+export {
+  accuracyColor,
+  accuracyLabel,
+  classifyAccuracy,
+  type AccuracyLevel,
+  type GPSResult,
+} from './locationFlow';
+export type { LocationProvider } from './locationFlow';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
-
-export type AccuracyLevel = 'high' | 'medium' | 'low' | 'unknown';
-
-export interface GPSResult {
-  latitude: number;
-  longitude: number;
-  accuracy: number;          // metres
-  accuracyLevel: AccuracyLevel;
-}
 
 export interface LocationData {
   latitude: number;
@@ -34,31 +40,6 @@ export interface LocationData {
 }
 
 // ─── Accuracy helpers ──────────────────────────────────────────────────────────
-
-export function classifyAccuracy(accuracyMetres: number): AccuracyLevel {
-  if (accuracyMetres <= 20)  return 'high';
-  if (accuracyMetres <= 100) return 'medium';
-  if (accuracyMetres <= 500) return 'low';
-  return 'unknown';
-}
-
-export function accuracyLabel(level: AccuracyLevel): string {
-  switch (level) {
-    case 'high':    return 'High accuracy (GPS)';
-    case 'medium':  return 'Medium accuracy';
-    case 'low':     return 'Low accuracy — move outdoors or adjust pin manually';
-    default:        return 'Accuracy unknown';
-  }
-}
-
-export function accuracyColor(level: AccuracyLevel): string {
-  switch (level) {
-    case 'high':   return '#16a34a';
-    case 'medium': return '#d97706';
-    case 'low':    return '#dc2626';
-    default:       return '#64748b';
-  }
-}
 
 // ─── Permissions ───────────────────────────────────────────────────────────────
 
@@ -136,37 +117,44 @@ export async function getCurrentPosition(): Promise<GPSResult | null> {
       };
     }
 
-    const granted = await requestLocationPermission();
-    if (!granted) return null;
-
-    const servicesEnabled = await ExpoLocation.hasServicesEnabledAsync();
-    if (!servicesEnabled) {
-      Alert.alert(
-        'Turn On Location Services',
-        'GPS is currently disabled. Turn on Location Services, then try again. You can also search an address or enter coordinates manually.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => Linking.openSettings() },
-        ],
-      );
-      return null;
-    }
-
-    // Try high accuracy first (may be slower)
-    const pos = await ExpoLocation.getCurrentPositionAsync({
-      accuracy: ExpoLocation.Accuracy.High,
-    }).catch(() =>
-      // Fallback to balanced if high accuracy fails/times out
-      ExpoLocation.getCurrentPositionAsync({ accuracy: ExpoLocation.Accuracy.Balanced }),
-    );
-
-    const acc = pos.coords.accuracy ?? 999;
-    return {
-      latitude:      parseFloat(pos.coords.latitude.toFixed(7)),
-      longitude:     parseFloat(pos.coords.longitude.toFixed(7)),
-      accuracy:      acc,
-      accuracyLevel: classifyAccuracy(acc),
-    };
+    return getCurrentPositionFromProvider(ExpoLocation, {
+      onPermissionDenied: ({ canAskAgain }) => {
+        if (!canAskAgain) {
+          Alert.alert(
+            'Location Permission Required',
+            'Location access is permanently denied. Please enable it in Settings to use GPS features.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            ],
+          );
+        } else {
+          Alert.alert(
+            'Location Permission',
+            'Allow location access to use GPS features like "Use My Location" and "Near Me".',
+          );
+        }
+      },
+      onServicesDisabled: () => {
+        Alert.alert(
+          'Turn On Location Services',
+          'GPS is currently disabled. Turn on Location Services, then try again. You can also search an address or enter coordinates manually.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          ],
+        );
+      },
+      onUnavailable: (reason) => {
+        if (reason === 'permission-denied' || reason === 'services-disabled') return;
+        Alert.alert(
+          'Location Unavailable',
+          reason === 'timeout'
+            ? 'GPS could not return a position yet. Keep Location Services on and try Use My Location again.'
+            : 'Could not get your current location. Make sure GPS is enabled and try again.',
+        );
+      },
+    });
   } catch (err) {
     Alert.alert(
       'Location Unavailable',

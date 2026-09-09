@@ -17,7 +17,7 @@ import { openGoogleMaps, type LocationData } from '@/lib/locationService';
 import {
   getAdminProperties, ApiProperty,
   approveProperty, rejectProperty,
-  toggleFeatureProperty, deleteAdminProperty, updateProperty, sendBroadcastPush,
+  toggleFeatureProperty, deleteAdminProperty, updateProperty,
 } from '@/lib/api';
 
 const NAVY = '#102a43';
@@ -87,19 +87,6 @@ export default function AdminProperties() {
   async function doApprove(prop: ApiProperty) {
     try {
       await approveProperty(prop.id);
-      try {
-        await sendBroadcastPush(
-          'New Property Listed',
-          `${prop.title} is now available in ${prop.city}.`,
-          { type: 'property', propertyId: prop.id },
-        );
-      } catch (error: unknown) {
-        console.warn('[push] Property approval broadcast failed.', error);
-        Alert.alert(
-          'Approved, but notification failed',
-          'The property was approved, but its notification could not be sent. You can retry from Broadcast Notification.',
-        );
-      }
       setProperties(p => p.filter(x => x.id !== prop.id));
     } catch { Alert.alert('Error', 'Could not approve.'); }
   }

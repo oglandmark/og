@@ -57,6 +57,17 @@ function upcomingDates(count = 7): { label: string; iso: string }[] {
   return result;
 }
 
+function formatVisitDate(iso: string): string {
+  const date = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleDateString('en-PK', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
 // ── Inquiry Modal (shown when buyer taps "Send Inquiry") ─────────────────────
 
 function InquiryModal({
@@ -426,7 +437,7 @@ function AppointmentModal({
               <Text style={[iq.successTitle, { color: colors.foreground }]}>Visit Booked!</Text>
               <Text style={[iq.successDesc, { color: colors.mutedForeground }]}>
                 Your {visitType.toLowerCase()} request for{'\n'}
-                <Text style={{ fontFamily: 'Inter_600SemiBold' }}>{selectedDate} at {selectedTime}</Text>
+                 <Text style={{ fontFamily: 'Inter_600SemiBold' }}>{formatVisitDate(selectedDate)} at {selectedTime}</Text>
                 {'\n'}has been submitted. The agent will confirm shortly.
               </Text>
               <View style={iq.successBtns}>
@@ -517,12 +528,29 @@ function AppointmentModal({
               </View>
 
               {/* Submit */}
-              <Pressable onPress={handleBook} disabled={booking}
-                style={[iq.sendBtn, { backgroundColor: colors.action, opacity: booking ? 0.72 : 1 }]}>
-                <Feather name="calendar" size={15} color={colors.actionForeground} />
-                <Text style={[iq.sendBtnText, { color: colors.actionForeground }]}>
-                  {booking ? 'Booking…' : 'Confirm Booking'}
+              <Pressable
+                onPress={handleBook}
+                disabled={booking}
+                accessibilityRole="button"
+                accessibilityLabel={booking ? 'Booking site visit' : 'Confirm site visit'}
+                style={({ pressed }) => [
+                  iq.sendBtn,
+                  {
+                    backgroundColor: colors.action,
+                    opacity: booking ? 0.72 : pressed ? 0.88 : 1,
+                    shadowColor: colors.actionDeep,
+                    shadowOpacity: 0.2,
+                    shadowRadius: 10,
+                    shadowOffset: { width: 0, height: 4 },
+                    elevation: 4,
+                  },
+                ]}
+              >
+                <Feather name="calendar" size={16} color="#ffffff" />
+                <Text style={[iq.sendBtnText, { color: '#ffffff' }]}>
+                  {booking ? 'Booking…' : 'Confirm Site Visit'}
                 </Text>
+                {!booking ? <Feather name="arrow-right" size={16} color="#ffffff" /> : null}
               </Pressable>
             </>
           )}
@@ -563,8 +591,8 @@ const iq = StyleSheet.create({
   actions:         { flexDirection: 'row', gap: 10, marginBottom: 4, marginTop: 4 },
   altBtn:          { flex: 0.7, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 14, paddingVertical: 14 },
   altBtnText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
-  sendBtn:         { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 14 },
-  sendBtnText:     { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  sendBtn:         { flex: 1, minHeight: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 16, paddingHorizontal: 18, paddingVertical: 14 },
+  sendBtnText:     { fontFamily: 'Inter_700Bold', fontSize: 14, lineHeight: 20, letterSpacing: 0.1 },
   // success
   successWrap:     { alignItems: 'center', paddingVertical: 24, gap: 10, paddingHorizontal: 10 },
   successIcon:     { width: 72, height: 72, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
@@ -1084,17 +1112,36 @@ function PropertyDetailMap({
   property,
   colors,
 }: {
-  property: { lat: number; lng: number; address: string };
+  property: {
+    lat: number;
+    lng: number;
+    address: string;
+    location?: {
+      latitude?: number;
+      longitude?: number;
+      address?: string;
+      city?: string;
+      district?: string;
+      tehsil?: string;
+      locality?: string;
+    };
+  };
   colors: ReturnType<typeof useColors>;
 }) {
   const [satellite, setSatellite] = useState(false);
+  const latitude = Number.isFinite(property.location?.latitude)
+    ? property.location!.latitude!
+    : property.lat;
+  const longitude = Number.isFinite(property.location?.longitude)
+    ? property.location!.longitude!
+    : property.lng;
 
   const hasCoords =
-    isFinite(property.lat) &&
-    isFinite(property.lng) &&
-    !(property.lat === 0 && property.lng === 0) &&
-    property.lat >= -90 && property.lat <= 90 &&
-    property.lng >= -180 && property.lng <= 180;
+    isFinite(latitude) &&
+    isFinite(longitude) &&
+    !(latitude === 0 && longitude === 0) &&
+    latitude >= -90 && latitude <= 90 &&
+    longitude >= -180 && longitude <= 180;
 
   return (
     <View style={[styles.detailMapCard, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
@@ -1108,8 +1155,8 @@ function PropertyDetailMap({
           </View>
         ) : (
           <StaticMap
-            latitude={property.lat}
-            longitude={property.lng}
+            latitude={latitude}
+            longitude={longitude}
             satellite={satellite}
             interactive
           />
@@ -1134,7 +1181,12 @@ function PropertyDetailMap({
         <View style={[styles.detailMapLocRow, { borderTopColor: colors.border }]}>
           <Feather name="map-pin" size={13} color={colors.action} style={{ marginTop: 1 }} />
           <Text style={[styles.detailMapLocText, { color: colors.mutedForeground }]} numberOfLines={2}>
-            {[(property as any).locality, (property as any).city, (property as any).district].filter(Boolean).join(' · ') || property.address}
+            {[
+              property.location?.locality,
+              property.location?.city,
+              property.location?.district,
+              property.location?.tehsil,
+            ].filter(Boolean).join(' · ') || property.location?.address || property.address}
           </Text>
         </View>
       )}
@@ -1145,7 +1197,7 @@ function PropertyDetailMap({
           <Pressable
             onPress={() =>
               Linking.openURL(
-                `https://www.google.com/maps/search/?api=1&query=${property.lat},${property.lng}`
+                `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
               )
             }
             style={({ pressed }) => [
@@ -1157,7 +1209,7 @@ function PropertyDetailMap({
             <Text style={[styles.detailMapActionText, { color: colors.action }]}>Open in Maps</Text>
           </Pressable>
           <Pressable
-            onPress={() => openDirections(property.lat, property.lng)}
+            onPress={() => openDirections(latitude, longitude)}
             style={({ pressed }) => [
               styles.detailMapAction,
               { flex: 1, backgroundColor: '#1a6b3a15', opacity: pressed ? 0.72 : 1 },

@@ -5,8 +5,8 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Alert, KeyboardAvoidingView, Platform, Pressable,
-  ScrollView, StyleSheet, View,
+  Alert, Platform, Pressable,
+  StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
@@ -17,6 +17,7 @@ import { useColors } from '@/hooks/useColors';
 import { BrandMark } from '@/components/BrandMark';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { requestPasswordReset, confirmPasswordReset } from '@/lib/api';
 
 // ── Main screen ───────────────────────────────────────────────────────────────
@@ -39,6 +40,14 @@ export default function ForgotPasswordScreen() {
   const [resendSecs, setResendSecs]   = useState(0);
 
   const digitRefs = useRef<(React.ElementRef<typeof TextInput> | null)[]>([]);
+  const scrollRef = useRef<any>(null);
+
+  const revealPasswordActions = () => {
+    // Android's IME can cover the reset button before the focused field is
+    // considered obscured. Move the whole final step above the keyboard so
+    // the action remains reachable without dragging the page manually.
+    setTimeout(() => scrollRef.current?.scrollToEnd?.({ animated: true }), 120);
+  };
 
   // Countdown timer for resend
   useEffect(() => {
@@ -129,7 +138,14 @@ export default function ForgotPasswordScreen() {
       );
     } catch (err: unknown) {
       setLoading(false);
-      setError(err instanceof Error ? err.message : 'Reset failed. Please check your code and try again.');
+      const message = err instanceof Error ? err.message : 'Reset failed. Please check your code and try again.';
+      if (/reset code/i.test(message)) {
+        setStep(2);
+        setError(message);
+        setTimeout(() => digitRefs.current[0]?.focus(), 80);
+      } else {
+        setError(message);
+      }
     }
   };
 
@@ -159,14 +175,20 @@ export default function ForgotPasswordScreen() {
   const pct = step === 1 ? 33 : step === 2 ? 66 : 100;
 
   return (
-    <KeyboardAvoidingView
-      style={[st.screen, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={{ paddingTop: topPad + 12, paddingBottom: insets.bottom + 40, paddingHorizontal: 24 }}
+    <View style={[st.screen, { backgroundColor: colors.background }]}>
+      <KeyboardAwareScrollViewCompat
+        ref={scrollRef}
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingTop: topPad + 12,
+          paddingBottom: insets.bottom + 40,
+          paddingHorizontal: 24,
+        }}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
+        bottomOffset={Platform.OS === 'android' ? 220 : 140}
       >
         {/* ── Header ── */}
         <View style={st.headerRow}>
@@ -231,66 +253,68 @@ export default function ForgotPasswordScreen() {
             STEP 2 — 6-digit code
         ════════════════════════════════════════════════════════ */}
         {step === 2 && (
-          <AnimatedReveal distance={16}>
-            <Text style={[st.eyebrow, { color: colors.primary }]}>VERIFY EMAIL</Text>
-            <Text style={[st.title, { color: colors.foreground }]}>Enter the{'\n'}6-digit code</Text>
-            <Text style={[st.sub, { color: colors.mutedForeground }]}>
-              A verification code was sent to{' '}
-              <Text style={{ color: colors.foreground, fontFamily: 'Inter_600SemiBold' }}>{email}</Text>.
-              {'\n'}The code expires in 15 minutes.
-            </Text>
+          <View style={st.otpStepContent}>
+            <AnimatedReveal distance={16}>
+              <Text style={[st.eyebrow, st.centerText, { color: colors.primary }]}>VERIFY EMAIL</Text>
+              <Text style={[st.title, st.centerText, { color: colors.foreground }]}>Enter the{'\n'}6-digit code</Text>
+              <Text style={[st.sub, st.centerText, { color: colors.mutedForeground }]}>
+                A verification code was sent to{' '}
+                <Text style={{ color: colors.foreground, fontFamily: 'Inter_600SemiBold' }}>{email}</Text>.
+                {'\n'}The code expires in 15 minutes.
+              </Text>
 
-            {error ? <ErrorBox error={error} colors={colors} /> : null}
+              {error ? <ErrorBox error={error} colors={colors} /> : null}
 
-            {/* OTP boxes */}
-            <View style={st.otpRow}>
-              {code.map((digit, i) => (
-                <View
-                  key={i}
-                  style={[
-                    st.otpBox,
-                    {
-                      backgroundColor: colors.glassCard,
-                      borderColor: digit ? colors.action : colors.glassBorder,
-                      shadowColor: digit ? colors.action : 'transparent',
-                    },
-                  ]}
-                >
-                  <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
-                  <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
-                  <TextInput
-                    ref={(r) => { digitRefs.current[i] = r; }}
-                    value={digit}
-                    onChangeText={(v) => handleDigit(v, i)}
-                    onKeyPress={(e) => handleDigitKeyPress(e, i)}
-                    keyboardType="number-pad"
-                    maxLength={1}
-                    selectTextOnFocus
-                    style={[st.otpInput, { color: colors.foreground }]}
-                  />
-                </View>
-              ))}
-            </View>
+              {/* OTP boxes */}
+              <View style={st.otpRow}>
+                {code.map((digit, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      st.otpBox,
+                      {
+                        backgroundColor: colors.glassCard,
+                        borderColor: digit ? colors.action : colors.glassBorder,
+                        shadowColor: digit ? colors.action : 'transparent',
+                      },
+                    ]}
+                  >
+                    <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+                    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
+                    <TextInput
+                      ref={(r) => { digitRefs.current[i] = r; }}
+                      value={digit}
+                      onChangeText={(v) => handleDigit(v, i)}
+                      onKeyPress={(e) => handleDigitKeyPress(e, i)}
+                      keyboardType="number-pad"
+                      maxLength={1}
+                      selectTextOnFocus
+                      style={[st.otpInput, { color: colors.foreground }]}
+                    />
+                  </View>
+                ))}
+              </View>
 
-            <AnimatedPressable onPress={verifyCode} style={[st.btn, { backgroundColor: colors.action }]}>
-              <Text style={[st.btnText, { color: colors.actionForeground }]}>Verify Code</Text>
-              <Feather name="check" size={16} color={colors.actionForeground} />
-            </AnimatedPressable>
+              <AnimatedPressable onPress={verifyCode} style={[st.btn, st.otpBtn, { backgroundColor: colors.action }]}>
+                <Text style={[st.btnText, { color: colors.actionForeground }]}>Verify Code</Text>
+                <Feather name="check" size={16} color={colors.actionForeground} />
+              </AnimatedPressable>
 
-            {/* Resend */}
-            <View style={st.resendRow}>
-              <Text style={[st.resendLabel, { color: colors.mutedForeground }]}>Didn't receive it?</Text>
-              <Pressable onPress={resendCode} disabled={resendSecs > 0 || loading} hitSlop={8}>
-                <Text style={[st.link, { color: resendSecs > 0 ? colors.mutedForeground : colors.action }]}>
-                  {resendSecs > 0 ? ` Resend in ${resendSecs}s` : ' Resend Code'}
-                </Text>
+              {/* Resend */}
+              <View style={st.resendRow}>
+                <Text style={[st.resendLabel, { color: colors.mutedForeground }]}>Didn't receive it?</Text>
+                <Pressable onPress={resendCode} disabled={resendSecs > 0 || loading} hitSlop={8}>
+                  <Text style={[st.link, { color: resendSecs > 0 ? colors.mutedForeground : colors.action }]}>
+                    {resendSecs > 0 ? ` Resend in ${resendSecs}s` : ' Resend Code'}
+                  </Text>
+                </Pressable>
+              </View>
+
+              <Pressable onPress={() => { setStep(1); setCode(['','','','','','']); setError(''); }} style={st.linkRow} hitSlop={8}>
+                <Text style={[st.link, { color: colors.action }]}>← Change Email</Text>
               </Pressable>
-            </View>
-
-            <Pressable onPress={() => { setStep(1); setCode(['','','','','','']); setError(''); }} style={st.linkRow} hitSlop={8}>
-              <Text style={[st.link, { color: colors.action }]}>← Change Email</Text>
-            </Pressable>
-          </AnimatedReveal>
+            </AnimatedReveal>
+          </View>
         )}
 
         {/* ════════════════════════════════════════════════════════
@@ -312,6 +336,7 @@ export default function ForgotPasswordScreen() {
               <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
               <TextInput
                 value={newPass} onChangeText={(v) => { setNewPass(v); setError(''); }}
+                onFocus={revealPasswordActions}
                 secureTextEntry={!showPass}
                 placeholder="At least 8 characters"
                 placeholderTextColor={colors.mutedForeground}
@@ -344,6 +369,7 @@ export default function ForgotPasswordScreen() {
               <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
               <TextInput
                 value={confirmPass} onChangeText={(v) => { setConfirmPass(v); setError(''); }}
+                onFocus={revealPasswordActions}
                 secureTextEntry={!showConfirm}
                 placeholder="Re-enter password"
                 placeholderTextColor={colors.mutedForeground}
@@ -376,8 +402,8 @@ export default function ForgotPasswordScreen() {
             </AnimatedPressable>
           </AnimatedReveal>
         )}
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAwareScrollViewCompat>
+    </View>
   );
 }
 
@@ -431,9 +457,12 @@ const st = StyleSheet.create({
   matchIcon:     { paddingRight: 8, zIndex: 1 },
   btn:           { height: 54, borderRadius: 15, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, marginTop: 4 },
   btnText:       { fontFamily: 'Inter_700Bold', fontSize: 14 },
-  errorBox:      { borderRadius: 12, borderWidth: 1, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
+  errorBox:      { alignSelf: 'stretch', borderRadius: 12, borderWidth: 1, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
   errorText:     { fontFamily: 'Inter_400Regular', fontSize: 12, flex: 1 },
   // OTP
+  otpStepContent: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 20 },
+  centerText:    { textAlign: 'center' },
+  otpBtn:        { alignSelf: 'stretch' },
   otpRow:        { flexDirection: 'row', gap: 10, justifyContent: 'center', marginBottom: 28, marginTop: 4 },
   otpBox:        { width: 48, height: 58, borderRadius: 14, borderWidth: 1.5, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', shadowOpacity: 0.25, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 3 },
   otpInput:      { fontFamily: 'Inter_700Bold', fontSize: 24, textAlign: 'center', width: '100%', height: '100%', zIndex: 1 },

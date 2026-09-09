@@ -408,13 +408,21 @@ export default function ListingWizard() {
       const priceNum = Number(form.price.replace(/[^0-9]/g, ''));
       let uploadedImages: string[] = [];
       if (form.photos.length > 0) {
-        try { uploadedImages = await uploadMultipleImages(form.photos); } catch { /* continue */ }
+        try { uploadedImages = await uploadMultipleImages(form.photos); }
+        catch { throw new Error('Photos could not be uploaded. Please check your connection and try again.'); }
       }
       let uploadedVideoUrl: string | undefined;
       if (form.video?.uri) {
-        try { uploadedVideoUrl = (await uploadVideo(form.video.uri, form.video.filename ?? 'video.mp4')).url; } catch { /* continue */ }
+        try { uploadedVideoUrl = (await uploadVideo(form.video.uri, form.video.filename ?? 'video.mp4')).url; }
+        catch { throw new Error('Video could not be uploaded. Please try again or remove the video.'); }
       }
       const location = [form.locality, form.society, form.city].filter(Boolean).join(', ');
+      const propertyDetails = Object.fromEntries(
+        Object.entries(form).filter(([key]) => key !== 'photos' && key !== 'video'),
+      );
+      const district = form.city.toLowerCase() === 'depalpur'
+        ? 'Okara'
+        : form.city;
       await addUserListing({
         id: `listing_${Date.now()}`,
         postedBy: user?.id ?? 'unknown',
@@ -436,12 +444,32 @@ export default function ListingWizard() {
         views: 0, saves: 0, leadsCount: 0,
         images: uploadedImages,
         videoUrl: uploadedVideoUrl,
+        features: form.features,
+        documents: form.documents,
+        district,
+        locality: form.locality,
+        tehsil: form.city,
+        propertyDetails,
         latitude: form.latitude,
         longitude: form.longitude,
         fullAddress: form.fullAddress,
         placeId: form.placeId || undefined,
         locationAccuracy: form.locationAccuracy ?? undefined,
         locationSource: form.locationSource || undefined,
+        location: {
+          latitude: form.latitude,
+          longitude: form.longitude,
+          city: form.city,
+          district,
+          tehsil: form.city,
+          locality: form.locality,
+          address: form.fullAddress || location,
+          province: 'Punjab',
+          country: 'Pakistan',
+          source: form.locationSource || 'manual',
+          accuracy: form.locationAccuracy,
+          placeId: form.placeId || null,
+        },
         description: [
           form.description,
           form.keyHighlights ? `Key Highlights: ${form.keyHighlights}` : '',
@@ -718,6 +746,7 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
         latitude={form.latitude} longitude={form.longitude}
         address={form.fullAddress}
         city={form.city}
+        locality={form.locality}
         onChange={(lat, lng, addr) => update({ latitude: lat, longitude: lng, fullAddress: addr ?? form.fullAddress })}
         onLocationChange={(loc) => update({
           latitude: loc.latitude,

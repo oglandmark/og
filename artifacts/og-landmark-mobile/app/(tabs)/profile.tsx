@@ -11,6 +11,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 // BlurView removed — crashes Android GPU
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { BrandMark } from '@/components/BrandMark';
+import { NotificationBell } from '@/components/NotificationBell';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
@@ -732,12 +733,14 @@ function NotificationSettingsPanel({
   busy,
   message,
   onAction,
+  onManage,
 }: {
   colors: ReturnType<typeof useColors>;
   permission: NotificationPermissionState | null;
   busy: boolean;
   message: string | null;
   onAction: () => void;
+  onManage: () => void;
 }) {
   const isBlocked = permission?.status === 'denied' && !permission.canAskAgain;
   const isUnsupported = permission?.status === 'unsupported';
@@ -792,6 +795,10 @@ function NotificationSettingsPanel({
           </Text>
         </Pressable>
       ) : null}
+      <Pressable onPress={onManage} style={[notificationPanel.manageAction, { borderColor: colors.border }]}>
+        <Feather name="sliders" size={13} color={colors.action} />
+        <Text style={[notificationPanel.manageText, { color: colors.action }]}>Manage alert preferences</Text>
+      </Pressable>
     </View>
   );
 }
@@ -806,6 +813,8 @@ const notificationPanel = StyleSheet.create({
   message:      { fontFamily: 'Inter_500Medium', fontSize: 11, lineHeight: 16 },
   action:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 10, paddingVertical: 11 },
   actionText:   { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
+  manageAction: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 10, borderWidth: 1, paddingVertical: 10 },
+  manageText:   { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
 });
 
 // ── Profile Completion Card ────────────────────────────────────────────────────
@@ -1052,16 +1061,16 @@ export default function ProfileScreen() {
         .then(setPhotoUri)
         .catch(() => setPhotoUri(null));
 
+      if (role === 'agent' || role === 'buyer') {
+        void getMyListings(user?.id ?? '')
+          .then((myL) => setListingsCount(myL.length))
+          .catch(() => setListingsCount(0));
+      }
+
       if (role === 'agent') {
-        void Promise.all([getMyListings(user?.id ?? ''), getLeads()])
-          .then(([myL, leads]) => {
-            setListingsCount(myL.length);
-            setAgentLeadsCount(leads.length);
-          })
-          .catch(() => {
-            setListingsCount(0);
-            setAgentLeadsCount(0);
-          });
+        void getLeads()
+          .then((leads) => setAgentLeadsCount(leads.length))
+          .catch(() => setAgentLeadsCount(0));
       }
 
       if (role === 'buyer' || role === null) {
@@ -1270,10 +1279,13 @@ export default function ProfileScreen() {
             <BrandMark />
             <Text style={[styles.profileSubtitle, { color: colors.mutedForeground }]}>{profileContent?.subtitle || 'Manage your account and preferences'}</Text>
           </View>
-          <Pressable onPress={() => router.push('/settings/account' as any)}
-            style={[styles.iconButton, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
-            <Feather name="settings" size={18} color={colors.mutedForeground} />
-          </Pressable>
+          <View style={styles.headerActions}>
+            <NotificationBell compact />
+            <Pressable onPress={() => router.push('/settings/account' as any)}
+              style={[styles.iconButton, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+              <Feather name="settings" size={18} color={colors.mutedForeground} />
+            </Pressable>
+          </View>
         </View>
       </AnimatedReveal>
 
@@ -1364,6 +1376,9 @@ export default function ProfileScreen() {
           {/* Shortcuts */}
           <AnimatedReveal delay={200}>
             <View style={styles.menuGroup}>
+              <RowLink icon="home" label="My Listed Properties"
+                sublabel={listingsCount > 0 ? `${listingsCount} propert${listingsCount !== 1 ? 'ies' : 'y'} listed` : 'View properties you have listed'}
+                onPress={() => router.push('/(tabs)/listings' as any)} colors={colors} iconColor={colors.action} />
               <RowLink icon="heart" label="Saved Properties"
                 sublabel={savedIds.length > 0 ? `${savedIds.length} propert${savedIds.length !== 1 ? 'ies' : 'y'} shortlisted` : 'Your favourites'}
                 onPress={() => router.push('/(tabs)/saved')} colors={colors} iconColor="#e71616" />
@@ -1479,6 +1494,7 @@ export default function ProfileScreen() {
                   busy={notificationBusy}
                   message={notificationMessage}
                   onAction={() => { void handleNotificationAction(); }}
+                  onManage={() => router.push('/settings/notifications' as any)}
                 />
               ) : null}
             </React.Fragment>
@@ -1555,6 +1571,7 @@ const gst = StyleSheet.create({
 const styles = StyleSheet.create({
   screen:        { flex: 1 },
   header:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   profileSubtitle: { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 3 },
   iconButton:    { width: 42, height: 42, borderRadius: 21, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   // Profile card

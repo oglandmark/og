@@ -17,6 +17,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { useFacebookAuth } from '@/lib/facebookAuth';
+import { Button } from '@/components/PolishedUI';
 
 const ACTION = '#102a43';
 const GOLD   = '#c8a45a';
@@ -160,19 +161,14 @@ export default function LoginScreen() {
           </View>
 
           {/* Login button */}
-          <Pressable
+          <Button
             onPress={() => { void handleLogin(); }}
-            style={({ pressed }) => [
-              styles.loginBtn,
-              { opacity: pressed ? 0.88 : 1, backgroundColor: loading ? '#8fa8c0' : ACTION },
-            ]}
-            disabled={loading}
+            loading={loading}
+            accessibilityLabel={tr('loginBtn')}
+            style={styles.loginBtn}
           >
-            {loading
-              ? <ActivityIndicator size="small" color="#fff" />
-              : <Text style={styles.loginBtnText}>{tr('loginBtn')}</Text>
-            }
-          </Pressable>
+            {tr('loginBtn')}
+          </Button>
 
           {/* Divider */}
           <View style={styles.dividerRow}>
@@ -181,7 +177,8 @@ export default function LoginScreen() {
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Social buttons */}
+          {/* Supported social sign-in only. Unsupported providers are not shown
+              as tappable actions, which avoids dead-end error states. */}
           <View style={styles.socialRow}>
             <Pressable
               onPress={() => { void facebook.signIn(); }}
@@ -194,22 +191,6 @@ export default function LoginScreen() {
               <Text style={styles.socialText}>Facebook</Text>
             </Pressable>
 
-            <Pressable
-              onPress={() => { void handleLogin(); }}
-              disabled={loading || facebook.loading}
-              style={({ pressed }) => [styles.socialBtn, { opacity: pressed ? 0.5 : 1 }]}
-            >
-              <Feather name="mail" size={18} color={ACTION} />
-              <Text style={styles.socialText}>Email</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setError('Apple sign in is not configured yet. Please use Facebook or email login.')}
-              style={({ pressed }) => [styles.socialBtn, { opacity: pressed ? 0.5 : 1 }]}
-            >
-              <FontAwesome5 name="apple" size={18} color="#000" />
-              <Text style={styles.socialText}>Apple</Text>
-            </Pressable>
           </View>
 
           {/* Sign up link */}

@@ -13,7 +13,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import {
   ListingStatus, UserListing,
-  calcListingStats, deleteUserListing, getMyListings, updateListingStatus,
+  calcListingStats, deleteUserListing, getMyListings, resubmitUserListing, updateListingStatus,
 } from '@/lib/listingsStore';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -92,6 +92,16 @@ export default function ListingsScreen() {
         },
       },
     ]);
+  };
+
+  const handleResubmit = async (id: string) => {
+    try {
+      const updated = await resubmitUserListing(id);
+      setMyListings(updated.filter((l) => l.postedBy === user?.id));
+      Alert.alert('Submitted for review', 'Your listing is back in the admin review queue.');
+    } catch (error) {
+      Alert.alert('Could not resubmit', error instanceof Error ? error.message : 'Please try again.');
+    }
   };
 
   if (!isLoggedIn) {
@@ -206,6 +216,7 @@ export default function ListingsScreen() {
                 listing={listing} index={i} colors={colors} isRTL={isRTL}
                 onStatusChange={handleStatusChange}
                 onDelete={handleDelete}
+                onResubmit={handleResubmit}
               />
             </AnimatedReveal>
           ))
@@ -218,7 +229,7 @@ export default function ListingsScreen() {
 // ─── listing card ─────────────────────────────────────────────────────────────
 
 function ListingCard({
-  listing, colors, isRTL, onStatusChange, onDelete,
+  listing, colors, isRTL, onStatusChange, onDelete, onResubmit,
 }: {
   listing: UserListing;
   index: number;
@@ -226,6 +237,7 @@ function ListingCard({
   isRTL: boolean;
   onStatusChange: (id: string, status: ListingStatus, msg?: string) => void;
   onDelete: (id: string, title: string) => void;
+  onResubmit: (id: string) => void;
 }) {
   const sc    = STATUS_BADGE[listing.listingStatus] ?? STATUS_BADGE.Pending;
   const addr  = listing.neighborhood ? `${listing.neighborhood}, ${listing.city}` : listing.city;
@@ -244,6 +256,9 @@ function ListingCard({
 
   const moreActions = () => {
     const opts: { text: string; onPress: () => void; style?: 'destructive' | 'cancel' }[] = [];
+    if (listing.reviewStatus === 'Rejected' || listing.reviewStatus === 'Changes Requested') {
+      opts.push({ text: 'Resubmit for Review', onPress: () => onResubmit(listing.id) });
+    }
     if (listing.listingStatus === 'Active') {
       opts.push({ text: 'Pause Listing', onPress: () => onStatusChange(listing.id, 'Paused', 'Pause this listing? It will no longer be visible to buyers.') });
       opts.push({ text: 'Mark as Sold', onPress: () => onStatusChange(listing.id, 'Sold', 'Mark this property as sold? This will update your dashboard stats.') });
@@ -277,6 +292,12 @@ function ListingCard({
               <Text style={[lc.purposeText, { color: colors.mutedForeground }]}>{listing.status}</Text>
             </View>
           </View>
+          {listing.reviewReason && (listing.reviewStatus === 'Rejected' || listing.reviewStatus === 'Changes Requested') && (
+            <View style={[lc.reviewNote, { backgroundColor: '#f59e0b14', borderColor: '#f59e0b55' }]}>
+              <Feather name="alert-circle" size={13} color="#a16207" />
+              <Text style={[lc.reviewNoteText, { color: '#854d0e' }]} numberOfLines={3}>{listing.reviewReason}</Text>
+            </View>
+          )}
           <Text style={[lc.listingTitle, { color: colors.foreground, textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={2}>
             {listing.title}
           </Text>
@@ -374,6 +395,8 @@ const lc = StyleSheet.create({
   card:         { borderRadius: 18, borderWidth: 1, padding: 14 },
   top:          { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
   statusRow:    { flexDirection: 'row', gap: 6, marginBottom: 6, flexWrap: 'wrap' },
+  reviewNote:   { flexDirection: 'row', alignItems: 'flex-start', gap: 7, borderWidth: 1, borderRadius: 9, padding: 8, marginBottom: 7 },
+  reviewNoteText:{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 16 },
   statusBadge:  { borderRadius: 7, paddingHorizontal: 8, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', gap: 5 },
   dot:          { width: 5, height: 5, borderRadius: 3 },
   statusText:   { fontFamily: 'Inter_600SemiBold', fontSize: 10 },

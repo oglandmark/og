@@ -27,6 +27,7 @@ import { InteractiveMap, StaticMap } from '@/components/MapViewComponent';
 import {
   fetchAutocompleteSuggestions,
   fetchPlaceDetails,
+  geocodeLocality,
   reverseGeocode,
   type AutocompleteSuggestion,
 } from '@/lib/geocodingService';
@@ -39,6 +40,7 @@ import {
   type LocationData,
   type AccuracyLevel,
 } from '@/lib/locationService';
+import { createGpsLocationData, lowAccuracyMessage } from '@/lib/locationFlow';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -187,6 +189,7 @@ interface LocationPickerProps {
   longitude?: number | null;
   address?: string;
   city?: string;
+  locality?: string;
   onChange: (lat: number, lng: number, address?: string) => void;
   onLocationChange?: (location: LocationData) => void;
   onClear: () => void;
@@ -198,7 +201,7 @@ interface LocationPickerProps {
 }
 
 export function LocationPicker({
-  latitude, longitude, address, city,
+  latitude, longitude, address, city, locality,
   onChange, onLocationChange, onClear,
   colors, accentColor, requireConfirm = false,
   onConfirmationChange, errorMessage,
@@ -216,8 +219,11 @@ export function LocationPicker({
 
   const [gpsLoading,     setGpsLoading]     = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
+  const [locationError, setLocationError] = useState('');
   const [accuracyLevel,  setAccuracyLevel]  = useState<AccuracyLevel>('unknown');
   const [accuracyMetres, setAccuracyMetres] = useState<number | null>(null);
+  const [localityLoading, setLocalityLoading] = useState(false);
+  const localityRequestRef = useRef(0);
 
   const [showManual, setShowManual] = useState(false);
   const [latInput,   setLatInput]   = useState(latitude  != null ? String(latitude)  : '');
@@ -244,11 +250,42 @@ export function LocationPicker({
     }
   }, [hasPin, latitude, longitude]);
 
-  // When the listing city changes before a pin is selected, move the map to
-  // that city instead of leaving the viewport at the old Okara default.
+  // When the listing city or area changes before an exact pin is selected,
+  // move the map to the selected place instead of leaving the old city center.
+  // The locality lookup uses the same Places service as address search, so a
+  // selected area gets a real map position rather than a visual-only chip.
   useEffect(() => {
-    if (!hasPin) setRegion(getCityRegion(city));
-  }, [city, hasPin]);
+    if (hasPin) return;
+
+    const requestId = ++localityRequestRef.current;
+    let cancelled = false;
+    setRegion(getCityRegion(city));
+    setLocalityLoading(Boolean(locality?.trim()));
+
+    if (!locality?.trim() || !city?.trim()) {
+      setLocalityLoading(false);
+      return () => { cancelled = true; };
+    }
+
+    (async () => {
+      const details = await geocodeLocality(locality, city);
+      if (cancelled || localityRequestRef.current !== requestId || hasPin) return;
+
+      if (details) {
+        setRegion({
+          latitude: details.latitude,
+          longitude: details.longitude,
+          latitudeDelta: 0.025,
+          longitudeDelta: 0.025,
+        });
+      }
+      setLocalityLoading(false);
+    })().catch(() => {
+      if (!cancelled && localityRequestRef.current === requestId) setLocalityLoading(false);
+    });
+
+    return () => { cancelled = true; };
+  }, [city, locality, hasPin]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -265,6 +302,7 @@ export function LocationPicker({
     setShowManual(false);
     setSuggestions([]);
     setShowSuggestions(false);
+    setLocationError('');
     if (loc.fullAddress) setQuery(loc.fullAddress);
     setRegion({ latitude: lat, longitude: lng, latitudeDelta: 0.02, longitudeDelta: 0.02 });
   }, [onChange, onLocationChange, requireConfirm]);
@@ -292,16 +330,20 @@ export function LocationPicker({
     setShowSuggestions(false);
     setAcLoading(true);
 
-    const details = await fetchPlaceDetails(s.placeId, sessionRef.current);
-    // Reset session token after use
-    sessionRef.current = `s${Date.now()}`;
-    setAcLoading(false);
-
-    if (!details) {
-      Alert.alert('Error', 'Could not load place details. Please try again.');
-      return;
+    try {
+      const details = await fetchPlaceDetails(s.placeId, sessionRef.current);
+      // Reset session token after use
+      sessionRef.current = `s${Date.now()}`;
+      if (!details) {
+        setLocationError('We could not resolve that place. Try another result or drop the pin on the map.');
+        return;
+      }
+      applyLocation({ ...details, locationSource: 'search' });
+    } catch {
+      setLocationError('Location search is unavailable right now. You can still place the pin manually.');
+    } finally {
+      setAcLoading(false);
     }
-    applyLocation({ ...details, locationSource: 'search' });
   }, [applyLocation]);
 
   // ── GPS ───────────────────────────────────────────────────────────────────
@@ -320,19 +362,13 @@ export function LocationPicker({
       if (pos.accuracyLevel === 'low') {
         Alert.alert(
           'Low GPS Accuracy',
-          `Location accuracy is ${Math.round(pos.accuracy)} metres. You can continue, or move outdoors for better accuracy and adjust the pin manually.`,
+          lowAccuracyMessage(pos.accuracy),
           [
             { text: 'Adjust Pin Manually', style: 'cancel' },
             {
               text: 'Use Anyway', onPress: async () => {
                 const rev = await reverseGeocode(pos.latitude, pos.longitude);
-                applyLocation({
-                  latitude: pos.latitude, longitude: pos.longitude,
-                  fullAddress: rev?.fullAddress ?? '',
-                  city: rev?.city, locality: rev?.locality, district: rev?.district,
-                  province: rev?.province, country: rev?.country,
-                  accuracy: pos.accuracy, locationSource: 'gps',
-                });
+                applyLocation(createGpsLocationData(pos, rev));
               },
             },
           ],
@@ -342,14 +378,7 @@ export function LocationPicker({
       }
 
       const rev = await reverseGeocode(pos.latitude, pos.longitude);
-      applyLocation({
-        latitude: pos.latitude, longitude: pos.longitude,
-        fullAddress: rev?.fullAddress ?? '',
-        city: rev?.city, locality: rev?.locality, district: rev?.district,
-        province: rev?.province, country: rev?.country, postalCode: rev?.postalCode,
-        placeId: rev?.placeId,
-        accuracy: pos.accuracy, locationSource: 'gps',
-      });
+      applyLocation(createGpsLocationData(pos, rev));
     } catch {
       Alert.alert('Error', 'Could not get your location. Please try again or enter address manually.');
     } finally {
@@ -375,6 +404,8 @@ export function LocationPicker({
           province: rev?.province, country: rev?.country, postalCode: rev?.postalCode,
           placeId: rev?.placeId, locationSource: 'map_tap',
         });
+      } catch {
+        setLocationError('We could not find the address for this pin. Check the pin and try again.');
       } finally {
         setAddressLoading(false);
       }
@@ -394,6 +425,8 @@ export function LocationPicker({
           province: rev?.province, country: rev?.country, postalCode: rev?.postalCode,
           placeId: rev?.placeId, locationSource: 'map_tap',
         });
+      } catch {
+        setLocationError('We could not update this address. Please try moving the pin again.');
       } finally {
         setAddressLoading(false);
       }
@@ -409,14 +442,21 @@ export function LocationPicker({
     const lng = parseFloat(lngInput.trim());
     if (isNaN(lat) || lat < -90  || lat > 90)  { setManualErr('Latitude must be between -90 and 90');    return; }
     if (isNaN(lng) || lng < -180 || lng > 180) { setManualErr('Longitude must be between -180 and 180'); return; }
-    const rev = await reverseGeocode(lat, lng);
-    applyLocation({
-      latitude: lat, longitude: lng,
-      fullAddress: rev?.fullAddress ?? '',
-      city: rev?.city, locality: rev?.locality, district: rev?.district,
-      locationSource: 'manual',
-    });
-    setShowManual(false);
+    setAddressLoading(true);
+    try {
+      const rev = await reverseGeocode(lat, lng);
+      applyLocation({
+        latitude: lat, longitude: lng,
+        fullAddress: rev?.fullAddress ?? '',
+        city: rev?.city, locality: rev?.locality, district: rev?.district,
+        locationSource: 'manual',
+      });
+      setShowManual(false);
+    } catch {
+      setLocationError('Coordinates were accepted, but the address could not be resolved. Please review the pin.');
+    } finally {
+      setAddressLoading(false);
+    }
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -528,11 +568,10 @@ export function LocationPicker({
       {/* Map surface */}
       <View style={lp.mapWrap}>
         <InteractiveMap
-          // Native map implementations keep their own initial marker state.
-          // Use the selected city's region directly while no exact pin exists,
-          // so a city change cannot be masked by the previous map center.
-          key={`${city ?? 'default'}-${hasPin ? `${latitude}-${longitude}` : 'city'}`}
-          region={hasPin ? region : getCityRegion(city)}
+          // Keep the camera controlled by the resolved city/locality region
+          // until the user selects an exact pin.
+          key={`${city ?? 'default'}-${hasPin ? `${latitude}-${longitude}` : 'location'}`}
+          region={region}
           onRegionChange={setRegion}
           onPress={handleMapPress}
           pinLat={hasPin ? latitude! : undefined}
@@ -540,6 +579,14 @@ export function LocationPicker({
           onDragEnd={handleDragEnd}
           showMyLocation={false}
         />
+        {localityLoading && !hasPin && (
+          <View pointerEvents="none" style={lp.localityLoading}>
+            <ActivityIndicator size="small" color={accent} />
+            <Text style={[lp.localityLoadingText, { color: colors.foreground }]}>
+              Locating {locality}…
+            </Text>
+          </View>
+        )}
         {Platform.OS !== 'web' && !hasPin && (
           <View pointerEvents="none" style={lp.tapHint}>
             <View style={lp.tapHintPill}>
@@ -549,6 +596,11 @@ export function LocationPicker({
           </View>
         )}
       </View>
+      {requireConfirm && (
+        <Text style={[lp.confirmHint, { color: colors.mutedForeground }]}>
+          Place the exact pin, review the address, then confirm the location before submitting.
+        </Text>
+      )}
 
       {/* Coordinate + address badge */}
       {hasPin && (
@@ -626,6 +678,12 @@ export function LocationPicker({
         </View>
       )}
       {errorMessage ? <Text style={lp.validationError}>{errorMessage}</Text> : null}
+      {locationError ? (
+        <View style={[lp.locationError, { backgroundColor: colors.destructive + '12', borderColor: colors.destructive + '30' }]}>
+          <Feather name="alert-circle" size={14} color={colors.destructive} />
+          <Text style={[lp.locationErrorText, { color: colors.destructive }]}>{locationError}</Text>
+        </View>
+      ) : null}
 
       {/* Manual coordinate entry */}
       {showManual && (
@@ -689,6 +747,15 @@ const lp = StyleSheet.create({
   tapHint:     { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 12 },
   tapHintPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8 },
   tapHintText: { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#ffffff' },
+  localityLoading: {
+    position: 'absolute', top: 10, left: 10, right: 10,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7,
+    alignSelf: 'center', paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.94)',
+    shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 }, elevation: 3,
+  },
+  localityLoadingText: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
 
   badge:      { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
   badgeCoord: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
@@ -712,4 +779,7 @@ const lp = StyleSheet.create({
   manualErr:   { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#dc2626' },
   validationError: { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#dc2626' },
   confirmBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, paddingVertical: 11 },
+  confirmHint: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, marginTop: 4, marginBottom: 12 },
+  locationError: { flexDirection: 'row', alignItems: 'flex-start', gap: 7, borderWidth: 1, borderRadius: 11, padding: 10, marginTop: 9 },
+  locationErrorText: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17 },
 });

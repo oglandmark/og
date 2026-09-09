@@ -207,7 +207,9 @@ export type LoginResponse = {
 export async function loginWithAPI(identifier: string, password: string): Promise<LoginResponse> {
   const res = await apiFetch<LoginResponse>('/api/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ identifier, password }),
+    // `identifier` is the current contract. Keep `email` as an alias for
+    // older Hostinger deployments that still read req.body.email.
+    body: JSON.stringify({ identifier, email: identifier, password }),
   }, false, AUTH_FETCH_TIMEOUT_MS);
   if (res.token) await setToken(res.token);
   return res;
@@ -297,10 +299,14 @@ export async function deleteMyAccount(userId: string): Promise<void> {
   await apiFetch('/api/account', { method: 'DELETE' });
 }
 
-export async function updatePushToken(userId: number, pushToken: string): Promise<void> {
+export async function updatePushToken(
+  userId: number,
+  pushToken: string,
+  device?: { deviceId?: string; platform?: string; appVersion?: string },
+): Promise<void> {
   await apiFetch(`/api/users/${userId}/push-token`, {
     method: 'PATCH',
-    body: JSON.stringify({ pushToken }),
+    body: JSON.stringify({ pushToken, ...device }),
   });
 }
 
@@ -311,12 +317,19 @@ export type ApiProperty = {
   type: string;
   status: string;
   approvalStatus?: string;
+  listingStatus?: string;
   price: number;
   area: number;
   areaUnit: string;
   bedrooms: number;
   bathrooms: number;
   city: string;
+  district?: string;
+  tehsil?: string;
+  locality?: string;
+  province?: string;
+  country?: string;
+  postalCode?: string;
   address: string;
   description: string;
   images: string[];
@@ -331,6 +344,36 @@ export type ApiProperty = {
   sellerPhone?: string;
   createdAt?: string;
   tags?: string[];
+  features?: string[];
+  documents?: string[];
+  propertyDetails?: Record<string, unknown>;
+  location?: {
+    latitude?: number | null;
+    longitude?: number | null;
+    city?: string;
+    district?: string;
+    tehsil?: string;
+    locality?: string;
+    address?: string;
+    province?: string;
+    country?: string;
+    postalCode?: string;
+    source?: string;
+    accuracy?: number | null;
+    placeId?: string | null;
+  };
+  media?: {
+    images?: Array<{ url: string; propertyId?: number; type?: string }>;
+    videos?: Array<{ url: string; propertyId?: number; type?: string }>;
+    documents?: Array<{ name?: string; url?: string; propertyId?: number; type?: string }>;
+  };
+  reviewHistory?: Array<{
+    action: string; reason?: string; by?: number; byName?: string;
+    fromStatus?: string | null; toStatus?: string; createdAt?: string;
+  }>;
+  rejectionReason?: string | null;
+  changeRequest?: string | null;
+  reviewedAt?: string;
   lat?: number;
   lng?: number;
   /** Present only on results returned by a nearby-distance query. */
@@ -411,12 +454,141 @@ export async function toggleSavedAPI(userId: number, propertyId: number): Promis
 }
 
 // ─── Notifications ─────────────────────────────────────────────────────────────
-export async function getNotifications(userId: number): Promise<unknown[]> {
-  return apiFetch(`/api/notifications?userId=${userId}`);
+export type NotificationCategory = 'properties' | 'projects' | 'announcements' | 'promotional' | 'account' | 'system';
+export type AppNotification = {
+  id: number;
+  notificationId: string;
+  recipientUserId: number;
+  type: string;
+  category: NotificationCategory;
+  title: string;
+  message: string;
+  body: string;
+  imageUrl?: string | null;
+  entityType?: string | null;
+  entityId?: string | number | null;
+  propertyId?: string | number | null;
+  projectId?: string | number | null;
+  announcementId?: string | number | null;
+  deepLink?: string | null;
+  priority?: 'NORMAL' | 'HIGH' | 'URGENT';
+  isRead: boolean;
+  read: boolean;
+  readAt?: string | null;
+  createdAt: string;
+  expiresAt?: string | null;
+  metadata?: Record<string, unknown>;
+};
+
+export type NotificationPage = {
+  items: AppNotification[];
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+  unreadCount: number;
+};
+
+export type NotificationPreferences = {
+  properties: boolean;
+  projects: boolean;
+  announcements: boolean;
+  promotional: boolean;
+  account: boolean;
+  system: boolean;
+  frequency: 'immediate' | 'daily' | 'weekly';
+  cities?: string[];
+  propertyTypes?: string[];
+};
+
+export async function getNotifications(
+  _userId?: number,
+  options: { page?: number; limit?: number; category?: NotificationCategory | 'all' } = {},
+): Promise<NotificationPage> {
+  const params = new URLSearchParams({
+    page: String(options.page ?? 1),
+    limit: String(options.limit ?? 25),
+    category: options.category ?? 'all',
+  });
+  return apiFetch<NotificationPage>(`/api/notifications?${params.toString()}`);
 }
 
-export async function markNotificationRead(id: number): Promise<void> {
+export async function getNotificationUnreadCount(): Promise<number> {
+  const result = await apiFetch<{ unreadCount: number }>('/api/notifications/unread-count');
+  return result.unreadCount;
+}
+
+export async function markNotificationRead(id: number | string): Promise<void> {
   await apiFetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
+}
+
+export async function markAllNotificationsRead(category: NotificationCategory | 'all' = 'all'): Promise<void> {
+  await apiFetch('/api/notifications/mark-all-read', {
+    method: 'PATCH',
+    body: JSON.stringify({ category }),
+  });
+}
+
+export async function deleteNotification(id: number | string): Promise<void> {
+  await apiFetch(`/api/notifications/${id}`, { method: 'DELETE' });
+}
+
+export async function getNotificationPreferences(): Promise<NotificationPreferences> {
+  return apiFetch<NotificationPreferences>('/api/notification-preferences');
+}
+
+export async function updateNotificationPreferences(
+  preferences: Partial<NotificationPreferences>,
+): Promise<NotificationPreferences> {
+  return apiFetch<NotificationPreferences>('/api/notification-preferences', {
+    method: 'PUT',
+    body: JSON.stringify(preferences),
+  });
+}
+
+export type AdminAnnouncement = {
+  id: number;
+  title: string;
+  message: string;
+  imageUrl?: string | null;
+  type: 'general' | 'important' | 'system' | 'promotional';
+  priority: 'NORMAL' | 'HIGH' | 'URGENT';
+  audience: { role?: string; city?: string };
+  scheduleAt?: string | null;
+  expiresAt?: string | null;
+  status: 'draft' | 'scheduled' | 'sent';
+  createdAt: string;
+  sentAt?: string | null;
+  recipientCount?: number;
+};
+
+export async function getAdminAnnouncements(): Promise<AdminAnnouncement[]> {
+  return apiFetch<AdminAnnouncement[]>('/api/admin/announcements');
+}
+
+export async function createAdminAnnouncement(payload: {
+  title: string;
+  message: string;
+  imageUrl?: string;
+  type: AdminAnnouncement['type'];
+  priority: AdminAnnouncement['priority'];
+  audience: { role?: string; city?: string };
+  scheduleAt?: string | null;
+  expiresAt?: string | null;
+  sendNow?: boolean;
+}): Promise<AdminAnnouncement> {
+  return apiFetch<AdminAnnouncement>('/api/admin/announcements', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function sendAdminAnnouncement(id: number): Promise<AdminAnnouncement> {
+  return apiFetch<AdminAnnouncement>(`/api/admin/announcements/${id}/send`, { method: 'POST' });
+}
+
+export async function getAnnouncement(id: number): Promise<AdminAnnouncement> {
+  return apiFetch<AdminAnnouncement>(`/api/announcements/${id}`);
 }
 
 // ─── Banner slides (mobile home screen) ───────────────────────────────────────
@@ -560,6 +732,7 @@ export type CreatePropertyPayload = {
   title: string;
   type: string;
   status: string;
+  listingStatus?: 'Active' | 'Pending' | 'Draft' | 'Paused' | 'Sold' | 'Rented';
   price: number;
   area: number;
   areaUnit?: string;
@@ -574,6 +747,21 @@ export type CreatePropertyPayload = {
   lat?: number;
   lng?: number;
   tags?: string[];
+  district?: string;
+  tehsil?: string;
+  locality?: string;
+  province?: string;
+  country?: string;
+  postalCode?: string;
+  placeId?: string;
+  locationSource?: string;
+  locationAccuracy?: number;
+  features?: string[];
+  documents?: string[];
+  propertyDetails?: Record<string, unknown>;
+  location?: ApiProperty['location'];
+  media?: ApiProperty['media'];
+  submissionState?: 'draft' | 'submitted';
 };
 
 export async function createProperty(payload: CreatePropertyPayload): Promise<ApiProperty> {
@@ -587,6 +775,16 @@ export async function updateProperty(id: number, payload: Partial<CreateProperty
   return apiFetch<ApiProperty>(`/api/properties/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
+  });
+}
+
+export async function updatePropertyListingStatus(
+  id: number,
+  listingStatus: NonNullable<CreatePropertyPayload['listingStatus']>,
+): Promise<ApiProperty> {
+  return apiFetch<ApiProperty>(`/api/properties/${id}/listing-status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ listingStatus }),
   });
 }
 
@@ -844,6 +1042,23 @@ export async function rejectProperty(id: number, reason?: string): Promise<void>
     method: 'PATCH',
     body: JSON.stringify({ reason }),
   });
+}
+export async function requestPropertyChanges(id: number, reason: string): Promise<void> {
+  await apiFetch(`/api/properties/${id}/request-changes`, {
+    method: 'PATCH',
+    body: JSON.stringify({ reason }),
+  });
+}
+export async function resubmitProperty(id: number): Promise<void> {
+  await apiFetch(`/api/properties/${id}/resubmit`, { method: 'PATCH' });
+}
+export type AdminPropertyReview = {
+  property: ApiProperty;
+  seller: { id: number; name?: string; role?: string; email?: string; phone?: string; agencyName?: string } | null;
+  audit: ApiProperty['reviewHistory'];
+};
+export async function getAdminPropertyReview(id: number): Promise<AdminPropertyReview> {
+  return apiFetch<AdminPropertyReview>(`/api/admin/properties/${id}/review`);
 }
 export async function toggleFeatureProperty(id: number, featured: boolean): Promise<void> {
   await apiFetch(`/api/admin/properties/${id}/feature`, {

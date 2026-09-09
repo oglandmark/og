@@ -83,13 +83,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
       {/* Solid overlay replaces BlurView — same visual, zero GPU cost */}
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
 
-      <Pressable
-        onPress={() => router.push(`/property/${property.id}`)}
-        onPressIn={() => { cardScale.value = withSpring(0.985, { damping: 18, stiffness: 260 }); }}
-        onPressOut={() => { cardScale.value = withSpring(1, { damping: 18, stiffness: 260 }); }}
-        style={styles.pressable}
-        testID={`property-card-${property.id}`}
-      >
+      <View style={styles.pressable}>
         <View style={styles.imageWrap} {...swipeResponder.panHandlers}>
           <Pressable
             onPress={(event) => { event.stopPropagation(); setGalleryVisible(true); }}
@@ -98,7 +92,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
           >
             <ExpoImage
               source={images[activeImage] ?? images[0]}
-              style={[styles.image, { backgroundColor: '#1a2e42' }]}
+              style={[styles.image, { backgroundColor: colors.actionDeep }]}
               contentFit="cover"
               transition={250}
               cachePolicy="memory-disk"
@@ -115,7 +109,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
                 hitSlop={6}
                 accessibilityLabel="Previous property image"
               >
-                <Feather name="chevron-left" size={17} color="#fff" />
+                <Feather name="chevron-left" size={17} color={colors.actionForeground} />
               </Pressable>
               <Pressable
                 onPress={(event) => {
@@ -126,10 +120,10 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
                 hitSlop={6}
                 accessibilityLabel="Next property image"
               >
-                <Feather name="chevron-right" size={17} color="#fff" />
+                <Feather name="chevron-right" size={17} color={colors.actionForeground} />
               </Pressable>
               <View pointerEvents="none" style={styles.imageCounter}>
-                <Feather name="image" size={10} color="#fff" />
+                <Feather name="image" size={10} color={colors.actionForeground} />
                 <Text style={styles.imageCounterText}>{activeImage + 1}/{images.length}</Text>
               </View>
             </>
@@ -149,8 +143,8 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
           {/* Featured ribbon */}
           {property.featured && (
             <View style={[styles.featuredBadge, { backgroundColor: colors.primary }]}>
-              <Feather name="star" size={8} color="#1c2024" />
-              <Text style={styles.featuredText}>FEATURED</Text>
+              <Feather name="star" size={8} color={colors.goldForeground} />
+              <Text style={[styles.featuredText, { color: colors.goldForeground }]}>FEATURED</Text>
             </View>
           )}
           {/* Action buttons */}
@@ -200,7 +194,15 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
           onSelect={setActiveImage}
         />
 
-        <View style={[styles.body, { borderTopColor: colors.glassBorder }]}>
+        <Pressable
+          onPress={() => router.push(`/property/${property.id}`)}
+          onPressIn={() => { cardScale.value = withSpring(0.985, { damping: 18, stiffness: 260 }); }}
+          onPressOut={() => { cardScale.value = withSpring(1, { damping: 18, stiffness: 260 }); }}
+          style={[styles.body, { borderTopColor: colors.glassBorder }]}
+          testID={`property-card-${property.id}`}
+          accessibilityRole="button"
+          accessibilityLabel={`${property.title}. ${formatPrice(property.price, property.status)}. ${property.city}. Open property details.`}
+        >
           {/* Solid tint instead of BlurView */}
           <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
           <LinearGradient
@@ -279,8 +281,8 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
               );
             })()}
           </View>
-        </View>
-      </Pressable>
+        </Pressable>
+      </View>
 
       <PropertyGalleryModal
         property={property}

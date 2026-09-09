@@ -32,30 +32,30 @@ export function newVisitId(): string {
 
 function todayISO(): string { return new Date().toISOString().slice(0, 10); }
 export async function getAgentVisitsByBuyer(buyerId: string): Promise<AgentVisit[]> {
-  return (await apiRequest<AgentVisit[]>('/api/agent/visits/mine'))
+  return (await apiRequest<AgentVisit[]>('/api/agent-visits'))
     .filter((v) => v.buyerId === buyerId)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export async function getAgentVisits(agentId: string): Promise<AgentVisit[]> {
-  return (await apiRequest<AgentVisit[]>('/api/agent/visits'))
+  return (await apiRequest<AgentVisit[]>('/api/agent-visits'))
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export async function saveAgentVisit(visit: AgentVisit): Promise<void> {
   const existing = !visit.id.startsWith('visit_');
-  await apiRequest(`/api/agent/visits${existing ? `/${encodeURIComponent(visit.id)}` : ''}`, {
-    method: existing ? 'PUT' : 'POST', body: JSON.stringify(visit),
+  await apiRequest(`/api/agent-visits${existing ? `/${encodeURIComponent(visit.id)}` : ''}`, {
+    method: existing ? 'PATCH' : 'POST', body: JSON.stringify(visit),
   });
 }
 
 export async function updateVisitStatus(id: string, status: VisitStatus): Promise<AgentVisit[]> {
-  await apiRequest(`/api/agent/visits/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+  await apiRequest(`/api/agent-visits/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ status }) });
   return getAgentVisits('');
 }
 
 export async function deleteAgentVisit(id: string): Promise<void> {
-  await apiRequest(`/api/agent/visits/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  await apiRequest(`/api/agent-visits/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
 export function isToday(date: string): boolean { return date === todayISO(); }

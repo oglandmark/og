@@ -558,12 +558,16 @@ function ensureMobileAgents(data) {
   return false;
 }
 
-function safeMobileAgent(agent) {
-  const { password: _password, ...safe } = agent;
+function safeMobileAgent(agent, includePrivate = false) {
+  const { password: _password, email: _email, authUserId: _authUserId, ...safe } = agent;
   return {
     ...safe,
     displayName: safe.displayName || safe.name || '',
     profilePhoto: safe.photo || safe.profilePhoto || null,
+    ...(includePrivate ? {
+      loginEmail: agent.email || '',
+      authUserId: agent.authUserId || null,
+    } : {}),
   };
 }
 
@@ -1688,7 +1692,7 @@ app.get('/api/mobile-agents', async (req, res) => {
 app.get('/api/admin/mobile-agents', requireAdmin, async (req, res) => {
   try {
     const data = await readData();
-    res.json((data.mobileAgents || []).map(safeMobileAgent));
+    res.json((data.mobileAgents || []).map(agent => safeMobileAgent(agent, true)));
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -1697,10 +1701,22 @@ app.post('/api/admin/mobile-agents', requireAdmin, async (req, res) => {
     const data = await readData();
     const body = req.body || {};
     const name = String(body.name || body.displayName || '').trim();
-    if (!name) return res.status(400).json({ error: 'Agent name is required' });
+    const email = normalizeEmail(body.email);
+    const password = String(body.password || '');
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Agent name, email and password are required' });
+    }
+    if (!isValidEmail(email)) return res.status(400).json({ error: 'Please enter a valid login email.' });
+    const passwordError = passwordValidationError(password);
+    if (passwordError) return res.status(400).json({ error: passwordError });
+    const existingEmail = data.users.find(user => normalizeEmail(user.email) === email)
+      || (data.mobileAgents || []).find(agent => normalizeEmail(agent.email) === email);
+    if (existingEmail) return res.status(409).json({ error: 'This login email is already in use.' });
     const now = new Date().toISOString();
+    const agentId = nextId(data);
+    const authUserId = nextId(data);
     const agent = {
-      id: nextId(data),
+      id: agentId,
       name,
       displayName: name,
       initials: String(body.initials || name.split(/\s+/).map(part => part[0]).join('').slice(0, 2)).toUpperCase(),
@@ -1719,13 +1735,36 @@ app.post('/api/admin/mobile-agents', requireAdmin, async (req, res) => {
       specialties: Array.isArray(body.specialties) ? body.specialties.filter(Boolean) : String(body.specialties || '').split(',').map(v => v.trim()).filter(Boolean),
       photo: body.photo || null,
       about: String(body.about || '').trim(),
+      email,
+      authUserId,
       createdAt: now,
       updatedAt: now,
     };
+    const agentStatus = agent.status === 'Suspended' ? 'Suspended' : 'Active';
+    const agentApproval = agent.approvalStatus || 'Approved';
+    data.users.push({
+      id: authUserId,
+      name,
+      username: uniqueUsername(data.users, null, email),
+      email,
+      phone: agent.phone,
+      role: 'Agent',
+      status: agentStatus,
+      approvalStatus: agentApproval,
+      password: hashPassword(password),
+      joinedDate: now.slice(0, 10),
+      createdByAdmin: true,
+      agencyName: agent.agency,
+      specialization: agent.specialties.join(', '),
+      experience: agent.years,
+      city: agent.areas.join(', '),
+      title: 'Property Agent',
+      photo: agent.photo,
+    });
     data.mobileAgents = data.mobileAgents || [];
     data.mobileAgents.push(agent);
     await writeData(data);
-    res.status(201).json(safeMobileAgent(agent));
+    res.status(201).json(safeMobileAgent(agent, true));
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -1735,6 +1774,27 @@ app.put('/api/admin/mobile-agents/:id', requireAdmin, async (req, res) => {
     const agent = (data.mobileAgents || []).find(item => String(item.id) === String(req.params.id));
     if (!agent) return res.status(404).json({ error: 'Mobile agent not found' });
     const body = req.body || {};
+    const email = body.email === undefined ? undefined : normalizeEmail(body.email);
+    const password = body.password === undefined ? undefined : String(body.password || '');
+    if (email !== undefined && !isValidEmail(email)) {
+      return res.status(400).json({ error: 'Please enter a valid login email.' });
+    }
+    if (password !== undefined && password !== '') {
+      const passwordError = passwordValidationError(password);
+      if (passwordError) return res.status(400).json({ error: passwordError });
+    }
+    const linkedUser = data.users.find(user =>
+      (agent.authUserId && Number(user.id) === Number(agent.authUserId))
+      || (agent.email && normalizeEmail(user.email) === normalizeEmail(agent.email) && user.role === 'Agent')
+    );
+    if (email && email !== normalizeEmail(agent.email)) {
+      const conflict = data.users.find(user => normalizeEmail(user.email) === email && user.id !== linkedUser?.id)
+        || (data.mobileAgents || []).find(item => item.id !== agent.id && normalizeEmail(item.email) === email);
+      if (conflict) return res.status(409).json({ error: 'This login email is already in use.' });
+    }
+    if ((email !== undefined || (password !== undefined && password !== '')) && !linkedUser && (!email || !password)) {
+      return res.status(400).json({ error: 'Email and password are both required to create this agent login.' });
+    }
     const textFields = ['name', 'displayName', 'agency', 'phone', 'about', 'photo', 'color'];
     for (const key of textFields) if (body[key] !== undefined) agent[key] = body[key];
     if (body.name !== undefined && body.displayName === undefined) agent.displayName = body.name;
@@ -1748,9 +1808,23 @@ app.put('/api/admin/mobile-agents/:id', requireAdmin, async (req, res) => {
     }
     if (body.status !== undefined) agent.status = body.status;
     if (body.approvalStatus !== undefined) agent.approvalStatus = body.approvalStatus;
+    if (email !== undefined) agent.email = email;
+    if (linkedUser) {
+      linkedUser.name = agent.name;
+      linkedUser.phone = agent.phone;
+      linkedUser.agencyName = agent.agency;
+      linkedUser.specialization = agent.specialties.join(', ');
+      linkedUser.experience = agent.years;
+      linkedUser.city = agent.areas.join(', ');
+      linkedUser.photo = agent.photo;
+      if (email !== undefined) linkedUser.email = email;
+      if (password) linkedUser.password = hashPassword(password);
+      linkedUser.status = agent.status === 'Suspended' ? 'Suspended' : 'Active';
+      linkedUser.approvalStatus = agent.approvalStatus;
+    }
     agent.updatedAt = new Date().toISOString();
     await writeData(data);
-    res.json(safeMobileAgent(agent));
+    res.json(safeMobileAgent(agent, true));
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -1762,7 +1836,10 @@ app.patch('/api/admin/mobile-agents/:id/status', requireAdmin, async (req, res) 
     agent.status = req.body.status || (agent.status === 'Active' ? 'Suspended' : 'Active');
     agent.updatedAt = new Date().toISOString();
     await writeData(data);
-    res.json({ success: true, agent: safeMobileAgent(agent) });
+    const linkedUser = data.users.find(user => Number(user.id) === Number(agent.authUserId));
+    if (linkedUser) linkedUser.status = agent.status === 'Suspended' ? 'Suspended' : 'Active';
+    await writeData(data);
+    res.json({ success: true, agent: safeMobileAgent(agent, true) });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -1775,7 +1852,13 @@ app.patch('/api/admin/mobile-agents/:id/approval', requireAdmin, async (req, res
     agent.status = agent.approvalStatus === 'Rejected' ? 'Suspended' : 'Active';
     agent.updatedAt = new Date().toISOString();
     await writeData(data);
-    res.json({ success: true, agent: safeMobileAgent(agent) });
+    const linkedUser = data.users.find(user => Number(user.id) === Number(agent.authUserId));
+    if (linkedUser) {
+      linkedUser.approvalStatus = agent.approvalStatus;
+      linkedUser.status = agent.approvalStatus === 'Rejected' ? 'Suspended' : 'Active';
+    }
+    await writeData(data);
+    res.json({ success: true, agent: safeMobileAgent(agent, true) });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 

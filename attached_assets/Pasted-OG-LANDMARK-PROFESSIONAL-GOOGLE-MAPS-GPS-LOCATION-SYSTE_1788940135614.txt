@@ -1,0 +1,1169 @@
+OG LANDMARK — PROFESSIONAL GOOGLE MAPS & GPS LOCATION SYSTEM
+
+You are working on the existing OG Landmark real-estate mobile application.
+
+Google Maps API / Google Maps credentials have already been provided and configured for this application.
+
+However, the current Property Listing and Property Search experience does NOT have a fully professional Google Maps implementation.
+
+The current issues include:
+
+* GPS location selection is not professional.
+* Property listing map experience is incomplete.
+* Location search is incomplete.
+* Property search does not provide a proper interactive map experience.
+* Map pin/location data is not consistently integrated with property data.
+* The map should behave like a professional real-estate application.
+
+Your task is to audit the existing Google Maps integration and implement a complete production-quality Google Maps experience throughout the relevant OG Landmark mobile app flows.
+
+DO NOT replace Google Maps with Leaflet or another mapping provider.
+
+Use the existing Google Maps API integration.
+
+⸻
+
+1. FIRST — AUDIT THE EXISTING IMPLEMENTATION
+
+Before changing anything, inspect:
+
+* Existing Google Maps package/library
+* Google Maps API key configuration
+* Android configuration
+* iOS configuration
+* API restrictions
+* Existing map components
+* Property Listing location screen
+* Property Search screen
+* Property Detail screen
+* GPS/location permission implementation
+* Reverse geocoding implementation
+* Property database location fields
+* Property API payloads
+* Search/filter API
+* Existing Leaflet/map code, if any
+
+Identify why the current map experience is incomplete.
+
+DO NOT simply add another map component.
+
+Fix the existing architecture properly.
+
+⸻
+
+2. GOOGLE MAPS ONLY
+
+The mobile application should use:
+
+Google Maps
+
+for the actual interactive map experience.
+
+Do NOT use Leaflet for the mobile app map if Google Maps is already configured.
+
+Remove/replace conflicting map implementations only where necessary.
+
+Do not unnecessarily change the web/admin map if it is working.
+
+⸻
+
+3. PROPERTY LISTING — PROFESSIONAL LOCATION PICKER
+
+When a seller creates a property listing, provide a dedicated:
+
+“Property Location”
+
+step.
+
+The screen should contain:
+
+Search Location
+
+Search bar:
+
+“Search city, area, road or location”
+
+The user should be able to search for:
+
+* Cities
+* Towns
+* Areas
+* Roads
+* Landmarks
+* Addresses
+
+⸻
+
+4. CURRENT GPS LOCATION
+
+Provide:
+
+“Use My Current Location”
+
+button.
+
+When pressed:
+
+1. Request location permission.
+2. Get the device’s current GPS coordinates.
+3. Move Google Maps camera to the current location.
+4. Display the current location.
+5. Allow the user to adjust the property pin.
+
+Handle permissions professionally.
+
+If permission is denied:
+
+“Location permission is required to use your current location.”
+
+Provide:
+
+Open Settings
+
+where appropriate.
+
+Do not crash or leave a blank map.
+
+⸻
+
+5. MAP LOCATION SELECTION
+
+The seller must be able to:
+
+* Tap the map
+* Move/drag the marker
+* Search for a location
+* Use current GPS location
+* Zoom in/out
+* Pan around the map
+
+When the marker is moved:
+
+latitude
+longitude
+
+must update immediately.
+
+⸻
+
+6. PROFESSIONAL PIN UX
+
+Do not make the map pin behave like a basic generic marker.
+
+Use a professional property-location selection UX.
+
+Preferred experience:
+
+* Fixed center pin or draggable marker
+* Map moves underneath the pin
+* Location updates after map movement
+* Clear selected-location indicator
+* Smooth camera movement
+
+For example:
+
+             📍
+      Selected Location
+
+The marker should clearly represent:
+
+“Property Location”
+
+⸻
+
+7. LOCATION CONFIRMATION
+
+After selecting the location, display a bottom card:
+
+Selected Property Location
+
+📍 Depalpur, Okara
+Punjab, Pakistan
+
+Address:
+[Resolved address]
+
+Latitude:
+[lat]
+
+Longitude:
+[long]
+
+Button:
+
+Confirm Location
+
+The user must explicitly confirm the selected location.
+
+⸻
+
+8. REVERSE GEOCODING
+
+When a user selects a GPS point:
+
+latitude + longitude
+
+must be converted into readable location information.
+
+Retrieve where possible:
+
+* Address
+* Locality
+* Area
+* City
+* Tehsil
+* District
+* Province
+* Country
+* Postal code
+
+Store these separately.
+
+Example:
+
+City:
+Depalpur
+
+District:
+Okara
+
+Tehsil:
+Depalpur
+
+Province:
+Punjab
+
+Country:
+Pakistan
+
+IMPORTANT:
+
+Do NOT automatically convert:
+
+Depalpur → Okara
+
+because Okara is the district.
+
+City and district must remain separate.
+
+⸻
+
+9. EXACT GPS DATA
+
+Every property must store:
+
+latitude
+longitude
+
+These coordinates are the PRIMARY location reference.
+
+Do NOT rely only on:
+
+city name
+area name
+address
+
+for displaying the map.
+
+Whenever a property map is opened:
+
+Use:
+
+latitude + longitude
+
+to position the map.
+
+⸻
+
+10. PROPERTY LISTING DATA FLOW
+
+Implement this exact flow:
+
+USER SEARCHES LOCATION
+↓
+GOOGLE PLACES / LOCATION RESULT
+↓
+LATITUDE + LONGITUDE
+↓
+MAP MOVES TO LOCATION
+↓
+USER ADJUSTS PIN
+↓
+REVERSE GEOCODING
+↓
+CITY / DISTRICT / AREA / ADDRESS
+↓
+USER CONFIRMS LOCATION
+↓
+PROPERTY FORM STATE
+↓
+BACKEND API
+↓
+DATABASE
+↓
+PROPERTY RECORD
+
+Do not maintain separate conflicting location states.
+
+⸻
+
+11. SEARCH PROPERTY — MAP VIEW
+
+The Search Property experience must have two professional modes:
+
+LIST VIEW
+
+Property cards.
+
+MAP VIEW
+
+Interactive Google Map.
+
+Provide a clear toggle:
+
+List | Map
+
+The user should be able to switch between them without losing search/filter state.
+
+⸻
+
+12. SEARCH MAP
+
+When Map View is opened:
+
+Show property locations on Google Maps.
+
+Each property should have a map marker.
+
+Markers must use the exact:
+
+latitude
+longitude
+
+stored against each property.
+
+Do NOT place all properties at city center.
+
+⸻
+
+13. PROPERTY MARKERS
+
+Create professional real-estate map markers.
+
+Instead of generic Google red pins, use an OG Landmark-style marker.
+
+Where appropriate, marker can display:
+
+Price
+
+Example:
+
+$125K
+
+or:
+
+PKR 2.50 Crore
+
+The marker should remain clean and readable.
+
+Use appropriate marker clustering when many properties exist.
+
+⸻
+
+14. MARKER CLUSTERING
+
+If many properties exist in one area:
+
+Do not render hundreds of overlapping markers.
+
+Use clustering.
+
+Example:
+
+● 24
+
+When zooming in:
+
+● 8
+● 5
+● 3
+
+Then individual property markers.
+
+Make clustering smooth and performant.
+
+⸻
+
+15. PROPERTY MARKER INTERACTION
+
+When the user taps a marker:
+
+Show a compact property preview card.
+
+Example:
+
+[Property Image]
+
+Luxury House
+Depalpur, Okara
+
+5 Beds • 4 Baths
+8 Marla
+
+PKR 2.50 Crore
+
+View Property →
+
+The user should be able to tap the card and open the full Property Detail screen.
+
+⸻
+
+16. SEARCH + MAP SYNCHRONIZATION
+
+Search and map must remain synchronized.
+
+Example:
+
+User searches:
+
+Depalpur
+
+Map moves to Depalpur.
+
+Results update.
+
+User selects:
+
+House
+
+Results update.
+
+Map updates.
+
+User changes:
+
+Price Range
+
+Map updates.
+
+User moves map:
+
+Results can optionally update to visible area if the application supports viewport-based search.
+
+⸻
+
+17. “SEARCH THIS AREA”
+
+Implement a professional option:
+
+“Search This Area”
+
+When the user moves/zooms the map, show:
+
+Search This Area
+
+If selected:
+
+Fetch properties within the visible map bounds.
+
+This should be implemented efficiently.
+
+⸻
+
+18. FILTERS + MAP
+
+All existing filters must work with Map View.
+
+For example:
+
+Location
+Property Type
+Purpose
+Price
+Area
+Bedrooms
+Bathrooms
+Features
+
+When filters change:
+
+* Update list
+* Update markers
+* Update result count
+
+Do not show stale markers.
+
+⸻
+
+19. RESULT COUNT
+
+Display:
+
+“24 Properties Found”
+
+or:
+
+“24 Properties”
+
+Update this dynamically after:
+
+* search
+* filter
+* location change
+* map area change
+
+⸻
+
+20. MAP CAMERA
+
+Use appropriate Google Maps camera behavior.
+
+When opening Search Map:
+
+Fit the map to the available property results.
+
+If searching for a specific city:
+
+Zoom to that city.
+
+If only one property:
+
+Zoom appropriately to that property.
+
+If multiple properties:
+
+Fit bounds to include relevant properties.
+
+Avoid extreme zoom levels.
+
+⸻
+
+21. PROPERTY DETAIL MAP
+
+Property Detail must include:
+
+Location
+
+with an embedded Google Map.
+
+The map must use the property’s exact:
+
+latitude
+longitude
+
+Show:
+
+* Property marker
+* Appropriate zoom
+* Location name
+* Address
+
+Do not use a generic city center.
+
+⸻
+
+22. OPEN FULL MAP
+
+Add:
+
+“View on Map”
+
+or:
+
+“Open Full Map”
+
+on Property Detail.
+
+Opening it should show the exact property location.
+
+⸻
+
+23. DIRECTIONS
+
+Where appropriate, provide:
+
+“Get Directions”
+
+This should open the user’s preferred navigation experience using the property’s coordinates.
+
+Do not expose or invent an incorrect address.
+
+⸻
+
+24. PROPERTY LISTING — LOCATION VALIDATION
+
+Before allowing submission:
+
+Require:
+
+latitude
+longitude
+
+and valid location information.
+
+If missing:
+
+“Please select the property location on the map.”
+
+Do not allow a property to be submitted with:
+
+0,0
+
+or fake/default coordinates.
+
+⸻
+
+25. LOCATION ACCURACY
+
+Never use hard-coded coordinates for:
+
+Okara
+Depalpur
+Renala Khurd
+Basirpur
+Hujrah Shah Muqeem
+Haveli Lakha
+
+The actual property coordinates must come from:
+
+* Search result
+* GPS
+* User-selected map location
+
+⸻
+
+26. GPS ACCURACY INDICATOR
+
+When using current GPS location, if the platform exposes accuracy information, show it appropriately.
+
+Example:
+
+Current location accuracy:
+±12 m
+
+If GPS accuracy is poor:
+
+“Your GPS location appears inaccurate. Please move to an open area or adjust the pin manually.”
+
+Do not prevent manual pin adjustment.
+
+⸻
+
+27. LOCATION PERMISSION UX
+
+Implement professional permission handling.
+
+First request:
+
+“OG Landmark uses your location to help you select your property location.”
+
+If denied:
+
+Show helpful explanation.
+
+If permanently denied:
+
+Provide:
+
+“Open Settings”
+
+Do not repeatedly request permission unnecessarily.
+
+⸻
+
+28. SEARCH AUTOCOMPLETE
+
+Implement professional location autocomplete using the existing Google location services/API configuration where available.
+
+Suggestions should appear as the user types.
+
+Example:
+
+Depalpur
+Depalpur, Okara
+Depalpur Road
+Depalpur Railway Station
+
+Selecting a result should:
+
+* Move map
+* Update coordinates
+* Reverse geocode
+* Update location information
+
+⸻
+
+29. SEARCH DEBOUNCING
+
+Do not send a Google location search request for every keystroke.
+
+Use proper debouncing.
+
+Prevent:
+
+* excessive API calls
+* unnecessary billing
+* duplicate requests
+
+⸻
+
+30. API SECURITY
+
+Audit the Google Maps API configuration.
+
+Ensure the API key is not unnecessarily exposed through backend secrets.
+
+For mobile:
+
+Use appropriate platform restrictions.
+
+Android:
+
+* Package name
+* SHA-1/SHA-256 where appropriate
+* Required Maps APIs
+
+iOS:
+
+* Bundle identifier
+* Required Maps APIs
+
+Only enable APIs that are actually required.
+
+Do not disable existing working APIs.
+
+⸻
+
+31. REQUIRED GOOGLE SERVICES
+
+Audit which Google services are currently enabled.
+
+Depending on implementation, ensure the required services are configured for:
+
+* Maps SDK
+* Places / autocomplete
+* Geocoding / reverse geocoding
+* Any required Maps-related APIs
+
+Do not enable unnecessary services.
+
+⸻
+
+32. ERROR HANDLING
+
+Handle:
+
+* API key error
+* Maps unavailable
+* No internet
+* Location permission denied
+* GPS disabled
+* Search failure
+* Reverse geocoding failure
+* No results
+* Invalid coordinates
+
+Example:
+
+“Unable to load the map.”
+
+[Retry]
+
+Do not crash.
+
+⸻
+
+33. OFFLINE / NETWORK BEHAVIOR
+
+If internet is unavailable:
+
+Show:
+
+“Map requires an internet connection.”
+
+Do not leave an infinite loading spinner.
+
+⸻
+
+34. LOADING EXPERIENCE
+
+Map loading should have a polished loading state.
+
+Avoid blank white screen.
+
+Use:
+
+* subtle loading indicator
+* map placeholder
+* location skeleton where appropriate
+
+⸻
+
+35. PERFORMANCE
+
+Optimize the map experience.
+
+Avoid:
+
+* unnecessary map re-renders
+* repeated API calls
+* repeated geocoding
+* loading thousands of markers at once
+* unnecessary camera animations
+
+Use:
+
+* marker clustering
+* debouncing
+* caching where appropriate
+* viewport-based loading where appropriate
+* efficient state management
+
+⸻
+
+36. MOBILE UX
+
+The map must work properly on:
+
+* small phones
+* large phones
+* Android
+* iOS
+
+Ensure:
+
+* Safe Area support
+* bottom controls do not overlap
+* search bar remains accessible
+* filters remain accessible
+* map controls are reachable
+* bottom property card does not cover critical map content
+
+⸻
+
+37. PROFESSIONAL MAP CONTROLS
+
+Where appropriate provide:
+
+* Current Location
+* Zoom controls if useful
+* Map/List toggle
+* Search
+* Filters
+* Search This Area
+
+Avoid unnecessary controls that clutter the map.
+
+⸻
+
+38. PROPERTY LOCATION PRIVACY
+
+For properties where exact public location should not be disclosed, support configurable location privacy.
+
+For example:
+
+Public listing can optionally show approximate location while admin retains exact coordinates.
+
+Do not implement this unless it fits the existing business logic, but structure the location model so this can be supported.
+
+⸻
+
+39. ADMIN MAP
+
+If the Admin Dashboard has property review:
+
+Admin should see the exact property location.
+
+Admin map must use:
+
+property.latitude
+property.longitude
+
+Admin should also see:
+
+City
+District
+Tehsil
+Area
+Address
+Coordinates
+
+The admin map should NOT default to Okara simply because the property belongs to Okara District.
+
+⸻
+
+40. DATA CONSISTENCY
+
+The following must all use the same coordinates:
+
+Seller Property Listing
+↓
+Database
+↓
+Admin Review
+↓
+Property Detail
+↓
+Search Map
+↓
+Directions
+
+If seller pins:
+
+Depalpur
+
+then every relevant screen must show the same property location.
+
+⸻
+
+41. EXISTING PROPERTY DATA
+
+Do not break existing properties.
+
+Audit existing property records.
+
+For properties missing coordinates:
+
+* Keep existing data.
+* Provide a migration/backfill strategy if possible.
+* Do not invent exact GPS coordinates.
+* Do not silently assign city-center coordinates and pretend they are exact.
+
+⸻
+
+42. GOOGLE MAP STYLE
+
+Use a clean professional Google Map presentation.
+
+The map should support OG Landmark’s premium visual identity without making the actual Google map unreadable.
+
+Use the existing Google Maps styling capabilities where appropriate.
+
+Do not over-style the map.
+
+⸻
+
+43. LOCATION SEARCH EXAMPLE
+
+Test:
+
+Search:
+
+Depalpur
+
+Select:
+
+Depalpur, Okara
+
+Map moves to location.
+
+Place property pin.
+
+Confirm.
+
+Property stores:
+
+City = Depalpur
+District = Okara
+Tehsil = Depalpur
+Latitude = exact
+Longitude = exact
+
+Then verify:
+
+Property Detail → Depalpur
+Admin → Depalpur
+Search Map → exact marker
+
+⸻
+
+44. TEST OTHER LOCATIONS
+
+Test at minimum:
+
+1. Okara City
+2. Depalpur
+3. Renala Khurd
+4. Basirpur
+5. Hujrah Shah Muqeem
+6. Haveli Lakha
+
+Verify city/district separation.
+
+⸻
+
+45. TEST PROPERTY SEARCH
+
+Create several test properties in different locations.
+
+Then test:
+
+Search by city.
+
+Search by area.
+
+Filter by property type.
+
+Filter by price.
+
+Filter by area.
+
+Open Map View.
+
+Tap marker.
+
+Open property.
+
+Return to map.
+
+Verify state remains correct.
+
+⸻
+
+46. TEST GPS
+
+Test:
+
+GPS permission granted.
+
+GPS permission denied.
+
+GPS disabled.
+
+Poor GPS accuracy.
+
+Current location.
+
+Move marker.
+
+Confirm location.
+
+Save property.
+
+Reopen property.
+
+Verify coordinates remain unchanged.
+
+⸻
+
+47. TEST API FAILURE
+
+Temporarily simulate:
+
+Google API unavailable.
+
+Network unavailable.
+
+Reverse geocoding failure.
+
+Search failure.
+
+The application must remain stable.
+
+⸻
+
+48. FINAL ACCEPTANCE CRITERIA
+
+The implementation is NOT complete until:
+
+✅ Google Maps is properly integrated.
+
+✅ Property Listing has a professional interactive map.
+
+✅ User can search locations.
+
+✅ User can use current GPS location.
+
+✅ User can manually move/select property pin.
+
+✅ Exact latitude/longitude is stored.
+
+✅ Reverse geocoding works.
+
+✅ City and district remain separate.
+
+✅ Depalpur does not incorrectly become Okara.
+
+✅ Property Search has List + Map modes.
+
+✅ Search results appear on the map.
+
+✅ Property markers use exact coordinates.
+
+✅ Marker clustering works for large result sets.
+
+✅ Marker tap opens property preview.
+
+✅ Filters synchronize with map results.
+
+✅ Search This Area works where implemented.
+
+✅ Property Detail shows exact property location.
+
+✅ Admin Review shows exact property location.
+
+✅ Existing property data is preserved.
+
+✅ Google API errors are handled professionally.
+
+✅ GPS permission handling is professional.
+
+✅ No map crashes.
+
+✅ No unnecessary duplicate Google API requests.
+
+✅ No Leaflet map remains in the mobile app where Google Maps is intended.
+
+✅ Android works.
+
+✅ iOS works.
+
+⸻
+
+49. FINAL IMPLEMENTATION RULE
+
+DO NOT simply add a Google Map component and consider the task complete.
+
+You must implement the complete:
+
+SEARCH
++
+GPS
++
+MAP
++
+PIN
++
+REVERSE GEOCODING
++
+PROPERTY DATABASE
++
+PROPERTY SEARCH
++
+FILTERS
++
+PROPERTY DETAIL
++
+ADMIN REVIEW
+
+workflow.
+
+After implementation, provide a concise technical report:
+
+1. Existing Google Maps implementation audited
+2. Root causes found
+3. Google APIs/services required
+4. Files/components changed
+5. Database changes
+6. GPS changes
+7. Search changes
+8. Map changes
+9. Marker/clustering changes
+10. Testing performed
+11. Any remaining configuration required
+
+Most importantly:
+
+ACTUALLY IMPLEMENT THE CHANGES IN THE EXISTING OG LANDMARK APP.
+
+Do not only provide recommendations.

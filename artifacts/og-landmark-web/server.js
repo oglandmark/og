@@ -719,7 +719,7 @@ async function initDb() {
   } else {
     // Update admin email/password from env vars if set (runtime override)
     const data = typeof existing.data === 'string' ? JSON.parse(existing.data) : existing.data;
-    let dataChanged = ensureMobileAgents(data);
+    let dataChanged = ensureMobileAgents(data) || ensurePropertyRecords(data);
     if (process.env.ADMIN_EMAIL || process.env.ADMIN_PASSWORD) {
       const adminUser = data.users.find(u => u.role === 'Admin');
       if (adminUser) {
@@ -754,7 +754,12 @@ async function readData() {
   if (!neonDb) {
     if (!localPreview) throw new Error('Neon is not configured for production.');
     const data = JSON.parse(fs.readFileSync(fallbackFile, 'utf8'));
-    ensureMobileAgents(data);
+    const changed = ensureMobileAgents(data) || ensurePropertyRecords(data);
+    if (changed) {
+      // The JSON fallback and Neon app_data both use the same canonical
+      // property shape after the first read.
+      await writeData(data);
+    }
     return data;
   }
   const rows = await neonDb`SELECT data FROM app_data WHERE id = 1 LIMIT 1`;
@@ -769,6 +774,7 @@ async function readData() {
   }
   const data = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
   const mobileAgentsAdded = ensureMobileAgents(data);
+  const propertyRecordsChanged = ensurePropertyRecords(data);
   // Migrate plain-text passwords to hashed on first read (backwards compat)
   let migrated = false;
   data.users.forEach(u => {
@@ -777,7 +783,7 @@ async function readData() {
       migrated = true;
     }
   });
-  if (migrated || mobileAgentsAdded) await writeData(data);
+  if (migrated || mobileAgentsAdded || propertyRecordsChanged) await writeData(data);
   return data;
 }
 
@@ -795,6 +801,116 @@ async function writeData(data) {
 function nextId(data) {
   data.nextId = (data.nextId || 1000) + 1;
   return data.nextId;
+}
+
+// Property records are deliberately kept as one document in app_data.  The
+// public listing, seller preview and admin review all read this same shape.
+// Keep lat/lng and address at the top level for older clients, while the
+// location object is the canonical source for new clients.
+function normalisePropertyPayload(raw = {}, existing = null, propertyId = null) {
+  const body = { ...(existing || {}), ...(raw || {}) };
+  const locationInput = body.location && typeof body.location === 'object' ? body.location : {};
+  const numberOrNull = value => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
+  const latitude = numberOrNull(
+    locationInput.latitude ?? locationInput.lat ?? body.latitude ?? body.lat ?? existing?.location?.latitude ?? existing?.lat,
+  );
+  const longitude = numberOrNull(
+    locationInput.longitude ?? locationInput.lng ?? body.longitude ?? body.lng ?? existing?.location?.longitude ?? existing?.lng,
+  );
+  const location = {
+    latitude,
+    longitude,
+    city: String(locationInput.city ?? body.city ?? '').trim(),
+    district: String(locationInput.district ?? body.district ?? (String(body.city || '').toLowerCase() === 'depalpur' ? 'Okara' : '')).trim(),
+    tehsil: String(locationInput.tehsil ?? body.tehsil ?? '').trim(),
+    locality: String(locationInput.locality ?? body.locality ?? body.neighborhood ?? '').trim(),
+    address: String(locationInput.address ?? body.address ?? body.fullAddress ?? '').trim(),
+    province: String(locationInput.province ?? body.province ?? 'Punjab').trim(),
+    country: String(locationInput.country ?? body.country ?? 'Pakistan').trim(),
+    postalCode: String(locationInput.postalCode ?? body.postalCode ?? '').trim(),
+    source: String(locationInput.source ?? body.locationSource ?? 'manual').trim() || 'manual',
+    accuracy: numberOrNull(locationInput.accuracy ?? body.locationAccuracy),
+    placeId: String(locationInput.placeId ?? body.placeId ?? '').trim() || null,
+  };
+  const images = Array.isArray(body.images) ? body.images.filter(Boolean).map(String) : [];
+  const mediaInput = body.media && typeof body.media === 'object' ? body.media : {};
+  const imageMedia = Array.isArray(mediaInput.images)
+    ? mediaInput.images.map(item => typeof item === 'string' ? { url: item } : item).filter(item => item?.url)
+    : images.map(url => ({ url }));
+  const documents = Array.isArray(body.documents) ? body.documents.filter(Boolean).map(String) : [];
+  const documentMedia = Array.isArray(mediaInput.documents)
+    ? mediaInput.documents.map(item => typeof item === 'string' ? { name: item } : item).filter(Boolean)
+    : documents.map(name => ({ name }));
+  const videoUrl = body.videoUrl ? String(body.videoUrl) : null;
+  const safeId = propertyId ?? body.id ?? null;
+  const media = {
+    images: imageMedia.map(item => ({
+      ...item,
+      propertyId: safeId,
+      type: item.type || 'image',
+    })),
+    videos: [
+      ...(videoUrl ? [{ url: videoUrl, propertyId: safeId, type: 'video' }] : []),
+      ...(Array.isArray(mediaInput.videos) ? mediaInput.videos : []),
+    ],
+    documents: documentMedia.map(item => ({ ...item, propertyId: safeId, type: item.type || 'document' })),
+  };
+  return {
+    ...body,
+    id: safeId,
+    city: location.city,
+    address: location.address,
+    neighborhood: location.locality,
+    locality: location.locality,
+    district: location.district,
+    tehsil: location.tehsil,
+    province: location.province,
+    country: location.country,
+    postalCode: location.postalCode,
+    lat: latitude,
+    lng: longitude,
+    location,
+    images,
+    videoUrl,
+    documents,
+    media,
+    features: Array.isArray(body.features) ? body.features.filter(Boolean).map(String) : (Array.isArray(body.amenities) ? body.amenities : []),
+    amenities: Array.isArray(body.amenities) ? body.amenities.filter(Boolean).map(String) : (Array.isArray(body.features) ? body.features : []),
+    propertyDetails: body.propertyDetails && typeof body.propertyDetails === 'object' ? body.propertyDetails : {},
+    reviewHistory: Array.isArray(body.reviewHistory) ? body.reviewHistory : [],
+  };
+}
+
+function validatePropertyForSubmission(property) {
+  const errors = [];
+  if (!String(property.title || '').trim()) errors.push('title is required');
+  if (!String(property.type || '').trim()) errors.push('type is required');
+  if (!Number.isFinite(Number(property.price)) || Number(property.price) < 0) errors.push('price must be a valid number');
+  if (!Number.isFinite(Number(property.area)) || Number(property.area) <= 0) errors.push('area must be greater than zero');
+  const { latitude, longitude } = property.location || {};
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) ||
+      latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180 ||
+      (latitude === 0 && longitude === 0)) {
+    errors.push('an exact latitude and longitude are required');
+  }
+  for (const field of ['city', 'district', 'tehsil', 'locality', 'address']) {
+    if (!String(property.location?.[field] || '').trim()) errors.push(`${field} is required`);
+  }
+  if (!Array.isArray(property.images) || property.images.length === 0) errors.push('at least one image is required');
+  return errors;
+}
+
+function ensurePropertyRecords(data) {
+  let changed = false;
+  data.properties = (data.properties || []).map(property => {
+    const canonical = normalisePropertyPayload(property, null, property.id);
+    if (JSON.stringify(canonical) !== JSON.stringify(property)) changed = true;
+    return canonical;
+  });
+  return changed;
 }
 
 // ─── Area unit conversion ──────────────────────────────────────────────────────
@@ -935,18 +1051,16 @@ app.get('/api/properties', async (req, res) => {
     // - If no filter AND caller is admin → return all
     // - If no filter AND public/non-admin → default to Active only
     const as = approvalStatus || approval_status;
-    if (as && as !== 'all') {
+    const caller = await getRequestUser(req).catch(() => null);
+    const isAdminCaller = caller?.role === 'Admin';
+    const callerId = caller?.id;
+    if (!isAdminCaller) {
+      // Never let a public query parameter expose Pending/Rejected records.
+      // Owners may still inspect their own records from the seller portal.
+      props = props.filter(p => p.approvalStatus === 'Active' || (callerId && p.sellerId === callerId) || (callerId && p.agentId === callerId));
+      if (as && as !== 'all') props = props.filter(p => p.approvalStatus === as);
+    } else if (as && as !== 'all') {
       props = props.filter(p => p.approvalStatus === as);
-    } else if (!as) {
-      const caller = await getRequestUser(req).catch(() => null);
-      if (!caller || caller.role !== 'Admin') {
-        const userId = caller?.id;
-        // Seller can always see their own listings (any status); others see Active only
-        props = props.filter(p =>
-          p.approvalStatus === 'Active' ||
-          (userId && p.sellerId === userId)
-        );
-      }
     }
     const sid = sellerId || seller_id;
     if (sid) props = props.filter(p => p.sellerId === Number(sid));
@@ -1033,10 +1147,18 @@ app.get('/api/properties/:id', async (req, res) => {
     const data = await readData();
     const prop = data.properties.find(p => p.id === Number(req.params.id));
     if (!prop) return res.status(404).json({ error: 'Not found' });
-    const rp = { ...prop,
+    const caller = await getRequestUser(req).catch(() => null);
+    const canSeeUnpublished = caller?.role === 'Admin' ||
+      (caller && (caller.id === prop.sellerId || caller.id === prop.agentId));
+    if (prop.approvalStatus !== 'Active' && !canSeeUnpublished) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    const canonical = normalisePropertyPayload(prop, null, prop.id);
+    const rp = { ...canonical,
       images: (prop.images||[]).map(img => img ? (img.startsWith('http') ? img : resolveImg(img)) : null).filter(Boolean),
       videoUrl: prop.videoUrl ? (prop.videoUrl.startsWith('http') ? prop.videoUrl : resolveImg(prop.videoUrl)) : null,
     };
+    rp.media = normalisePropertyPayload({ ...canonical, images: rp.images, videoUrl: rp.videoUrl }, null, prop.id).media;
     res.json(rp);
   } catch (err) {
     console.error(err);
@@ -1066,20 +1188,37 @@ app.post('/api/properties', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'Your account is not allowed to submit a property listing.' });
     }
     const data = await readData();
-    // Always force Pending on new submissions — admin must review before going public
-    const newProp = {
-      id: nextId(data),
-      createdAt: new Date().toISOString().split('T')[0],
+    const id = nextId(data);
+    const requestedState = String(req.body.submissionState || req.body.approvalStatus || '').toLowerCase();
+    const isDraft = requestedState === 'draft';
+    let newProp = normalisePropertyPayload({
+      ...req.body,
+      id,
+      createdAt: new Date().toISOString(),
       views: 0,
       inquiryCount: 0,
-      ...req.body,
       // Ownership is always established from the authenticated account; callers
       // must never be able to create a listing under somebody else's account.
       ...(req.currentUser.role === 'Agent' ? { agentId: req.currentUser.id } : { sellerId: req.currentUser.id }),
-      approvalStatus: 'Pending',  // override whatever client sent
+      approvalStatus: isDraft ? 'Draft' : 'Pending',
+      submissionState: isDraft ? 'draft' : 'submitted',
       featured: false,
-    };
+      reviewHistory: [],
+    }, null, id);
+    if (!isDraft) {
+      const validationErrors = validatePropertyForSubmission(newProp);
+      if (validationErrors.length) return res.status(422).json({ error: 'Listing needs correction before submission.', code: 'LISTING_VALIDATION_FAILED', fields: validationErrors });
+    }
+    newProp.reviewHistory.push({
+      action: isDraft ? 'draft_saved' : 'submitted',
+      by: req.currentUser.id,
+      byName: req.currentUser.name,
+      fromStatus: null,
+      toStatus: newProp.approvalStatus,
+      createdAt: new Date().toISOString(),
+    });
     data.properties.push(newProp);
+    adminAudit(data, req.currentUser, isDraft ? 'draft_saved' : 'submit', 'properties', id, { status: newProp.approvalStatus });
     await writeData(data);
     res.status(201).json(newProp);
   } catch (err) {
@@ -1098,13 +1237,30 @@ app.put('/api/properties/:id', requireAuth, async (req, res) => {
     if (req.auth.role !== 'Admin' && prop.sellerId !== req.auth.userId) {
       return res.status(403).json({ error: 'You are not authorised to edit this property.' });
     }
-    // On edit, reset to Pending so admin reviews changes before they go public
-    // Admin approval/rejection uses the dedicated PATCH routes, not PUT
-    data.properties[idx] = {
-      ...data.properties[idx],
-      ...req.body,
-      approvalStatus: 'Pending',
-    };
+    const previousStatus = prop.approvalStatus || 'Pending';
+    const merged = normalisePropertyPayload(req.body, prop, prop.id);
+    const requestedState = String(req.body.submissionState || '').toLowerCase();
+    const isDraft = requestedState === 'draft';
+    if (!isDraft) {
+      const validationErrors = validatePropertyForSubmission(merged);
+      if (validationErrors.length) return res.status(422).json({ error: 'Listing needs correction before submission.', code: 'LISTING_VALIDATION_FAILED', fields: validationErrors });
+    }
+    const nextStatus = isDraft ? 'Draft' : (req.currentUser.role === 'Admin' ? previousStatus : 'Pending');
+    merged.approvalStatus = nextStatus;
+    merged.submissionState = isDraft ? 'draft' : 'submitted';
+    merged.updatedAt = new Date().toISOString();
+    merged.reviewHistory = Array.isArray(prop.reviewHistory) ? prop.reviewHistory : [];
+    merged.reviewHistory.push({
+      action: isDraft ? 'draft_saved' : (req.currentUser.role === 'Admin' ? 'admin_edit' : 'resubmitted'),
+      by: req.currentUser.id,
+      byName: req.currentUser.name,
+      fromStatus: previousStatus,
+      toStatus: nextStatus,
+      createdAt: merged.updatedAt,
+    });
+    data.properties[idx] = merged;
+    if (req.currentUser.role === 'Admin') adminAudit(data, req.currentUser, 'edit', 'properties', prop.id, { fromStatus: previousStatus, toStatus: nextStatus });
+    else adminAudit(data, req.currentUser, isDraft ? 'draft_saved' : 'resubmit', 'properties', prop.id, { fromStatus: previousStatus, toStatus: nextStatus });
     await writeData(data);
     res.json(data.properties[idx]);
   } catch (err) {
@@ -1217,9 +1373,20 @@ app.patch('/api/properties/:id/approve', requireAdmin, async (req, res) => {
   try {
     const data = await readData();
     const prop = data.properties.find(p => p.id === Number(req.params.id));
-    if (prop) { prop.approvalStatus = 'Active'; prop.rejectionReason = null; }
+    if (!prop) return res.status(404).json({ error: 'Property not found' });
+    const validationErrors = validatePropertyForSubmission(normalisePropertyPayload(prop, null, prop.id));
+    if (validationErrors.length) return res.status(422).json({ error: 'Property cannot go live until required data is complete.', code: 'LISTING_VALIDATION_FAILED', fields: validationErrors });
+    const previousStatus = prop.approvalStatus || 'Pending';
+    prop.approvalStatus = 'Active';
+    prop.submissionState = 'published';
+    prop.rejectionReason = null;
+    prop.reviewedAt = new Date().toISOString();
+    prop.reviewedBy = req.currentUser.id;
+    prop.reviewHistory ||= [];
+    prop.reviewHistory.push({ action: 'approved', by: req.currentUser.id, byName: req.currentUser.name, fromStatus: previousStatus, toStatus: 'Active', createdAt: prop.reviewedAt });
+    adminAudit(data, req.currentUser, 'approve', 'properties', prop.id, { fromStatus: previousStatus, toStatus: 'Active' });
     await writeData(data);
-    res.json({ success: true });
+    res.json({ success: true, property: prop });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -1230,9 +1397,72 @@ app.patch('/api/properties/:id/reject', requireAdmin, async (req, res) => {
   try {
     const data = await readData();
     const prop = data.properties.find(p => p.id === Number(req.params.id));
-    if (prop) { prop.approvalStatus = 'Rejected'; prop.rejectionReason = req.body.reason || 'Does not meet guidelines'; }
+    if (!prop) return res.status(404).json({ error: 'Property not found' });
+    const reason = String(req.body.reason || '').trim();
+    if (!reason) return res.status(400).json({ error: 'A rejection reason is required.' });
+    const previousStatus = prop.approvalStatus || 'Pending';
+    prop.approvalStatus = 'Rejected';
+    prop.submissionState = 'rejected';
+    prop.rejectionReason = reason;
+    prop.reviewedAt = new Date().toISOString();
+    prop.reviewedBy = req.currentUser.id;
+    prop.reviewHistory ||= [];
+    prop.reviewHistory.push({ action: 'rejected', reason, by: req.currentUser.id, byName: req.currentUser.name, fromStatus: previousStatus, toStatus: 'Rejected', createdAt: prop.reviewedAt });
+    adminAudit(data, req.currentUser, 'reject', 'properties', prop.id, { reason, fromStatus: previousStatus, toStatus: 'Rejected' });
     await writeData(data);
-    res.json({ success: true });
+    res.json({ success: true, property: prop });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.patch('/api/properties/:id/request-changes', requireAdmin, async (req, res) => {
+  try {
+    const data = await readData();
+    const prop = data.properties.find(p => p.id === Number(req.params.id));
+    if (!prop) return res.status(404).json({ error: 'Property not found' });
+    const reason = String(req.body.reason || '').trim();
+    if (!reason) return res.status(400).json({ error: 'Please describe the changes required.' });
+    const previousStatus = prop.approvalStatus || 'Pending';
+    prop.approvalStatus = 'Changes Requested';
+    prop.submissionState = 'changes_requested';
+    prop.changeRequest = reason;
+    prop.reviewedAt = new Date().toISOString();
+    prop.reviewedBy = req.currentUser.id;
+    prop.reviewHistory ||= [];
+    prop.reviewHistory.push({ action: 'changes_requested', reason, by: req.currentUser.id, byName: req.currentUser.name, fromStatus: previousStatus, toStatus: prop.approvalStatus, createdAt: prop.reviewedAt });
+    adminAudit(data, req.currentUser, 'request_changes', 'properties', prop.id, { reason, fromStatus: previousStatus, toStatus: prop.approvalStatus });
+    await writeData(data);
+    res.json({ success: true, property: prop });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.patch('/api/properties/:id/resubmit', requireAuth, async (req, res) => {
+  try {
+    const data = await readData();
+    const index = data.properties.findIndex(p => p.id === Number(req.params.id));
+    if (index < 0) return res.status(404).json({ error: 'Property not found' });
+    const prop = data.properties[index];
+    if (req.currentUser.role !== 'Admin' && prop.sellerId !== req.currentUser.id && prop.agentId !== req.currentUser.id) {
+      return res.status(403).json({ error: 'You are not authorised to resubmit this property.' });
+    }
+    const canonical = normalisePropertyPayload(prop, null, prop.id);
+    const validationErrors = validatePropertyForSubmission(canonical);
+    if (validationErrors.length) return res.status(422).json({ error: 'Listing needs correction before resubmission.', code: 'LISTING_VALIDATION_FAILED', fields: validationErrors });
+    const previousStatus = prop.approvalStatus || 'Rejected';
+    prop.approvalStatus = 'Pending';
+    prop.submissionState = 'submitted';
+    prop.changeRequest = null;
+    prop.rejectionReason = null;
+    prop.reviewHistory ||= [];
+    prop.reviewHistory.push({ action: 'resubmitted', by: req.currentUser.id, byName: req.currentUser.name, fromStatus: previousStatus, toStatus: 'Pending', createdAt: new Date().toISOString() });
+    adminAudit(data, req.currentUser, 'resubmit', 'properties', prop.id, { fromStatus: previousStatus, toStatus: 'Pending' });
+    await writeData(data);
+    res.json({ success: true, property: prop });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -2822,7 +3052,40 @@ app.get('/api/admin/properties', requireAdmin, async (req, res) => {
     const l = parseInt(limit, 10);
     const start = (p - 1) * l;
     res.set('X-Total-Count', String(total));
-    res.json(props.slice(start, start + l));
+    res.json(props.slice(start, start + l).map(property => normalisePropertyPayload(property, null, property.id)));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Complete review payload for the CMS and mobile admin.  This intentionally
+// returns the exact property record plus seller contact and only the audit
+// entries for this property, so review and public views never drift apart.
+app.get('/api/admin/properties/:id/review', requireAdmin, async (req, res) => {
+  try {
+    const data = await readData();
+    const property = data.properties.find(p => p.id === Number(req.params.id));
+    if (!property) return res.status(404).json({ error: 'Property not found' });
+    const canonical = normalisePropertyPayload(property, null, property.id);
+    const seller = (data.users || []).find(user =>
+      Number(user.id) === Number(property.sellerId || property.agentId),
+    );
+    const audit = (data.auditLog || [])
+      .filter(entry => entry.resource === 'properties' && String(entry.recordId) === String(property.id))
+      .slice(0, 100);
+    res.json({
+      property: canonical,
+      seller: seller ? {
+        id: seller.id,
+        name: seller.name,
+        role: seller.role,
+        email: seller.email,
+        phone: seller.phone,
+        agencyName: seller.agencyName || seller.agency,
+      } : null,
+      audit,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -2837,9 +3100,30 @@ app.patch('/api/admin/properties/:id/verify', requireAdmin, async (req, res) => 
     const data = await readData();
     const prop = data.properties.find(p => p.id === Number(req.params.id));
     if (!prop) return res.status(404).json({ error: 'Property not found' });
+    const previousStatus = prop.approvalStatus || 'Pending';
+    if (action === 'approve') {
+      const validationErrors = validatePropertyForSubmission(normalisePropertyPayload(prop, null, prop.id));
+      if (validationErrors.length) return res.status(422).json({ error: 'Property cannot go live until required data is complete.', code: 'LISTING_VALIDATION_FAILED', fields: validationErrors });
+    }
     prop.approvalStatus = action === 'approve' ? 'Active' : 'Rejected';
-    if (action === 'reject' && reason) prop.rejectionReason = reason;
+    prop.submissionState = action === 'approve' ? 'published' : 'rejected';
+    if (action === 'reject') {
+      if (!String(reason || '').trim()) return res.status(400).json({ error: 'A rejection reason is required.' });
+      prop.rejectionReason = String(reason).trim();
+    } else prop.rejectionReason = null;
     prop.reviewedAt = new Date().toISOString();
+    prop.reviewedBy = req.currentUser.id;
+    prop.reviewHistory ||= [];
+    prop.reviewHistory.push({
+      action: action === 'approve' ? 'approved' : 'rejected',
+      reason: action === 'reject' ? prop.rejectionReason : undefined,
+      by: req.currentUser.id,
+      byName: req.currentUser.name,
+      fromStatus: previousStatus,
+      toStatus: prop.approvalStatus,
+      createdAt: prop.reviewedAt,
+    });
+    adminAudit(data, req.currentUser, action, 'properties', prop.id, { reason: prop.rejectionReason || null, fromStatus: previousStatus, toStatus: prop.approvalStatus });
     await writeData(data);
     res.json({ success: true, property: prop });
   } catch (err) {

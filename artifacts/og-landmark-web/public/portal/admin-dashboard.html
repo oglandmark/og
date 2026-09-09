@@ -1170,6 +1170,9 @@ tr:hover td{background:#f8fafc}
             <div class="pr-edit-field"><label>Bedrooms</label><input id="pe-bedrooms" type="number" min="0"/></div>
             <div class="pr-edit-field"><label>Bathrooms</label><input id="pe-bathrooms" type="number" min="0"/></div>
             <div class="pr-edit-field"><label>City</label><input id="pe-city" type="text"/></div>
+            <div class="pr-edit-field"><label>District</label><input id="pe-district" type="text"/></div>
+            <div class="pr-edit-field"><label>Tehsil</label><input id="pe-tehsil" type="text"/></div>
+            <div class="pr-edit-field"><label>Locality</label><input id="pe-locality" type="text"/></div>
             <div class="pr-edit-field"><label>Society / Area</label><input id="pe-society" type="text"/></div>
             <div class="pr-edit-field full"><label>Full Address</label><input id="pe-address" type="text"/></div>
             <div class="pr-edit-field"><label>Year Built</label><input id="pe-yearBuilt" type="number"/></div>
@@ -1197,6 +1200,13 @@ tr:hover td{background:#f8fafc}
         <div class="pr-details-grid" id="pr-details-grid"></div>
       </div>
 
+      <!-- Canonical location review -->
+      <div class="pr-section" id="pr-location-card">
+        <div class="pr-section-title"> Exact Location</div>
+        <div id="pr-location-details"></div>
+        <div id="pr-location-map" style="height:260px;border-radius:12px;overflow:hidden;margin-top:12px;background:#eef2f7"></div>
+      </div>
+
       <!-- Description -->
       <div class="pr-section" id="pr-desc-card" style="display:none">
         <div class="pr-section-title"> Description</div>
@@ -1209,6 +1219,12 @@ tr:hover td{background:#f8fafc}
         <div id="pr-amenities-list" style="display:flex;flex-wrap:wrap;gap:4px"></div>
       </div>
 
+      <!-- Submitted document evidence -->
+      <div class="pr-section" id="pr-documents-card" style="display:none">
+        <div class="pr-section-title"> Documents Submitted</div>
+        <div id="pr-documents-list"></div>
+      </div>
+
       <!-- Nearby -->
       <div class="pr-section" id="pr-nearby-card" style="display:none">
         <div class="pr-section-title"> Nearby Places</div>
@@ -1219,6 +1235,11 @@ tr:hover td{background:#f8fafc}
       <div class="pr-section" id="pr-score-card" style="display:none">
         <div class="pr-section-title">⭐ Property Score</div>
         <div id="pr-score-list"></div>
+      </div>
+
+      <div class="pr-section" id="pr-audit-card">
+        <div class="pr-section-title"> Audit History</div>
+        <div id="pr-audit-list"></div>
       </div>
     </div>
 
@@ -1281,6 +1302,13 @@ tr:hover td{background:#f8fafc}
         <div class="pr-reject-inline" id="pr-reject-inline">
           <textarea id="pr-reject-reason" rows="3" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:8px;font-family:inherit;resize:vertical" placeholder="Reason for rejection..."></textarea>
           <button class="btn btn-danger" style="width:100%;justify-content:center" onclick="prRejectProperty()">Confirm Reject</button>
+        </div>
+        <button class="pr-reject-btn" style="color:#9a6700;border-color:#c8a45a;margin-top:8px" onclick="togglePrChangeForm()">
+           Request Changes
+        </button>
+        <div class="pr-reject-inline" id="pr-change-inline">
+          <textarea id="pr-change-reason" rows="3" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:8px;font-family:inherit;resize:vertical" placeholder="Tell the seller exactly what must be corrected..."></textarea>
+          <button class="btn btn-outline" style="width:100%;justify-content:center;border-color:#c8a45a;color:#8a650e" onclick="prRequestChanges()">Send Change Request</button>
         </div>
       </div>
 
@@ -2542,7 +2570,7 @@ function closePropDetail(){ closePropReview(); }
 
 // ── PROPERTY REVIEW PAGE ──
 let prCurrentId=null, prFromPage='approvals';
-let prGalleryIndex=0, prImages=[];
+let prGalleryIndex=0, prImages=[], prAudit=[];
 
 function fmtPKR(n){
   if(!n) return '—';
@@ -2558,9 +2586,14 @@ function prShowTab(tab, btn){
   document.getElementById('pr-video-panel').classList.toggle('show', tab==='video');
 }
 
-function openPropReview(id, fromPage){
-  const p=allProps.find(x=>x.id===id);
+async function openPropReview(id, fromPage){
+  let p=allProps.find(x=>x.id===id);
   if(!p) return;
+  try{
+    const review=await api('GET',`/api/admin/properties/${id}/review`);
+    if(review?.property) p={...p,...review.property};
+    prAudit=Array.isArray(review?.audit)?review.audit:[];
+  }catch(e){ prAudit=Array.isArray(p.reviewHistory)?p.reviewHistory:[]; }
   prCurrentId=id;
   prFromPage=fromPage||document.querySelector('nav a.active')?.id?.replace('nav-','')||'approvals';
   prGalleryIndex=0;
@@ -2576,7 +2609,7 @@ function openPropReview(id, fromPage){
   document.getElementById('pr-breadcrumb').textContent=p.title;
 
   // Topbar status badge
-  const stColors={Pending:'#f59e0b',Active:'#16a34a',Rejected:'#ef4444'};
+  const stColors={Pending:'#f59e0b',Active:'#16a34a',Rejected:'#ef4444','Changes Requested':'#c8a45a',Draft:'#64748b'};
   document.getElementById('pr-topbar-status').innerHTML=`<span style="background:${stColors[p.approvalStatus]||'#94a3b8'}22;color:${stColors[p.approvalStatus]||'#94a3b8'};border:1px solid ${stColors[p.approvalStatus]||'#94a3b8'}44;border-radius:999px;font-size:12px;font-weight:700;padding:4px 12px">${p.approvalStatus}</span>`;
 
   // ── GALLERY ──
@@ -2640,6 +2673,12 @@ function openPropReview(id, fromPage){
     ['Bedrooms',p.bedrooms||null],
     ['Bathrooms',p.bathrooms||null],
     ['City',p.city],
+    ['District',p.district || p.location?.district],
+    ['Tehsil',p.tehsil || p.location?.tehsil],
+    ['Locality',p.locality || p.location?.locality || p.neighborhood],
+    ['Province',p.province || p.location?.province],
+    ['Country',p.country || p.location?.country],
+    ['Postal Code',p.postalCode || p.location?.postalCode],
     ['Society / Area',p.society],
     ['Block',p.block],
     ['Landmark',p.landmark],
@@ -2657,6 +2696,26 @@ function openPropReview(id, fromPage){
   ].filter(([,v])=>v!=null&&v!=='');
   document.getElementById('pr-details-grid').innerHTML=detailRows.map(([l,v])=>`<div class="pr-detail-item"><label>${l}</label><span>${v}</span></div>`).join('');
 
+  // ── CANONICAL LOCATION ──
+  const loc=p.location||{};
+  const lat=Number(loc.latitude ?? p.lat), lng=Number(loc.longitude ?? p.lng);
+  const locationRows=[
+    ['Coordinates',Number.isFinite(lat)&&Number.isFinite(lng)?`${lat.toFixed(6)}, ${lng.toFixed(6)}`:'Not set'],
+    ['Source',loc.source||p.locationSource||'—'],
+    ['Accuracy',loc.accuracy!=null?`${loc.accuracy} m`:'—'],
+    ['Address',loc.address||p.address||'—'],
+    ['City / District',`${loc.city||p.city||'—'}${loc.district||p.district?' · '+(loc.district||p.district):''}`],
+    ['Tehsil / Locality',`${loc.tehsil||p.tehsil||'—'}${loc.locality||p.locality||p.neighborhood?' · '+(loc.locality||p.locality||p.neighborhood):''}`],
+  ];
+  document.getElementById('pr-location-details').innerHTML=locationRows.map(([l,v])=>`<div style="display:flex;justify-content:space-between;gap:18px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--muted)">${l}</span><strong>${v}</strong></div>`).join('');
+  const mapEl=document.getElementById('pr-location-map');
+  if(Number.isFinite(lat)&&Number.isFinite(lng)&&!(lat===0&&lng===0)){
+    const delta=.006;
+    mapEl.innerHTML=`<iframe title="Exact property location" src="https://www.openstreetmap.org/export/embed.html?bbox=${lng-delta}%2C${lat-delta}%2C${lng+delta}%2C${lat+delta}&layer=mapnik&marker=${lat}%2C${lng}" style="width:100%;height:100%;border:0"></iframe><a href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank" rel="noopener" style="display:block;background:#fff;padding:7px 10px;font-size:12px;color:#0B1F3A;text-decoration:none">Open exact pin in Google Maps ↗</a>`;
+  }else{
+    mapEl.innerHTML='<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#dc2626;font-size:13px">Exact coordinates were not submitted.</div>';
+  }
+
   // ── DESCRIPTION ──
   const descCard=document.getElementById('pr-desc-card');
   if(p.description){ descCard.style.display=''; document.getElementById('pr-desc-text').textContent=p.description; }
@@ -2668,6 +2727,20 @@ function openPropReview(id, fromPage){
     amCard.style.display='';
     document.getElementById('pr-amenities-list').innerHTML=p.amenities.map(a=>`<span class="pr-amenity"> ${a}</span>`).join('');
   } else amCard.style.display='none';
+
+  // ── DOCUMENTS ──
+  const docCard=document.getElementById('pr-documents-card');
+  const docs=(p.media&&Array.isArray(p.media.documents)?p.media.documents:[]).length
+    ? p.media.documents
+    : (Array.isArray(p.documents)?p.documents:[]);
+  if(docs.length){
+    docCard.style.display='';
+    document.getElementById('pr-documents-list').innerHTML=docs.map(doc=>{
+      const item=typeof doc==='string'?{name:doc}:doc;
+      const label=item.name||item.title||item.url||'Submitted document';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px"><span> ${label}</span>${item.url?`<a href="${item.url}" target="_blank" rel="noopener" style="color:#0B1F3A;font-weight:700">Open ↗</a>`:''}</div>`;
+    }).join('');
+  }else docCard.style.display='none';
 
   // ── NEARBY ──
   const nbCard=document.getElementById('pr-nearby-card');
@@ -2699,18 +2772,20 @@ function openPropReview(id, fromPage){
 
   // ── STATUS PANEL ──
   const stCard=document.getElementById('pr-status-card');
-  stCard.className='pr-panel-card pr-status-'+p.approvalStatus.toLowerCase();
+  stCard.className='pr-panel-card pr-status-'+String(p.approvalStatus||'Pending').toLowerCase().replace(/\s+/g,'-');
   const stMap={
     Pending:{emoji:'⏳',label:'Pending Review',msg:'This property is awaiting your review. Check all details before approving.'},
     Active:{emoji:'',label:'Live & Active',msg:'This property is visible on public pages.'},
-    Rejected:{emoji:'',label:'Rejected',msg:p.rejectionReason?`Reason: ${p.rejectionReason}`:'Does not meet listing guidelines.'}
+    Rejected:{emoji:'',label:'Rejected',msg:p.rejectionReason?`Reason: ${p.rejectionReason}`:'Does not meet listing guidelines.'},
+    'Changes Requested':{emoji:'',label:'Changes Requested',msg:p.changeRequest||'Seller must update the listing before it can be reviewed again.'}
   };
   const st=stMap[p.approvalStatus]||{emoji:'•',label:p.approvalStatus,msg:''};
   document.getElementById('pr-status-badge').textContent=`${st.emoji} ${st.label}`;
   document.getElementById('pr-status-msg').textContent=st.msg;
 
   // Show/hide approve section
-  document.getElementById('pr-approve-section').style.display=(p.approvalStatus==='Pending'||p.approvalStatus==='Rejected')?'':'none';
+  document.getElementById('pr-approve-section').style.display=(p.approvalStatus==='Pending'||p.approvalStatus==='Rejected'||p.approvalStatus==='Changes Requested')?'':'none';
+  document.getElementById('pr-change-reason').value='';
 
   // ── CITY AGENT ASSIGNMENT CARD ──
   prPopulateAgentCard(p);
@@ -2746,7 +2821,14 @@ function openPropReview(id, fromPage){
     {l:'Submitted',v:p.createdAt?new Date(p.createdAt).toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'}):'—'},
     {l:'Views',v:(p.views||0).toLocaleString()},
     {l:'Inquiries',v:p.inquiryCount||0},
+    {l:'Last reviewed',v:p.reviewedAt?new Date(p.reviewedAt).toLocaleString('en-PK'):'Not reviewed'},
   ].map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--muted)">${r.l}</span><span style="font-weight:600">${r.v}</span></div>`).join('');
+
+  // ── AUDIT HISTORY ──
+  const history=prAudit.length?prAudit:(Array.isArray(p.reviewHistory)?p.reviewHistory:[]);
+  document.getElementById('pr-audit-list').innerHTML=history.length
+    ? history.map(entry=>`<div style="padding:9px 0;border-bottom:1px solid var(--border);font-size:12px"><div style="display:flex;justify-content:space-between;gap:10px"><strong>${entry.action||'update'}</strong><span style="color:var(--muted)">${entry.createdAt?new Date(entry.createdAt).toLocaleString('en-PK'):''}</span></div><div style="color:var(--muted);margin-top:3px">${entry.byName||'System'}${entry.fromStatus||entry.toStatus?` · ${entry.fromStatus||'—'} → ${entry.toStatus||'—'}`:''}</div>${entry.reason?`<div style="margin-top:4px">${entry.reason}</div>`:''}</div>`).join('')
+    : '<div style="font-size:13px;color:var(--muted)">No review activity recorded yet.</div>';
 
   // ── FILL EDIT FORM ──
   document.getElementById('pe-title').value=p.title||'';
@@ -2758,6 +2840,9 @@ function openPropReview(id, fromPage){
   document.getElementById('pe-bedrooms').value=p.bedrooms||0;
   document.getElementById('pe-bathrooms').value=p.bathrooms||0;
   document.getElementById('pe-city').value=p.city||'';
+  document.getElementById('pe-district').value=p.district||p.location?.district||'';
+  document.getElementById('pe-tehsil').value=p.tehsil||p.location?.tehsil||'';
+  document.getElementById('pe-locality').value=p.locality||p.location?.locality||p.neighborhood||'';
   document.getElementById('pe-society').value=p.society||'';
   document.getElementById('pe-address').value=p.address||'';
   document.getElementById('pe-yearBuilt').value=p.yearBuilt||'';
@@ -2818,6 +2903,9 @@ async function savePropEdit(){
     bedrooms:Number(document.getElementById('pe-bedrooms').value)||0,
     bathrooms:Number(document.getElementById('pe-bathrooms').value)||0,
     city:document.getElementById('pe-city').value.trim(),
+    district:document.getElementById('pe-district').value.trim(),
+    tehsil:document.getElementById('pe-tehsil').value.trim(),
+    locality:document.getElementById('pe-locality').value.trim(),
     society:document.getElementById('pe-society').value.trim(),
     address:document.getElementById('pe-address').value.trim(),
     yearBuilt:Number(document.getElementById('pe-yearBuilt').value)||null,
@@ -3032,6 +3120,12 @@ async function prApproveProperty(){
 
 function togglePrRejectForm(){
   document.getElementById('pr-reject-inline').classList.toggle('open');
+  document.getElementById('pr-change-inline').classList.remove('open');
+}
+
+function togglePrChangeForm(){
+  document.getElementById('pr-change-inline').classList.toggle('open');
+  document.getElementById('pr-reject-inline').classList.remove('open');
 }
 
 async function prRejectProperty(){
@@ -3040,6 +3134,17 @@ async function prRejectProperty(){
   try{
     await api('PATCH',`/api/properties/${prCurrentId}/reject`,{reason});
     showToast('Property rejected.','success');
+    await loadAll();
+    openPropReview(prCurrentId, prFromPage);
+  }catch(e){showToast(e.message,'error');}
+}
+
+async function prRequestChanges(){
+  const reason=document.getElementById('pr-change-reason').value.trim();
+  if(!reason){showToast('Please describe the required changes','error');return;}
+  try{
+    await api('PATCH',`/api/properties/${prCurrentId}/request-changes`,{reason});
+    showToast('Change request sent to the seller.','success');
     await loadAll();
     openPropReview(prCurrentId, prFromPage);
   }catch(e){showToast(e.message,'error');}

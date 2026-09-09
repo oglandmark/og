@@ -317,6 +317,12 @@ export type ApiProperty = {
   bedrooms: number;
   bathrooms: number;
   city: string;
+  district?: string;
+  tehsil?: string;
+  locality?: string;
+  province?: string;
+  country?: string;
+  postalCode?: string;
   address: string;
   description: string;
   images: string[];
@@ -331,6 +337,36 @@ export type ApiProperty = {
   sellerPhone?: string;
   createdAt?: string;
   tags?: string[];
+  features?: string[];
+  documents?: string[];
+  propertyDetails?: Record<string, unknown>;
+  location?: {
+    latitude?: number | null;
+    longitude?: number | null;
+    city?: string;
+    district?: string;
+    tehsil?: string;
+    locality?: string;
+    address?: string;
+    province?: string;
+    country?: string;
+    postalCode?: string;
+    source?: string;
+    accuracy?: number | null;
+    placeId?: string | null;
+  };
+  media?: {
+    images?: Array<{ url: string; propertyId?: number; type?: string }>;
+    videos?: Array<{ url: string; propertyId?: number; type?: string }>;
+    documents?: Array<{ name?: string; url?: string; propertyId?: number; type?: string }>;
+  };
+  reviewHistory?: Array<{
+    action: string; reason?: string; by?: number; byName?: string;
+    fromStatus?: string | null; toStatus?: string; createdAt?: string;
+  }>;
+  rejectionReason?: string | null;
+  changeRequest?: string | null;
+  reviewedAt?: string;
   lat?: number;
   lng?: number;
   /** Present only on results returned by a nearby-distance query. */
@@ -574,6 +610,21 @@ export type CreatePropertyPayload = {
   lat?: number;
   lng?: number;
   tags?: string[];
+  district?: string;
+  tehsil?: string;
+  locality?: string;
+  province?: string;
+  country?: string;
+  postalCode?: string;
+  placeId?: string;
+  locationSource?: string;
+  locationAccuracy?: number;
+  features?: string[];
+  documents?: string[];
+  propertyDetails?: Record<string, unknown>;
+  location?: ApiProperty['location'];
+  media?: ApiProperty['media'];
+  submissionState?: 'draft' | 'submitted';
 };
 
 export async function createProperty(payload: CreatePropertyPayload): Promise<ApiProperty> {
@@ -844,6 +895,23 @@ export async function rejectProperty(id: number, reason?: string): Promise<void>
     method: 'PATCH',
     body: JSON.stringify({ reason }),
   });
+}
+export async function requestPropertyChanges(id: number, reason: string): Promise<void> {
+  await apiFetch(`/api/properties/${id}/request-changes`, {
+    method: 'PATCH',
+    body: JSON.stringify({ reason }),
+  });
+}
+export async function resubmitProperty(id: number): Promise<void> {
+  await apiFetch(`/api/properties/${id}/resubmit`, { method: 'PATCH' });
+}
+export type AdminPropertyReview = {
+  property: ApiProperty;
+  seller: { id: number; name?: string; role?: string; email?: string; phone?: string; agencyName?: string } | null;
+  audit: ApiProperty['reviewHistory'];
+};
+export async function getAdminPropertyReview(id: number): Promise<AdminPropertyReview> {
+  return apiFetch<AdminPropertyReview>(`/api/admin/properties/${id}/review`);
 }
 export async function toggleFeatureProperty(id: number, featured: boolean): Promise<void> {
   await apiFetch(`/api/admin/properties/${id}/feature`, {

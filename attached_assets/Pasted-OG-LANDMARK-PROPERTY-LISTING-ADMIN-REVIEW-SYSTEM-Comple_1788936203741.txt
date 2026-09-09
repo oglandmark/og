@@ -1,0 +1,1446 @@
+OG LANDMARK — PROPERTY LISTING & ADMIN REVIEW SYSTEM
+
+Complete End-to-End Workflow, Location Accuracy & Media Synchronization
+
+You are working on the OG Landmark real-estate platform.
+
+There are currently TWO critical issues in the Property Listing workflow:
+
+ISSUE 1 — MAP LOCATION MISMATCH
+
+When a seller creates a property listing and selects/pins a location on the map, the selected location is NOT reliably reflected in the property details.
+
+Example:
+
+* Seller pins/selects a property location in Depalpur.
+* Property details later show Okara.
+* The map pin and property city/location are therefore inconsistent.
+
+This must be fixed completely.
+
+ISSUE 2 — INCOMPLETE ADMIN PROPERTY REVIEW
+
+When a seller submits a property listing, the Admin Dashboard → Property Review does NOT show the complete listing.
+
+The admin must be able to see the EXACT same complete property information submitted by the seller, including:
+
+* All property details
+* Location
+* Exact map pin
+* Images
+* Videos
+* Property features
+* Pricing
+* Area
+* Seller information
+* Contact information
+* Description
+* Any additional listing fields
+* All uploaded media
+
+The admin should NEVER have to guess, recreate, or separately retrieve missing listing information.
+
+⸻
+
+OBJECTIVE
+
+Rebuild/refactor the property listing data flow so that:
+
+SELLER PROPERTY FORM
+↓
+LOCATION SELECTION
+↓
+MEDIA UPLOAD
+↓
+VALIDATION
+↓
+DATABASE
+↓
+ADMIN PROPERTY REVIEW
+↓
+APPROVE / REJECT / REQUEST CHANGES
+↓
+PUBLIC PROPERTY LISTING
+
+All stages must use the SAME property record and the SAME source of truth.
+
+Do NOT create duplicate or conflicting location/property data.
+
+⸻
+
+1. PROPERTY DATA MODEL
+
+Audit the existing database schema first.
+
+Do NOT blindly create duplicate tables or fields.
+
+Use the existing property/listing structure where possible and migrate/refactor only when necessary.
+
+Every property listing must have a unique immutable:
+
+propertyId / listingId
+
+The property record should contain, at minimum:
+
+Basic Information
+
+* propertyId
+* listingId
+* title
+* propertyType
+* purpose
+* category
+* subCategory
+* description
+* status
+* listingStatus
+* createdAt
+* updatedAt
+* submittedAt
+* approvedAt
+* rejectedAt
+* publishedAt
+
+Seller Information
+
+* sellerId
+* sellerName
+* sellerPhone
+* sellerEmail
+* sellerType
+* sellerProfileImage
+
+Do not expose private seller information publicly unless the existing platform rules explicitly allow it.
+
+⸻
+
+2. LOCATION DATA — SINGLE SOURCE OF TRUTH
+
+This is extremely important.
+
+The selected map location must NOT depend on a manually selected/default city.
+
+When the seller places a pin on the map, save the location coordinates directly with the property.
+
+Required fields:
+
+* latitude
+* longitude
+* city
+* district
+* tehsil
+* locality
+* areaName
+* address
+* province
+* country
+* postalCode where available
+* locationSource
+
+Example:
+
+latitude: 30.xxxxx
+longitude: 73.xxxxx
+city: Depalpur
+district: Okara
+tehsil: Depalpur
+province: Punjab
+country: Pakistan
+
+IMPORTANT:
+
+“Okara” as the district MUST NOT automatically replace “Depalpur” as the city.
+
+Depalpur is a city/tehsil while Okara is the district.
+
+The UI must correctly distinguish:
+
+City → Depalpur
+District → Okara
+
+Do not use district as city.
+
+⸻
+
+3. MAP PIN WORKFLOW
+
+When the seller opens the map:
+
+1. Show the map.
+2. Allow the seller to search for a location.
+3. Allow the seller to tap/click on the map.
+4. Allow the seller to drag the marker.
+5. Every time the marker moves:
+    * update latitude
+    * update longitude
+    * reverse geocode the location
+    * update city
+    * update district
+    * update tehsil
+    * update locality/address where available
+
+The selected marker location must be stored in the property form state.
+
+Do NOT store only the city name.
+
+Coordinates are the primary location source.
+
+⸻
+
+4. LOCATION CONFIRMATION UI
+
+After the seller selects the location, show a clear confirmation card:
+
+Selected Property Location
+
+📍 City: Depalpur
+District: Okara
+Tehsil: Depalpur
+Address: [resolved address]
+
+Latitude: [latitude]
+Longitude: [longitude]
+
+The seller must be able to:
+
+* Change location
+* Move pin
+* Search another location
+* Confirm location
+
+Add a:
+
+“Confirm Location”
+
+button.
+
+Once confirmed, the location data must be saved to the form state.
+
+⸻
+
+5. DO NOT USE DEFAULT CITY VALUES
+
+Find and eliminate bugs such as:
+
+city = “Okara”
+
+being automatically assigned to every property.
+
+Do NOT hard-code:
+
+* Okara
+* Depalpur
+* Renala Khurd
+* Basirpur
+* Haveli Lakha
+* Hujrah Shah Muqeem
+
+as default property locations.
+
+The property city must come from the selected location.
+
+If the seller selects Depalpur, the listing must show Depalpur.
+
+If the seller selects Renala Khurd, the listing must show Renala Khurd.
+
+If the seller selects another supported location, show that location.
+
+⸻
+
+6. IMPORTANT: CITY VS DISTRICT
+
+Implement proper location hierarchy:
+
+Province
+↓
+District
+↓
+Tehsil
+↓
+City
+↓
+Locality / Area
+↓
+Exact Coordinates
+
+For example:
+
+Punjab
+→ Okara District
+→ Depalpur Tehsil
+→ Depalpur City
+→ [Locality]
+→ Latitude/Longitude
+
+Do not display:
+
+City: Okara
+
+when the actual selected city is:
+
+Depalpur.
+
+The public property details should clearly display:
+
+📍 Depalpur, Okara, Punjab
+
+where appropriate.
+
+⸻
+
+7. REVERSE GEOCODING
+
+If the project already uses a map/geocoding provider, use the existing provider.
+
+Do NOT introduce another mapping provider unless necessary.
+
+Reverse geocoding should happen after:
+
+* map click
+* marker drag
+* location search
+* manual location selection
+
+Handle reverse-geocoding failures gracefully.
+
+If reverse geocoding fails:
+
+* Keep latitude/longitude.
+* Do not overwrite the previous valid location with incorrect/default data.
+* Show the seller a warning.
+* Allow manual city/area selection if necessary.
+
+⸻
+
+8. PROPERTY FORM — COMPLETE DATA CAPTURE
+
+Audit the entire Property Listing form.
+
+Every field entered by the seller must be connected to:
+
+1. React/frontend state
+2. API/request payload
+3. backend validation
+4. database
+5. admin review API
+6. admin review UI
+7. public listing UI
+
+There must be NO field that exists only visually in the frontend.
+
+There must be NO database field that is ignored by the admin review.
+
+⸻
+
+9. PROPERTY DETAILS
+
+The property form should support the existing OG Landmark property categories and relevant fields.
+
+Depending on property type, include:
+
+General
+
+* Property Title
+* Property Type
+* Purpose
+* Description
+* Price
+* Area
+* Area Unit
+* City
+* District
+* Tehsil
+* Locality
+* Address
+* Map Location
+
+Residential
+
+* Bedrooms
+* Bathrooms
+* Floors
+* Furnishing
+* Construction Year/Age
+* Parking
+* Kitchen
+* Drawing Room
+* TV Lounge
+* Store Room
+* Servant Room
+* Balcony
+* Electricity
+* Gas
+* Water
+* Sewerage
+
+Commercial
+
+* Commercial Type
+* Floor
+* Shop/Office Count
+* Parking
+* Main Road
+* Front Width
+* Building Condition
+* Electricity
+* Gas
+* Water
+
+Agricultural Land
+
+Include relevant fields such as:
+
+* Land Type
+* Total Area
+* Area Unit
+* Road Front Width
+* Road Access
+* Distance From Main Road
+* Nehri Water
+* Tube Well
+* Water Turbine
+* Solar Tube Well/Turbine
+* Electricity
+* Soil Information
+* Crop Information
+* Boundary Status
+* Land Condition
+
+Only show relevant fields according to property type.
+
+⸻
+
+10. MEDIA SYSTEM
+
+The seller must be able to upload:
+
+Images
+
+* Property Cover Image
+* Multiple Property Images
+* Interior Images
+* Exterior Images
+* Additional Images
+
+Videos
+
+* Property Video
+* Walkthrough Video
+* Optional additional videos
+
+Every uploaded media item must belong to the exact propertyId.
+
+Database/media relationship:
+
+propertyId → media[]
+
+Each media record should contain:
+
+* mediaId
+* propertyId
+* type
+* url
+* thumbnailUrl if applicable
+* fileName
+* mimeType
+* size
+* sortOrder
+* isCover
+* uploadedAt
+* status
+
+⸻
+
+11. MEDIA UPLOAD RELIABILITY
+
+Do not save only temporary frontend URLs.
+
+The upload process must be:
+
+FILE SELECTED
+↓
+UPLOAD TO STORAGE
+↓
+GET PERMANENT URL
+↓
+SAVE MEDIA RECORD WITH propertyId
+↓
+RETURN MEDIA RECORD TO FRONTEND
+
+Before the listing is submitted, verify that every selected image/video has a valid permanent URL.
+
+Handle:
+
+* upload failure
+* partial upload
+* retry
+* duplicate upload
+* invalid file
+* oversized file
+* unsupported format
+
+without losing the property listing.
+
+⸻
+
+12. COVER IMAGE
+
+Seller must be able to select one image as:
+
+“Cover Image”
+
+The cover image must be stored against the property.
+
+The same cover image should appear consistently in:
+
+* Seller dashboard
+* Admin review
+* Public property card
+* Property detail page
+
+Do not randomly select different images in different parts of the application.
+
+⸻
+
+13. PROPERTY DRAFT SYSTEM
+
+Allow sellers to save a property as:
+
+Draft
+
+A draft should preserve:
+
+* All property details
+* Location
+* Coordinates
+* Media
+* Seller data
+* Form progress
+
+The seller should be able to leave and continue later.
+
+⸻
+
+14. SUBMIT FOR REVIEW
+
+When seller clicks:
+
+“Submit Property”
+
+perform complete validation.
+
+Check:
+
+* Required fields
+* Valid price
+* Valid area
+* Valid property type
+* Valid location
+* Latitude exists
+* Longitude exists
+* City exists
+* At least one image
+* Cover image exists
+* Media URLs are valid
+* Seller information exists
+
+If validation passes:
+
+listingStatus = “pending_review”
+
+Then create/update the property record.
+
+Do NOT create a second property record during submission.
+
+⸻
+
+15. ADMIN PROPERTY REVIEW
+
+Admin Dashboard → Property Review must display the COMPLETE listing.
+
+Create a professional Property Review page.
+
+The admin should see the listing exactly as submitted.
+
+Recommended layout:
+
+HEADER
+
+Property Title
+Listing ID
+Status
+Submission Date
+Seller Name
+
+Actions:
+
+* Approve
+* Reject
+* Request Changes
+* Edit
+* View Public Preview
+
+⸻
+
+16. ADMIN REVIEW — PROPERTY OVERVIEW
+
+Show:
+
+* Cover Image
+* Property Title
+* Property Type
+* Purpose
+* Price
+* Area
+* Description
+* Listing Status
+* Created Date
+* Submitted Date
+
+⸻
+
+17. ADMIN REVIEW — LOCATION
+
+Show an actual map.
+
+Display:
+
+📍 Exact Property Location
+
+* Map marker
+* Latitude
+* Longitude
+* City
+* District
+* Tehsil
+* Locality
+* Address
+
+Example:
+
+City: Depalpur
+District: Okara
+Tehsil: Depalpur
+Punjab, Pakistan
+
+The map marker MUST use the exact stored latitude/longitude from the database.
+
+Do NOT derive the admin map location from city name.
+
+⸻
+
+18. ADMIN REVIEW — IMAGE GALLERY
+
+Admin must see ALL submitted images.
+
+Use a professional gallery:
+
+* Large cover image
+* Thumbnail grid
+* Full-screen image viewer
+* Image count
+* Image ordering
+
+Example:
+
+Property Images (12)
+
+[Image] [Image] [Image]
+[Image] [Image] [Image]
+
+Clicking an image should open a larger preview.
+
+⸻
+
+19. ADMIN REVIEW — VIDEO
+
+Admin must see all submitted videos.
+
+Show:
+
+* Video thumbnail
+* Play button
+* Video duration if available
+* Full-screen player
+
+Example:
+
+Property Videos (2)
+
+▶️ Property Walkthrough
+▶️ Exterior Video
+
+Videos must be playable directly from the Admin Review page.
+
+Do NOT merely show a filename.
+
+⸻
+
+20. ADMIN REVIEW — ALL DETAILS
+
+Create organized sections/tabs:
+
+Overview
+
+Property Details
+
+Features
+
+Location
+
+Media
+
+Seller
+
+Documents
+
+Submission History
+
+Activity / Audit Log
+
+Every field submitted by seller must appear in the appropriate section.
+
+If a field is empty, display:
+
+Not Provided
+
+instead of hiding the entire section.
+
+⸻
+
+21. SELLER INFORMATION IN ADMIN
+
+Admin should see:
+
+* Seller name
+* Seller ID
+* Email
+* Phone
+* Seller type
+* Profile information
+* Previous listings if the existing system supports it
+
+Public users should NOT automatically receive sensitive seller information.
+
+⸻
+
+22. DOCUMENTS
+
+If the listing workflow supports property documents, show:
+
+* Document name
+* Document type
+* Upload date
+* Preview/download
+* Verification status
+
+Admin should be able to mark documents:
+
+Verified
+Pending
+Rejected
+
+Do not expose private documents publicly.
+
+⸻
+
+23. ADMIN APPROVAL WORKFLOW
+
+Status lifecycle:
+
+DRAFT
+↓
+PENDING_REVIEW
+↓
+UNDER_REVIEW
+↓
+APPROVED
+↓
+PUBLISHED
+
+Alternative:
+
+PENDING_REVIEW
+↓
+CHANGES_REQUESTED
+↓
+SELLER_EDITS
+↓
+PENDING_REVIEW
+
+Rejection:
+
+PENDING_REVIEW
+↓
+REJECTED
+
+Admin must provide a reason when:
+
+* Rejecting
+* Requesting changes
+
+⸻
+
+24. PUBLIC LISTING
+
+Only:
+
+APPROVED / PUBLISHED
+
+properties should appear publicly.
+
+The public property detail page must use the SAME property record used by Admin Review.
+
+It should display:
+
+* Same title
+* Same price
+* Same area
+* Same description
+* Same location
+* Same city
+* Same map coordinates
+* Same images
+* Same videos
+* Same features
+
+No duplicated manually maintained data.
+
+⸻
+
+25. SINGLE SOURCE OF TRUTH
+
+This is a critical architecture requirement.
+
+The property database record is the source of truth.
+
+Do NOT maintain separate versions such as:
+
+sellerProperty
+adminProperty
+publicProperty
+
+unless they are merely database/API views of the same underlying property record.
+
+Seller → submits propertyId.
+
+Admin → reviews same propertyId.
+
+Public page → displays same propertyId.
+
+⸻
+
+26. API REQUIREMENTS
+
+Audit all property-related APIs.
+
+At minimum, verify:
+
+POST /properties
+PUT /properties/:id
+GET /properties/:id
+GET /admin/properties
+GET /admin/properties/:id
+POST /properties/:id/media
+PUT /properties/:id/status
+
+Use the actual existing route structure if different.
+
+Every API must return complete property data where appropriate.
+
+The Admin Property Details API should return:
+
+{
+property,
+location,
+media,
+seller,
+features,
+documents,
+auditHistory
+}
+
+Do not return only the basic property fields.
+
+⸻
+
+27. DATABASE QUERY
+
+The Admin Review API must correctly retrieve related data.
+
+If the project uses relational tables:
+
+Property
+→ Property Location
+→ Property Media
+→ Property Features
+→ Property Documents
+→ Seller/User
+
+Use proper joins/relations.
+
+If the project uses JSON fields, ensure the complete object is returned.
+
+Avoid N+1 requests where practical.
+
+⸻
+
+28. MEDIA + PROPERTY RELATIONSHIP CHECK
+
+Perform a database audit.
+
+Find orphaned media where:
+
+media.propertyId
+
+does not point to an existing property.
+
+Also find properties where:
+
+* images exist in storage but no database media record
+* database media record exists but URL is invalid
+* video exists but is not returned by admin API
+
+Fix these issues.
+
+⸻
+
+29. LOCATION BUG DIAGNOSTICS
+
+Before implementing the fix, inspect the existing code and identify exactly why:
+
+Depalpur → Okara
+
+is occurring.
+
+Check:
+
+* Map component
+* reverse geocoding
+* city selector
+* district selector
+* form state
+* API payload
+* backend controller
+* database schema
+* admin API
+* public property API
+
+Do NOT patch only the UI.
+
+Fix the root cause.
+
+⸻
+
+30. FRONTEND STATE
+
+Use one location object:
+
+location: {
+latitude,
+longitude,
+city,
+district,
+tehsil,
+locality,
+address,
+province,
+country
+}
+
+The map, location display, submission payload and preview should all read from this same object.
+
+Avoid having separate conflicting states such as:
+
+selectedCity
+mapCity
+propertyCity
+locationCity
+
+unless there is a strong technical reason.
+
+⸻
+
+31. PRE-SUBMISSION PREVIEW
+
+Before final submission, show:
+
+PROPERTY PREVIEW
+
+Cover Image
+Property Title
+Price
+Area
+Property Type
+Description
+
+LOCATION
+
+📍 Depalpur, Okara
+[Map with exact marker]
+
+MEDIA
+
+12 Images
+2 Videos
+
+The seller can review everything before submitting.
+
+⸻
+
+32. ADMIN PREVIEW SHOULD MATCH SELLER PREVIEW
+
+The seller preview and admin review should use the same data structure.
+
+If seller sees:
+
+Depalpur, Okara
+
+Admin must see:
+
+Depalpur, Okara
+
+If seller uploaded:
+
+12 images + 2 videos
+
+Admin must see:
+
+12 images + 2 videos
+
+If seller entered:
+
+5 bedrooms
+
+Admin must see:
+
+5 bedrooms
+
+There must be ZERO data mismatch.
+
+⸻
+
+33. AUDIT LOG
+
+Create/maintain a property activity history.
+
+Examples:
+
+Property Created
+Location Updated
+Image Uploaded
+Video Uploaded
+Draft Saved
+Submitted for Review
+Admin Started Review
+Changes Requested
+Seller Updated Listing
+Approved
+Published
+Rejected
+
+Store:
+
+* action
+* userId
+* timestamp
+* previousValue where useful
+* newValue where useful
+
+⸻
+
+34. SECURITY
+
+Implement authorization.
+
+Seller can:
+
+* Create own listing
+* Edit own draft
+* Submit own listing
+* View own listings
+
+Seller cannot:
+
+* Edit another seller’s listing
+* Modify approved listing without proper workflow
+* Change admin status
+* Access private admin information
+
+Admin can:
+
+* Review listings
+* Approve
+* Reject
+* Request changes
+* Manage listings according to role permissions
+
+⸻
+
+35. VALIDATION
+
+Backend validation is mandatory.
+
+Never rely only on frontend validation.
+
+Validate:
+
+* Property ownership
+* Property ID
+* Location coordinates
+* Required fields
+* Media ownership
+* Status transitions
+* Admin permissions
+
+⸻
+
+36. ERROR HANDLING
+
+Use professional user-friendly errors.
+
+Examples:
+
+“Please select a property location on the map.”
+
+“Unable to determine the city from this location. Please adjust the pin.”
+
+“Some images have not finished uploading.”
+
+“Video upload failed. Please try again.”
+
+“Your property has been submitted successfully for review.”
+
+Do not expose raw database/server errors to users.
+
+⸻
+
+37. RESPONSIVE ADMIN UI
+
+Admin Review must work professionally on:
+
+* Desktop
+* Laptop
+* Tablet
+* Mobile
+
+Use:
+
+* Sticky action bar
+* Clear sections
+* Image gallery
+* Video player
+* Map
+* Status badge
+* Seller information card
+* Timeline
+* Approve/Reject controls
+
+⸻
+
+38. IMPORTANT — DO NOT BREAK EXISTING FEATURES
+
+Before modifying anything:
+
+1. Inspect the existing architecture.
+2. Identify existing property tables/models.
+3. Identify existing property APIs.
+4. Identify existing map implementation.
+5. Identify existing media/storage implementation.
+6. Identify existing admin dashboard.
+7. Reuse existing infrastructure wherever possible.
+
+Do NOT rebuild the entire application unnecessarily.
+
+Do NOT remove existing working features.
+
+Do NOT change the overall OG Landmark design/theme.
+
+Only improve the affected Property Listing → Admin Review workflow.
+
+⸻
+
+39. DATABASE MIGRATION
+
+If schema changes are required:
+
+* Create proper migration.
+* Preserve existing property records.
+* Backfill missing values where safely possible.
+* Do not delete existing property/media data.
+* Ensure old listings continue working.
+
+⸻
+
+40. TESTING — MANDATORY
+
+After implementation, test the complete workflow.
+
+TEST CASE 1 — DEPALPUR
+
+Create a property.
+
+Select:
+
+Depalpur
+
+Place pin in Depalpur.
+
+Submit.
+
+Verify:
+
+Seller preview → Depalpur
+Database → Depalpur
+Admin → Depalpur
+Admin map → exact coordinates
+Public listing → Depalpur
+
+District should remain:
+
+Okara
+
+⸻
+
+TEST CASE 2 — OKARA CITY
+
+Create another property.
+
+Select/pin Okara City.
+
+Verify that:
+
+City = Okara
+
+and it is not confused with Depalpur.
+
+⸻
+
+TEST CASE 3 — RENALA KHURD
+
+Select Renala Khurd.
+
+Verify:
+
+City = Renala Khurd
+
+⸻
+
+TEST CASE 4 — MEDIA
+
+Create property with:
+
+10 images
+3 videos
+
+Verify:
+
+Seller sees 10 images + 3 videos.
+
+Admin sees 10 images + 3 playable videos.
+
+Public listing after approval sees the correct approved media.
+
+⸻
+
+TEST CASE 5 — EDIT
+
+Create draft.
+
+Save.
+
+Close.
+
+Open again.
+
+Verify:
+
+All details remain.
+
+Location remains.
+
+Map pin remains.
+
+Images remain.
+
+Videos remain.
+
+⸻
+
+TEST CASE 6 — CHANGE LOCATION
+
+Change:
+
+Depalpur → Okara
+
+Move map marker.
+
+Save.
+
+Verify all related location fields update correctly.
+
+There must be no stale Depalpur data.
+
+⸻
+
+TEST CASE 7 — REQUEST CHANGES
+
+Admin requests changes.
+
+Seller edits property.
+
+Submit again.
+
+Admin must see the updated version.
+
+Old information must not incorrectly overwrite the new version.
+
+⸻
+
+41. FINAL DATA CONSISTENCY TEST
+
+For every property, compare:
+
+SELLER DATA
+vs
+DATABASE DATA
+vs
+ADMIN DATA
+vs
+PUBLIC DATA
+
+They must match wherever the same field is intended to be displayed.
+
+Create a developer-side test/debug utility if useful.
+
+⸻
+
+42. ACCEPTANCE CRITERIA
+
+The task is NOT complete until all of these are true:
+
+✅ Map pin saves exact latitude/longitude.
+
+✅ Reverse geocoding correctly identifies city.
+
+✅ City and district are stored separately.
+
+✅ Depalpur is not incorrectly displayed as Okara.
+
+✅ Okara District can still correctly appear as the district.
+
+✅ Property location persists after saving/reopening.
+
+✅ Property location persists after submission.
+
+✅ Admin receives the exact property location.
+
+✅ Admin map displays the exact stored coordinates.
+
+✅ Admin sees every submitted property field.
+
+✅ Admin sees all images.
+
+✅ Admin sees all videos.
+
+✅ Videos are playable.
+
+✅ Cover image is consistent.
+
+✅ Seller preview and Admin Review show the same data.
+
+✅ Public listing uses the same approved property record.
+
+✅ Drafts preserve all information.
+
+✅ Changes requested workflow works.
+
+✅ Approval workflow works.
+
+✅ Rejection workflow works.
+
+✅ Media is linked to the correct propertyId.
+
+✅ No orphaned property media is created.
+
+✅ Existing listings continue working.
+
+✅ No existing OG Landmark functionality is unnecessarily broken.
+
+⸻
+
+43. IMPLEMENTATION APPROACH
+
+Do NOT simply make superficial UI changes.
+
+First:
+
+STEP 1
+
+Audit existing code/database/API architecture.
+
+STEP 2
+
+Trace the property listing data from frontend → backend → database.
+
+STEP 3
+
+Trace map location from map → form state → API → database → admin.
+
+STEP 4
+
+Trace media from upload → storage → database → admin.
+
+STEP 5
+
+Identify the root causes of both reported bugs.
+
+STEP 6
+
+Implement the corrected single-source-of-truth workflow.
+
+STEP 7
+
+Run database/schema migrations if required.
+
+STEP 8
+
+Implement complete Admin Property Review.
+
+STEP 9
+
+Test with Depalpur, Okara and Renala Khurd.
+
+STEP 10
+
+Test images and videos.
+
+STEP 11
+
+Test draft/edit/resubmit/approve/reject.
+
+STEP 12
+
+Verify there are no console errors, API errors, broken images, broken videos or stale location values.
+
+⸻
+
+FINAL REQUIREMENT
+
+Do not tell me only what needs to be changed.
+
+Actually inspect the existing OG Landmark implementation and IMPLEMENT the complete solution end-to-end.
+
+After implementation, provide a concise technical report containing:
+
+1. Root cause of location mismatch
+2. Root cause of incomplete admin review
+3. Database changes
+4. API changes
+5. Frontend changes
+6. Media changes
+7. Admin Dashboard changes
+8. Testing performed
+9. Any remaining issues
+
+The final result must be production-ready and professionally structured.

@@ -9,6 +9,7 @@ import {
   resubmitProperty,
   type CreatePropertyPayload,
 } from '@/lib/api';
+import { buildCreatePropertyPayload } from '@/lib/listingPayload';
 
 export type ListingStatus = 'Active' | 'Pending' | 'Draft' | 'Paused' | 'Sold' | 'Rented';
 
@@ -157,32 +158,7 @@ export async function addUserListing(listing: UserListing): Promise<void> {
     updatedAt: now,
   };
 
-  const payload: CreatePropertyPayload = {
-    title: newEntry.title, type: newEntry.type, status: newEntry.status,
-    price: newEntry.price, area: newEntry.area, areaUnit: newEntry.areaUnit,
-    bedrooms: newEntry.bedrooms, bathrooms: newEntry.bathrooms, city: newEntry.city,
-    address: newEntry.fullAddress || newEntry.neighborhood, description: newEntry.description,
-    lat: newEntry.latitude, lng: newEntry.longitude, images: newEntry.images, videoUrl: newEntry.videoUrl,
-    district: newEntry.district,
-    locality: newEntry.locality ?? newEntry.neighborhood,
-    tehsil: newEntry.tehsil,
-    features: newEntry.features,
-    amenities: newEntry.features,
-    documents: newEntry.documents,
-    propertyDetails: newEntry.propertyDetails,
-    location: newEntry.location ?? {
-      latitude: newEntry.latitude,
-      longitude: newEntry.longitude,
-      city: newEntry.city,
-      district: newEntry.district,
-      tehsil: newEntry.tehsil,
-      locality: newEntry.locality ?? newEntry.neighborhood,
-      address: newEntry.fullAddress || newEntry.neighborhood,
-      source: newEntry.locationSource,
-      accuracy: newEntry.locationAccuracy,
-      placeId: newEntry.placeId,
-    },
-  };
+  const payload: CreatePropertyPayload = buildCreatePropertyPayload(newEntry);
   await createProperty(payload);
 }
 

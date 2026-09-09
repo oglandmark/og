@@ -13,4 +13,5 @@
 - [GitHub connector write fallback](github-connector-write-fallback.md) — selected source-file writes may hit Cloudflare 403; publish through credential-injected Git data APIs.
 - [Android reveal lifecycle](android-reveal-lifecycle.md) — nested tab focus callbacks can miss; animated content must start visible to avoid blank Home sections.
 - [Location picker camera sync](location-picker-camera.md) — city/locality changes must drive the native map camera, while GPS recovery must persist the selected pin.
+- [Location flow testing](location-flow-testing.md) — keep native GPS recovery behind a provider seam so permission and fallback branches run in Node tests.
 - [Post-merge setup](post-merge-setup.md) — this workspace needs a non-frozen pnpm install and the scoped @workspace/db filter.

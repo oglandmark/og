@@ -40,6 +40,7 @@ import {
   type LocationData,
   type AccuracyLevel,
 } from '@/lib/locationService';
+import { createGpsLocationData, lowAccuracyMessage } from '@/lib/locationFlow';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -355,19 +356,13 @@ export function LocationPicker({
       if (pos.accuracyLevel === 'low') {
         Alert.alert(
           'Low GPS Accuracy',
-          `Location accuracy is ${Math.round(pos.accuracy)} metres. You can continue, or move outdoors for better accuracy and adjust the pin manually.`,
+          lowAccuracyMessage(pos.accuracy),
           [
             { text: 'Adjust Pin Manually', style: 'cancel' },
             {
               text: 'Use Anyway', onPress: async () => {
                 const rev = await reverseGeocode(pos.latitude, pos.longitude);
-                applyLocation({
-                  latitude: pos.latitude, longitude: pos.longitude,
-                  fullAddress: rev?.fullAddress ?? '',
-                  city: rev?.city, locality: rev?.locality, district: rev?.district,
-                  province: rev?.province, country: rev?.country,
-                  accuracy: pos.accuracy, locationSource: 'gps',
-                });
+                applyLocation(createGpsLocationData(pos, rev));
               },
             },
           ],
@@ -377,14 +372,7 @@ export function LocationPicker({
       }
 
       const rev = await reverseGeocode(pos.latitude, pos.longitude);
-      applyLocation({
-        latitude: pos.latitude, longitude: pos.longitude,
-        fullAddress: rev?.fullAddress ?? '',
-        city: rev?.city, locality: rev?.locality, district: rev?.district,
-        province: rev?.province, country: rev?.country, postalCode: rev?.postalCode,
-        placeId: rev?.placeId,
-        accuracy: pos.accuracy, locationSource: 'gps',
-      });
+      applyLocation(createGpsLocationData(pos, rev));
     } catch {
       Alert.alert('Error', 'Could not get your location. Please try again or enter address manually.');
     } finally {

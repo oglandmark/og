@@ -1,0 +1,1293 @@
+OG LANDMARK — COMPLETE PROFESSIONAL APP POLISH
+
+You are working on the existing OG Landmark real-estate mobile application.
+
+The application is already developed and functional. DO NOT rebuild the application from scratch.
+
+Your task is to perform a complete professional UI/UX polish, visual refinement, usability improvement, consistency audit, and production-quality finishing pass across the entire app.
+
+The goal is to make OG Landmark feel like a premium, modern, trustworthy international real-estate application comparable in quality to leading property platforms.
+
+⸻
+
+1. IMPORTANT RULE — DO NOT CHANGE THE CORE PRODUCT
+
+Before making changes:
+
+* Inspect the entire existing application.
+* Understand the current navigation.
+* Understand all existing screens.
+* Understand the current components.
+* Understand the current API/database integration.
+* Understand authentication.
+* Understand seller/buyer/agent/admin flows.
+* Understand existing property listing workflow.
+
+DO NOT remove working functionality.
+
+DO NOT rebuild existing functionality unnecessarily.
+
+DO NOT change the database unless required for a genuine UI/UX issue.
+
+DO NOT change business logic unless a bug is discovered.
+
+The objective is:
+
+EXISTING FUNCTIONALITY
++
+PREMIUM PROFESSIONAL POLISH
+
+⸻
+
+2. DESIGN DIRECTION
+
+OG Landmark should feel:
+
+* Premium
+* Luxury
+* Modern
+* Minimal
+* Trustworthy
+* Elegant
+* Professional
+* Clean
+* Spacious
+* Easy to use
+* International-quality
+
+Avoid making the interface:
+
+* overly colorful
+* childish
+* crowded
+* excessively rounded
+* overly animated
+* visually noisy
+* generic template-like
+
+The design should communicate:
+
+“Trusted Premium Real Estate Platform”
+
+⸻
+
+3. EXISTING BRAND THEME
+
+Preserve the existing OG Landmark brand identity.
+
+Primary visual direction:
+
+* Deep Navy / Dark Blue
+* White
+* Soft Off-White
+* Neutral Gray
+* Luxury Gold as a subtle accent
+
+Do NOT replace the entire existing theme.
+
+Use the current brand colors consistently.
+
+Gold should be used as an accent, not as a dominant color.
+
+⸻
+
+4. TYPOGRAPHY
+
+Perform a complete typography audit.
+
+Use a modern professional font system.
+
+Typography hierarchy should clearly distinguish:
+
+Display / Hero
+
+Large, premium, strong typography.
+
+Screen Titles
+
+Clear and confident.
+
+Section Titles
+
+Medium/semibold.
+
+Body
+
+Highly readable.
+
+Labels
+
+Small but readable.
+
+Metadata
+
+Subtle but clear.
+
+Prices
+
+Strong visual hierarchy.
+
+Maintain consistent:
+
+* font sizes
+* font weights
+* line heights
+* letter spacing
+* text colors
+
+Do not use random font sizes across screens.
+
+Create a consistent typography scale.
+
+⸻
+
+5. SPACING SYSTEM
+
+Implement a consistent spacing system.
+
+Audit:
+
+* margins
+* padding
+* gaps
+* card spacing
+* section spacing
+* screen padding
+* button spacing
+* input spacing
+
+Avoid:
+
+* elements touching each other
+* excessive empty space
+* inconsistent padding
+* random spacing values
+
+The interface should feel intentionally designed.
+
+⸻
+
+6. BORDER RADIUS SYSTEM
+
+Create a consistent radius system.
+
+For example:
+
+* Small controls → subtle radius
+* Inputs → medium radius
+* Cards → medium/large radius
+* Bottom sheets → larger top radius
+
+Avoid making every element extremely rounded.
+
+The result should feel premium rather than playful.
+
+⸻
+
+7. SHADOWS & DEPTH
+
+Audit all shadows.
+
+Use subtle, realistic elevation.
+
+Avoid:
+
+* heavy shadows
+* dark outlines
+* excessive glow
+* unnecessary borders
+
+Cards should have enough separation without looking bulky.
+
+⸻
+
+8. BUTTON DESIGN
+
+Create a consistent button system.
+
+Primary Button:
+
+* Strong OG Landmark brand color
+* High contrast
+* Clear typography
+* Comfortable touch area
+
+Secondary Button:
+
+* White/off-white
+* Subtle border
+* Brand-colored text
+
+Tertiary:
+
+* Minimal/no background
+
+Buttons should have consistent:
+
+* height
+* radius
+* typography
+* padding
+* icon alignment
+
+⸻
+
+9. SELECTED STATES
+
+There are currently areas where selected options become visually heavy.
+
+Refine selection states.
+
+Instead of making the entire option aggressively dark blue:
+
+Use:
+
+* subtle background tint
+* brand-colored border
+* brand icon
+* check indicator
+* slightly stronger typography
+
+Selection should be clearly visible but elegant.
+
+Apply this consistently to:
+
+* Property Types
+* Purpose
+* Filters
+* Amenities
+* Furnishing
+* Bedrooms
+* Bathrooms
+* Area Units
+* Land features
+* Listing options
+* Any selectable chips/cards
+
+⸻
+
+10. ICON SYSTEM
+
+Audit every icon.
+
+Use one consistent icon style.
+
+Do not mix:
+
+* different stroke widths
+* random icon libraries
+* inconsistent visual styles
+* emojis where professional icons are expected
+
+Icons should have consistent:
+
+* size
+* stroke weight
+* alignment
+* color
+
+Important actions should use icons where useful.
+
+⸻
+
+11. HOME SCREEN
+
+Professionally polish the Home screen.
+
+Improve:
+
+* Header
+* Logo placement
+* Search
+* Location selector
+* Featured properties
+* Property cards
+* Categories
+* CTA sections
+* Navigation
+
+The Home screen should immediately communicate:
+
+OG Landmark = Premium Real Estate.
+
+Avoid overcrowding.
+
+Prioritize:
+
+1. Search
+2. Property discovery
+3. Categories
+4. Featured listings
+5. Trusted platform messaging
+
+⸻
+
+12. SEARCH EXPERIENCE
+
+Make property search extremely polished.
+
+Search should feel:
+
+Fast
+Simple
+Professional
+
+Improve:
+
+* Search bar
+* Search suggestions
+* Location search
+* Recent searches
+* Filters
+* Clear search
+* Search results
+
+Search UI should clearly communicate what the user is searching.
+
+⸻
+
+13. FILTER SYSTEM
+
+Create a professional filter experience.
+
+Filters should be grouped logically:
+
+Location
+
+* City
+* Area
+* Map
+
+Property
+
+* Property Type
+* Purpose
+
+Price
+
+* Minimum
+* Maximum
+
+Area
+
+* Minimum
+* Maximum
+* Unit
+
+Features
+
+* Bedrooms
+* Bathrooms
+* Furnishing
+* Amenities
+
+For agricultural land:
+
+* Road frontage
+* Nehri water
+* Tube well
+* Solar turbine
+* Road access
+* Land features
+
+Use a clean bottom-sheet or dedicated filter screen depending on existing architecture.
+
+Show:
+
+“Apply Filters”
+
+and:
+
+“Clear All”
+
+clearly.
+
+⸻
+
+14. PROPERTY CARD
+
+Completely polish property cards.
+
+Each card should have strong hierarchy:
+
+PROPERTY IMAGE
+
+Favorite button
+
+Property Type / Badge
+
+PROPERTY TITLE
+
+Location
+
+Area
+
+Beds / Baths where applicable
+
+PRICE
+
+Optional verified badge
+
+Avoid displaying too much information.
+
+Use consistent image ratios.
+
+Images must not stretch or distort.
+
+⸻
+
+15. PROPERTY DETAIL SCREEN
+
+This is one of the most important screens.
+
+Create a premium property detail experience.
+
+Structure:
+
+Image / Video Gallery
+
+Large hero image.
+
+Thumbnail/media navigation.
+
+Video support.
+
+Property Header
+
+Title
+
+Location
+
+Price
+
+Property type
+
+Quick Facts
+
+Area
+Bedrooms
+Bathrooms
+Parking
+etc.
+
+Description
+
+Readable text with “Read More” when necessary.
+
+Features
+
+Use clean icon-based feature rows.
+
+Location
+
+Map + location details.
+
+Media
+
+Images and videos.
+
+Seller / Agent
+
+Professional profile card.
+
+Contact
+
+Call
+WhatsApp
+Message
+Schedule Visit
+
+Keep the primary CTA easily accessible.
+
+⸻
+
+16. PROPERTY MEDIA
+
+Make images and videos feel premium.
+
+Images:
+
+* correct aspect ratio
+* smooth gallery
+* full-screen viewer
+* swipe gestures
+* pinch-to-zoom where appropriate
+
+Videos:
+
+* proper thumbnail
+* play button
+* full-screen support
+* loading state
+* error state
+
+Do not show broken media.
+
+⸻
+
+17. MAP EXPERIENCE
+
+The map should feel integrated with the OG Landmark design.
+
+Use:
+
+* clean marker
+* professional location pin
+* selected location state
+* proper zoom
+* loading state
+* error state
+
+Property detail should use the EXACT saved coordinates.
+
+Do not derive the map from a generic city center when exact coordinates are available.
+
+⸻
+
+18. SELLER LISTING EXPERIENCE
+
+Audit the entire property listing process.
+
+The workflow should feel simple and professional.
+
+Recommended steps:
+
+1. Property Type
+2. Purpose
+3. Property Details
+4. Pricing
+5. Features
+6. Location
+7. Photos & Videos
+8. Description
+9. Preview
+10. Submit for Review
+
+Show progress.
+
+Example:
+
+Step 4 of 10
+
+Use:
+
+Back
+Continue
+
+and preserve entered information.
+
+⸻
+
+19. PROPERTY LISTING FORM
+
+Improve every input.
+
+Inputs must have:
+
+* clear labels
+* placeholders
+* focus state
+* error state
+* success state where appropriate
+* correct keyboard type
+* validation
+
+Avoid relying only on placeholder text as labels.
+
+⸻
+
+20. MEDIA UPLOAD SCREEN
+
+Make upload experience premium.
+
+Show:
+
+Upload Property Photos
+
+[ + Add Photos ]
+
+Selected:
+
+12 Photos
+
+Show thumbnails.
+
+Allow:
+
+* reorder
+* delete
+* set cover image
+* preview
+
+For videos:
+
+[ + Add Video ]
+
+Show upload progress.
+
+Never leave the user wondering whether an upload is still processing.
+
+⸻
+
+21. LOCATION SELECTION SCREEN
+
+Improve the location workflow.
+
+Show:
+
+Search Location
+
+OR
+
+Select on Map
+
+Then:
+
+Selected Location
+
+City
+District
+Area
+Address
+
+Show exact pin.
+
+Add:
+
+“Confirm Location”
+
+The user must clearly understand which location will be attached to the property.
+
+⸻
+
+22. SELLER DASHBOARD
+
+Polish seller dashboard.
+
+Show:
+
+Active Listings
+Pending Review
+Approved
+Rejected
+Drafts
+
+Each listing should have a clear status badge.
+
+Example:
+
+● Pending Review
+
+● Approved
+
+● Changes Required
+
+● Rejected
+
+Avoid confusing colors.
+
+⸻
+
+23. BUYER DASHBOARD
+
+Polish buyer experience.
+
+Useful sections:
+
+* Saved Properties
+* Recently Viewed
+* Search History
+* Recommended Properties
+* Scheduled Visits
+* Messages
+
+Maintain clean hierarchy.
+
+⸻
+
+24. FAVORITES
+
+Make favorite interactions smooth.
+
+Heart icon:
+
+Unselected → outline
+
+Selected → filled brand state
+
+Add subtle animation only.
+
+Do not over-animate.
+
+⸻
+
+25. PROFILE SCREEN
+
+Create a professional profile experience.
+
+Show:
+
+Profile photo
+
+Name
+
+Email
+
+Phone
+
+Account type
+
+Verification status
+
+Settings
+
+Saved properties
+
+My listings
+
+Security
+
+Logout
+
+Use grouped sections.
+
+⸻
+
+26. NAVIGATION
+
+Audit bottom navigation.
+
+Ensure:
+
+* icons are visually consistent
+* active state is obvious
+* labels are readable
+* spacing is balanced
+* navigation does not feel crowded
+
+Do not change navigation structure unless there is a strong UX reason.
+
+⸻
+
+27. LOADING STATES
+
+Replace blank screens/spinners with professional loading states.
+
+Use:
+
+Skeleton loaders
+
+for:
+
+* property cards
+* property detail
+* profile
+* dashboard
+* search results
+
+Loading should feel intentional.
+
+⸻
+
+28. EMPTY STATES
+
+Every empty section needs a professional empty state.
+
+Examples:
+
+No Saved Properties
+
+“No properties saved yet.”
+
+CTA:
+
+“Explore Properties”
+
+No Listings
+
+“Your property listings will appear here.”
+
+CTA:
+
+“List a Property”
+
+Avoid blank screens.
+
+⸻
+
+29. ERROR STATES
+
+Create consistent error states.
+
+Examples:
+
+Unable to load properties.
+
+[Try Again]
+
+Unable to load map.
+
+[Retry]
+
+Upload failed.
+
+[Try Again]
+
+Network connection unavailable.
+
+[Retry]
+
+Do not show technical error messages to normal users.
+
+⸻
+
+30. SUCCESS STATES
+
+Create polished success feedback.
+
+Examples:
+
+Property Submitted
+
+“Your property has been submitted successfully and is now under review.”
+
+Profile Updated
+
+“Your profile has been updated successfully.”
+
+Property Saved
+
+“Added to your saved properties.”
+
+Use subtle animations where appropriate.
+
+⸻
+
+31. TOASTS & ALERTS
+
+Standardize all toast messages.
+
+Avoid:
+
+“Success”
+“Error”
+“Something happened”
+
+Use meaningful messages.
+
+Keep toast duration appropriate.
+
+Do not interrupt the user’s workflow unnecessarily.
+
+⸻
+
+32. ANIMATIONS
+
+Add subtle premium micro-interactions.
+
+Examples:
+
+* Button press
+* Favorite
+* Page transition
+* Bottom sheet
+* Image transition
+* Selection
+* Success confirmation
+
+Animation should be:
+
+Fast
+Smooth
+Subtle
+
+Avoid excessive animations.
+
+Target approximately 150–300ms for most micro-interactions.
+
+Respect reduced-motion/accessibility preferences where possible.
+
+⸻
+
+33. TOUCH TARGETS
+
+Ensure all interactive elements are easy to tap.
+
+Buttons, icons and controls should have comfortable touch areas.
+
+Avoid tiny icons that are difficult to use on mobile.
+
+⸻
+
+34. KEYBOARD & FORM UX
+
+Audit all forms.
+
+When keyboard opens:
+
+* important fields should remain visible
+* content should scroll correctly
+* buttons should remain accessible
+* keyboard should not cover inputs
+
+Use appropriate keyboard types:
+
+Email
+Phone
+Numeric
+Decimal
+Text
+
+⸻
+
+35. IMAGE PERFORMANCE
+
+Optimize property images.
+
+Use:
+
+* proper compression
+* thumbnails
+* lazy loading
+* caching
+* appropriate resolutions
+
+Do not load unnecessarily huge images.
+
+Maintain good visual quality.
+
+⸻
+
+36. PERFORMANCE AUDIT
+
+Check:
+
+* unnecessary re-renders
+* slow screens
+* excessive API calls
+* duplicate API requests
+* large image loading
+* unnecessary animations
+* memory usage
+
+Improve performance without changing functionality.
+
+⸻
+
+37. ACCESSIBILITY
+
+Audit:
+
+* text contrast
+* readable font sizes
+* touch targets
+* labels
+* accessibility labels for icons
+* keyboard navigation where relevant
+* screen-reader support where practical
+
+The UI should remain usable for a wide range of users.
+
+⸻
+
+38. CONSISTENCY AUDIT
+
+Search the entire application for inconsistencies.
+
+Fix:
+
+* different button heights
+* different corner radii
+* different spacing
+* different font weights
+* different icon sizes
+* inconsistent colors
+* inconsistent card layouts
+* inconsistent status badges
+* inconsistent headers
+* inconsistent error messages
+
+Create reusable components where appropriate.
+
+⸻
+
+39. DESIGN SYSTEM
+
+Create/reuse centralized design tokens/components for:
+
+* Colors
+* Typography
+* Spacing
+* Radius
+* Shadows
+* Buttons
+* Inputs
+* Cards
+* Badges
+* Modals
+* Bottom sheets
+* Headers
+* Icons
+
+This will prevent future screens from becoming visually inconsistent.
+
+⸻
+
+40. DARK/LIGHT APPEARANCE
+
+Do not introduce a completely new theme.
+
+If the application already supports light/dark appearance, ensure every screen is polished in both modes.
+
+If dark mode is not implemented, do not unexpectedly redesign the entire app around it.
+
+⸻
+
+41. PROFESSIONAL REAL-ESTATE DETAILS
+
+Add subtle premium details where appropriate:
+
+* Verified property badge
+* Verified seller/agent badge
+* Listing date
+* Property ID
+* Location hierarchy
+* Share property
+* Favorite
+* Report property
+* Schedule visit
+
+Do not overcrowd the UI.
+
+⸻
+
+42. SECURITY / TRUST UI
+
+Where applicable, communicate trust professionally.
+
+Examples:
+
+Verified Listing
+Verified Agent
+Secure Account
+
+Use badges sparingly.
+
+Never display a verification badge unless the backend actually confirms verification.
+
+⸻
+
+43. SCREEN-BY-SCREEN AUDIT
+
+Inspect EVERY existing screen.
+
+For each screen evaluate:
+
+1. Visual hierarchy
+2. Typography
+3. Spacing
+4. Alignment
+5. Colors
+6. Buttons
+7. Icons
+8. Cards
+9. Navigation
+10. Loading
+11. Empty state
+12. Error state
+13. Accessibility
+14. Responsiveness
+15. Performance
+
+Fix issues rather than simply documenting them.
+
+⸻
+
+44. DO NOT MAKE IT LOOK LIKE A TEMPLATE
+
+Avoid generic UI patterns.
+
+OG Landmark should have its own visual identity.
+
+The interface should feel:
+
+Designed specifically for OG Landmark.
+
+Not:
+
+“another React Native real-estate template.”
+
+⸻
+
+45. RESPONSIVE DESIGN
+
+Test on different mobile screen sizes.
+
+Ensure:
+
+* no clipping
+* no overlapping
+* no horizontal overflow
+* no broken images
+* no text truncation where inappropriate
+* safe-area support
+* proper bottom navigation spacing
+* proper keyboard behavior
+
+Test both small and large phones.
+
+⸻
+
+46. REAL DATA TESTING
+
+Do not polish screens using only placeholder data.
+
+Use the existing real application data/API structure.
+
+Verify that the UI works with:
+
+* long property titles
+* long descriptions
+* missing images
+* multiple images
+* videos
+* different prices
+* large property areas
+* missing optional fields
+* different cities
+* different property types
+
+⸻
+
+47. NO FUNCTIONAL REGRESSIONS
+
+After polishing:
+
+Verify:
+
+* Sign Up
+* Login
+* Logout
+* Forgot Password
+* Profile
+* Property Search
+* Filters
+* Property Details
+* Favorites
+* Property Listing
+* Media Upload
+* Location Selection
+* Seller Dashboard
+* Buyer Dashboard
+* Admin-related flows
+* Notifications where applicable
+
+Do not break existing authentication or database integration.
+
+⸻
+
+48. FINAL QA
+
+Before declaring completion:
+
+Run the application and inspect EVERY screen visually.
+
+Check:
+
+* spacing
+* typography
+* colors
+* buttons
+* icons
+* images
+* animations
+* loading
+* errors
+* empty states
+* navigation
+* keyboard behavior
+* map
+* media
+* forms
+
+Fix all obvious visual issues.
+
+Then check:
+
+* console errors
+* runtime errors
+* failed API requests
+* broken images
+* broken videos
+* navigation errors
+* crashes
+
+There should be no unresolved critical errors.
+
+⸻
+
+49. IMPORTANT IMPLEMENTATION RULE
+
+Do not make hundreds of random individual style changes.
+
+Create reusable components and design tokens wherever practical.
+
+For example:
+
+PrimaryButton
+SecondaryButton
+PropertyCard
+SectionHeader
+StatusBadge
+LocationCard
+MediaGallery
+FormInput
+SelectField
+EmptyState
+ErrorState
+LoadingSkeleton
+
+Then use those components consistently.
+
+⸻
+
+50. FINAL RESULT
+
+The finished OG Landmark app should feel:
+
+PREMIUM
++
+MODERN
++
+MINIMAL
++
+TRUSTWORTHY
++
+FAST
++
+EASY TO USE
++
+INTERNATIONAL QUALITY
+
+The user should immediately feel that OG Landmark is a serious professional real-estate platform.
+
+⸻
+
+FINAL REPORT
+
+After completing the work, provide a concise report:
+
+1. Screens polished
+2. Components improved
+3. Design-system improvements
+4. UX improvements
+5. Performance improvements
+6. Accessibility improvements
+7. Bugs discovered and fixed
+8. Any remaining issues
+
+Most importantly:
+
+DO NOT ONLY GIVE RECOMMENDATIONS.
+
+ACTUALLY IMPLEMENT THE POLISH IN THE EXISTING OG LANDMARK APPLICATION.

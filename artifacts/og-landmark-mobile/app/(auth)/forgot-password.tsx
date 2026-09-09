@@ -40,6 +40,14 @@ export default function ForgotPasswordScreen() {
   const [resendSecs, setResendSecs]   = useState(0);
 
   const digitRefs = useRef<(React.ElementRef<typeof TextInput> | null)[]>([]);
+  const scrollRef = useRef<any>(null);
+
+  const revealPasswordActions = () => {
+    // Android's IME can cover the reset button before the focused field is
+    // considered obscured. Move the whole final step above the keyboard so
+    // the action remains reachable without dragging the page manually.
+    setTimeout(() => scrollRef.current?.scrollToEnd?.({ animated: true }), 120);
+  };
 
   // Countdown timer for resend
   useEffect(() => {
@@ -130,7 +138,14 @@ export default function ForgotPasswordScreen() {
       );
     } catch (err: unknown) {
       setLoading(false);
-      setError(err instanceof Error ? err.message : 'Reset failed. Please check your code and try again.');
+      const message = err instanceof Error ? err.message : 'Reset failed. Please check your code and try again.';
+      if (/reset code/i.test(message)) {
+        setStep(2);
+        setError(message);
+        setTimeout(() => digitRefs.current[0]?.focus(), 80);
+      } else {
+        setError(message);
+      }
     }
   };
 
@@ -162,6 +177,7 @@ export default function ForgotPasswordScreen() {
   return (
     <View style={[st.screen, { backgroundColor: colors.background }]}>
       <KeyboardAwareScrollViewCompat
+        ref={scrollRef}
         style={{ flex: 1 }}
         contentContainerStyle={{
           flexGrow: 1,
@@ -172,7 +188,7 @@ export default function ForgotPasswordScreen() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
-        bottomOffset={140}
+        bottomOffset={Platform.OS === 'android' ? 220 : 140}
       >
         {/* ── Header ── */}
         <View style={st.headerRow}>
@@ -320,6 +336,7 @@ export default function ForgotPasswordScreen() {
               <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
               <TextInput
                 value={newPass} onChangeText={(v) => { setNewPass(v); setError(''); }}
+                onFocus={revealPasswordActions}
                 secureTextEntry={!showPass}
                 placeholder="At least 8 characters"
                 placeholderTextColor={colors.mutedForeground}
@@ -352,6 +369,7 @@ export default function ForgotPasswordScreen() {
               <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
               <TextInput
                 value={confirmPass} onChangeText={(v) => { setConfirmPass(v); setError(''); }}
+                onFocus={revealPasswordActions}
                 secureTextEntry={!showConfirm}
                 placeholder="Re-enter password"
                 placeholderTextColor={colors.mutedForeground}

@@ -207,7 +207,9 @@ export type LoginResponse = {
 export async function loginWithAPI(identifier: string, password: string): Promise<LoginResponse> {
   const res = await apiFetch<LoginResponse>('/api/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ identifier, password }),
+    // `identifier` is the current contract. Keep `email` as an alias for
+    // older Hostinger deployments that still read req.body.email.
+    body: JSON.stringify({ identifier, email: identifier, password }),
   }, false, AUTH_FETCH_TIMEOUT_MS);
   if (res.token) await setToken(res.token);
   return res;

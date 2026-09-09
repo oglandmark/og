@@ -1036,6 +1036,7 @@ export default function ExploreScreen() {
                 properties={filteredProperties.map((p: any) => ({
                   ...p,
                   distance: p._distLabel,
+                  image: typeof p.image === 'string' ? p.image : undefined,
                 }))}
                 count={filteredProperties.length}
                 colors={colors}
@@ -1043,6 +1044,8 @@ export default function ExploreScreen() {
                 onSearchArea={handleSearchArea}
                 userLat={nearMe?.lat}
                 userLng={nearMe?.lng}
+                centerLat={searchedPlace?.lat}
+                centerLng={searchedPlace?.lng}
               />
             )}
 

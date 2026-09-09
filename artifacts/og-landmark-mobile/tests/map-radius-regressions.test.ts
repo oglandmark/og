@@ -8,6 +8,7 @@ import {
   formatMapAreaRange,
   MAP_AREA_RANGE_STEPS,
 } from '../components/mapRadius';
+import { cities, okaraDistrict } from '../lib/cities';
 
 const mobileRoot = resolve(import.meta.dirname, '..');
 const readComponent = (name: string) =>
@@ -40,10 +41,11 @@ test('web radius updates resize the existing circle without rebuilding the viewp
   assert.deepEqual(createMapAreaRadiusMessage(0.4), {
     type: 'mapAreaRadius',
     radiusKm: 0.4,
+    fit: false,
   });
-  assert.match(web, /createMapAreaRadiusMessage\(radiusKm\)/);
+  assert.match(web, /createMapAreaRadiusMessage\(radiusKm, fit\)/);
   assert.match(web, /areaCircle\.setRadius\(radiusKm \* 1000\)/);
-  assert.match(web, /\[properties, selectedId, userLat, userLng\]/);
+  assert.match(web, /\[properties, selectedId, userLat, userLng, centerLat, centerLng\]/);
   const htmlMemo = web.match(
     /const html = useMemo\([\s\S]*?\n\s*\);/,
   )?.[0];
@@ -54,44 +56,51 @@ test('web radius updates resize the existing circle without rebuilding the viewp
   );
 });
 
-test('Android radius updates inject into the existing WebView map', () => {
-  const androidMap = readComponent('AndroidLeafletMap.tsx');
+test('Android map overrides reuse native Google Maps instead of Leaflet', () => {
+  const androidMap = readComponent('MapViewComponent.android.tsx');
   const androidExplore = readComponent('ExploreMapView.android.tsx');
+  const nativeMap = readComponent('MapViewComponent.native.tsx');
+  const nativeExplore = readComponent('ExploreMapView.native.tsx');
 
-  assert.equal(
-    createMapAreaRadiusInjection(10),
-    'if (window.__setAreaRadius) window.__setAreaRadius(10); true;',
-  );
-  assert.match(androidMap, /createMapAreaRadiusInjection\(Number\(props\.areaRadiusKm\)\)/);
-  assert.match(androidMap, /areaCircle\.setRadius\(nextRadius \* 1000\)/);
-
-  const radiusSetter = androidMap.match(
-    /window\.__setAreaRadius = function\(radiusKm\) \{[\s\S]*?\n\s*\};/,
-  )?.[0];
-  assert.ok(radiusSetter);
-  assert.doesNotMatch(radiusSetter, /setView|fitBounds/);
-
-  const htmlMemo = androidMap.match(
-    /const html = useMemo\([\s\S]*?\n\s*\]\);/,
-  )?.[0];
-  assert.ok(htmlMemo);
-  assert.doesNotMatch(htmlMemo, /areaRadiusKm/);
-  assert.match(androidExplore, /areaRadiusKm=\{areaRadiusKm\}/);
+  assert.match(androidMap, /MapViewComponent\.native/);
+  assert.match(androidExplore, /ExploreMapView\.native/);
+  assert.doesNotMatch(androidMap, /Leaflet|WebView/);
+  assert.doesNotMatch(androidExplore, /Leaflet|WebView/);
+  assert.match(nativeMap, /const PROVIDER = PROVIDER_GOOGLE/);
+  assert.match(nativeExplore, /const PROVIDER = PROVIDER_GOOGLE/);
 });
 
 test('Search this area stays available after a map move and a radius change', () => {
   const web = readComponent('ExploreMapView.tsx');
-  const android = readComponent('ExploreMapView.android.tsx');
+  const native = readComponent('ExploreMapView.native.tsx');
 
-  const webRadiusListener = web.match(
-    /window\.addEventListener\('message',[\s\S]*?areaCircle\.setRadius\(radiusKm \* 1000\);[\s\S]*?\n\s*\}\);/,
-  )?.[0];
-  assert.ok(webRadiusListener);
-  assert.doesNotMatch(webRadiusListener, /classList\.remove\(['"]show['"]\)/);
-  assert.match(web, /map\.on\('moveend zoomend', function\(\) \{[\s\S]*?classList\.add\('show'\)/);
-  assert.match(web, /window\.parent\.postMessage\(\{ type: 'mapSearchArea'/);
+  assert.match(web, /setShowSearchArea\(true\)/);
+  assert.match(web, /onSearchArea\(lastBounds\.current\)/);
+  assert.match(native, /setShowSearchArea\(true\)/);
+  assert.match(native, /onSearchArea\(\{/);
+  assert.match(native, /onChange=\{handleAreaRadiusChange\}/);
+});
 
-  assert.match(android, /setShowSearch\(true\)/);
-  assert.match(android, /onChange=\{setAreaRadiusKm\}/);
-  assert.match(android, /onSearchArea\(bounds\)/);
+test('native maps expose loading, retry, and exact map-area bounds behavior', () => {
+  const native = readComponent('ExploreMapView.native.tsx');
+  assert.match(native, /Loading Google Maps/);
+  assert.match(native, /Google Maps could not load/);
+  assert.match(native, /Retry map/);
+  assert.match(native, /north: currentRegion\.latitude \+ currentRegion\.latitudeDelta \/ 2/);
+  assert.match(native, /centerLat: currentRegion\.latitude/);
+});
+
+test('Okara district keeps city and tehsil identities separate', () => {
+  assert.deepEqual([...cities], [
+    'Okara',
+    'Depalpur',
+    'Renala Khurd',
+    'Hujra Shah Muqeem',
+    'Basirpur',
+    'Haveli Lakha',
+  ]);
+  assert.equal(okaraDistrict.tehsils.includes('Depalpur'), true);
+  assert.equal(okaraDistrict.tehsils.includes('Renala Khurd'), true);
+  assert.notEqual(okaraDistrict.areas.Depalpur, okaraDistrict.areas.Okara);
+  assert.ok(okaraDistrict.areas['Hujra Shah Muqeem'].length > 0);
 });

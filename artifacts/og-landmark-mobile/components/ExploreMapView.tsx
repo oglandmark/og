@@ -9,9 +9,10 @@
  *  • Compact popup preview: title / type / area / location + select action
  */
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import type { ImageSourcePropType } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { MapAreaRange } from '@/components/MapAreaRange';
 import {
   createMapAreaRadiusMessage,
@@ -49,6 +50,8 @@ interface Props {
   selectedId?: string | number;
   userLat?: number;
   userLng?: number;
+  centerLat?: number;
+  centerLng?: number;
 }
 
 const OKARA_DISTRICT_CENTER = { latitude: 30.8105, longitude: 73.4597 };
@@ -77,6 +80,8 @@ function buildExploreHtml(
   selectedId?: string | number,
   userLat?: number,
   userLng?: number,
+  centerLat?: number,
+  centerLng?: number,
 ) {
   const validProps = properties.filter(
     (p) => p.lat && p.lng && isFinite(p.lat!) && isFinite(p.lng!)
@@ -84,8 +89,12 @@ function buildExploreHtml(
 
   const hasUser = userLat != null && userLng != null && isFinite(Number(userLat)) && isFinite(Number(userLng));
 
-  const centerLat = hasUser ? Number(userLat) : OKARA_DISTRICT_CENTER.latitude;
-  const centerLng = hasUser ? Number(userLng) : OKARA_DISTRICT_CENTER.longitude;
+  const mapCenterLat = centerLat != null
+    ? Number(centerLat)
+    : hasUser ? Number(userLat) : OKARA_DISTRICT_CENTER.latitude;
+  const mapCenterLng = centerLng != null
+    ? Number(centerLng)
+    : hasUser ? Number(userLng) : OKARA_DISTRICT_CENTER.longitude;
   const zoom = hasUser ? 13 : 10;
   const areaPoints = JSON.stringify(validProps.map((property) => ({
     latitude: property.lat,
@@ -208,7 +217,7 @@ function buildExploreHtml(
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>if (!L.MarkerClusterGroup) document.write('<script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"><\/script>');</script>
 <script>
-  var map = L.map('map',{zoomControl:true,attributionControl:false}).setView([${centerLat},${centerLng}],${zoom});
+  var map = L.map('map',{zoomControl:true,attributionControl:false}).setView([${mapCenterLat},${mapCenterLng}],${zoom});
     var primaryTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
      maxZoom: 19, maxNativeZoom: 19, keepBuffer: 3,
      updateWhenIdle: false, updateWhenZooming: true
@@ -329,13 +338,18 @@ export function ExploreMapView({
   selectedId,
   userLat,
   userLng,
+  centerLat,
+  centerLng,
+  onSearchArea,
 }: Props) {
   const [areaRadiusKm, setAreaRadiusKm] = useState(4);
   const [areaPropertyCount, setAreaPropertyCount] = useState(0);
   const iframeRef = React.useRef<any>(null);
+  const boundsInitialized = React.useRef(false);
+  const [showSearchArea, setShowSearchArea] = useState(false);
   const html = useMemo(
-    () => buildExploreHtml(properties, selectedId, userLat, userLng),
-    [properties, selectedId, userLat, userLng],
+    () => buildExploreHtml(properties, selectedId, userLat, userLng, centerLat, centerLng),
+    [properties, selectedId, userLat, userLng, centerLat, centerLng],
   );
 
   // Track the latest bounds reported by the iframe so the search control can act on them.
@@ -350,6 +364,8 @@ export function ExploreMapView({
         onSelect(data.id);
       } else if (data.type === 'mapBounds' && data.bounds) {
         lastBounds.current = data.bounds as MapBounds;
+        if (boundsInitialized.current) setShowSearchArea(true);
+        else boundsInitialized.current = true;
       } else if (data.type === 'mapAreaCount' && Number.isFinite(data.count)) {
         setAreaPropertyCount(Math.max(0, Math.round(data.count)));
       }
@@ -408,6 +424,20 @@ export function ExploreMapView({
           {areaPropertyCount} on map
         </Text>
       </View>
+      {showSearchArea && onSearchArea && (
+        <Pressable
+          style={s.searchAreaButton}
+          onPress={() => {
+            if (lastBounds.current) onSearchArea(lastBounds.current);
+            setShowSearchArea(false);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Search properties in this map area"
+        >
+          <Feather name="search" size={14} color="#102a43" />
+          <Text style={s.searchAreaText}>Search this area</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -445,4 +475,22 @@ const s = StyleSheet.create({
   },
   countDot: { width: 7, height: 7, borderRadius: 4 },
   countText: { fontFamily: 'Inter_700Bold', fontSize: 11 },
+  searchAreaButton: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    borderRadius: 17,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    backgroundColor: '#ffffff',
+    shadowColor: '#102a43',
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+  },
+  searchAreaText: { color: '#102a43', fontSize: 12, fontWeight: '800' },
 });

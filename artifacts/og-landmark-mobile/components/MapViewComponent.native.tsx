@@ -1,21 +1,17 @@
 /**
  * MapViewComponent — Native: react-native-maps
  *
- * iOS  → PROVIDER_DEFAULT (Apple Maps)
- * Android → PROVIDER_GOOGLE with gold markers
+ * iOS + Android → PROVIDER_GOOGLE with gold markers
  *
  * Exports:
  *   StaticMap      — non-interactive property pin (detail page)
  *   InteractiveMap — draggable pin + tap-to-set + My Location (LocationPicker)
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Platform, Pressable, StyleSheet, View,
-} from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import MapView, {
   Marker,
-  PROVIDER_DEFAULT,
   PROVIDER_GOOGLE,
   type MapPressEvent,
   type MarkerDragStartEndEvent,
@@ -48,12 +44,11 @@ const OG_MAP_STYLE = [
   { featureType: 'water', elementType: 'labels.text.stroke', stylers: [{ color: '#0e1a2d' }] },
 ];
 
-const PROVIDER = Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT;
-// A Google provider without an Android SDK key can terminate the native app while
-// the MapView is being created. Keep the rest of the app usable if a build was
-// made without its EAS environment variable.
-const HAS_ANDROID_MAPS_KEY =
-  Platform.OS !== 'android' || Boolean(process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim());
+const PROVIDER = PROVIDER_GOOGLE;
+// A Google provider without a native SDK key can terminate the app while the
+// MapView is being created. Keep the rest of the app usable in unconfigured
+// preview builds instead of mounting a provider that cannot initialize.
+const HAS_GOOGLE_MAPS_KEY = Boolean(process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim());
 
 function GoogleMapsUnavailable() {
   return (
@@ -61,7 +56,7 @@ function GoogleMapsUnavailable() {
       <Feather name="map" size={24} color="#c8a45a" />
       <Text style={styles.mapsUnavailableTitle}>Google Maps unavailable</Text>
       <Text style={styles.mapsUnavailableText}>
-        This build needs its Android Maps API key.
+        This build needs its Google Maps API key.
       </Text>
     </View>
   );
@@ -137,12 +132,12 @@ interface InteractiveMapProps {
 }
 
 // ─── StaticMap ─────────────────────────────────────────────────────────────────
-export function StaticMap({ latitude, longitude, interactive = true }: StaticMapProps) {
+export function StaticMap({ latitude, longitude, satellite = false, interactive = true }: StaticMapProps) {
   const mapRef = useRef<MapView>(null);
   if (!latitude || !longitude || !isFinite(latitude) || !isFinite(longitude)) {
     return <View style={styles.placeholder} />;
   }
-  if (!HAS_ANDROID_MAPS_KEY) return <GoogleMapsUnavailable />;
+  if (!HAS_GOOGLE_MAPS_KEY) return <GoogleMapsUnavailable />;
 
   const region: Region = {
     latitude, longitude,
@@ -155,6 +150,8 @@ export function StaticMap({ latitude, longitude, interactive = true }: StaticMap
       style={styles.map}
       provider={PROVIDER}
       initialRegion={region}
+       mapType={satellite ? 'satellite' : 'standard'}
+       customMapStyle={OG_MAP_STYLE}
       showsPointsOfInterests
       showsBuildings
       showsIndoors
@@ -182,7 +179,7 @@ export function StaticMap({ latitude, longitude, interactive = true }: StaticMap
 
 // ─── InteractiveMap ────────────────────────────────────────────────────────────
 export function InteractiveMap(props: InteractiveMapProps) {
-  if (!HAS_ANDROID_MAPS_KEY) return <GoogleMapsUnavailable />;
+  if (!HAS_GOOGLE_MAPS_KEY) return <GoogleMapsUnavailable />;
   return <InteractiveMapWithGoogleMaps {...props} />;
 }
 
@@ -277,6 +274,7 @@ function InteractiveMapWithGoogleMaps({
         style={styles.map}
         provider={PROVIDER}
         initialRegion={initialRegion}
+        customMapStyle={OG_MAP_STYLE}
         onPress={handleMapPress}
         userInterfaceStyle="light"
         showsUserLocation={false}

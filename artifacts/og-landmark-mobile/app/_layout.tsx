@@ -25,6 +25,7 @@ import {
   registerPushTokenForUser,
   subscribeToNotificationResponses,
 } from '@/lib/pushNotifications';
+import { markNotificationRead } from '@/lib/api';
 
 SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
@@ -56,15 +57,25 @@ function RootLayoutNav() {
       });
 
       const data = getNotificationData(response.notification);
+      if (data.notificationId) {
+        void markNotificationRead(String(data.notificationId)).catch(() => undefined);
+      }
+      const deepLink = typeof data.deepLink === 'string' ? data.deepLink : '';
       const propertyId = data.propertyId;
 
-      if (propertyId !== undefined && propertyId !== null && String(propertyId)) {
+      if (deepLink.startsWith('/property/')) {
+        router.push(deepLink as any);
+      } else if (deepLink.startsWith('/project/')) {
+        router.push(deepLink as any);
+      } else if (deepLink.startsWith('/announcements/')) {
+        router.push(deepLink as any);
+      } else if (propertyId !== undefined && propertyId !== null && String(propertyId)) {
         router.push({
           pathname: '/property/[id]',
           params: { id: String(propertyId) },
         });
       } else {
-        router.push('/(tabs)');
+        router.push('/notifications');
       }
     };
 
@@ -127,7 +138,9 @@ function RootLayoutNav() {
     const inAgent     = segments[0] === 'agent';
     const inPost      = segments[0] === 'post';
     const inTools     = segments[0] === 'tools';
-    const inKnownRoute = inTabs || inAuth || inProperty || inProject || inSettings || inAgent || inPost || inAdmin || inTools;
+    const inNotifications = segments[0] === 'notifications';
+    const inAnnouncements = segments[0] === 'announcements';
+    const inKnownRoute = inTabs || inAuth || inProperty || inProject || inSettings || inAgent || inPost || inAdmin || inTools || inNotifications || inAnnouncements;
 
     // Allow registration routes even when onboarding is already completed
     const isRegisterRoute = inOnboarding && ['select-role', 'register-buyer', 'register-agent', 'register-developer'].includes(segments[1] as string);

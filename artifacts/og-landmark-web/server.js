@@ -778,6 +778,7 @@ async function readData() {
     return seed;
   }
   const data = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+  const notificationCollectionsChanged = ensureNotificationCollections(data);
   const mobileAgentsAdded = ensureMobileAgents(data);
   const propertyRecordsChanged = ensurePropertyRecords(data);
   // Migrate plain-text passwords to hashed on first read (backwards compat)
@@ -788,7 +789,7 @@ async function readData() {
       migrated = true;
     }
   });
-  if (migrated || mobileAgentsAdded || propertyRecordsChanged) await writeData(data);
+  if (migrated || notificationCollectionsChanged || mobileAgentsAdded || propertyRecordsChanged) await writeData(data);
   return data;
 }
 
@@ -806,6 +807,191 @@ async function writeData(data) {
 function nextId(data) {
   data.nextId = (data.nextId || 1000) + 1;
   return data.nextId;
+}
+
+const NOTIFICATION_CATEGORIES = new Set(['properties', 'projects', 'announcements', 'promotional', 'account', 'system']);
+const NOTIFICATION_TYPES = new Set([
+  'NEW_PROPERTY', 'PROPERTY_APPROVED', 'PROPERTY_REJECTED', 'PROPERTY_CHANGES_REQUESTED',
+  'PROPERTY_PUBLISHED', 'PROPERTY_UPDATED', 'NEW_PROJECT', 'PROJECT_APPROVED',
+  'PROJECT_REJECTED', 'PROJECT_CHANGES_REQUESTED', 'PROJECT_PUBLISHED', 'PROJECT_UPDATED',
+  'GENERAL_ANNOUNCEMENT', 'IMPORTANT_ANNOUNCEMENT', 'SYSTEM_ANNOUNCEMENT',
+  'PROMOTIONAL_ANNOUNCEMENT', 'ACCOUNT_VERIFICATION', 'PROFILE_UPDATE', 'SECURITY_ALERT',
+  'SYSTEM_UPDATE', 'MAINTENANCE', 'FEATURE_UPDATE',
+]);
+
+function ensureNotificationCollections(data) {
+  let changed = false;
+  if (!Array.isArray(data.notifications)) { data.notifications = []; changed = true; }
+  if (!Array.isArray(data.pushDevices)) { data.pushDevices = []; changed = true; }
+  if (!data.notificationPreferences || typeof data.notificationPreferences !== 'object') {
+    data.notificationPreferences = {};
+    changed = true;
+  }
+  if (!Array.isArray(data.notificationEvents)) { data.notificationEvents = []; changed = true; }
+  if (!Array.isArray(data.announcements)) { data.announcements = []; changed = true; }
+  data.notifications = data.notifications.map(item => {
+    const normalized = {
+      ...item,
+      notificationId: String(item.notificationId || item.id),
+      recipientUserId: item.recipientUserId ?? item.userId ?? null,
+      type: String(item.type || 'SYSTEM_UPDATE').toUpperCase(),
+      category: item.category || (String(item.type || '').toLowerCase().includes('project') ? 'projects' : 'system'),
+      body: item.body || item.message || '',
+      message: item.message || item.body || '',
+      isRead: item.isRead === true || item.read === true,
+      read: item.read === true || item.isRead === true,
+      createdAt: item.createdAt || item.timestamp || new Date().toISOString(),
+      timestamp: item.timestamp || item.createdAt || new Date().toISOString(),
+      userDeletedAt: item.userDeletedAt || null,
+    };
+    if (JSON.stringify(normalized) !== JSON.stringify(item)) changed = true;
+    return normalized;
+  });
+  return changed;
+}
+
+function notificationCategory(type, explicitCategory) {
+  if (NOTIFICATION_CATEGORIES.has(explicitCategory)) return explicitCategory;
+  const value = String(type || '').toUpperCase();
+  if (value.includes('PROJECT')) return 'projects';
+  if (value.includes('PROPERTY')) return 'properties';
+  if (value.includes('ANNOUNCEMENT') || value === 'PROMOTIONAL_ANNOUNCEMENT') return value === 'PROMOTIONAL_ANNOUNCEMENT' ? 'promotional' : 'announcements';
+  if (value.includes('ACCOUNT') || value.includes('PROFILE') || value.includes('SECURITY')) return 'account';
+  return 'system';
+}
+
+function notificationPreferenceEnabled(data, userId, category, mandatory = false) {
+  if (mandatory) return true;
+  const prefs = data.notificationPreferences?.[String(userId)];
+  return prefs?.[category] !== false;
+}
+
+function createNotificationRecord(data, recipientUserId, payload) {
+  ensureNotificationCollections(data);
+  const eventKey = `${recipientUserId}:${String(payload.eventKey || `${payload.type}:${payload.entityType || ''}:${payload.entityId || ''}`)}`;
+  if (data.notificationEvents.includes(eventKey)) return null;
+  const now = new Date().toISOString();
+  const id = nextId(data);
+  const type = NOTIFICATION_TYPES.has(String(payload.type || '').toUpperCase())
+    ? String(payload.type).toUpperCase()
+    : 'SYSTEM_UPDATE';
+  const category = notificationCategory(type, payload.category);
+  const item = {
+    id,
+    notificationId: String(id),
+    recipientUserId: Number(recipientUserId),
+    userId: Number(recipientUserId),
+    type,
+    category,
+    title: String(payload.title || 'OG Landmark Update'),
+    message: String(payload.message || payload.body || ''),
+    body: String(payload.body || payload.message || ''),
+    imageUrl: payload.imageUrl || null,
+    entityType: payload.entityType || null,
+    entityId: payload.entityId ?? null,
+    propertyId: payload.propertyId ?? (payload.entityType === 'property' ? payload.entityId : null),
+    projectId: payload.projectId ?? (payload.entityType === 'project' ? payload.entityId : null),
+    announcementId: payload.announcementId ?? (payload.entityType === 'announcement' ? payload.entityId : null),
+    deepLink: payload.deepLink || payload.actionUrl || null,
+    actionUrl: payload.actionUrl || payload.deepLink || null,
+    priority: payload.priority || 'NORMAL',
+    isRead: false,
+    read: false,
+    readAt: null,
+    userDeletedAt: null,
+    createdAt: now,
+    timestamp: now,
+    expiresAt: payload.expiresAt || null,
+    metadata: payload.metadata || {},
+    eventKey,
+    forPortal: payload.forPortal || null,
+  };
+  data.notifications.unshift(item);
+  data.notificationEvents.push(eventKey);
+  // Keep deduplication state bounded; notification history remains available.
+  if (data.notificationEvents.length > 10000) data.notificationEvents.splice(0, data.notificationEvents.length - 10000);
+  return item;
+}
+
+function usersForAnnouncement(data, audience = {}) {
+  const role = String(audience.role || '').toLowerCase();
+  const city = String(audience.city || '').trim().toLowerCase();
+  return (data.users || [])
+    .filter(user => user.status !== 'Inactive' && user.status !== 'Suspended')
+    .filter(user => !role || String(user.role || '').toLowerCase() === role)
+    .filter(user => !city || String(user.city || '').toLowerCase() === city)
+    .map(user => user.id);
+}
+
+function usersForPropertyAlert(data, property) {
+  const city = String(property.city || property.location?.city || '').trim().toLowerCase();
+  const propertyType = String(property.type || '').trim().toLowerCase();
+  return (data.users || [])
+    .filter(user => user.status !== 'Inactive' && user.status !== 'Suspended')
+    .filter(user => ['buyer', 'agent', 'admin'].includes(String(user.role || '').toLowerCase()))
+    .filter(user => {
+      const prefs = data.notificationPreferences?.[String(user.id)] || {};
+      if (prefs.propertyAlerts === false || prefs.properties === false) return false;
+      if (Array.isArray(prefs.cities) && prefs.cities.length && !prefs.cities.some(item => String(item).toLowerCase() === city)) return false;
+      if (Array.isArray(prefs.propertyTypes) && prefs.propertyTypes.length && !prefs.propertyTypes.some(item => String(item).toLowerCase() === propertyType)) return false;
+      return true;
+    })
+    .map(user => user.id);
+}
+
+function usersForProjectAlert(data, project) {
+  const city = String(project.city || project.location?.city || '').trim().toLowerCase();
+  const projectType = String(project.type || project.projectType || '').trim().toLowerCase();
+  return (data.users || [])
+    .filter(user => user.status !== 'Inactive' && user.status !== 'Suspended')
+    .filter(user => ['buyer', 'agent', 'developer', 'admin'].includes(String(user.role || '').toLowerCase()))
+    .filter(user => {
+      const prefs = data.notificationPreferences?.[String(user.id)] || {};
+      if (prefs.projects === false || prefs.newProjects === false) return false;
+      if (Array.isArray(prefs.cities) && prefs.cities.length && !prefs.cities.some(item => String(item).toLowerCase() === city)) return false;
+      if (Array.isArray(prefs.projectTypes) && prefs.projectTypes.length && !prefs.projectTypes.some(item => String(item).toLowerCase() === projectType)) return false;
+      return true;
+    })
+    .map(user => user.id);
+}
+
+async function sendExpoPushToUser(data, userId, item) {
+  const devices = (data.pushDevices || [])
+    .filter(device => Number(device.userId) === Number(userId) && device.isActive !== false)
+    .map(device => device.pushToken);
+  const legacy = data.users?.find(user => Number(user.id) === Number(userId))?.pushToken;
+  const tokens = [...new Set([...devices, legacy].filter(Boolean))];
+  for (const token of tokens) {
+    await sendExpoPush(token, item.title, item.body, {
+      type: item.type,
+      category: item.category,
+      notificationId: item.notificationId,
+      entityType: item.entityType,
+      entityId: item.entityId,
+      propertyId: item.propertyId,
+      projectId: item.projectId,
+      announcementId: item.announcementId,
+      deepLink: item.deepLink,
+    });
+  }
+}
+
+async function createAndDeliverNotifications(data, recipientIds, payload) {
+  const created = [];
+  for (const userId of [...new Set(recipientIds.map(Number).filter(Number.isInteger))]) {
+    const category = notificationCategory(payload.type, payload.category);
+    if (!notificationPreferenceEnabled(data, userId, category, payload.mandatory)) continue;
+    const prefs = data.notificationPreferences?.[String(userId)] || {};
+    const item = createNotificationRecord(data, userId, { ...payload, category });
+    if (!item) continue;
+    created.push(item);
+    // Immediate is the default. Daily/weekly choices keep the durable in-app
+    // history but defer push delivery so high-volume alerts do not spam users.
+    if (payload.mandatory || !prefs.frequency || prefs.frequency === 'immediate') {
+      await sendExpoPushToUser(data, userId, item);
+    }
+  }
+  return created;
 }
 
 // Property records are deliberately kept as one document in app_data.  The
@@ -1229,6 +1415,19 @@ app.post('/api/properties', requireAuth, async (req, res) => {
     });
     data.properties.push(newProp);
     adminAudit(data, req.currentUser, isDraft ? 'draft_saved' : 'submit', 'properties', id, { status: newProp.approvalStatus });
+    if (!isDraft) {
+      await createAndDeliverNotifications(
+        data,
+        data.users.filter(user => String(user.role || '').toLowerCase() === 'admin').map(user => user.id),
+        {
+          type: 'SYSTEM_UPDATE', category: 'system', mandatory: true,
+          title: 'New Listing Submitted',
+          body: `${req.currentUser.name || 'A user'} submitted "${newProp.title}" for review.`,
+          entityType: 'property', entityId: id, propertyId: id,
+          deepLink: '/admin/properties', eventKey: `property:${id}:submitted`,
+        },
+      );
+    }
     await writeData(data);
     res.status(201).json(newProp);
   } catch (err) {
@@ -1274,6 +1473,19 @@ app.put('/api/properties/:id', requireAuth, async (req, res) => {
     data.properties[idx] = merged;
     if (req.currentUser.role === 'Admin') adminAudit(data, req.currentUser, 'edit', 'properties', prop.id, { fromStatus: previousStatus, toStatus: nextStatus });
     else adminAudit(data, req.currentUser, isDraft ? 'draft_saved' : 'resubmit', 'properties', prop.id, { fromStatus: previousStatus, toStatus: nextStatus });
+    if (!isDraft && req.currentUser.role !== 'Admin') {
+      await createAndDeliverNotifications(
+        data,
+        data.users.filter(user => String(user.role || '').toLowerCase() === 'admin').map(user => user.id),
+        {
+          type: 'SYSTEM_UPDATE', category: 'system', mandatory: true,
+          title: 'Property Resubmitted',
+          body: `"${merged.title}" has been resubmitted for review.`,
+          entityType: 'property', entityId: prop.id, propertyId: prop.id,
+          deepLink: '/admin/properties', eventKey: `property:${prop.id}:resubmitted:${merged.updatedAt}`,
+        },
+      );
+    }
     await writeData(data);
     res.json(data.properties[idx]);
   } catch (err) {
@@ -1436,6 +1648,24 @@ app.patch('/api/properties/:id/approve', requireAdmin, async (req, res) => {
     prop.reviewHistory ||= [];
     prop.reviewHistory.push({ action: 'approved', by: req.currentUser.id, byName: req.currentUser.name, fromStatus: previousStatus, toStatus: 'Active', createdAt: prop.reviewedAt });
     adminAudit(data, req.currentUser, 'approve', 'properties', prop.id, { fromStatus: previousStatus, toStatus: 'Active' });
+    const ownerIds = [prop.sellerId, prop.agentId].filter(Boolean);
+    await createAndDeliverNotifications(data, ownerIds, {
+      type: 'PROPERTY_APPROVED', category: 'account', mandatory: true,
+      title: 'Property Approved',
+      body: `Your property "${prop.title}" has been approved and is now live.`,
+      entityType: 'property', entityId: prop.id, propertyId: prop.id,
+      imageUrl: prop.images?.[0] || null, deepLink: `/property/${prop.id}`,
+      eventKey: `property:${prop.id}:approved`,
+    });
+    await createAndDeliverNotifications(data, usersForPropertyAlert(data, prop), {
+      type: 'NEW_PROPERTY',
+      title: `New Property in ${prop.city || 'your area'}`,
+      body: `${prop.title} is now available in ${prop.city || 'Okara District'}.`,
+      entityType: 'property', entityId: prop.id, propertyId: prop.id,
+      imageUrl: prop.images?.[0] || null, deepLink: `/property/${prop.id}`,
+      metadata: { price: prop.price, propertyType: prop.type, city: prop.city },
+      eventKey: `property:${prop.id}:published`,
+    });
     await writeData(data);
     res.json({ success: true, property: prop });
   } catch (err) {
@@ -1461,6 +1691,14 @@ app.patch('/api/properties/:id/reject', requireAdmin, async (req, res) => {
     prop.reviewHistory ||= [];
     prop.reviewHistory.push({ action: 'rejected', reason, by: req.currentUser.id, byName: req.currentUser.name, fromStatus: previousStatus, toStatus: 'Rejected', createdAt: prop.reviewedAt });
     adminAudit(data, req.currentUser, 'reject', 'properties', prop.id, { reason, fromStatus: previousStatus, toStatus: 'Rejected' });
+    await createAndDeliverNotifications(data, [prop.sellerId, prop.agentId].filter(Boolean), {
+      type: 'PROPERTY_REJECTED', category: 'account', mandatory: true,
+      title: 'Property Listing Rejected',
+      body: `Your property "${prop.title}" was rejected. Reason: ${reason}`,
+      entityType: 'property', entityId: prop.id, propertyId: prop.id,
+      imageUrl: prop.images?.[0] || null, deepLink: `/property/${prop.id}`,
+      metadata: { reason }, eventKey: `property:${prop.id}:rejected:${prop.reviewedAt}`,
+    });
     await writeData(data);
     res.json({ success: true, property: prop });
   } catch (err) {
@@ -1486,6 +1724,14 @@ app.patch('/api/properties/:id/request-changes', requireAdmin, async (req, res) 
     prop.reviewHistory ||= [];
     prop.reviewHistory.push({ action: 'changes_requested', reason, by: req.currentUser.id, byName: req.currentUser.name, fromStatus: previousStatus, toStatus: prop.approvalStatus, createdAt: prop.reviewedAt });
     adminAudit(data, req.currentUser, 'request_changes', 'properties', prop.id, { reason, fromStatus: previousStatus, toStatus: prop.approvalStatus });
+    await createAndDeliverNotifications(data, [prop.sellerId, prop.agentId].filter(Boolean), {
+      type: 'PROPERTY_CHANGES_REQUESTED', category: 'account', mandatory: true,
+      title: 'Changes Required',
+      body: `Please update "${prop.title}" before it can be published. ${reason}`,
+      entityType: 'property', entityId: prop.id, propertyId: prop.id,
+      imageUrl: prop.images?.[0] || null, deepLink: `/post/listing?edit=${prop.id}`,
+      metadata: { reason }, eventKey: `property:${prop.id}:changes:${prop.reviewedAt}`,
+    });
     await writeData(data);
     res.json({ success: true, property: prop });
   } catch (err) {
@@ -1515,6 +1761,13 @@ app.patch('/api/properties/:id/resubmit', requireAuth, async (req, res) => {
     prop.reviewHistory ||= [];
     prop.reviewHistory.push({ action: 'resubmitted', by: req.currentUser.id, byName: req.currentUser.name, fromStatus: previousStatus, toStatus: 'Pending', createdAt: new Date().toISOString() });
     adminAudit(data, req.currentUser, 'resubmit', 'properties', prop.id, { fromStatus: previousStatus, toStatus: 'Pending' });
+    await createAndDeliverNotifications(data, data.users.filter(user => String(user.role || '').toLowerCase() === 'admin').map(user => user.id), {
+      type: 'SYSTEM_UPDATE', category: 'system', mandatory: true,
+      title: 'Property Resubmitted',
+      body: `"${prop.title}" has been resubmitted for review.`,
+      entityType: 'property', entityId: prop.id, propertyId: prop.id,
+      deepLink: `/admin/properties`, eventKey: `property:${prop.id}:resubmitted:${prop.reviewHistory.length}`,
+    });
     await writeData(data);
     res.json({ success: true, property: prop });
   } catch (err) {
@@ -1669,11 +1922,28 @@ app.patch('/api/users/:id/push-token', requireAuth, async (req, res) => {
     const data = await readData();
     const user = data.users.find(u => u.id === targetId);
     if (!user) return res.status(404).json({ error: 'Not found' });
-    const { pushToken } = req.body;
+    const { pushToken, deviceId, platform, appVersion } = req.body;
     if (!pushToken) return res.status(400).json({ error: 'pushToken required' });
     user.pushToken = pushToken;
+    ensureNotificationCollections(data);
+    const stableDeviceId = String(deviceId || `${platform || 'unknown'}:${pushToken}`);
+    const existing = data.pushDevices.find(device => device.deviceId === stableDeviceId && Number(device.userId) === targetId);
+    const device = {
+      ...(existing || {}),
+      id: existing?.id || nextId(data),
+      userId: targetId,
+      deviceId: stableDeviceId,
+      pushToken: String(pushToken),
+      platform: String(platform || 'unknown'),
+      appVersion: String(appVersion || ''),
+      isActive: true,
+      updatedAt: new Date().toISOString(),
+      createdAt: existing?.createdAt || new Date().toISOString(),
+    };
+    if (existing) Object.assign(existing, device);
+    else data.pushDevices.push(device);
     await writeData(data);
-    res.json({ success: true });
+    res.json({ success: true, device: { ...device, pushToken: undefined } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -1687,7 +1957,7 @@ async function sendExpoPush(token, title, body, data = {}) {
     await fetch('https://exp.host/--/api/v2/push/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ to: token, title, body, data, sound: 'default' }),
+      body: JSON.stringify({ to: token, title, body, data, channelId: data.category || 'system', sound: 'default' }),
     });
   } catch (err) {
     console.warn('⚠️  Push notification failed:', err.message);
@@ -2873,27 +3143,38 @@ app.delete('/api/conversations/:id', requireAuth, async (req, res) => {
 app.get('/api/notifications', requireAuth, async (req, res) => {
   try {
     const data = await readData();
-    let items = data.notifications;
-    if (req.currentUser.role !== 'Admin') {
-      items = items.filter(n => !n.userId || Number(n.userId) === req.currentUser.id);
-    } else if (req.query.userId) {
-      items = items.filter(n => Number(n.userId) === Number(req.query.userId));
-    }
-    if (req.query.portal) items = items.filter(n => n.forPortal === req.query.portal);
-    res.json(items.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 25));
+    const category = String(req.query.category || 'all');
+    let items = data.notifications.filter(n => !n.userDeletedAt && (!n.expiresAt || new Date(n.expiresAt) > new Date()));
+    // Admin may inspect a selected user for support, but ordinary users are
+    // always scoped from the bearer identity rather than a client id.
+    const recipientId = req.currentUser.role === 'Admin' && req.query.userId
+      ? Number(req.query.userId)
+      : req.currentUser.id;
+    items = items.filter(n => Number(n.recipientUserId ?? n.userId) === recipientId);
+    if (category !== 'all') items = items.filter(n => n.category === category);
+    items.sort((a, b) => new Date(b.createdAt || b.timestamp) - new Date(a.createdAt || a.timestamp));
+    const total = items.length;
+    const unreadCount = items.filter(n => !n.isRead && !n.read).length;
+    const start = (page - 1) * limit;
+    res.json({ items: items.slice(start, start + limit), page, limit, total, hasMore: start + limit < total, unreadCount });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-app.post('/api/notifications', async (req, res) => {
+app.get('/api/notifications/unread-count', requireAuth, async (req, res) => {
   try {
     const data = await readData();
-    const newItem = { id: nextId(data), read: false, timestamp: new Date().toISOString(), ...req.body };
-    data.notifications.unshift(newItem);
-    await writeData(data);
-    res.status(201).json(newItem);
+    const unreadCount = data.notifications.filter(n =>
+      !n.userDeletedAt &&
+      Number(n.recipientUserId ?? n.userId) === req.currentUser.id &&
+      !n.isRead && !n.read &&
+      (!n.expiresAt || new Date(n.expiresAt) > new Date())
+    ).length;
+    res.json({ unreadCount });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -2903,10 +3184,29 @@ app.post('/api/notifications', async (req, res) => {
 app.patch('/api/notifications/:id/read', requireAuth, async (req, res) => {
   try {
     const data = await readData();
-    const item = data.notifications.find(n => n.id === Number(req.params.id));
+    const item = data.notifications.find(n => String(n.notificationId || n.id) === String(req.params.id));
     if (!item) return res.status(404).json({ error: 'Not found' });
-    if (req.currentUser.role !== 'Admin' && item.userId && Number(item.userId) !== req.currentUser.id) return res.status(403).json({ error: 'Forbidden' });
-    if (item) item.read = true;
+    if (Number(item.recipientUserId ?? item.userId) !== req.currentUser.id) return res.status(403).json({ error: 'Forbidden' });
+    item.read = true;
+    item.isRead = true;
+    item.readAt = new Date().toISOString();
+    await writeData(data);
+    res.json({ success: true, notification: item });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.patch('/api/notifications/mark-all-read', requireAuth, async (req, res) => {
+  try {
+    const data = await readData();
+    const category = String(req.body.category || 'all');
+    const now = new Date().toISOString();
+    data.notifications
+      .filter(n => Number(n.recipientUserId ?? n.userId) === req.currentUser.id)
+      .filter(n => category === 'all' || n.category === category)
+      .forEach(n => { n.read = true; n.isRead = true; n.readAt = now; });
     await writeData(data);
     res.json({ success: true });
   } catch (err) {
@@ -2915,11 +3215,13 @@ app.patch('/api/notifications/:id/read', requireAuth, async (req, res) => {
   }
 });
 
-app.patch('/api/notifications/mark-all-read', async (req, res) => {
+app.delete('/api/notifications/:id', requireAuth, async (req, res) => {
   try {
     const data = await readData();
-    const { portal } = req.body;
-    data.notifications.filter(n => n.forPortal === portal).forEach(n => { n.read = true; });
+    const item = data.notifications.find(n => String(n.notificationId || n.id) === String(req.params.id));
+    if (!item) return res.status(404).json({ error: 'Not found' });
+    if (Number(item.recipientUserId ?? item.userId) !== req.currentUser.id) return res.status(403).json({ error: 'Forbidden' });
+    item.userDeletedAt = new Date().toISOString();
     await writeData(data);
     res.json({ success: true });
   } catch (err) {
@@ -2928,16 +3230,148 @@ app.patch('/api/notifications/mark-all-read', async (req, res) => {
   }
 });
 
-app.delete('/api/notifications/:id', async (req, res) => {
+app.put('/api/notification-preferences', requireAuth, async (req, res) => {
   try {
     const data = await readData();
-    data.notifications = data.notifications.filter(n => n.id !== Number(req.params.id));
+    const allowed = ['properties', 'projects', 'announcements', 'promotional', 'account', 'system', 'propertyAlerts', 'newProjects', 'frequency'];
+    const current = data.notificationPreferences[String(req.currentUser.id)] || {};
+    const next = { ...current };
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) next[key] = key === 'frequency' ? String(req.body[key]) : Boolean(req.body[key]);
+    }
+    if (Array.isArray(req.body.cities)) next.cities = req.body.cities.map(String).slice(0, 30);
+    if (Array.isArray(req.body.propertyTypes)) next.propertyTypes = req.body.propertyTypes.map(String).slice(0, 20);
+    data.notificationPreferences[String(req.currentUser.id)] = next;
     await writeData(data);
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.json(next);
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+});
+
+app.get('/api/notification-preferences', requireAuth, async (req, res) => {
+  try {
+    const data = await readData();
+    res.json(data.notificationPreferences[String(req.currentUser.id)] || {
+      properties: true, projects: true, announcements: true, promotional: true,
+      account: true, system: true, frequency: 'immediate',
+    });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+});
+
+// ─── Admin announcements ───────────────────────────────────────────────────────
+async function deliverAnnouncement(data, announcement) {
+  if (announcement.sentAt) return [];
+  const recipients = usersForAnnouncement(data, announcement.audience || {});
+  const type = announcement.type === 'promotional'
+    ? 'PROMOTIONAL_ANNOUNCEMENT'
+    : announcement.type === 'important'
+      ? 'IMPORTANT_ANNOUNCEMENT'
+      : announcement.type === 'system' ? 'SYSTEM_ANNOUNCEMENT' : 'GENERAL_ANNOUNCEMENT';
+  const created = await createAndDeliverNotifications(data, recipients, {
+    type,
+    category: announcement.type === 'promotional' ? 'promotional' : 'announcements',
+    title: announcement.title,
+    body: announcement.message,
+    imageUrl: announcement.imageUrl,
+    entityType: 'announcement',
+    entityId: announcement.id,
+    announcementId: announcement.id,
+    deepLink: `/announcements/${announcement.id}`,
+    priority: announcement.priority,
+    expiresAt: announcement.expiresAt,
+    eventKey: `announcement:${announcement.id}`,
+    metadata: { audience: announcement.audience || {} },
+  });
+  announcement.status = 'sent';
+  announcement.sentAt = new Date().toISOString();
+  announcement.recipientCount = created.length;
+  return created;
+}
+
+async function processScheduledAnnouncements() {
+  try {
+    const data = await readData();
+    const now = Date.now();
+    let changed = false;
+    for (const announcement of data.announcements || []) {
+      if (announcement.status === 'scheduled' && announcement.scheduleAt && new Date(announcement.scheduleAt).getTime() <= now) {
+        await deliverAnnouncement(data, announcement);
+        changed = true;
+      }
+    }
+    if (changed) await writeData(data);
+  } catch (error) {
+    console.warn('[notifications] Scheduled announcement processing failed:', error.message);
   }
+}
+
+app.get('/api/admin/announcements', requireAdmin, async (req, res) => {
+  try {
+    const data = await readData();
+    res.json((data.announcements || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+});
+
+app.post('/api/admin/announcements', requireAdmin, async (req, res) => {
+  try {
+    const data = await readData();
+    const title = String(req.body.title || '').trim();
+    const message = String(req.body.message || req.body.body || '').trim();
+    if (!title || !message) return res.status(400).json({ error: 'title and message are required' });
+    const scheduleAt = req.body.scheduleAt ? new Date(req.body.scheduleAt).toISOString() : null;
+    if (req.body.scheduleAt && Number.isNaN(new Date(req.body.scheduleAt).getTime())) {
+      return res.status(400).json({ error: 'scheduleAt must be a valid date' });
+    }
+    const announcement = {
+      id: nextId(data),
+      title,
+      message,
+      imageUrl: req.body.imageUrl || null,
+      type: ['general', 'important', 'system', 'promotional'].includes(req.body.type) ? req.body.type : 'general',
+      priority: ['NORMAL', 'HIGH', 'URGENT'].includes(req.body.priority) ? req.body.priority : 'NORMAL',
+      audience: {
+        role: req.body.audience?.role || '',
+        city: req.body.audience?.city || '',
+      },
+      scheduleAt,
+      expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt).toISOString() : null,
+      status: scheduleAt ? 'scheduled' : (req.body.sendNow ? 'sent' : 'draft'),
+      createdAt: new Date().toISOString(),
+      createdBy: req.currentUser.id,
+      sentAt: null,
+      recipientCount: 0,
+    };
+    data.announcements.unshift(announcement);
+    if (req.body.sendNow && !scheduleAt) await deliverAnnouncement(data, announcement);
+    await writeData(data);
+    res.status(201).json(announcement);
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+});
+
+app.post('/api/admin/announcements/:id/send', requireAdmin, async (req, res) => {
+  try {
+    const data = await readData();
+    const announcement = (data.announcements || []).find(item => Number(item.id) === Number(req.params.id));
+    if (!announcement) return res.status(404).json({ error: 'Announcement not found' });
+    await deliverAnnouncement(data, announcement);
+    await writeData(data);
+    res.json(announcement);
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+});
+
+app.get('/api/announcements/:id', requireAuth, async (req, res) => {
+  try {
+    const data = await readData();
+    const announcement = (data.announcements || []).find(item =>
+      Number(item.id) === Number(req.params.id) &&
+      item.status === 'sent' &&
+      (!item.expiresAt || new Date(item.expiresAt) > new Date())
+    );
+    if (!announcement) return res.status(404).json({ error: 'Announcement is no longer available.' });
+    const audience = announcement.audience || {};
+    const allowed = usersForAnnouncement({ ...data, users: [req.currentUser] }, audience).includes(req.currentUser.id);
+    if (!allowed) return res.status(403).json({ error: 'This announcement is not available for your account.' });
+    res.json(announcement);
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 
 // ─── BLOG ──────────────────────────────────────────────────────────────────────
@@ -3994,37 +4428,24 @@ app.post('/api/mobile/push', requireAdmin, async (req, res) => {
     if (!title || !body) return res.status(400).json({ error: 'title and body required' });
 
     const appData = await readData();
-
-    // Store notification in history so in-app notification centre shows it
-    if (!appData.notifications) appData.notifications = [];
-    const notif = {
-      id: nextId(appData),
-      title,
-      body,
-      type: 'broadcast',
-      forPortal: 'mobile',
-      read: false,
-      timestamp: new Date().toISOString(),
-      screen: 'notifications',
-      ...payload,
-    };
-    appData.notifications.unshift(notif);
-    await writeData(appData);
-
-    // Send Expo push to every user who has registered a push token
-    const tokens = (appData.users || [])
-      .filter(u => u.pushToken && u.pushToken.startsWith('ExponentPushToken'))
-      .map(u => u.pushToken);
-
-    console.log(`[BROADCAST PUSH] "${title}" → ${tokens.length} device(s)`);
-    const results = await Promise.allSettled(
-      tokens.map(token =>
-        sendExpoPush(token, title, body, { screen: 'notifications', notificationId: notif.id, ...payload })
-      )
+    const created = await createAndDeliverNotifications(
+      appData,
+      (appData.users || []).map(user => user.id),
+      {
+        type: payload.type || 'GENERAL_ANNOUNCEMENT',
+        category: payload.category || 'announcements',
+        title,
+        body,
+        entityType: payload.entityType || null,
+        entityId: payload.entityId || null,
+        propertyId: payload.propertyId || null,
+        deepLink: payload.deepLink || '/notifications',
+        priority: payload.priority || 'NORMAL',
+        eventKey: `broadcast:${crypto.createHash('sha256').update(`${title}:${body}:${Date.now()}`).digest('hex').slice(0, 20)}`,
+      },
     );
-    const sent = results.filter(r => r.status === 'fulfilled').length;
-
-    res.json({ success: true, sent, totalTokens: tokens.length, title, body, sentAt: new Date().toISOString() });
+    await writeData(appData);
+    res.json({ success: true, sent: created.length, totalRecipients: created.length, title, body, sentAt: new Date().toISOString() });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -4339,12 +4760,40 @@ function developerCrud(path, key, prefix, extra = {}) {
   app.put(`${path}/:id`, requireAuth, developerAccess, async (req, res) => {
     const data = await readData(); const item = findRecord(data[key], req.params.id);
     if (!item) return res.status(404).json({ error: 'Not found' }); if (!ownDeveloperRecord(req, item)) return res.status(403).json({ error: 'Forbidden' });
-    Object.assign(item, req.body, { id: item.id, developerId: item.developerId, updatedAt: new Date().toISOString() }); await writeData(data); res.json(item);
+    const previousStatus = item.status;
+    Object.assign(item, req.body, { id: item.id, developerId: item.developerId, updatedAt: new Date().toISOString() });
+    if (key === 'developerProjects' && ['Live', 'Approved', 'Coming Soon', 'Under Development'].includes(item.status) && previousStatus !== item.status) {
+      await createAndDeliverNotifications(data, usersForProjectAlert(data, item), {
+        type: 'NEW_PROJECT', category: 'projects',
+        title: `New Project in ${item.city || 'your area'}`,
+        body: `${item.name || item.title || 'A new project'} is now available on OG Landmark.`,
+        entityType: 'project', entityId: item.id, projectId: item.id,
+        imageUrl: item.imageUrl || item.coverImage || item.image || null,
+        deepLink: `/project/${item.id}`,
+        metadata: { city: item.city, projectType: item.type || item.projectType, startingPrice: item.startingPrice },
+        eventKey: `project:${item.id}:published:${item.updatedAt}`,
+      });
+    }
+    await writeData(data); res.json(item);
   });
   app.patch(`${path}/:id`, requireAuth, developerAccess, async (req, res) => {
     const data = await readData(); const item = findRecord(data[key], req.params.id);
     if (!item) return res.status(404).json({ error: 'Not found' }); if (!ownDeveloperRecord(req, item)) return res.status(403).json({ error: 'Forbidden' });
-    Object.assign(item, req.body, { id: item.id, developerId: item.developerId, updatedAt: new Date().toISOString() }); await writeData(data); res.json(item);
+    const previousStatus = item.status;
+    Object.assign(item, req.body, { id: item.id, developerId: item.developerId, updatedAt: new Date().toISOString() });
+    if (key === 'developerProjects' && ['Live', 'Approved', 'Coming Soon', 'Under Development'].includes(item.status) && previousStatus !== item.status) {
+      await createAndDeliverNotifications(data, usersForProjectAlert(data, item), {
+        type: 'NEW_PROJECT', category: 'projects',
+        title: `New Project in ${item.city || 'your area'}`,
+        body: `${item.name || item.title || 'A new project'} is now available on OG Landmark.`,
+        entityType: 'project', entityId: item.id, projectId: item.id,
+        imageUrl: item.imageUrl || item.coverImage || item.image || null,
+        deepLink: `/project/${item.id}`,
+        metadata: { city: item.city, projectType: item.type || item.projectType, startingPrice: item.startingPrice },
+        eventKey: `project:${item.id}:published:${item.updatedAt}`,
+      });
+    }
+    await writeData(data); res.json(item);
   });
   app.delete(`${path}/:id`, requireAuth, developerAccess, async (req, res) => {
     const data = await readData(); const list = data[key] || []; const i = list.findIndex(x => String(x.id) === req.params.id);
@@ -5142,6 +5591,7 @@ app.get('*', (req, res) => {
 // until initDb succeeds, and the exact failure is visible in the app log.
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`OG Landmark listening on ${PORT}`);
+  setInterval(processScheduledAnnouncements, 30_000);
   verifySmtpConnection();
   initDb()
     .then(() => {

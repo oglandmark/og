@@ -15,7 +15,7 @@ import { useColors } from '@/hooks/useColors';
 import {
   getAdminStats, AdminStats,
   getAdminProperties, ApiProperty,
-  approveProperty, rejectProperty, deleteAdminProperty, sendBroadcastPush,
+  approveProperty, rejectProperty, deleteAdminProperty,
 } from '@/lib/api';
 
 const NAVY = '#102a43';
@@ -59,19 +59,6 @@ export default function AdminDashboard() {
   async function handleApprove(prop: ApiProperty) {
     try {
       await approveProperty(prop.id);
-      try {
-        await sendBroadcastPush(
-          'New Property Listed',
-          `${prop.title} is now available in ${prop.city}.`,
-          { type: 'property', propertyId: prop.id },
-        );
-      } catch (error: unknown) {
-        console.warn('[push] Property approval broadcast failed.', error);
-        Alert.alert(
-          'Approved, but notification failed',
-          'The property was approved, but its notification could not be sent. You can retry from Broadcast Notification.',
-        );
-      }
       setPending(p => p.filter(x => x.id !== prop.id));
       setStats(s => s ? { ...s, pendingApprovals: (s.pendingApprovals ?? 1) - 1, activeListings: (s.activeListings ?? 0) + 1 } : s);
     } catch { Alert.alert('Error', 'Could not approve property.'); }
@@ -106,6 +93,7 @@ export default function AdminDashboard() {
   const navItems = [
     { label: 'Properties',  icon: 'home'     as const, route: '/admin/properties' as const },
     { label: 'Users',       icon: 'users'    as const, route: '/admin/users'      as const },
+    { label: 'Notifications', icon: 'bell'   as const, route: '/admin/notifications' as const },
     { label: 'Settings',    icon: 'settings' as const, route: '/admin/settings'   as const },
   ];
 

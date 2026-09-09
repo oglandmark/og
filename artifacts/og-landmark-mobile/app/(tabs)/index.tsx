@@ -24,6 +24,7 @@ import { PropertyCard } from '@/components/PropertyCard';
 import { useColors } from '@/hooks/useColors';
 import { useLanguage } from '@/context/LanguageContext';
 import { BrandMark } from '@/components/BrandMark';
+import { NotificationBell } from '@/components/NotificationBell';
 import { BrowseDiscoveryModule } from '@/components/BrowseDiscoveryModule';
 import { PropertyDemoBadge } from '@/components/PropertyDemoBadge';
 import { VideoWatermark } from '@/components/VideoWatermark';
@@ -1869,6 +1870,7 @@ export default function HomeScreen() {
             </Animated.View>
           </Pressable>
           <BrandMark />
+          {user ? <NotificationBell compact /> : <View style={{ width: 36 }} />}
         </View>
 
         {/* Buy / Rent toggle — animated sliding pill */}

@@ -299,10 +299,14 @@ export async function deleteMyAccount(userId: string): Promise<void> {
   await apiFetch('/api/account', { method: 'DELETE' });
 }
 
-export async function updatePushToken(userId: number, pushToken: string): Promise<void> {
+export async function updatePushToken(
+  userId: number,
+  pushToken: string,
+  device?: { deviceId?: string; platform?: string; appVersion?: string },
+): Promise<void> {
   await apiFetch(`/api/users/${userId}/push-token`, {
     method: 'PATCH',
-    body: JSON.stringify({ pushToken }),
+    body: JSON.stringify({ pushToken, ...device }),
   });
 }
 
@@ -450,12 +454,141 @@ export async function toggleSavedAPI(userId: number, propertyId: number): Promis
 }
 
 // ─── Notifications ─────────────────────────────────────────────────────────────
-export async function getNotifications(userId: number): Promise<unknown[]> {
-  return apiFetch(`/api/notifications?userId=${userId}`);
+export type NotificationCategory = 'properties' | 'projects' | 'announcements' | 'promotional' | 'account' | 'system';
+export type AppNotification = {
+  id: number;
+  notificationId: string;
+  recipientUserId: number;
+  type: string;
+  category: NotificationCategory;
+  title: string;
+  message: string;
+  body: string;
+  imageUrl?: string | null;
+  entityType?: string | null;
+  entityId?: string | number | null;
+  propertyId?: string | number | null;
+  projectId?: string | number | null;
+  announcementId?: string | number | null;
+  deepLink?: string | null;
+  priority?: 'NORMAL' | 'HIGH' | 'URGENT';
+  isRead: boolean;
+  read: boolean;
+  readAt?: string | null;
+  createdAt: string;
+  expiresAt?: string | null;
+  metadata?: Record<string, unknown>;
+};
+
+export type NotificationPage = {
+  items: AppNotification[];
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+  unreadCount: number;
+};
+
+export type NotificationPreferences = {
+  properties: boolean;
+  projects: boolean;
+  announcements: boolean;
+  promotional: boolean;
+  account: boolean;
+  system: boolean;
+  frequency: 'immediate' | 'daily' | 'weekly';
+  cities?: string[];
+  propertyTypes?: string[];
+};
+
+export async function getNotifications(
+  _userId?: number,
+  options: { page?: number; limit?: number; category?: NotificationCategory | 'all' } = {},
+): Promise<NotificationPage> {
+  const params = new URLSearchParams({
+    page: String(options.page ?? 1),
+    limit: String(options.limit ?? 25),
+    category: options.category ?? 'all',
+  });
+  return apiFetch<NotificationPage>(`/api/notifications?${params.toString()}`);
 }
 
-export async function markNotificationRead(id: number): Promise<void> {
+export async function getNotificationUnreadCount(): Promise<number> {
+  const result = await apiFetch<{ unreadCount: number }>('/api/notifications/unread-count');
+  return result.unreadCount;
+}
+
+export async function markNotificationRead(id: number | string): Promise<void> {
   await apiFetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
+}
+
+export async function markAllNotificationsRead(category: NotificationCategory | 'all' = 'all'): Promise<void> {
+  await apiFetch('/api/notifications/mark-all-read', {
+    method: 'PATCH',
+    body: JSON.stringify({ category }),
+  });
+}
+
+export async function deleteNotification(id: number | string): Promise<void> {
+  await apiFetch(`/api/notifications/${id}`, { method: 'DELETE' });
+}
+
+export async function getNotificationPreferences(): Promise<NotificationPreferences> {
+  return apiFetch<NotificationPreferences>('/api/notification-preferences');
+}
+
+export async function updateNotificationPreferences(
+  preferences: Partial<NotificationPreferences>,
+): Promise<NotificationPreferences> {
+  return apiFetch<NotificationPreferences>('/api/notification-preferences', {
+    method: 'PUT',
+    body: JSON.stringify(preferences),
+  });
+}
+
+export type AdminAnnouncement = {
+  id: number;
+  title: string;
+  message: string;
+  imageUrl?: string | null;
+  type: 'general' | 'important' | 'system' | 'promotional';
+  priority: 'NORMAL' | 'HIGH' | 'URGENT';
+  audience: { role?: string; city?: string };
+  scheduleAt?: string | null;
+  expiresAt?: string | null;
+  status: 'draft' | 'scheduled' | 'sent';
+  createdAt: string;
+  sentAt?: string | null;
+  recipientCount?: number;
+};
+
+export async function getAdminAnnouncements(): Promise<AdminAnnouncement[]> {
+  return apiFetch<AdminAnnouncement[]>('/api/admin/announcements');
+}
+
+export async function createAdminAnnouncement(payload: {
+  title: string;
+  message: string;
+  imageUrl?: string;
+  type: AdminAnnouncement['type'];
+  priority: AdminAnnouncement['priority'];
+  audience: { role?: string; city?: string };
+  scheduleAt?: string | null;
+  expiresAt?: string | null;
+  sendNow?: boolean;
+}): Promise<AdminAnnouncement> {
+  return apiFetch<AdminAnnouncement>('/api/admin/announcements', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function sendAdminAnnouncement(id: number): Promise<AdminAnnouncement> {
+  return apiFetch<AdminAnnouncement>(`/api/admin/announcements/${id}/send`, { method: 'POST' });
+}
+
+export async function getAnnouncement(id: number): Promise<AdminAnnouncement> {
+  return apiFetch<AdminAnnouncement>(`/api/announcements/${id}`);
 }
 
 // ─── Banner slides (mobile home screen) ───────────────────────────────────────

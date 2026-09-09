@@ -70,3 +70,17 @@ mtime_ms = 1788686970807
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/0b4f353c-f4c9-4e0b-be7f-9ec24ea9d100/b0ada59e-a2a0-4f04-9c63-322512e3c0f5"
 storage_version_token = "1788686980833096"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "6lr2xpOiHtnQg6Yulp-kd"
+uri = "file://exports/og-landmark-hostinger.zip"
+type = "unspecified"
+title = "OG Landmark Hostinger Website ZIP"
+description = "Hostinger-ready website package with Express server, public website, API, database schema, seed import script, and setup instructions. Replit lockfiles, node_modules, secrets, and local fallback data are excluded."
+logical_id = "6544ec84-7324-4170-ba52-68b406885d58"
+content_hash = "sha256:170b6a521b6763a61da348197b7522058ecba51a188c811bc7be943a0e7a9a1d"
+size = 10971982
+mtime_ms = 1788976333026
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/6544ec84-7324-4170-ba52-68b406885d58/c3022e93-1fb6-45e5-8053-fc18a3ce7bfb"
+storage_version_token = "1788976357265845"
+content_type = "application/octet-stream"

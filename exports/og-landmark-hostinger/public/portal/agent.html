@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>OG Landmark — Agent Portal</title>
+  <link rel="icon" href="/og-logo.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;background:#0B1F3A}
+    .left{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;background:linear-gradient(135deg,#0B1F3A 0%,#0d2a50 100%);position:relative;overflow:hidden}
+    .left::before{content:'';position:absolute;inset:0;background:url('/images/property-1.jpg') center/cover;opacity:.12}
+    .left-content{position:relative;z-index:1;text-align:center;max-width:400px}
+    .brand-logo{width:70px;height:70px;object-fit:contain;margin-bottom:20px;filter:drop-shadow(0 4px 16px rgba(200,164,90,.5))}
+    .brand-name{font-size:28px;font-weight:800;color:#fff;letter-spacing:-.5px}
+    .brand-sub{font-size:11px;color:#C8A45A;letter-spacing:3px;text-transform:uppercase;margin-bottom:24px}
+    .brand-desc{font-size:14px;color:#94a3b8;line-height:1.7;margin-bottom:32px}
+    .brand-points{list-style:none;text-align:left;display:inline-block}
+    .brand-points li{font-size:13px;color:#cbd5e1;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+    .brand-points li::before{content:'✦';color:#C8A45A;font-size:10px;flex-shrink:0}
+    .right{width:480px;flex-shrink:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 40px;min-height:100vh}
+    .portal-badge{background:#0B1F3A;color:#C8A45A;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:5px 14px;border-radius:999px;margin-bottom:28px;display:flex;align-items:center;gap:6px}
+    .portal-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:#C8A45A}
+    h1{font-size:26px;font-weight:800;color:#0B1F3A;margin-bottom:6px}
+    .subtitle{font-size:14px;color:#64748b;margin-bottom:32px}
+    .panel{width:100%;display:none}
+    .panel.active{display:block}
+    .field{margin-bottom:18px}
+    .field label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:7px}
+    .field input{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;transition:.2s;color:#1e293b}
+    .field input:focus{border-color:#C8A45A;box-shadow:0 0 0 3px rgba(200,164,90,.1)}
+    .btn-main{width:100%;padding:13px;background:#C8A45A;color:#0B1F3A;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:.2s;margin-top:4px;font-family:inherit}
+    .btn-main:hover{background:#b8943a}
+    .btn-main:disabled{opacity:.6;cursor:not-allowed}
+    .err{color:#dc2626;font-size:13px;background:#fee2e2;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:none}
+    .err.show{display:block}
+    .link-btn{background:none;border:none;color:#C8A45A;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:underline;padding:0}
+    .link-btn:hover{color:#b8943a}
+    .divider{text-align:center;color:#94a3b8;font-size:12px;margin:18px 0;position:relative}
+    .divider::before,.divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:#e2e8f0}
+    .divider::before{left:0}.divider::after{right:0}
+    .other-portals{margin-top:28px;text-align:center;font-size:12px;color:#94a3b8}
+    .other-portals a{color:#C8A45A;text-decoration:none;font-weight:600;margin:0 6px}
+    .other-portals a:hover{text-decoration:underline}
+    .success-box{background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:16px;font-size:13px;color:#15803d;margin-bottom:16px;display:none}
+    .success-box.show{display:block}
+    .pending-box{background:#fffbeb;border:1.5px solid #fde68a;border-radius:12px;padding:20px;text-align:center;margin-bottom:16px;display:none}
+    .pending-box.show{display:block}
+    .pending-box .pi{font-size:42px;margin-bottom:10px}
+    .pending-box h3{font-size:17px;font-weight:700;color:#92400e;margin-bottom:6px}
+    .pending-box p{font-size:13px;color:#78350f;line-height:1.6}
+    .field select{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;transition:.2s;color:#1e293b;background:#fff}
+    .field select:focus{border-color:#C8A45A;box-shadow:0 0 0 3px rgba(200,164,90,.1)}
+    .btn-outline{width:100%;padding:13px;background:transparent;border:1.5px solid #e2e8f0;color:#64748b;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;margin-top:10px;font-family:inherit}
+    .btn-outline:hover{background:#f8fafc;border-color:#cbd5e1}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .right{overflow-y:auto}
+    @media(max-width:800px){.left{display:none}.right{width:100%;padding:40px 24px}}
+  </style>
+</head>
+<body>
+<div class="left">
+  <div class="left-content">
+    <img src="/og-logo.png" class="brand-logo" alt="OG Landmark" onerror="this.style.display='none'"/>
+    <div class="brand-name">OG Landmark</div>
+    <div class="brand-sub">Agent Portal</div>
+    <div class="brand-desc">Your complete workspace for managing properties, leads, and client relationships.</div>
+    <ul class="brand-points">
+      <li>Manage your assigned property listings</li>
+      <li>Handle leads & client inquiries</li>
+      <li>Schedule & track site visits</li>
+      <li>Chat with buyers in real time</li>
+      <li>Track your performance & commissions</li>
+    </ul>
+  </div>
+</div>
+
+<div class="right">
+  <div class="portal-badge">Agent Portal</div>
+
+  <!-- LOGIN PANEL -->
+  <div class="panel active" id="panel-login">
+    <h1>Agent Login</h1>
+    <div class="subtitle">Sign in to access your agent workspace</div>
+    <div class="err" id="login-err"></div>
+    <div class="field"><label>Email Address</label><input type="email" id="login-email" placeholder="your@email.com" autocomplete="off"/></div>
+    <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="Your password" autocomplete="current-password"/></div>
+    <button class="btn-main" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="divider">or</div>
+    <button class="link-btn" onclick="showPanel('forgot')">Forgot Password?</button>
+    <div class="divider">or</div>
+    <button class="btn-outline" onclick="showPanel('register')">New Agent? Register Here →</button>
+    <div class="other-portals">Other portals: <a href="/portal/buyer">Buyer</a> <a href="/portal/seller">Seller</a></div>
+  </div>
+
+  <!-- REGISTER PANEL -->
+  <div class="panel" id="panel-register">
+    <h1>Agent Registration</h1>
+    <div class="subtitle">Create your agent account — admin approval required</div>
+    <div class="err" id="reg-err"></div>
+    <div class="grid2">
+      <div class="field" style="margin-bottom:0"><label>First Name</label><input type="text" id="reg-fname" placeholder="First name" autocomplete="given-name"/></div>
+      <div class="field" style="margin-bottom:0"><label>Last Name</label><input type="text" id="reg-lname" placeholder="Last name" autocomplete="family-name"/></div>
+    </div>
+    <div style="margin-bottom:14px"></div>
+    <div class="field"><label>Email Address</label><input type="email" id="reg-email" placeholder="your@email.com" autocomplete="off"/></div>
+    <div class="field"><label>Phone Number</label><input type="tel" id="reg-phone" placeholder="+92 300 1234567" autocomplete="tel"/></div>
+    <div class="grid2">
+      <div class="field" style="margin-bottom:0">
+        <label>City</label>
+        <select id="reg-city">
+          <option value="">Select city</option>
+          <option>Lahore</option><option>Karachi</option><option>Islamabad</option>
+          <option>Rawalpindi</option><option>Faisalabad</option><option>Multan</option>
+          <option>Okara</option><option>Depalpur</option><option>Renala Khurd</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Specialization</label>
+        <select id="reg-spec">
+          <option value="">Select type</option>
+          <option>Residential</option><option>Commercial</option>
+          <option>Agricultural</option><option>Industrial</option><option>All Types</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-bottom:14px"></div>
+    <div class="field">
+      <label>Years of Experience</label>
+      <select id="reg-exp">
+        <option value="">Select experience</option>
+        <option>Less than 1 year</option><option>1–3 years</option>
+        <option>3–5 years</option><option>5–10 years</option><option>10+ years</option>
+      </select>
+    </div>
+    <div class="field"><label>Password</label><input type="password" id="reg-pass" placeholder="Min. 8 characters" autocomplete="new-password"/></div>
+    <div class="field"><label>Confirm Password</label><input type="password" id="reg-pass2" placeholder="Re-enter password" autocomplete="new-password"/></div>
+    <button class="btn-main" id="reg-btn" onclick="doRegister()">Submit Application</button>
+    <button class="btn-outline" onclick="showPanel('login')">Already have an account? Sign In</button>
+  </div>
+
+  <!-- PENDING PANEL -->
+  <div class="panel" id="panel-pending">
+    <div class="pending-box show">
+      <div class="pi">⏳</div>
+      <h3>Application Submitted!</h3>
+      <p>Your agent registration has been sent to the OG Landmark admin team for review.<br/><br/>
+      You will be notified once your account is approved. This usually takes 1–2 business days.</p>
+    </div>
+    <button class="btn-main" onclick="showPanel('login')">Back to Login</button>
+  </div>
+
+  <!-- FORGOT PASSWORD -->
+  <div class="panel" id="panel-forgot">
+    <h1>Reset Password</h1>
+    <div class="subtitle">Enter your email to receive a reset code</div>
+    <div class="err" id="forgot-err"></div>
+    <div class="success-box" id="forgot-ok">Reset code sent! Check your email.</div>
+    <div class="field"><label>Email Address</label><input type="email" id="forgot-email" placeholder="your@email.com" autocomplete="off"/></div>
+    <button class="btn-main" id="forgot-btn" onclick="doForgot()">Send Reset Code</button>
+    <div class="divider">or</div>
+    <button class="link-btn" onclick="showPanel('login')">← Back to Login</button>
+  </div>
+</div>
+
+<script>
+function showPanel(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  clearErrors();
+}
+function clearErrors(){
+  document.querySelectorAll('.err').forEach(e=>{e.classList.remove('show');e.textContent='';});
+  document.querySelectorAll('.success-box').forEach(e=>e.classList.remove('show'));
+}
+function showErr(id,msg){ const el=document.getElementById(id); el.textContent=msg; el.classList.add('show'); }
+
+// Enter key support
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter') return;
+  const active=document.querySelector('.panel.active');
+  if(!active) return;
+  const id=active.id;
+  if(id==='panel-login') doLogin();
+  else if(id==='panel-forgot') doForgot();
+  else if(id==='panel-register') doRegister();
+});
+
+async function doLogin(){
+  clearErrors();
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  if(!email) return showErr('login-err','Please enter your email.');
+  if(!pass)  return showErr('login-err','Please enter your password.');
+  const btn=document.getElementById('login-btn');
+  btn.disabled=true; btn.textContent='Signing in…';
+  try{
+    const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const d=await r.json();
+    if(!r.ok){
+      btn.disabled=false; btn.textContent='Sign In';
+      if(d.code==='AGENT_PENDING') return showErr('login-err','⏳ Your account is pending admin approval. Please wait — you will be notified once approved.');
+      if(d.code==='AGENT_REJECTED') return showErr('login-err','❌ Your account was not approved. Contact support@oglandmark.com');
+      return showErr('login-err',d.error||'Login failed. Check your credentials.');
+    }
+    if(!['Agent','Admin'].includes(d.user?.role)) return showErr('login-err','This portal is for agents only. Please use the correct portal.');
+    localStorage.setItem('og_token',d.token);
+    localStorage.setItem('og_user',JSON.stringify(d.user));
+    window.location.href='/agent';
+  } catch(e){ showErr('login-err','Network error. Please try again.'); }
+  btn.disabled=false; btn.textContent='Sign In';
+}
+
+async function doRegister(){
+  clearErrors();
+  const firstName=document.getElementById('reg-fname').value.trim();
+  const lastName=document.getElementById('reg-lname').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const phone=document.getElementById('reg-phone').value.trim();
+  const city=document.getElementById('reg-city').value;
+  const specialization=document.getElementById('reg-spec').value;
+  const experience=document.getElementById('reg-exp').value;
+  const pass=document.getElementById('reg-pass').value;
+  const pass2=document.getElementById('reg-pass2').value;
+  if(!firstName) return showErr('reg-err','Please enter your first name.');
+  if(!email)     return showErr('reg-err','Please enter your email address.');
+  if(!phone)     return showErr('reg-err','Please enter your phone number.');
+  if(!city)      return showErr('reg-err','Please select your city.');
+  if(!specialization) return showErr('reg-err','Please select your specialization.');
+  if(pass.length<8)   return showErr('reg-err','Password must be at least 8 characters.');
+  if(pass!==pass2)    return showErr('reg-err','Passwords do not match.');
+  const btn=document.getElementById('reg-btn');
+  btn.disabled=true; btn.textContent='Submitting…';
+  try{
+    const r=await fetch('/api/auth/register',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({firstName,lastName,email,phone,city,specialization,experience,password:pass,role:'agent'})
+    });
+    const d=await r.json();
+    if(!r.ok){ btn.disabled=false; btn.textContent='Submit Application'; return showErr('reg-err',d.error||'Registration failed. Please try again.'); }
+    if(d.pending){ showPanel('pending'); return; }
+    showPanel('pending');
+  } catch(e){ showErr('reg-err','Network error. Please try again.'); }
+  btn.disabled=false; btn.textContent='Submit Application';
+}
+
+async function doForgot(){
+  clearErrors();
+  const email=document.getElementById('forgot-email').value.trim();
+  if(!email) return showErr('forgot-err','Please enter your email.');
+  const btn=document.getElementById('forgot-btn');
+  btn.disabled=true; btn.textContent='Sending…';
+  try{
+    await fetch('/api/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    document.getElementById('forgot-ok').classList.add('show');
+  } catch(e){ showErr('forgot-err','Network error.'); }
+  btn.disabled=false; btn.textContent='Send Reset Code';
+}
+</script>
+</body>
+</html>

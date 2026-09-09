@@ -1,0 +1,1140 @@
+{
+  "properties": [
+    {
+      "id": 1,
+      "title": "Luxurious Modern Villa in DHA Phase 8",
+      "type": "Villa",
+      "status": "For Sale",
+      "approvalStatus": "Active",
+      "price": 125000000,
+      "area": 5500,
+      "bedrooms": 6,
+      "bathrooms": 7,
+      "city": "Lahore",
+      "address": "Street 12, DHA Phase 8, Lahore",
+      "society": "DHA Phase 8",
+      "block": "Block H",
+      "landmark": "Near DHA Phase 8 Gate",
+      "nearbyPlaces": {
+        "schools": [
+          "The City School DHA",
+          "Beaconhouse DHA Campus"
+        ],
+        "hospitals": [
+          "Shaukat Khanum Memorial Hospital"
+        ],
+        "mosques": [
+          "DHA Jamia Masjid"
+        ],
+        "markets": [
+          "DHA Phase 8 Commercial Area"
+        ],
+        "metroStations": [],
+        "motorwayDist": "15 km"
+      },
+      "description": "Exceptional modern villa featuring contemporary architecture, premium finishes, and expansive living spaces. Private pool, landscaped garden, and state-of-the-art amenities.",
+      "amenities": [
+        "Private Pool",
+        "Home Theater",
+        "Gym",
+        "Garden",
+        "Servant Quarters",
+        "Security System",
+        "3 Car Parking",
+        "Central AC",
+        "Solar System",
+        "CCTV",
+        "EV Charging"
+      ],
+      "images": [
+        "/images/property-1.jpg",
+        "/images/property-5.jpg",
+        "/images/property-3.jpg",
+        "/images/property-2.jpg"
+      ],
+      "agentId": 1,
+      "sellerId": 10,
+      "sellerName": "Salman Khan",
+      "featured": true,
+      "views": 820,
+      "inquiryCount": 12,
+      "videoUrl": null,
+      "tour360Url": null,
+      "yearBuilt": 2023,
+      "constructionAge": "New",
+      "furnishing": "Unfurnished",
+      "availability": "Ready to Move",
+      "areaUnit": "Kanal",
+      "areaInSqft": 5500,
+      "purpose": "For Sale",
+      "tags": [
+        "featured",
+        "verified",
+        "luxury",
+        "smartHome"
+      ],
+      "propertyScore": {
+        "location": 4.9,
+        "construction": 5,
+        "investment": 4.8,
+        "amenities": 5,
+        "futureGrowth": 4.7,
+        "overall": 4.9
+      },
+      "createdAt": "2024-01-15"
+    },
+    {
+      "id": 2,
+      "title": "Premium 3-Bed Apartment in Bahria Town",
+      "type": "Apartment",
+      "status": "For Rent",
+      "approvalStatus": "Active",
+      "price": 85000,
+      "area": 1850,
+      "bedrooms": 3,
+      "bathrooms": 3,
+      "city": "Islamabad",
+      "address": "Civic Centre, Bahria Town Phase 4, Islamabad",
+      "society": "Bahria Town Phase 4",
+      "block": "Civic Centre",
+      "landmark": "Near Bahria Grand Mosque",
+      "nearbyPlaces": {
+        "schools": [
+          "The Scholar School Bahria",
+          "Roots School Bahria"
+        ],
+        "hospitals": [
+          "Bahria International Hospital"
+        ],
+        "mosques": [
+          "Bahria Grand Mosque"
+        ],
+        "markets": [
+          "Bahria Town Phase 4 Market"
+        ],
+        "metroStations": [],
+        "motorwayDist": "3 km"
+      },
+      "description": "Stunning apartment with panoramic city views and modern amenities. Open-concept design, high-end finishes, and access to world-class facilities.",
+      "amenities": [
+        "Clubhouse",
+        "Swimming Pool",
+        "Gym",
+        "Balcony",
+        "Central Heating",
+        "Underground Parking",
+        "24/7 Security",
+        "Elevators",
+        "Backup Generator"
+      ],
+      "images": [
+        "/images/property-2.jpg",
+        "/images/property-5.jpg",
+        "/images/property-1.jpg"
+      ],
+      "agentId": 3,
+      "sellerId": 10,
+      "sellerName": "Salman Khan",
+      "featured": true,
+      "views": 560,
+      "inquiryCount": 8,
+      "videoUrl": null,
+      "tour360Url": null,
+      "yearBuilt": 2022,
+      "constructionAge": "1 Year",
+      "furnishing": "Semi Furnished",
+      "availability": "Ready to Move",
+      "areaUnit": "Square Feet",
+      "areaInSqft": 1850,
+      "purpose": "For Rent",
+      "tags": [
+        "featured",
+        "verified",
+        "newListing"
+      ],
+      "propertyScore": {
+        "location": 4.7,
+        "construction": 4.5,
+        "investment": 4.2,
+        "amenities": 4.8,
+        "futureGrowth": 4.5,
+        "overall": 4.5
+      },
+      "createdAt": "2024-01-20"
+    },
+    {
+      "id": 3,
+      "title": "Elegant 5 Bedroom House in Gulberg",
+      "type": "House",
+      "status": "For Sale",
+      "approvalStatus": "Active",
+      "price": 68000000,
+      "area": 4200,
+      "bedrooms": 5,
+      "bathrooms": 5,
+      "city": "Lahore",
+      "address": "Main Boulevard, Gulberg III, Lahore",
+      "society": "Gulberg III",
+      "block": "Main Boulevard",
+      "landmark": "Near Gulberg Main Market",
+      "nearbyPlaces": {
+        "schools": [
+          "LGS Gulberg",
+          "Aitchison College"
+        ],
+        "hospitals": [
+          "Doctors Hospital",
+          "Hameed Latif Hospital"
+        ],
+        "mosques": [
+          "Jamia Masjid Gulberg"
+        ],
+        "markets": [
+          "Liberty Market",
+          "MM Alam Road"
+        ],
+        "metroStations": [
+          "Gulberg Orange Line Station"
+        ],
+        "motorwayDist": "12 km"
+      },
+      "description": "Spacious and elegant house in the heart of Gulberg with premium finishes throughout. Perfect for families seeking upscale urban living.",
+      "amenities": [
+        "Garden",
+        "Servant Quarters",
+        "4 Car Parking",
+        "Security System",
+        "Solar System",
+        "Generator",
+        "Fiber Internet",
+        "CCTV"
+      ],
+      "images": [
+        "/images/property-3.jpg",
+        "/images/property-1.jpg",
+        "/images/property-4.jpg"
+      ],
+      "agentId": 1,
+      "sellerId": 10,
+      "sellerName": "Salman Khan",
+      "featured": false,
+      "views": 430,
+      "inquiryCount": 10,
+      "videoUrl": null,
+      "tour360Url": null,
+      "yearBuilt": 2020,
+      "constructionAge": "5 Years",
+      "furnishing": "Unfurnished",
+      "availability": "Ready to Move",
+      "areaUnit": "Marla",
+      "areaInSqft": 4200,
+      "purpose": "For Sale",
+      "tags": [
+        "verified",
+        "hotArea",
+        "corner"
+      ],
+      "propertyScore": {
+        "location": 4.8,
+        "construction": 4,
+        "investment": 4.5,
+        "amenities": 4.2,
+        "futureGrowth": 4.6,
+        "overall": 4.4
+      },
+      "createdAt": "2024-01-10"
+    },
+    {
+      "id": 4,
+      "title": "Spacious Penthouse with City View",
+      "type": "Apartment",
+      "status": "For Sale",
+      "approvalStatus": "Active",
+      "price": 45000000,
+      "area": 3200,
+      "bedrooms": 4,
+      "bathrooms": 4,
+      "city": "Karachi",
+      "address": "Clifton Block 5, Karachi",
+      "society": "Clifton Block 5",
+      "block": "Block 5",
+      "landmark": "Near Clifton Beach",
+      "nearbyPlaces": {
+        "schools": [
+          "Karachi Grammar School"
+        ],
+        "hospitals": [
+          "Aga Khan University Hospital"
+        ],
+        "mosques": [
+          "Clifton Mosque"
+        ],
+        "markets": [
+          "Clifton Block 9 Market"
+        ],
+        "metroStations": [],
+        "motorwayDist": "25 km"
+      },
+      "description": "Exclusive penthouse offering breathtaking city views with top-notch finishes and premium amenities in the heart of Clifton.",
+      "amenities": [
+        "Private Terrace",
+        "Jacuzzi",
+        "Smart Home",
+        "Gym",
+        "Concierge Service",
+        "Swimming Pool",
+        "Elevator"
+      ],
+      "images": [
+        "/images/property-4.jpg",
+        "/images/property-6.jpg",
+        "/images/property-2.jpg"
+      ],
+      "agentId": 2,
+      "sellerId": 11,
+      "sellerName": "Hassan Raza",
+      "featured": true,
+      "views": 680,
+      "inquiryCount": 6,
+      "videoUrl": null,
+      "tour360Url": null,
+      "yearBuilt": 2021,
+      "constructionAge": "5 Years",
+      "furnishing": "Furnished",
+      "availability": "Ready to Move",
+      "areaUnit": "Square Feet",
+      "areaInSqft": 3200,
+      "purpose": "For Sale",
+      "tags": [
+        "featured",
+        "verified",
+        "luxury",
+        "highROI",
+        "parkFacing"
+      ],
+      "propertyScore": {
+        "location": 4.9,
+        "construction": 4.2,
+        "investment": 4.7,
+        "amenities": 4.9,
+        "futureGrowth": 4.4,
+        "overall": 4.6
+      },
+      "createdAt": "2024-01-25"
+    },
+    {
+      "id": 5,
+      "title": "Modern Commercial Plaza in Clifton",
+      "type": "Commercial",
+      "status": "For Sale",
+      "approvalStatus": "Active",
+      "price": 180000000,
+      "area": 8500,
+      "bedrooms": 0,
+      "bathrooms": 4,
+      "city": "Karachi",
+      "address": "Main Clifton Road, Karachi",
+      "society": "Clifton",
+      "block": "Main Clifton Road",
+      "landmark": "Near Clifton Bridge",
+      "nearbyPlaces": {
+        "schools": [],
+        "hospitals": [
+          "Dr. Ziauddin Hospital"
+        ],
+        "mosques": [
+          "Clifton Mosque"
+        ],
+        "markets": [
+          "Clifton Commercial Market"
+        ],
+        "metroStations": [],
+        "motorwayDist": "22 km"
+      },
+      "description": "Prime commercial space in the most sought-after commercial area of Karachi. Ideal for offices, retail, or mixed-use development.",
+      "amenities": [
+        "Elevator",
+        "Backup Generator",
+        "Central AC",
+        "Security",
+        "Parking",
+        "Fiber Internet"
+      ],
+      "images": [
+        "/images/property-5.jpg",
+        "/images/property-3.jpg"
+      ],
+      "agentId": 2,
+      "sellerId": 11,
+      "sellerName": "Hassan Raza",
+      "featured": false,
+      "views": 290,
+      "inquiryCount": 4,
+      "videoUrl": null,
+      "tour360Url": null,
+      "yearBuilt": 2019,
+      "constructionAge": "10 Years",
+      "furnishing": "Unfurnished",
+      "availability": "Ready to Move",
+      "areaUnit": "Square Feet",
+      "areaInSqft": 8500,
+      "purpose": "For Sale",
+      "tags": [
+        "verified",
+        "highROI",
+        "rentalIncome",
+        "mainRoad",
+        "corner"
+      ],
+      "propertyScore": {
+        "location": 4.6,
+        "construction": 3.5,
+        "investment": 4.8,
+        "amenities": 3.8,
+        "futureGrowth": 4.3,
+        "overall": 4.2
+      },
+      "createdAt": "2024-02-01"
+    },
+    {
+      "id": 6,
+      "title": "Affordable 2-Bed Apartment in E-11",
+      "type": "Apartment",
+      "status": "For Rent",
+      "approvalStatus": "Active",
+      "price": 55000,
+      "area": 1200,
+      "bedrooms": 2,
+      "bathrooms": 2,
+      "city": "Islamabad",
+      "address": "E-11/2, Islamabad",
+      "society": "E-11",
+      "block": "Sector E-11/2",
+      "landmark": "Near Islamabad Zoo",
+      "nearbyPlaces": {
+        "schools": [
+          "The Educators E-11",
+          "NUST"
+        ],
+        "hospitals": [
+          "PIMS Hospital"
+        ],
+        "mosques": [
+          "E-11 Masjid"
+        ],
+        "markets": [
+          "E-11 Market"
+        ],
+        "metroStations": [
+          "E-11 Metro Station"
+        ],
+        "motorwayDist": "8 km"
+      },
+      "description": "Well-maintained apartment in a peaceful neighborhood perfect for small families or couples.",
+      "amenities": [
+        "Elevator",
+        "Backup Generator",
+        "Security",
+        "Parking"
+      ],
+      "images": [
+        "/images/property-6.jpg",
+        "/images/property-4.jpg"
+      ],
+      "agentId": 3,
+      "sellerId": 12,
+      "sellerName": "Maria Ali",
+      "featured": false,
+      "views": 340,
+      "inquiryCount": 5,
+      "videoUrl": null,
+      "tour360Url": null,
+      "yearBuilt": 2018,
+      "constructionAge": "10 Years",
+      "furnishing": "Semi Furnished",
+      "availability": "Ready to Move",
+      "areaUnit": "Square Feet",
+      "areaInSqft": 1200,
+      "purpose": "For Rent",
+      "tags": [
+        "newListing"
+      ],
+      "propertyScore": {
+        "location": 4,
+        "construction": 3.5,
+        "investment": 3.8,
+        "amenities": 3.5,
+        "futureGrowth": 4.2,
+        "overall": 3.8
+      },
+      "createdAt": "2024-02-05"
+    },
+    {
+      "id": 7,
+      "title": "10-Acre Mango Orchard in Rahim Yar Khan",
+      "type": "Orchard",
+      "status": "For Sale",
+      "approvalStatus": "Active",
+      "price": 8500000,
+      "area": 435600,
+      "bedrooms": 0,
+      "bathrooms": 0,
+      "city": "Rahim Yar Khan",
+      "address": "Liaquatpur Road, Rahim Yar Khan",
+      "society": null,
+      "block": null,
+      "landmark": "Near Rahim Yar Khan City",
+      "nearbyPlaces": {
+        "schools": [],
+        "hospitals": [
+          "DHQ Hospital RYK"
+        ],
+        "mosques": [
+          "Local Mosque"
+        ],
+        "markets": [
+          "Liaquatpur Market"
+        ],
+        "metroStations": [],
+        "motorwayDist": "15 km"
+      },
+      "description": "Highly productive mango orchard with established trees and bore well irrigation. Excellent investment opportunity.",
+      "amenities": [
+        "Bore Well",
+        "Solar Pumping",
+        "Caretaker House",
+        "Boundary Wall"
+      ],
+      "images": [
+        "/images/property-5.jpg",
+        "/images/property-6.jpg"
+      ],
+      "agentId": 5,
+      "sellerId": 14,
+      "sellerName": "Muhammad Tariq",
+      "featured": false,
+      "views": 180,
+      "inquiryCount": 3,
+      "videoUrl": null,
+      "tour360Url": null,
+      "yearBuilt": null,
+      "constructionAge": null,
+      "furnishing": null,
+      "availability": "Ready to Move",
+      "areaUnit": "Acre",
+      "areaInSqft": 435600,
+      "purpose": "For Sale",
+      "tags": [
+        "verified",
+        "highROI",
+        "orchard",
+        "tubeWell"
+      ],
+      "propertyScore": {
+        "location": 3.5,
+        "construction": 3,
+        "investment": 4.5,
+        "amenities": 3.2,
+        "futureGrowth": 4,
+        "overall": 3.6
+      },
+      "createdAt": "2024-02-10"
+    },
+    {
+      "id": 8,
+      "title": "25-Acre Fertile Farmland in Okara",
+      "type": "Agriculture Land",
+      "status": "For Sale",
+      "approvalStatus": "Active",
+      "price": 30000000,
+      "area": 1089000,
+      "bedrooms": 0,
+      "bathrooms": 0,
+      "city": "Okara",
+      "address": "Renala Khurd Road, Okara",
+      "society": null,
+      "block": null,
+      "landmark": "Near Renala Khurd Town",
+      "nearbyPlaces": {
+        "schools": [],
+        "hospitals": [
+          "THQ Hospital Renala"
+        ],
+        "mosques": [
+          "Village Mosque"
+        ],
+        "markets": [
+          "Renala Market"
+        ],
+        "metroStations": [],
+        "motorwayDist": "5 km"
+      },
+      "description": "Premium agricultural land in Okara district with canal irrigation available. Ideal for wheat, rice, and sugarcane cultivation.",
+      "amenities": [
+        "Canal Irrigation",
+        "Electricity",
+        "Road Access",
+        "Flat Land"
+      ],
+      "images": [
+        "/images/property-6.jpg",
+        "/images/property-5.jpg"
+      ],
+      "agentId": 5,
+      "sellerId": 14,
+      "sellerName": "Muhammad Tariq",
+      "featured": false,
+      "views": 220,
+      "inquiryCount": 4,
+      "videoUrl": null,
+      "tour360Url": null,
+      "yearBuilt": null,
+      "constructionAge": null,
+      "furnishing": null,
+      "availability": "Ready to Move",
+      "areaUnit": "Acre",
+      "areaInSqft": 1089000,
+      "purpose": "For Sale",
+      "tags": [
+        "verified",
+        "highROI",
+        "riceLand",
+        "canalWater",
+        "roadFront"
+      ],
+      "propertyScore": {
+        "location": 3.2,
+        "construction": 2.5,
+        "investment": 4.8,
+        "amenities": 2.8,
+        "futureGrowth": 4.2,
+        "overall": 3.5
+      },
+      "createdAt": "2024-02-12"
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "name": "Admin",
+      "email": "oggroup834@gmail.com",
+      "phone": "+92 304 2569000",
+      "role": "Admin",
+      "status": "Active",
+      "password": "pbkdf2:d47f640e6b74b552d22695eff08c72b9:10bb5ef822564a865a67c2875e981798cc2715cb1fce0156c214af53e21fdbaaa0ed425f04ccb2d1895f9a1f01f8290cea9c26b23e2644a7a4a202ee3723aa0b",
+      "joinedDate": "2023-01-01"
+    },
+    {
+      "id": 2,
+      "name": "Ali Hassan",
+      "email": "ali.agent@og.com",
+      "phone": "+92 300 1111111",
+      "city": "Lahore",
+      "specialization": "Luxury",
+      "title": "Senior Property Consultant",
+      "experience": "7 Years",
+      "license": "RERA-2017-002",
+      "languages": "Urdu, Punjabi, English",
+      "bio": "Specialist in luxury residential properties across Lahore. 7+ years of experience.",
+      "role": "Agent",
+      "status": "Active",
+      "approvalStatus": "Approved",
+      "password": "pbkdf2:38c8c98f6e0997baf2157d55c5318ed8:ea26d06eb1018de89e1a99f01d37b318ad8a3e3d89b9a0952d7f44552d177bc19902a082c91db209b4d79d5412d3cfa56d547140f578bc963e9664813e01d0c6",
+      "joinedDate": "2024-01-01",
+      "createdByAdmin": true,
+      "photo": null,
+      "rating": null
+    },
+    {
+      "id": 3,
+      "name": "Sara Ahmed",
+      "email": "sara.agent@og.com",
+      "phone": "+92 300 2222222",
+      "city": "Islamabad",
+      "specialization": "Residential",
+      "title": "Property Consultant",
+      "experience": "4 Years",
+      "license": "RERA-2020-003",
+      "languages": "Urdu, English",
+      "bio": "Expert in residential and rental properties in Islamabad and Rawalpindi.",
+      "role": "Agent",
+      "status": "Active",
+      "approvalStatus": "Approved",
+      "password": "pbkdf2:7fd4e157c7497d3bfc82a93f1aaee166:91496acd479a385bae20f3b5b57938d46e5195d3173200d4ad44b2129cd2c5c2186095105d4d72bc19d4dd2ab0598d16f4e470f2f81b2ff87bc7c45a1979cf87",
+      "joinedDate": "2024-01-01",
+      "createdByAdmin": true,
+      "photo": null,
+      "rating": null
+    },
+    {
+      "id": 4,
+      "name": "Usman Ahmed",
+      "email": "usman@example.com",
+      "phone": "+92 300 1234567",
+      "role": "Buyer",
+      "status": "Active",
+      "password": "pbkdf2:0163d459ed9e7e4ac219595c9e0e74c8:39d0e9f9e893823fd0cd9d2682442a08d9e16d3402e7efa133325842afdbbbcc8fe2de5bfc8bdbf84ccbb275e21b76943445fdb4ad8921656d94299545f5f0fd",
+      "joinedDate": "2023-06-15"
+    },
+    {
+      "id": 5,
+      "name": "Bilal Malik",
+      "email": "bilal.agent@og.com",
+      "phone": "+92 300 5555555",
+      "city": "Okara",
+      "specialization": "Agriculture",
+      "title": "Agricultural Land Specialist",
+      "experience": "6 Years",
+      "license": "RERA-2018-005",
+      "languages": "Urdu, Punjabi",
+      "bio": "Expert in agricultural land, farmhouses, and rural properties in Punjab.",
+      "role": "Agent",
+      "status": "Active",
+      "approvalStatus": "Approved",
+      "password": "pbkdf2:b88216f32e74061ba6c0344a287683bb:fbb9e7c67dc2134152b82ca1344b64d8c693fcaac7d0e969de38b4e6a7244df47adcd980f4b072f5bce5eba2c03a0032b935beb7a8e12dc1b1ec60f54a160a58",
+      "joinedDate": "2024-01-01",
+      "createdByAdmin": true,
+      "photo": null,
+      "rating": null
+    },
+    {
+      "id": 10,
+      "name": "Salman Khan",
+      "email": "salman@example.com",
+      "phone": "+92 321 9876543",
+      "role": "Seller",
+      "status": "Active",
+      "password": "pbkdf2:5b5e2329e4f1f243587247570db3040a:193339a88ac6a5acabc98ba4df615190ce1774256a60756b0997aaa6de3171b0dee5039139b87f9f6574a22a1b312459c6b9ea70cd918ecafe16f679952dd2e2",
+      "joinedDate": "2023-03-10"
+    },
+    {
+      "id": 11,
+      "name": "Hassan Raza",
+      "email": "hassan@example.com",
+      "phone": "+92 333 4567890",
+      "role": "Seller",
+      "status": "Active",
+      "password": "pbkdf2:ab81ba330c690aebb6308e2042ec5fdf:174637b4d3319363c71b742a0436e49cbec64ef100a4b6582628cf9157f569e2eca395f2b495bc3a9e5f4695891ae4b29bec885a385f786b0ac0e3664e654ab7",
+      "joinedDate": "2023-04-20"
+    },
+    {
+      "id": 12,
+      "name": "Zainab Khan",
+      "email": "zainab@example.com",
+      "phone": "+92 345 2468135",
+      "role": "Buyer",
+      "status": "Active",
+      "password": "pbkdf2:9ec87c035b0c459dbe76c9699cc082c9:b4a1c5d5a6b9c367508dff0da88dc100ca234605c9001a7bbd4344ee7e28c6e1c7b7fedae8e080ff2c01f1978db547b86a3a37e0ee625498753bd1fb1bf18e10",
+      "joinedDate": "2023-07-01"
+    },
+    {
+      "id": 13,
+      "name": "Shahid Malik",
+      "email": "shahid@example.com",
+      "phone": "+92 300 8765432",
+      "role": "Buyer",
+      "status": "Active",
+      "password": "pbkdf2:30f26bdf2b37618b5ff38020d326748c:d861a341d8225ce51763dd430e4df66cd4e97675620230a41ec257c250e9a7bb817c85dde34b308129300734aac9c2b8e223070873e949ab171b3fef76ae65e0",
+      "joinedDate": "2023-05-12"
+    },
+    {
+      "id": 14,
+      "name": "Maria Ali",
+      "email": "maria@example.com",
+      "phone": "+92 321 1357924",
+      "role": "Seller",
+      "status": "Active",
+      "password": "pbkdf2:b885044ecb08ec769b522ecb8f60eb02:a152e0aa22f802d70d038f013377a34c95847edb7718a7605e17c5de87fef77931bf431fba64b939316e85fda610d71515f3b8aaba45c72eb863e87b234ebd3a",
+      "joinedDate": "2023-08-05"
+    },
+    {
+      "id": 15,
+      "name": "Kamran Ahmed",
+      "email": "kamran@example.com",
+      "phone": "+92 300 2468135",
+      "role": "Buyer",
+      "status": "Active",
+      "password": "pbkdf2:62614ee89298d2a98a498729dc2fda97:7b5d5a46181450364644e186c56d5475c2cc5594f12414ff8136cde02b1ea781785373691cd52657a4f9d47ae33eab11039e59a8342c0b984601f513dbde7993",
+      "joinedDate": "2023-09-18"
+    }
+  ],
+  "inquiries": [
+    {
+      "id": 1,
+      "propertyId": 1,
+      "propertyTitle": "Luxurious Modern Villa in DHA Phase 8",
+      "clientName": "Usman Ahmed",
+      "email": "usman@example.com",
+      "phone": "+92 300 1234567",
+      "message": "I am very interested in this villa. Can we arrange a viewing this weekend?",
+      "sellerId": 10,
+      "buyerId": 4,
+      "status": "Pending",
+      "reply": null,
+      "replyDate": null,
+      "date": "2024-01-25",
+      "agentId": 1
+    },
+    {
+      "id": 2,
+      "propertyId": 2,
+      "propertyTitle": "Premium 3-Bed Apartment in Bahria Town",
+      "clientName": "Zainab Khan",
+      "email": "zainab@example.com",
+      "phone": "+92 345 2468135",
+      "message": "What is the minimum lease period for this apartment?",
+      "sellerId": 10,
+      "buyerId": 12,
+      "status": "Contacted",
+      "reply": "Minimum lease is 12 months. Happy to arrange a viewing.",
+      "replyDate": "2024-01-24",
+      "date": "2024-01-24",
+      "agentId": 3
+    },
+    {
+      "id": 3,
+      "propertyId": 5,
+      "propertyTitle": "Modern Commercial Plaza in Clifton",
+      "clientName": "Shahid Malik",
+      "email": "shahid@example.com",
+      "phone": "+92 300 8765432",
+      "message": "We are looking for office space. Is this property available for lease?",
+      "sellerId": 11,
+      "buyerId": 13,
+      "status": "Contacted",
+      "reply": null,
+      "replyDate": null,
+      "date": "2024-01-23",
+      "agentId": 2
+    },
+    {
+      "id": 4,
+      "propertyId": 4,
+      "propertyTitle": "Spacious Penthouse with City View",
+      "clientName": "Maria Ali",
+      "email": "maria@example.com",
+      "phone": "+92 321 1357924",
+      "message": "Interested in the penthouse. What are the maintenance charges?",
+      "sellerId": 11,
+      "buyerId": null,
+      "status": "Pending",
+      "reply": null,
+      "replyDate": null,
+      "date": "2024-01-25",
+      "agentId": 2
+    },
+    {
+      "id": 5,
+      "propertyId": 3,
+      "propertyTitle": "Elegant 5 Bedroom House in Gulberg",
+      "clientName": "Hassan Raza",
+      "email": "hassan@example.com",
+      "phone": "+92 333 4567890",
+      "message": "Price seems high. Is the seller open to negotiation?",
+      "sellerId": 10,
+      "buyerId": null,
+      "status": "Closed",
+      "reply": null,
+      "replyDate": null,
+      "date": "2024-01-20",
+      "agentId": 1
+    }
+  ],
+  "offers": [
+    {
+      "id": 1,
+      "propertyId": 1,
+      "propertyTitle": "Luxurious Modern Villa in DHA Phase 8",
+      "propertyImage": "/images/property-1.jpg",
+      "buyerId": 4,
+      "buyerName": "Usman Ahmed",
+      "buyerPhone": "+92 300 1234567",
+      "sellerId": 10,
+      "amount": 120000000,
+      "message": "I am very interested in this property. Please consider my offer.",
+      "status": "Pending",
+      "counterAmount": null,
+      "counterMessage": null,
+      "date": "2024-02-12"
+    },
+    {
+      "id": 2,
+      "propertyId": 3,
+      "propertyTitle": "Elegant 5 Bedroom House in Gulberg",
+      "propertyImage": "/images/property-3.jpg",
+      "buyerId": 4,
+      "buyerName": "Usman Ahmed",
+      "buyerPhone": "+92 300 1234567",
+      "sellerId": 10,
+      "amount": 65000000,
+      "message": "Great property. Offering a fair market price.",
+      "status": "Accepted",
+      "counterAmount": null,
+      "counterMessage": null,
+      "date": "2024-01-28"
+    },
+    {
+      "id": 3,
+      "propertyId": 4,
+      "propertyTitle": "Spacious Penthouse with City View",
+      "propertyImage": "/images/property-4.jpg",
+      "buyerId": 12,
+      "buyerName": "Zainab Khan",
+      "buyerPhone": "+92 345 2468135",
+      "sellerId": 11,
+      "amount": 43000000,
+      "message": "Keen buyer. Can close quickly.",
+      "status": "Rejected",
+      "counterAmount": null,
+      "counterMessage": null,
+      "date": "2024-02-05"
+    }
+  ],
+  "appointments": [
+    {
+      "id": 1,
+      "propertyId": 1,
+      "propertyTitle": "Luxurious Modern Villa in DHA Phase 8",
+      "propertyAddress": "Street 12, DHA Phase 8, Lahore",
+      "buyerId": 4,
+      "buyerName": "Usman Ahmed",
+      "sellerId": 10,
+      "date": "2024-02-15",
+      "time": "10:00 AM",
+      "type": "Site Visit",
+      "status": "Upcoming",
+      "notes": "",
+      "agentId": 1
+    },
+    {
+      "id": 2,
+      "propertyId": 2,
+      "propertyTitle": "Premium 3-Bed Apartment in Bahria Town",
+      "propertyAddress": "Civic Centre, Bahria Town Phase 4",
+      "buyerId": 4,
+      "buyerName": "Usman Ahmed",
+      "sellerId": 10,
+      "date": "2024-02-16",
+      "time": "02:00 PM",
+      "type": "Site Visit",
+      "status": "Upcoming",
+      "notes": "",
+      "agentId": 3
+    },
+    {
+      "id": 3,
+      "propertyId": 3,
+      "propertyTitle": "Elegant 5 Bedroom House in Gulberg",
+      "propertyAddress": "Main Boulevard, Gulberg III",
+      "buyerId": 4,
+      "buyerName": "Usman Ahmed",
+      "sellerId": 10,
+      "date": "2024-01-20",
+      "time": "11:00 AM",
+      "type": "Video Call",
+      "status": "Completed",
+      "notes": "",
+      "agentId": 1
+    }
+  ],
+  "conversations": [
+    {
+      "id": 1,
+      "propertyId": 1,
+      "propertyTitle": "Luxurious Modern Villa in DHA Phase 8",
+      "participants": [
+        4,
+        2
+      ],
+      "participantNames": [
+        "Usman Ahmed",
+        "Ahmed Hassan"
+      ],
+      "agentImage": "/images/agent-1.jpg",
+      "lastUpdated": "2026-07-27T08:44:40.255Z",
+      "messages": [
+        {
+          "id": 1,
+          "senderId": 1,
+          "senderName": "Ahmed Hassan",
+          "text": "Hello Usman, I've confirmed with the seller. The viewing for the DHA Phase 8 Villa is scheduled for tomorrow at 10:00 AM.",
+          "timestamp": "2026-07-27T06:44:40.255Z"
+        },
+        {
+          "id": 2,
+          "senderId": 4,
+          "senderName": "Usman Ahmed",
+          "text": "That sounds great. I'll be there on time.",
+          "timestamp": "2026-07-27T07:44:40.255Z"
+        },
+        {
+          "id": 3,
+          "senderId": 1,
+          "senderName": "Ahmed Hassan",
+          "text": "Perfect. Please bring your CNIC just in case security asks at the gate. See you tomorrow!",
+          "timestamp": "2026-07-27T08:14:40.255Z"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "propertyId": 2,
+      "propertyTitle": "Premium 3-Bed Apartment in Bahria Town",
+      "participants": [
+        4,
+        2
+      ],
+      "participantNames": [
+        "Usman Ahmed",
+        "Fatima Khan"
+      ],
+      "agentImage": "/images/agent-2.jpg",
+      "lastUpdated": "2026-07-26T08:44:40.255Z",
+      "messages": [
+        {
+          "id": 4,
+          "senderId": 2,
+          "senderName": "Fatima Khan",
+          "text": "Here are the documents you requested. Please review and let me know.",
+          "timestamp": "2026-07-26T08:44:40.255Z"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "propertyId": 3,
+      "propertyTitle": "Elegant 5 Bedroom House in Gulberg",
+      "participants": [
+        4,
+        3
+      ],
+      "participantNames": [
+        "Usman Ahmed",
+        "Bilal Rashid"
+      ],
+      "agentImage": "/images/agent-3.jpg",
+      "lastUpdated": "2026-07-24T08:44:40.255Z",
+      "messages": [
+        {
+          "id": 5,
+          "senderId": 3,
+          "senderName": "Bilal Rashid",
+          "text": "Yes, the price is negotiable. The seller is open to offers above 62 Cr.",
+          "timestamp": "2026-07-24T08:44:40.255Z"
+        }
+      ]
+    }
+  ],
+  "notifications": [
+    {
+      "id": 1,
+      "type": "appointment",
+      "title": "Appointment Reminder",
+      "message": "Your site visit for DHA Phase 8 Villa is tomorrow at 10:00 AM.",
+      "forPortal": "buyer",
+      "read": false,
+      "timestamp": "2026-07-27T06:44:40.255Z",
+      "link": "/user/appointments"
+    },
+    {
+      "id": 2,
+      "type": "message",
+      "title": "New Message",
+      "message": "Ahmed Hassan replied to your inquiry about the commercial plaza.",
+      "forPortal": "buyer",
+      "read": false,
+      "timestamp": "2026-07-27T03:44:40.255Z",
+      "link": "/user/messages"
+    },
+    {
+      "id": 3,
+      "type": "system",
+      "title": "Price Drop Alert",
+      "message": "\"Elegant 5 Bedroom House in Gulberg\" price dropped by 2%.",
+      "forPortal": "buyer",
+      "read": true,
+      "timestamp": "2026-07-26T08:44:40.255Z",
+      "link": null
+    },
+    {
+      "id": 4,
+      "type": "inquiry",
+      "title": "New Lead",
+      "message": "Usman Ahmed enquired about DHA Phase 8 Villa.",
+      "forPortal": "seller",
+      "read": false,
+      "timestamp": "2026-07-27T07:44:40.255Z",
+      "link": "/seller/leads"
+    },
+    {
+      "id": 5,
+      "type": "offer",
+      "title": "New Offer Received",
+      "message": "Usman Ahmed made an offer of PKR 1.20 Cr on Villa.",
+      "forPortal": "seller",
+      "read": false,
+      "timestamp": "2026-07-27T06:44:40.255Z",
+      "link": "/seller/offers"
+    },
+    {
+      "id": 6,
+      "type": "inquiry",
+      "title": "New Inquiry",
+      "message": "New inquiry from Shahid Malik for Clifton Plaza.",
+      "forPortal": "admin",
+      "read": false,
+      "timestamp": "2026-07-27T07:44:40.255Z",
+      "link": "/admin/inquiries"
+    },
+    {
+      "id": 7,
+      "type": "approval",
+      "title": "New Listing Submission",
+      "message": "A new property has been submitted for admin approval.",
+      "forPortal": "admin",
+      "read": false,
+      "timestamp": "2026-07-27T06:44:40.255Z",
+      "link": "/admin/properties"
+    }
+  ],
+  "blogPosts": [
+    {
+      "id": 1,
+      "title": "Top 5 Emerging Real Estate Markets in Pakistan 2024",
+      "excerpt": "Discover where savvy investors are putting their money in Pakistan's fastest-growing property markets.",
+      "content": "<p>Pakistan's real estate sector is witnessing unprecedented growth. Lahore's DHA, Karachi's Clifton, and Islamabad's New Blue Area continue to dominate, but emerging markets in Multan, Faisalabad, and Gwadar are gaining traction.</p>",
+      "author": "OG Landmark",
+      "category": "Market Trends",
+      "image": "/images/blog-1.jpg",
+      "published": true,
+      "views": 1240,
+      "createdAt": "2024-01-15"
+    },
+    {
+      "id": 2,
+      "title": "Complete Guide to Buying Property in Pakistan",
+      "excerpt": "Everything first-time buyers need to know about the property purchase process in Pakistan.",
+      "content": "<p>Buying property in Pakistan can be complex. Understanding Fard, Registry, and Mutation is essential. Always verify the seller's ownership documents before making any payment.</p>",
+      "author": "OG Landmark",
+      "category": "Buyer Guide",
+      "image": "/images/blog-1.jpg",
+      "published": true,
+      "views": 890,
+      "createdAt": "2024-01-20"
+    },
+    {
+      "id": 3,
+      "title": "Agricultural Land Investment in Punjab: A Growing Opportunity",
+      "excerpt": "Why agricultural land in Punjab districts like Okara, Sahiwal, and Faisalabad is attracting urban investors.",
+      "content": "<p>Agricultural land in Okara district, known for its fertile soil and canal irrigation, has appreciated 25% in three years. OG Landmark specializes in agricultural land in the Depalpur-Okara region.</p>",
+      "author": "OG Landmark",
+      "category": "Investment",
+      "image": "/images/blog-1.jpg",
+      "published": true,
+      "views": 560,
+      "createdAt": "2024-02-01"
+    }
+  ],
+  "savedProperties": {},
+  "nextId": 1000
+}

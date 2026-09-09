@@ -8,6 +8,7 @@
 - [Expo GitHub build dispatch](expo-github-build-dispatch.md) — after repository linking, EAS dispatch can still return transient 503s; verify no queued build before retrying.
 - [Plot calculator geometry](plot-calculator-geometry.md) — irregular plots need diagonals for exact triangulation; side-only results must be labelled estimates or declined.
 - [EAS cloud monorepo builds](eas-cloud-monorepo-build.md) — direct CLI uploads bypass GitHub, but remote pnpm can fail on esbuild build-script policy in this workspace.
+- [EAS pnpm 8 lockfile compatibility](eas-pnpm8-lockfile.md) — EAS uses pnpm 8.9.2 here; catalog refs and pnpm 9/10 lockfiles are not build-compatible.
 - [Native splash provider order](native-splash-provider-order.md) — native-only startup overlays must render inside every context provider they consume; web previews may hide this class of crash.
 - [Android video compositing](android-video-compositing.md) — stacked Expo video surfaces can blank sibling content; use texture views and mount only the active banner video.
 - [GitHub connector write fallback](github-connector-write-fallback.md) — selected source-file writes may hit Cloudflare 403; publish through credential-injected Git data APIs.

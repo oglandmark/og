@@ -9,6 +9,7 @@
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Constants from 'expo-constants';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import MapView, {
   Marker,
@@ -48,7 +49,12 @@ const PROVIDER = PROVIDER_GOOGLE;
 // A Google provider without a native SDK key can terminate the app while the
 // MapView is being created. Keep the rest of the app usable in unconfigured
 // preview builds instead of mounting a provider that cannot initialize.
-const HAS_GOOGLE_MAPS_KEY = Boolean(process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim());
+const GOOGLE_MAPS_KEY =
+  process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ||
+  Constants.expoConfig?.android?.config?.googleMaps?.apiKey?.trim() ||
+  Constants.expoConfig?.ios?.config?.googleMapsApiKey?.trim() ||
+  '';
+const HAS_GOOGLE_MAPS_KEY = Boolean(GOOGLE_MAPS_KEY);
 
 function GoogleMapsUnavailable() {
   return (

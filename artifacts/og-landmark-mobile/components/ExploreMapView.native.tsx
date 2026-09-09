@@ -10,6 +10,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
+import Constants from 'expo-constants';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import MapView, {
   Circle,
@@ -77,7 +78,12 @@ const OG_MAP_STYLE = [
 const PROVIDER = PROVIDER_GOOGLE;
 // Do not mount the native Google provider in a build made without its SDK key.
 // It can crash during MapView initialization instead of showing an error.
-const HAS_GOOGLE_MAPS_KEY = Boolean(process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim());
+const GOOGLE_MAPS_KEY =
+  process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ||
+  Constants.expoConfig?.android?.config?.googleMaps?.apiKey?.trim() ||
+  Constants.expoConfig?.ios?.config?.googleMapsApiKey?.trim() ||
+  '';
+const HAS_GOOGLE_MAPS_KEY = Boolean(GOOGLE_MAPS_KEY);
 
 function GoogleMapsUnavailable() {
   return (

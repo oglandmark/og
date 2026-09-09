@@ -1,0 +1,1496 @@
+OG LANDMARK — PROFESSIONAL NOTIFICATION & ANNOUNCEMENT SYSTEM
+
+You are working on the existing OG Landmark real-estate mobile application.
+
+Add a complete, production-ready Notification & Announcement System for:
+
+1. New Property Listings
+2. New Project Listings
+3. Announcements
+4. Admin Notifications
+5. User-specific system notifications
+6. Property/Project status updates
+
+The system must feel like a professional international real-estate platform.
+
+DO NOT build a basic notification popup only.
+
+Implement a complete notification architecture with:
+
+PUSH NOTIFICATIONS
++
+IN-APP NOTIFICATION CENTER
++
+UNREAD COUNTER
++
+NOTIFICATION PREFERENCES
++
+ADMIN ANNOUNCEMENTS
++
+PROPERTY ALERTS
++
+PROJECT ALERTS
++
+READ/UNREAD STATE
++
+DEEP LINKING
++
+NOTIFICATION HISTORY
+
+⸻
+
+1. FIRST — AUDIT EXISTING SYSTEM
+
+Before implementation inspect:
+
+* Existing authentication
+* User roles
+* Buyer account
+* Seller account
+* Agent account
+* Admin account
+* Existing property listing system
+* Existing project listing system
+* Existing announcement system
+* Existing backend
+* Existing database
+* Existing API structure
+* Existing push notification setup
+* Expo configuration
+* Android notification configuration
+* iOS notification configuration
+
+Reuse the existing architecture wherever possible.
+
+DO NOT create duplicate authentication, user or database systems.
+
+⸻
+
+2. NOTIFICATION TYPES
+
+Create a structured notification type system.
+
+At minimum support:
+
+PROPERTY
+
+* NEW_PROPERTY
+* PROPERTY_APPROVED
+* PROPERTY_REJECTED
+* PROPERTY_CHANGES_REQUESTED
+* PROPERTY_PUBLISHED
+* PROPERTY_UPDATED
+
+PROJECT
+
+* NEW_PROJECT
+* PROJECT_APPROVED
+* PROJECT_REJECTED
+* PROJECT_CHANGES_REQUESTED
+* PROJECT_PUBLISHED
+* PROJECT_UPDATED
+
+ANNOUNCEMENT
+
+* GENERAL_ANNOUNCEMENT
+* IMPORTANT_ANNOUNCEMENT
+* SYSTEM_ANNOUNCEMENT
+* PROMOTIONAL_ANNOUNCEMENT
+
+ACCOUNT
+
+* ACCOUNT_VERIFICATION
+* PROFILE_UPDATE
+* SECURITY_ALERT
+
+SYSTEM
+
+* SYSTEM_UPDATE
+* MAINTENANCE
+* FEATURE_UPDATE
+
+Keep notification types extensible for future features.
+
+⸻
+
+3. NOTIFICATION DATABASE MODEL
+
+Create/reuse a proper notifications table/model.
+
+Suggested fields:
+
+notificationId
+recipientUserId
+type
+title
+message
+body
+imageUrl
+entityType
+entityId
+actionUrl / deepLink
+priority
+isRead
+readAt
+createdAt
+expiresAt
+metadata
+
+Where applicable:
+
+propertyId
+projectId
+announcementId
+
+Do not duplicate full property/project records inside notifications.
+
+Use entityId references.
+
+⸻
+
+4. NOTIFICATION HISTORY
+
+Every notification sent to a user should remain available in the in-app notification center unless it has expired according to system rules.
+
+Users should be able to see previous notifications.
+
+Sort:
+
+Newest → Oldest
+
+Show relative time:
+
+Just now
+5 min ago
+2 hours ago
+Yesterday
+Sep 8
+
+⸻
+
+5. NOTIFICATION CENTER
+
+Add a professional notification icon in the main app header.
+
+Example:
+
+🔔
+
+When unread notifications exist:
+
+🔔 3
+
+Use a badge.
+
+The badge must update dynamically.
+
+When the user opens Notification Center:
+
+Show:
+
+Notifications
+
+Tabs/filters where appropriate:
+
+All
+Properties
+Projects
+Announcements
+
+⸻
+
+6. NOTIFICATION CARD DESIGN
+
+Create a premium notification card.
+
+Example:
+
+[Property Image]
+
+New Property Listed
+
+A new 10 Marla house has been listed in Depalpur.
+
+2 hours ago
+
+Tap to View →
+
+Use appropriate icons/images depending on notification type.
+
+Unread notification:
+
+* subtle background difference
+* bold title
+
+Read notification:
+
+* normal background
+* normal typography
+
+Do not use excessive colors.
+
+⸻
+
+7. MARK AS READ
+
+When user opens/taps a notification:
+
+Mark it as read.
+
+Update:
+
+isRead = true
+readAt = current timestamp
+
+Unread count must immediately decrease.
+
+Also provide:
+
+“Mark all as read”
+
+button.
+
+⸻
+
+8. DELETE / CLEAR NOTIFICATIONS
+
+Allow users to manage notification history.
+
+Support where appropriate:
+
+* Delete individual notification
+* Clear all notifications
+
+Do NOT delete notification records globally.
+
+Only remove/hide them for the current user.
+
+If implementing soft-delete:
+
+userDeletedAt
+
+or equivalent.
+
+⸻
+
+9. NEW PROPERTY LISTING NOTIFICATIONS
+
+When a property is successfully:
+
+APPROVED
++
+PUBLISHED
+
+the system can generate a new-property notification according to notification rules.
+
+Example:
+
+“New Property in Depalpur”
+
+“A new 5 Marla house is now available in Depalpur.”
+
+Notification should contain:
+
+* Property image
+* Property title
+* Location
+* Price
+* Property type
+
+Tapping notification must open:
+
+Property Detail
+
+directly.
+
+⸻
+
+10. WHO RECEIVES NEW PROPERTY NOTIFICATIONS
+
+Do NOT send every new property notification to every user by default.
+
+Create a targeting system.
+
+Potential recipients:
+
+* Users interested in that city
+* Users interested in property type
+* Users matching saved searches
+* Users who enabled new-property notifications
+
+Example:
+
+Property:
+
+House
+Depalpur
+
+Users interested in:
+
+House + Depalpur
+
+receive the notification.
+
+Users who have disabled property notifications do not receive it.
+
+⸻
+
+11. SAVED SEARCH ALERTS
+
+If the existing app supports saved searches, integrate notifications.
+
+Example:
+
+User saves:
+
+House
+Depalpur
+5–10 Marla
+Budget: PKR 1–3 Crore
+
+When a matching property is published:
+
+“New Property Matches Your Search”
+
+Then:
+
+“5 Marla house available in Depalpur within your saved price range.”
+
+Tap → Property Detail.
+
+If saved searches do not currently exist, structure the notification architecture so this can be added later without rebuilding the system.
+
+⸻
+
+12. NEW PROJECT LISTING NOTIFICATIONS
+
+When a new project is approved/published:
+
+Generate project notifications according to user preferences and targeting.
+
+Example:
+
+“New Project in Okara”
+
+“OG Landmark has added a new residential project in Okara.”
+
+Show:
+
+* Project image
+* Project name
+* Location
+* Project type
+* Starting price where available
+
+Tap:
+
+→ Project Detail
+
+⸻
+
+13. PROJECT TARGETING
+
+Project notifications can target users based on:
+
+* City
+* Area
+* Project type
+* Investment interest
+* Residential/commercial preference
+* User notification preferences
+
+Do not broadcast unnecessarily.
+
+⸻
+
+14. ANNOUNCEMENT SYSTEM
+
+Create a professional Admin Announcement system.
+
+Admin should be able to create:
+
+Announcement Title
+
+Example:
+
+“OG Landmark Summer Property Week”
+
+Message
+
+Full announcement content.
+
+Image
+
+Optional announcement banner.
+
+Type
+
+* General
+* Important
+* System
+* Promotional
+
+Priority
+
+* Normal
+* High
+* Urgent
+
+Audience
+
+* All users
+* Buyers
+* Sellers
+* Agents
+* Specific city
+* Specific user group
+
+Schedule
+
+Admin should be able to:
+
+* Send immediately
+* Schedule for later
+
+Expiration
+
+Optional expiry date/time.
+
+⸻
+
+15. ADMIN ANNOUNCEMENT DASHBOARD
+
+Create:
+
+Admin → Notifications & Announcements
+
+Sections:
+
+Announcements
+Notification Campaigns
+Notification History
+Templates
+Analytics
+Settings
+
+⸻
+
+16. CREATE ANNOUNCEMENT SCREEN
+
+Admin UI:
+
+Announcement Title
+Message
+Image/Banner
+Notification Type
+Priority
+Audience
+City
+User Role
+Schedule
+Expiry
+
+Preview:
+
+Notification Preview
+
+[Image]
+
+Title
+
+Message
+
+Then:
+
+Cancel
+Save Draft
+Schedule
+Send Now
+
+⸻
+
+17. ANNOUNCEMENT PREVIEW
+
+Admin must be able to preview exactly how the notification will look on the user’s device/in-app notification center.
+
+Provide:
+
+* Light UI preview
+* Notification card preview
+* Push notification preview where practical
+
+⸻
+
+18. PUSH NOTIFICATIONS
+
+Implement real push notifications.
+
+The mobile application should register the user’s device and obtain the appropriate push token.
+
+Store:
+
+userId
+deviceId
+pushToken
+platform
+appVersion
+createdAt
+updatedAt
+isActive
+
+Support multiple devices per user.
+
+Example:
+
+iPhone
+Android
+
+Both may receive notifications.
+
+⸻
+
+19. PUSH TOKEN MANAGEMENT
+
+When user:
+
+* Logs in
+* Installs app
+* Opens app
+* Changes device
+* Reinstalls app
+
+ensure the push token is correctly registered/refreshed.
+
+If a token becomes invalid:
+
+Deactivate it.
+
+Do not continuously retry invalid tokens.
+
+⸻
+
+20. ANDROID + IOS
+
+Push notifications must work on:
+
+Android
++
+iOS
+
+Configure:
+
+* Notification permissions
+* Android notification channels
+* iOS notification permissions
+* Badge counts
+* Sound where appropriate
+* Foreground behavior
+* Background behavior
+* Notification tap handling
+
+Do not break existing Expo configuration.
+
+⸻
+
+21. NOTIFICATION CHANNELS — ANDROID
+
+Create professional notification channels such as:
+
+OG Landmark — Properties
+OG Landmark — Projects
+OG Landmark — Announcements
+OG Landmark — Account
+OG Landmark — System
+
+Use appropriate importance levels.
+
+Urgent/system notifications should not be abused.
+
+⸻
+
+22. FOREGROUND NOTIFICATIONS
+
+When the app is open:
+
+Do not blindly show a duplicate system notification AND an identical in-app popup.
+
+Use professional behavior.
+
+For example:
+
+Show an in-app notification banner:
+
+[Property Image]
+
+New Property in Depalpur
+
+View Property →
+
+and update the notification center.
+
+⸻
+
+23. BACKGROUND NOTIFICATIONS
+
+When app is in background:
+
+Use push notification.
+
+Example:
+
+🔔 New Property in Depalpur
+
+5 Marla House • PKR 1.50 Crore
+
+Tap to View
+
+⸻
+
+24. DEEP LINKING
+
+Every actionable notification must have a destination.
+
+Examples:
+
+NEW_PROPERTY
+→ Property Detail
+
+NEW_PROJECT
+→ Project Detail
+
+ANNOUNCEMENT
+→ Announcement Detail
+
+PROPERTY_APPROVED
+→ Seller’s Property
+
+PROPERTY_REJECTED
+→ Seller’s Property / Review screen
+
+CHANGES_REQUESTED
+→ Edit Property
+
+ACCOUNT_NOTIFICATION
+→ Profile / Verification
+
+Do not open the app home screen unnecessarily.
+
+⸻
+
+25. NOTIFICATION NAVIGATION
+
+When user taps notification:
+
+1. Open app if closed.
+2. Authenticate if necessary.
+3. Navigate to correct screen.
+4. Load entity.
+5. Mark notification as read.
+
+If the entity has been deleted:
+
+Show:
+
+“This property is no longer available.”
+
+Do not crash.
+
+⸻
+
+26. PROPERTY STATUS NOTIFICATIONS
+
+Seller should receive notifications when their listing status changes.
+
+Example:
+
+Submitted
+
+“Your property has been submitted for review.”
+
+Approved
+
+“Your property has been approved.”
+
+Changes Required
+
+“Admin has requested changes to your property listing.”
+
+Rejected
+
+“Your property listing has been rejected.”
+
+Include:
+
+“View Property”
+
+or:
+
+“Edit Property”
+
+CTA.
+
+⸻
+
+27. PROJECT STATUS NOTIFICATIONS
+
+Same workflow for project listings.
+
+Seller/admin/project manager should receive appropriate notifications:
+
+Submitted
+Under Review
+Changes Required
+Approved
+Published
+Rejected
+
+⸻
+
+28. NOTIFICATION PREFERENCES
+
+Create:
+
+Settings → Notifications
+
+Categories:
+
+Property Alerts
+
+ON/OFF
+
+New Projects
+
+ON/OFF
+
+Announcements
+
+ON/OFF
+
+Promotional
+
+ON/OFF
+
+Account & Security
+
+ON/OFF
+
+System
+
+ON/OFF
+
+Important security/system notifications may remain mandatory where appropriate.
+
+⸻
+
+29. LOCATION-BASED NOTIFICATIONS
+
+If the platform has user-selected cities/interests, support targeted alerts.
+
+Example:
+
+User interest:
+
+Depalpur
+
+When a matching property/project is published:
+
+Send notification.
+
+Do not use device GPS location as the user’s permanent interest automatically.
+
+User preferences should control targeting.
+
+⸻
+
+30. NOTIFICATION FREQUENCY
+
+Avoid notification spam.
+
+Implement reasonable controls.
+
+For example:
+
+* Immediate
+* Daily digest
+* Weekly digest
+
+where applicable.
+
+Critical account/security notifications remain immediate.
+
+⸻
+
+31. DUPLICATE PREVENTION
+
+The same event should not generate duplicate notifications.
+
+For example:
+
+One property publication event
+
+must not create:
+
+5 identical notifications
+
+for the same user.
+
+Use a unique event/reference strategy.
+
+Example:
+
+recipientUserId
++
+entityId
++
+notificationType
++
+eventId
+
+⸻
+
+32. RATE LIMITING
+
+Prevent accidental notification floods.
+
+If an admin accidentally triggers multiple requests, the system should not send unlimited duplicates.
+
+Implement appropriate backend safeguards.
+
+⸻
+
+33. NOTIFICATION PRIORITY
+
+Support:
+
+NORMAL
+HIGH
+URGENT
+
+Use priority carefully.
+
+Example:
+
+Normal:
+
+New Property
+
+High:
+
+Important Announcement
+
+Urgent:
+
+Security/System Alert
+
+Do not make marketing notifications urgent.
+
+⸻
+
+34. NOTIFICATION TEMPLATES
+
+Create reusable templates.
+
+Example:
+
+NEW_PROPERTY:
+
+Title:
+“New Property in {{city}}”
+
+Body:
+“{{propertyTitle}} is now available for {{price}}.”
+
+NEW_PROJECT:
+
+Title:
+“New Project in {{city}}”
+
+Body:
+“{{projectName}} is now available on OG Landmark.”
+
+PROPERTY_APPROVED:
+
+Title:
+“Property Approved”
+
+Body:
+“Your property {{propertyTitle}} has been approved.”
+
+Templates should support dynamic variables.
+
+⸻
+
+35. ANNOUNCEMENT DETAIL PAGE
+
+When a user taps an announcement:
+
+Open a professional announcement detail page.
+
+Show:
+
+* Banner image
+* Title
+* Date
+* Full content
+* CTA if applicable
+* Related property/project if applicable
+
+⸻
+
+36. NOTIFICATION ANALYTICS — ADMIN
+
+Create basic notification analytics.
+
+Show:
+
+Sent
+Delivered where provider supports it
+Opened
+Read
+Failed
+
+For campaigns:
+
+Open rate
+Read rate
+Click rate
+
+Do not claim delivery/open metrics if the underlying provider cannot reliably provide them.
+
+⸻
+
+37. NOTIFICATION HISTORY — ADMIN
+
+Admin should be able to see:
+
+* Campaign
+* Notification type
+* Audience
+* Sent date
+* Status
+* Number sent
+* Number opened
+* Number failed
+
+⸻
+
+38. ROLE-BASED NOTIFICATIONS
+
+Respect user roles.
+
+BUYER:
+
+* New properties
+* New projects
+* Announcements
+* Saved search alerts
+
+SELLER:
+
+* Listing submission
+* Approval
+* Rejection
+* Changes requested
+* Listing published
+
+AGENT:
+
+* Relevant property/project updates
+* Account updates
+* Announcements
+
+ADMIN:
+
+* System alerts
+* Review activity
+* Important platform events
+
+⸻
+
+39. NOTIFICATION ICON
+
+Add notification bell to appropriate authenticated screens.
+
+Unread badge:
+
+1
+2
+9+
+
+Do not allow badge to become visually huge.
+
+If no notifications:
+
+Bell without badge.
+
+⸻
+
+40. EMPTY NOTIFICATION STATE
+
+If there are no notifications:
+
+Show:
+
+“No notifications yet”
+
+“New property listings, projects and important updates will appear here.”
+
+Do not show a blank page.
+
+⸻
+
+41. NOTIFICATION LOADING
+
+Use skeleton loading when retrieving notifications.
+
+Do not display a blank screen.
+
+⸻
+
+42. PAGINATION
+
+Notification history should be paginated/infinite-scroll.
+
+Do not load thousands of notifications at once.
+
+Example:
+
+20–30 notifications per request.
+
+Load more as user scrolls.
+
+⸻
+
+43. READ STATE SYNCHRONIZATION
+
+When notification is marked read:
+
+Synchronize with backend.
+
+If the user opens the same account on another device:
+
+Unread state should remain consistent.
+
+⸻
+
+44. OFFLINE BEHAVIOR
+
+If the app is offline:
+
+Previously loaded notifications should remain viewable where possible.
+
+When connection returns:
+
+Synchronize read state.
+
+Do not lose notifications because of temporary network failure.
+
+⸻
+
+45. SECURITY
+
+Users must only be able to access their own notifications.
+
+Admin-only announcements/campaign data must not be exposed through normal user APIs.
+
+Validate:
+
+recipientUserId
+
+on backend.
+
+Never trust recipient IDs supplied directly by the client.
+
+⸻
+
+46. ADMIN AUTHORIZATION
+
+Only authorized admin roles should be able to:
+
+* Create announcements
+* Send campaigns
+* Schedule announcements
+* View notification analytics
+* Broadcast notifications
+
+Do not expose these APIs to ordinary users.
+
+⸻
+
+47. NOTIFICATION EVENT ARCHITECTURE
+
+Use event-driven logic where practical.
+
+Example:
+
+Property Approved
+↓
+Property Published
+↓
+Notification Event
+↓
+Determine Audience
+↓
+Check Preferences
+↓
+Create In-App Notification
+↓
+Send Push Notification
+↓
+Store Delivery Result
+
+This should be handled reliably on the backend.
+
+Do not depend only on the frontend being open.
+
+⸻
+
+48. PROPERTY PUBLICATION EVENT
+
+The new property notification must be triggered ONLY after the property is actually approved/published.
+
+Do not notify users about:
+
+Draft
+Pending Review
+Rejected
+
+properties.
+
+Same rule applies to projects.
+
+⸻
+
+49. ANNOUNCEMENT SCHEDULING
+
+Scheduled announcements should be handled by backend/server-side scheduling.
+
+Do not rely on the user’s mobile app being open.
+
+If the existing architecture supports scheduled jobs/cron, integrate with it.
+
+⸻
+
+50. TIMEZONE
+
+Store timestamps in UTC.
+
+Display times in the user’s local timezone.
+
+Use consistent formatting.
+
+⸻
+
+51. IMAGE HANDLING
+
+Notification images should use optimized thumbnails.
+
+Do not send huge property images as push notification payloads.
+
+Use URLs/references where supported.
+
+⸻
+
+52. NOTIFICATION PAYLOAD
+
+Keep push payloads lightweight.
+
+Example concept:
+
+type
+entityType
+entityId
+notificationId
+deepLink
+
+The app can then retrieve the latest entity information.
+
+Do not put the entire property record inside the push payload.
+
+⸻
+
+53. FAILED NOTIFICATIONS
+
+If push delivery fails:
+
+* Log the failure.
+* Deactivate invalid tokens where appropriate.
+* Keep the in-app notification.
+* Do not delete the notification.
+
+The in-app notification is the permanent source of notification history.
+
+⸻
+
+54. TESTING — PROPERTY
+
+Create/publish a test property.
+
+Verify:
+
+Admin approves property
+↓
+Property becomes published
+↓
+Eligible users receive notification
+↓
+Notification appears in Notification Center
+↓
+Push notification appears
+↓
+Unread badge increases
+↓
+User taps notification
+↓
+Property Detail opens
+↓
+Notification becomes read
+
+⸻
+
+55. TESTING — PROJECT
+
+Publish a test project.
+
+Verify:
+
+Project notification generated
+↓
+Targeted users receive it
+↓
+Notification Center updates
+↓
+Push notification works
+↓
+Tap opens Project Detail
+
+⸻
+
+56. TESTING — ANNOUNCEMENT
+
+Admin creates:
+
+“OG Landmark Announcement”
+
+Audience:
+
+All Users
+
+Send.
+
+Verify:
+
+Users receive in-app notification
++
+push notification
+
+Tap opens Announcement Detail.
+
+⸻
+
+57. TESTING — USER PREFERENCES
+
+Turn:
+
+New Property Notifications = OFF
+
+Publish matching property.
+
+User must NOT receive the property alert.
+
+Then turn it ON.
+
+Publish another matching property.
+
+User should receive it.
+
+⸻
+
+58. TESTING — MULTIPLE DEVICES
+
+Same user logged into:
+
+iPhone
+Android
+
+Verify notifications are handled correctly on both registered devices.
+
+⸻
+
+59. TESTING — APP STATES
+
+Test notification behavior when app is:
+
+1. Open/foreground
+2. Background
+3. Completely closed
+
+All three states must work correctly.
+
+⸻
+
+60. TESTING — DELETED PROPERTY
+
+Send notification for a property.
+
+Then remove/unpublish property.
+
+Tap old notification.
+
+The app should show a professional:
+
+“Property no longer available.”
+
+No crash.
+
+⸻
+
+61. TESTING — DUPLICATES
+
+Trigger the same publication event multiple times.
+
+Verify users do not receive duplicate notifications for the same event.
+
+⸻
+
+62. FINAL UI POLISH
+
+Notification system must match the existing OG Landmark design.
+
+Use:
+
+* Deep Navy
+* White
+* Off-White
+* Neutral Gray
+* Subtle Gold accents
+
+Use consistent:
+
+* Typography
+* Icons
+* Cards
+* Spacing
+* Border radius
+* Shadows
+* Buttons
+
+Do not create a visually separate notification system.
+
+⸻
+
+63. FINAL ACCEPTANCE CRITERIA
+
+The system is NOT complete until:
+
+✅ Professional Notification Center exists.
+
+✅ Notification bell exists where appropriate.
+
+✅ Unread badge works.
+
+✅ Mark as read works.
+
+✅ Mark all as read works.
+
+✅ Notification history works.
+
+✅ New Property notifications work.
+
+✅ New Project notifications work.
+
+✅ Announcements work.
+
+✅ Admin can create announcements.
+
+✅ Admin can target audiences.
+
+✅ Admin can schedule announcements.
+
+✅ Push notifications work on Android.
+
+✅ Push notifications work on iOS.
+
+✅ Foreground behavior works.
+
+✅ Background behavior works.
+
+✅ Closed-app notification behavior works.
+
+✅ Deep links work.
+
+✅ Property notification opens correct property.
+
+✅ Project notification opens correct project.
+
+✅ Announcement opens correct announcement.
+
+✅ Seller receives listing status notifications.
+
+✅ User notification preferences work.
+
+✅ Duplicate notifications are prevented.
+
+✅ Notification permissions are handled professionally.
+
+✅ Push tokens are managed correctly.
+
+✅ Invalid tokens are handled.
+
+✅ Notification security is implemented.
+
+✅ Admin analytics/history works where supported.
+
+✅ Existing OG Landmark functionality remains intact.
+
+⸻
+
+64. FINAL IMPLEMENTATION REQUIREMENT
+
+DO NOT simply create a notification UI.
+
+Implement the COMPLETE END-TO-END SYSTEM:
+
+ADMIN
+↓
+EVENT
+↓
+AUDIENCE TARGETING
+↓
+USER PREFERENCES
+↓
+DATABASE NOTIFICATION
+↓
+PUSH NOTIFICATION
+↓
+IN-APP NOTIFICATION CENTER
+↓
+UNREAD BADGE
+↓
+DEEP LINK
+↓
+TARGET SCREEN
+↓
+READ STATE
+↓
+NOTIFICATION HISTORY
+
+After implementation provide a concise technical report containing:
+
+1. Database changes
+2. Backend/API changes
+3. Push notification implementation
+4. Android configuration
+5. iOS configuration
+6. Notification Center implementation
+7. Admin announcement system
+8. Targeting system
+9. Deep-link implementation
+10. Testing performed
+11. Any external configuration still required
+
+MOST IMPORTANT:
+
+ACTUALLY IMPLEMENT THE SYSTEM IN THE EXISTING OG LANDMARK APP.
+
+Do not only provide recommendations or sample code.

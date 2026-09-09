@@ -932,6 +932,17 @@ tr:hover td{background:#f8fafc}
       <div class="form-group"><label>Full Name *</label><input id="mobile-agent-name" type="text" placeholder="e.g. Ahmed Property Consultants"/></div>
       <div class="form-group"><label>Agency / Business</label><input id="mobile-agent-agency" type="text" placeholder="e.g. Ahmed Real Estate"/></div>
       <div class="form-group"><label>Phone</label><input id="mobile-agent-phone" type="tel" placeholder="03001234567"/></div>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;margin:14px 0;font-size:12px;color:#1e40af">
+        <strong>Mobile App Login:</strong> Set the email and password the agent will use to sign in to the Agent dashboard.
+      </div>
+      <div class="form-group"><label>Email Address (Mobile Login) *</label><input id="mobile-agent-email" type="email" autocomplete="off" placeholder="agent@oglandmark.com"/></div>
+      <div class="form-group"><label>Password <span id="mobile-agent-password-required">*</span></label>
+        <div style="position:relative">
+          <input id="mobile-agent-password" type="password" autocomplete="new-password" placeholder="Min 8 characters"/>
+          <button type="button" onclick="togglePw('mobile-agent-password')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px">Show</button>
+        </div>
+        <small id="mobile-agent-password-help" style="display:block;color:var(--muted);font-size:11px;margin-top:4px"></small>
+      </div>
       <div class="form-group"><label>Areas Served <small style="color:var(--muted)">(comma separated)</small></label><input id="mobile-agent-areas" type="text" placeholder="Okara City, Depalpur"/></div>
       <div class="form-group"><label>Specialties <small style="color:var(--muted)">(comma separated)</small></label><input id="mobile-agent-specialties" type="text" placeholder="Residential, Plots"/></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -2007,6 +2018,14 @@ function fillMobileAgentModal(a){
   document.getElementById('mobile-agent-name').value=a?.displayName||a?.name||'';
   document.getElementById('mobile-agent-agency').value=a?.agency||'';
   document.getElementById('mobile-agent-phone').value=a?.phone||'';
+  document.getElementById('mobile-agent-email').value=a?.loginEmail||'';
+  document.getElementById('mobile-agent-password').value='';
+  document.getElementById('mobile-agent-email').required=!a;
+  document.getElementById('mobile-agent-password').required=!a;
+  document.getElementById('mobile-agent-password-required').style.display=a?'none':'inline';
+  document.getElementById('mobile-agent-password-help').textContent=a
+    ? 'Leave blank to keep the current password unchanged.'
+    : 'Use at least 8 characters with a letter and a number.';
   document.getElementById('mobile-agent-areas').value=(a?.areas||[]).join(', ');
   document.getElementById('mobile-agent-specialties').value=(a?.specialties||[]).join(', ');
   document.getElementById('mobile-agent-years').value=a?.years??'';
@@ -2030,6 +2049,8 @@ async function saveMobileAgent(){
     name:document.getElementById('mobile-agent-name').value.trim(),
     agency:document.getElementById('mobile-agent-agency').value.trim(),
     phone:document.getElementById('mobile-agent-phone').value.trim(),
+    email:document.getElementById('mobile-agent-email').value.trim(),
+    password:document.getElementById('mobile-agent-password').value,
     areas:document.getElementById('mobile-agent-areas').value.split(',').map(v=>v.trim()).filter(Boolean),
     specialties:document.getElementById('mobile-agent-specialties').value.split(',').map(v=>v.trim()).filter(Boolean),
     years:Number(document.getElementById('mobile-agent-years').value)||0,
@@ -2042,6 +2063,8 @@ async function saveMobileAgent(){
     visible:document.getElementById('mobile-agent-visible').checked,
   };
   if(!body.name){ showToast('Agent name is required','error'); return; }
+  if(!id && (!body.email||!body.password)){ showToast('Email and password are required for mobile login','error'); return; }
+  if(body.password && body.password.length<8){ showToast('Password must be at least 8 characters','error'); return; }
   try{
     await api(id?'PUT':'POST',id?`/api/admin/mobile-agents/${id}`:'/api/admin/mobile-agents',body);
     closeMobileAgentModal(); await loadAll(); showToast(id?'Mobile agent updated':'Mobile agent added','success');

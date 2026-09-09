@@ -564,6 +564,7 @@ function safeMobileAgent(agent, includePrivate = false) {
     ...safe,
     displayName: safe.displayName || safe.name || '',
     profilePhoto: safe.photo || safe.profilePhoto || null,
+    ...(agent.role === 'Agent' && agent.email ? { email: agent.email } : {}),
     ...(includePrivate ? {
       loginEmail: agent.email || '',
       authUserId: agent.authUserId || null,
@@ -1783,7 +1784,7 @@ app.put('/api/admin/mobile-agents/:id', requireAdmin, async (req, res) => {
       const passwordError = passwordValidationError(password);
       if (passwordError) return res.status(400).json({ error: passwordError });
     }
-    const linkedUser = data.users.find(user =>
+    let linkedUser = data.users.find(user =>
       (agent.authUserId && Number(user.id) === Number(agent.authUserId))
       || (agent.email && normalizeEmail(user.email) === normalizeEmail(agent.email) && user.role === 'Agent')
     );
@@ -1809,6 +1810,24 @@ app.put('/api/admin/mobile-agents/:id', requireAdmin, async (req, res) => {
     if (body.status !== undefined) agent.status = body.status;
     if (body.approvalStatus !== undefined) agent.approvalStatus = body.approvalStatus;
     if (email !== undefined) agent.email = email;
+    if (!linkedUser && (email || (password !== undefined && password !== ''))) {
+      const authUserId = nextId(data);
+      linkedUser = {
+        id: authUserId,
+        name: agent.name,
+        username: uniqueUsername(data.users, null, email),
+        email,
+        phone: agent.phone,
+        role: 'Agent',
+        status: agent.status === 'Suspended' ? 'Suspended' : 'Active',
+        approvalStatus: agent.approvalStatus,
+        password: hashPassword(password),
+        joinedDate: new Date().toISOString().split('T')[0],
+        createdByAdmin: true,
+      };
+      data.users.push(linkedUser);
+      agent.authUserId = authUserId;
+    }
     if (linkedUser) {
       linkedUser.name = agent.name;
       linkedUser.phone = agent.phone;
@@ -1835,7 +1854,6 @@ app.patch('/api/admin/mobile-agents/:id/status', requireAdmin, async (req, res) 
     if (!agent) return res.status(404).json({ error: 'Mobile agent not found' });
     agent.status = req.body.status || (agent.status === 'Active' ? 'Suspended' : 'Active');
     agent.updatedAt = new Date().toISOString();
-    await writeData(data);
     const linkedUser = data.users.find(user => Number(user.id) === Number(agent.authUserId));
     if (linkedUser) linkedUser.status = agent.status === 'Suspended' ? 'Suspended' : 'Active';
     await writeData(data);
@@ -1851,7 +1869,6 @@ app.patch('/api/admin/mobile-agents/:id/approval', requireAdmin, async (req, res
     agent.approvalStatus = req.body.approvalStatus || 'Approved';
     agent.status = agent.approvalStatus === 'Rejected' ? 'Suspended' : 'Active';
     agent.updatedAt = new Date().toISOString();
-    await writeData(data);
     const linkedUser = data.users.find(user => Number(user.id) === Number(agent.authUserId));
     if (linkedUser) {
       linkedUser.approvalStatus = agent.approvalStatus;
@@ -1865,9 +1882,13 @@ app.patch('/api/admin/mobile-agents/:id/approval', requireAdmin, async (req, res
 app.delete('/api/admin/mobile-agents/:id', requireAdmin, async (req, res) => {
   try {
     const data = await readData();
+    const removed = (data.mobileAgents || []).find(item => String(item.id) === String(req.params.id));
     const before = (data.mobileAgents || []).length;
     data.mobileAgents = (data.mobileAgents || []).filter(item => String(item.id) !== String(req.params.id));
     if (data.mobileAgents.length === before) return res.status(404).json({ error: 'Mobile agent not found' });
+    if (removed?.authUserId) {
+      data.users = data.users.filter(user => Number(user.id) !== Number(removed.authUserId));
+    }
     await writeData(data);
     res.json({ success: true });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }

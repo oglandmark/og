@@ -89,6 +89,24 @@ export function InteractiveMap({
     }
   }, [pinLat, pinLng]);
 
+  // Keep the Android WebView map centered on a newly selected city/locality
+  // until the user has an exact pin. The picker resolves locality coordinates
+  // asynchronously, so the initial pin coordinate can otherwise leave the
+  // camera at the old default center.
+  useEffect(() => {
+    if (hasValidCoordinates(pinLat, pinLng) || userCoordinate || !region) return;
+    setPinCoordinate({
+      latitude: region.latitude,
+      longitude: region.longitude,
+    });
+  }, [
+    region?.latitude,
+    region?.longitude,
+    pinLat,
+    pinLng,
+    userCoordinate,
+  ]);
+
   const handleMapPress = useCallback((latitude: number, longitude: number) => {
     if (Date.now() < ignoreMapPressUntil.current) return;
     const coordinate = { latitude, longitude };

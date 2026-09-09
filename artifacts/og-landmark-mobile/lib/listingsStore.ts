@@ -4,6 +4,7 @@
 import {
   createProperty,
   updateProperty,
+  updatePropertyListingStatus,
   deleteProperty,
   getMyProperties,
   resubmitProperty,
@@ -115,6 +116,11 @@ function mapApiPropToListing(p: Awaited<ReturnType<typeof getMyProperties>>[numb
     bathrooms:    p.bathrooms ?? 0,
     postedAt:     p.createdAt ?? new Date().toISOString(),
     listingStatus: (
+      p.listingStatus === 'Active'    ? 'Active'  :
+      p.listingStatus === 'Draft'     ? 'Draft'   :
+      p.listingStatus === 'Paused'    ? 'Paused'  :
+      p.listingStatus === 'Sold'      ? 'Sold'    :
+      p.listingStatus === 'Rented'    ? 'Rented'  :
       p.approvalStatus === 'Active'   ? 'Active'  :
       p.approvalStatus === 'Draft'    ? 'Draft'   :
       p.approvalStatus === 'Rejected' ? 'Paused'  : 'Pending'
@@ -195,7 +201,7 @@ export async function updateListingStatus(
 ): Promise<UserListing[]> {
   const listing = (await getUserListings()).find((item) => item.id === id);
   if (!listing?.apiId) throw new Error('Listing is not available on the server.');
-  await updateProperty(listing.apiId, { status: listingStatus });
+  await updatePropertyListingStatus(listing.apiId, listingStatus);
   return getUserListings();
 }
 

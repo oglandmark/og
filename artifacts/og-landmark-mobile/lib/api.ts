@@ -313,6 +313,7 @@ export type ApiProperty = {
   type: string;
   status: string;
   approvalStatus?: string;
+  listingStatus?: string;
   price: number;
   area: number;
   areaUnit: string;
@@ -598,6 +599,7 @@ export type CreatePropertyPayload = {
   title: string;
   type: string;
   status: string;
+  listingStatus?: 'Active' | 'Pending' | 'Draft' | 'Paused' | 'Sold' | 'Rented';
   price: number;
   area: number;
   areaUnit?: string;
@@ -640,6 +642,16 @@ export async function updateProperty(id: number, payload: Partial<CreateProperty
   return apiFetch<ApiProperty>(`/api/properties/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
+  });
+}
+
+export async function updatePropertyListingStatus(
+  id: number,
+  listingStatus: NonNullable<CreatePropertyPayload['listingStatus']>,
+): Promise<ApiProperty> {
+  return apiFetch<ApiProperty>(`/api/properties/${id}/listing-status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ listingStatus }),
   });
 }
 

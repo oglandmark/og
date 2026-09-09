@@ -991,6 +991,10 @@ app.get('/api/properties', async (req, res) => {
     }
 
     // Legacy + new filters
+    // A listing lifecycle status is separate from the sale/rent purpose in
+    // `status`. Keep paused/sold/rented listings out of the public catalogue
+    // while preserving them in the owner's dashboard.
+    props = props.filter(p => !p.listingStatus || p.listingStatus === 'Active');
     if (type) {
       const types = type.split(',').map(t => t.trim());
       props = props.filter(p => types.includes(p.type));
@@ -1206,6 +1210,7 @@ app.post('/api/properties', requireAuth, async (req, res) => {
       // must never be able to create a listing under somebody else's account.
       ...(req.currentUser.role === 'Agent' ? { agentId: req.currentUser.id } : { sellerId: req.currentUser.id }),
       approvalStatus: isDraft ? 'Draft' : 'Pending',
+      listingStatus: isDraft ? 'Draft' : 'Pending',
       submissionState: isDraft ? 'draft' : 'submitted',
       featured: false,
       reviewHistory: [],
@@ -1237,9 +1242,9 @@ app.put('/api/properties/:id', requireAuth, async (req, res) => {
     const data = await readData();
     const idx = data.properties.findIndex(p => p.id === Number(req.params.id));
     if (idx === -1) return res.status(404).json({ error: 'Not found' });
-    // Only the owning seller or an admin may edit
+    // Only the owning seller/agent or an admin may edit
     const prop = data.properties[idx];
-    if (req.auth.role !== 'Admin' && prop.sellerId !== req.auth.userId) {
+    if (req.currentUser.role !== 'Admin' && prop.sellerId !== req.currentUser.id && prop.agentId !== req.currentUser.id) {
       return res.status(403).json({ error: 'You are not authorised to edit this property.' });
     }
     const previousStatus = prop.approvalStatus || 'Pending';
@@ -1252,6 +1257,9 @@ app.put('/api/properties/:id', requireAuth, async (req, res) => {
     }
     const nextStatus = isDraft ? 'Draft' : (req.currentUser.role === 'Admin' ? previousStatus : 'Pending');
     merged.approvalStatus = nextStatus;
+    merged.listingStatus = isDraft
+      ? 'Draft'
+      : (req.currentUser.role === 'Admin' ? (prop.listingStatus || (previousStatus === 'Active' ? 'Active' : previousStatus)) : 'Pending');
     merged.submissionState = isDraft ? 'draft' : 'submitted';
     merged.updatedAt = new Date().toISOString();
     merged.reviewHistory = Array.isArray(prop.reviewHistory) ? prop.reviewHistory : [];
@@ -1279,13 +1287,50 @@ app.delete('/api/properties/:id', requireAuth, async (req, res) => {
     const data = await readData();
     const prop = data.properties.find(p => p.id === Number(req.params.id));
     if (!prop) return res.status(404).json({ error: 'Not found' });
-    // Only the owning seller or an admin may delete
-    if (req.auth.role !== 'Admin' && prop.sellerId !== req.auth.userId) {
+    // Only the owning seller/agent or an admin may delete
+    if (req.currentUser.role !== 'Admin' && prop.sellerId !== req.currentUser.id && prop.agentId !== req.currentUser.id) {
       return res.status(403).json({ error: 'You are not authorised to delete this property.' });
     }
     data.properties = data.properties.filter(p => p.id !== Number(req.params.id));
     await writeData(data);
     res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Agent/seller lifecycle actions must not go through the property purpose
+// field (`For Sale` / `For Rent`). Keep these states independently persisted.
+app.patch('/api/properties/:id/listing-status', requireAuth, async (req, res) => {
+  try {
+    const data = await readData();
+    const prop = data.properties.find(p => p.id === Number(req.params.id));
+    if (!prop) return res.status(404).json({ error: 'Property not found' });
+    const nextStatus = String(req.body.listingStatus || '').trim();
+    const allowed = ['Active', 'Paused', 'Sold', 'Rented'];
+    if (!allowed.includes(nextStatus)) return res.status(400).json({ error: 'Invalid listing status.' });
+    const isOwner = prop.sellerId === req.currentUser.id || prop.agentId === req.currentUser.id;
+    if (req.currentUser.role !== 'Admin' && !isOwner) {
+      return res.status(403).json({ error: 'You are not authorised to update this property.' });
+    }
+    if (nextStatus === 'Active' && prop.approvalStatus !== 'Active') {
+      return res.status(409).json({ error: 'Only an approved listing can be activated.' });
+    }
+    const previousStatus = prop.listingStatus || (prop.approvalStatus === 'Active' ? 'Active' : prop.approvalStatus || 'Pending');
+    prop.listingStatus = nextStatus;
+    prop.updatedAt = new Date().toISOString();
+    prop.reviewHistory ||= [];
+    prop.reviewHistory.push({
+      action: 'listing_status_changed',
+      by: req.currentUser.id,
+      byName: req.currentUser.name,
+      fromStatus: previousStatus,
+      toStatus: nextStatus,
+      createdAt: prop.updatedAt,
+    });
+    await writeData(data);
+    res.json(prop);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -1383,6 +1428,7 @@ app.patch('/api/properties/:id/approve', requireAdmin, async (req, res) => {
     if (validationErrors.length) return res.status(422).json({ error: 'Property cannot go live until required data is complete.', code: 'LISTING_VALIDATION_FAILED', fields: validationErrors });
     const previousStatus = prop.approvalStatus || 'Pending';
     prop.approvalStatus = 'Active';
+    prop.listingStatus = 'Active';
     prop.submissionState = 'published';
     prop.rejectionReason = null;
     prop.reviewedAt = new Date().toISOString();
@@ -1407,6 +1453,7 @@ app.patch('/api/properties/:id/reject', requireAdmin, async (req, res) => {
     if (!reason) return res.status(400).json({ error: 'A rejection reason is required.' });
     const previousStatus = prop.approvalStatus || 'Pending';
     prop.approvalStatus = 'Rejected';
+    prop.listingStatus = 'Paused';
     prop.submissionState = 'rejected';
     prop.rejectionReason = reason;
     prop.reviewedAt = new Date().toISOString();
@@ -1431,6 +1478,7 @@ app.patch('/api/properties/:id/request-changes', requireAdmin, async (req, res) 
     if (!reason) return res.status(400).json({ error: 'Please describe the changes required.' });
     const previousStatus = prop.approvalStatus || 'Pending';
     prop.approvalStatus = 'Changes Requested';
+    prop.listingStatus = 'Paused';
     prop.submissionState = 'changes_requested';
     prop.changeRequest = reason;
     prop.reviewedAt = new Date().toISOString();
@@ -1460,6 +1508,7 @@ app.patch('/api/properties/:id/resubmit', requireAuth, async (req, res) => {
     if (validationErrors.length) return res.status(422).json({ error: 'Listing needs correction before resubmission.', code: 'LISTING_VALIDATION_FAILED', fields: validationErrors });
     const previousStatus = prop.approvalStatus || 'Rejected';
     prop.approvalStatus = 'Pending';
+    prop.listingStatus = 'Pending';
     prop.submissionState = 'submitted';
     prop.changeRequest = null;
     prop.rejectionReason = null;

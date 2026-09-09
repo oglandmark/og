@@ -36,6 +36,7 @@ export function buildCreatePropertyPayload(
     title: listing.title,
     type: listing.type,
     status: listing.status,
+    listingStatus: 'Pending',
     price: listing.price,
     area: listing.area,
     areaUnit: listing.areaUnit,

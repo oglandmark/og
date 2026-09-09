@@ -33,37 +33,37 @@ function migrateLead(l: Partial<Lead> & { id: number; name: string }): Lead {
 }
 
 export async function getLeads(): Promise<Lead[]> {
-  return (await apiRequest<Lead[]>('/api/agent/leads')).map(migrateLead);
+  return (await apiRequest<Lead[]>('/api/agent-leads')).map(migrateLead);
 }
 
 export async function saveLeads(leads: Lead[]): Promise<void> {
-  await Promise.all(leads.map((lead) => apiRequest(`/api/agent/leads/${lead.id}`, {
+  await Promise.all(leads.map((lead) => apiRequest(`/api/agent-leads/${lead.id}`, {
     method: 'PUT', body: JSON.stringify(lead),
   })));
 }
 
 export async function updateLeadStatus(id: number, status: LeadStatus): Promise<Lead[]> {
-  await apiRequest(`/api/agent/leads/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+  await apiRequest(`/api/agent-leads/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
   return getLeads();
 }
 
 export async function updateLeadNotes(id: number, notes: string): Promise<Lead[]> {
-  await apiRequest(`/api/agent/leads/${id}`, { method: 'PATCH', body: JSON.stringify({ notes }) });
+  await apiRequest(`/api/agent-leads/${id}`, { method: 'PATCH', body: JSON.stringify({ notes }) });
   return getLeads();
 }
 
 export async function setLeadFollowUp(id: number, followUpDate: string): Promise<Lead[]> {
-  await apiRequest(`/api/agent/leads/${id}`, { method: 'PATCH', body: JSON.stringify({ followUpDate }) });
+  await apiRequest(`/api/agent-leads/${id}`, { method: 'PATCH', body: JSON.stringify({ followUpDate }) });
   return getLeads();
 }
 
 export async function addLead(lead: Lead): Promise<Lead[]> {
-  await apiRequest('/api/agent/leads', { method: 'POST', body: JSON.stringify(lead) });
+  await apiRequest('/api/agent-leads', { method: 'POST', body: JSON.stringify(lead) });
   return getLeads();
 }
 
 export async function deleteLead(id: number): Promise<Lead[]> {
-  await apiRequest(`/api/agent/leads/${id}`, { method: 'DELETE' });
+  await apiRequest(`/api/agent-leads/${id}`, { method: 'DELETE' });
   return getLeads();
 }
 

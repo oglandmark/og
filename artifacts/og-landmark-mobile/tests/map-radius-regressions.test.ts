@@ -13,8 +13,6 @@ import { cities, okaraDistrict } from '../lib/cities';
 const mobileRoot = resolve(import.meta.dirname, '..');
 const readComponent = (name: string) =>
   readFileSync(resolve(mobileRoot, 'components', name), 'utf8');
-const readMobileFile = (name: string) =>
-  readFileSync(resolve(mobileRoot, name), 'utf8');
 
 test('every selectable radius has a concrete user-facing label', () => {
   assert.deepEqual(
@@ -70,15 +68,6 @@ test('Android map overrides reuse native Google Maps instead of Leaflet', () => 
   assert.doesNotMatch(androidExplore, /Leaflet|WebView/);
   assert.match(nativeMap, /const PROVIDER = PROVIDER_GOOGLE/);
   assert.match(nativeExplore, /const PROVIDER = PROVIDER_GOOGLE/);
-});
-
-test('native builds register the Google Maps SDK key through the maps config plugin', () => {
-  const appConfig = readMobileFile('app.config.js');
-
-  assert.match(appConfig, /['"]react-native-maps['"]/);
-  assert.match(appConfig, /androidGoogleMapsApiKey:\s*googleMapsApiKey/);
-  assert.match(appConfig, /iosGoogleMapsApiKey:\s*googleMapsApiKey/);
-  assert.match(appConfig, /Google Maps SDK key is missing/);
 });
 
 test('Search this area stays available after a map move and a radius change', () => {

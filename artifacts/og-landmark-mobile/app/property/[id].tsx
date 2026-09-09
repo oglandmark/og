@@ -517,12 +517,29 @@ function AppointmentModal({
               </View>
 
               {/* Submit */}
-              <Pressable onPress={handleBook} disabled={booking}
-                style={[iq.sendBtn, { backgroundColor: colors.action, opacity: booking ? 0.72 : 1 }]}>
-                <Feather name="calendar" size={15} color={colors.actionForeground} />
-                <Text style={[iq.sendBtnText, { color: colors.actionForeground }]}>
-                  {booking ? 'Booking…' : 'Confirm Booking'}
+              <Pressable
+                onPress={handleBook}
+                disabled={booking}
+                accessibilityRole="button"
+                accessibilityLabel={booking ? 'Booking site visit' : 'Confirm site visit'}
+                style={({ pressed }) => [
+                  iq.sendBtn,
+                  {
+                    backgroundColor: colors.action,
+                    opacity: booking ? 0.72 : pressed ? 0.88 : 1,
+                    shadowColor: colors.actionDeep,
+                    shadowOpacity: 0.2,
+                    shadowRadius: 10,
+                    shadowOffset: { width: 0, height: 4 },
+                    elevation: 4,
+                  },
+                ]}
+              >
+                <Feather name="calendar" size={16} color="#ffffff" />
+                <Text style={[iq.sendBtnText, { color: '#ffffff' }]}>
+                  {booking ? 'Booking…' : 'Confirm Site Visit'}
                 </Text>
+                {!booking ? <Feather name="arrow-right" size={16} color="#ffffff" /> : null}
               </Pressable>
             </>
           )}
@@ -563,8 +580,8 @@ const iq = StyleSheet.create({
   actions:         { flexDirection: 'row', gap: 10, marginBottom: 4, marginTop: 4 },
   altBtn:          { flex: 0.7, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 14, paddingVertical: 14 },
   altBtnText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
-  sendBtn:         { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 14 },
-  sendBtnText:     { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  sendBtn:         { flex: 1, minHeight: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 16, paddingHorizontal: 18, paddingVertical: 14 },
+  sendBtnText:     { fontFamily: 'Inter_700Bold', fontSize: 14, lineHeight: 20, letterSpacing: 0.1 },
   // success
   successWrap:     { alignItems: 'center', paddingVertical: 24, gap: 10, paddingHorizontal: 10 },
   successIcon:     { width: 72, height: 72, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },

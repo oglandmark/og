@@ -718,6 +718,7 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
         latitude={form.latitude} longitude={form.longitude}
         address={form.fullAddress}
         city={form.city}
+        locality={form.locality}
         onChange={(lat, lng, addr) => update({ latitude: lat, longitude: lng, fullAddress: addr ?? form.fullAddress })}
         onLocationChange={(loc) => update({
           latitude: loc.latitude,

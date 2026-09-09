@@ -238,6 +238,21 @@ function InteractiveMapWithGoogleMaps({
     );
   }, [pinLat, pinLng]);
 
+  // Recenter the native map when the form changes city/locality before an
+  // exact pin exists. Without this, react-native-maps keeps its initial camera
+  // at the old city even though the parent has resolved a new region.
+  useEffect(() => {
+    if (pinLat != null || pinLng != null || !region) return;
+    const nextRegion: Region = {
+      latitude: region.latitude,
+      longitude: region.longitude,
+      latitudeDelta: region.latitudeDelta ?? 0.025,
+      longitudeDelta: region.longitudeDelta ?? 0.025,
+    };
+    setPinCoord({ latitude: nextRegion.latitude, longitude: nextRegion.longitude });
+    mapRef.current?.animateToRegion(nextRegion, 450);
+  }, [region?.latitude, region?.longitude, region?.latitudeDelta, region?.longitudeDelta, pinLat, pinLng]);
+
   const goToMyLocation = useCallback(async () => {
     if (locating) return;
     setLocating(true);

@@ -12,3 +12,4 @@
 - [Android video compositing](android-video-compositing.md) — stacked Expo video surfaces can blank sibling content; use texture views and mount only the active banner video.
 - [GitHub connector write fallback](github-connector-write-fallback.md) — selected source-file writes may hit Cloudflare 403; publish through credential-injected Git data APIs.
 - [Android reveal lifecycle](android-reveal-lifecycle.md) — nested tab focus callbacks can miss; animated content must start visible to avoid blank Home sections.
+- [Location picker camera sync](location-picker-camera.md) — city/locality changes must drive the native map camera, while GPS recovery must persist the selected pin.

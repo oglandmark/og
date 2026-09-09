@@ -27,6 +27,7 @@ import { InteractiveMap, StaticMap } from '@/components/MapViewComponent';
 import {
   fetchAutocompleteSuggestions,
   fetchPlaceDetails,
+  geocodeLocality,
   reverseGeocode,
   type AutocompleteSuggestion,
 } from '@/lib/geocodingService';
@@ -187,6 +188,7 @@ interface LocationPickerProps {
   longitude?: number | null;
   address?: string;
   city?: string;
+  locality?: string;
   onChange: (lat: number, lng: number, address?: string) => void;
   onLocationChange?: (location: LocationData) => void;
   onClear: () => void;
@@ -198,7 +200,7 @@ interface LocationPickerProps {
 }
 
 export function LocationPicker({
-  latitude, longitude, address, city,
+  latitude, longitude, address, city, locality,
   onChange, onLocationChange, onClear,
   colors, accentColor, requireConfirm = false,
   onConfirmationChange, errorMessage,
@@ -218,6 +220,8 @@ export function LocationPicker({
   const [addressLoading, setAddressLoading] = useState(false);
   const [accuracyLevel,  setAccuracyLevel]  = useState<AccuracyLevel>('unknown');
   const [accuracyMetres, setAccuracyMetres] = useState<number | null>(null);
+  const [localityLoading, setLocalityLoading] = useState(false);
+  const localityRequestRef = useRef(0);
 
   const [showManual, setShowManual] = useState(false);
   const [latInput,   setLatInput]   = useState(latitude  != null ? String(latitude)  : '');
@@ -244,11 +248,42 @@ export function LocationPicker({
     }
   }, [hasPin, latitude, longitude]);
 
-  // When the listing city changes before a pin is selected, move the map to
-  // that city instead of leaving the viewport at the old Okara default.
+  // When the listing city or area changes before an exact pin is selected,
+  // move the map to the selected place instead of leaving the old city center.
+  // The locality lookup uses the same Places service as address search, so a
+  // selected area gets a real map position rather than a visual-only chip.
   useEffect(() => {
-    if (!hasPin) setRegion(getCityRegion(city));
-  }, [city, hasPin]);
+    if (hasPin) return;
+
+    const requestId = ++localityRequestRef.current;
+    let cancelled = false;
+    setRegion(getCityRegion(city));
+    setLocalityLoading(Boolean(locality?.trim()));
+
+    if (!locality?.trim() || !city?.trim()) {
+      setLocalityLoading(false);
+      return () => { cancelled = true; };
+    }
+
+    (async () => {
+      const details = await geocodeLocality(locality, city);
+      if (cancelled || localityRequestRef.current !== requestId || hasPin) return;
+
+      if (details) {
+        setRegion({
+          latitude: details.latitude,
+          longitude: details.longitude,
+          latitudeDelta: 0.025,
+          longitudeDelta: 0.025,
+        });
+      }
+      setLocalityLoading(false);
+    })().catch(() => {
+      if (!cancelled && localityRequestRef.current === requestId) setLocalityLoading(false);
+    });
+
+    return () => { cancelled = true; };
+  }, [city, locality, hasPin]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -528,11 +563,10 @@ export function LocationPicker({
       {/* Map surface */}
       <View style={lp.mapWrap}>
         <InteractiveMap
-          // Native map implementations keep their own initial marker state.
-          // Use the selected city's region directly while no exact pin exists,
-          // so a city change cannot be masked by the previous map center.
-          key={`${city ?? 'default'}-${hasPin ? `${latitude}-${longitude}` : 'city'}`}
-          region={hasPin ? region : getCityRegion(city)}
+          // Keep the camera controlled by the resolved city/locality region
+          // until the user selects an exact pin.
+          key={`${city ?? 'default'}-${hasPin ? `${latitude}-${longitude}` : 'location'}`}
+          region={region}
           onRegionChange={setRegion}
           onPress={handleMapPress}
           pinLat={hasPin ? latitude! : undefined}
@@ -540,6 +574,14 @@ export function LocationPicker({
           onDragEnd={handleDragEnd}
           showMyLocation={false}
         />
+        {localityLoading && !hasPin && (
+          <View pointerEvents="none" style={lp.localityLoading}>
+            <ActivityIndicator size="small" color={accent} />
+            <Text style={[lp.localityLoadingText, { color: colors.foreground }]}>
+              Locating {locality}…
+            </Text>
+          </View>
+        )}
         {Platform.OS !== 'web' && !hasPin && (
           <View pointerEvents="none" style={lp.tapHint}>
             <View style={lp.tapHintPill}>
@@ -689,6 +731,15 @@ const lp = StyleSheet.create({
   tapHint:     { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 12 },
   tapHintPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8 },
   tapHintText: { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#ffffff' },
+  localityLoading: {
+    position: 'absolute', top: 10, left: 10, right: 10,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7,
+    alignSelf: 'center', paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.94)',
+    shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 }, elevation: 3,
+  },
+  localityLoadingText: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
 
   badge:      { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
   badgeCoord: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },

@@ -152,13 +152,41 @@ export async function getCurrentPosition(): Promise<GPSResult | null> {
       return null;
     }
 
-    // Try high accuracy first (may be slower)
-    const pos = await ExpoLocation.getCurrentPositionAsync({
-      accuracy: ExpoLocation.Accuracy.High,
-    }).catch(() =>
-      // Fallback to balanced if high accuracy fails/times out
-      ExpoLocation.getCurrentPositionAsync({ accuracy: ExpoLocation.Accuracy.Balanced }),
-    );
+    // A native location request can remain pending when the user has just
+    // enabled Location Services. Bound each attempt so the form never stays
+    // stuck in "Locating…" and can still save a last-known coordinate.
+    const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<T | null> => {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        return await Promise.race([
+          promise,
+          new Promise<null>((resolve) => {
+            timer = setTimeout(() => resolve(null), timeoutMs);
+          }),
+        ]);
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+    };
+
+    const pos =
+      await withTimeout(
+        ExpoLocation.getCurrentPositionAsync({ accuracy: ExpoLocation.Accuracy.High }),
+        12_000,
+      ) ??
+      await withTimeout(
+        ExpoLocation.getCurrentPositionAsync({ accuracy: ExpoLocation.Accuracy.Balanced }),
+        10_000,
+      ) ??
+      await ExpoLocation.getLastKnownPositionAsync().catch(() => null);
+
+    if (!pos) {
+      Alert.alert(
+        'Location Unavailable',
+        'GPS could not return a position yet. Keep Location Services on and try Use My Location again.',
+      );
+      return null;
+    }
 
     const acc = pos.coords.accuracy ?? 999;
     return {

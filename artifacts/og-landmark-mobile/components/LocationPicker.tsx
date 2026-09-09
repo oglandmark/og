@@ -219,6 +219,7 @@ export function LocationPicker({
 
   const [gpsLoading,     setGpsLoading]     = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
+  const [locationError, setLocationError] = useState('');
   const [accuracyLevel,  setAccuracyLevel]  = useState<AccuracyLevel>('unknown');
   const [accuracyMetres, setAccuracyMetres] = useState<number | null>(null);
   const [localityLoading, setLocalityLoading] = useState(false);
@@ -301,6 +302,7 @@ export function LocationPicker({
     setShowManual(false);
     setSuggestions([]);
     setShowSuggestions(false);
+    setLocationError('');
     if (loc.fullAddress) setQuery(loc.fullAddress);
     setRegion({ latitude: lat, longitude: lng, latitudeDelta: 0.02, longitudeDelta: 0.02 });
   }, [onChange, onLocationChange, requireConfirm]);
@@ -328,16 +330,20 @@ export function LocationPicker({
     setShowSuggestions(false);
     setAcLoading(true);
 
-    const details = await fetchPlaceDetails(s.placeId, sessionRef.current);
-    // Reset session token after use
-    sessionRef.current = `s${Date.now()}`;
-    setAcLoading(false);
-
-    if (!details) {
-      Alert.alert('Error', 'Could not load place details. Please try again.');
-      return;
+    try {
+      const details = await fetchPlaceDetails(s.placeId, sessionRef.current);
+      // Reset session token after use
+      sessionRef.current = `s${Date.now()}`;
+      if (!details) {
+        setLocationError('We could not resolve that place. Try another result or drop the pin on the map.');
+        return;
+      }
+      applyLocation({ ...details, locationSource: 'search' });
+    } catch {
+      setLocationError('Location search is unavailable right now. You can still place the pin manually.');
+    } finally {
+      setAcLoading(false);
     }
-    applyLocation({ ...details, locationSource: 'search' });
   }, [applyLocation]);
 
   // ── GPS ───────────────────────────────────────────────────────────────────
@@ -398,6 +404,8 @@ export function LocationPicker({
           province: rev?.province, country: rev?.country, postalCode: rev?.postalCode,
           placeId: rev?.placeId, locationSource: 'map_tap',
         });
+      } catch {
+        setLocationError('We could not find the address for this pin. Check the pin and try again.');
       } finally {
         setAddressLoading(false);
       }
@@ -417,6 +425,8 @@ export function LocationPicker({
           province: rev?.province, country: rev?.country, postalCode: rev?.postalCode,
           placeId: rev?.placeId, locationSource: 'map_tap',
         });
+      } catch {
+        setLocationError('We could not update this address. Please try moving the pin again.');
       } finally {
         setAddressLoading(false);
       }
@@ -432,14 +442,21 @@ export function LocationPicker({
     const lng = parseFloat(lngInput.trim());
     if (isNaN(lat) || lat < -90  || lat > 90)  { setManualErr('Latitude must be between -90 and 90');    return; }
     if (isNaN(lng) || lng < -180 || lng > 180) { setManualErr('Longitude must be between -180 and 180'); return; }
-    const rev = await reverseGeocode(lat, lng);
-    applyLocation({
-      latitude: lat, longitude: lng,
-      fullAddress: rev?.fullAddress ?? '',
-      city: rev?.city, locality: rev?.locality, district: rev?.district,
-      locationSource: 'manual',
-    });
-    setShowManual(false);
+    setAddressLoading(true);
+    try {
+      const rev = await reverseGeocode(lat, lng);
+      applyLocation({
+        latitude: lat, longitude: lng,
+        fullAddress: rev?.fullAddress ?? '',
+        city: rev?.city, locality: rev?.locality, district: rev?.district,
+        locationSource: 'manual',
+      });
+      setShowManual(false);
+    } catch {
+      setLocationError('Coordinates were accepted, but the address could not be resolved. Please review the pin.');
+    } finally {
+      setAddressLoading(false);
+    }
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -579,6 +596,11 @@ export function LocationPicker({
           </View>
         )}
       </View>
+      {requireConfirm && (
+        <Text style={[lp.confirmHint, { color: colors.mutedForeground }]}>
+          Place the exact pin, review the address, then confirm the location before submitting.
+        </Text>
+      )}
 
       {/* Coordinate + address badge */}
       {hasPin && (
@@ -656,6 +678,12 @@ export function LocationPicker({
         </View>
       )}
       {errorMessage ? <Text style={lp.validationError}>{errorMessage}</Text> : null}
+      {locationError ? (
+        <View style={[lp.locationError, { backgroundColor: colors.destructive + '12', borderColor: colors.destructive + '30' }]}>
+          <Feather name="alert-circle" size={14} color={colors.destructive} />
+          <Text style={[lp.locationErrorText, { color: colors.destructive }]}>{locationError}</Text>
+        </View>
+      ) : null}
 
       {/* Manual coordinate entry */}
       {showManual && (
@@ -751,4 +779,7 @@ const lp = StyleSheet.create({
   manualErr:   { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#dc2626' },
   validationError: { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#dc2626' },
   confirmBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, paddingVertical: 11 },
+  confirmHint: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, marginTop: 4, marginBottom: 12 },
+  locationError: { flexDirection: 'row', alignItems: 'flex-start', gap: 7, borderWidth: 1, borderRadius: 11, padding: 10, marginTop: 9 },
+  locationErrorText: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17 },
 });

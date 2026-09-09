@@ -57,6 +57,17 @@ function upcomingDates(count = 7): { label: string; iso: string }[] {
   return result;
 }
 
+function formatVisitDate(iso: string): string {
+  const date = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleDateString('en-PK', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
 // ── Inquiry Modal (shown when buyer taps "Send Inquiry") ─────────────────────
 
 function InquiryModal({
@@ -426,7 +437,7 @@ function AppointmentModal({
               <Text style={[iq.successTitle, { color: colors.foreground }]}>Visit Booked!</Text>
               <Text style={[iq.successDesc, { color: colors.mutedForeground }]}>
                 Your {visitType.toLowerCase()} request for{'\n'}
-                <Text style={{ fontFamily: 'Inter_600SemiBold' }}>{selectedDate} at {selectedTime}</Text>
+                 <Text style={{ fontFamily: 'Inter_600SemiBold' }}>{formatVisitDate(selectedDate)} at {selectedTime}</Text>
                 {'\n'}has been submitted. The agent will confirm shortly.
               </Text>
               <View style={iq.successBtns}>

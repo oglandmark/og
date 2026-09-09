@@ -338,24 +338,34 @@ export default function DashboardScreen() {
   const [todayVisits, setTodayVisits]                 = useState(0);
   const [upcomingVisits, setUpcomingVisits]           = useState(0);
   const [recentLeads, setRecentLeads]                 = useState<Lead[]>([]);
+  const [dashboardLoading, setDashboardLoading]       = useState(false);
+  const [dashboardError, setDashboardError]           = useState('');
 
   useFocusEffect(
     useCallback(() => {
       if (!isAgent) return;
       void (async () => {
-        const [myListings, leads, visits] = await Promise.all([
-          getMyListings(user?.id ?? ''),
-          getLeads(),
-          getAgentVisits(user?.id ?? ''),
-        ]);
-        const lstats = calcListingStats(myListings);
-        setActiveListingsCount(lstats.active);
-        setTotalViews(lstats.totalViews);
-        setNewLeadsCount(leads.filter((l) => l.status === 'new').length);
-        setTotalLeadsCount(leads.length);
-        setTodayVisits(visits.filter(isTodayVisit).length);
-        setUpcomingVisits(visits.filter((v) => !isTodayVisit(v) && (v.status === 'Confirmed' || v.status === 'Requested')).length);
-        setRecentLeads(leads.slice(0, 4));
+        setDashboardLoading(true);
+        setDashboardError('');
+        try {
+          const [myListings, leads, visits] = await Promise.all([
+            getMyListings(user?.id ?? ''),
+            getLeads(),
+            getAgentVisits(user?.id ?? ''),
+          ]);
+          const lstats = calcListingStats(myListings);
+          setActiveListingsCount(lstats.active);
+          setTotalViews(lstats.totalViews);
+          setNewLeadsCount(leads.filter((l) => l.status === 'new').length);
+          setTotalLeadsCount(leads.length);
+          setTodayVisits(visits.filter(isTodayVisit).length);
+          setUpcomingVisits(visits.filter((v) => !isTodayVisit(v) && (v.status === 'Confirmed' || v.status === 'Requested')).length);
+          setRecentLeads(leads.slice(0, 4));
+        } catch {
+          setDashboardError('We could not refresh your portal data. Please try again.');
+        } finally {
+          setDashboardLoading(false);
+        }
       })();
     }, [isAgent, user?.id]),
   );
@@ -418,6 +428,13 @@ export default function DashboardScreen() {
         </View>
       </AnimatedReveal>
 
+      {dashboardError && (
+        <View style={[styles.verifyBanner, { backgroundColor: colors.destructive + '12', borderColor: colors.destructive + '30', marginHorizontal: 20, marginTop: 16 }]}>
+          <Feather name="wifi-off" size={18} color={colors.destructive} />
+          <Text style={[styles.verifyDesc, { color: colors.destructive, flex: 1 }]}>{dashboardError}</Text>
+        </View>
+      )}
+
       {isPending && (
         <AnimatedReveal delay={80}>
           <View style={[styles.verifyBanner, { backgroundColor: colors.accent, borderColor: colors.primary + '44', marginHorizontal: 20, marginTop: 16 }]}>
@@ -448,7 +465,7 @@ export default function DashboardScreen() {
                 <View style={[styles.statIconWrap, { backgroundColor: s.color + '18' }]}>
                   <Feather name={s.icon} size={18} color={s.color} />
                 </View>
-                <Text style={[styles.statValue, { color: colors.foreground }]}>{s.value}</Text>
+                <Text style={[styles.statValue, { color: colors.foreground }]}>{dashboardLoading ? '—' : s.value}</Text>
                 <Text style={[styles.statLabel2, { color: colors.mutedForeground, textAlign: rtl }]}>{s.label}</Text>
               </Pressable>
             </AnimatedReveal>

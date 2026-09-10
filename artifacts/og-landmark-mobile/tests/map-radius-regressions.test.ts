@@ -90,6 +90,18 @@ test('native maps expose loading, retry, and exact map-area bounds behavior', ()
   assert.match(native, /centerLat: currentRegion\.latitude/);
 });
 
+test('Expo Go map keeps its WebView mounted, supports touch gestures, and follows the map center', () => {
+  const fallback = readComponent('ExpoGoMapFallback.tsx');
+  const native = readComponent('ExploreMapView.native.tsx');
+  assert.match(fallback, /initialHtmlRef/);
+  assert.match(fallback, /window\.__updateMapState/);
+  assert.match(fallback, /scrollEnabled=\{false\}/);
+  assert.match(fallback, /touchZoom: interactive/);
+  assert.match(fallback, /areaCircle\.setLatLng\(map\.getCenter\(\)\)/);
+  assert.match(fallback, /areaCircle\.setRadius\(nextRadius\)/);
+  assert.match(native, /setAreaCenter\(\{ latitude: region\.latitude, longitude: region\.longitude \}\)/);
+});
+
 test('Okara district keeps city and tehsil identities separate', () => {
   assert.deepEqual([...cities], [
     'Okara',

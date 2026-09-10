@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
@@ -45,11 +45,12 @@ function buildMapHtml({
   return `<!doctype html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
     * { box-sizing: border-box; }
-    html, body, #map { width: 100%; height: 100%; margin: 0; background: #e8f0f7; }
+    html, body, #map { width: 100%; height: 100%; margin: 0; background: #e8f0f7; overflow: hidden; }
+    .leaflet-container { touch-action: none; }
     .leaflet-control-attribution { font-size: 8px; opacity: .72; }
     .pin, .user-pin {
       width: 22px; height: 22px; border-radius: 50%;
@@ -111,23 +112,51 @@ function buildMapHtml({
           iconAnchor: point.label ? [35, 15] : [11, 11]
         });
       }
-      points.forEach(function (point) {
-        if (point.latitude == null || point.longitude == null) return;
-        var marker = L.marker([point.latitude, point.longitude], {
-          icon: pointIcon(point), draggable: interactive && !point.label
-        }).addTo(map);
-        if (point.id != null) marker.on('click', function () { send('select', { id: point.id }); });
-        if (interactive) marker.on('dragend', function (event) {
-          var p = event.target.getLatLng();
-          send('drag', { latitude: p.lat, longitude: p.lng });
+      var markerLayer = L.layerGroup().addTo(map);
+      var areaCircle = null;
+      function renderPoints(nextPoints) {
+        markerLayer.clearLayers();
+        (nextPoints || []).forEach(function (point) {
+          if (point.latitude == null || point.longitude == null) return;
+          var marker = L.marker([point.latitude, point.longitude], {
+            icon: pointIcon(point), draggable: interactive && !point.label
+          }).addTo(markerLayer);
+          if (point.id != null) marker.on('click', function () { send('select', { id: point.id }); });
+          if (interactive) marker.on('dragend', function (event) {
+            var p = event.target.getLatLng();
+            send('drag', { latitude: p.lat, longitude: p.lng });
+          });
         });
-      });
-      if (${radiusKm != null}) {
-        L.circle([${latitude}, ${longitude}], {
-          radius: ${radius * 1000}, color: '#1f6f8b', weight: 1.5,
-          fillColor: '#7fc8d6', fillOpacity: .16
-        }).addTo(map);
       }
+      function updateArea(nextLatitude, nextLongitude, nextRadiusKm) {
+        if (nextLatitude == null || nextLongitude == null || nextRadiusKm == null) return;
+        var nextRadius = Math.max(0.4, Number(nextRadiusKm)) * 1000;
+        if (!areaCircle) {
+          areaCircle = L.circle([nextLatitude, nextLongitude], {
+            radius: nextRadius, color: '#1f6f8b', weight: 1.5,
+            fillColor: '#7fc8d6', fillOpacity: .16
+          }).addTo(map);
+        } else {
+          areaCircle.setLatLng([nextLatitude, nextLongitude]);
+          areaCircle.setRadius(nextRadius);
+        }
+      }
+      renderPoints(points);
+      if (${radiusKm != null}) updateArea(${latitude}, ${longitude}, ${radius});
+      map.on('move', function () {
+        if (areaCircle) areaCircle.setLatLng(map.getCenter());
+      });
+      window.__updateMapState = function (next) {
+        if (!next) return;
+        var current = map.getCenter();
+        if (next.latitude != null && next.longitude != null &&
+            (Math.abs(current.lat - next.latitude) > 0.000001 ||
+             Math.abs(current.lng - next.longitude) > 0.000001)) {
+          map.setView([next.latitude, next.longitude], next.zoom || map.getZoom(), { animate: false });
+        }
+        if (next.points) renderPoints(next.points);
+        if (next.radiusKm != null) updateArea(next.latitude, next.longitude, next.radiusKm);
+      };
       map.on('click', function (event) {
         if (interactive) send('press', { latitude: event.latlng.lat, longitude: event.latlng.lng });
       });
@@ -147,17 +176,38 @@ function buildMapHtml({
 }
 
 export function ExpoGoMapFallback(props: Props) {
-  const html = useMemo(
-    () => buildMapHtml({
+  const webViewRef = useRef<WebView>(null);
+  const readyRef = useRef(false);
+  const [mapReady, setMapReady] = useState(false);
+  const initialHtmlRef = useRef<string | null>(null);
+  if (!initialHtmlRef.current) {
+    initialHtmlRef.current = buildMapHtml({
       latitude: props.latitude,
       longitude: props.longitude,
       zoom: props.zoom,
       points: props.points,
       radiusKm: props.radiusKm,
       interactive: props.interactive,
-    }),
-    [props.latitude, props.longitude, props.zoom, props.points, props.radiusKm, props.interactive],
-  );
+    });
+  }
+
+  const syncMapState = useCallback(() => {
+    if (!readyRef.current) return;
+    const payload = toSafeJson({
+      latitude: props.latitude,
+      longitude: props.longitude,
+      zoom: props.zoom,
+      points: props.points ?? [],
+      radiusKm: props.radiusKm,
+    });
+    webViewRef.current?.injectJavaScript(
+      `window.__updateMapState && window.__updateMapState(${payload}); true;`,
+    );
+  }, [props.latitude, props.longitude, props.zoom, props.points, props.radiusKm]);
+
+  useEffect(() => {
+    syncMapState();
+  }, [syncMapState, mapReady]);
 
   const onMessage = (event: WebViewMessageEvent) => {
     try {
@@ -169,7 +219,12 @@ export function ExpoGoMapFallback(props: Props) {
         latitudeDelta?: number;
         longitudeDelta?: number;
       };
-      if (message.type === 'ready') return;
+       if (message.type === 'ready') {
+         readyRef.current = true;
+         setMapReady(true);
+         syncMapState();
+         return;
+       }
       if (message.type === 'select' && message.id != null) props.onSelect?.(message.id);
       if (message.type === 'press' && message.latitude != null && message.longitude != null) {
         props.onPress?.(message.latitude, message.longitude);
@@ -198,12 +253,16 @@ export function ExpoGoMapFallback(props: Props) {
 
   return (
     <View style={styles.container}>
-      <WebView
+       <WebView
+         ref={webViewRef}
         originWhitelist={['*']}
-        source={{ html }}
+         source={{ html: initialHtmlRef.current }}
         style={styles.webview}
         javaScriptEnabled
         domStorageEnabled
+         scrollEnabled={false}
+         nestedScrollEnabled={false}
+         cacheEnabled
         onMessage={onMessage}
         startInLoadingState
         renderLoading={() => <View style={styles.loading} />}

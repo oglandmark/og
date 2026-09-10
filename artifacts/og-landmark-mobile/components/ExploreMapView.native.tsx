@@ -190,6 +190,10 @@ function ExploreMapViewWithExpoGoFallback({
   const [areaRadiusKm, setAreaRadiusKm] = useState(4);
   const cLat = centerLat ?? userLat ?? OKARA_DISTRICT_CENTER.latitude;
   const cLng = centerLng ?? userLng ?? OKARA_DISTRICT_CENTER.longitude;
+  const [areaCenter, setAreaCenter] = useState({ latitude: cLat, longitude: cLng });
+  useEffect(() => {
+    setAreaCenter({ latitude: cLat, longitude: cLng });
+  }, [cLat, cLng]);
   const validProps = properties.filter((property) => {
     const latitude = property.latitude ?? property.lat;
     const longitude = property.longitude ?? property.lng;
@@ -204,17 +208,20 @@ function ExploreMapViewWithExpoGoFallback({
   if (userLat != null && userLng != null) {
     points.push({ id: '__user__', latitude: userLat, longitude: userLng, label: '' });
   }
-  const areaCount = countPointsWithinRadius(validProps, { latitude: cLat, longitude: cLng }, areaRadiusKm);
+  const areaCount = countPointsWithinRadius(validProps, areaCenter, areaRadiusKm);
 
   return (
     <View style={styles.container}>
       <ExpoGoMapFallback
-        latitude={cLat}
-        longitude={cLng}
+        latitude={areaCenter.latitude}
+        longitude={areaCenter.longitude}
         zoom={12}
         points={points}
         radiusKm={areaRadiusKm}
         interactive
+        onRegionChange={(region) => {
+          setAreaCenter({ latitude: region.latitude, longitude: region.longitude });
+        }}
         onSelect={(id) => {
           if (id !== '__user__') onSelect(id);
         }}

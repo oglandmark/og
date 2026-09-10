@@ -14,3 +14,9 @@ Expo Go can still show the Google watermark with blank tiles when the app key is
 **Why:** This preserves the native Google Maps architecture for shipped Android/iOS apps while keeping Replit's Expo Go preview useful for location and listing flows.
 
 **How to apply:** Detect Expo Go at runtime and route preview-only map surfaces through the fallback. Do not add a WebView/Leaflet implementation to the Android platform wrapper or replace the production Google provider.
+
+For the Expo Go fallback, keep the WebView document stable and push marker, center, and radius updates through `injectJavaScript`; rebuilding the HTML source on every parent render makes returning from a property detail feel like a fresh map load.
+
+**Why:** Explore data and filter state can rerender while the user navigates, and a remote Leaflet document otherwise re-downloads its scripts and tiles unnecessarily.
+
+**How to apply:** Initialize the map HTML once per mounted fallback, cache the WebView, disable WebView page scrolling so Leaflet receives touch gestures, and update the radius circle center from map movement events.

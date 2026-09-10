@@ -20,6 +20,7 @@ import MapView, {
 } from 'react-native-maps';
 import { Feather } from '@expo/vector-icons';
 import { getCurrentPosition } from '@/lib/locationService';
+import { ExpoGoMapFallback } from '@/components/ExpoGoMapFallback';
 
 // ─── OG Landmark dark-gold map style (Google Maps) ────────────────────────────
 const OG_MAP_STYLE = [
@@ -55,6 +56,7 @@ const GOOGLE_MAPS_KEY =
   Constants.expoConfig?.ios?.config?.googleMapsApiKey?.trim() ||
   '';
 const HAS_GOOGLE_MAPS_KEY = Boolean(GOOGLE_MAPS_KEY);
+const IS_EXPO_GO = Constants.appOwnership === 'expo';
 
 function GoogleMapsUnavailable() {
   return (
@@ -143,6 +145,17 @@ export function StaticMap({ latitude, longitude, satellite = false, interactive 
   if (!latitude || !longitude || !isFinite(latitude) || !isFinite(longitude)) {
     return <View style={styles.placeholder} />;
   }
+  if (IS_EXPO_GO) {
+    return (
+      <ExpoGoMapFallback
+        latitude={latitude}
+        longitude={longitude}
+        zoom={15}
+        interactive={interactive}
+        points={[{ latitude, longitude }]}
+      />
+    );
+  }
   if (!HAS_GOOGLE_MAPS_KEY) return <GoogleMapsUnavailable />;
 
   const region: Region = {
@@ -185,6 +198,24 @@ export function StaticMap({ latitude, longitude, satellite = false, interactive 
 
 // ─── InteractiveMap ────────────────────────────────────────────────────────────
 export function InteractiveMap(props: InteractiveMapProps) {
+  if (IS_EXPO_GO) {
+    const latitude = props.pinLat ?? props.region?.latitude ?? 30.8141;
+    const longitude = props.pinLng ?? props.region?.longitude ?? 73.4502;
+    return (
+      <ExpoGoMapFallback
+        latitude={latitude}
+        longitude={longitude}
+        zoom={14}
+        interactive
+        points={[{ latitude, longitude }]}
+        onPress={(nextLat, nextLng) => props.onPress?.({
+          nativeEvent: { coordinate: { latitude: nextLat, longitude: nextLng } },
+        })}
+        onDragEnd={props.onDragEnd}
+        onRegionChange={props.onRegionChange}
+      />
+    );
+  }
   if (!HAS_GOOGLE_MAPS_KEY) return <GoogleMapsUnavailable />;
   return <InteractiveMapWithGoogleMaps {...props} />;
 }

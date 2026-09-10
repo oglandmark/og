@@ -22,6 +22,7 @@ import Supercluster from 'supercluster';
 import { Feather } from '@expo/vector-icons';
 import { MapAreaRange, MAP_AREA_BLUE, MAP_AREA_BLUE_FILL } from '@/components/MapAreaRange';
 import { countPointsWithinRadius } from '@/components/mapRadius';
+import { ExpoGoMapFallback } from '@/components/ExpoGoMapFallback';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 export interface MapBounds {
@@ -84,6 +85,7 @@ const GOOGLE_MAPS_KEY =
   Constants.expoConfig?.ios?.config?.googleMapsApiKey?.trim() ||
   '';
 const HAS_GOOGLE_MAPS_KEY = Boolean(GOOGLE_MAPS_KEY);
+const IS_EXPO_GO = Constants.appOwnership === 'expo';
 
 function GoogleMapsUnavailable() {
   return (
@@ -172,8 +174,72 @@ const udot = StyleSheet.create({
 // ─── Region → bbox helper ──────────────────────────────────────────────────────
 // ─── Main component ────────────────────────────────────────────────────────────
 export function ExploreMapView(props: Props) {
+  if (IS_EXPO_GO) return <ExploreMapViewWithExpoGoFallback {...props} />;
   if (!HAS_GOOGLE_MAPS_KEY) return <GoogleMapsUnavailable />;
   return <ExploreMapViewWithGoogleMaps {...props} />;
+}
+
+function ExploreMapViewWithExpoGoFallback({
+  properties = [],
+  onSelect,
+  userLat,
+  userLng,
+  centerLat,
+  centerLng,
+}: Props) {
+  const [areaRadiusKm, setAreaRadiusKm] = useState(4);
+  const cLat = centerLat ?? userLat ?? OKARA_DISTRICT_CENTER.latitude;
+  const cLng = centerLng ?? userLng ?? OKARA_DISTRICT_CENTER.longitude;
+  const validProps = properties.filter((property) => {
+    const latitude = property.latitude ?? property.lat;
+    const longitude = property.longitude ?? property.lng;
+    return latitude != null && longitude != null && isFinite(Number(latitude)) && isFinite(Number(longitude));
+  });
+  const points = validProps.map((property) => ({
+    id: property.id,
+    latitude: Number(property.latitude ?? property.lat),
+    longitude: Number(property.longitude ?? property.lng),
+    label: fmt(property.price),
+  }));
+  if (userLat != null && userLng != null) {
+    points.push({ id: '__user__', latitude: userLat, longitude: userLng, label: '' });
+  }
+  const areaCount = countPointsWithinRadius(validProps, { latitude: cLat, longitude: cLng }, areaRadiusKm);
+
+  return (
+    <View style={styles.container}>
+      <ExpoGoMapFallback
+        latitude={cLat}
+        longitude={cLng}
+        zoom={12}
+        points={points}
+        radiusKm={areaRadiusKm}
+        interactive
+        onSelect={(id) => {
+          if (id !== '__user__') onSelect(id);
+        }}
+      />
+      <View style={styles.rangeOverlay}>
+        <MapAreaRange
+          value={areaRadiusKm}
+          onChange={setAreaRadiusKm}
+          colors={{
+            card: '#ffffff',
+            border: '#d6e0e8',
+            foreground: '#102a43',
+            mutedForeground: '#587089',
+          }}
+        />
+      </View>
+      <View
+        pointerEvents="none"
+        style={[styles.countBadge, { backgroundColor: '#ffffff', borderColor: '#d6e0e8' }]}
+      >
+        <View style={styles.countDot} />
+        <Text style={styles.countText}>{areaCount} on map</Text>
+      </View>
+    </View>
+  );
 }
 
 function ExploreMapViewWithGoogleMaps({

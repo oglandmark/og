@@ -297,8 +297,11 @@ export function ExpoGoMapFallback(props: Props) {
         style={styles.webview}
         javaScriptEnabled
         domStorageEnabled
-         scrollEnabled={false}
-         nestedScrollEnabled={false}
+         // Keep the native touch stream enabled. The HTML document itself is
+         // overflow-locked, so this allows Leaflet pan/pinch without making
+         // the surrounding Explore list scroll inside the map.
+         scrollEnabled
+         nestedScrollEnabled
          cacheEnabled
         onMessage={onMessage}
         startInLoadingState

@@ -96,7 +96,7 @@ test('Expo Go map keeps its WebView mounted, supports touch gestures, and follow
   assert.match(fallback, /initialHtmlRef/);
   assert.match(fallback, /window\.__updateMapState/);
   assert.match(fallback, /window\.__zoomMap/);
-  assert.match(fallback, /scrollEnabled=\{false\}/);
+  assert.match(fallback, /scrollEnabled\s*\/>/);
   assert.match(fallback, /touchZoom: false/);
   assert.match(fallback, /pinchStartDistance/);
   assert.match(fallback, /areaCircle\.setLatLng\(map\.getCenter\(\)\)/);

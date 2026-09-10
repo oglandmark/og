@@ -95,8 +95,10 @@ test('Expo Go map keeps its WebView mounted, supports touch gestures, and follow
   const native = readComponent('ExploreMapView.native.tsx');
   assert.match(fallback, /initialHtmlRef/);
   assert.match(fallback, /window\.__updateMapState/);
+  assert.match(fallback, /window\.__zoomMap/);
   assert.match(fallback, /scrollEnabled=\{false\}/);
-  assert.match(fallback, /touchZoom: interactive/);
+  assert.match(fallback, /touchZoom: false/);
+  assert.match(fallback, /pinchStartDistance/);
   assert.match(fallback, /areaCircle\.setLatLng\(map\.getCenter\(\)\)/);
   assert.match(fallback, /areaCircle\.setRadius\(nextRadius\)/);
   assert.match(native, /setAreaCenter\(\{ latitude: region\.latitude, longitude: region\.longitude \}\)/);

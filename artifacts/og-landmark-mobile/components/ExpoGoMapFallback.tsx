@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { Pressable, View, StyleSheet } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
+import { Feather } from '@expo/vector-icons';
 
 export type ExpoGoMapPoint = {
   id?: string | number;
@@ -74,10 +75,12 @@ function buildMapHtml({
       var points = ${pointsJson};
       var interactive = ${Boolean(interactive)};
       var map = L.map('map', {
-        zoomControl: interactive,
+        zoomControl: false,
         attributionControl: true,
         dragging: interactive,
-        touchZoom: interactive,
+        // Expo Go's Android WebView can swallow Leaflet's built-in pinch
+        // handler. A small native touch bridge below handles two-finger zoom.
+        touchZoom: false,
         scrollWheelZoom: interactive,
         doubleClickZoom: interactive,
       }).setView([${latitude}, ${longitude}], ${zoom ?? 13});
@@ -146,6 +149,34 @@ function buildMapHtml({
       map.on('move', function () {
         if (areaCircle) areaCircle.setLatLng(map.getCenter());
       });
+      var pinchStartDistance = 0;
+      var pinchStartZoom = 0;
+      function touchDistance(touches) {
+        var dx = touches[0].clientX - touches[1].clientX;
+        var dy = touches[0].clientY - touches[1].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+      var mapElement = map.getContainer();
+      mapElement.addEventListener('touchstart', function (event) {
+        if (!interactive || event.touches.length !== 2) return;
+        pinchStartDistance = touchDistance(event.touches);
+        pinchStartZoom = map.getZoom();
+        event.preventDefault();
+      }, { passive: false });
+      mapElement.addEventListener('touchmove', function (event) {
+        if (!interactive || event.touches.length !== 2 || !pinchStartDistance) return;
+        var scale = touchDistance(event.touches) / pinchStartDistance;
+        var nextZoom = Math.max(3, Math.min(19, pinchStartZoom + Math.log(scale) / Math.LN2));
+        map.setZoom(nextZoom, { animate: false });
+        event.preventDefault();
+      }, { passive: false });
+      mapElement.addEventListener('touchend', function (event) {
+        if (event.touches.length < 2) pinchStartDistance = 0;
+      }, { passive: false });
+      window.__zoomMap = function (delta) {
+        var nextZoom = Math.max(3, Math.min(19, map.getZoom() + Number(delta || 0)));
+        map.setZoom(nextZoom, { animate: true });
+      };
       window.__updateMapState = function (next) {
         if (!next) return;
         var current = map.getCenter();
@@ -204,6 +235,12 @@ export function ExpoGoMapFallback(props: Props) {
       `window.__updateMapState && window.__updateMapState(${payload}); true;`,
     );
   }, [props.latitude, props.longitude, props.zoom, props.points, props.radiusKm]);
+
+  const zoomBy = useCallback((delta: number) => {
+    webViewRef.current?.injectJavaScript(
+      `window.__zoomMap && window.__zoomMap(${delta}); true;`,
+    );
+  }, []);
 
   useEffect(() => {
     syncMapState();
@@ -267,6 +304,24 @@ export function ExpoGoMapFallback(props: Props) {
         startInLoadingState
         renderLoading={() => <View style={styles.loading} />}
       />
+       <View pointerEvents="box-none" style={styles.zoomControls}>
+         <Pressable
+           accessibilityRole="button"
+           accessibilityLabel="Zoom in map"
+           style={styles.zoomButton}
+           onPress={() => zoomBy(1)}
+         >
+           <Feather name="plus" size={20} color="#102a43" />
+         </Pressable>
+         <Pressable
+           accessibilityRole="button"
+           accessibilityLabel="Zoom out map"
+           style={styles.zoomButton}
+           onPress={() => zoomBy(-1)}
+         >
+           <Feather name="minus" size={20} color="#102a43" />
+         </Pressable>
+       </View>
     </View>
   );
 }
@@ -275,4 +330,25 @@ const styles = StyleSheet.create({
   container: { flex: 1, overflow: 'hidden' },
   webview: { flex: 1, backgroundColor: '#e8f0f7' },
   loading: { ...StyleSheet.absoluteFill, backgroundColor: '#e8f0f7' },
+  zoomControls: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    gap: 6,
+  },
+  zoomButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#d6e0e8',
+    shadowColor: '#102a43',
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
 });

@@ -84,3 +84,17 @@ mtime_ms = 1788976333026
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/6544ec84-7324-4170-ba52-68b406885d58/c3022e93-1fb6-45e5-8053-fc18a3ce7bfb"
 storage_version_token = "1788976357265845"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "RBpT5GzGNyXjfsQqOqGc7"
+uri = "file://attached_assets/og-landmark-expo-preview-qr.png"
+type = "image"
+title = "OG Landmark Expo Preview QR"
+description = "Expo Go QR code for the active OG Landmark mobile preview session."
+logical_id = "754b74ae-a270-4d68-acbe-c7d95720f47d"
+content_hash = "sha256:df7c0e9f7f627c645423e159e547ed8cd4f2d4d89589aa5a75f78a79c7183609"
+size = 5996
+mtime_ms = 1789026922283
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/754b74ae-a270-4d68-acbe-c7d95720f47d/6a1703cb-df6e-4c71-821d-4d3c1eab65de"
+storage_version_token = "1789026931096358"
+content_type = "image/png"

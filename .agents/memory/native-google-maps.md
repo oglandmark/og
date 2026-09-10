@@ -19,4 +19,4 @@ For the Expo Go fallback, keep the WebView document stable and push marker, cent
 
 **Why:** Explore data and filter state can rerender while the user navigates, and a remote Leaflet document otherwise re-downloads its scripts and tiles unnecessarily.
 
-**How to apply:** Initialize the map HTML once per mounted fallback, cache the WebView, disable WebView page scrolling so Leaflet receives touch gestures, and update the radius circle center from map movement events.
+**How to apply:** Initialize the map HTML once per mounted fallback, cache the WebView, keep the native WebView touch stream enabled while locking HTML overflow, use the explicit pinch bridge/zoom controls, and update the radius circle center from map movement events.

@@ -116,11 +116,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    // Never keep the entire app behind the startup splash while a stale
+    // session check waits on a slow or unreachable API. A cached identity is
+    // safe to render while the server check finishes; protected requests still
+    // enforce the token on the API side.
+    const startupWatchdog = setTimeout(() => {
+      if (mounted) setIsLoading(false);
+    }, 5000);
+
     (async () => {
       const [raw, token] = await Promise.all([
         AsyncStorage.getItem(STORAGE_KEY).catch(() => null),
         getToken(),
       ]);
+
+      if (mounted && raw) {
+        try {
+          setUser(JSON.parse(raw) as User);
+        } catch {
+          setUser(null);
+        }
+      }
+
       if (!token) {
         await AsyncStorage.removeItem(STORAGE_KEY).catch(() => undefined);
         if (mounted) {
@@ -155,7 +172,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       }
     });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+      clearTimeout(startupWatchdog);
+    };
   }, []);
 
   const login = useCallback(async (newUser: User) => {

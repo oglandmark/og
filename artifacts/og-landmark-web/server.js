@@ -30,6 +30,7 @@ const storage = multer.diskStorage({
 });
 const ALLOWED_IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.webp'];
 const ALLOWED_VIDEO_EXT = ['.mp4', '.mov'];
+const MAX_LISTING_IMAGES = 30;
 const upload = multer({
   storage,
   limits: { fileSize: 300 * 1024 * 1024 }, // 300 MB (covers large video)
@@ -3470,7 +3471,7 @@ app.post('/api/saved/:userId/:propertyId', requireAuth, async (req, res) => {
 });
 
 // ─── IMAGE UPLOAD ──────────────────────────────────────────────────────────────
-app.post('/api/upload', requireAuth, upload.array('images', 10), (req, res) => {
+app.post('/api/upload', requireAuth, upload.array('images', MAX_LISTING_IMAGES), (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: 'No image files provided' });

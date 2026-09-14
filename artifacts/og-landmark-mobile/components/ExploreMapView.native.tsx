@@ -21,7 +21,12 @@ import MapView, {
 import Supercluster from 'supercluster';
 import { Feather } from '@expo/vector-icons';
 import { MapAreaRange, MAP_AREA_BLUE, MAP_AREA_BLUE_FILL } from '@/components/MapAreaRange';
-import { countPointsWithinRadius } from '@/components/mapRadius';
+import {
+  countPointsWithinRadius,
+  MAP_AREA_DEFAULT_KM,
+  mapAreaRadiusMeters,
+  normalizeMapAreaRange,
+} from '@/components/mapRadius';
 import { ExpoGoMapFallback } from '@/components/ExpoGoMapFallback';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -190,7 +195,7 @@ function ExploreMapViewWithExpoGoFallback({
   centerLat,
   centerLng,
 }: Props) {
-  const [areaRadiusKm, setAreaRadiusKm] = useState(4);
+  const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
   const cLat = centerLat ?? userLat ?? OKARA_DISTRICT_CENTER.latitude;
   const cLng = centerLng ?? userLng ?? OKARA_DISTRICT_CENTER.longitude;
   const [areaCenter, setAreaCenter] = useState({ latitude: cLat, longitude: cLng });
@@ -262,7 +267,7 @@ function ExploreMapViewWithGoogleMaps({
   centerLng,
   onSearchArea,
 }: Props) {
-  const [areaRadiusKm, setAreaRadiusKm] = useState(4);
+  const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
   const [showSearchArea, setShowSearchArea] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<MapProperty | null>(null);
@@ -318,8 +323,9 @@ function ExploreMapViewWithGoogleMaps({
   }, [centerLat, centerLng, userLat, userLng]);
 
   const handleAreaRadiusChange = useCallback((nextRadiusKm: number) => {
-    setAreaRadiusKm(nextRadiusKm);
-    const latitudeDelta = Math.max(0.025, (nextRadiusKm * 2.8) / 111);
+    const safeRadiusKm = normalizeMapAreaRange(nextRadiusKm);
+    setAreaRadiusKm(safeRadiusKm);
+    const latitudeDelta = Math.max(0.025, (safeRadiusKm * 2.8) / 111);
     const longitudeDelta = Math.max(
       0.025,
       latitudeDelta / Math.max(0.35, Math.cos((cLat * Math.PI) / 180)),
@@ -446,7 +452,7 @@ function ExploreMapViewWithGoogleMaps({
       >
         <Circle
           center={areaCenter}
-          radius={areaRadiusKm * 1000}
+          radius={mapAreaRadiusMeters(areaRadiusKm)}
           strokeColor={MAP_AREA_BLUE}
           strokeWidth={1.5}
           fillColor={MAP_AREA_BLUE_FILL}

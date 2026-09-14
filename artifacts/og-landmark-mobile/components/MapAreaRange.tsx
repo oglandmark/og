@@ -9,6 +9,7 @@ import {
   MAP_AREA_MAX_KM,
   MAP_AREA_MIN_KM,
   MAP_AREA_RANGE_STEPS,
+  normalizeMapAreaRange,
 } from '@/components/mapRadius';
 
 export {
@@ -18,6 +19,7 @@ export {
   MAP_AREA_MAX_KM,
   MAP_AREA_MIN_KM,
   MAP_AREA_RANGE_STEPS,
+  normalizeMapAreaRange,
 };
 
 interface Props {
@@ -32,7 +34,7 @@ interface Props {
 }
 export function MapAreaRange({ value, onChange, colors }: Props) {
   const [trackWidth, setTrackWidth] = React.useState(0);
-  const safeValue = Math.max(MAP_AREA_MIN_KM, Math.min(MAP_AREA_MAX_KM, Number(value) || MAP_AREA_MIN_KM));
+  const safeValue = normalizeMapAreaRange(value);
   const progress = (safeValue - MAP_AREA_MIN_KM) / (MAP_AREA_MAX_KM - MAP_AREA_MIN_KM);
 
   const updateFromLocation = (locationX: number) => {

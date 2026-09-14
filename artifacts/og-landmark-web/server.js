@@ -36,8 +36,16 @@ const upload = multer({
   limits: { fileSize: 300 * 1024 * 1024 }, // 300 MB (covers large video)
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    const image = ALLOWED_IMAGE_EXT.includes(ext) && /^image\/(jpeg|png|webp)$/.test(file.mimetype);
-    const video = ALLOWED_VIDEO_EXT.includes(ext) && /^video\/(mp4|quicktime)$/.test(file.mimetype);
+    // React Native/Android may report a selected local file as
+    // application/octet-stream even when the client supplies a valid image
+    // extension. The extension remains allowlisted, so accept that transport
+    // MIME as well as the normal browser MIME values.
+    const transportMime = file.mimetype === 'application/octet-stream'
+      || file.mimetype === 'binary/octet-stream';
+    const image = ALLOWED_IMAGE_EXT.includes(ext)
+      && (/^image\/(jpeg|jpg|png|webp)$/.test(file.mimetype) || transportMime);
+    const video = ALLOWED_VIDEO_EXT.includes(ext)
+      && (/^video\/(mp4|quicktime)$/.test(file.mimetype) || transportMime);
     const ok = image || video;
     cb(ok ? null : new Error('Allowed: JPG, PNG, WebP, MP4, MOV'), ok);
   }

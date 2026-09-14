@@ -6,7 +6,9 @@ import {
   createMapAreaRadiusInjection,
   createMapAreaRadiusMessage,
   formatMapAreaRange,
+  mapAreaRadiusMeters,
   MAP_AREA_RANGE_STEPS,
+  normalizeMapAreaRange,
 } from '../components/mapRadius';
 import { cities, okaraDistrict } from '../lib/cities';
 
@@ -33,6 +35,16 @@ test('invalid radius values fall back to a safe label and never cross either bri
   assert.equal(createMapAreaRadiusMessage(Number.NaN), null);
   assert.equal(createMapAreaRadiusMessage(0), null);
   assert.equal(createMapAreaRadiusInjection(Number.POSITIVE_INFINITY), null);
+});
+
+test('the selected range uses one clamped kilometer-to-meter conversion everywhere', () => {
+  assert.equal(normalizeMapAreaRange(0.4), 0.4);
+  assert.equal(normalizeMapAreaRange(0.93), 0.9);
+  assert.equal(normalizeMapAreaRange(25), 10);
+  assert.equal(mapAreaRadiusMeters(0.4), 400);
+  assert.equal(mapAreaRadiusMeters(0.9), 900);
+  assert.equal(mapAreaRadiusMeters(4), 4000);
+  assert.equal(mapAreaRadiusMeters(10), 10000);
 });
 
 test('web radius updates resize the existing circle without rebuilding the viewport', () => {

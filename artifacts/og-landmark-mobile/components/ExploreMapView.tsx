@@ -16,7 +16,9 @@ import { Feather } from '@expo/vector-icons';
 import { MapAreaRange } from '@/components/MapAreaRange';
 import {
   createMapAreaRadiusMessage,
+  MAP_AREA_DEFAULT_KM,
   MAP_AREA_BLUE,
+  mapAreaRadiusMeters,
 } from '@/components/mapRadius';
 
 export interface PropertyLike {
@@ -253,8 +255,8 @@ function buildExploreHtml(
   ${markersJs}
   if (clusterGroup && clusterGroup.getLayers().length) clusterGroup.addTo(map);
   ${userJs}
-  var areaCircle = L.circle([${centerLat},${centerLng}], {
-    radius: 4000,
+   var areaCircle = L.circle([${centerLat},${centerLng}], {
+     radius: ${mapAreaRadiusMeters(MAP_AREA_DEFAULT_KM)},
     color: '${MAP_AREA_BLUE}',
     weight: 1.5,
     fillColor: '${MAP_AREA_BLUE}',
@@ -342,7 +344,7 @@ export function ExploreMapView({
   centerLng,
   onSearchArea,
 }: Props) {
-  const [areaRadiusKm, setAreaRadiusKm] = useState(4);
+  const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
   const [areaPropertyCount, setAreaPropertyCount] = useState(0);
   const iframeRef = React.useRef<any>(null);
   const boundsInitialized = React.useRef(false);

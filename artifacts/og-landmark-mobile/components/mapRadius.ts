@@ -54,7 +54,10 @@ export function countPointsWithinRadius(
   const earthRadiusKm = 6371;
   const centerLat = (center.latitude * Math.PI) / 180;
   const centerLng = (center.longitude * Math.PI) / 180;
-  const safeRadius = normalizeMapAreaRange(radiusKm);
+  const numericRadius = Number(radiusKm);
+  const safeRadius = Number.isFinite(numericRadius)
+    ? Math.min(MAP_AREA_MAX_KM, Math.max(0, numericRadius))
+    : 0;
 
   return points.reduce((count, point) => {
     const coordinate = coordinateValue(point);

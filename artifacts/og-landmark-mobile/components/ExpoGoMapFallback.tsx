@@ -41,7 +41,7 @@ function buildMapHtml({
   interactive,
 }: Required<Pick<Props, 'latitude' | 'longitude'>> & Omit<Props, 'latitude' | 'longitude'>) {
   const pointsJson = toSafeJson(points ?? []);
-  const radius = Math.max(0.4, Number(radiusKm ?? 0));
+  const radius = Math.min(10, Math.max(0.4, Math.round(Number(radiusKm ?? 0) * 10) / 10));
 
   return `<!doctype html>
 <html>
@@ -133,7 +133,8 @@ function buildMapHtml({
       }
       function updateArea(nextLatitude, nextLongitude, nextRadiusKm) {
         if (nextLatitude == null || nextLongitude == null || nextRadiusKm == null) return;
-        var nextRadius = Math.max(0.4, Number(nextRadiusKm)) * 1000;
+        var nextRadiusKmSafe = Math.min(10, Math.max(0.4, Math.round(Number(nextRadiusKm) * 10) / 10));
+        var nextRadius = nextRadiusKmSafe * 1000;
         if (!areaCircle) {
           areaCircle = L.circle([nextLatitude, nextLongitude], {
             radius: nextRadius, color: '#1f6f8b', weight: 1.5,

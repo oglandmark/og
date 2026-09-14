@@ -400,7 +400,9 @@ export function LocationPicker({
         applyLocation({
           latitude: lat, longitude: lng,
           fullAddress: rev?.fullAddress ?? `Pinned location · ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+           streetAddress: rev?.streetAddress,
           city: rev?.city, locality: rev?.locality, district: rev?.district,
+           tehsil: rev?.tehsil,
           province: rev?.province, country: rev?.country, postalCode: rev?.postalCode,
           placeId: rev?.placeId, locationSource: 'map_tap',
         });
@@ -421,7 +423,9 @@ export function LocationPicker({
         applyLocation({
           latitude: lat, longitude: lng,
           fullAddress: rev?.fullAddress ?? `Pinned location · ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+           streetAddress: rev?.streetAddress,
           city: rev?.city, locality: rev?.locality, district: rev?.district,
+           tehsil: rev?.tehsil,
           province: rev?.province, country: rev?.country, postalCode: rev?.postalCode,
           placeId: rev?.placeId, locationSource: 'map_tap',
         });
@@ -448,7 +452,9 @@ export function LocationPicker({
       applyLocation({
         latitude: lat, longitude: lng,
         fullAddress: rev?.fullAddress ?? '',
+         streetAddress: rev?.streetAddress,
         city: rev?.city, locality: rev?.locality, district: rev?.district,
+         tehsil: rev?.tehsil,
         locationSource: 'manual',
       });
       setShowManual(false);

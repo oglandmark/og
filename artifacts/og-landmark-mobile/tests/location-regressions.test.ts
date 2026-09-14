@@ -9,6 +9,10 @@ import {
   type LocationPosition,
   type LocationProvider,
 } from '../lib/locationFlow';
+import {
+  parseGoogleAddressComponents,
+  parseNominatimAddress,
+} from '../lib/addressParsing';
 import { buildCreatePropertyPayload } from '../lib/listingPayload';
 
 function position(
@@ -49,6 +53,54 @@ test('classifies accuracy at every boundary and gives actionable low-accuracy gu
   assert.match(accuracyLabel('low'), /move outdoors|adjust pin manually/i);
   assert.match(lowAccuracyMessage(347.8), /348 metres/i);
   assert.match(lowAccuracyMessage(347.8), /continue|move outdoors|adjust the pin manually/i);
+});
+
+test('keeps Google city, district, tehsil, locality, and street fields separate', () => {
+  const parsed = parseGoogleAddressComponents([
+    { long_name: '12', types: ['street_number'] },
+    { long_name: 'Main Road', types: ['route'] },
+    { long_name: 'Model Town', types: ['sublocality_level_1'] },
+    { long_name: 'Depalpur', types: ['locality'] },
+    { long_name: 'Depalpur Tehsil', types: ['administrative_area_level_3'] },
+    { long_name: 'Okara District', types: ['administrative_area_level_2'] },
+    { long_name: 'Punjab', types: ['administrative_area_level_1'] },
+    { long_name: '56300', types: ['postal_code'] },
+    { long_name: 'Pakistan', types: ['country'] },
+  ]);
+
+  assert.deepEqual(parsed, {
+    streetAddress: '12 Main Road',
+    locality: 'Model Town',
+    city: 'Depalpur',
+    district: 'Okara District',
+    tehsil: 'Depalpur Tehsil',
+    province: 'Punjab',
+    postalCode: '56300',
+    country: 'Pakistan',
+  });
+});
+
+test('uses Nominatim fallbacks for Pakistani administrative fields', () => {
+  assert.deepEqual(parseNominatimAddress({
+    house_number: '12',
+    road: 'Main Road',
+    neighbourhood: 'Model Town',
+    town: 'Depalpur',
+    city_district: 'Depalpur Tehsil',
+    county: 'Okara District',
+    state: 'Punjab',
+    postcode: '56300',
+    country: 'Pakistan',
+  }), {
+    streetAddress: '12 Main Road',
+    locality: 'Model Town',
+    city: 'Depalpur',
+    district: 'Okara District',
+    tehsil: 'Depalpur Tehsil',
+    province: 'Punjab',
+    postalCode: '56300',
+    country: 'Pakistan',
+  });
 });
 
 test('stops after a permanently denied location permission and reports recovery state', async () => {
@@ -140,6 +192,7 @@ test('propagates successful GPS and mocked reverse-geocoding into the listing pa
 
   const reverseGeocode = async () => ({
     fullAddress: 'Street 4, Okara',
+    streetAddress: 'Street 4',
     city: 'Okara',
     locality: 'Model Town',
     district: 'Okara',
@@ -166,6 +219,7 @@ test('propagates successful GPS and mocked reverse-geocoding into the listing pa
     longitude: location.longitude,
     district: location.district,
     locality: location.locality,
+    streetAddress: location.streetAddress,
     images: [],
     locationSource: location.locationSource,
     locationAccuracy: location.accuracy,
@@ -183,9 +237,52 @@ test('propagates successful GPS and mocked reverse-geocoding into the listing pa
     district: 'Okara',
     tehsil: undefined,
     locality: 'Model Town',
+    streetAddress: 'Street 4',
     address: 'Street 4, Okara',
     source: 'gps',
     accuracy: 12,
     placeId: 'mock-place-id',
+  });
+});
+
+test('keeps structured address fields in the final listing location payload', () => {
+  const payload = buildCreatePropertyPayload({
+    title: 'Depalpur listing',
+    type: 'House',
+    status: 'For Sale',
+    price: 18000000,
+    area: 5,
+    areaUnit: 'Marla',
+    bedrooms: 3,
+    bathrooms: 2,
+    city: 'Depalpur',
+    neighborhood: 'Model Town',
+    fullAddress: '12 Main Road, Model Town, Depalpur',
+    streetAddress: '12 Main Road',
+    district: 'Okara District',
+    tehsil: 'Depalpur Tehsil',
+    locality: 'Model Town',
+    description: 'Structured location regression fixture.',
+    latitude: 30.67,
+    longitude: 73.65,
+    locationSource: 'search',
+    placeId: 'dep-12',
+  });
+
+  assert.equal(payload.city, 'Depalpur');
+  assert.equal(payload.district, 'Okara District');
+  assert.equal(payload.tehsil, 'Depalpur Tehsil');
+  assert.deepEqual(payload.location, {
+    latitude: 30.67,
+    longitude: 73.65,
+    city: 'Depalpur',
+    district: 'Okara District',
+    tehsil: 'Depalpur Tehsil',
+    locality: 'Model Town',
+    streetAddress: '12 Main Road',
+    address: '12 Main Road, Model Town, Depalpur',
+    source: 'search',
+    accuracy: undefined,
+    placeId: 'dep-12',
   });
 });

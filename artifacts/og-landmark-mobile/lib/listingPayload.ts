@@ -11,6 +11,7 @@ export interface ListingPayloadSource {
   bathrooms: number;
   city: string;
   fullAddress?: string;
+  streetAddress?: string;
   neighborhood: string;
   description: string;
   latitude?: number;
@@ -32,6 +33,10 @@ export interface ListingPayloadSource {
 export function buildCreatePropertyPayload(
   listing: ListingPayloadSource,
 ): CreatePropertyPayload {
+  const listingLocation = listing.location as
+    | { streetAddress?: string }
+    | undefined;
+
   return {
     title: listing.title,
     type: listing.type,
@@ -63,6 +68,7 @@ export function buildCreatePropertyPayload(
       district: listing.district,
       tehsil: listing.tehsil,
       locality: listing.locality ?? listing.neighborhood,
+      streetAddress: listing.streetAddress ?? listingLocation?.streetAddress,
       address: listing.fullAddress || listing.neighborhood,
       source: listing.locationSource,
       accuracy: listing.locationAccuracy,

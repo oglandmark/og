@@ -305,6 +305,24 @@ function AgentForm({ colors, topInset, user, router }: any) {
   const types = TYPES_BY_CATEGORY[category];
   const neighborhoods = okaraDistrict.areas[city] ?? [];
 
+  const applySelectedLocation = (loc: LocationData) => {
+    setSelectedLocation(loc);
+    setLatitude(loc.latitude);
+    setLongitude(loc.longitude);
+    setGpsBoundary(`${loc.latitude}, ${loc.longitude}`);
+
+    const matchedCity = loc.city
+      ? CITIES.find((candidate) => candidate.toLowerCase() === loc.city!.toLowerCase())
+      : undefined;
+    if (matchedCity) setCity(matchedCity);
+    if (isAgri) {
+      if (loc.locality) setVillage(loc.locality);
+      if (loc.tehsil || loc.city) setTehsil(loc.tehsil || loc.city || '');
+    } else if (loc.locality) {
+      setNeighborhood(loc.locality);
+    }
+  };
+
   const handleCategoryChange = (c: Category) => {
     setCategory(c);
     setPropType(TYPES_BY_CATEGORY[c][0]);
@@ -377,6 +395,8 @@ function AgentForm({ colors, topInset, user, router }: any) {
         area: finalArea,
         areaUnit: finalUnit,
         city: locationCity,
+        district: selectedLocation?.district,
+        tehsil: selectedLocation?.tehsil || locationCity,
         neighborhood: locationNeighborhood,
         description: description.trim(),
         bedrooms: isResidential ? Number(bedrooms) || 0 : 0,
@@ -645,8 +665,10 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 latitude={latitude}
                 longitude={longitude}
                 address={selectedLocation?.fullAddress}
+                city={isAgri ? (tehsil || city) : city}
+                locality={isAgri ? village : neighborhood}
                 onChange={(lat, lng) => { setLatitude(lat); setLongitude(lng); setGpsBoundary(`${lat}, ${lng}`); }}
-                onLocationChange={setSelectedLocation}
+                onLocationChange={applySelectedLocation}
                 onClear={() => {
                   setLatitude(null); setLongitude(null); setGpsBoundary('');
                   setSelectedLocation(null); setLocationConfirmed(false);
@@ -800,8 +822,10 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 latitude={latitude}
                 longitude={longitude}
                 address={selectedLocation?.fullAddress}
+                city={isAgri ? (tehsil || city) : city}
+                locality={isAgri ? village : neighborhood}
                 onChange={(lat, lng) => { setLatitude(lat); setLongitude(lng); }}
-                onLocationChange={setSelectedLocation}
+                onLocationChange={applySelectedLocation}
                 onClear={() => {
                   setLatitude(null); setLongitude(null);
                   setSelectedLocation(null); setLocationConfirmed(false);
@@ -947,8 +971,10 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 latitude={latitude}
                 longitude={longitude}
                 address={selectedLocation?.fullAddress}
+                city={isAgri ? (tehsil || city) : city}
+                locality={isAgri ? village : neighborhood}
                 onChange={(lat, lng) => { setLatitude(lat); setLongitude(lng); }}
-                onLocationChange={setSelectedLocation}
+                onLocationChange={applySelectedLocation}
                 onClear={() => {
                   setLatitude(null); setLongitude(null);
                   setSelectedLocation(null); setLocationConfirmed(false);

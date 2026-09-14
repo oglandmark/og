@@ -372,6 +372,7 @@ export type ApiProperty = {
     district?: string;
     tehsil?: string;
     locality?: string;
+    streetAddress?: string;
     address?: string;
     province?: string;
     country?: string;

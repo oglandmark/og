@@ -31,6 +31,7 @@ export interface LocationData {
   locality?: string;         // area / neighbourhood
   city?: string;
   district?: string;
+  tehsil?: string;
   province?: string;
   postalCode?: string;
   country?: string;

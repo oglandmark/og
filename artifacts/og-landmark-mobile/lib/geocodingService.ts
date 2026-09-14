@@ -10,6 +10,11 @@
  */
 import { Platform } from 'react-native';
 import type { LocationData } from './locationService';
+import {
+  parseGoogleAddressComponents,
+  parseNominatimAddress,
+  type GoogleAddressComponent,
+} from './addressParsing';
 
 const API_KEY       = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
 const PLACES_BASE   = 'https://maps.googleapis.com/maps/api/place';
@@ -30,36 +35,6 @@ export interface PlaceResult extends LocationData {
 }
 
 // ─── Address component parsing ─────────────────────────────────────────────────
-
-interface RawComponent {
-  long_name: string;
-  short_name: string;
-  types: string[];
-}
-
-function pick(components: RawComponent[], ...types: string[]): string {
-  for (const type of types) {
-    const c = components.find((x) => x.types.includes(type));
-    if (c) return c.long_name;
-  }
-  return '';
-}
-
-function parseComponents(components: RawComponent[]): Partial<LocationData> {
-  return {
-    streetAddress: [
-      pick(components, 'street_number'),
-      pick(components, 'route'),
-    ].filter(Boolean).join(' ') || undefined,
-    locality:    pick(components, 'sublocality_level_1', 'sublocality', 'neighborhood', 'locality') || undefined,
-    city:        pick(components, 'locality', 'postal_town', 'administrative_area_level_2') || undefined,
-    district:    pick(components, 'administrative_area_level_2') || undefined,
-    tehsil:      pick(components, 'administrative_area_level_3', 'locality', 'postal_town') || undefined,
-    province:    pick(components, 'administrative_area_level_1') || undefined,
-    postalCode:  pick(components, 'postal_code') || undefined,
-    country:     pick(components, 'country') || undefined,
-  };
-}
 
 // ─── API helpers ───────────────────────────────────────────────────────────────
 
@@ -131,7 +106,9 @@ export async function fetchPlaceDetails(
 
   const r    = data.result;
   const loc  = r.geometry.location;
-  const comp = parseComponents(r.address_components ?? []);
+  const comp = parseGoogleAddressComponents(
+    (r.address_components ?? []) as GoogleAddressComponent[],
+  );
 
   return {
     latitude:     parseFloat(Number(loc.lat).toFixed(7)),
@@ -210,19 +187,11 @@ export async function reverseGeocode(
           place_id?: number;
           address?: Record<string, string>;
         };
-        const a = result.address ?? {};
         return {
           latitude: parseFloat(lat.toFixed(7)),
           longitude: parseFloat(lng.toFixed(7)),
           fullAddress: result.display_name ?? '',
-          streetAddress: [a.house_number, a.road].filter(Boolean).join(' ') || undefined,
-          locality: a.neighbourhood ?? a.suburb ?? a.village ?? a.town ?? undefined,
-          city: a.city ?? a.town ?? a.village ?? undefined,
-          district: a.county ?? a.state_district ?? undefined,
-           tehsil: a.city_district ?? a.municipality ?? a.town ?? a.village ?? undefined,
-          province: a.state ?? undefined,
-          postalCode: a.postcode ?? undefined,
-          country: a.country ?? undefined,
+          ...parseNominatimAddress(result.address ?? {}),
           placeId: result.place_id ? String(result.place_id) : '',
           name: '',
           locationSource: 'map_tap',
@@ -251,7 +220,9 @@ export async function reverseGeocode(
   if (!data?.results?.length) return null;
 
   const r    = data.results[0];
-  const comp = parseComponents(r.address_components ?? []);
+  const comp = parseGoogleAddressComponents(
+    (r.address_components ?? []) as GoogleAddressComponent[],
+  );
 
   return {
     latitude:       parseFloat(lat.toFixed(7)),

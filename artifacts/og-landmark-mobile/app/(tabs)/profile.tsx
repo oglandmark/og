@@ -1304,8 +1304,8 @@ export default function ProfileScreen() {
             <Text style={styles.pcName} numberOfLines={1}>{displayName}</Text>
             <View style={styles.pcMeta}>
               <View style={[styles.rolePill, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
-                <Feather name={role ? roleIcons[role] : 'user'} size={9} color="#ffffff" />
-                <Text style={styles.rolePillText}>{role ? roleLabels(tr)[role] : 'User'}</Text>
+                <Feather name={role ? (roleIcons[role] ?? 'user') : 'user'} size={9} color="#ffffff" />
+                <Text style={styles.rolePillText}>{role ? (roleLabels(tr)[role] ?? 'User') : 'User'}</Text>
               </View>
               {isVerified && (
                 <View style={[styles.rolePill, { backgroundColor: '#05966930' }]}>

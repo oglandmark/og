@@ -175,7 +175,10 @@ const udot = StyleSheet.create({
 // ─── Main component ────────────────────────────────────────────────────────────
 export function ExploreMapView(props: Props) {
   if (IS_EXPO_GO) return <ExploreMapViewWithExpoGoFallback {...props} />;
-  if (!HAS_GOOGLE_MAPS_KEY) return <GoogleMapsUnavailable />;
+  // A preview/dev build may not have the native Google SDK key injected yet.
+  // Keep the map usable with the same WebView fallback used by Expo Go rather
+  // than mounting a blank native surface.
+  if (!HAS_GOOGLE_MAPS_KEY) return <ExploreMapViewWithExpoGoFallback {...props} />;
   return <ExploreMapViewWithGoogleMaps {...props} />;
 }
 

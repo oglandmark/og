@@ -156,7 +156,19 @@ export function StaticMap({ latitude, longitude, satellite = false, interactive 
       />
     );
   }
-  if (!HAS_GOOGLE_MAPS_KEY) return <GoogleMapsUnavailable />;
+  // Keep preview/dev builds useful when the native Google SDK key has not
+  // been injected yet. Production builds with a key still use Google Maps.
+  if (!HAS_GOOGLE_MAPS_KEY) {
+    return (
+      <ExpoGoMapFallback
+        latitude={latitude}
+        longitude={longitude}
+        zoom={15}
+        interactive={interactive}
+        points={[{ latitude, longitude }]}
+      />
+    );
+  }
 
   const region: Region = {
     latitude, longitude,
@@ -216,7 +228,24 @@ export function InteractiveMap(props: InteractiveMapProps) {
       />
     );
   }
-  if (!HAS_GOOGLE_MAPS_KEY) return <GoogleMapsUnavailable />;
+  if (!HAS_GOOGLE_MAPS_KEY) {
+    const latitude = props.pinLat ?? props.region?.latitude ?? 30.8141;
+    const longitude = props.pinLng ?? props.region?.longitude ?? 73.4502;
+    return (
+      <ExpoGoMapFallback
+        latitude={latitude}
+        longitude={longitude}
+        zoom={14}
+        interactive
+        points={[{ latitude, longitude }]}
+        onPress={(nextLat, nextLng) => props.onPress?.({
+          nativeEvent: { coordinate: { latitude: nextLat, longitude: nextLng } },
+        })}
+        onDragEnd={props.onDragEnd}
+        onRegionChange={props.onRegionChange}
+      />
+    );
+  }
   return <InteractiveMapWithGoogleMaps {...props} />;
 }
 

@@ -124,7 +124,11 @@ async function apiUpload<T>(path: string, form: FormData, timeoutMs = 180_000): 
           || (err as { message?: string }).message
           || (err as { detail?: string }).detail
         : undefined;
-      throw new Error(message || `HTTP ${res.status}`);
+      throw new ApiRequestError(
+        message || `HTTP ${res.status}`,
+        res.status,
+        typeof err === 'object' && err !== null ? (err as { code?: string }).code : undefined,
+      );
     }
     return res.json();
   } catch (error: unknown) {
@@ -135,6 +139,20 @@ async function apiUpload<T>(path: string, form: FormData, timeoutMs = 180_000): 
   } finally {
     clearTimeout(timer);
   }
+}
+
+function imageUploadFile(uri: string, filename = 'photo.jpg') {
+  const cleanUri = uri.split(/[?#]/, 1)[0];
+  const uriExt = cleanUri.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
+  const requestedExt = filename.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
+  const ext = uriExt === 'png' || uriExt === 'webp'
+    ? uriExt
+    : requestedExt === 'png' || requestedExt === 'webp'
+      ? requestedExt
+      : 'jpg';
+  const baseName = filename.replace(/\.[^.]*$/, '').replace(/[^a-z0-9_-]/gi, '_') || 'photo';
+  const type = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+  return { uri, type, name: `${baseName}.${ext}` };
 }
 
 // ─── Inquiry & Appointment submission ─────────────────────────────────────────
@@ -715,8 +733,9 @@ export async function getMobileSettings(): Promise<MobileSettings> {
 }
 export async function uploadImage(uri: string, filename = 'photo.jpg'): Promise<{ url: string }> {
   const form = new FormData();
-  // React Native FormData accepts { uri, type, name }
-  form.append('image', { uri, type: 'image/jpeg', name: filename } as unknown as Blob);
+  // React Native FormData accepts { uri, type, name }. Keep the extension and
+  // MIME type aligned because Android content:// URIs often have no extension.
+  form.append('image', imageUploadFile(uri, filename) as unknown as Blob);
   return apiUpload<{ url: string }>('/api/upload/single', form);
 }
 
@@ -738,17 +757,29 @@ export async function uploadMultipleImages(uris: string[]): Promise<string[]> {
     const form = new FormData();
     const batch = uris.slice(start, start + batchSize);
     batch.forEach((uri, index) => {
-      const cleanUri = uri.split(/[?#]/, 1)[0];
-      const uriExt = cleanUri.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
-      const ext = uriExt === 'png' ? 'png' : uriExt === 'webp' ? 'webp' : 'jpg';
-      const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
       form.append(
         'images',
-        { uri, type: mime, name: `photo_${start + index}.${ext}` } as unknown as Blob,
+        imageUploadFile(uri, `photo_${start + index}.jpg`) as unknown as Blob,
       );
     });
-    const res = await apiUpload<{ urls: string[] }>('/api/upload', form);
-    uploaded.push(...(res.urls ?? []));
+    try {
+      const res = await apiUpload<{ urls: string[] }>('/api/upload', form);
+      uploaded.push(...(res.urls ?? []));
+    } catch (error) {
+      // Some already-deployed Hostinger instances still expose the older
+      // single-file route or have a smaller multi-file limit. Retry only for
+      // a server-side multipart compatibility response; network/auth failures
+      // are surfaced immediately instead of creating duplicate uploads.
+      const compatibilityFailure =
+        error instanceof ApiRequestError &&
+        [400, 404, 413, 415, 422].includes(error.status);
+      if (!compatibilityFailure) throw error;
+
+      for (let index = 0; index < batch.length; index += 1) {
+        const result = await uploadImage(batch[index], `photo_${start + index}.jpg`);
+        uploaded.push(result.url);
+      }
+    }
   }
   return uploaded;
 }

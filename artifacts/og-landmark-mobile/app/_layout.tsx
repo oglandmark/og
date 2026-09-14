@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ActivityIndicator, AppState, Platform, View } from 'react-native';
+import { ActivityIndicator, AppState, InteractionManager, Platform, View } from 'react-native';
 import { setAudioModeAsync } from 'expo-audio';
 import type { NotificationResponse } from 'expo-notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -41,11 +41,6 @@ function RootLayoutNav() {
   const handledNotificationResponses = React.useRef(new Set<string>());
 
   useEffect(() => {
-    void configurePushNotifications().catch((error: unknown) => {
-      console.warn('[push] Could not configure push notifications.', error);
-    });
-
-    if (Platform.OS === 'web') return;
     let mounted = true;
     let unsubscribe: () => void = () => {};
     const handleNotificationResponse = (response: NotificationResponse) => {
@@ -79,17 +74,25 @@ function RootLayoutNav() {
       }
     };
 
-    subscribeToNotificationResponses(handleNotificationResponse)
-      .then((cleanup) => {
-        if (mounted) unsubscribe = cleanup;
-        else cleanup();
-      })
-      .catch((error: unknown) => {
-        console.warn('[push] Could not subscribe to notification responses.', error);
+    const interactionTask = InteractionManager.runAfterInteractions(() => {
+      void configurePushNotifications().catch((error: unknown) => {
+        console.warn('[push] Could not configure push notifications.', error);
       });
+
+      if (Platform.OS === 'web') return;
+      subscribeToNotificationResponses(handleNotificationResponse)
+        .then((cleanup) => {
+          if (mounted) unsubscribe = cleanup;
+          else cleanup();
+        })
+        .catch((error: unknown) => {
+          console.warn('[push] Could not subscribe to notification responses.', error);
+        });
+    });
 
     return () => {
       mounted = false;
+      interactionTask.cancel();
       unsubscribe();
     };
   }, [router]);
@@ -113,7 +116,9 @@ function RootLayoutNav() {
       }
     };
 
-    void syncPushTokenIfAllowed();
+    const interactionTask = InteractionManager.runAfterInteractions(() => {
+      void syncPushTokenIfAllowed();
+    });
 
     const appStateSubscription = AppState.addEventListener('change', (nextState) => {
       if (nextState !== 'active') return;
@@ -122,6 +127,7 @@ function RootLayoutNav() {
 
     return () => {
       mounted = false;
+      interactionTask.cancel();
       appStateSubscription.remove();
     };
   }, [user?.id]);
@@ -236,7 +242,7 @@ export default function RootLayout() {
   useEffect(() => {
     const timeout = setTimeout(
       () => setFontGateTimedOut(true),
-      Platform.OS === 'web' ? 1800 : 6000,
+       Platform.OS === 'web' ? 1800 : 2500,
     );
     return () => clearTimeout(timeout);
   }, []);
@@ -245,11 +251,14 @@ export default function RootLayout() {
   // even when iOS silent switch is off or no explicit user interaction yet.
   useEffect(() => {
     if (Platform.OS === 'web') return;
-    setAudioModeAsync({
-      playsInSilentMode: true, // ignore iOS silent/mute switch
-      allowsRecording: false,
-      shouldPlayInBackground: false,
-    }).catch(() => undefined);
+    const interactionTask = InteractionManager.runAfterInteractions(() => {
+      setAudioModeAsync({
+        playsInSilentMode: true, // ignore iOS silent/mute switch
+        allowsRecording: false,
+        shouldPlayInBackground: false,
+      }).catch(() => undefined);
+    });
+    return () => interactionTask.cancel();
   }, []);
   // The browser preview can render with platform fallback fonts while the
   // bundled font manifest is unavailable in offline mode. Native keeps the

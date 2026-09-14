@@ -122,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // enforce the token on the API side.
     const startupWatchdog = setTimeout(() => {
       if (mounted) setIsLoading(false);
-    }, 5000);
+    }, 2500);
 
     (async () => {
       const [raw, token] = await Promise.all([
@@ -138,11 +138,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
+      // Cached identity is enough to render the shell. Validate the token in
+      // the background so a slow API cannot keep the native splash/spinner up.
+      if (mounted) setIsLoading(false);
+
       if (!token) {
         await AsyncStorage.removeItem(STORAGE_KEY).catch(() => undefined);
         if (mounted) {
           setUser(null);
-          setIsLoading(false);
         }
         return;
       }
@@ -163,8 +166,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else if (mounted && raw) {
           try { setUser(JSON.parse(raw) as User); } catch { setUser(null); }
         }
-      } finally {
-        if (mounted) setIsLoading(false);
       }
     })().catch(() => {
       if (mounted) {

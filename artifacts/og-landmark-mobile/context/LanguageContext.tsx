@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { I18nManager, Platform } from 'react-native';
+import { I18nManager } from 'react-native';
 import { getTranslation, type Lang, type TranslationKey } from '@/lib/i18n';
 
 type LanguageContextValue = {
@@ -19,8 +19,6 @@ const LANG_SELECTED_KEY = '@og-landmark/language-selected-v1';
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>('en');
   const [hasSelectedLanguage, setHasSelectedLanguage] = useState(true); // default English — no language gate on first launch
-  const [isLoading, setIsLoading] = useState(true);
-  const [storageTimedOut, setStorageTimedOut] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -31,14 +29,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         if (savedLang === 'en' || savedLang === 'ur') setLangState(savedLang);
         if (selected === 'true') setHasSelectedLanguage(true);
       })
-      .catch(() => undefined)
-      .finally(() => setIsLoading(false));
-  }, []);
-
-  useEffect(() => {
-    if (Platform.OS !== 'web') return;
-    const timeout = setTimeout(() => setStorageTimedOut(true), 1800);
-    return () => clearTimeout(timeout);
+      .catch(() => undefined);
   }, []);
 
   const setLang = useCallback(async (newLang: Lang) => {
@@ -64,8 +55,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     () => ({ lang, setLang, tr, isRTL: lang === 'ur', hasSelectedLanguage }),
     [lang, setLang, tr, hasSelectedLanguage],
   );
-
-  if (isLoading && !storageTimedOut) return null;
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }

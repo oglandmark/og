@@ -135,7 +135,13 @@ type Form = {
   latitude:          number | null;
   longitude:         number | null;
   fullAddress:       string;
+  streetAddress:     string;
   placeId:           string;
+  district:          string;
+  tehsil:            string;
+  province:          string;
+  postalCode:        string;
+  country:           string;
   locationAccuracy:  number | null;
   locationSource:    string;
   // Step 3 – Basic
@@ -275,7 +281,8 @@ type Form = {
 const defaultForm = (): Form => ({
   propertyType: 'House', purpose: 'Sale',
   city: 'Okara', locality: '', society: '', block: '', street: '', landmark: '',
-  latitude: null, longitude: null, fullAddress: '', placeId: '',
+  latitude: null, longitude: null, fullAddress: '', streetAddress: '', placeId: '',
+  district: '', tehsil: '', province: '', postalCode: '', country: '',
   locationAccuracy: null, locationSource: '',
   title: '', price: '', isNegotiable: false,
   area: '', areaUnit: 'Marla',
@@ -420,9 +427,10 @@ export default function ListingWizard() {
       const propertyDetails = Object.fromEntries(
         Object.entries(form).filter(([key]) => key !== 'photos' && key !== 'video'),
       );
-      const district = form.city.toLowerCase() === 'depalpur'
+      const district = form.district || (form.city.toLowerCase() === 'depalpur'
         ? 'Okara'
-        : form.city;
+        : form.city);
+      const tehsil = form.tehsil || form.city;
       await addUserListing({
         id: `listing_${Date.now()}`,
         postedBy: user?.id ?? 'unknown',
@@ -448,7 +456,7 @@ export default function ListingWizard() {
         documents: form.documents,
         district,
         locality: form.locality,
-        tehsil: form.city,
+        tehsil,
         propertyDetails,
         latitude: form.latitude,
         longitude: form.longitude,
@@ -461,11 +469,13 @@ export default function ListingWizard() {
           longitude: form.longitude,
           city: form.city,
           district,
-          tehsil: form.city,
+          tehsil,
           locality: form.locality,
           address: form.fullAddress || location,
-          province: 'Punjab',
-          country: 'Pakistan',
+          province: form.province || 'Punjab',
+          country: form.country || 'Pakistan',
+          postalCode: form.postalCode || undefined,
+          streetAddress: form.streetAddress || undefined,
           source: form.locationSource || 'manual',
           accuracy: form.locationAccuracy,
           placeId: form.placeId || null,
@@ -706,7 +716,13 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
             latitude: null,
             longitude: null,
             fullAddress: '',
+             streetAddress: '',
             placeId: '',
+             district: '',
+             tehsil: '',
+             province: '',
+             postalCode: '',
+             country: '',
             locationAccuracy: null,
             locationSource: '',
           })}
@@ -752,7 +768,13 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
           latitude: loc.latitude,
           longitude: loc.longitude,
           fullAddress: loc.fullAddress,
+           streetAddress: loc.streetAddress ?? '',
           placeId: loc.placeId ?? '',
+           district: loc.district ?? '',
+           tehsil: loc.tehsil ?? '',
+           province: loc.province ?? '',
+           postalCode: loc.postalCode ?? '',
+           country: loc.country ?? '',
           locationAccuracy: loc.accuracy ?? null,
           locationSource: loc.locationSource,
           ...(loc.city && { city: loc.city }),
@@ -762,7 +784,13 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
           latitude: null,
           longitude: null,
           fullAddress: '',
+           streetAddress: '',
           placeId: '',
+           district: '',
+           tehsil: '',
+           province: '',
+           postalCode: '',
+           country: '',
           locationAccuracy: null,
           locationSource: '',
         })}
@@ -771,6 +799,35 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
         onConfirmationChange={onConfirmationChange}
         errorMessage={errors.location}
       />
+      {(form.fullAddress || form.district || form.tehsil) && (
+        <View style={[s.locationSummary, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+          <View style={s.locationSummaryHeader}>
+            <Feather name="check-circle" size={14} color={colors.action} />
+            <Text style={[s.locationSummaryTitle, { color: colors.foreground }]}>Auto-filled location details</Text>
+          </View>
+          {form.fullAddress ? (
+            <Text style={[s.locationSummaryAddress, { color: colors.mutedForeground }]} numberOfLines={3}>
+              {form.fullAddress}
+            </Text>
+          ) : null}
+          <View style={s.locationSummaryGrid}>
+            {[
+              ['City', form.city],
+              ['District', form.district],
+              ['Tehsil', form.tehsil],
+              ['Area', form.locality],
+            ].filter(([, value]) => Boolean(value)).map(([label, value]) => (
+              <View key={label} style={s.locationSummaryItem}>
+                <Text style={[s.locationSummaryLabel, { color: colors.mutedForeground }]}>{label}</Text>
+                <Text style={[s.locationSummaryValue, { color: colors.foreground }]} numberOfLines={1}>{value}</Text>
+              </View>
+            ))}
+          </View>
+          <Text style={[s.locationSummaryHint, { color: colors.mutedForeground }]}>
+            These details came from your exact map pin. You can still edit the fields above.
+          </Text>
+        </View>
+      )}
     </AnimatedReveal>
   );
 }
@@ -1835,6 +1892,15 @@ const s = StyleSheet.create({
   // Hint
   hintBox:              { flexDirection: 'row', gap: 8, alignItems: 'flex-start', borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 6 },
   hintText:             { fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 15, flex: 1 },
+  locationSummary:      { borderWidth: 1, borderRadius: 14, padding: 12, gap: 8, marginTop: 2 },
+  locationSummaryHeader: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  locationSummaryTitle: { fontFamily: 'Inter_700Bold', fontSize: 12 },
+  locationSummaryAddress: { fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 16 },
+  locationSummaryGrid:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  locationSummaryItem:  { width: '47%', gap: 2 },
+  locationSummaryLabel: { fontFamily: 'Inter_500Medium', fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5 },
+  locationSummaryValue: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
+  locationSummaryHint:  { fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 14 },
   // Success
   successIcon:          { width: 80, height: 80, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 1, marginBottom: 20 },
   successTitle:         { fontFamily: 'Inter_700Bold', fontSize: 26, textAlign: 'center', marginBottom: 10 },

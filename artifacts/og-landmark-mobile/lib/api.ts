@@ -101,22 +101,40 @@ export async function apiRequest<T>(
 
 const apiFetch = apiRequest;
 
-// Multipart fetch (for file uploads)
-async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+// Multipart fetch (for file uploads). Media uploads get a longer timeout than
+// normal JSON requests because a phone may be sending a large video over a
+// slower mobile connection.
+async function apiUpload<T>(path: string, form: FormData, timeoutMs = 180_000): Promise<T> {
   const token = await getToken();
   const headers: Record<string, string> = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}${path}`, { method: 'POST', body: form, headers });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    const message = typeof err === 'object' && err !== null
-      ? (err as { error?: string; message?: string; detail?: string }).error
-        || (err as { message?: string }).message
-        || (err as { detail?: string }).detail
-      : undefined;
-    throw new Error(message || `HTTP ${res.status}`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      body: form,
+      headers,
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      const message = typeof err === 'object' && err !== null
+        ? (err as { error?: string; message?: string; detail?: string }).error
+          || (err as { message?: string }).message
+          || (err as { detail?: string }).detail
+        : undefined;
+      throw new Error(message || `HTTP ${res.status}`);
+    }
+    return res.json();
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Media upload timed out. Please check your connection and try again.');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
   }
-  return res.json();
 }
 
 // ─── Inquiry & Appointment submission ─────────────────────────────────────────
@@ -354,6 +372,7 @@ export type ApiProperty = {
     district?: string;
     tehsil?: string;
     locality?: string;
+    streetAddress?: string;
     address?: string;
     province?: string;
     country?: string;
@@ -710,13 +729,28 @@ export async function uploadVideo(uri: string, filename = 'video.mp4'): Promise<
 }
 
 export async function uploadMultipleImages(uris: string[]): Promise<string[]> {
-  const form = new FormData();
-  uris.forEach((uri, i) => {
-    const ext = uri.split('.').pop()?.toLowerCase() ?? 'jpg';
-    form.append('images', { uri, type: `image/${ext === 'png' ? 'png' : 'jpeg'}`, name: `photo_${i}.${ext}` } as unknown as Blob);
-  });
-  const res = await apiUpload<{ urls: string[] }>('/api/upload', form);
-  return res.urls ?? [];
+  // Keep batches at the previous server limit as well. This lets an already
+  // deployed backend accept new app builds while the backend is being updated
+  // to the 30-photo listing limit.
+  const batchSize = 10;
+  const uploaded: string[] = [];
+  for (let start = 0; start < uris.length; start += batchSize) {
+    const form = new FormData();
+    const batch = uris.slice(start, start + batchSize);
+    batch.forEach((uri, index) => {
+      const cleanUri = uri.split(/[?#]/, 1)[0];
+      const uriExt = cleanUri.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
+      const ext = uriExt === 'png' ? 'png' : uriExt === 'webp' ? 'webp' : 'jpg';
+      const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+      form.append(
+        'images',
+        { uri, type: mime, name: `photo_${start + index}.${ext}` } as unknown as Blob,
+      );
+    });
+    const res = await apiUpload<{ urls: string[] }>('/api/upload', form);
+    uploaded.push(...(res.urls ?? []));
+  }
+  return uploaded;
 }
 
 export async function uploadProfilePhoto(uri: string): Promise<{ url: string }> {

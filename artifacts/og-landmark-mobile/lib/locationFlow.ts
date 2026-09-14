@@ -186,9 +186,11 @@ export async function getCurrentPositionFromProvider(
 
 export interface ReverseGeocodeResult {
   fullAddress?: string;
+  streetAddress?: string;
   city?: string;
   locality?: string;
   district?: string;
+  tehsil?: string;
   province?: string;
   country?: string;
   postalCode?: string;
@@ -214,6 +216,8 @@ export function createGpsLocationData(
     city: reverseGeocoded?.city,
     locality: reverseGeocoded?.locality,
     district: reverseGeocoded?.district,
+    tehsil: reverseGeocoded?.tehsil,
+    streetAddress: reverseGeocoded?.streetAddress,
     province: reverseGeocoded?.province,
     country: reverseGeocoded?.country,
     postalCode: reverseGeocoded?.postalCode,

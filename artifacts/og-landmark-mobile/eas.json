@@ -11,6 +11,7 @@
     },
     "production": {
       "node": "20.19.4",
+      "environment": "production",
       "distribution": "store",
       "android": {
         "image": "ubuntu-22.04-jdk-17-ndk-r21e",

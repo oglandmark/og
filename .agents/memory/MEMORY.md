@@ -3,6 +3,7 @@
 - [Hostinger package portability](hostinger-package-portability.md) — omit Replit lockfiles and force the public npm registry in external deployment ZIPs.
 - [Hostinger startup timeout](hostinger-startup-timeout.md) — bind the Node port before MySQL initialization so external health checks do not time out.
 - [Hostinger SMTP delivery](hostinger-smtp-delivery.md) — OTP mail needs a real mailbox credential pair, independently of the database connection.
+- [Mobile listing uploads](mobile-listing-uploads.md) — upload Android property photos one at a time, with a legacy collection-route fallback for deployed backend compatibility.
 - [Neon PostgreSQL production database](neon-database.md) — production persistence uses the user's Neon database through a server-only DATABASE_URL.
 - [Neon auth schema](neon-auth-schema.md) — app_data alone is insufficient; auth tables must exist before production auth flows are exercised.
 - [Expo GitHub build dispatch](expo-github-build-dispatch.md) — after repository linking, EAS dispatch can still return transient 503s; verify no queued build before retrying.

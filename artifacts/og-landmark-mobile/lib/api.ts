@@ -747,39 +747,45 @@ export async function uploadVideo(uri: string, filename = 'video.mp4'): Promise<
   return apiUpload<{ url: string }>('/api/upload/video', form);
 }
 
-export async function uploadMultipleImages(uris: string[]): Promise<string[]> {
-  // Keep batches at the previous server limit as well. This lets an already
-  // deployed backend accept new app builds while the backend is being updated
-  // to the 30-photo listing limit.
-  const batchSize = 10;
-  const uploaded: string[] = [];
-  for (let start = 0; start < uris.length; start += batchSize) {
-    const form = new FormData();
-    const batch = uris.slice(start, start + batchSize);
-    batch.forEach((uri, index) => {
-      form.append(
-        'images',
-        imageUploadFile(uri, `photo_${start + index}.jpg`) as unknown as Blob,
-      );
-    });
-    try {
-      const res = await apiUpload<{ urls: string[] }>('/api/upload', form);
-      uploaded.push(...(res.urls ?? []));
-    } catch (error) {
-      // Some already-deployed Hostinger instances still expose the older
-      // single-file route or have a smaller multi-file limit. Retry only for
-      // a server-side multipart compatibility response; network/auth failures
-      // are surfaced immediately instead of creating duplicate uploads.
-      const compatibilityFailure =
-        error instanceof ApiRequestError &&
-        [400, 404, 413, 415, 422].includes(error.status);
-      if (!compatibilityFailure) throw error;
+function isUploadCompatibilityError(error: unknown): error is ApiRequestError {
+  return error instanceof ApiRequestError
+    && [400, 404, 413, 415, 422, 500, 502, 503].includes(error.status);
+}
 
-      for (let index = 0; index < batch.length; index += 1) {
-        const result = await uploadImage(batch[index], `photo_${start + index}.jpg`);
-        uploaded.push(result.url);
-      }
-    }
+async function uploadImageToLegacyCollectionRoute(
+  uri: string,
+  filename: string,
+): Promise<{ url: string }> {
+  const form = new FormData();
+  form.append('images', imageUploadFile(uri, filename) as unknown as Blob);
+  const response = await apiUpload<{ urls?: string[]; url?: string }>('/api/upload', form);
+  const url = response.urls?.[0] || response.url;
+  if (!url) throw new Error('The server did not return an uploaded photo URL.');
+  return { url };
+}
+
+async function uploadListingImage(uri: string, filename: string): Promise<{ url: string }> {
+  try {
+    return await uploadImage(uri, filename);
+  } catch (error: unknown) {
+    // Older Hostinger deployments do not expose /api/upload/single, while
+    // some Android multipart requests are rejected by that route. Retry the
+    // same photo through the older collection endpoint as a one-file request.
+    if (!isUploadCompatibilityError(error)) throw error;
+    return uploadImageToLegacyCollectionRoute(uri, filename);
+  }
+}
+
+export async function uploadMultipleImages(uris: string[]): Promise<string[]> {
+  // Upload photos individually on mobile. A single multipart request containing
+  // many Android content:// files is rejected by some deployed proxies/Multer
+  // versions even though each file is valid. The server still receives the
+  // same authenticated upload requests, but each request stays small and can
+  // fall back to the legacy collection route.
+  const uploaded: string[] = [];
+  for (let index = 0; index < uris.length; index += 1) {
+    const result = await uploadListingImage(uris[index], `photo_${index}.jpg`);
+    uploaded.push(result.url);
   }
   return uploaded;
 }

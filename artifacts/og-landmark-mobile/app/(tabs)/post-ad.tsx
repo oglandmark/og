@@ -24,7 +24,7 @@ import { BrandMark } from '@/components/BrandMark';
 import { okaraDistrict } from '@/lib/cities';
 import { useAuth } from '@/context/AuthContext';
 import { addUserListing } from '@/lib/listingsStore';
-import { uploadImage, uploadVideo } from '@/lib/api';
+import { uploadMultipleImages, uploadVideo } from '@/lib/api';
 import { LocationPicker } from '@/components/LocationPicker';
 import type { LocationData } from '@/lib/locationService';
 
@@ -365,23 +365,13 @@ function AgentForm({ colors, topInset, user, router }: any) {
     let uploadedImages: string[] = [];
     let uploadedVideoUrl: string | undefined;
     try {
-      const imageUploads = await Promise.all(
-        photos.map((uri, i) =>
-          uploadImage(uri, `prop_${Date.now()}_${i}.jpg`).catch(() => null)
-        )
-      );
-      uploadedImages = imageUploads.filter(Boolean).map((r) => r!.url);
-    } catch { /* ignore — listing saved without images */ }
-
-    if (video) {
-      try {
+      if (photos.length > 0) {
+        uploadedImages = await uploadMultipleImages(photos);
+      }
+      if (video) {
         const vRes = await uploadVideo(video.uri, video.filename ?? 'property-video.mp4');
         uploadedVideoUrl = vRes.url;
-      } catch { /* ignore — listing saved without video */ }
-    }
-    // ───────────────────────────────────────────────────────────────────────
-
-    try {
+      }
       await addUserListing({
         id: `agent_${Date.now()}`,
         postedBy: user.id,
@@ -438,8 +428,11 @@ function AgentForm({ colors, topInset, user, router }: any) {
         'Your property has been submitted for admin review. It will appear on OG Landmark once approved. You can track its status in My Listings.',
         [{ text: 'My Listings', onPress: () => router.push('/(tabs)/listings') }],
       );
-    } catch {
-      Alert.alert('Error', 'Could not save listing. Please try again.');
+    } catch (error) {
+      const message = error instanceof Error && error.message
+        ? error.message
+        : 'Could not save listing. Please try again.';
+      Alert.alert('Could not save listing', message);
     } finally {
       setSubmitting(false);
     }

@@ -62,23 +62,25 @@ interface Props {
 
 const OKARA_DISTRICT_CENTER = { latitude: 30.8105, longitude: 73.4597 };
 
-// ─── OG Landmark dark-gold Google Maps style ──────────────────────────────────
+// ─── OG Landmark light Google Maps style ───────────────────────────────────────
 const OG_MAP_STYLE = [
-  { elementType: 'geometry', stylers: [{ color: '#0e1e33' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0e1e33' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#c8a45a' }] },
-  { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#1a3358' }] },
-  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#d4a75e' }] },
-  { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#d4a75e' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#0a2010' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#18304f' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#0b1a2d' }] },
-  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#8a94a3' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#c8a45a' }] },
-  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#f0d090' }] },
-  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#1e2e44' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#061422' }] },
-  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#3d4a5c' }] },
+  { elementType: 'geometry', stylers: [{ color: '#f3f6f8' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#425466' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#d7e0e7' }] },
+  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#17324d' }] },
+  { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#637588' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#dcecdf' }] },
+  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#4c7659' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#e1e8ed' }] },
+  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#607486' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#f1d18b' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#dbb765' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#6b5220' }] },
+  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#e8edf1' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#cfe4f2' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#63869b' }] },
 ];
 
 const PROVIDER = PROVIDER_GOOGLE;
@@ -308,6 +310,17 @@ function ExploreMapViewWithGoogleMaps({
     longitudeDelta: userLat != null && userLng != null ? 0.1 : 0.22,
   };
 
+  if (mapError) {
+    return <ExploreMapViewWithExpoGoFallback {...{
+      properties,
+      onSelect,
+      userLat,
+      userLng,
+      centerLat,
+      centerLng,
+    }} />;
+  }
+
   // initialRegion is only read on the first native render. Recenter explicitly
   // whenever Near Me obtains a fresh GPS coordinate while the map is already open.
   useEffect(() => {
@@ -445,7 +458,10 @@ function ExploreMapViewWithGoogleMaps({
         showsMyLocationButton={false}
         toolbarEnabled={false}
         moveOnMarkerPress={false}
-        onMapReady={() => {
+         loadingEnabled
+         loadingBackgroundColor="#f3f6f8"
+         loadingIndicatorColor="#c8a45a"
+         onMapLoaded={() => {
           setMapReady(true);
           setMapError(false);
         }}

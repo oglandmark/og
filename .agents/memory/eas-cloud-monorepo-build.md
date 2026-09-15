@@ -7,4 +7,4 @@ Direct `eas-cli build` uploads the workspace to EAS without requiring a GitHub c
 
 **Why:** The Replit workspace and EAS's pnpm 11 builder do not initially apply the same build-script approval behavior, and a missing Babel preset only appears after the dependency phase succeeds.
 
-**How to apply:** When generating a future Android bundle, check the EAS install-dependencies and Gradle logs in order. Keep the pnpm build-script policy valid for the chosen pnpm version, ensure the mobile package declares `babel-preset-expo`, and do not submit the finished artifact unless explicitly requested.
+**How to apply:** When generating a future Android bundle, check the EAS install-dependencies and Gradle logs in order. Keep the pnpm build-script policy valid for the chosen pnpm version, ensure the mobile package declares `babel-preset-expo`, and do not submit the finished artifact unless explicitly requested. For GitHub-based builds, verify every locally imported source file exists in the remote commit tree; local typecheck can pass while the cloud bundle fails on a file that was not published.

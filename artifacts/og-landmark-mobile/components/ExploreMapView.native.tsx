@@ -21,7 +21,13 @@ import MapView, {
 import Supercluster from 'supercluster';
 import { Feather } from '@expo/vector-icons';
 import { MapAreaRange, MAP_AREA_BLUE, MAP_AREA_BLUE_FILL } from '@/components/MapAreaRange';
-import { countPointsWithinRadius } from '@/components/mapRadius';
+import {
+  countPointsWithinRadius,
+  MAP_AREA_DEFAULT_KM,
+  mapAreaRadiusMeters,
+  normalizeMapAreaRange,
+} from '@/components/mapRadius';
+import { ExpoGoMapFallback } from '@/components/ExpoGoMapFallback';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 export interface MapBounds {
@@ -56,23 +62,25 @@ interface Props {
 
 const OKARA_DISTRICT_CENTER = { latitude: 30.8105, longitude: 73.4597 };
 
-// ─── OG Landmark dark-gold Google Maps style ──────────────────────────────────
+// ─── OG Landmark light Google Maps style ───────────────────────────────────────
 const OG_MAP_STYLE = [
-  { elementType: 'geometry', stylers: [{ color: '#0e1e33' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0e1e33' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#c8a45a' }] },
-  { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#1a3358' }] },
-  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#d4a75e' }] },
-  { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#d4a75e' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#0a2010' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#18304f' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#0b1a2d' }] },
-  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#8a94a3' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#c8a45a' }] },
-  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#f0d090' }] },
-  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#1e2e44' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#061422' }] },
-  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#3d4a5c' }] },
+  { elementType: 'geometry', stylers: [{ color: '#f3f6f8' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#425466' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#d7e0e7' }] },
+  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#17324d' }] },
+  { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#637588' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#dcecdf' }] },
+  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#4c7659' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#e1e8ed' }] },
+  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#607486' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#f1d18b' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#dbb765' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#6b5220' }] },
+  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#e8edf1' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#cfe4f2' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#63869b' }] },
 ];
 
 const PROVIDER = PROVIDER_GOOGLE;
@@ -84,6 +92,7 @@ const GOOGLE_MAPS_KEY =
   Constants.expoConfig?.ios?.config?.googleMapsApiKey?.trim() ||
   '';
 const HAS_GOOGLE_MAPS_KEY = Boolean(GOOGLE_MAPS_KEY);
+const IS_EXPO_GO = Constants.appOwnership === 'expo';
 
 function GoogleMapsUnavailable() {
   return (
@@ -172,8 +181,82 @@ const udot = StyleSheet.create({
 // ─── Region → bbox helper ──────────────────────────────────────────────────────
 // ─── Main component ────────────────────────────────────────────────────────────
 export function ExploreMapView(props: Props) {
-  if (!HAS_GOOGLE_MAPS_KEY) return <GoogleMapsUnavailable />;
+  if (IS_EXPO_GO) return <ExploreMapViewWithExpoGoFallback {...props} />;
+  // A preview/dev build may not have the native Google SDK key injected yet.
+  // Keep the map usable with the same WebView fallback used by Expo Go rather
+  // than mounting a blank native surface.
+  if (!HAS_GOOGLE_MAPS_KEY) return <ExploreMapViewWithExpoGoFallback {...props} />;
   return <ExploreMapViewWithGoogleMaps {...props} />;
+}
+
+function ExploreMapViewWithExpoGoFallback({
+  properties = [],
+  onSelect,
+  userLat,
+  userLng,
+  centerLat,
+  centerLng,
+}: Props) {
+  const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
+  const cLat = centerLat ?? userLat ?? OKARA_DISTRICT_CENTER.latitude;
+  const cLng = centerLng ?? userLng ?? OKARA_DISTRICT_CENTER.longitude;
+  const [areaCenter, setAreaCenter] = useState({ latitude: cLat, longitude: cLng });
+  useEffect(() => {
+    setAreaCenter({ latitude: cLat, longitude: cLng });
+  }, [cLat, cLng]);
+  const validProps = properties.filter((property) => {
+    const latitude = property.latitude ?? property.lat;
+    const longitude = property.longitude ?? property.lng;
+    return latitude != null && longitude != null && isFinite(Number(latitude)) && isFinite(Number(longitude));
+  });
+  const points = validProps.map((property) => ({
+    id: property.id,
+    latitude: Number(property.latitude ?? property.lat),
+    longitude: Number(property.longitude ?? property.lng),
+    label: fmt(property.price),
+  }));
+  if (userLat != null && userLng != null) {
+    points.push({ id: '__user__', latitude: userLat, longitude: userLng, label: '' });
+  }
+  const areaCount = countPointsWithinRadius(validProps, areaCenter, areaRadiusKm);
+
+  return (
+    <View style={styles.container}>
+      <ExpoGoMapFallback
+        latitude={areaCenter.latitude}
+        longitude={areaCenter.longitude}
+        zoom={12}
+        points={points}
+        radiusKm={areaRadiusKm}
+        interactive
+        onRegionChange={(region) => {
+          setAreaCenter({ latitude: region.latitude, longitude: region.longitude });
+        }}
+        onSelect={(id) => {
+          if (id !== '__user__') onSelect(id);
+        }}
+      />
+      <View style={styles.rangeOverlay}>
+        <MapAreaRange
+          value={areaRadiusKm}
+          onChange={setAreaRadiusKm}
+          colors={{
+            card: '#ffffff',
+            border: '#d6e0e8',
+            foreground: '#102a43',
+            mutedForeground: '#587089',
+          }}
+        />
+      </View>
+      <View
+        pointerEvents="none"
+        style={[styles.countBadge, { backgroundColor: '#ffffff', borderColor: '#d6e0e8' }]}
+      >
+        <View style={styles.countDot} />
+        <Text style={styles.countText}>{areaCount} on map</Text>
+      </View>
+    </View>
+  );
 }
 
 function ExploreMapViewWithGoogleMaps({
@@ -186,7 +269,7 @@ function ExploreMapViewWithGoogleMaps({
   centerLng,
   onSearchArea,
 }: Props) {
-  const [areaRadiusKm, setAreaRadiusKm] = useState(4);
+  const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
   const [showSearchArea, setShowSearchArea] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<MapProperty | null>(null);
@@ -227,6 +310,17 @@ function ExploreMapViewWithGoogleMaps({
     longitudeDelta: userLat != null && userLng != null ? 0.1 : 0.22,
   };
 
+  if (mapError) {
+    return <ExploreMapViewWithExpoGoFallback {...{
+      properties,
+      onSelect,
+      userLat,
+      userLng,
+      centerLat,
+      centerLng,
+    }} />;
+  }
+
   // initialRegion is only read on the first native render. Recenter explicitly
   // whenever Near Me obtains a fresh GPS coordinate while the map is already open.
   useEffect(() => {
@@ -242,8 +336,9 @@ function ExploreMapViewWithGoogleMaps({
   }, [centerLat, centerLng, userLat, userLng]);
 
   const handleAreaRadiusChange = useCallback((nextRadiusKm: number) => {
-    setAreaRadiusKm(nextRadiusKm);
-    const latitudeDelta = Math.max(0.025, (nextRadiusKm * 2.8) / 111);
+    const safeRadiusKm = normalizeMapAreaRange(nextRadiusKm);
+    setAreaRadiusKm(safeRadiusKm);
+    const latitudeDelta = Math.max(0.025, (safeRadiusKm * 2.8) / 111);
     const longitudeDelta = Math.max(
       0.025,
       latitudeDelta / Math.max(0.35, Math.cos((cLat * Math.PI) / 180)),
@@ -363,14 +458,17 @@ function ExploreMapViewWithGoogleMaps({
         showsMyLocationButton={false}
         toolbarEnabled={false}
         moveOnMarkerPress={false}
-        onMapReady={() => {
+         loadingEnabled
+         loadingBackgroundColor="#f3f6f8"
+         loadingIndicatorColor="#c8a45a"
+         onMapLoaded={() => {
           setMapReady(true);
           setMapError(false);
         }}
       >
         <Circle
           center={areaCenter}
-          radius={areaRadiusKm * 1000}
+          radius={mapAreaRadiusMeters(areaRadiusKm)}
           strokeColor={MAP_AREA_BLUE}
           strokeWidth={1.5}
           fillColor={MAP_AREA_BLUE_FILL}

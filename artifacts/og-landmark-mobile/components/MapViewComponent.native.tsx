@@ -20,32 +20,34 @@ import MapView, {
 } from 'react-native-maps';
 import { Feather } from '@expo/vector-icons';
 import { getCurrentPosition } from '@/lib/locationService';
+import { ExpoGoMapFallback } from '@/components/ExpoGoMapFallback';
 
-// ─── OG Landmark dark-gold map style (Google Maps) ────────────────────────────
+// ─── OG Landmark light map style (Google Maps) ─────────────────────────────────
+// Keep the map light and information-dense so roads, labels, and the gold pin
+// remain readable against both the white property detail screen and the form.
 const OG_MAP_STYLE = [
-  { elementType: 'geometry', stylers: [{ color: '#0e1e33' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0e1e33' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#c8a45a' }] },
-  { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#1a3358' }] },
-  { featureType: 'administrative.country', elementType: 'labels.text.fill', stylers: [{ color: '#c8a45a' }] },
-  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#d4a75e' }] },
-  { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#d4a75e' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#0a2010' }] },
-  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#507460' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#18304f' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#0b1a2d' }] },
-  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#8a94a3' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#c8a45a' }] },
-  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#1a2535' }] },
-  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#f0d090' }] },
-  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#1e2e44' }] },
-  { featureType: 'transit.station', elementType: 'labels.text.fill', stylers: [{ color: '#c8a45a' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#061422' }] },
-  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#3d4a5c' }] },
-  { featureType: 'water', elementType: 'labels.text.stroke', stylers: [{ color: '#0e1a2d' }] },
+  { elementType: 'geometry', stylers: [{ color: '#f3f6f8' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#425466' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#d7e0e7' }] },
+  { featureType: 'administrative.country', elementType: 'labels.text.fill', stylers: [{ color: '#17324d' }] },
+  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#17324d' }] },
+  { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#637588' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#dcecdf' }] },
+  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#4c7659' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#e1e8ed' }] },
+  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#607486' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#f1d18b' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#dbb765' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#6b5220' }] },
+  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#e8edf1' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#cfe4f2' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#63869b' }] },
 ];
 
 const PROVIDER = PROVIDER_GOOGLE;
+const MAP_LOAD_TIMEOUT_MS = 8_000;
 // A Google provider without a native SDK key can terminate the app while the
 // MapView is being created. Keep the rest of the app usable in unconfigured
 // preview builds instead of mounting a provider that cannot initialize.
@@ -55,6 +57,7 @@ const GOOGLE_MAPS_KEY =
   Constants.expoConfig?.ios?.config?.googleMapsApiKey?.trim() ||
   '';
 const HAS_GOOGLE_MAPS_KEY = Boolean(GOOGLE_MAPS_KEY);
+const IS_EXPO_GO = Constants.appOwnership === 'expo';
 
 function GoogleMapsUnavailable() {
   return (
@@ -140,10 +143,42 @@ interface InteractiveMapProps {
 // ─── StaticMap ─────────────────────────────────────────────────────────────────
 export function StaticMap({ latitude, longitude, satellite = false, interactive = true }: StaticMapProps) {
   const mapRef = useRef<MapView>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapFailed, setMapFailed] = useState(false);
+
+  useEffect(() => {
+    if (IS_EXPO_GO || !HAS_GOOGLE_MAPS_KEY || mapLoaded) return;
+    const timeout = setTimeout(() => setMapFailed(true), MAP_LOAD_TIMEOUT_MS);
+    return () => clearTimeout(timeout);
+  }, [mapLoaded, latitude, longitude]);
+
   if (!latitude || !longitude || !isFinite(latitude) || !isFinite(longitude)) {
     return <View style={styles.placeholder} />;
   }
-  if (!HAS_GOOGLE_MAPS_KEY) return <GoogleMapsUnavailable />;
+  if (IS_EXPO_GO || mapFailed) {
+    return (
+      <ExpoGoMapFallback
+        latitude={latitude}
+        longitude={longitude}
+        zoom={15}
+        interactive={interactive}
+        points={[{ latitude, longitude }]}
+      />
+    );
+  }
+  // Keep preview/dev builds useful when the native Google SDK key has not
+  // been injected yet. Production builds with a key still use Google Maps.
+  if (!HAS_GOOGLE_MAPS_KEY) {
+    return (
+      <ExpoGoMapFallback
+        latitude={latitude}
+        longitude={longitude}
+        zoom={15}
+        interactive={interactive}
+        points={[{ latitude, longitude }]}
+      />
+    );
+  }
 
   const region: Region = {
     latitude, longitude,
@@ -157,17 +192,24 @@ export function StaticMap({ latitude, longitude, satellite = false, interactive 
       provider={PROVIDER}
       initialRegion={region}
        mapType={satellite ? 'satellite' : 'standard'}
-       customMapStyle={OG_MAP_STYLE}
+       customMapStyle={satellite ? undefined : OG_MAP_STYLE}
       showsPointsOfInterests
       showsBuildings
       showsIndoors
       showsCompass
+       loadingEnabled
+       loadingBackgroundColor="#f3f6f8"
+       loadingIndicatorColor="#c8a45a"
       scrollEnabled={interactive}
       zoomEnabled={interactive}
       rotateEnabled={interactive}
       pitchEnabled={interactive}
       toolbarEnabled={false}
-         userInterfaceStyle="light"
+       userInterfaceStyle="light"
+       onMapLoaded={() => {
+         setMapLoaded(true);
+         setMapFailed(false);
+       }}
     >
       <Marker
         coordinate={{ latitude, longitude }}
@@ -185,7 +227,42 @@ export function StaticMap({ latitude, longitude, satellite = false, interactive 
 
 // ─── InteractiveMap ────────────────────────────────────────────────────────────
 export function InteractiveMap(props: InteractiveMapProps) {
-  if (!HAS_GOOGLE_MAPS_KEY) return <GoogleMapsUnavailable />;
+  if (IS_EXPO_GO) {
+    const latitude = props.pinLat ?? props.region?.latitude ?? 30.8141;
+    const longitude = props.pinLng ?? props.region?.longitude ?? 73.4502;
+    return (
+      <ExpoGoMapFallback
+        latitude={latitude}
+        longitude={longitude}
+        zoom={14}
+        interactive
+        points={[{ latitude, longitude }]}
+        onPress={(nextLat, nextLng) => props.onPress?.({
+          nativeEvent: { coordinate: { latitude: nextLat, longitude: nextLng } },
+        })}
+        onDragEnd={props.onDragEnd}
+        onRegionChange={props.onRegionChange}
+      />
+    );
+  }
+  if (!HAS_GOOGLE_MAPS_KEY) {
+    const latitude = props.pinLat ?? props.region?.latitude ?? 30.8141;
+    const longitude = props.pinLng ?? props.region?.longitude ?? 73.4502;
+    return (
+      <ExpoGoMapFallback
+        latitude={latitude}
+        longitude={longitude}
+        zoom={14}
+        interactive
+        points={[{ latitude, longitude }]}
+        onPress={(nextLat, nextLng) => props.onPress?.({
+          nativeEvent: { coordinate: { latitude: nextLat, longitude: nextLng } },
+        })}
+        onDragEnd={props.onDragEnd}
+        onRegionChange={props.onRegionChange}
+      />
+    );
+  }
   return <InteractiveMapWithGoogleMaps {...props} />;
 }
 
@@ -193,6 +270,7 @@ function InteractiveMapWithGoogleMaps({
   region,
   pinLat,
   pinLng,
+  onRegionChange,
   onPress,
   onDragEnd,
   showMyLocation = true,
@@ -203,8 +281,16 @@ function InteractiveMapWithGoogleMaps({
   const [pinCoord, setPinCoord] = useState({ latitude: lat, longitude: lng });
   const [userCoord, setUserCoord] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locating, setLocating] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapFailed, setMapFailed] = useState(false);
   const mapRef = useRef<MapView>(null);
   const ignoreMapPressUntil = useRef(0);
+
+  useEffect(() => {
+    if (mapLoaded) return;
+    const timeout = setTimeout(() => setMapFailed(true), MAP_LOAD_TIMEOUT_MS);
+    return () => clearTimeout(timeout);
+  }, [mapLoaded]);
 
   const initialRegion: Region = {
     latitude: lat, longitude: lng,
@@ -273,6 +359,23 @@ function InteractiveMapWithGoogleMaps({
     }
   }, [locating]);
 
+  if (mapFailed) {
+    return (
+      <ExpoGoMapFallback
+        latitude={lat}
+        longitude={lng}
+        zoom={14}
+        interactive
+        points={[{ latitude: pinCoord.latitude, longitude: pinCoord.longitude }]}
+        onPress={(nextLat, nextLng) => onPress?.({
+          nativeEvent: { coordinate: { latitude: nextLat, longitude: nextLng } },
+        })}
+        onDragEnd={onDragEnd}
+        onRegionChange={onRegionChange}
+      />
+    );
+  }
+
   return (
     <View style={styles.container}>
       <MapView
@@ -285,6 +388,13 @@ function InteractiveMapWithGoogleMaps({
         userInterfaceStyle="light"
         showsUserLocation={false}
         toolbarEnabled={false}
+        loadingEnabled
+        loadingBackgroundColor="#f3f6f8"
+        loadingIndicatorColor="#c8a45a"
+        onMapLoaded={() => {
+          setMapLoaded(true);
+          setMapFailed(false);
+        }}
       >
         <Marker
           coordinate={pinCoord}

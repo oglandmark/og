@@ -630,18 +630,24 @@ export function LocationPicker({
               </Pressable>
               <Pressable
                 testID="done-fullscreen-location-map"
-                disabled={!hasPin}
                 onPress={() => {
-                  if (draftLocation) {
-                    onChange(draftLocation.latitude, draftLocation.longitude, draftLocation.fullAddress);
-                    onLocationChange?.(draftLocation);
-                  }
+                  const locationToSave: LocationData = draftLocation ?? {
+                    latitude: region.latitude,
+                    longitude: region.longitude,
+                    fullAddress: pinnedAddr || `Pinned location · ${region.latitude.toFixed(5)}, ${region.longitude.toFixed(5)}`,
+                    locationSource: 'manual',
+                  };
+                  setDraftLocation(locationToSave);
+                  setPinnedAddr(locationToSave.fullAddress);
+                  setLocationData(locationToSave);
+                  onChange(locationToSave.latitude, locationToSave.longitude, locationToSave.fullAddress);
+                  onLocationChange?.(locationToSave);
                   setConfirmed(true);
                   onDone?.();
                 }}
                 style={({ pressed }) => [
                   lp.doneButton,
-                  { backgroundColor: accent, opacity: !hasPin ? 0.45 : pressed ? 0.82 : 1 },
+                  { backgroundColor: accent, opacity: pressed ? 0.82 : 1 },
                 ]}
               >
                 <Feather name="check" size={16} color="#ffffff" />

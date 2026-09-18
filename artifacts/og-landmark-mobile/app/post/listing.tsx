@@ -566,6 +566,8 @@ export default function ListingWizard() {
           </View>
         )}
 
+        <TransactionToggle form={form} update={update} colors={colors} />
+
         <View style={[s.formSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <StepType form={form} update={update} colors={colors} />
         </View>
@@ -624,6 +626,51 @@ export default function ListingWizard() {
 }
 
 // ── SECTION 1: Property Type ───────────────────────────────────────────────────
+
+function TransactionToggle({ form, update, colors }: { form: Form; update: (p: Partial<Form>) => void; colors: any }) {
+  const setPurpose = (purpose: 'Sale' | 'Rent') => {
+    if (purpose === 'Rent' && !purposesFor(form.propertyType).includes('Rent')) {
+      update({ propertyType: 'House', purpose });
+      return;
+    }
+    update({ purpose });
+  };
+
+  return (
+    <View style={[s.transactionToggle, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Text style={[s.transactionToggleLabel, { color: colors.mutedForeground }]}>LIST PROPERTY TO</Text>
+      <View style={[s.transactionToggleTrack, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+        {([
+          { value: 'Sale' as const, label: 'Buy', icon: 'home' as const },
+          { value: 'Rent' as const, label: 'Rent', icon: 'key' as const },
+        ]).map((option) => {
+          const active = form.purpose === option.value;
+          return (
+            <Pressable
+              key={option.value}
+              onPress={() => setPurpose(option.value)}
+              style={[
+                s.transactionToggleOption,
+                {
+                  backgroundColor: active ? colors.action : 'transparent',
+                  borderColor: active ? colors.action : 'transparent',
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={`List property for ${option.label}`}
+            >
+              <Feather name={option.icon} size={16} color={active ? colors.actionForeground : colors.mutedForeground} />
+              <Text style={[s.transactionToggleText, { color: active ? colors.actionForeground : colors.foreground }]}>
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
 
 function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Form>) => void; colors: any }) {
   const [activeGroup, setActiveGroup] = useState<PropCategory>(categoryOf(form.propertyType));
@@ -1793,6 +1840,11 @@ const s = StyleSheet.create({
   formSection:          { borderWidth: 1, borderRadius: 20, padding: 16, marginBottom: 14, overflow: 'hidden' },
   validationBanner:      { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 14 },
   validationText:        { fontFamily: 'Inter_500Medium', fontSize: 12, lineHeight: 17, flex: 1 },
+  transactionToggle:    { borderWidth: 1, borderRadius: 16, padding: 12, marginBottom: 14 },
+  transactionToggleLabel:{ fontFamily: 'Inter_700Bold', fontSize: 10, letterSpacing: 1, marginBottom: 8 },
+  transactionToggleTrack:{ flexDirection: 'row', gap: 6, borderWidth: 1, borderRadius: 12, padding: 4 },
+  transactionToggleOption:{ flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 9 },
+  transactionToggleText:{ fontFamily: 'Inter_700Bold', fontSize: 14 },
   stepEyebrow:          { fontFamily: 'Inter_700Bold', fontSize: 10, letterSpacing: 1.4, marginBottom: 4 },
   stepTitle:            { fontFamily: 'Inter_700Bold', fontSize: 22, marginBottom: 6 },
   stepSub:              { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, marginBottom: 14 },

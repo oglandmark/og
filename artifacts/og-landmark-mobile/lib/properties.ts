@@ -790,12 +790,21 @@ const ALL_IMAGES: ImageSourcePropType[] = [
   require('@/assets/images/property-6.jpg'),
 ];
 
+const AGRICULTURE_IMAGES: ImageSourcePropType[] = [
+  require('@/assets/images/agriculture/agri-field-1.jpg'),
+  require('@/assets/images/agriculture/agri-field-2.jpg'),
+  require('@/assets/images/agriculture/agri-field-3.jpg'),
+  require('@/assets/images/agriculture/agri-field-4.jpg'),
+];
+
 /** Returns exactly 15 images: property's own first, padded with other assets if needed. */
 export function propertyImages(property: Property): ImageSourcePropType[] {
   const own = [property.image, ...property.gallery];
-  const pool = ALL_IMAGES.filter(
+  const imagePool = /agri|farm/i.test(property.type) ? AGRICULTURE_IMAGES : ALL_IMAGES;
+  const uniquePool = imagePool.filter(
     (img) => !own.some((o) => JSON.stringify(o) === JSON.stringify(img)),
   );
+  const pool = uniquePool.length > 0 ? uniquePool : imagePool;
   const result = [...own];
   let i = 0;
   while (result.length < 15) {
@@ -860,6 +869,8 @@ const PLACEHOLDERS: ImageSourcePropType[] = [
   require('@/assets/images/property-6.jpg'),
 ];
 
+const AGRICULTURE_PLACEHOLDER = AGRICULTURE_IMAGES;
+
 /**
  * Convert an ApiProperty (from the backend) to the Property shape used
  * throughout the mobile app. Falls back to placeholder images when the
@@ -890,7 +901,8 @@ export function apiPropertyToProperty(ap: {
 }): Property {
   const safeId   = typeof ap.id === 'number' && isFinite(ap.id) ? ap.id : 0;
   const imgs     = Array.isArray(ap.images) ? ap.images.filter(Boolean) : [];
-  const placeholder = PLACEHOLDERS[safeId % PLACEHOLDERS.length] ?? PLACEHOLDERS[0]!;
+  const placeholderPool = /agri|farm/i.test(ap.type ?? '') ? AGRICULTURE_PLACEHOLDER : PLACEHOLDERS;
+  const placeholder = placeholderPool[safeId % placeholderPool.length] ?? placeholderPool[0]!;
   const image: ImageSourcePropType = imgs[0] ? { uri: resolveImageUrl(imgs[0]) } : placeholder;
   const gallery: ImageSourcePropType[] = imgs.slice(1).map(
     (u) => ({ uri: resolveImageUrl(u) } as ImageSourcePropType),

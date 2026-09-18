@@ -537,8 +537,9 @@ export default function ListingWizard() {
           <Feather name="arrow-left" size={16} color={colors.foreground} />
         </Pressable>
         <View style={{ flex: 1, minWidth: 0, paddingHorizontal: 4 }}>
-          <Text style={[s.headerStep, { color: colors.mutedForeground }]}>CREATE PROPERTY LISTING</Text>
+          <Text style={[s.headerStep, { color: colors.action }]}>POST PROPERTY</Text>
           <Text style={[s.headerTitle, { color: colors.foreground }]}>Post an Ad</Text>
+          <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Create a listing buyers can trust</Text>
           <View style={[s.progressTrack, { backgroundColor: colors.border }]}>
             <View style={[s.progressFill, { width: '100%', backgroundColor: colors.action }]} />
           </View>
@@ -557,6 +558,8 @@ export default function ListingWizard() {
         showsVerticalScrollIndicator={false}
         bottomOffset={28}
       >
+        <ListingProgress form={form} locationConfirmed={locationConfirmed} colors={colors} />
+
         {Object.keys(errors).length > 0 && (
           <View style={[s.validationBanner, { backgroundColor: '#e53e3e12', borderColor: '#e53e3e55' }]}>
             <Feather name="alert-circle" size={16} color="#e53e3e" />
@@ -672,6 +675,43 @@ function TransactionToggle({ form, update, colors }: { form: Form; update: (p: P
   );
 }
 
+function ListingProgress({ form, locationConfirmed, colors }: { form: Form; locationConfirmed: boolean; colors: any }) {
+  const stages = [
+    { label: 'Property', icon: 'home' as const, done: Boolean(form.propertyType) },
+    { label: 'Location', icon: 'map-pin' as const, done: Boolean(form.city && form.latitude != null && form.longitude != null && locationConfirmed) },
+    { label: 'Details', icon: 'edit-3' as const, done: Boolean(form.price && form.area) },
+    { label: 'Media', icon: 'camera' as const, done: form.photos.length > 0 },
+  ];
+  const completed = stages.filter((stage) => stage.done).length;
+
+  return (
+    <View style={[s.progressCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={s.progressCardHeader}>
+        <View>
+          <Text style={[s.progressCardEyebrow, { color: colors.mutedForeground }]}>LISTING PROGRESS</Text>
+          <Text style={[s.progressCardTitle, { color: colors.foreground }]}>Build a stronger listing</Text>
+        </View>
+        <View style={[s.progressCount, { backgroundColor: colors.action + '16' }]}>
+          <Text style={[s.progressCountText, { color: colors.action }]}>{completed}/4 ready</Text>
+        </View>
+      </View>
+      <View style={s.progressSteps}>
+        {stages.map((stage, index) => (
+          <React.Fragment key={stage.label}>
+            <View style={s.progressStep}>
+              <View style={[s.progressStepIcon, { backgroundColor: stage.done ? colors.action : colors.secondary, borderColor: stage.done ? colors.action : colors.border }]}>
+                <Feather name={stage.done ? 'check' : stage.icon} size={12} color={stage.done ? colors.actionForeground : colors.mutedForeground} />
+              </View>
+              <Text style={[s.progressStepLabel, { color: stage.done ? colors.foreground : colors.mutedForeground }]}>{stage.label}</Text>
+            </View>
+            {index < stages.length - 1 && <View style={[s.progressConnector, { backgroundColor: stages[index + 1].done ? colors.action : colors.border }]} />}
+          </React.Fragment>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Form>) => void; colors: any }) {
   const [activeGroup, setActiveGroup] = useState<PropCategory>(categoryOf(form.propertyType));
   const typesInGroup = PROPERTY_TYPES.filter((t) => t.category === activeGroup);
@@ -686,7 +726,8 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 1</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>What are you listing?</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Choose your property</Text>
+      <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Start with the property type so we can tailor the rest of your listing.</Text>
 
       {/* Category tabs */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 16 }}>
@@ -751,7 +792,8 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 2</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>Location</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Where is it located?</Text>
+      <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Pin the exact property location so interested buyers can find it easily.</Text>
 
       <Label colors={colors}>City *</Label>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
@@ -891,7 +933,8 @@ function StepBasic({ form, update, colors, errors }: any) {
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 3</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>Basic Details</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Pricing & basics</Text>
+      <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Add the essentials buyers look for first.</Text>
 
       <WizField label="Listing Title" optional
         placeholder={`e.g. ${form.propertyType} ${isRent ? 'for Rent' : 'for Sale'} in ${form.city}`}
@@ -934,8 +977,8 @@ function StepSpecific({ form, update, colors, category }: any) {
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 4</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>Property Details</Text>
-      <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Specific fields for {type}. Optional unless marked *.</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Property details</Text>
+      <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Tell buyers what makes this {type} a good fit. Optional unless marked *.</Text>
 
       {/* ── House / Villa ─────────────────────────────────────── */}
       {(type === 'House' || type === 'Villa') && (
@@ -1490,7 +1533,7 @@ function StepFeatures({ form, update, colors, category }: any) {
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 5</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>Features & Amenities</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Features & amenities</Text>
       <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Select all that apply. These appear as highlighted tags on your listing.</Text>
       <View style={s.featureGrid}>
         {available.map((f: string) => {
@@ -1515,7 +1558,7 @@ function StepMedia({ form, update, colors, errors, pickPhotos, pickVideo }: any)
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 6</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>Photos & Media</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Photos & media</Text>
       <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Properties with 5+ photos get 3× more enquiries. Add up to 30 photos.</Text>
 
       <View style={[s.mediaBox, { borderColor: errors.photos ? '#e53e3e' : colors.border, backgroundColor: colors.card }]}>
@@ -1598,7 +1641,7 @@ function StepDocs({ form, update, colors, errors, user, category }: any) {
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 7</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>Description & Docs</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Description & documents</Text>
 
       {/* Description */}
       <Label colors={colors}>Property Description *</Label>
@@ -1680,7 +1723,7 @@ function StepPreview({ form, colors, category }: any) {
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 8</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>Preview & Publish</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Review & publish</Text>
       <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Review your listing before submitting it for approval.</Text>
 
       <View style={[s.previewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -1845,45 +1888,57 @@ function BoolGrid({ items, form, update, colors, tristate }: { items: { key: str
 const s = StyleSheet.create({
   screen:               { flex: 1 },
   // Header
-  header:               { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 12 },
-  backBtn:              { width: 34, height: 34, borderRadius: 11, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  headerStep:           { fontFamily: 'Inter_700Bold', fontSize: 10, letterSpacing: 1.2, marginBottom: 3 },
-  headerTitle:          { fontFamily: 'Inter_700Bold', fontSize: 15, marginBottom: 6 },
-  progressTrack:        { height: 3, borderRadius: 2, overflow: 'hidden' },
-  progressFill:         { height: 3, borderRadius: 2 },
-  purposeBadge:         { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, marginTop: 1 },
+  header:               { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 15 },
+  backBtn:              { width: 38, height: 38, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  headerStep:           { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.5, marginBottom: 3 },
+  headerTitle:          { fontFamily: 'Inter_700Bold', fontSize: 21, lineHeight: 25, marginBottom: 2 },
+  headerSub:            { fontFamily: 'Inter_400Regular', fontSize: 10, marginBottom: 9 },
+  progressTrack:        { height: 4, borderRadius: 4, overflow: 'hidden' },
+  progressFill:         { height: 4, borderRadius: 4 },
+  purposeBadge:         { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', borderWidth: 1, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, marginTop: 1 },
   purposeBadgeText:     { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 0.4 },
   // Single-page sections
-  formSection:          { borderWidth: 1, borderRadius: 20, padding: 16, marginBottom: 14, overflow: 'hidden' },
-  validationBanner:      { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 14 },
+  progressCard:         { borderWidth: 1, borderRadius: 20, padding: 15, marginBottom: 12 },
+  progressCardHeader:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 },
+  progressCardEyebrow:  { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.2, marginBottom: 4 },
+  progressCardTitle:    { fontFamily: 'Inter_700Bold', fontSize: 16 },
+  progressCount:        { borderRadius: 10, paddingHorizontal: 9, paddingVertical: 6 },
+  progressCountText:    { fontFamily: 'Inter_700Bold', fontSize: 10 },
+  progressSteps:        { flexDirection: 'row', alignItems: 'flex-start' },
+  progressStep:         { alignItems: 'center', gap: 6, minWidth: 54 },
+  progressStepIcon:     { width: 28, height: 28, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  progressStepLabel:    { fontFamily: 'Inter_600SemiBold', fontSize: 9 },
+  progressConnector:    { height: 2, flex: 1, marginTop: 13, marginHorizontal: 4, borderRadius: 2 },
+  formSection:          { borderWidth: 1, borderRadius: 22, padding: 18, marginBottom: 12, overflow: 'hidden' },
+  validationBanner:     { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 16, padding: 13, marginBottom: 12 },
   validationText:        { fontFamily: 'Inter_500Medium', fontSize: 12, lineHeight: 17, flex: 1 },
-  transactionToggle:    { borderWidth: 1, borderRadius: 16, padding: 12, marginBottom: 14 },
-  transactionToggleLabel:{ fontFamily: 'Inter_700Bold', fontSize: 10, letterSpacing: 1, marginBottom: 8 },
-  transactionToggleTrack:{ flexDirection: 'row', gap: 6, borderWidth: 1, borderRadius: 12, padding: 4 },
-  transactionToggleOption:{ flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 9 },
+  transactionToggle:    { borderWidth: 1, borderRadius: 20, padding: 14, marginBottom: 12 },
+  transactionToggleLabel:{ fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.2, marginBottom: 9 },
+  transactionToggleTrack:{ flexDirection: 'row', gap: 6, borderWidth: 1, borderRadius: 14, padding: 4 },
+  transactionToggleOption:{ flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 11 },
   transactionToggleText:{ fontFamily: 'Inter_700Bold', fontSize: 14 },
-  stepEyebrow:          { fontFamily: 'Inter_700Bold', fontSize: 10, letterSpacing: 1.4, marginBottom: 4 },
-  stepTitle:            { fontFamily: 'Inter_700Bold', fontSize: 22, marginBottom: 6 },
-  stepSub:              { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, marginBottom: 14 },
-  label:                { fontFamily: 'Inter_600SemiBold', fontSize: 13, marginBottom: 8, marginTop: 2 },
+  stepEyebrow:          { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.5, marginBottom: 5 },
+  stepTitle:            { fontFamily: 'Inter_700Bold', fontSize: 23, lineHeight: 28, marginBottom: 6 },
+  stepSub:              { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, marginBottom: 16 },
+  label:                { fontFamily: 'Inter_600SemiBold', fontSize: 12, marginBottom: 8, marginTop: 2 },
   // Type selection
-  groupTab:             { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 20, paddingHorizontal: 13, paddingVertical: 8 },
+  groupTab:             { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 20, paddingHorizontal: 13, paddingVertical: 9 },
   groupTabText:         { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   typeGrid:             { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  typeCard:             { width: '30.5%', borderRadius: 14, borderWidth: 1, padding: 14, alignItems: 'center', gap: 7 },
+  typeCard:             { width: '30.5%', minHeight: 92, borderRadius: 16, borderWidth: 1, padding: 13, alignItems: 'center', justifyContent: 'center', gap: 7 },
   typeLabel:            { fontFamily: 'Inter_600SemiBold', fontSize: 10, textAlign: 'center', lineHeight: 13 },
   // Purpose
   purposeRow:           { flexDirection: 'row', gap: 10, marginBottom: 18 },
   purposeBtn:           { borderWidth: 1, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
   purposeBtnText:       { fontFamily: 'Inter_700Bold', fontSize: 13 },
   // Inputs
-  inputWrap:            { borderRadius: 13, borderWidth: 1, overflow: 'hidden', marginBottom: 2 },
-  input:                { fontFamily: 'Inter_400Regular', fontSize: 14, paddingHorizontal: 14, paddingVertical: 12 },
+  inputWrap:            { borderRadius: 15, borderWidth: 1, overflow: 'hidden', marginBottom: 2 },
+  input:                { fontFamily: 'Inter_400Regular', fontSize: 14, paddingHorizontal: 15, paddingVertical: 13 },
   unitSeg:              { flexDirection: 'row', borderRadius: 10, borderWidth: 1, overflow: 'hidden', borderColor: 'transparent', flexWrap: 'wrap' },
   unitBtn:              { flex: 1, alignItems: 'center', paddingVertical: 9, paddingHorizontal: 2 },
   unitText:             { fontFamily: 'Inter_600SemiBold', fontSize: 10 },
   // Chips
-  chip:                 { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 9 },
+  chip:                 { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10 },
   chipText:             { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   // Feature grid
   featureGrid:          { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

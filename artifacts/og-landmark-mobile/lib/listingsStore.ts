@@ -8,6 +8,7 @@ import {
   deleteProperty,
   getMyProperties,
   resubmitProperty,
+  API_BASE,
   type CreatePropertyPayload,
 } from '@/lib/api';
 import { buildCreatePropertyPayload } from '@/lib/listingPayload';
@@ -92,6 +93,11 @@ function migrateListing(l: Partial<UserListing> & { id: string; postedBy: string
   } as UserListing;
 }
 
+function resolveListingMediaUrl(url: string): string {
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 function mapApiPropToListing(p: Awaited<ReturnType<typeof getMyProperties>>[number]): UserListing {
@@ -131,8 +137,8 @@ function mapApiPropToListing(p: Awaited<ReturnType<typeof getMyProperties>>[numb
     views:      p.views ?? 0,
     saves:      0,
     leadsCount: p.inquiryCount ?? 0,
-    images:     (p.images as string[] | undefined) ?? [],
-    videoUrl:   p.videoUrl ?? undefined,
+    images:     ((p.images as string[] | undefined) ?? []).map(resolveListingMediaUrl),
+    videoUrl:   p.videoUrl ? resolveListingMediaUrl(p.videoUrl) : undefined,
     latitude:   p.lat,
     longitude:  p.lng,
     fullAddress: p.address ?? '',
@@ -179,15 +185,22 @@ export async function updateUserListing(updated: UserListing): Promise<void> {
     area: entry.area, areaUnit: entry.areaUnit, bedrooms: entry.bedrooms, bathrooms: entry.bathrooms,
     city: entry.city, address: entry.fullAddress || entry.neighborhood, description: entry.description,
     lat: entry.latitude, lng: entry.longitude,
+    images: entry.images,
+    videoUrl: entry.videoUrl ?? null,
     district: entry.district,
     locality: entry.locality ?? entry.neighborhood,
     tehsil: entry.tehsil,
     features: entry.features,
+    amenities: entry.features,
     documents: entry.documents,
     propertyDetails: entry.propertyDetails,
     location: entry.location,
     ...(entry.listingStatus === 'Pending' ? { submissionState: 'submitted' as const } : {}),
   });
+}
+
+export async function getUserListingByApiId(apiId: number): Promise<UserListing | undefined> {
+  return (await getUserListings()).find((listing) => listing.apiId === apiId);
 }
 
 export async function resubmitUserListing(id: string): Promise<UserListing[]> {

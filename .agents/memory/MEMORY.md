@@ -22,4 +22,5 @@
 - [Native Google Maps provider](native-google-maps.md) — Android and iOS map overrides must share react-native-maps; native builds require the injected restricted Maps key.
 - [Notification delivery pipeline](notification-system.md) — all broadcasts and lifecycle events must use per-user records, recipient-scoped dedupe keys, and the same push/preferences pipeline.
 - [Mobile polish guardrails](mobile-polish-guardrails.md) — reuse semantic UI tokens and keep card body actions separate from nested image/action controls.
+- [Listing edit media](listing-edit-media.md) — treat stored media URLs as remote and send explicit null when an editor removes optional media.
 - [Post-merge setup](post-merge-setup.md) — this workspace needs a non-frozen pnpm install and the scoped @workspace/db filter.

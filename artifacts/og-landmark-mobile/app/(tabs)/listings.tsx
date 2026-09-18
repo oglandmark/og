@@ -225,6 +225,13 @@ export default function ListingsScreen() {
                 onStatusChange={handleStatusChange}
                 onDelete={handleDelete}
                 onResubmit={handleResubmit}
+                onEdit={(item) => {
+                  if (!item.apiId) return;
+                  router.push({
+                    pathname: '/post/listing',
+                    params: { editId: String(item.apiId) },
+                  });
+                }}
               />
             </AnimatedReveal>
           ))
@@ -237,7 +244,7 @@ export default function ListingsScreen() {
 // ─── listing card ─────────────────────────────────────────────────────────────
 
 function ListingCard({
-  listing, colors, isRTL, onStatusChange, onDelete, onResubmit,
+  listing, colors, isRTL, onStatusChange, onDelete, onResubmit, onEdit,
 }: {
   listing: UserListing;
   index: number;
@@ -246,6 +253,7 @@ function ListingCard({
   onStatusChange: (id: string, status: ListingStatus, msg?: string) => void;
   onDelete: (id: string, title: string) => void;
   onResubmit: (id: string) => void;
+  onEdit: (listing: UserListing) => void;
 }) {
   const sc    = STATUS_BADGE[listing.listingStatus] ?? STATUS_BADGE.Pending;
   const addr  = listing.neighborhood ? `${listing.neighborhood}, ${listing.city}` : listing.city;
@@ -264,6 +272,9 @@ function ListingCard({
 
   const moreActions = () => {
     const opts: { text: string; onPress: () => void; style?: 'destructive' | 'cancel' }[] = [];
+    if (listing.apiId) {
+      opts.push({ text: 'Edit listing details', onPress: () => onEdit(listing) });
+    }
     if (listing.reviewStatus === 'Rejected' || listing.reviewStatus === 'Changes Requested') {
       opts.push({ text: 'Resubmit for Review', onPress: () => onResubmit(listing.id) });
     }

@@ -3,10 +3,10 @@
  * Single-page flow: Type → Location → Basic → Type-Specific → Features → Media → Docs → Preview
  * 20 property types with per-type dynamic fields.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {
-  Alert, Image, Platform,
+  ActivityIndicator, Alert, Image, Platform,
   Pressable, ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -15,7 +15,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
-import { addUserListing } from '@/lib/listingsStore';
+import {
+  addUserListing,
+  getUserListingByApiId,
+  updateUserListing,
+  type UserListing,
+} from '@/lib/listingsStore';
 import { uploadMultipleImages, uploadVideo } from '@/lib/api';
 import { LocationPicker, PinnedMapCard } from '@/components/LocationPicker';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -319,6 +324,80 @@ const defaultForm = (): Form => ({
   showWhatsApp: true, allowCalls: true,
 });
 
+const FORM_STRING_FIELDS: Array<keyof Form> = [
+  'propertyType', 'purpose', 'city', 'locality', 'society', 'block', 'street',
+  'landmark', 'fullAddress', 'streetAddress', 'placeId', 'district', 'tehsil',
+  'province', 'postalCode', 'country', 'locationSource', 'title', 'price',
+  'area', 'areaUnit', 'bedrooms', 'bathrooms', 'floors', 'coveredArea',
+  'furnishing', 'constructionYear', 'parking', 'facing', 'roadFront',
+  'plotDimensions', 'floorNumber', 'totalFloors', 'maintenanceCharges',
+  'possessionStatus', 'roomType', 'minimumStay', 'availableFrom', 'familyPref',
+  'waterSource', 'farmArea', 'roadWidth', 'devStatus', 'landType',
+  'tubeWellType', 'soilType', 'landLevel', 'currentCrop', 'trees',
+  'nearbyCanalRiver', 'farmType', 'orchardType', 'numberOfTrees',
+  'productionStatus', 'shopDimensions', 'cabins', 'numShops', 'numOffices',
+  'numApartments', 'occupancyStatus', 'rentalIncome', 'warehouseHeight',
+  'electricityLoad', 'factoryType', 'industrialZone', 'ceilingHeight',
+  'displayArea', 'nocStatus', 'projectName', 'developer', 'totalUnits',
+  'startingPrice', 'paymentPlan', 'downPayment', 'installmentPlan',
+  'possessionDate', 'plotSizes', 'description', 'keyHighlights',
+  'ownershipStatus',
+];
+
+function isLocalMediaUri(uri: string): boolean {
+  return /^(file|content|ph|assets-library|blob|data):/i.test(uri);
+}
+
+function formFromListing(listing: UserListing): Form {
+  const base = defaultForm();
+  const details = listing.propertyDetails && typeof listing.propertyDetails === 'object'
+    ? listing.propertyDetails
+    : {};
+  const hydrated = {
+    ...base,
+    ...details,
+    propertyType: details.propertyType ?? listing.type,
+    purpose: details.purpose
+      ?? (listing.status.replace(/^For\s+/i, '') || 'Sale'),
+    city: details.city ?? listing.city,
+    locality: details.locality ?? listing.locality ?? listing.location?.locality ?? '',
+    fullAddress: details.fullAddress ?? listing.fullAddress ?? listing.location?.address ?? '',
+    streetAddress: details.streetAddress ?? listing.location?.streetAddress ?? '',
+    placeId: details.placeId ?? listing.placeId ?? listing.location?.placeId ?? '',
+    district: details.district ?? listing.district ?? listing.location?.district ?? '',
+    tehsil: details.tehsil ?? listing.tehsil ?? listing.location?.tehsil ?? '',
+    province: details.province ?? listing.location?.province ?? '',
+    postalCode: details.postalCode ?? listing.location?.postalCode ?? '',
+    country: details.country ?? listing.location?.country ?? '',
+    locationAccuracy: details.locationAccuracy ?? listing.locationAccuracy ?? listing.location?.accuracy ?? null,
+    locationSource: details.locationSource ?? listing.locationSource ?? listing.location?.source ?? '',
+    title: listing.title,
+    price: details.price != null ? String(details.price) : String(listing.price ?? ''),
+    area: details.area != null ? String(details.area) : String(listing.area ?? ''),
+    areaUnit: details.areaUnit ?? listing.areaUnit ?? base.areaUnit,
+    bedrooms: details.bedrooms != null ? String(details.bedrooms) : String(listing.bedrooms ?? ''),
+    bathrooms: details.bathrooms != null ? String(details.bathrooms) : String(listing.bathrooms ?? ''),
+    description: typeof details.description === 'string' ? details.description : listing.description,
+    features: Array.isArray(details.features) ? details.features : (listing.features ?? []),
+    documents: Array.isArray(details.documents) ? details.documents : (listing.documents ?? []),
+    photos: listing.images ?? [],
+    coverPhotoIndex: 0,
+    video: listing.videoUrl ? { uri: listing.videoUrl, filename: 'Existing video' } : null,
+  } as Form;
+
+  const mutable = hydrated as unknown as Record<string, unknown>;
+  FORM_STRING_FIELDS.forEach((key) => {
+    const value = mutable[key];
+    if (value !== null && value !== undefined && typeof value !== 'string' && typeof value !== 'boolean') {
+      mutable[key] = String(value);
+    }
+  });
+  mutable.features = Array.isArray(mutable.features) ? mutable.features.filter((item): item is string => typeof item === 'string') : [];
+  mutable.documents = Array.isArray(mutable.documents) ? mutable.documents.filter((item): item is string => typeof item === 'string') : [];
+  mutable.photos = Array.isArray(mutable.photos) ? mutable.photos.filter((item): item is string => typeof item === 'string') : [];
+  return hydrated;
+}
+
 function categoryOf(type: string): PropCategory {
   return PROPERTY_TYPES.find((t) => t.key === type)?.category ?? 'residential';
 }
@@ -334,7 +413,8 @@ export default function ListingWizard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const params = useLocalSearchParams<{ purpose?: string }>();
+  const params = useLocalSearchParams<{ purpose?: string; editId?: string }>();
+  const editId = String(params.editId ?? '');
 
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
@@ -347,6 +427,43 @@ export default function ListingWizard() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [locationConfirmed, setLocationConfirmed] = useState(false);
+  const [editLoading, setEditLoading] = useState(Boolean(editId));
+  const [editingListing, setEditingListing] = useState<UserListing | null>(null);
+
+  useEffect(() => {
+    if (!editId) return;
+    const apiId = Number(editId);
+    if (!Number.isInteger(apiId)) {
+      Alert.alert('Could not edit listing', 'This listing link is invalid.');
+      router.back();
+      return;
+    }
+    let mounted = true;
+    setEditLoading(true);
+    void getUserListingByApiId(apiId)
+      .then((listing) => {
+        if (!mounted) return;
+        if (!listing) {
+          Alert.alert('Could not edit listing', 'This listing is no longer available in your account.');
+          router.back();
+          return;
+        }
+        setEditingListing(listing);
+        setForm(formFromListing(listing));
+        setLocationConfirmed(listing.latitude != null && listing.longitude != null);
+      })
+      .catch((error: unknown) => {
+        if (!mounted) return;
+        Alert.alert('Could not load listing', error instanceof Error ? error.message : 'Please try again.');
+        router.back();
+      })
+      .finally(() => {
+        if (mounted) setEditLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [editId, router]);
 
   const category = categoryOf(form.propertyType);
   const update = (patch: Partial<Form>) => setForm((f) => ({ ...f, ...patch }));
@@ -413,10 +530,22 @@ export default function ListingWizard() {
     setSubmitting(true);
     try {
       const priceNum = Number(form.price.replace(/[^0-9]/g, ''));
-      let uploadedImages: string[] = [];
-      if (form.photos.length > 0) {
-        try { uploadedImages = await uploadMultipleImages(form.photos); }
-        catch { throw new Error('Photos could not be uploaded. Please check your connection and try again.'); }
+      const localPhotoIndexes = form.photos
+        .map((uri, index) => (isLocalMediaUri(uri) ? index : -1))
+        .filter((index) => index >= 0);
+      let uploadedImages = [...form.photos];
+      if (localPhotoIndexes.length > 0) {
+        const localUris = localPhotoIndexes.map((index) => form.photos[index]);
+        let uploadedLocal: string[];
+        try {
+          uploadedLocal = await uploadMultipleImages(localUris);
+        } catch {
+          throw new Error('Photos could not be uploaded. Please check your connection and try again.');
+        }
+        uploadedImages = [...form.photos];
+        localPhotoIndexes.forEach((index, localIndex) => {
+          uploadedImages[index] = uploadedLocal[localIndex];
+        });
       }
       // The public catalogue uses images[0] as the cover. Preserve the photo
       // selected in Review & Publish instead of silently reverting to the
@@ -427,28 +556,34 @@ export default function ListingWizard() {
           uploadedImages = [cover, ...uploadedImages.filter((_, index) => index !== form.coverPhotoIndex)];
         }
       }
-      let uploadedVideoUrl: string | undefined;
+      let uploadedVideoUrl: string | null = form.video?.uri ?? null;
       if (form.video?.uri) {
-        try { uploadedVideoUrl = (await uploadVideo(form.video.uri, form.video.filename ?? 'video.mp4')).url; }
-        catch { throw new Error('Video could not be uploaded. Please try again or remove the video.'); }
+        if (isLocalMediaUri(form.video.uri)) {
+          try { uploadedVideoUrl = (await uploadVideo(form.video.uri, form.video.filename ?? 'video.mp4')).url; }
+          catch { throw new Error('Video could not be uploaded. Please try again or remove the video.'); }
+        }
       }
       const location = [form.locality, form.society, form.city].filter(Boolean).join(', ');
       const propertyDetails = Object.fromEntries(
         Object.entries(form).filter(([key]) => key !== 'photos' && key !== 'video'),
       );
+      propertyDetails.coverPhotoIndex = 0;
       const district = form.district || (form.city.toLowerCase() === 'depalpur'
         ? 'Okara'
         : form.city);
       const tehsil = form.tehsil || form.city;
-      await addUserListing({
+      const listing: UserListing = {
         id: `listing_${Date.now()}`,
-        postedBy: user?.id ?? 'unknown',
+        apiId: editingListing?.apiId,
+        postedBy: editingListing?.postedBy ?? user?.id ?? 'unknown',
         agentName: user?.name ?? '',
         role: 'agent',
         title: form.title || `${form.propertyType} ${form.purpose === 'Rent' ? 'for Rent' : form.purpose === 'Lease' ? 'for Lease' : 'for Sale'} in ${form.city}`,
         type: form.propertyType,
         category,
-        status: form.purpose === 'Rent' ? 'For Rent' : 'For Sale',
+        status: form.purpose === 'Rent'
+          ? 'For Rent'
+          : form.purpose === 'Lease' ? 'For Lease' : 'For Sale',
         price: priceNum,
         area: Number(form.area) || 0,
         areaUnit: form.areaUnit,
@@ -460,7 +595,7 @@ export default function ListingWizard() {
         listingStatus: 'Pending',
         views: 0, saves: 0, leadsCount: 0,
         images: uploadedImages,
-        videoUrl: uploadedVideoUrl,
+        videoUrl: uploadedVideoUrl ?? undefined,
         features: form.features,
         documents: form.documents,
         district,
@@ -499,7 +634,12 @@ export default function ListingWizard() {
         ].filter(Boolean).join('\n\n'),
         // Agri specifics
         ...(category === 'agricultural' && { nehriWater: form.nehriWater, tubeWell: form.tubeWell, soilType: form.soilType, mainCrop: form.currentCrop }),
-      });
+      };
+      if (editingListing) {
+        await updateUserListing({ ...editingListing, ...listing });
+      } else {
+        await addUserListing(listing);
+      }
       setSubmitted(true);
     } catch (error) {
       const message = error instanceof Error && error.message
@@ -513,15 +653,28 @@ export default function ListingWizard() {
 
   // ── Success Screen ─────────────────────────────────────────────────────────
 
+  if (editLoading) {
+    return (
+      <View style={[s.screen, { backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', gap: 12 }]}>
+        <ActivityIndicator size="large" color={colors.action} />
+        <Text style={[s.successBody, { color: colors.mutedForeground }]}>Loading your listing…</Text>
+      </View>
+    );
+  }
+
   if (submitted) {
     return (
       <View style={[s.screen, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
         <View style={[s.successIcon, { backgroundColor: '#1a6b3a14', borderColor: '#1a6b3a33' }]}>
           <Feather name="check-circle" size={42} color="#1a6b3a" />
         </View>
-        <Text style={[s.successTitle, { color: colors.foreground }]}>Property Submitted!</Text>
+        <Text style={[s.successTitle, { color: colors.foreground }]}>
+          {editingListing ? 'Listing Updated!' : 'Property Submitted!'}
+        </Text>
         <Text style={[s.successBody, { color: colors.mutedForeground }]}>
-          Our team will review your listing before it goes live. You'll be notified once it's approved.
+          {editingListing
+            ? 'Your changes were saved and the listing is back in the review queue.'
+            : "Our team will review your listing before it goes live. You'll be notified once it's approved."}
         </Text>
         <View style={[s.reviewBadge, { backgroundColor: colors.accent, borderColor: colors.border }]}>
           <Feather name="clock" size={13} color={colors.accentForeground} />
@@ -546,9 +699,9 @@ export default function ListingWizard() {
           <Feather name="arrow-left" size={16} color={colors.foreground} />
         </Pressable>
         <View style={{ flex: 1, minWidth: 0, paddingHorizontal: 4 }}>
-          <Text style={[s.headerStep, { color: colors.action }]}>POST PROPERTY</Text>
-          <Text style={[s.headerTitle, { color: colors.foreground }]}>Post an Ad</Text>
-          <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Create a listing buyers can trust</Text>
+          <Text style={[s.headerStep, { color: colors.action }]}>{editingListing ? 'EDIT LISTING' : 'POST PROPERTY'}</Text>
+          <Text style={[s.headerTitle, { color: colors.foreground }]}>{editingListing ? 'Update your listing' : 'Post an Ad'}</Text>
+          <Text style={[s.headerSub, { color: colors.mutedForeground }]}>{editingListing ? 'Address the review feedback before resubmitting' : 'Create a listing buyers can trust'}</Text>
           <View style={[s.progressTrack, { backgroundColor: colors.border }]}>
             <View style={[s.progressFill, { width: '100%', backgroundColor: colors.action }]} />
           </View>
@@ -624,7 +777,7 @@ export default function ListingWizard() {
             style={[s.submitBtn, { backgroundColor: colors.action, opacity: submitting ? 0.65 : 1 }]}
           >
             <Text style={[s.submitBtnText, { color: colors.actionForeground }]}>
-              {submitting ? 'Submitting…' : 'Submit Property for Review'}
+              {submitting ? 'Saving…' : editingListing ? 'Save & Resubmit for Review' : 'Submit Property for Review'}
             </Text>
             <Feather name="arrow-up-right" size={17} color={colors.actionForeground} />
           </AnimatedPressable>

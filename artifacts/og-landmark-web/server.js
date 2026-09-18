@@ -1478,6 +1478,10 @@ app.put('/api/properties/:id', requireAuth, async (req, res) => {
       ? 'Draft'
       : (req.currentUser.role === 'Admin' ? (prop.listingStatus || (previousStatus === 'Active' ? 'Active' : previousStatus)) : 'Pending');
     merged.submissionState = isDraft ? 'draft' : 'submitted';
+    if (!isDraft && req.currentUser.role !== 'Admin') {
+      merged.changeRequest = null;
+      merged.rejectionReason = null;
+    }
     merged.updatedAt = new Date().toISOString();
     merged.reviewHistory = Array.isArray(prop.reviewHistory) ? prop.reviewHistory : [];
     merged.reviewHistory.push({

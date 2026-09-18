@@ -369,7 +369,7 @@ export type ApiProperty = {
   address: string;
   description: string;
   images: string[];
-  videoUrl?: string;
+  videoUrl?: string | null;
   amenities?: string[];
   featured?: boolean;
   views?: number;
@@ -813,7 +813,7 @@ export type CreatePropertyPayload = {
   address?: string;
   description?: string;
   images?: string[];
-  videoUrl?: string;
+  videoUrl?: string | null;
   amenities?: string[];
   lat?: number;
   lng?: number;

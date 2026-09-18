@@ -15,6 +15,7 @@ import {
   FlatList,
   Keyboard,
   Linking,
+  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -23,6 +24,7 @@ import {
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import type { useColors } from '@/hooks/useColors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { InteractiveMap, StaticMap } from '@/components/MapViewComponent';
 import {
   fetchAutocompleteSuggestions,
@@ -198,6 +200,11 @@ interface LocationPickerProps {
   requireConfirm?: boolean;
   onConfirmationChange?: (confirmed: boolean) => void;
   errorMessage?: string;
+  fullScreen?: boolean;
+  visible?: boolean;
+  onOpen?: () => void;
+  onClose?: () => void;
+  onDone?: () => void;
 }
 
 export function LocationPicker({
@@ -205,8 +212,10 @@ export function LocationPicker({
   onChange, onLocationChange, onClear,
   colors, accentColor, requireConfirm = false,
   onConfirmationChange, errorMessage,
+  fullScreen = false, visible = false, onOpen, onClose, onDone,
 }: LocationPickerProps) {
   const accent  = accentColor ?? (colors as any).action ?? colors.primary;
+  const insets = useSafeAreaInsets();
   const hasPin  = typeof latitude === 'number' && typeof longitude === 'number'
                && isFinite(latitude) && isFinite(longitude);
 
@@ -394,20 +403,36 @@ export function LocationPicker({
       if (!coord) return;
       const lat = parseFloat(coord.latitude.toFixed(7));
       const lng = parseFloat(coord.longitude.toFixed(7));
+      const fallback = {
+        latitude: lat,
+        longitude: lng,
+        fullAddress: `Pinned location · ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+        locationSource: 'map_tap' as const,
+      };
+
+      // Save the pin immediately. Address lookup is helpful metadata, not a
+      // requirement for a valid manually placed property pin.
+      applyLocation(fallback);
       setAddressLoading(true);
       try {
         const rev = await reverseGeocode(lat, lng);
-        applyLocation({
-          latitude: lat, longitude: lng,
-          fullAddress: rev?.fullAddress ?? `Pinned location · ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-           streetAddress: rev?.streetAddress,
-          city: rev?.city, locality: rev?.locality, district: rev?.district,
-           tehsil: rev?.tehsil,
-          province: rev?.province, country: rev?.country, postalCode: rev?.postalCode,
-          placeId: rev?.placeId, locationSource: 'map_tap',
-        });
+        if (rev) {
+          applyLocation({
+            ...fallback,
+            fullAddress: rev.fullAddress ?? fallback.fullAddress,
+            streetAddress: rev.streetAddress,
+            city: rev.city,
+            locality: rev.locality,
+            district: rev.district,
+            tehsil: rev.tehsil,
+            province: rev.province,
+            country: rev.country,
+            postalCode: rev.postalCode,
+            placeId: rev.placeId,
+          });
+        }
       } catch {
-        setLocationError('We could not find the address for this pin. Check the pin and try again.');
+        // Keep the coordinate-only pin. GPS and reverse geocoding are optional.
       } finally {
         setAddressLoading(false);
       }
@@ -417,20 +442,36 @@ export function LocationPicker({
 
   const handleDragEnd = useCallback(
     async (lat: number, lng: number) => {
+      const roundedLat = parseFloat(lat.toFixed(7));
+      const roundedLng = parseFloat(lng.toFixed(7));
+      const fallback = {
+        latitude: roundedLat,
+        longitude: roundedLng,
+        fullAddress: `Pinned location · ${roundedLat.toFixed(5)}, ${roundedLng.toFixed(5)}`,
+        locationSource: 'map_tap' as const,
+      };
+
+      applyLocation(fallback);
       setAddressLoading(true);
       try {
-        const rev = await reverseGeocode(lat, lng);
-        applyLocation({
-          latitude: lat, longitude: lng,
-          fullAddress: rev?.fullAddress ?? `Pinned location · ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-           streetAddress: rev?.streetAddress,
-          city: rev?.city, locality: rev?.locality, district: rev?.district,
-           tehsil: rev?.tehsil,
-          province: rev?.province, country: rev?.country, postalCode: rev?.postalCode,
-          placeId: rev?.placeId, locationSource: 'map_tap',
-        });
+        const rev = await reverseGeocode(roundedLat, roundedLng);
+        if (rev) {
+          applyLocation({
+            ...fallback,
+            fullAddress: rev.fullAddress ?? fallback.fullAddress,
+            streetAddress: rev.streetAddress,
+            city: rev.city,
+            locality: rev.locality,
+            district: rev.district,
+            tehsil: rev.tehsil,
+            province: rev.province,
+            country: rev.country,
+            postalCode: rev.postalCode,
+            placeId: rev.placeId,
+          });
+        }
       } catch {
-        setLocationError('We could not update this address. Please try moving the pin again.');
+        // Keep the coordinate-only pin when address lookup is unavailable.
       } finally {
         setAddressLoading(false);
       }
@@ -466,6 +507,121 @@ export function LocationPicker({
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
+
+  const selectedLocationLabel = pinnedAddr || (city ? `Choose a point in ${city}` : 'Choose the exact property point');
+
+  if (fullScreen) {
+    return (
+      <>
+        <Pressable
+          testID="open-fullscreen-location-map"
+          onPress={onOpen}
+          style={({ pressed }) => [
+            lp.fullScreenTrigger,
+            { backgroundColor: colors.secondary, borderColor: hasPin ? accent : colors.border, opacity: pressed ? 0.82 : 1 },
+          ]}
+        >
+          <View style={[lp.fullScreenTriggerIcon, { backgroundColor: accent + '18' }]}>
+            <Feather name={hasPin ? 'check-circle' : 'map-pin'} size={18} color={hasPin ? '#16a34a' : accent} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[lp.fullScreenTriggerTitle, { color: colors.foreground }]}>
+              {hasPin ? 'Property location pinned' : 'Set exact property location'}
+            </Text>
+            <Text style={[lp.fullScreenTriggerSub, { color: colors.mutedForeground }]} numberOfLines={2}>
+              {hasPin ? selectedLocationLabel : `Select a point on the ${city || 'property'} map`}
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+        </Pressable>
+
+        <Modal
+          visible={visible}
+          animationType="slide"
+          presentationStyle="fullScreen"
+          statusBarTranslucent
+          onRequestClose={onClose}
+        >
+          <View style={[lp.fullScreen, { backgroundColor: colors.background }]}>
+            <View style={[lp.fullHeader, { backgroundColor: colors.background, borderBottomColor: colors.border, paddingTop: insets.top + 8 }]}>
+              <Pressable
+                testID="close-fullscreen-location-map"
+                onPress={onClose}
+                hitSlop={10}
+                style={[lp.fullHeaderButton, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+              >
+                <Feather name="arrow-left" size={18} color={colors.foreground} />
+              </Pressable>
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Text style={[lp.fullHeaderTitle, { color: colors.foreground }]}>Mark Location on Map</Text>
+                <Text style={[lp.fullHeaderSub, { color: colors.mutedForeground }]}>Tap or drag the pin to the exact property point</Text>
+              </View>
+              <View style={{ width: 38 }} />
+            </View>
+
+            <View style={lp.fullMap}>
+              <InteractiveMap
+                key={`${city ?? 'default'}-${hasPin ? `${latitude}-${longitude}` : 'location'}`}
+                region={region}
+                onRegionChange={setRegion}
+                onPress={handleMapPress}
+                pinLat={hasPin ? latitude! : undefined}
+                pinLng={hasPin ? longitude! : undefined}
+                onDragEnd={handleDragEnd}
+                showMyLocation={false}
+              />
+
+              <View pointerEvents="none" style={[lp.selectedCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[lp.selectedCardEyebrow, { color: colors.mutedForeground }]}>SELECTED LOCATION</Text>
+                <View style={lp.selectedCardRow}>
+                  <View style={[lp.selectedCardPin, { backgroundColor: accent + '18' }]}>
+                    <Feather name={hasPin ? 'check' : 'map-pin'} size={15} color={hasPin ? '#16a34a' : accent} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[lp.selectedCardTitle, { color: colors.foreground }]} numberOfLines={1}>
+                      {hasPin ? selectedLocationLabel : city || 'Choose a location'}
+                    </Text>
+                    <Text style={[lp.selectedCardSub, { color: colors.mutedForeground }]} numberOfLines={1}>
+                      {hasPin ? `${fmtCoord(latitude!, true)} · ${fmtCoord(longitude!, false)}` : 'Move the pin or tap anywhere on the map'}
+                    </Text>
+                  </View>
+                  {addressLoading && <ActivityIndicator size="small" color={accent} />}
+                </View>
+              </View>
+
+              <View pointerEvents="none" style={lp.fullMapHint}>
+                <View style={lp.fullMapHintPill}>
+                  <Feather name="move" size={12} color="#ffffff" />
+                  <Text style={lp.fullMapHintText}>Tap map or drag pin to adjust</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={[lp.fullFooter, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: insets.bottom + 12 }]}>
+              <Pressable onPress={onClose} hitSlop={10} style={lp.skipButton}>
+                <Text style={[lp.skipButtonText, { color: colors.mutedForeground }]}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                testID="done-fullscreen-location-map"
+                disabled={!hasPin}
+                onPress={() => {
+                  setConfirmed(true);
+                  onDone?.();
+                }}
+                style={({ pressed }) => [
+                  lp.doneButton,
+                  { backgroundColor: accent, opacity: !hasPin ? 0.45 : pressed ? 0.82 : 1 },
+                ]}
+              >
+                <Feather name="check" size={16} color="#ffffff" />
+                <Text style={lp.doneButtonText}>Done</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+      </>
+    );
+  }
 
   return (
     <View style={lp.root}>
@@ -735,6 +891,59 @@ const lp = StyleSheet.create({
   title:    { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   sub:      { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 1 },
   clearBtn: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+
+  fullScreenTrigger: {
+    flexDirection: 'row', alignItems: 'center', gap: 11,
+    borderWidth: 1, borderRadius: 15, padding: 13,
+  },
+  fullScreenTriggerIcon: {
+    width: 38, height: 38, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  fullScreenTriggerTitle: { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  fullScreenTriggerSub: { fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 16, marginTop: 2 },
+
+  fullScreen: { flex: 1 },
+  fullHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 12,
+  },
+  fullHeaderButton: {
+    width: 38, height: 38, borderRadius: 12, borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  fullHeaderTitle: { fontFamily: 'Inter_700Bold', fontSize: 16 },
+  fullHeaderSub: { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 2 },
+  fullMap: { flex: 1, position: 'relative' },
+  selectedCard: {
+    position: 'absolute', top: 18, left: 16, right: 16,
+    borderWidth: 1, borderRadius: 15, padding: 13,
+    shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 }, elevation: 4,
+  },
+  selectedCardEyebrow: { fontFamily: 'Inter_600SemiBold', fontSize: 10, letterSpacing: 0.7, marginBottom: 7 },
+  selectedCardRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  selectedCardPin: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  selectedCardTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  selectedCardSub: { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 3 },
+  fullMapHint: { position: 'absolute', left: 0, right: 0, bottom: 16, alignItems: 'center' },
+  fullMapHintPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: 'rgba(16,42,67,0.78)', borderRadius: 20,
+    paddingHorizontal: 13, paddingVertical: 8,
+  },
+  fullMapHintText: { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#ffffff' },
+  fullFooter: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 12,
+  },
+  skipButton: { paddingHorizontal: 12, paddingVertical: 14 },
+  skipButtonText: { fontFamily: 'Inter_500Medium', fontSize: 14 },
+  doneButton: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 7, borderRadius: 12, paddingVertical: 14,
+  },
+  doneButtonText: { fontFamily: 'Inter_700Bold', fontSize: 14, color: '#ffffff' },
 
   searchWrap:  { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 13, height: 46, gap: 8 },
   searchInput: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13, height: '100%', paddingHorizontal: 8 },

@@ -699,7 +699,8 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
 // ── SECTION 2: Location ─────────────────────────────────────────────────────────
 
 function StepLocation({ form, update, colors, errors, onConfirmationChange }: any) {
-  const neighborhoods = okaraDistrict.areas[form.city] ?? [];
+  const [mapOpen, setMapOpen] = useState(false);
+
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 2</Text>
@@ -708,55 +709,34 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
       <Label colors={colors}>City *</Label>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
         {CITIES.map((c) => (
-          <Pressable key={c} onPress={() => update({
-            city: c,
-            locality: '',
-            // A pin from another city would be misleading. Recenter the map
-            // on the newly selected city and let the user choose a new pin.
-            latitude: null,
-            longitude: null,
-            fullAddress: '',
-             streetAddress: '',
-            placeId: '',
-             district: '',
-             tehsil: '',
-             province: '',
-             postalCode: '',
-             country: '',
-            locationAccuracy: null,
-            locationSource: '',
-          })}
+          <Pressable key={c} onPress={() => {
+            update({
+              city: c,
+              locality: '',
+              // A pin from another city would be misleading. Recenter the map
+              // on the newly selected city and let the user choose a new pin.
+              latitude: null,
+              longitude: null,
+              fullAddress: '',
+              streetAddress: '',
+              placeId: '',
+              district: '',
+              tehsil: '',
+              province: '',
+              postalCode: '',
+              country: '',
+              locationAccuracy: null,
+              locationSource: '',
+            });
+            onConfirmationChange?.(false);
+            setMapOpen(true);
+          }}
              style={[s.chip, { backgroundColor: form.city === c ? colors.selectionBackground : colors.secondary, borderColor: form.city === c ? colors.selectionBorder : colors.border, borderWidth: form.city === c ? 1.5 : 1 }]}>
              <Text style={[s.chipText, { color: form.city === c ? colors.selectionForeground : colors.foreground, fontWeight: form.city === c ? '600' : '400' }]}>{c}</Text>
           </Pressable>
         ))}
       </ScrollView>
       {errors.city ? <Text style={s.errorText}>{errors.city}</Text> : null}
-
-      {neighborhoods.length > 0 && (
-        <>
-          <Label colors={colors}>Area / Locality</Label>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 14 }}>
-            {neighborhoods.map((n: string) => (
-              <Pressable key={n} onPress={() => update({ locality: n })}
-                 style={[s.chip, { backgroundColor: form.locality === n ? colors.selectionBackground : colors.secondary, borderColor: form.locality === n ? colors.selectionBorder : colors.border, borderWidth: form.locality === n ? 1.5 : 1 }]}>
-                 <Text style={[s.chipText, { color: form.locality === n ? colors.selectionForeground : colors.foreground, fontWeight: form.locality === n ? '600' : '400' }]}>{n}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </>
-      )}
-
-      <WizField label="Society / Scheme" placeholder="e.g. Canal View Society" value={form.society} onChangeText={(v: string) => update({ society: v })} colors={colors} optional />
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        <View style={{ flex: 1 }}>
-          <WizField label="Block" placeholder="e.g. Block A" value={form.block} onChangeText={(v: string) => update({ block: v })} colors={colors} optional />
-        </View>
-        <View style={{ flex: 1 }}>
-          <WizField label="Street / House #" placeholder="e.g. Street 4" value={form.street} onChangeText={(v: string) => update({ street: v })} colors={colors} optional />
-        </View>
-      </View>
-      <WizField label="Nearby Landmark" placeholder="e.g. Near Government Hospital" value={form.landmark} onChangeText={(v: string) => update({ landmark: v })} colors={colors} optional />
 
       <LocationPicker
         latitude={form.latitude} longitude={form.longitude}
@@ -798,6 +778,14 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
         requireConfirm
         onConfirmationChange={onConfirmationChange}
         errorMessage={errors.location}
+         fullScreen
+         visible={mapOpen}
+         onOpen={() => setMapOpen(true)}
+         onClose={() => setMapOpen(false)}
+         onDone={() => {
+           setMapOpen(false);
+           onConfirmationChange?.(true);
+         }}
       />
       {(form.fullAddress || form.district || form.tehsil) && (
         <View style={[s.locationSummary, { backgroundColor: colors.secondary, borderColor: colors.border }]}>

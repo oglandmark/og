@@ -303,6 +303,7 @@ function InteractiveMapWithGoogleMaps({
 
   const handleMapPress = useCallback(
     (e: MapPressEvent) => {
+      if (!onPress) return;
       if (Date.now() < ignoreMapPressUntil.current) return;
       const coord = e.nativeEvent.coordinate;
       setPinCoord(coord);

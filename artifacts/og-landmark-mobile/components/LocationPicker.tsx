@@ -282,6 +282,18 @@ export function LocationPicker({
     ));
   }, [fullScreen, visible, hasCommittedPin, latitude, longitude, address]);
 
+  useEffect(() => {
+    if (!fullScreen || visible) return;
+    setDraftLocation(hasCommittedPin
+      ? {
+          latitude: latitude!,
+          longitude: longitude!,
+          fullAddress: address ?? '',
+          locationSource: 'manual',
+        }
+      : null);
+  }, [fullScreen, visible, hasCommittedPin, latitude, longitude, address]);
+
   const [region, setRegion] = useState(
     hasPin
       ? { latitude: mapLatitude!, longitude: mapLongitude!, latitudeDelta: 0.02, longitudeDelta: 0.02 }
@@ -558,9 +570,9 @@ export function LocationPicker({
               <InteractiveMap
                 region={region}
                 onRegionChange={setRegion}
-                onPress={handleMapPress}
-                pinLat={hasPin ? latitude! : undefined}
-                pinLng={hasPin ? longitude! : undefined}
+                onPress={undefined}
+                pinLat={hasPin ? mapLatitude! : undefined}
+                pinLng={hasPin ? mapLongitude! : undefined}
                 onDragEnd={handleDragEnd}
                 showMyLocation={false}
               />
@@ -573,7 +585,7 @@ export function LocationPicker({
                   </Text>
                   {!hasPin && (
                     <Text style={[lp.selectedCardSub, { color: colors.mutedForeground }]} numberOfLines={1}>
-                      Tap the map or move the pin to choose the exact point
+                      Drag the pin to choose the exact point
                     </Text>
                   )}
                   {addressLoading && (
@@ -585,7 +597,8 @@ export function LocationPicker({
                 </View>
                 <Pressable
                   onPress={() => {
-                    onClear();
+                    if (!fullScreen) onClear();
+                    setDraftLocation(null);
                     setPinnedAddr('');
                     setLocationData({});
                     setConfirmed(false);
@@ -598,7 +611,7 @@ export function LocationPicker({
                 </Pressable>
                 {hasPin && !addressLoading && (
                   <Text style={[lp.selectedCardCoordinates, { color: colors.mutedForeground }]} numberOfLines={1}>
-                    {fmtCoord(latitude!, true)} · {fmtCoord(longitude!, false)}
+                    {fmtCoord(mapLatitude!, true)} · {fmtCoord(mapLongitude!, false)}
                   </Text>
                 )}
               </View>
@@ -606,7 +619,7 @@ export function LocationPicker({
               <View pointerEvents="none" style={lp.fullMapHint}>
                 <View style={lp.fullMapHintPill}>
                   <Feather name="move" size={12} color="#ffffff" />
-                  <Text style={lp.fullMapHintText}>Tap map or drag pin to adjust</Text>
+                  <Text style={lp.fullMapHintText}>Drag the pin to adjust</Text>
                 </View>
               </View>
             </View>
@@ -619,6 +632,10 @@ export function LocationPicker({
                 testID="done-fullscreen-location-map"
                 disabled={!hasPin}
                 onPress={() => {
+                  if (draftLocation) {
+                    onChange(draftLocation.latitude, draftLocation.longitude, draftLocation.fullAddress);
+                    onLocationChange?.(draftLocation);
+                  }
                   setConfirmed(true);
                   onDone?.();
                 }}
@@ -749,9 +766,9 @@ export function LocationPicker({
           key={`${city ?? 'default'}-${hasPin ? `${latitude}-${longitude}` : 'location'}`}
           region={region}
           onRegionChange={setRegion}
-          onPress={handleMapPress}
-          pinLat={hasPin ? latitude! : undefined}
-          pinLng={hasPin ? longitude! : undefined}
+           onPress={undefined}
+           pinLat={hasPin ? mapLatitude! : undefined}
+           pinLng={hasPin ? mapLongitude! : undefined}
           onDragEnd={handleDragEnd}
           showMyLocation={false}
         />
@@ -767,7 +784,7 @@ export function LocationPicker({
           <View pointerEvents="none" style={lp.tapHint}>
             <View style={lp.tapHintPill}>
               <Feather name="map-pin" size={12} color="#ffffff" />
-              <Text style={lp.tapHintText}>Tap map to drop a pin</Text>
+               <Text style={lp.tapHintText}>Drag the pin to set the exact location</Text>
             </View>
           </View>
         )}

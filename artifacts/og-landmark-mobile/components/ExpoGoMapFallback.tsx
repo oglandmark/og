@@ -55,7 +55,7 @@ function buildMapHtml({
     .leaflet-control-attribution { font-size: 8px; opacity: .72; }
     .pin, .user-pin {
       width: 22px; height: 22px; border-radius: 50%;
-      background: #c8a45a; border: 3px solid #f3d37c;
+      background: #17324d; border: 3px solid #ffffff;
       box-shadow: 0 2px 7px rgba(16,42,67,.45);
     }
     .user-pin { width: 18px; height: 18px; background: #4285f4; border-color: #fff; }

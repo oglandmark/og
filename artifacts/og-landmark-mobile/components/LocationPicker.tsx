@@ -554,7 +554,6 @@ export function LocationPicker({
               </Pressable>
               <View style={{ flex: 1, alignItems: 'center' }}>
                 <Text style={[lp.fullHeaderTitle, { color: colors.foreground }]}>Mark Location on Map</Text>
-                <Text style={[lp.fullHeaderSub, { color: colors.mutedForeground }]}>Tap or drag the pin to the exact property point</Text>
               </View>
               <View style={{ width: 38 }} />
             </View>
@@ -619,7 +618,7 @@ export function LocationPicker({
 
             <View style={[lp.fullFooter, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: insets.bottom + 12 }]}>
               <Pressable onPress={onClose} hitSlop={10} style={lp.skipButton}>
-                <Text style={[lp.skipButtonText, { color: colors.mutedForeground }]}>Cancel</Text>
+                <Text style={[lp.skipButtonText, { color: colors.mutedForeground }]}>Skip</Text>
               </Pressable>
               <Pressable
                 testID="done-fullscreen-location-map"
@@ -937,15 +936,18 @@ const lp = StyleSheet.create({
   fullMap: { flex: 1, position: 'relative' },
   selectedCard: {
     position: 'absolute', top: 18, left: 16, right: 16,
-    borderWidth: 1, borderRadius: 15, padding: 13,
+    borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
     shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 }, elevation: 4,
   },
-  selectedCardEyebrow: { fontFamily: 'Inter_600SemiBold', fontSize: 10, letterSpacing: 0.7, marginBottom: 7 },
-  selectedCardRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
-  selectedCardPin: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  selectedCardTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
-  selectedCardSub: { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 3 },
+  selectedCardEyebrow: { fontFamily: 'Inter_400Regular', fontSize: 12, marginBottom: 3 },
+  selectedCardTitle: { fontFamily: 'Inter_500Medium', fontSize: 16 },
+  selectedCardSub: { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 4 },
+  addressLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  changeLocationButton: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6 },
+  changeLocationText: { fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#1a6b3a' },
+  selectedCardCoordinates: { position: 'absolute', left: 14, bottom: 5, fontFamily: 'Inter_400Regular', fontSize: 8 },
   fullMapHint: { position: 'absolute', left: 0, right: 0, bottom: 16, alignItems: 'center' },
   fullMapHintPill: {
     flexDirection: 'row', alignItems: 'center', gap: 6,

@@ -1,7 +1,7 @@
 /**
  * MapViewComponent — Native: react-native-maps
  *
- * iOS + Android → PROVIDER_GOOGLE with gold markers
+ * iOS + Android → PROVIDER_GOOGLE with navy property markers
  *
  * Exports:
  *   StaticMap      — non-interactive property pin (detail page)
@@ -23,7 +23,7 @@ import { getCurrentPosition } from '@/lib/locationService';
 import { ExpoGoMapFallback } from '@/components/ExpoGoMapFallback';
 
 // ─── OG Landmark light map style (Google Maps) ─────────────────────────────────
-// Keep the map light and information-dense so roads, labels, and the gold pin
+// Keep the map light and information-dense so roads, labels, and the navy pin
 // remain readable against both the white property detail screen and the form.
 const OG_MAP_STYLE = [
   { elementType: 'geometry', stylers: [{ color: '#f3f6f8' }] },
@@ -71,8 +71,8 @@ function GoogleMapsUnavailable() {
   );
 }
 
-// ─── Gold property pin ─────────────────────────────────────────────────────────
-function GoldPin() {
+// ─── Navy property pin ─────────────────────────────────────────────────────────
+function PropertyPin() {
   return (
     <View style={pin.container}>
       <View style={pin.head}>
@@ -86,16 +86,16 @@ const pin = StyleSheet.create({
   container: { alignItems: 'center' },
   head: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#c8a45a',
-    borderWidth: 3, borderColor: '#e8c870',
+    backgroundColor: '#17324d',
+    borderWidth: 3, borderColor: '#315b7d',
     alignItems: 'center', justifyContent: 'center',
     shadowColor: '#000', shadowOpacity: 0.45,
     shadowRadius: 4, shadowOffset: { width: 0, height: 2 },
     elevation: 5,
   },
-  inner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#102a43' },
+  inner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#ffffff' },
   tail: {
-    width: 3, height: 10, backgroundColor: '#c8a45a',
+    width: 3, height: 10, backgroundColor: '#17324d',
     marginTop: -1, borderRadius: 2,
   },
 });
@@ -219,7 +219,7 @@ export function StaticMap({ latitude, longitude, satellite = false, interactive 
           450,
         )}
       >
-        <GoldPin />
+        <PropertyPin />
       </Marker>
     </MapView>
   );
@@ -402,7 +402,7 @@ function InteractiveMapWithGoogleMaps({
           onDragEnd={handleDragEnd}
           tracksViewChanges={false}
         >
-          <GoldPin />
+          <PropertyPin />
         </Marker>
 
         {userCoord && (

@@ -31,7 +31,7 @@ function buildLeafletHtml(lat: number, lng: number, zoom: number, interactive = 
     * { margin:0; padding:0; }
     body { background:#e8f0f7; }
     #map { width:100%; height:100%; position:absolute;top:0;left:0;right:0;bottom:0; }
-    .custom-pin { width:20px;height:20px;background:#C8A45A;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4); }
+    .custom-pin { width:20px;height:20px;background:#17324D;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4); }
   </style>
 </head>
 <body>

@@ -5,7 +5,7 @@
  * render immediately on lower-end Android devices.
  */
 import React from 'react';
-import { StyleProp, View, ViewStyle } from 'react-native';
+import { StyleProp, Text as NativeText, View, ViewStyle } from 'react-native';
 
 type AnimatedRevealProps = {
   children: React.ReactNode;
@@ -22,5 +22,10 @@ export function AnimatedReveal({
 }: AnimatedRevealProps) {
   void delay;
   void distance;
-  return <View style={style}>{children}</View>;
+  const safeChildren = React.Children.map(children, (child, index) => (
+    typeof child === 'string' && child.trim().length > 0
+      ? <NativeText key={`animated-text-${index}`}>{child}</NativeText>
+      : child
+  ));
+  return <View style={style}>{safeChildren}</View>;
 }

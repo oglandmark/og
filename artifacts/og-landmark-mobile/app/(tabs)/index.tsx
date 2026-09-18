@@ -13,10 +13,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 // BlurView removed — crashes Android GPU
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  cancelAnimation, Easing, ReduceMotion, useAnimatedStyle,
-  useSharedValue, withRepeat, withSpring, withTiming,
-} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { SkeletonShimmer } from '@/components/SkeletonShimmer';
@@ -85,31 +81,21 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
   const drawerRouter = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const [mounted, setMounted] = useState(false);
+  const mounted = open;
   const [selectedInfo, setSelectedInfo] = useState<DrawerInfo | null>(null);
-  const panelX = useSharedValue(-420);
-  const backdropOpacity = useSharedValue(0);
 
   useEffect(() => {
-    if (open) { setMounted(true); panelX.value = withTiming(0, { duration: 300 }); backdropOpacity.value = withTiming(1, { duration: 240 }); return; }
-    setSelectedInfo(null);
-    panelX.value = withTiming(-420, { duration: 220 });
-    backdropOpacity.value = withTiming(0, { duration: 180 });
-    const t = setTimeout(() => setMounted(false), 240);
-    return () => clearTimeout(t);
-  }, [open, backdropOpacity, panelX]);
-
-  const panelStyle   = useAnimatedStyle(() => ({ transform: [{ translateX: panelX.value }] }));
-  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropOpacity.value }));
+    if (!open) setSelectedInfo(null);
+  }, [open]);
 
   return (
     <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={s.drawerRoot}>
-        <Animated.View style={[StyleSheet.absoluteFill, s.drawerBackdrop, backdropStyle]}>
+        <View style={[StyleSheet.absoluteFill, s.drawerBackdrop]}>
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.25)' }]} />
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close menu" />
-        </Animated.View>
-        <Animated.View style={[s.drawerPanel, panelStyle, { width: Math.min(width * 0.86, 360), paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18, backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
+        </View>
+        <View style={[s.drawerPanel, { width: Math.min(width * 0.86, 360), paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18, backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
           <LinearGradient pointerEvents="none" colors={[colors.glassOverlay, 'transparent']} style={StyleSheet.absoluteFill} />
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.drawerScrollContent} keyboardShouldPersistTaps="handled">
@@ -210,7 +196,7 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
               </View>
             </View>
           )}
-        </Animated.View>
+        </View>
       </View>
     </Modal>
   );
@@ -442,7 +428,7 @@ function CinematicBanner({ isScreenVisible, externalSlides, config }: {
       {config?.carousel?.showDots !== false && <View style={bn.dots}>
         {slides.map((_, i) => (
           <Pressable key={i} onPress={() => goTo(i)} hitSlop={8}>
-            <Animated.View style={[bn.dot, i === activeIdx && bn.dotActive]} />
+            <View style={[bn.dot, i === activeIdx && bn.dotActive]} />
           </Pressable>
         ))}
       </View>}
@@ -455,23 +441,10 @@ function BannerSlide({ slide, isActive }: {
   slide: BannerSlideData;
   isActive: boolean;
 }) {
-  const opacity   = useSharedValue(isActive ? 1 : 0);
-  const kenScale  = useSharedValue(1);
-
-  useEffect(() => {
-    opacity.value   = withTiming(isActive ? 1 : 0, { duration: 900, easing: Easing.out(Easing.quad) });
-    if (isActive) {
-      kenScale.value = 1;
-      kenScale.value = withTiming(1.1, { duration: BANNER_AUTO_INTERVAL + 800, easing: Easing.linear });
-    }
-  }, [isActive]);
-
-  const slideStyle   = useAnimatedStyle(() => ({ opacity: opacity.value }));
-  const imgStyle     = useAnimatedStyle(() => ({ transform: [{ scale: kenScale.value }] }));
   return (
-    <Animated.View style={[bn.slide, StyleSheet.absoluteFill, slideStyle]} pointerEvents={isActive ? 'auto' : 'none'}>
-      <Animated.Image source={slide.image} style={[bn.image, imgStyle]} resizeMode="cover" />
-    </Animated.View>
+    <View style={[bn.slide, StyleSheet.absoluteFill, { opacity: isActive ? 1 : 0 }]} pointerEvents={isActive ? 'auto' : 'none'}>
+      <Image source={slide.image} style={bn.image} resizeMode="cover" />
+    </View>
   );
 }
 
@@ -483,17 +456,12 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible }: {
   isMuted: boolean;
   isScreenVisible: boolean;
 }) {
-  const opacity   = useSharedValue(isActive ? 1 : 0);
   const shouldPlay = isActive && isScreenVisible;
   const source: VideoSource = slide.localVideo ?? (slide.videoUri ? { uri: slide.videoUri } : null);
   const player = useVideoPlayer(source, (videoPlayer) => {
     videoPlayer.loop = true;
     videoPlayer.muted = isMuted;
   });
-
-  useEffect(() => {
-    opacity.value   = withTiming(isActive ? 1 : 0, { duration: 900, easing: Easing.out(Easing.quad) });
-  }, [isActive]);
 
   // Play when active; pause + rewind when becoming inactive so it starts fresh next cycle
   useEffect(() => {
@@ -509,10 +477,8 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible }: {
     player.muted = isMuted;
   }, [isMuted, player]);
 
-  const slideStyle   = useAnimatedStyle(() => ({ opacity: opacity.value }));
-
   return (
-    <Animated.View style={[bn.slide, StyleSheet.absoluteFill, slideStyle]} pointerEvents={isActive ? 'auto' : 'none'}>
+    <View style={[bn.slide, StyleSheet.absoluteFill, { opacity: isActive ? 1 : 0 }]} pointerEvents={isActive ? 'auto' : 'none'}>
       {/* Remote video only on native — web uses image fallback (avoids byte-range 422 errors) */}
       {isActive && (slide.localVideo || slide.videoUri) && Platform.OS !== 'web' ? (
         <VideoView
@@ -525,7 +491,7 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible }: {
       ) : isActive ? (
         <Image source={slide.image ?? require('@/assets/images/property-1.jpg')} style={bn.image} resizeMode="cover" />
       ) : null}
-    </Animated.View>
+    </View>
   );
 }
 
@@ -925,122 +891,30 @@ const fp = StyleSheet.create({
 // ─── Agent Card (premium) ─────────────────────────────────────────────────────
 
 function AgentCarousel({ agents, colors, onAgentPress }: { agents: SampleAgent[]; colors: Colors; onAgentPress: (id: string) => void }) {
-  const translation = useSharedValue(0);
-  const pausedRef = useRef(false);
-  const gestureStartRef = useRef(0);
   const visibleAgents = agents.length
-    ? Array.from({ length: Math.max(6, agents.length * 3) }, (_, index) => agents[index % agents.length])
+    ? agents
     : [];
-  const cardStep = 264;
-  const loopWidth = visibleAgents.length * cardStep;
-  const loopDuration = loopWidth * 42;
-  const animatedTrackStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translation.value }],
-  }));
-
-  useEffect(() => {
-    translation.value = withRepeat(
-      withTiming(-loopWidth, {
-        duration: loopDuration,
-        easing: Easing.linear,
-        reduceMotion: ReduceMotion.Never,
-      }),
-      -1,
-      false,
-    );
-
-    return () => cancelAnimation(translation);
-  }, [loopWidth]);
-
-  const pause = () => {
-    pausedRef.current = true;
-    cancelAnimation(translation);
-  };
-
-  const resume = () => {
-    if (!pausedRef.current) return;
-    pausedRef.current = false;
-    const remainingDistance = Math.max(1, loopWidth + translation.value);
-    const remainingDuration = Math.max(900, remainingDistance * 42);
-    translation.value = withTiming(
-      -loopWidth,
-      {
-        duration: remainingDuration,
-        easing: Easing.linear,
-        reduceMotion: ReduceMotion.Never,
-      },
-      (finished) => {
-        if (finished) {
-          translation.value = withRepeat(
-            withTiming(-loopWidth, {
-              duration: loopDuration,
-              easing: Easing.linear,
-              reduceMotion: ReduceMotion.Never,
-            }),
-            -1,
-            false,
-          );
-        }
-      },
-    );
-  };
-
-  const panResponder = useMemo(() => PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gesture) =>
-      Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
-    onPanResponderGrant: () => {
-      pausedRef.current = true;
-      cancelAnimation(translation);
-      gestureStartRef.current = translation.value;
-    },
-    onPanResponderMove: (_, gesture) => {
-      translation.value = Math.max(
-        -loopWidth,
-        Math.min(0, gestureStartRef.current + gesture.dx),
-      );
-    },
-    onPanResponderRelease: () => resume(),
-    onPanResponderTerminate: () => resume(),
-    onPanResponderTerminationRequest: () => false,
-  }), [loopDuration, loopWidth]);
 
   return (
-    <View
-      style={s.agentCarouselViewport}
-      {...panResponder.panHandlers}
-    >
-      <Animated.View
-        style={[
-          s.agentTrack,
-          s.hRow,
-          { width: loopWidth * 2 + 36 },
-          animatedTrackStyle,
-        ]}
-      >
-        {[...visibleAgents, ...visibleAgents].map((agent, index) => (
+    <ScrollView horizontal style={s.agentCarouselViewport} contentContainerStyle={[s.agentTrack, s.hRow]} showsHorizontalScrollIndicator={false}>
+      {visibleAgents.map((agent) => (
           <AgentCard
-            key={`${agent.id}-${index}`}
+            key={agent.id}
             agent={agent}
             colors={colors}
             onPress={() => onAgentPress(agent.id)}
           />
-        ))}
-      </Animated.View>
-    </View>
+      ))}
+    </ScrollView>
   );
 }
 
 function AgentCard({ agent, colors, onPress }: { agent: SampleAgent; colors: Colors; onPress: () => void }) {
-  const scale = useSharedValue(1);
-  const scaleStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-
   return (
     <Pressable
       onPress={onPress}
-      onPressIn={() => { scale.value = withSpring(0.97, { damping: 18, stiffness: 260 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 18, stiffness: 260 }); }}
     >
-      <Animated.View style={[ac.card, { backgroundColor: colors.card, borderColor: colors.border }, scaleStyle]}>
+      <View style={[ac.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={ac.photoWrap}>
           {agent.profileImage ? (
             <Image source={agent.profileImage} style={ac.photo} resizeMode="cover" />
@@ -1118,7 +992,7 @@ function AgentCard({ agent, colors, onPress }: { agent: SampleAgent; colors: Col
             </Pressable>
           </View>
         </View>
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }
@@ -1166,16 +1040,11 @@ function ProjectShowcaseCard({ project, colors, onPress }: { project: typeof pro
   const totalUnits = units * 18;
   const available = Math.floor(totalUnits * 0.62);
   const progress = 1 - (available / totalUnits);
-  const scale = useSharedValue(1);
-  const scaleStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-
   return (
     <Pressable
       onPress={onPress}
-      onPressIn={() => { scale.value = withSpring(0.974, { damping: 18, stiffness: 260 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 18, stiffness: 260 }); }}
     >
-      <Animated.View style={[pc.card, scaleStyle]}>
+      <View style={pc.card}>
         <Image source={project.image} style={pc.image} resizeMode="cover" />
         <LinearGradient colors={['#00000000', '#00000099']} style={pc.gradient} />
         <View style={pc.topRow}>
@@ -1205,7 +1074,7 @@ function ProjectShowcaseCard({ project, colors, onPress }: { project: typeof pro
           <View style={pc.viewBtn}><Text style={pc.viewBtnText}>View</Text><Feather name="arrow-up-right" size={11} color="#ffffff" /></View>
         </View>
       </View>
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }
@@ -1281,16 +1150,12 @@ const dpc = StyleSheet.create({
 function RecommendedCard({ property, colors, onPress }: { property: Property; colors: Colors; onPress: () => void }) {
   const { isSaved, toggleSaved } = useSaved();
   const saved = isSaved(property.id);
-  const scale = useSharedValue(1);
-  const scaleStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
     <Pressable
       onPress={onPress}
-      onPressIn={() => { scale.value = withSpring(0.975, { damping: 18, stiffness: 260 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 18, stiffness: 260 }); }}
     >
-      <Animated.View style={[rc.card, { backgroundColor: colors.card, borderColor: colors.border }, scaleStyle]}>
+      <View style={[rc.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Image source={property.image} style={rc.image} resizeMode="cover" />
         <LinearGradient colors={['#00000000', '#000000aa']} style={rc.imageGradient} />
 
@@ -1319,7 +1184,7 @@ function RecommendedCard({ property, colors, onPress }: { property: Property; co
             <Text style={[rc.area, { color: colors.mutedForeground }]}>{property.area} {property.areaUnit}</Text>
           </View>
         </View>
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }
@@ -1346,15 +1211,11 @@ function AgriCommCard({ property, colors, isAgri, onPress }: {
   property: Property; colors: Colors; isAgri: boolean; onPress: () => void;
 }) {
   const accentColor = isAgri ? '#1a6b3a' : '#102a43';
-  const scale = useSharedValue(1);
-  const scaleStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   return (
     <Pressable
       onPress={onPress}
-      onPressIn={() => { scale.value = withSpring(0.968, { damping: 18, stiffness: 260 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 18, stiffness: 260 }); }}
     >
-      <Animated.View style={[acp.card, { backgroundColor: colors.card, borderColor: colors.border }, scaleStyle]}>
+      <View style={[acp.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Image source={property.image} style={acp.image} resizeMode="cover" />
         <LinearGradient colors={['#00000000', '#000000cc']} style={acp.gradient} />
         <View style={[acp.typeBadge, { backgroundColor: accentColor + 'cc' }]}>
@@ -1369,7 +1230,7 @@ function AgriCommCard({ property, colors, isAgri, onPress }: {
             <Text style={acp.meta}>{property.city}</Text>
           </View>
         </View>
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }
@@ -1395,28 +1256,9 @@ function LocationSheet({ visible, selected, onSelect, onClose, colors, insets, m
   onClose: () => void; colors: Colors; insets: ReturnType<typeof useSafeAreaInsets>;
   mapProperties: Property[];
 }) {
-  const translateY = useSharedValue(400);
-  const opacity    = useSharedValue(0);
-  const [mounted, setMounted] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
 
-  useEffect(() => {
-    if (visible) {
-      setMounted(true);
-      translateY.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) });
-      opacity.value    = withTiming(1, { duration: 180, easing: Easing.out(Easing.cubic) });
-    } else {
-      translateY.value = withTiming(400, { duration: 210, easing: Easing.in(Easing.cubic) });
-      opacity.value    = withTiming(0, { duration: 160, easing: Easing.in(Easing.cubic) });
-      const t = setTimeout(() => setMounted(false), 220);
-      return () => clearTimeout(t);
-    }
-  }, [visible, translateY, opacity]);
-
-  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
-  const bgStyle    = useAnimatedStyle(() => ({ opacity: opacity.value }));
-
-  if (!mounted) return null;
+  if (!visible) return null;
 
   const handlePropertySelect = (id: number) => {
     const prop = mapProperties.find((p) => p.id === id);
@@ -1424,12 +1266,12 @@ function LocationSheet({ visible, selected, onSelect, onClose, colors, insets, m
   };
 
   return (
-    <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#0d1d2bbb' }, bgStyle]}>
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#0d1d2bbb' }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        </Animated.View>
-        <Animated.View style={[ls.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20, borderColor: colors.border }, sheetStyle]}>
+        </View>
+        <View style={[ls.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20, borderColor: colors.border }]}>
           <View style={[ls.handle, { backgroundColor: colors.border }]} />
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={ls.scrollContent} keyboardShouldPersistTaps="handled">
             <Text style={[ls.heading, { color: colors.foreground }]}>Select Location</Text>
@@ -1466,7 +1308,7 @@ function LocationSheet({ visible, selected, onSelect, onClose, colors, insets, m
               </View>
             )}
           </ScrollView>
-        </Animated.View>
+        </View>
       </View>
     </Modal>
   );
@@ -1507,20 +1349,13 @@ function PlotCalculator({ colors }: { colors: Colors }) {
   const [inputs,  setInputs]  = useState<Record<string, string>>({});
   const [result,  setResult]  = useState<SharedCalcResult | null>(null);
   const [error,   setError]   = useState('');
-  const expandAnim = useSharedValue(0);
-
   const toggleOpen = () => {
     const next = !open;
     setOpen(next);
-    expandAnim.value = withSpring(next ? 1 : 0, { damping: 22, stiffness: 180 });
     if (!next) { setResult(null); setError(''); }
   };
 
-  const panelStyle = useAnimatedStyle(() => ({
-    opacity:   expandAnim.value,
-    maxHeight: expandAnim.value * 1100,
-    overflow:  'hidden',
-  }));
+  const panelStyle = { overflow: 'hidden' as const };
 
   // Auto-calculate whenever any input, corner count, or unit changes
   useEffect(() => {
@@ -1555,7 +1390,7 @@ function PlotCalculator({ colors }: { colors: Colors }) {
       </Pressable>
 
       {/* Expandable body */}
-      <Animated.View style={panelStyle}>
+      <View style={panelStyle}>
         <View style={[cc.body, { borderTopColor: colors.border }]}>
 
           {/* Corner + Unit selectors */}
@@ -1662,7 +1497,7 @@ function PlotCalculator({ colors }: { colors: Colors }) {
             </View>
           )}
         </View>
-      </Animated.View>
+      </View>
     </View>
   );
 }
@@ -1740,18 +1575,8 @@ export default function HomeScreen() {
     action: homeContent?.theme?.action || baseColors.action,
   };
 
-  // ── Animated toggle pill ──────────────────────────────────────────────────
-  const togglePillX   = useSharedValue(0);
+  // ── Static toggle pill ────────────────────────────────────────────────────
   const [switcherW,   setSwitcherW]   = useState(0);
-  const pillAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: togglePillX.value * (switcherW / 2) }],
-  }));
-
-  // ── Header button micro-animations ────────────────────────────────────────
-  const menuScale    = useSharedValue(1);
-  const profileScale = useSharedValue(1);
-  const menuScaleStyle    = useAnimatedStyle(() => ({ transform: [{ scale: menuScale.value }] }));
-  const profileScaleStyle = useAnimatedStyle(() => ({ transform: [{ scale: profileScale.value }] }));
 
   // ── Video scroll-visibility tracking ──────────────────────────────────────
   const [tabFocused,     setTabFocused]     = useState(true);
@@ -1861,27 +1686,32 @@ export default function HomeScreen() {
         <View style={s.topBar}>
           <Pressable
             onPress={() => setDrawerOpen(true)}
-            onPressIn={() => { menuScale.value = withSpring(0.88, { damping: 16, stiffness: 300 }); }}
-            onPressOut={() => { menuScale.value = withSpring(1, { damping: 16, stiffness: 300 }); }}
             accessibilityRole="button" accessibilityLabel="Open navigation menu" testID="open-navigation-menu"
           >
-            <Animated.View style={[s.headerIcon, menuScaleStyle]}>
+            <View style={s.headerIcon}>
               <Feather name="menu" size={21} color="#102a43" />
-            </Animated.View>
+            </View>
           </Pressable>
           <BrandMark />
           {user ? <NotificationBell compact /> : <View style={{ width: 36 }} />}
         </View>
 
-        {/* Buy / Rent toggle — animated sliding pill */}
+        {/* Buy / Rent toggle */}
         <View
           style={[s.switcher, { backgroundColor: colors.secondary }]}
           onLayout={(e) => setSwitcherW(e.nativeEvent.layout.width)}
         >
           {/* Sliding pill */}
           {switcherW > 0 && (
-            <Animated.View
-              style={[s.switchPill, { width: switcherW / 2 - 4, backgroundColor: colors.action }, pillAnimStyle]}
+            <View
+              style={[
+                s.switchPill,
+                {
+                  width: switcherW / 2 - 4,
+                  left: transaction === 'Rent' ? switcherW / 2 + 2 : 2,
+                  backgroundColor: colors.action,
+                },
+              ]}
               pointerEvents="none"
             />
           )}
@@ -1891,7 +1721,6 @@ export default function HomeScreen() {
               onPress={() => {
                 setTransaction(item);
                 setQuery('');
-                togglePillX.value = withSpring(item === 'Buy' ? 0 : 1, { damping: 22, stiffness: 340 });
               }}
               style={s.switchItem}
             >

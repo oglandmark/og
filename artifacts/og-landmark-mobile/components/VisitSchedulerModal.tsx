@@ -153,7 +153,7 @@ export default function VisitSchedulerModal({
   if (!visible) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose} statusBarTranslucent>
       <View style={vs.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
 

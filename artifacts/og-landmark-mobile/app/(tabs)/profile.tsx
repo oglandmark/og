@@ -9,7 +9,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useFocusEffect, useRouter } from 'expo-router';
 // BlurView removed — crashes Android GPU
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { BrandMark } from '@/components/BrandMark';
 import { NotificationBell } from '@/components/NotificationBell';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -55,35 +54,15 @@ function SlideSheet({
   children: React.ReactNode; colors: ReturnType<typeof useColors>;
   insets: ReturnType<typeof useSafeAreaInsets>;
 }) {
-  const translateY = useSharedValue(600);
-  const opacity    = useSharedValue(0);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    if (visible) {
-      setMounted(true);
-      translateY.value = withSpring(0, { damping: 24, stiffness: 240 });
-      opacity.value    = withTiming(1, { duration: 200 });
-    } else {
-      translateY.value = withTiming(600, { duration: 220 });
-      opacity.value    = withTiming(0, { duration: 180 });
-      const t = setTimeout(() => setMounted(false), 240);
-      return () => clearTimeout(t);
-    }
-  }, [visible, translateY, opacity]);
-
-  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
-  const bgStyle    = useAnimatedStyle(() => ({ opacity: opacity.value }));
-
-  if (!mounted) return null;
+  if (!visible) return null;
   return (
-    <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={sh.root}>
-        <Animated.View style={[StyleSheet.absoluteFill, sh.backdrop, bgStyle]}>
+        <View style={[StyleSheet.absoluteFill, sh.backdrop]}>
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.25)' }]} />
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        </Animated.View>
-        <Animated.View style={[sh.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16, borderColor: colors.border }, sheetStyle]}>
+        </View>
+        <View style={[sh.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16, borderColor: colors.border }]}>
           <View style={[sh.handle, { backgroundColor: colors.border }]} />
           <View style={sh.sheetHeader}>
             <View>
@@ -95,7 +74,7 @@ function SlideSheet({
             </Pressable>
           </View>
           {children}
-        </Animated.View>
+        </View>
       </View>
     </Modal>
   );

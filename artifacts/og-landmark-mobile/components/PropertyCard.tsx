@@ -13,12 +13,6 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withSpring,
-} from 'react-native-reanimated';
 import { useColors } from '@/hooks/useColors';
 import { formatAreaDisplay, formatPrice, Property } from '@/lib/properties';
 import { useSaved } from '@/context/SavedContext';
@@ -32,8 +26,6 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
   const colors = useColors();
   const router = useRouter();
   const { isSaved, toggleSaved } = useSaved();
-  const cardScale = useSharedValue(1);
-  const heartScale = useSharedValue(1);
   const [activeImage, setActiveImage] = useState(0);
   const [galleryVisible, setGalleryVisible] = useState(false);
   const images = propertyImages(property);
@@ -53,9 +45,6 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
     onPanResponderTerminationRequest: () => false,
   }), [images.length]);
 
-  const heartAnimatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: heartScale.value }] }));
-  const cardAnimatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: cardScale.value }] }));
-
   const handleShare = useCallback((event: any) => {
     event.stopPropagation();
     void shareProperty(property);
@@ -64,20 +53,15 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
   const handleSave = useCallback((event: any) => {
     event.stopPropagation();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    heartScale.value = withSequence(
-      withSpring(1.22, { damping: 8, stiffness: 300 }),
-      withSpring(1, { damping: 12, stiffness: 240 }),
-    );
     toggleSaved(property.id);
-  }, [heartScale, toggleSaved, property.id]);
+  }, [toggleSaved, property.id]);
 
   return (
-    <Animated.View
+    <View
       style={[
         styles.card,
         { backgroundColor: colors.glassCard, borderColor: colors.glassBorder },
         compact && styles.compactCard,
-        cardAnimatedStyle,
       ]}
     >
       {/* Solid overlay replaces BlurView — same visual, zero GPU cost */}
@@ -94,7 +78,6 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
               source={images[activeImage] ?? images[0]}
               style={[styles.image, { backgroundColor: colors.actionDeep }]}
               contentFit="cover"
-              transition={250}
               cachePolicy="memory-disk"
             />
           </Pressable>
@@ -177,13 +160,11 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
               accessibilityLabel={`${saved ? 'Remove from' : 'Add to'} favorites: ${property.title}`}
               testID={`save-property-${property.id}`}
             >
-              <Animated.View style={heartAnimatedStyle}>
-                <Feather
-                  name="heart"
-                  size={17}
-                  color={saved ? colors.gold : colors.goldForeground}
-                />
-              </Animated.View>
+              <Feather
+                name="heart"
+                size={17}
+                color={saved ? colors.gold : colors.goldForeground}
+              />
             </Pressable>
           </View>
         </View>
@@ -196,8 +177,6 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
 
         <Pressable
           onPress={() => router.push(`/property/${property.id}`)}
-          onPressIn={() => { cardScale.value = withSpring(0.985, { damping: 18, stiffness: 260 }); }}
-          onPressOut={() => { cardScale.value = withSpring(1, { damping: 18, stiffness: 260 }); }}
           style={[styles.body, { borderTopColor: colors.glassBorder }]}
           testID={`property-card-${property.id}`}
           accessibilityRole="button"
@@ -325,7 +304,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
           <WhatsAppLogo size={34} />
         </Pressable>
       </View>
-    </Animated.View>
+    </View>
   );
 }
 

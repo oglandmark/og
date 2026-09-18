@@ -312,7 +312,7 @@ export default function AdminProperties() {
         />
       )}
 
-      <Modal visible={!!editingProperty} transparent animationType="slide" onRequestClose={() => closeLocationEdit()}>
+      <Modal visible={!!editingProperty} transparent animationType="none" onRequestClose={() => closeLocationEdit()}>
         <View style={s.modalBackdrop}>
           <View style={[s.modalSheet, { backgroundColor: colors.background, paddingBottom: Platform.OS === 'ios' ? 28 : 18 }]}>
             <View style={[s.modalHeader, { borderBottomColor: colors.border }]}>

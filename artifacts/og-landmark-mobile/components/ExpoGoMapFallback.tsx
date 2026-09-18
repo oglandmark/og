@@ -54,10 +54,13 @@ function buildMapHtml({
     .leaflet-container { touch-action: none; }
     .leaflet-control-attribution { font-size: 8px; opacity: .72; }
     .pin, .user-pin {
-      width: 22px; height: 22px; border-radius: 50%;
+      position: relative;
+      width: 28px; height: 28px; border-radius: 50% 50% 50% 0;
       background: #17324d; border: 3px solid #ffffff;
       box-shadow: 0 2px 7px rgba(16,42,67,.45);
+      transform: rotate(-45deg);
     }
+    .pin::after { content: ''; position: absolute; width: 8px; height: 8px; left: 7px; top: 7px; border-radius: 50%; background: #ffffff; }
     .user-pin { width: 18px; height: 18px; background: #4285f4; border-color: #fff; }
     .price-pill {
       display: inline-block; padding: 5px 8px; border-radius: 9px;
@@ -111,8 +114,8 @@ function buildMapHtml({
           ? '<div class="price-pill">' + escapeHtml(point.label) + '</div>'
           : '<div class="pin"></div>';
         return L.divIcon({
-          html: html, className: '', iconSize: point.label ? [70, 30] : [22, 22],
-          iconAnchor: point.label ? [35, 15] : [11, 11]
+           html: html, className: '', iconSize: point.label ? [70, 30] : [28, 28],
+           iconAnchor: point.label ? [35, 15] : [14, 28]
         });
       }
       var markerLayer = L.layerGroup().addTo(map);

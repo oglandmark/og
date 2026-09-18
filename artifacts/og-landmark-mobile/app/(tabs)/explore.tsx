@@ -1094,7 +1094,7 @@ export default function ExploreScreen() {
       />
 
       {/* ── Save Search modal ── */}
-      <Modal visible={saveModalOpen} transparent animationType="fade" onRequestClose={() => setSaveModalOpen(false)}>
+      <Modal visible={saveModalOpen} transparent animationType="none" onRequestClose={() => setSaveModalOpen(false)}>
         <View style={ex.modalBackdrop}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setSaveModalOpen(false)} />
           <View style={[ex.saveModal, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -1150,7 +1150,7 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
   };
 
   return (
-    <Modal visible={open} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={open} animationType="none" transparent onRequestClose={onClose}>
       <View style={fs.root}>
         <Pressable style={fs.backdrop} onPress={onClose} />
         <View style={[fs.sheet, { backgroundColor: colors.background, borderColor: colors.border }]}>

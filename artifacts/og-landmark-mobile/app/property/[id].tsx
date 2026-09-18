@@ -191,7 +191,7 @@ function InquiryModal({
   const agentPhone = property.agentPhone;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose} statusBarTranslucent>
       <View style={iq.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         <View style={[iq.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}>
@@ -423,7 +423,7 @@ function AppointmentModal({
   if (!visible) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose} statusBarTranslucent>
       <View style={iq.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         <View style={[iq.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}>

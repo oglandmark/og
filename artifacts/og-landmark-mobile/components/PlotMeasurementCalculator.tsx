@@ -333,7 +333,7 @@ export function PlotMeasurementCalculator({
         )}
       </View>
 
-      <Modal visible={saveModalOpen} transparent animationType="fade" onRequestClose={() => setSaveModalOpen(false)}>
+      <Modal visible={saveModalOpen} transparent animationType="none" onRequestClose={() => setSaveModalOpen(false)}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.foreground }]}>Save measurement</Text>

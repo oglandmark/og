@@ -13,14 +13,6 @@ import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  Extrapolation,
-  interpolate,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
-  useSharedValue,
-  type SharedValue,
-} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
@@ -59,25 +51,13 @@ const SLIDES: OnboardingSlide[] = [
   },
 ];
 
-function Slide({ slide, index, width, scrollX, colors }: {
+function Slide({ slide, width, colors }: {
   slide: OnboardingSlide;
-  index: number;
   width: number;
-  scrollX: SharedValue<number>;
   colors: ReturnType<typeof useColors>;
 }) {
-  const animatedStyle = useAnimatedStyle(() => {
-    const inputRange = [(index - 1) * width, index * width, (index + 1) * width];
-    return {
-      opacity: interpolate(scrollX.value, inputRange, [0.45, 1, 0.45], Extrapolation.CLAMP),
-      transform: [
-        { scale: interpolate(scrollX.value, inputRange, [0.92, 1, 0.92], Extrapolation.CLAMP) },
-      ],
-    };
-  });
-
   return (
-    <Animated.View style={[styles.slide, { width }, animatedStyle]}>
+    <View style={[styles.slide, { width }]}>
       <ImageBackground source={slide.image} style={styles.image} imageStyle={styles.imageRadius} resizeMode="cover">
         <LinearGradient
           colors={[colors.actionDeep + '20', colors.action + 'a8', colors.actionDeep]}
@@ -93,7 +73,7 @@ function Slide({ slide, index, width, scrollX, colors }: {
           <Text style={[styles.description, { color: colors.background + 'CC' }]}>{slide.description}</Text>
         </View>
       </ImageBackground>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -104,18 +84,11 @@ export default function OnboardingScreen() {
   const { width } = useWindowDimensions();
   const { completeOnboarding } = useOnboarding();
   const [page, setPage] = useState(0);
-  const scrollX = useSharedValue(0);
-  const scrollRef = useRef<{ scrollTo: (options: { x: number; animated: boolean }) => void } | null>(null);
+  const scrollRef = useRef<ScrollView | null>(null);
 
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const bottomInset = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
   const isLastPage = page === SLIDES.length - 1;
-
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollX.value = event.contentOffset.x;
-    },
-  });
 
   const handlePageChange = useCallback((nextPage: number) => {
     setPage(nextPage);
@@ -128,7 +101,7 @@ export default function OnboardingScreen() {
       return;
     }
     const nextPage = page + 1;
-    scrollRef.current?.scrollTo({ x: nextPage * width, animated: true });
+    scrollRef.current?.scrollTo({ x: nextPage * width, animated: false });
     handlePageChange(nextPage);
   }, [completeOnboarding, handlePageChange, isLastPage, page, router, width]);
 
@@ -179,15 +152,11 @@ export default function OnboardingScreen() {
         <Text style={[styles.introText, { color: colors.background }]}>Property, with perspective.</Text>
       </View>
 
-      <Animated.ScrollView
-        ref={(node: Animated.ScrollView | null) => {
-          scrollRef.current = node;
-        }}
+      <ScrollView
+        ref={scrollRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
         onMomentumScrollEnd={(event) => {
           const nextPage = Math.round(event.nativeEvent.contentOffset.x / width);
           if (nextPage !== page) handlePageChange(nextPage);
@@ -196,9 +165,9 @@ export default function OnboardingScreen() {
         contentContainerStyle={styles.carouselContent}
       >
         {SLIDES.map((slide, index) => (
-          <Slide key={slide.title} slide={slide} index={index} width={width - 40} scrollX={scrollX} colors={colors} />
+          <Slide key={slide.title} slide={slide} width={width - 40} colors={colors} />
         ))}
-      </Animated.ScrollView>
+      </ScrollView>
 
       <View
         style={[

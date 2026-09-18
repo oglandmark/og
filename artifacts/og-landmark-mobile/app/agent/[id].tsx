@@ -63,7 +63,7 @@ function ContactModal({
 
   if (!visible) return null;
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose} statusBarTranslucent>
       <View style={cm.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         <View style={[cm.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}>

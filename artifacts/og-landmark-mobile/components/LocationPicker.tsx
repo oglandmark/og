@@ -537,7 +537,7 @@ export function LocationPicker({
 
         <Modal
           visible={visible}
-          animationType="slide"
+          animationType="none"
           presentationStyle="fullScreen"
           statusBarTranslucent
           onRequestClose={onClose}
@@ -560,7 +560,6 @@ export function LocationPicker({
 
             <View style={lp.fullMap}>
               <InteractiveMap
-                key={`${city ?? 'default'}-${hasPin ? `${latitude}-${longitude}` : 'location'}`}
                 region={region}
                 onRegionChange={setRegion}
                 onPress={handleMapPress}

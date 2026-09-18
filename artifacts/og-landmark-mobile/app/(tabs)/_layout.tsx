@@ -11,14 +11,8 @@ import { useLanguage } from '@/context/LanguageContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { getMobileSettings } from '@/lib/api';
 import { useMobileContent } from '@/hooks/useMobileContent';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  useReducedMotion,
-} from 'react-native-reanimated';
 
-// ── Animated tab icon — springs to scale 1.14 when focused ───────────────────
+// ── Static tab icon ───────────────────────────────────────────────────────────
 function TabIcon({
   name,
   color,
@@ -30,51 +24,19 @@ function TabIcon({
   size: number;
   focused: boolean;
 }) {
-  const scale = useSharedValue(focused ? 1.14 : 1);
-  const reducedMotion = useReducedMotion();
-
-  useEffect(() => {
-    if (reducedMotion) {
-      scale.value = focused ? 1.14 : 1;
-      return;
-    }
-    scale.value = withSpring(focused ? 1.14 : 1, {
-      damping: 16,
-      stiffness: 340,
-      mass: 0.6,
-    });
-  }, [focused, reducedMotion, scale]);
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  return (
-    <Animated.View style={animStyle}>
-      <Feather name={name} size={size} color={color as string} />
-    </Animated.View>
-  );
+  void focused;
+  return <Feather name={name} size={size} color={color as string} />;
 }
 
 // ── Plus icon (post-ad) keeps its own raised circle treatment ────────────────
 function PostAdIcon({ color, focused }: { color: ColorValue; focused: boolean }) {
   const colors = useColors();
-  const scale = useSharedValue(focused ? 1.08 : 1);
-  const reducedMotion = useReducedMotion();
-
-  useEffect(() => {
-    if (reducedMotion) { scale.value = focused ? 1.08 : 1; return; }
-    scale.value = withSpring(focused ? 1.08 : 1, { damping: 16, stiffness: 340, mass: 0.6 });
-  }, [focused, reducedMotion, scale]);
-
-  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  void focused;
 
   return (
-    <Animated.View
-      style={[styles.postIcon, { backgroundColor: colors.action }, animStyle]}
-    >
+    <View style={[styles.postIcon, { backgroundColor: colors.action }]}>
       <Feather name="plus" size={22} color={colors.actionForeground} />
-    </Animated.View>
+    </View>
   );
 }
 

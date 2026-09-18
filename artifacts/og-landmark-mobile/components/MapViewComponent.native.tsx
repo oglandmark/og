@@ -87,7 +87,7 @@ const pin = StyleSheet.create({
   head: {
     width: 28, height: 28, borderRadius: 14,
     backgroundColor: '#17324d',
-    borderWidth: 3, borderColor: '#315b7d',
+    borderWidth: 3, borderColor: '#ffffff',
     alignItems: 'center', justifyContent: 'center',
     shadowColor: '#000', shadowOpacity: 0.45,
     shadowRadius: 4, shadowOffset: { width: 0, height: 2 },
@@ -95,8 +95,11 @@ const pin = StyleSheet.create({
   },
   inner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#ffffff' },
   tail: {
-    width: 3, height: 10, backgroundColor: '#17324d',
-    marginTop: -1, borderRadius: 2,
+    width: 0, height: 0,
+    borderLeftWidth: 5, borderRightWidth: 5, borderTopWidth: 10,
+    borderLeftColor: 'transparent', borderRightColor: 'transparent',
+    borderTopColor: '#17324d',
+    marginTop: -2,
   },
 });
 
@@ -204,6 +207,7 @@ export function StaticMap({ latitude, longitude, satellite = false, interactive 
       zoomEnabled={interactive}
       rotateEnabled={interactive}
       pitchEnabled={interactive}
+       moveOnMarkerPress={false}
       toolbarEnabled={false}
        userInterfaceStyle="light"
        onMapLoaded={() => {

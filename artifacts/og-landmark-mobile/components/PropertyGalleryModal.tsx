@@ -48,7 +48,7 @@ export function PropertyGalleryModal({
   return (
     <Modal
       visible={visible}
-      animationType="fade"
+      animationType="none"
       transparent
       statusBarTranslucent
       onRequestClose={onClose}

@@ -110,7 +110,7 @@ function ProjectInquiryModal({
   if (!visible) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={iqm.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <View style={[iqm.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}>
@@ -709,7 +709,7 @@ export default function ProjectDetailScreen() {
 
     {/* ── GALLERY MODAL ────────────────────────────────────────────────── */}
     {/* ── INLINE GALLERY MODAL ─────────────────────────────────────── */}
-    <Modal visible={galleryOpen} transparent animationType="fade" onRequestClose={() => setGalleryOpen(false)} statusBarTranslucent>
+    <Modal visible={galleryOpen} transparent animationType="none" onRequestClose={() => setGalleryOpen(false)} statusBarTranslucent>
       <View style={{ flex: 1, backgroundColor: '#000000ee', justifyContent: 'center', alignItems: 'center' }}>
         <Pressable style={{ position: 'absolute', top: 50, right: 20, zIndex: 10, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }} onPress={() => setGalleryOpen(false)}>
           <Feather name="x" size={20} color="#ffffff" />

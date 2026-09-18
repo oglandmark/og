@@ -241,7 +241,7 @@ export function PropertyMediaStrip({
       {/* ── Fullscreen Video Player ──────────────────────────────────── */}
       <Modal
         visible={videoVisible}
-        animationType="fade"
+        animationType="none"
         statusBarTranslucent
         supportedOrientations={['portrait', 'landscape']}
         onRequestClose={closeVideo}

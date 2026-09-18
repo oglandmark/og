@@ -1,7 +1,7 @@
 /**
  * MapViewComponent — Web implementation using iframe + label-rich street tiles.
  */
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 interface InteractiveMapProps {
@@ -31,7 +31,8 @@ function buildLeafletHtml(lat: number, lng: number, zoom: number, interactive = 
     * { margin:0; padding:0; }
     body { background:#e8f0f7; }
     #map { width:100%; height:100%; position:absolute;top:0;left:0;right:0;bottom:0; }
-    .custom-pin { width:20px;height:20px;background:#17324D;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4); }
+     .custom-pin { position:relative;width:28px;height:28px;background:#17324D;border-radius:50% 50% 50% 0;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);transform:rotate(-45deg); }
+     .custom-pin::after { content:'';position:absolute;width:8px;height:8px;left:7px;top:7px;background:#fff;border-radius:50%; }
   </style>
 </head>
 <body>
@@ -60,7 +61,7 @@ function buildLeafletHtml(lat: number, lng: number, zoom: number, interactive = 
      if (!fallbackEnabled) { fallbackEnabled = true; detailTiles.addTo(map); }
    });
    primaryTiles.addTo(map);
-   var icon = L.divIcon({html:'<div class="custom-pin"></div>',iconSize:[20,20],iconAnchor:[10,10],className:''});
+   var icon = L.divIcon({html:'<div class="custom-pin"></div>',iconSize:[28,28],iconAnchor:[14,28],className:''});
     var marker = L.marker([${lat},${lng}],{icon:icon, draggable:${interactive}}).addTo(map);
     function send(type, payload) {
       window.parent.postMessage(Object.assign({ type:type, channel:'${channel}' }, payload), '*');
@@ -85,6 +86,13 @@ function buildLeafletHtml(lat: number, lng: number, zoom: number, interactive = 
    marker.on('click', function () {
      map.setView([${lat},${lng}], Math.max(map.getZoom(), 17), { animate: true });
    });
+   window.addEventListener('message', function(event) {
+     var data = event.data;
+     if (!data || data.channel !== '${channel}' || data.type !== 'og-map-update') return;
+     if (data.latitude == null || data.longitude == null) return;
+     marker.setLatLng([data.latitude, data.longitude]);
+     map.setView([data.latitude, data.longitude], data.zoom || map.getZoom(), { animate: false });
+   });
 </script>
 </body></html>`;
 }
@@ -93,8 +101,12 @@ export function StaticMap({ latitude, longitude, interactive = true }: StaticMap
   if (!latitude || !longitude || !isFinite(latitude) || !isFinite(longitude)) {
     return <View style={s.placeholder} />;
   }
-  const html = buildLeafletHtml(latitude, longitude, 15, interactive);
-  const blob = typeof Blob !== 'undefined' ? URL.createObjectURL(new Blob([html], { type: 'text/html' })) : null;
+  const html = useMemo(() => buildLeafletHtml(latitude, longitude, 15, interactive), [latitude, longitude, interactive]);
+  const blob = useMemo(
+    () => typeof Blob !== 'undefined' ? URL.createObjectURL(new Blob([html], { type: 'text/html' })) : null,
+    [html],
+  );
+  useEffect(() => () => { if (blob) URL.revokeObjectURL(blob); }, [blob]);
   return (
     <View style={s.container}>
       {/* @ts-ignore — iframe is valid on web */}
@@ -112,6 +124,7 @@ export function InteractiveMap({ region, pinLat, pinLng, onPress, onDragEnd, onR
   const lat = pinLat ?? region?.latitude ?? 30.3753;
   const lng = pinLng ?? region?.longitude ?? 69.3451;
   const channel = useMemo(() => `og-map-${Math.random().toString(36).slice(2)}`, []);
+  const iframeRef = React.useRef<HTMLIFrameElement | null>(null);
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       const data = event.data;
@@ -130,14 +143,28 @@ export function InteractiveMap({ region, pinLat, pinLng, onPress, onDragEnd, onR
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
   }, [channel, onDragEnd, onPress, onRegionChange]);
-  const html = buildLeafletHtml(lat, lng, 14, true, channel);
-  const blob = typeof Blob !== 'undefined' ? URL.createObjectURL(new Blob([html], { type: 'text/html' })) : null;
+  const syncMap = useCallback(() => {
+    iframeRef.current?.contentWindow?.postMessage({
+      channel, type: 'og-map-update', latitude: lat, longitude: lng, zoom: 14,
+    }, '*');
+  }, [channel, lat, lng]);
+  useEffect(() => {
+    syncMap();
+  }, [syncMap]);
+  const html = useMemo(() => buildLeafletHtml(lat, lng, 14, true, channel), [channel]);
+  const blob = useMemo(
+    () => typeof Blob !== 'undefined' ? URL.createObjectURL(new Blob([html], { type: 'text/html' })) : null,
+    [html],
+  );
+  useEffect(() => () => { if (blob) URL.revokeObjectURL(blob); }, [blob]);
   return (
     <View style={s.container}>
       {/* @ts-ignore */}
       <iframe
+        ref={iframeRef}
         src={blob ?? `about:blank`}
         srcDoc={!blob ? html : undefined}
+        onLoad={syncMap}
         style={{ width: '100%', height: '100%', border: 'none' } as any}
         title="Map"
       />

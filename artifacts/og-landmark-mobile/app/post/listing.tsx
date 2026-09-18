@@ -641,10 +641,10 @@ function TransactionToggle({ form, update, colors }: { form: Form; update: (p: P
 
   return (
     <View style={[s.transactionToggle, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <Text style={[s.transactionToggleLabel, { color: colors.mutedForeground }]}>LIST PROPERTY TO</Text>
+      <Text style={[s.transactionToggleLabel, { color: colors.mutedForeground }]}>LISTING PURPOSE</Text>
       <View style={[s.transactionToggleTrack, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
         {([
-          { value: 'Sale' as const, label: 'Buy', icon: 'home' as const },
+          { value: 'Sale' as const, label: 'Sale', icon: 'home' as const },
           { value: 'Rent' as const, label: 'Rent', icon: 'key' as const },
         ]).map((option) => {
           const active = form.purpose === option.value;
@@ -715,7 +715,6 @@ function ListingProgress({ form, locationConfirmed, colors }: { form: Form; loca
 function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Form>) => void; colors: any }) {
   const [activeGroup, setActiveGroup] = useState<PropCategory>(categoryOf(form.propertyType));
   const typesInGroup = PROPERTY_TYPES.filter((t) => t.category === activeGroup);
-  const availablePurposes = purposesFor(form.propertyType);
 
   const handleTypeSelect = (key: string) => {
     const purposes = purposesFor(key);
@@ -755,22 +754,6 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
             </Pressable>
           );
         })}
-      </View>
-
-      {/* Purpose selector */}
-      <Text style={[s.label, { color: colors.foreground, marginTop: 20 }]}>Purpose</Text>
-      <View style={s.purposeRow}>
-        {availablePurposes.map((p) => (
-          <Pressable key={p} onPress={() => update({ purpose: p })}
-            style={[s.purposeBtn, {
-               backgroundColor: form.purpose === p ? colors.selectionBackground : colors.secondary,
-               borderColor: form.purpose === p ? colors.selectionBorder : colors.border,
-               borderWidth: form.purpose === p ? 1.5 : 1,
-              flex: 1,
-            }]}>
-             <Text style={[s.purposeBtnText, { color: form.purpose === p ? colors.selectionForeground : colors.foreground, fontWeight: form.purpose === p ? '600' : '400' }]}>{p}</Text>
-          </Pressable>
-        ))}
       </View>
 
       {/* Info hint */}

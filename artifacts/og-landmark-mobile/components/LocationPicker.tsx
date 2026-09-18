@@ -216,8 +216,21 @@ export function LocationPicker({
 }: LocationPickerProps) {
   const accent  = accentColor ?? (colors as any).action ?? colors.primary;
   const insets = useSafeAreaInsets();
-  const hasPin  = typeof latitude === 'number' && typeof longitude === 'number'
-               && isFinite(latitude) && isFinite(longitude);
+  const hasCommittedPin = typeof latitude === 'number' && typeof longitude === 'number'
+                        && isFinite(latitude) && isFinite(longitude);
+  const [draftLocation, setDraftLocation] = useState<LocationData | null>(() => (
+    fullScreen && hasCommittedPin
+      ? {
+          latitude: latitude!,
+          longitude: longitude!,
+          fullAddress: address ?? '',
+          locationSource: 'manual',
+        }
+      : null
+  ));
+  const hasPin = fullScreen ? Boolean(draftLocation) : hasCommittedPin;
+  const mapLatitude = fullScreen && draftLocation ? draftLocation.latitude : latitude;
+  const mapLongitude = fullScreen && draftLocation ? draftLocation.longitude : longitude;
 
   const [query,           setQuery]           = useState(address ?? '');
   const [suggestions,     setSuggestions]     = useState<AutocompleteSuggestion[]>([]);
@@ -247,17 +260,39 @@ export function LocationPicker({
     onConfirmationChange?.(confirmed);
   }, [confirmed, onConfirmationChange]);
 
+  // Full-screen picking is a draft transaction. Re-open with the committed
+  // parent value, or with no pin after the city has been changed.
+  useEffect(() => {
+    if (!fullScreen || !visible) return;
+    if (!hasCommittedPin) {
+      setDraftLocation(null);
+      return;
+    }
+    setDraftLocation((current) => (
+      current
+      && current.latitude === latitude
+      && current.longitude === longitude
+        ? current
+        : {
+            latitude: latitude!,
+            longitude: longitude!,
+            fullAddress: address ?? '',
+            locationSource: 'manual',
+          }
+    ));
+  }, [fullScreen, visible, hasCommittedPin, latitude, longitude, address]);
+
   const [region, setRegion] = useState(
     hasPin
-      ? { latitude: latitude!, longitude: longitude!, latitudeDelta: 0.02, longitudeDelta: 0.02 }
+      ? { latitude: mapLatitude!, longitude: mapLongitude!, latitudeDelta: 0.02, longitudeDelta: 0.02 }
       : getCityRegion(city),
   );
 
   useEffect(() => {
     if (hasPin) {
-      setRegion({ latitude: latitude!, longitude: longitude!, latitudeDelta: 0.02, longitudeDelta: 0.02 });
+      setRegion({ latitude: mapLatitude!, longitude: mapLongitude!, latitudeDelta: 0.02, longitudeDelta: 0.02 });
     }
-  }, [hasPin, latitude, longitude]);
+  }, [hasPin, mapLatitude, mapLongitude]);
 
   // When the listing city or area changes before an exact pin is selected,
   // move the map to the selected place instead of leaving the old city center.
@@ -301,8 +336,12 @@ export function LocationPicker({
   const applyLocation = useCallback((loc: LocationData) => {
     const lat = loc.latitude;
     const lng = loc.longitude;
-    onChange(lat, lng, loc.fullAddress);
-    if (onLocationChange) onLocationChange(loc);
+    if (fullScreen) {
+      setDraftLocation(loc);
+    } else {
+      onChange(lat, lng, loc.fullAddress);
+      if (onLocationChange) onLocationChange(loc);
+    }
     setPinnedAddr(loc.fullAddress);
     setLocationData(loc);
     setLatInput(String(lat));
@@ -314,7 +353,7 @@ export function LocationPicker({
     setLocationError('');
     if (loc.fullAddress) setQuery(loc.fullAddress);
     setRegion({ latitude: lat, longitude: lng, latitudeDelta: 0.02, longitudeDelta: 0.02 });
-  }, [onChange, onLocationChange, requireConfirm]);
+  }, [fullScreen, onChange, onLocationChange, requireConfirm]);
 
   // ── Autocomplete ──────────────────────────────────────────────────────────
 
@@ -396,49 +435,6 @@ export function LocationPicker({
   };
 
   // ── Map tap / drag ────────────────────────────────────────────────────────
-
-  const handleMapPress = useCallback(
-    async (e: { nativeEvent?: { coordinate?: { latitude: number; longitude: number } } }) => {
-      const coord = e?.nativeEvent?.coordinate;
-      if (!coord) return;
-      const lat = parseFloat(coord.latitude.toFixed(7));
-      const lng = parseFloat(coord.longitude.toFixed(7));
-      const fallback = {
-        latitude: lat,
-        longitude: lng,
-        fullAddress: `Pinned location · ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-        locationSource: 'map_tap' as const,
-      };
-
-      // Save the pin immediately. Address lookup is helpful metadata, not a
-      // requirement for a valid manually placed property pin.
-      applyLocation(fallback);
-      setAddressLoading(true);
-      try {
-        const rev = await reverseGeocode(lat, lng);
-        if (rev) {
-          applyLocation({
-            ...fallback,
-            fullAddress: rev.fullAddress ?? fallback.fullAddress,
-            streetAddress: rev.streetAddress,
-            city: rev.city,
-            locality: rev.locality,
-            district: rev.district,
-            tehsil: rev.tehsil,
-            province: rev.province,
-            country: rev.country,
-            postalCode: rev.postalCode,
-            placeId: rev.placeId,
-          });
-        }
-      } catch {
-        // Keep the coordinate-only pin. GPS and reverse geocoding are optional.
-      } finally {
-        setAddressLoading(false);
-      }
-    },
-    [applyLocation],
-  );
 
   const handleDragEnd = useCallback(
     async (lat: number, lng: number) => {

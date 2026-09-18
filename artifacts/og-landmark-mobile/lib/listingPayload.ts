@@ -17,6 +17,7 @@ export interface ListingPayloadSource {
   latitude?: number;
   longitude?: number;
   images?: string[];
+  coverImage?: string;
   videoUrl?: string;
   district?: string;
   locality?: string;
@@ -59,6 +60,7 @@ export function buildCreatePropertyPayload(
     lat: listing.latitude,
     lng: listing.longitude,
     images: listing.images,
+    coverImage: listing.coverImage ?? listing.images?.[0] ?? null,
     videoUrl: listing.videoUrl,
     district: listing.district,
     locality,

@@ -23,4 +23,5 @@
 - [Notification delivery pipeline](notification-system.md) — all broadcasts and lifecycle events must use per-user records, recipient-scoped dedupe keys, and the same push/preferences pipeline.
 - [Mobile polish guardrails](mobile-polish-guardrails.md) — reuse semantic UI tokens and keep card body actions separate from nested image/action controls.
 - [Listing edit media](listing-edit-media.md) — treat stored media URLs as remote and send explicit null when an editor removes optional media.
+- [Local auth test fixtures](local-auth-fixtures.md) — local JSON server fixtures must seed passwords in the server's PBKDF2 format before login tests.
 - [Post-merge setup](post-merge-setup.md) — this workspace needs a non-frozen pnpm install and the scoped @workspace/db filter.

@@ -60,7 +60,8 @@ if (!databaseConfigured && !localPreview) {
   console.error('Neon settings are missing. Set DATABASE_URL to your Neon PostgreSQL connection string in production.');
 }
 const neonDb = databaseConfigured && !localPreview ? neon(databaseUrl) : null;
-const fallbackFile = path.join(__dirname, 'runtime-data.json');
+const fallbackFile = process.env.OG_LANDMARK_RUNTIME_DATA
+  || path.join(__dirname, 'runtime-data.json');
 let dbReady = false;
 let dbInitError = null;
 // Legacy maps remain only as a local cache; authoritative sessions/challenges are persisted.
@@ -1045,6 +1046,10 @@ function normalisePropertyPayload(raw = {}, existing = null, propertyId = null) 
     placeId: String(locationInput.placeId ?? body.placeId ?? '').trim() || null,
   };
   const images = Array.isArray(body.images) ? body.images.filter(Boolean).map(String) : [];
+  const requestedCoverImage = body.coverImage ? String(body.coverImage).trim() : '';
+  const coverImage = requestedCoverImage && images.includes(requestedCoverImage)
+    ? requestedCoverImage
+    : (images[0] || null);
   const mediaInput = body.media && typeof body.media === 'object' ? body.media : {};
   const imageMedia = Array.isArray(mediaInput.images)
     ? mediaInput.images.map(item => typeof item === 'string' ? { url: item } : item).filter(item => item?.url)
@@ -1083,6 +1088,7 @@ function normalisePropertyPayload(raw = {}, existing = null, propertyId = null) 
     lng: longitude,
     location,
     images,
+    coverImage,
     videoUrl,
     documents,
     media,
@@ -1373,6 +1379,37 @@ app.get('/api/properties/:id', async (req, res) => {
     };
     rp.media = normalisePropertyPayload({ ...canonical, images: rp.images, videoUrl: rp.videoUrl }, null, prop.id).media;
     res.json(rp);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Admin review details include the listing owner so the review screen does not
+// need to make a second user-directory request (and can show the same context
+// when the property is no longer in the admin list).
+app.get('/api/admin/properties/:id/review', requireAdmin, async (req, res) => {
+  try {
+    const data = await readData();
+    const prop = data.properties.find(p => p.id === Number(req.params.id));
+    if (!prop) return res.status(404).json({ error: 'Property not found' });
+
+    const sellerId = prop.sellerId ?? prop.agentId;
+    const sellerRecord = data.users.find(user => user.id === sellerId);
+    const seller = sellerRecord
+      ? (({ password, ...safeUser }) => safeUser)(sellerRecord)
+      : null;
+    const property = normalisePropertyPayload(prop, null, prop.id);
+    if (seller) {
+      property.sellerName = seller.name;
+      property.sellerPhone = seller.phone || '';
+    }
+
+    res.json({
+      property,
+      seller,
+      audit: Array.isArray(prop.reviewHistory) ? prop.reviewHistory : [],
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });

@@ -571,22 +571,42 @@ export function LocationPicker({
                 showMyLocation={false}
               />
 
-              <View pointerEvents="none" style={[lp.selectedCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Text style={[lp.selectedCardEyebrow, { color: colors.mutedForeground }]}>SELECTED LOCATION</Text>
-                <View style={lp.selectedCardRow}>
-                  <View style={[lp.selectedCardPin, { backgroundColor: accent + '18' }]}>
-                    <Feather name={hasPin ? 'check' : 'map-pin'} size={15} color={hasPin ? '#16a34a' : accent} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[lp.selectedCardTitle, { color: colors.foreground }]} numberOfLines={1}>
-                      {hasPin ? selectedLocationLabel : city || 'Choose a location'}
-                    </Text>
+              <View style={[lp.selectedCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[lp.selectedCardEyebrow, { color: colors.mutedForeground }]}>Selected Location</Text>
+                  <Text style={[lp.selectedCardTitle, { color: colors.foreground }]} numberOfLines={1}>
+                    {hasPin ? selectedLocationLabel : city || 'Choose a location'}
+                  </Text>
+                  {!hasPin && (
                     <Text style={[lp.selectedCardSub, { color: colors.mutedForeground }]} numberOfLines={1}>
-                      {hasPin ? `${fmtCoord(latitude!, true)} · ${fmtCoord(longitude!, false)}` : 'Move the pin or tap anywhere on the map'}
+                      Tap the map or move the pin to choose the exact point
                     </Text>
-                  </View>
-                  {addressLoading && <ActivityIndicator size="small" color={accent} />}
+                  )}
+                  {addressLoading && (
+                    <View style={lp.addressLoadingRow}>
+                      <ActivityIndicator size="small" color={accent} />
+                      <Text style={[lp.selectedCardSub, { color: accent }]}>Updating address…</Text>
+                    </View>
+                  )}
                 </View>
+                <Pressable
+                  onPress={() => {
+                    onClear();
+                    setPinnedAddr('');
+                    setLocationData({});
+                    setConfirmed(false);
+                  }}
+                  hitSlop={8}
+                  style={lp.changeLocationButton}
+                >
+                  <Feather name="map-pin" size={14} color="#1a6b3a" />
+                  <Text style={lp.changeLocationText}>Change</Text>
+                </Pressable>
+                {hasPin && !addressLoading && (
+                  <Text style={[lp.selectedCardCoordinates, { color: colors.mutedForeground }]} numberOfLines={1}>
+                    {fmtCoord(latitude!, true)} · {fmtCoord(longitude!, false)}
+                  </Text>
+                )}
               </View>
 
               <View pointerEvents="none" style={lp.fullMapHint}>

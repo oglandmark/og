@@ -1702,6 +1702,21 @@ function StepPreview({ form, colors, category }: any) {
     : `PKR ${Number(form.price.replace(/[^0-9]/g, '') || '0').toLocaleString()}`;
   const location = [form.locality, form.society, form.city].filter(Boolean).join(', ');
   const typeInfo = PROPERTY_TYPES.find((t) => t.key === form.propertyType);
+  const previewDetails = Object.entries(form)
+    .filter(([key, value]) => (
+      ![
+        'photos', 'video', 'coverPhotoIndex', 'features', 'documents',
+        'description', 'keyHighlights', 'showWhatsApp', 'allowCalls',
+        'latitude', 'longitude', 'locationAccuracy', 'locationSource',
+        'placeId', 'country', 'province',
+      ].includes(key)
+      && value !== '' && value !== null && value !== false
+      && !(Array.isArray(value) && value.length === 0)
+    ))
+    .map(([key, value]) => ({
+      label: PREVIEW_LABELS[key] ?? key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()),
+      value: value === true ? 'Yes' : String(value),
+    }));
 
   return (
     <AnimatedReveal>
@@ -1711,7 +1726,29 @@ function StepPreview({ form, colors, category }: any) {
 
       <View style={[s.previewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         {form.photos.length > 0 ? (
-          <Image source={{ uri: form.photos[form.coverPhotoIndex] ?? form.photos[0] }} style={s.previewImage} resizeMode="cover" />
+          <>
+            <View style={s.previewHeroWrap}>
+              <Image source={{ uri: form.photos[form.coverPhotoIndex] ?? form.photos[0] }} style={s.previewImage} resizeMode="cover" />
+              <View style={[s.previewPhotoCount, { backgroundColor: '#0b2038cc' }]}>
+                <Feather name="image" size={11} color="#ffffff" />
+                <Text style={s.previewPhotoCountText}>{form.photos.length} photo{form.photos.length === 1 ? '' : 's'}</Text>
+              </View>
+            </View>
+            {form.photos.length > 1 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.previewGallery} style={{ backgroundColor: colors.secondary }}>
+                {form.photos.map((uri: string, i: number) => (
+                  <View key={`${uri}-${i}`} style={[s.previewThumbWrap, i === form.coverPhotoIndex && { borderColor: colors.action, borderWidth: 2 }]}>
+                    <Image source={{ uri }} style={s.previewThumb} resizeMode="cover" />
+                    {i === form.coverPhotoIndex && (
+                      <View style={[s.previewCoverMark, { backgroundColor: colors.action }]}>
+                        <Feather name="star" size={8} color={colors.actionForeground} />
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </>
         ) : (
           <View style={[s.previewImagePlaceholder, { backgroundColor: colors.secondary }]}>
             <Text style={{ fontSize: 32 }}>{typeInfo?.emoji ?? '🏠'}</Text>
@@ -1760,6 +1797,22 @@ function StepPreview({ form, colors, category }: any) {
           {form.description ? (
             <Text style={[s.previewDesc, { color: colors.mutedForeground }]} numberOfLines={3}>{form.description}</Text>
           ) : null}
+          {previewDetails.length > 0 && (
+            <View style={[s.previewDetails, { borderTopColor: colors.border }]}>
+              <View style={s.previewDetailsHeader}>
+                <Feather name="list" size={13} color={colors.action} />
+                <Text style={[s.previewDetailsTitle, { color: colors.foreground }]}>All listing details</Text>
+              </View>
+              <View style={s.previewDetailsGrid}>
+                {previewDetails.map((detail) => (
+                  <View key={detail.label} style={[s.previewDetailItem, { backgroundColor: colors.secondary }]}>
+                    <Text style={[s.previewDetailLabel, { color: colors.mutedForeground }]}>{detail.label}</Text>
+                    <Text style={[s.previewDetailValue, { color: colors.foreground }]} numberOfLines={2}>{detail.value}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
           <View style={[s.previewReview, { backgroundColor: '#1a6b3a0e', borderColor: '#1a6b3a33' }]}>
             <Feather name="clock" size={12} color="#1a6b3a" />
             <Text style={[s.previewReviewText, { color: '#1a6b3a' }]}>Pending review · Not yet public · {form.photos.length} photo(s) · {form.documents.length} doc(s)</Text>
@@ -1769,6 +1822,77 @@ function StepPreview({ form, colors, category }: any) {
     </AnimatedReveal>
   );
 }
+
+const PREVIEW_LABELS: Record<string, string> = {
+  propertyType: 'Property type',
+  purpose: 'Purpose',
+  city: 'City',
+  locality: 'Area',
+  society: 'Society',
+  block: 'Block',
+  street: 'Street',
+  landmark: 'Landmark',
+  fullAddress: 'Pinned address',
+  streetAddress: 'Street address',
+  district: 'District',
+  tehsil: 'Tehsil',
+  postalCode: 'Postal code',
+  title: 'Listing title',
+  price: 'Price',
+  isNegotiable: 'Price negotiable',
+  area: 'Area',
+  areaUnit: 'Area unit',
+  bedrooms: 'Bedrooms',
+  bathrooms: 'Bathrooms',
+  floors: 'Floors',
+  coveredArea: 'Covered area',
+  furnishing: 'Furnishing',
+  constructionYear: 'Construction year',
+  parking: 'Parking',
+  facing: 'Facing',
+  isCorner: 'Corner',
+  isMainRoad: 'Main road',
+  isParkFacing: 'Park facing',
+  roadFront: 'Road front',
+  plotDimensions: 'Plot dimensions',
+  possessionStatus: 'Possession status',
+  floorNumber: 'Floor number',
+  totalFloors: 'Total floors',
+  maintenanceCharges: 'Maintenance charges',
+  roadWidth: 'Road width',
+  devStatus: 'Development status',
+  landType: 'Land type',
+  currentCrop: 'Current crop',
+  trees: 'Trees / plants',
+  nearbyCanalRiver: 'Nearby canal / river',
+  farmType: 'Farm type',
+  orchardType: 'Orchard type',
+  numberOfTrees: 'Number of trees',
+  productionStatus: 'Production status',
+  shopDimensions: 'Shop dimensions',
+  cabins: 'Rooms / cabins',
+  numShops: 'Number of shops',
+  numOffices: 'Number of offices',
+  numApartments: 'Number of apartments',
+  occupancyStatus: 'Occupancy status',
+  rentalIncome: 'Rental income',
+  warehouseHeight: 'Warehouse height',
+  electricityLoad: 'Electricity load',
+  factoryType: 'Factory type',
+  industrialZone: 'Industrial zone',
+  ceilingHeight: 'Ceiling height',
+  displayArea: 'Display area',
+  nocStatus: 'NOC status',
+  projectName: 'Project / society',
+  developer: 'Developer',
+  totalUnits: 'Total units',
+  startingPrice: 'Starting price',
+  paymentPlan: 'Payment plan',
+  downPayment: 'Down payment',
+  installmentPlan: 'Installment plan',
+  possessionDate: 'Possession date',
+  plotSizes: 'Plot sizes',
+};
 
 // ── Shared UI atoms ────────────────────────────────────────────────────────────
 

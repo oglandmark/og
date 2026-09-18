@@ -418,6 +418,15 @@ export default function ListingWizard() {
         try { uploadedImages = await uploadMultipleImages(form.photos); }
         catch { throw new Error('Photos could not be uploaded. Please check your connection and try again.'); }
       }
+      // The public catalogue uses images[0] as the cover. Preserve the photo
+      // selected in Review & Publish instead of silently reverting to the
+      // picker order.
+      if (uploadedImages.length > 1 && form.coverPhotoIndex > 0) {
+        const cover = uploadedImages[form.coverPhotoIndex];
+        if (cover) {
+          uploadedImages = [cover, ...uploadedImages.filter((_, index) => index !== form.coverPhotoIndex)];
+        }
+      }
       let uploadedVideoUrl: string | undefined;
       if (form.video?.uri) {
         try { uploadedVideoUrl = (await uploadVideo(form.video.uri, form.video.filename ?? 'video.mp4')).url; }

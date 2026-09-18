@@ -68,8 +68,12 @@ export default function ListingsScreen() {
 
   const handleStatusChange = (id: string, status: ListingStatus, confirmMsg?: string) => {
     const doIt = async () => {
-      const updated = await updateListingStatus(id, status);
-      setMyListings(updated.filter((l) => l.postedBy === user?.id));
+      try {
+        const updated = await updateListingStatus(id, status);
+        setMyListings(updated.filter((l) => l.postedBy === user?.id));
+      } catch (error) {
+        Alert.alert('Could not update listing', error instanceof Error ? error.message : 'Please try again.');
+      }
     };
     if (confirmMsg) {
       Alert.alert('Confirm', confirmMsg, [
@@ -87,8 +91,12 @@ export default function ListingsScreen() {
       {
         text: 'Delete', style: 'destructive',
         onPress: async () => {
-          const updated = await deleteUserListing(id);
-          setMyListings(updated.filter((l) => l.postedBy === user?.id));
+          try {
+            const updated = await deleteUserListing(id);
+            setMyListings(updated.filter((l) => l.postedBy === user?.id));
+          } catch (error) {
+            Alert.alert('Could not delete listing', error instanceof Error ? error.message : 'Please try again.');
+          }
         },
       },
     ]);

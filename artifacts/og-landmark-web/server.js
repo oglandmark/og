@@ -1020,13 +1020,22 @@ function normalisePropertyPayload(raw = {}, existing = null, propertyId = null) 
   const longitude = numberOrNull(
     locationInput.longitude ?? locationInput.lng ?? body.longitude ?? body.lng ?? existing?.location?.longitude ?? existing?.lng,
   );
+  const locality = String(
+    locationInput.locality
+      ?? body.locality
+      ?? body.neighborhood
+      ?? body.streetAddress
+      ?? body.fullAddress
+      ?? body.city
+      ?? '',
+  ).trim();
   const location = {
     latitude,
     longitude,
     city: String(locationInput.city ?? body.city ?? '').trim(),
     district: String(locationInput.district ?? body.district ?? (String(body.city || '').toLowerCase() === 'depalpur' ? 'Okara' : '')).trim(),
     tehsil: String(locationInput.tehsil ?? body.tehsil ?? '').trim(),
-    locality: String(locationInput.locality ?? body.locality ?? body.neighborhood ?? '').trim(),
+    locality,
     address: String(locationInput.address ?? body.address ?? body.fullAddress ?? '').trim(),
     province: String(locationInput.province ?? body.province ?? 'Punjab').trim(),
     country: String(locationInput.country ?? body.country ?? 'Pakistan').trim(),

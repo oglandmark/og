@@ -1067,7 +1067,7 @@ export async function getAdminProperties(
   if (params.status) qs.set('status', params.status);
   return apiFetch<ApiProperty[]>(
     `/api/admin/properties${qs.toString() ? `?${qs}` : ''}`,
-  ).catch(() => []);
+  );
 }
 
 export async function verifyAdminProperty(id: number): Promise<void> {

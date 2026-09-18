@@ -36,6 +36,12 @@ export function buildCreatePropertyPayload(
   const listingLocation = listing.location as
     | { streetAddress?: string }
     | undefined;
+  const address = listing.fullAddress
+    || listing.streetAddress
+    || listingLocation?.streetAddress
+    || listing.neighborhood
+    || listing.city;
+  const locality = listing.locality ?? listing.neighborhood ?? listing.streetAddress ?? listing.city;
 
   return {
     title: listing.title,
@@ -48,14 +54,14 @@ export function buildCreatePropertyPayload(
     bedrooms: listing.bedrooms,
     bathrooms: listing.bathrooms,
     city: listing.city,
-    address: listing.fullAddress || listing.neighborhood,
+    address,
     description: listing.description,
     lat: listing.latitude,
     lng: listing.longitude,
     images: listing.images,
     videoUrl: listing.videoUrl,
     district: listing.district,
-    locality: listing.locality ?? listing.neighborhood,
+    locality,
     tehsil: listing.tehsil,
     features: listing.features,
     amenities: listing.features,
@@ -67,9 +73,9 @@ export function buildCreatePropertyPayload(
       city: listing.city,
       district: listing.district,
       tehsil: listing.tehsil,
-      locality: listing.locality ?? listing.neighborhood,
+      locality,
       streetAddress: listing.streetAddress ?? listingLocation?.streetAddress,
-      address: listing.fullAddress || listing.neighborhood,
+      address,
       source: listing.locationSource,
       accuracy: listing.locationAccuracy,
       placeId: listing.placeId,

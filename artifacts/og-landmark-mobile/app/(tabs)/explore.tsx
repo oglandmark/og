@@ -6,7 +6,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert, FlatList, Image, Modal, Platform, Pressable,
+  Alert, FlatList, Image, InteractionManager, Modal, Platform, Pressable,
   ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -366,6 +366,18 @@ function sortProperties(props: Property[], sortBy: SortOption): Property[] {
   });
 }
 
+function uniqueProperties(items: Property[]): Property[] {
+  const seen = new Set<string>();
+  return items.filter((property) => {
+    const key = property.id > 0
+      ? String(property.id)
+      : `${property.title}|${property.city}|${property.address}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 // ── Quick filter definitions ───────────────────────────────────────────────────
 
 type QuickFilter = { label: string; icon: string; section: string };
@@ -458,7 +470,7 @@ export default function ExploreScreen() {
   const [isProjectsMode, setIsProjectsMode]   = useState(
     params.category === 'Projects' || params.propertyType === 'Project',
   );
-  const [allProperties, setAllProperties]     = useState(properties);
+  const [allProperties, setAllProperties]     = useState(() => uniqueProperties(properties));
   const [nearMe, setNearMe]                   = useState<{ lat: number; lng: number; radiusKm: number } | null>(null);
   const [nearMeLoading, setNearMeLoading]     = useState(false);
   const [searchedPlace, setSearchedPlace]     = useState<{ lat: number; lng: number; radiusKm: number; label: string } | null>(null);
@@ -472,36 +484,46 @@ export default function ExploreScreen() {
   // ── Effects ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    getRecentSearches().then(setRecentSearches).catch(() => {});
-    getSavedSearches().then((ss) => setSavedSearchLabels(ss.slice(0, 4).map((s) => s.label))).catch(() => {});
-    getVisitHistory().then((h) => setRecentlyViewed(h.slice(0, 6))).catch(() => {});
-    getAllPublicProjects().then(setDevProjects).catch(() => {});
-    // Fetch live properties from backend; fall back to local mock on error
-    getProperties({ limit: 100 })
-      .then((ps) => { if (ps.length) setAllProperties(ps.map(apiPropertyToProperty)); })
-      .catch(() => undefined);
+    let cancelled = false;
+    const interactionTask = InteractionManager.runAfterInteractions(() => {
+      getRecentSearches().then((items) => { if (!cancelled) setRecentSearches(items); }).catch(() => {});
+      getSavedSearches()
+        .then((ss) => { if (!cancelled) setSavedSearchLabels(ss.slice(0, 4).map((s) => s.label)); })
+        .catch(() => {});
+      getVisitHistory()
+        .then((h) => { if (!cancelled) setRecentlyViewed(h.slice(0, 6)); })
+        .catch(() => {});
+      getAllPublicProjects().then((items) => { if (!cancelled) setDevProjects(items); }).catch(() => {});
+    });
+    return () => {
+      cancelled = true;
+      interactionTask.cancel();
+    };
   }, []);
 
   useEffect(() => {
     const radiusLocation = nearMe ?? searchedPlace;
     if (!radiusLocation && !mapBoundsFilter) {
       let cancelled = false;
-      setGeoError('');
-      setGeoLoading(true);
-      getProperties({ limit: 100 })
-        .then((items) => {
-          if (!cancelled && items.length) setAllProperties(items.map(apiPropertyToProperty));
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setGeoError('Live properties could not be refreshed. Showing the properties already loaded on this device.');
-          }
-        })
-        .finally(() => {
-          if (!cancelled) setGeoLoading(false);
-        });
+      const interactionTask = InteractionManager.runAfterInteractions(() => {
+        setGeoError('');
+        setGeoLoading(true);
+        getProperties({ limit: 100 })
+          .then((items) => {
+            if (!cancelled && items.length) setAllProperties(uniqueProperties(items.map(apiPropertyToProperty)));
+          })
+          .catch(() => {
+            if (!cancelled) {
+              setGeoError('Live properties could not be refreshed. Showing the properties already loaded on this device.');
+            }
+          })
+          .finally(() => {
+            if (!cancelled) setGeoLoading(false);
+          });
+      });
       return () => {
         cancelled = true;
+        interactionTask.cancel();
       };
     }
 
@@ -522,21 +544,24 @@ export default function ExploreScreen() {
           maxLng: mapBoundsFilter!.east,
         }, { limit: 100 });
 
-    request
-      .then((items) => {
-        if (!cancelled) setAllProperties(items.map(apiPropertyToProperty));
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setGeoError('Live map results could not be refreshed. Showing the properties already loaded on this device.');
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setGeoLoading(false);
-      });
+    const interactionTask = InteractionManager.runAfterInteractions(() => {
+      request
+        .then((items) => {
+          if (!cancelled) setAllProperties(uniqueProperties(items.map(apiPropertyToProperty)));
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setGeoError('Live map results could not be refreshed. Showing the properties already loaded on this device.');
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setGeoLoading(false);
+        });
+    });
 
     return () => {
       cancelled = true;
+      interactionTask.cancel();
     };
   }, [nearMe, searchedPlace, mapBoundsFilter]);
 
@@ -993,7 +1018,7 @@ export default function ExploreScreen() {
       <FlatList
         ref={flatListRef}
         data={isProjectsMode ? [] : (viewMode === 'list' ? filteredProperties : [])}
-        keyExtractor={(p) => String(p.id)}
+        keyExtractor={(p, index) => `${p.id}-${index}`}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarHeight, paddingTop: 14 }}
         ListHeaderComponent={
@@ -1493,7 +1518,7 @@ function ProjectsList({ staticProjects, devProjects, router, colors }: { staticP
   return (
     <>
       {staticProjects.map((proj) => (
-        <AnimatedReveal key={proj.id} distance={14}>
+        <AnimatedReveal key={`static-${proj.id}`} distance={14}>
           <Pressable onPress={() => router.push(`/project/${proj.id}` as any)} style={[pj.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Image source={proj.image} style={pj.image} resizeMode="cover" />
             <View style={pj.body}>
@@ -1513,7 +1538,7 @@ function ProjectsList({ staticProjects, devProjects, router, colors }: { staticP
         </AnimatedReveal>
       ))}
       {devProjects.map((dp) => (
-        <AnimatedReveal key={dp.id} distance={14}>
+        <AnimatedReveal key={`developer-${dp.id}`} distance={14}>
           <Pressable onPress={() => router.push(`/project/${dp.id}` as any)} style={[pj.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={[pj.imagePlaceholder, { backgroundColor: colors.secondary }]}>
               <Feather name="layers" size={20} color={colors.mutedForeground} />
@@ -1549,8 +1574,8 @@ function RecentlyViewedRow({ items, colors, router }: { items: VisitRecord[]; co
     <View style={{ marginBottom: 20 }}>
       <Text style={[rv.heading, { color: colors.foreground }]}>Recently Viewed</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={{ gap: 12, paddingRight: 4 }}>
-        {items.map((v) => (
-          <Pressable key={`${v.propertyId}-${v.viewedAt}`} onPress={() => router.push(`/property/${v.propertyId}` as any)}
+        {items.map((v, index) => (
+          <Pressable key={`${v.propertyId}-${v.viewedAt}-${index}`} onPress={() => router.push(`/property/${v.propertyId}` as any)}
             style={[rv.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[rv.type, { color: colors.primary }]}>{v.propertyType}</Text>
             <Text style={[rv.title, { color: colors.foreground }]} numberOfLines={2}>{v.propertyTitle}</Text>

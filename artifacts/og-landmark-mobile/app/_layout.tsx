@@ -190,14 +190,14 @@ function RootLayoutNav() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.action, direction: isRTL ? 'rtl' : 'ltr' }}>
-      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+      <Stack screenOptions={{ headerShown: false, animation: 'none' }}>
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="tools" options={{ headerShown: false }} />
         <Stack.Screen name="admin" options={{ headerShown: false }} />
-        <Stack.Screen name="property/[id]" options={{ presentation: 'card', animation: 'slide_from_right' }} />
-        <Stack.Screen name="project/[id]" options={{ presentation: 'card', animation: 'slide_from_right' }} />
-        <Stack.Screen name="(auth)" options={{ presentation: 'card', animation: 'slide_from_right' }} />
+        <Stack.Screen name="property/[id]" options={{ presentation: 'card', animation: 'none' }} />
+        <Stack.Screen name="project/[id]" options={{ presentation: 'card', animation: 'none' }} />
+        <Stack.Screen name="(auth)" options={{ presentation: 'card', animation: 'none' }} />
       </Stack>
       {!navigationReady && (
         <View

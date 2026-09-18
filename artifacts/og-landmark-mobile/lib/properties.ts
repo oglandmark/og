@@ -410,7 +410,6 @@ const bundledDemoProperties: Property[] = [
     gallery: [
       require('@/assets/images/agriculture/agri-field-3.jpg'),
       require('@/assets/images/agriculture/agri-field-4.jpg'),
-      require('@/assets/images/agriculture/agri-field-2.jpg'),
     ],
     featured: true,
     agent: 'Tariq Mehmood',
@@ -464,7 +463,6 @@ const bundledDemoProperties: Property[] = [
     gallery: [
       require('@/assets/images/agriculture/agri-field-1.jpg'),
       require('@/assets/images/agriculture/agri-field-3.jpg'),
-      require('@/assets/images/agriculture/agri-field-2.jpg'),
     ],
     featured: true,
     agent: 'Tariq Mehmood',
@@ -515,7 +513,6 @@ const bundledDemoProperties: Property[] = [
     image: require('@/assets/images/agriculture/agri-field-4.jpg'),
     gallery: [
       require('@/assets/images/agriculture/agri-field-1.jpg'),
-      require('@/assets/images/agriculture/agri-field-2.jpg'),
       require('@/assets/images/agriculture/agri-field-3.jpg'),
     ],
     featured: true,
@@ -568,7 +565,6 @@ const bundledDemoProperties: Property[] = [
     gallery: [
       require('@/assets/images/agriculture/agri-field-1.jpg'),
       require('@/assets/images/agriculture/agri-field-4.jpg'),
-      require('@/assets/images/agriculture/agri-field-2.jpg'),
     ],
     featured: false,
     agent: 'Tariq Mehmood',
@@ -616,9 +612,8 @@ const bundledDemoProperties: Property[] = [
     address: 'Moray Wala, Hujra Shah Muqeem, Okara District',
     description:
       'Sandy-loam land suitable for mixed farming — currently under maize and cotton. No nehri access but deep tube well (16HP) provides year-round irrigation. Lower land price ideal for first-time agricultural investors or young farmers. Boundary marked with pillars.',
-    image: require('@/assets/images/agriculture/agri-field-2.jpg'),
+    image: require('@/assets/images/agriculture/agri-field-1.jpg'),
     gallery: [
-      require('@/assets/images/agriculture/agri-field-1.jpg'),
       require('@/assets/images/agriculture/agri-field-4.jpg'),
       require('@/assets/images/agriculture/agri-field-3.jpg'),
     ],
@@ -672,7 +667,6 @@ const bundledDemoProperties: Property[] = [
     gallery: [
       require('@/assets/images/agriculture/agri-field-3.jpg'),
       require('@/assets/images/agriculture/agri-field-1.jpg'),
-      require('@/assets/images/agriculture/agri-field-2.jpg'),
     ],
     featured: false,
     agent: 'Muhammad Asif',
@@ -792,7 +786,6 @@ const ALL_IMAGES: ImageSourcePropType[] = [
 
 const AGRICULTURE_IMAGES: ImageSourcePropType[] = [
   require('@/assets/images/agriculture/agri-field-1.jpg'),
-  require('@/assets/images/agriculture/agri-field-2.jpg'),
   require('@/assets/images/agriculture/agri-field-3.jpg'),
   require('@/assets/images/agriculture/agri-field-4.jpg'),
 ];

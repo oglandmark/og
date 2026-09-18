@@ -655,16 +655,16 @@ function TransactionToggle({ form, update, colors }: { form: Form; update: (p: P
               style={[
                 s.transactionToggleOption,
                 {
-                  backgroundColor: active ? colors.action : 'transparent',
-                  borderColor: active ? colors.action : 'transparent',
+                  backgroundColor: 'transparent',
+                  borderColor: active ? colors.action : colors.border,
                 },
               ]}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
               accessibilityLabel={`List property for ${option.label}`}
             >
-              <Feather name={option.icon} size={16} color={active ? colors.actionForeground : colors.mutedForeground} />
-              <Text style={[s.transactionToggleText, { color: active ? colors.actionForeground : colors.foreground }]}>
+              <Feather name={option.icon} size={16} color={active ? colors.action : colors.mutedForeground} />
+              <Text style={[s.transactionToggleText, { color: active ? colors.action : colors.foreground }]}>
                 {option.label}
               </Text>
             </Pressable>

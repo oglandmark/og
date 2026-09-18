@@ -47,6 +47,8 @@ export type User = {
   joinedAt: string;
   authProvider?: string;
   avatarUrl?: string;
+  profilePhoto?: string | null;
+  coverPhoto?: string | null;
 };
 
 type AuthContextValue = {
@@ -92,6 +94,8 @@ function mapApiUser(apiU: {
   joinedDate?: string;
   authProvider?: string;
   avatarUrl?: string;
+  profilePhoto?: string | null;
+  coverPhoto?: string | null;
 }): User {
   return {
     id: String(apiU.id),
@@ -107,6 +111,8 @@ function mapApiUser(apiU: {
     joinedAt: apiU.joinedDate || new Date().toISOString(),
     authProvider: apiU.authProvider,
     avatarUrl: apiU.avatarUrl,
+    profilePhoto: apiU.profilePhoto,
+    coverPhoto: apiU.coverPhoto,
   };
 }
 

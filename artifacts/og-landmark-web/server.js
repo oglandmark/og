@@ -574,6 +574,7 @@ function safeMobileAgent(agent, includePrivate = false) {
     ...safe,
     displayName: safe.displayName || safe.name || '',
     profilePhoto: safe.photo || safe.profilePhoto || null,
+    coverPhoto: safe.coverPhoto || null,
     ...(agent.role === 'Agent' && agent.email ? { email: agent.email } : {}),
     ...(includePrivate ? {
       loginEmail: agent.email || '',
@@ -2064,7 +2065,14 @@ app.get('/api/mobile-agents', async (req, res) => {
       agents = agents.filter(a => (a.areas || []).some(area => String(area).toLowerCase() === city));
     }
     if (req.query.limit) agents = agents.slice(0, Math.max(0, Number(req.query.limit) || 0));
-    res.json(agents.map(safeMobileAgent));
+    res.json(agents.map(agent => {
+      const linkedUser = (data.users || []).find(user => String(user.id) === String(agent.authUserId));
+      return safeMobileAgent({
+        ...agent,
+        photo: agent.photo || linkedUser?.profilePhoto || linkedUser?.photo,
+        coverPhoto: agent.coverPhoto || linkedUser?.coverPhoto,
+      });
+    }));
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -4762,7 +4770,7 @@ app.get('/api/account', requireAuth, async (req, res) => {
 });
 app.put('/api/account', requireAuth, async (req, res) => {
   const data = await readData(); const user = data.users.find(u => u.id === req.currentUser.id);
-  for (const key of ['name', 'phone', 'city', 'agencyName', 'companyName', 'profilePhoto']) if (req.body[key] !== undefined) user[key] = req.body[key];
+  for (const key of ['name', 'phone', 'city', 'agencyName', 'companyName', 'profilePhoto', 'coverPhoto']) if (req.body[key] !== undefined) user[key] = req.body[key];
   await writeData(data); const { password, ...safe } = user; res.json(safe);
 });
 app.delete('/api/account', requireAuth, async (req, res) => {
@@ -4788,6 +4796,20 @@ app.get('/api/account/profile-photo', requireAuth, async (req, res) => {
 app.delete('/api/account/profile-photo', requireAuth, async (req, res) => {
   const data = await readData(); const user = data.users.find(u => u.id === req.currentUser.id);
   user.profilePhoto = null; user.photo = null; await writeData(data); res.status(204).end();
+});
+app.put('/api/account/cover-photo', requireAuth, async (req, res) => {
+  if (!req.body.url || typeof req.body.url !== 'string') return res.status(400).json({ error: 'url is required' });
+  const data = await readData(); const user = data.users.find(u => u.id === req.currentUser.id);
+  if (!user) return res.status(404).json({ error: 'Account not found' });
+  user.coverPhoto = req.body.url; await writeData(data); res.json({ url: req.body.url });
+});
+app.get('/api/account/cover-photo', requireAuth, async (req, res) => {
+  res.json({ url: req.currentUser.coverPhoto || null });
+});
+app.delete('/api/account/cover-photo', requireAuth, async (req, res) => {
+  const data = await readData(); const user = data.users.find(u => u.id === req.currentUser.id);
+  if (!user) return res.status(404).json({ error: 'Account not found' });
+  user.coverPhoto = null; await writeData(data); res.status(204).end();
 });
 
 app.get('/api/saved-searches', requireAuth, async (req, res) => {

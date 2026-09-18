@@ -156,6 +156,7 @@ type AgentProfile = {
   displayName: string;
   initials: string;
   profileImage?: SampleAgent['profileImage'];
+  coverPhoto?: string;
   agency: string;
   verified: boolean;
   years: number;
@@ -212,6 +213,7 @@ export default function AgentProfileScreen() {
         id: user.id,
         displayName: user.name ?? 'Agent',
         initials: (user.name ?? 'A').split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase(),
+         coverPhoto: user.coverPhoto ?? undefined,
         agency: user.agencyName ?? 'Agency',
         verified: user.verificationStatus === 'verified',
         years: Number(user.yearsExperience ?? 0),
@@ -266,6 +268,10 @@ export default function AgentProfileScreen() {
 
       {/* ── HEADER ────────────────────────────────────────────────────── */}
       <View style={[styles.header, { backgroundColor: colors.action }]}>
+        {agent.coverPhoto ? (
+          <Image source={{ uri: agent.coverPhoto }} style={styles.coverImage} resizeMode="cover" />
+        ) : null}
+        <View style={styles.coverOverlay} />
         {/* back */}
         <Pressable onPress={() => router.back()} style={[styles.backCircle, { top: topInset + 10 }]}>
           <Feather name="arrow-left" size={20} color="#ffffff" />
@@ -508,6 +514,8 @@ const styles = StyleSheet.create({
   backBtnText:    { fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#ffffff' },
   // Header
   header:         { paddingHorizontal: 18, paddingBottom: 28, paddingTop: 50, alignItems: 'center' },
+  coverImage:     { ...StyleSheet.absoluteFill },
+  coverOverlay:   { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(8,24,40,0.54)' },
   backCircle:     { position: 'absolute', left: 18, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
   shareCircle:    { position: 'absolute', right: 18, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
   avatarWrap:     { position: 'relative', marginBottom: 12, marginTop: 8 },

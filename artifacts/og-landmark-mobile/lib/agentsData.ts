@@ -11,6 +11,7 @@ export type SampleAgent = {
   initials: string;
   profileImage?: ImageSourcePropType;
   photo?: string;
+  coverPhoto?: string;
   agency: string;
   verified: boolean;
   rating: number;
@@ -42,6 +43,7 @@ export type ManagedAgentRecord = {
   about?: string;
   photo?: string | null;
   profilePhoto?: string | null;
+  coverPhoto?: string | null;
 };
 
 export function apiAgentToSample(agent: ManagedAgentRecord): SampleAgent {
@@ -55,6 +57,7 @@ export function apiAgentToSample(agent: ManagedAgentRecord): SampleAgent {
     initials: initials.toUpperCase(),
     profileImage: photo ? { uri: photo } : undefined,
     photo,
+    coverPhoto: agent.coverPhoto || undefined,
     agency: agent.agency || 'OG Landmark Agent',
     verified: agent.verified !== false,
     rating: Number(agent.rating || 0),

@@ -229,6 +229,8 @@ export type ApiUser = {
   facebookId?: string;
   googleId?: string;
   avatarUrl?: string;
+  profilePhoto?: string | null;
+  coverPhoto?: string | null;
 };
 
 // Server returns { user, token } on success (no `success` field)
@@ -323,6 +325,7 @@ export async function confirmPasswordReset(email: string, code: string, newPassw
 
 export async function updateUser(userId: string, payload: Partial<{
   name: string; phone: string; email: string; agencyName: string; companyName: string; city: string;
+  profilePhoto: string | null; coverPhoto: string | null;
 }>): Promise<ApiUser> {
   return apiFetch<ApiUser>(`/api/users/${userId}`, {
     method: 'PUT',
@@ -799,6 +802,14 @@ export async function uploadProfilePhoto(uri: string): Promise<{ url: string }> 
   });
 }
 
+export async function uploadCoverPhoto(uri: string): Promise<{ url: string }> {
+  const uploaded = await uploadImage(uri, `cover_${Date.now()}.jpg`);
+  return apiFetch<{ url: string }>('/api/account/cover-photo', {
+    method: 'PUT',
+    body: JSON.stringify(uploaded),
+  });
+}
+
 // ─── Properties CRUD (for agents / sellers posting listings) ──────────────────
 export type CreatePropertyPayload = {
   title: string;
@@ -1017,6 +1028,7 @@ export type ApiAgent = {
   about?: string;
   photo?: string;
   profilePhoto?: string;
+  coverPhoto?: string;
   createdAt?: string;
 };
 
@@ -1040,6 +1052,7 @@ export async function getAgents(
     ...agent,
     profilePhoto: resolveAgentPhoto(agent.profilePhoto || agent.photo),
     photo: resolveAgentPhoto(agent.photo || agent.profilePhoto),
+    coverPhoto: resolveAgentPhoto(agent.coverPhoto),
   }));
 }
 

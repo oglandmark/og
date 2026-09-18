@@ -17,7 +17,7 @@ import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
 import { addUserListing } from '@/lib/listingsStore';
 import { uploadMultipleImages, uploadVideo } from '@/lib/api';
-import { LocationPicker } from '@/components/LocationPicker';
+import { LocationPicker, PinnedMapCard } from '@/components/LocationPicker';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
@@ -538,7 +538,7 @@ export default function ListingWizard() {
         </Pressable>
         <View style={{ flex: 1, minWidth: 0, paddingHorizontal: 4 }}>
           <Text style={[s.headerStep, { color: colors.mutedForeground }]}>CREATE PROPERTY LISTING</Text>
-          <Text style={[s.headerTitle, { color: colors.foreground }]}>Complete all details in one form</Text>
+          <Text style={[s.headerTitle, { color: colors.foreground }]}>Post an Ad</Text>
           <View style={[s.progressTrack, { backgroundColor: colors.border }]}>
             <View style={[s.progressFill, { width: '100%', backgroundColor: colors.action }]} />
           </View>
@@ -834,6 +834,23 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
            onConfirmationChange?.(true);
          }}
       />
+      {typeof form.latitude === 'number' && typeof form.longitude === 'number' && (
+        <View style={s.pinnedMapSection}>
+          <View style={s.pinnedMapHeading}>
+            <Feather name="map" size={14} color={colors.action} />
+            <Text style={[s.pinnedMapHeadingText, { color: colors.foreground }]}>Map pinned location</Text>
+          </View>
+          <PinnedMapCard
+            latitude={form.latitude}
+            longitude={form.longitude}
+            address={form.fullAddress}
+            city={form.city}
+            locality={form.locality}
+            district={form.district}
+            colors={colors}
+          />
+        </View>
+      )}
       {(form.fullAddress || form.district || form.tehsil) && (
         <View style={[s.locationSummary, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           <View style={s.locationSummaryHeader}>
@@ -1941,6 +1958,9 @@ const s = StyleSheet.create({
   locationSummaryLabel: { fontFamily: 'Inter_500Medium', fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5 },
   locationSummaryValue: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   locationSummaryHint:  { fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 14 },
+  pinnedMapSection:     { marginTop: 2 },
+  pinnedMapHeading:     { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 8 },
+  pinnedMapHeadingText: { fontFamily: 'Inter_700Bold', fontSize: 12 },
   // Success
   successIcon:          { width: 80, height: 80, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 1, marginBottom: 20 },
   successTitle:         { fontFamily: 'Inter_700Bold', fontSize: 26, textAlign: 'center', marginBottom: 10 },

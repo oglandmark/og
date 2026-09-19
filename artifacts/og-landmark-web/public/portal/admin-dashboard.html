@@ -195,6 +195,17 @@ tr:hover td{background:#f8fafc}
 .pr-edit-field label{font-size:12px;font-weight:700;color:var(--muted)}
 .pr-edit-field input,.pr-edit-field select,.pr-edit-field textarea{padding:8px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:100%;font-family:inherit}
 .pr-edit-field input:focus,.pr-edit-field select:focus,.pr-edit-field textarea:focus{outline:none;border-color:var(--red)}
+.pr-media-manager{margin-top:12px;padding:14px;border:1px solid #dbe4ee;border-radius:12px;background:#f8fafc}
+.pr-media-manager-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pr-media-manager-title{font-size:13px;font-weight:800;color:#0B1F3A}
+.pr-media-manager-help{font-size:11px;color:var(--muted);margin-top:3px}
+.pr-media-actions{display:flex;gap:8px;flex-wrap:wrap}
+.pr-media-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:12px}
+.pr-media-item{position:relative;overflow:hidden;border:1px solid #dbe4ee;border-radius:9px;background:#fff;min-height:92px}
+.pr-media-item img,.pr-media-item video{display:block;width:100%;height:92px;object-fit:cover;background:#0f172a}
+.pr-media-item-label{padding:6px 8px;font-size:11px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-media-delete{position:absolute;top:6px;right:6px;border:0;border-radius:999px;background:rgba(127,29,29,.9);color:#fff;width:25px;height:25px;cursor:pointer;font-size:12px;font-weight:700}
+.pr-media-empty{font-size:12px;color:var(--muted);padding:8px 0}
 </style>
 </head>
 <body>
@@ -1150,6 +1161,23 @@ tr:hover td{background:#f8fafc}
       <!-- Video panel -->
       <div class="pr-video-wrap" id="pr-video-panel">
         <div class="pr-video" id="pr-video-embed"></div>
+      </div>
+
+      <div class="pr-media-manager">
+        <div class="pr-media-manager-head">
+          <div>
+            <div class="pr-media-manager-title">Manage property photos &amp; video</div>
+            <div class="pr-media-manager-help">Changes are saved to the mobile listing and public website immediately.</div>
+          </div>
+          <div class="pr-media-actions">
+            <input id="pr-photo-file" type="file" accept=".jpg,.jpeg,.png,.webp" multiple style="display:none" onchange="prUploadPhotos(this)"/>
+            <input id="pr-video-file" type="file" accept=".mp4,.mov" style="display:none" onchange="prUploadVideo(this)"/>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('pr-photo-file').click()">+ Add Photos</button>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('pr-video-file').click()">+ Upload Video</button>
+          </div>
+        </div>
+        <div id="pr-media-status" style="font-size:12px;color:var(--muted);margin-top:8px"></div>
+        <div id="pr-media-items" class="pr-media-items"></div>
       </div>
 
       <!-- Property header (title, price, stats) -->
@@ -2593,7 +2621,7 @@ function closePropDetail(){ closePropReview(); }
 
 // ── PROPERTY REVIEW PAGE ──
 let prCurrentId=null, prFromPage='approvals';
-let prGalleryIndex=0, prImages=[], prAudit=[];
+let prGalleryIndex=0, prImages=[], prMediaVideoUrl=null, prAudit=[];
 
 function fmtPKR(n){
   if(!n) return '—';
@@ -2661,6 +2689,8 @@ async function openPropReview(id, fromPage){
     const isYt=embed.includes('youtube.com/embed')||embed.includes('youtu.be');
     vidEmbed.innerHTML=isYt?`<iframe src="${embed}" allowfullscreen style="width:100%;height:100%;border:none"></iframe>`:`<video src="${embed}" controls style="width:100%;height:100%"></video>`;
   } else { vidTab.style.display='none'; vidEmbed.innerHTML=''; }
+  prMediaVideoUrl=p.videoUrl||null;
+  renderPrMediaManager();
 
   // ── PROPERTY HEADER ──
   const badges=[];
@@ -2877,6 +2907,115 @@ async function openPropReview(id, fromPage){
   document.getElementById('pe-images').value=(p.images||[]).join(', ');
 
   showPage('prop-review');
+}
+
+function setPrMediaStatus(message, color){
+  const el=document.getElementById('pr-media-status');
+  if(el){ el.textContent=message||''; el.style.color=color||'var(--muted)'; }
+}
+
+function renderPrMediaManager(){
+  const list=document.getElementById('pr-media-items');
+  if(!list) return;
+  const photoItems=prImages.map((src,index)=>`
+    <div class="pr-media-item">
+      <img src="${src}" alt="Property photo ${index+1}" onerror="this.style.opacity='.35'"/>
+      <button class="pr-media-delete" title="Delete photo" onclick="prRemovePhoto(${index})">×</button>
+      <div class="pr-media-item-label">Photo ${index+1}</div>
+    </div>`).join('');
+  const videoItem=prMediaVideoUrl?`
+    <div class="pr-media-item">
+      ${/youtube\.com|youtu\.be/.test(prMediaVideoUrl)
+        ? `<div style="height:92px;background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px">YouTube video</div>`
+        : `<video src="${prMediaVideoUrl}" muted preload="metadata"></video>`}
+      <button class="pr-media-delete" title="Delete video" onclick="prRemoveVideo()">×</button>
+      <div class="pr-media-item-label">Property video</div>
+    </div>`:'';
+  list.innerHTML=photoItems+videoItem||'<div class="pr-media-empty">No photos or video uploaded yet.</div>';
+}
+
+async function prPersistMedia(images, videoUrl, successMessage){
+  setPrMediaStatus('Saving media changes...');
+  try{
+    const result=await api('PATCH',`/api/admin/properties/${prCurrentId}/media`,{
+      images,
+      videoUrl:videoUrl||null,
+    });
+    const updated=result?.property;
+    const index=allProps.findIndex(item=>item.id===prCurrentId);
+    if(updated&&index!==-1) allProps[index]={...allProps[index],...updated};
+    prImages=images;
+    prMediaVideoUrl=videoUrl||null;
+    renderAll();
+    await openPropReview(prCurrentId,prFromPage);
+    showToast(successMessage||'Property media updated','success');
+  }catch(e){
+    setPrMediaStatus(e.message,'var(--danger)');
+    showToast(e.message,'error');
+  }
+}
+
+async function prUploadPhotos(input){
+  const files=[...(input.files||[])];
+  input.value='';
+  if(!files.length) return;
+  if(prImages.length+files.length>30){
+    showToast('A property can have at most 30 photos','error');
+    return;
+  }
+  const uploaded=[];
+  setPrMediaStatus(`Uploading ${files.length} photo${files.length===1?'':'s'}...`);
+  try{
+    for(const file of files){
+      const form=new FormData();
+      form.append('image',file);
+      const response=await fetch('/api/upload/single',{
+        method:'POST',
+        headers:{'Authorization':'Bearer '+token},
+        body:form,
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok||!data.url) throw new Error(data.error||'Photo upload failed');
+      uploaded.push(data.url);
+    }
+    await prPersistMedia([...prImages,...uploaded],prMediaVideoUrl,`${uploaded.length} photo${uploaded.length===1?'':'s'} uploaded`);
+  }catch(e){
+    setPrMediaStatus(e.message,'var(--danger)');
+    showToast(e.message,'error');
+  }
+}
+
+async function prUploadVideo(input){
+  const file=input.files?.[0];
+  input.value='';
+  if(!file) return;
+  setPrMediaStatus('Uploading video...');
+  try{
+    const form=new FormData();
+    form.append('video',file);
+    const response=await fetch('/api/upload/video',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+token},
+      body:form,
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||!data.url) throw new Error(data.error||'Video upload failed');
+    await prPersistMedia(prImages,data.url,'Property video uploaded');
+  }catch(e){
+    setPrMediaStatus(e.message,'var(--danger)');
+    showToast(e.message,'error');
+  }
+}
+
+async function prRemovePhoto(index){
+  const photo=prImages[index];
+  if(!photo||!confirm('Delete this property photo?')) return;
+  await prPersistMedia(prImages.filter((_,i)=>i!==index),prMediaVideoUrl,'Property photo deleted');
+}
+
+async function prRemoveVideo(){
+  if(!prMediaVideoUrl||!confirm('Delete this property video?')) return;
+  await prPersistMedia(prImages,null,'Property video deleted');
 }
 
 function closePropReview(){

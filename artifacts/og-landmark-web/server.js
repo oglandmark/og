@@ -3746,6 +3746,107 @@ app.get('/api/admin/properties/:id/review', requireAdmin, async (req, res) => {
   }
 });
 
+function localUploadPathFromUrl(value) {
+  if (!value) return null;
+  try {
+    const parsed = new URL(String(value), 'http://localhost');
+    const pathname = decodeURIComponent(parsed.pathname || '');
+    const uploadPrefix = '/images/uploads/';
+    if (!pathname.startsWith(uploadPrefix)) return null;
+    const uploadDir = path.resolve(__dirname, 'public/images/uploads');
+    const candidate = path.resolve(uploadDir, path.basename(pathname));
+    if (!candidate.startsWith(`${uploadDir}${path.sep}`)) return null;
+    return candidate;
+  } catch {
+    return null;
+  }
+}
+
+async function removeUnreferencedUploadedMedia(data, removedUrls) {
+  const candidates = [...new Set((removedUrls || []).map(localUploadPathFromUrl).filter(Boolean))];
+  for (const candidate of candidates) {
+    const stillReferenced = (data.properties || []).some(property => {
+      const mediaUrls = [
+        ...(Array.isArray(property.images) ? property.images : []),
+        property.videoUrl,
+      ].map(localUploadPathFromUrl).filter(Boolean);
+      return mediaUrls.includes(candidate);
+    });
+    if (stillReferenced) continue;
+    try {
+      await fs.promises.unlink(candidate);
+    } catch (err) {
+      if (err.code !== 'ENOENT') console.warn('Could not remove unreferenced property media:', err.message);
+    }
+  }
+}
+
+// Admin property media management.  The property record remains the source of
+// truth so the website, mobile app, and public listing all see the same media.
+app.patch('/api/admin/properties/:id/media', requireAdmin, async (req, res) => {
+  try {
+    const data = await readData();
+    const property = data.properties.find(item => item.id === Number(req.params.id));
+    if (!property) return res.status(404).json({ error: 'Property not found' });
+
+    if (!Array.isArray(req.body?.images)) {
+      return res.status(400).json({ error: 'images must be an array' });
+    }
+    if (req.body.images.length > MAX_LISTING_IMAGES) {
+      return res.status(400).json({ error: `A property can have at most ${MAX_LISTING_IMAGES} images` });
+    }
+
+    const previousImages = Array.isArray(property.images) ? property.images.filter(Boolean).map(String) : [];
+    const previousVideo = property.videoUrl ? String(property.videoUrl) : null;
+    const images = [...new Set(req.body.images.map(value => String(value || '').trim()).filter(Boolean))];
+    const videoUrl = req.body.videoUrl ? String(req.body.videoUrl).trim() : null;
+    const updatedAt = new Date().toISOString();
+
+    property.images = images;
+    property.coverImage = property.coverImage && images.includes(property.coverImage)
+      ? property.coverImage
+      : (images[0] || null);
+    property.videoUrl = videoUrl;
+    property.media = {
+      ...(property.media && typeof property.media === 'object' ? property.media : {}),
+      images: images.map(url => ({ url, propertyId: property.id, type: 'image' })),
+      videos: videoUrl ? [{ url: videoUrl, propertyId: property.id, type: 'video' }] : [],
+    };
+    property.updatedAt = updatedAt;
+    property.reviewHistory = Array.isArray(property.reviewHistory) ? property.reviewHistory : [];
+    property.reviewHistory.push({
+      action: 'media_updated',
+      by: req.currentUser.id,
+      byName: req.currentUser.name,
+      detail: {
+        addedImages: images.filter(url => !previousImages.includes(url)).length,
+        removedImages: previousImages.filter(url => !images.includes(url)).length,
+        videoChanged: previousVideo !== videoUrl,
+      },
+      createdAt: updatedAt,
+    });
+    adminAudit(data, req.currentUser, 'media_updated', 'properties', property.id, {
+      addedImages: images.filter(url => !previousImages.includes(url)).length,
+      removedImages: previousImages.filter(url => !images.includes(url)).length,
+      videoChanged: previousVideo !== videoUrl,
+    });
+
+    await writeData(data);
+    await removeUnreferencedUploadedMedia(data, [
+      ...previousImages.filter(url => !images.includes(url)),
+      ...(previousVideo && previousVideo !== videoUrl ? [previousVideo] : []),
+    ]);
+
+    res.json({
+      success: true,
+      property: normalisePropertyPayload(property, null, property.id),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not update property media' });
+  }
+});
+
 // ─── ADMIN: VERIFY / REJECT PROPERTY (mobile) ────────────────────────────────
 app.patch('/api/admin/properties/:id/verify', requireAdmin, async (req, res) => {
   try {

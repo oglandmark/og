@@ -112,3 +112,17 @@ mtime_ms = 1789748425142
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/0904edbd-f8d3-482a-ac5b-fe8692950dc4/14ea3327-8f94-4589-8ab6-0d709b632a49"
 storage_version_token = "1789748450590407"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "J4NTvMKobSMUBQevgJdi0"
+uri = "file://exports/OG%20Landmark%20Hostinger%2019-09-26.zip"
+type = "unspecified"
+title = "OG Landmark Hostinger Website ZIP"
+description = "Latest Hostinger-ready website package with the admin property photo/video upload and delete controls. Replit lockfiles, node_modules, local runtime data, and secrets are excluded."
+logical_id = "c8d62807-9338-454a-b262-55d0057a4900"
+content_hash = "sha256:8608b53397fb3bbc1712417cd0008ad3fbe11cae567932f588d8cf1d182821e0"
+size = 10975302
+mtime_ms = 1789840393839
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/c8d62807-9338-454a-b262-55d0057a4900/b643c211-44c2-4fd9-8e4c-69995f455bbe"
+storage_version_token = "1789840432956427"
+content_type = "application/octet-stream"

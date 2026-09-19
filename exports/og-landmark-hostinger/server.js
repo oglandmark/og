@@ -30,13 +30,22 @@ const storage = multer.diskStorage({
 });
 const ALLOWED_IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.webp'];
 const ALLOWED_VIDEO_EXT = ['.mp4', '.mov'];
+const MAX_LISTING_IMAGES = 30;
 const upload = multer({
   storage,
   limits: { fileSize: 300 * 1024 * 1024 }, // 300 MB (covers large video)
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    const image = ALLOWED_IMAGE_EXT.includes(ext) && /^image\/(jpeg|png|webp)$/.test(file.mimetype);
-    const video = ALLOWED_VIDEO_EXT.includes(ext) && /^video\/(mp4|quicktime)$/.test(file.mimetype);
+    // React Native/Android may report a selected local file as
+    // application/octet-stream even when the client supplies a valid image
+    // extension. The extension remains allowlisted, so accept that transport
+    // MIME as well as the normal browser MIME values.
+    const transportMime = file.mimetype === 'application/octet-stream'
+      || file.mimetype === 'binary/octet-stream';
+    const image = ALLOWED_IMAGE_EXT.includes(ext)
+      && (/^image\/(jpeg|jpg|png|webp)$/.test(file.mimetype) || transportMime);
+    const video = ALLOWED_VIDEO_EXT.includes(ext)
+      && (/^video\/(mp4|quicktime)$/.test(file.mimetype) || transportMime);
     const ok = image || video;
     cb(ok ? null : new Error('Allowed: JPG, PNG, WebP, MP4, MOV'), ok);
   }
@@ -51,7 +60,8 @@ if (!databaseConfigured && !localPreview) {
   console.error('Neon settings are missing. Set DATABASE_URL to your Neon PostgreSQL connection string in production.');
 }
 const neonDb = databaseConfigured && !localPreview ? neon(databaseUrl) : null;
-const fallbackFile = path.join(__dirname, 'runtime-data.json');
+const fallbackFile = process.env.OG_LANDMARK_RUNTIME_DATA
+  || path.join(__dirname, 'runtime-data.json');
 let dbReady = false;
 let dbInitError = null;
 // Legacy maps remain only as a local cache; authoritative sessions/challenges are persisted.
@@ -564,6 +574,7 @@ function safeMobileAgent(agent, includePrivate = false) {
     ...safe,
     displayName: safe.displayName || safe.name || '',
     profilePhoto: safe.photo || safe.profilePhoto || null,
+    coverPhoto: safe.coverPhoto || null,
     ...(agent.role === 'Agent' && agent.email ? { email: agent.email } : {}),
     ...(includePrivate ? {
       loginEmail: agent.email || '',
@@ -1011,13 +1022,22 @@ function normalisePropertyPayload(raw = {}, existing = null, propertyId = null) 
   const longitude = numberOrNull(
     locationInput.longitude ?? locationInput.lng ?? body.longitude ?? body.lng ?? existing?.location?.longitude ?? existing?.lng,
   );
+  const locality = String(
+    locationInput.locality
+      ?? body.locality
+      ?? body.neighborhood
+      ?? body.streetAddress
+      ?? body.fullAddress
+      ?? body.city
+      ?? '',
+  ).trim();
   const location = {
     latitude,
     longitude,
     city: String(locationInput.city ?? body.city ?? '').trim(),
     district: String(locationInput.district ?? body.district ?? (String(body.city || '').toLowerCase() === 'depalpur' ? 'Okara' : '')).trim(),
     tehsil: String(locationInput.tehsil ?? body.tehsil ?? '').trim(),
-    locality: String(locationInput.locality ?? body.locality ?? body.neighborhood ?? '').trim(),
+    locality,
     address: String(locationInput.address ?? body.address ?? body.fullAddress ?? '').trim(),
     province: String(locationInput.province ?? body.province ?? 'Punjab').trim(),
     country: String(locationInput.country ?? body.country ?? 'Pakistan').trim(),
@@ -1027,6 +1047,10 @@ function normalisePropertyPayload(raw = {}, existing = null, propertyId = null) 
     placeId: String(locationInput.placeId ?? body.placeId ?? '').trim() || null,
   };
   const images = Array.isArray(body.images) ? body.images.filter(Boolean).map(String) : [];
+  const requestedCoverImage = body.coverImage ? String(body.coverImage).trim() : '';
+  const coverImage = requestedCoverImage && images.includes(requestedCoverImage)
+    ? requestedCoverImage
+    : (images[0] || null);
   const mediaInput = body.media && typeof body.media === 'object' ? body.media : {};
   const imageMedia = Array.isArray(mediaInput.images)
     ? mediaInput.images.map(item => typeof item === 'string' ? { url: item } : item).filter(item => item?.url)
@@ -1065,6 +1089,7 @@ function normalisePropertyPayload(raw = {}, existing = null, propertyId = null) 
     lng: longitude,
     location,
     images,
+    coverImage,
     videoUrl,
     documents,
     media,
@@ -1361,6 +1386,37 @@ app.get('/api/properties/:id', async (req, res) => {
   }
 });
 
+// Admin review details include the listing owner so the review screen does not
+// need to make a second user-directory request (and can show the same context
+// when the property is no longer in the admin list).
+app.get('/api/admin/properties/:id/review', requireAdmin, async (req, res) => {
+  try {
+    const data = await readData();
+    const prop = data.properties.find(p => p.id === Number(req.params.id));
+    if (!prop) return res.status(404).json({ error: 'Property not found' });
+
+    const sellerId = prop.sellerId ?? prop.agentId;
+    const sellerRecord = data.users.find(user => user.id === sellerId);
+    const seller = sellerRecord
+      ? (({ password, ...safeUser }) => safeUser)(sellerRecord)
+      : null;
+    const property = normalisePropertyPayload(prop, null, prop.id);
+    if (seller) {
+      property.sellerName = seller.name;
+      property.sellerPhone = seller.phone || '';
+    }
+
+    res.json({
+      property,
+      seller,
+      audit: Array.isArray(prop.reviewHistory) ? prop.reviewHistory : [],
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Listing management is account-scoped and deliberately includes Pending and
 // Rejected records so a seller/agent can track its submissions.
 app.get('/api/my-properties', requireAuth, async (req, res) => {
@@ -1460,6 +1516,10 @@ app.put('/api/properties/:id', requireAuth, async (req, res) => {
       ? 'Draft'
       : (req.currentUser.role === 'Admin' ? (prop.listingStatus || (previousStatus === 'Active' ? 'Active' : previousStatus)) : 'Pending');
     merged.submissionState = isDraft ? 'draft' : 'submitted';
+    if (!isDraft && req.currentUser.role !== 'Admin') {
+      merged.changeRequest = null;
+      merged.rejectionReason = null;
+    }
     merged.updatedAt = new Date().toISOString();
     merged.reviewHistory = Array.isArray(prop.reviewHistory) ? prop.reviewHistory : [];
     merged.reviewHistory.push({
@@ -2005,7 +2065,14 @@ app.get('/api/mobile-agents', async (req, res) => {
       agents = agents.filter(a => (a.areas || []).some(area => String(area).toLowerCase() === city));
     }
     if (req.query.limit) agents = agents.slice(0, Math.max(0, Number(req.query.limit) || 0));
-    res.json(agents.map(safeMobileAgent));
+    res.json(agents.map(agent => {
+      const linkedUser = (data.users || []).find(user => String(user.id) === String(agent.authUserId));
+      return safeMobileAgent({
+        ...agent,
+        photo: agent.photo || linkedUser?.profilePhoto || linkedUser?.photo,
+        coverPhoto: agent.coverPhoto || linkedUser?.coverPhoto,
+      });
+    }));
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -3470,7 +3537,7 @@ app.post('/api/saved/:userId/:propertyId', requireAuth, async (req, res) => {
 });
 
 // ─── IMAGE UPLOAD ──────────────────────────────────────────────────────────────
-app.post('/api/upload', requireAuth, upload.array('images', 10), (req, res) => {
+app.post('/api/upload', requireAuth, upload.array('images', MAX_LISTING_IMAGES), (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: 'No image files provided' });
@@ -3676,6 +3743,107 @@ app.get('/api/admin/properties/:id/review', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+function localUploadPathFromUrl(value) {
+  if (!value) return null;
+  try {
+    const parsed = new URL(String(value), 'http://localhost');
+    const pathname = decodeURIComponent(parsed.pathname || '');
+    const uploadPrefix = '/images/uploads/';
+    if (!pathname.startsWith(uploadPrefix)) return null;
+    const uploadDir = path.resolve(__dirname, 'public/images/uploads');
+    const candidate = path.resolve(uploadDir, path.basename(pathname));
+    if (!candidate.startsWith(`${uploadDir}${path.sep}`)) return null;
+    return candidate;
+  } catch {
+    return null;
+  }
+}
+
+async function removeUnreferencedUploadedMedia(data, removedUrls) {
+  const candidates = [...new Set((removedUrls || []).map(localUploadPathFromUrl).filter(Boolean))];
+  for (const candidate of candidates) {
+    const stillReferenced = (data.properties || []).some(property => {
+      const mediaUrls = [
+        ...(Array.isArray(property.images) ? property.images : []),
+        property.videoUrl,
+      ].map(localUploadPathFromUrl).filter(Boolean);
+      return mediaUrls.includes(candidate);
+    });
+    if (stillReferenced) continue;
+    try {
+      await fs.promises.unlink(candidate);
+    } catch (err) {
+      if (err.code !== 'ENOENT') console.warn('Could not remove unreferenced property media:', err.message);
+    }
+  }
+}
+
+// Admin property media management.  The property record remains the source of
+// truth so the website, mobile app, and public listing all see the same media.
+app.patch('/api/admin/properties/:id/media', requireAdmin, async (req, res) => {
+  try {
+    const data = await readData();
+    const property = data.properties.find(item => item.id === Number(req.params.id));
+    if (!property) return res.status(404).json({ error: 'Property not found' });
+
+    if (!Array.isArray(req.body?.images)) {
+      return res.status(400).json({ error: 'images must be an array' });
+    }
+    if (req.body.images.length > MAX_LISTING_IMAGES) {
+      return res.status(400).json({ error: `A property can have at most ${MAX_LISTING_IMAGES} images` });
+    }
+
+    const previousImages = Array.isArray(property.images) ? property.images.filter(Boolean).map(String) : [];
+    const previousVideo = property.videoUrl ? String(property.videoUrl) : null;
+    const images = [...new Set(req.body.images.map(value => String(value || '').trim()).filter(Boolean))];
+    const videoUrl = req.body.videoUrl ? String(req.body.videoUrl).trim() : null;
+    const updatedAt = new Date().toISOString();
+
+    property.images = images;
+    property.coverImage = property.coverImage && images.includes(property.coverImage)
+      ? property.coverImage
+      : (images[0] || null);
+    property.videoUrl = videoUrl;
+    property.media = {
+      ...(property.media && typeof property.media === 'object' ? property.media : {}),
+      images: images.map(url => ({ url, propertyId: property.id, type: 'image' })),
+      videos: videoUrl ? [{ url: videoUrl, propertyId: property.id, type: 'video' }] : [],
+    };
+    property.updatedAt = updatedAt;
+    property.reviewHistory = Array.isArray(property.reviewHistory) ? property.reviewHistory : [];
+    property.reviewHistory.push({
+      action: 'media_updated',
+      by: req.currentUser.id,
+      byName: req.currentUser.name,
+      detail: {
+        addedImages: images.filter(url => !previousImages.includes(url)).length,
+        removedImages: previousImages.filter(url => !images.includes(url)).length,
+        videoChanged: previousVideo !== videoUrl,
+      },
+      createdAt: updatedAt,
+    });
+    adminAudit(data, req.currentUser, 'media_updated', 'properties', property.id, {
+      addedImages: images.filter(url => !previousImages.includes(url)).length,
+      removedImages: previousImages.filter(url => !images.includes(url)).length,
+      videoChanged: previousVideo !== videoUrl,
+    });
+
+    await writeData(data);
+    await removeUnreferencedUploadedMedia(data, [
+      ...previousImages.filter(url => !images.includes(url)),
+      ...(previousVideo && previousVideo !== videoUrl ? [previousVideo] : []),
+    ]);
+
+    res.json({
+      success: true,
+      property: normalisePropertyPayload(property, null, property.id),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not update property media' });
   }
 });
 
@@ -4703,7 +4871,7 @@ app.get('/api/account', requireAuth, async (req, res) => {
 });
 app.put('/api/account', requireAuth, async (req, res) => {
   const data = await readData(); const user = data.users.find(u => u.id === req.currentUser.id);
-  for (const key of ['name', 'phone', 'city', 'agencyName', 'companyName', 'profilePhoto']) if (req.body[key] !== undefined) user[key] = req.body[key];
+  for (const key of ['name', 'phone', 'city', 'agencyName', 'companyName', 'profilePhoto', 'coverPhoto']) if (req.body[key] !== undefined) user[key] = req.body[key];
   await writeData(data); const { password, ...safe } = user; res.json(safe);
 });
 app.delete('/api/account', requireAuth, async (req, res) => {
@@ -4729,6 +4897,20 @@ app.get('/api/account/profile-photo', requireAuth, async (req, res) => {
 app.delete('/api/account/profile-photo', requireAuth, async (req, res) => {
   const data = await readData(); const user = data.users.find(u => u.id === req.currentUser.id);
   user.profilePhoto = null; user.photo = null; await writeData(data); res.status(204).end();
+});
+app.put('/api/account/cover-photo', requireAuth, async (req, res) => {
+  if (!req.body.url || typeof req.body.url !== 'string') return res.status(400).json({ error: 'url is required' });
+  const data = await readData(); const user = data.users.find(u => u.id === req.currentUser.id);
+  if (!user) return res.status(404).json({ error: 'Account not found' });
+  user.coverPhoto = req.body.url; await writeData(data); res.json({ url: req.body.url });
+});
+app.get('/api/account/cover-photo', requireAuth, async (req, res) => {
+  res.json({ url: req.currentUser.coverPhoto || null });
+});
+app.delete('/api/account/cover-photo', requireAuth, async (req, res) => {
+  const data = await readData(); const user = data.users.find(u => u.id === req.currentUser.id);
+  if (!user) return res.status(404).json({ error: 'Account not found' });
+  user.coverPhoto = null; await writeData(data); res.status(204).end();
 });
 
 app.get('/api/saved-searches', requireAuth, async (req, res) => {

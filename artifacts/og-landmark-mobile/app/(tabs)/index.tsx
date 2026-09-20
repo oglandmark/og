@@ -295,11 +295,13 @@ const BANNER_H            = 165;
 const BANNER_AUTO_INTERVAL = 4200;
 const VIDEO_MAX_DURATION   = 60_000; // 60 s — auto-advance after this even if looping
 
-function CinematicBanner({ isScreenVisible, externalSlides, config }: {
+function CinematicBanner({ isScreenVisible, externalSlides, config, colors }: {
   isScreenVisible: boolean;
   externalSlides?: BannerSlideData[];
   config?: MobileContent['homepage'];
+  colors: Colors;
 }) {
+  const router = useRouter();
   const [slides, setSlides]       = useState<BannerSlideData[]>(FALLBACK_SLIDES);
   const [activeIdx, setActiveIdx] = useState(0);
   const [isMuted, setIsMuted]     = useState(false);
@@ -363,6 +365,13 @@ function CinematicBanner({ isScreenVisible, externalSlides, config }: {
 
   const activeSlide  = slides[activeIdx] ?? slides[0];
   const isVideoSlide = activeSlide?.type === 'video';
+  const handleSlideCta = useCallback(() => {
+    if (!activeSlide) return;
+    router.push({
+      pathname: activeSlide.route,
+      params: activeSlide.ctaParams,
+    } as Parameters<typeof router.push>[0]);
+  }, [activeSlide, router]);
 
   const carouselInterval = Math.max(1500, Number(config?.carousel?.intervalMs) || BANNER_AUTO_INTERVAL);
   const startTimer = useCallback(() => {
@@ -412,9 +421,11 @@ function CinematicBanner({ isScreenVisible, externalSlides, config }: {
               isActive={i === activeIdx}
               isMuted={isMuted}
               isScreenVisible={isScreenVisible}
+              colors={colors}
+              onCta={handleSlideCta}
             />
           ) : (
-            <BannerSlide key={i} slide={slide} isActive={i === activeIdx} />
+            <BannerSlide key={i} slide={slide} isActive={i === activeIdx} colors={colors} onCta={handleSlideCta} />
           ),
         )}
       </View>
@@ -440,10 +451,27 @@ function CinematicBanner({ isScreenVisible, externalSlides, config }: {
 function BannerSlide({ slide, isActive }: {
   slide: BannerSlideData;
   isActive: boolean;
+  colors: Colors;
+  onCta: () => void;
 }) {
   return (
     <View style={[bn.slide, StyleSheet.absoluteFill, { opacity: isActive ? 1 : 0 }]} pointerEvents={isActive ? 'auto' : 'none'}>
       <Image source={slide.image} style={bn.image} resizeMode="cover" />
+      <LinearGradient
+        pointerEvents="none"
+        colors={['#102a4300', '#081e34e8']}
+        locations={[0.16, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+      <View pointerEvents="none" style={bn.bannerCopy}>
+        <Text style={[bn.bannerEyebrow, { color: colors.gold }]}>{slide.eyebrow}</Text>
+        <Text style={bn.bannerTitle} numberOfLines={2}>{slide.title}</Text>
+        <Text style={bn.bannerSubtitle} numberOfLines={2}>{slide.subtitle}</Text>
+      </View>
+      <Pressable onPress={onCta} style={({ pressed }) => [bn.bannerCta, { backgroundColor: colors.gold, opacity: pressed ? 0.82 : 1 }]}>
+        <Text style={[bn.bannerCtaText, { color: colors.actionDeep }]}>{slide.cta}</Text>
+        <Feather name="arrow-up-right" size={13} color={colors.actionDeep} />
+      </Pressable>
     </View>
   );
 }
@@ -455,6 +483,8 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible }: {
   isActive: boolean;
   isMuted: boolean;
   isScreenVisible: boolean;
+  colors: Colors;
+  onCta: () => void;
 }) {
   const shouldPlay = isActive && isScreenVisible;
   const source: VideoSource = slide.localVideo ?? (slide.videoUri ? { uri: slide.videoUri } : null);
@@ -491,6 +521,21 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible }: {
       ) : isActive ? (
         <Image source={slide.image ?? require('@/assets/images/property-1.jpg')} style={bn.image} resizeMode="cover" />
       ) : null}
+      <LinearGradient
+        pointerEvents="none"
+        colors={['#102a4300', '#081e34e8']}
+        locations={[0.16, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+      <View pointerEvents="none" style={bn.bannerCopy}>
+        <Text style={[bn.bannerEyebrow, { color: colors.gold }]}>{slide.eyebrow}</Text>
+        <Text style={bn.bannerTitle} numberOfLines={2}>{slide.title}</Text>
+        <Text style={bn.bannerSubtitle} numberOfLines={2}>{slide.subtitle}</Text>
+      </View>
+      <Pressable onPress={onCta} style={({ pressed }) => [bn.bannerCta, { backgroundColor: colors.gold, opacity: pressed ? 0.82 : 1 }]}>
+        <Text style={[bn.bannerCtaText, { color: colors.actionDeep }]}>{slide.cta}</Text>
+        <Feather name="arrow-up-right" size={13} color={colors.actionDeep} />
+      </Pressable>
     </View>
   );
 }
@@ -506,6 +551,12 @@ const bn = StyleSheet.create({
   dots:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 10 },
   dot:        { width: 6, height: 6, borderRadius: 3, backgroundColor: '#c8a45a55' },
   dotActive:  { width: 20, height: 6, borderRadius: 3, backgroundColor: '#c8a45a' },
+  bannerCopy: { position: 'absolute', left: 20, right: 88, bottom: 18 },
+  bannerEyebrow: { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1.5, marginBottom: 4 },
+  bannerTitle: { color: '#ffffff', fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 20, lineHeight: 23, marginBottom: 3 },
+  bannerSubtitle: { color: '#ffffffcc', fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 14 },
+  bannerCta: { position: 'absolute', right: 18, bottom: 18, minHeight: 32, borderRadius: 11, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 4 },
+  bannerCtaText: { fontFamily: 'Inter_700Bold', fontSize: 10 },
 });
 
 // ─── Static placeholder images ────────────────────────────────────────────────

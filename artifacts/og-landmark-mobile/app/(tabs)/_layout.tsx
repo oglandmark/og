@@ -34,7 +34,7 @@ function PostAdIcon({ color, focused }: { color: ColorValue; focused: boolean })
   void focused;
 
   return (
-    <View style={[styles.postIcon, { backgroundColor: colors.action }]}>
+       <View style={[styles.postIcon, { backgroundColor: colors.action, borderColor: colors.background }]}>
       <Feather name="plus" size={22} color={colors.actionForeground} />
     </View>
   );
@@ -126,5 +126,5 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabGlass: { overflow: 'hidden', borderTopWidth: 1, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
-  postIcon:  { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginTop: -16, borderWidth: 4, borderColor: '#ffffff' },
+  postIcon:  { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginTop: -16, borderWidth: 4 },
 });

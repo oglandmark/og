@@ -947,7 +947,17 @@ function AgentCarousel({ agents, colors, onAgentPress }: { agents: SampleAgent[]
     : [];
 
   return (
-    <ScrollView horizontal style={s.agentCarouselViewport} contentContainerStyle={[s.agentTrack, s.hRow]} showsHorizontalScrollIndicator={false}>
+    <ScrollView
+      horizontal
+      nestedScrollEnabled
+      directionalLockEnabled
+      scrollEnabled={visibleAgents.length > 1}
+      decelerationRate="fast"
+      keyboardShouldPersistTaps="handled"
+      style={s.agentCarouselViewport}
+      contentContainerStyle={[s.agentTrack, s.hRow]}
+      showsHorizontalScrollIndicator={false}
+    >
       {visibleAgents.map((agent) => (
           <AgentCard
             key={agent.id}

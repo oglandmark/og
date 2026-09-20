@@ -118,11 +118,15 @@ function fmt(price?: string | number): string {
 }
 
 // ─── Price pill marker ─────────────────────────────────────────────────────────
-function PricePill({ price, selected }: { price?: string | number; selected: boolean }) {
+function PricePill({ price, selected, colors }: { price?: string | number; selected: boolean; colors?: any }) {
   const label = fmt(price);
   return (
-    <View style={[pill.wrap, selected && pill.wrapSel]}>
-      <Text style={[pill.text, selected && pill.textSel]} numberOfLines={1}>
+    <View style={[
+      pill.wrap,
+      { backgroundColor: selected ? (colors?.primary ?? '#c8a45a') : (colors?.card ?? '#ffffff'), borderColor: colors?.primary ?? '#c8a45a' },
+      selected && pill.wrapSel,
+    ]}>
+      <Text style={[pill.text, { color: colors?.action ?? '#102a43' }, selected && pill.textSel]} numberOfLines={1}>
         {label || '—'}
       </Text>
     </View>
@@ -142,11 +146,17 @@ const pill = StyleSheet.create({
 });
 
 // ─── Cluster bubble ────────────────────────────────────────────────────────────
-function ClusterBubble({ count }: { count: number }) {
+function ClusterBubble({ count, colors }: { count: number; colors?: any }) {
   const size = count < 5 ? 38 : count < 15 ? 48 : 58;
   return (
-    <View style={[clust.wrap, { width: size, height: size, borderRadius: size / 2 }]}>
-      <Text style={clust.text}>{count}</Text>
+    <View style={[clust.wrap, {
+      width: size,
+      height: size,
+      borderRadius: size / 2,
+      backgroundColor: colors?.primary ?? '#c8a45a',
+      borderColor: colors?.goldGlassBorder ?? '#e8c870',
+    }]}>
+      <Text style={[clust.text, { color: colors?.action ?? '#102a43' }]}>{count}</Text>
     </View>
   );
 }
@@ -196,6 +206,7 @@ function ExploreMapViewWithExpoGoFallback({
   userLng,
   centerLat,
   centerLng,
+  colors,
 }: Props) {
   const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
   const cLat = centerLat ?? userLat ?? OKARA_DISTRICT_CENTER.latitude;
@@ -241,20 +252,39 @@ function ExploreMapViewWithExpoGoFallback({
           value={areaRadiusKm}
           onChange={setAreaRadiusKm}
           colors={{
-            card: '#ffffff',
-            border: '#d6e0e8',
-            foreground: '#102a43',
-            mutedForeground: '#587089',
+            card: colors?.card ?? '#ffffff',
+            border: colors?.border ?? '#d6e0e8',
+            foreground: colors?.foreground ?? '#102a43',
+            mutedForeground: colors?.mutedForeground ?? '#587089',
           }}
         />
       </View>
       <View
         pointerEvents="none"
-        style={[styles.countBadge, { backgroundColor: '#ffffff', borderColor: '#d6e0e8' }]}
+        style={[styles.mapContextBadge, { backgroundColor: colors?.actionGlass ?? '#173d5ed9', borderColor: colors?.actionGlassBorder ?? '#ffffff55' }]}
+      >
+        <Feather name="map" size={14} color={colors?.actionForeground ?? '#ffffff'} />
+        <View>
+          <Text style={[styles.mapContextKicker, { color: colors?.gold ?? '#d9b96d' }]}>LIVE LISTINGS</Text>
+          <Text style={[styles.mapContextTitle, { color: colors?.actionForeground ?? '#ffffff' }]}>Explore the area</Text>
+        </View>
+      </View>
+      <View
+        pointerEvents="none"
+        style={[styles.countBadge, { backgroundColor: colors?.card ?? '#ffffff', borderColor: colors?.border ?? '#d6e0e8' }]}
       >
         <View style={styles.countDot} />
-        <Text style={styles.countText}>{areaCount} on map</Text>
+        <Text style={[styles.countText, { color: colors?.foreground ?? '#102a43' }]}>{areaCount} on map</Text>
       </View>
+      {validProps.length === 0 && (
+        <View pointerEvents="none" style={styles.mapEmpty}>
+          <View style={[styles.mapEmptyCard, { backgroundColor: colors?.card ?? '#ffffff', borderColor: colors?.border ?? '#d6e0e8' }]}>
+            <Feather name="map-pin" size={18} color={colors?.primary ?? '#c8a45a'} />
+            <Text style={[styles.mapEmptyTitle, { color: colors?.foreground ?? '#102a43' }]}>No listings in this area</Text>
+            <Text style={[styles.mapEmptyText, { color: colors?.mutedForeground ?? '#587089' }]}>Move the map or expand the range to explore more.</Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -268,6 +298,7 @@ function ExploreMapViewWithGoogleMaps({
   centerLat,
   centerLng,
   onSearchArea,
+  colors,
 }: Props) {
   const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
@@ -318,6 +349,7 @@ function ExploreMapViewWithGoogleMaps({
       userLng,
       centerLat,
       centerLng,
+      colors,
     }} />;
   }
 
@@ -412,7 +444,7 @@ function ExploreMapViewWithGoogleMaps({
               { duration: 450 },
             )}
           >
-            <ClusterBubble count={feature.properties.point_count} />
+             <ClusterBubble count={feature.properties.point_count} colors={colors} />
           </Marker>
         );
       }
@@ -432,7 +464,7 @@ function ExploreMapViewWithGoogleMaps({
           tracksViewChanges={false}
           zIndex={selected ? 10 : 1}
         >
-          <PricePill price={feature.properties.price} selected={selected} />
+           <PricePill price={feature.properties.price} selected={selected} colors={colors} />
         </Marker>
       );
     }),
@@ -512,14 +544,35 @@ function ExploreMapViewWithGoogleMaps({
       )}
       {showSearchArea && onSearchArea && (
         <Pressable
-          style={styles.searchAreaButton}
+          style={[styles.searchAreaButton, { backgroundColor: colors?.card ?? '#ffffff', borderColor: colors?.border ?? '#d6e0e8' }]}
           onPress={handleSearchArea}
           accessibilityRole="button"
           accessibilityLabel="Search properties in this map area"
         >
-          <Feather name="search" size={14} color="#102a43" />
-          <Text style={styles.searchAreaText}>Search this area</Text>
+          <Feather name="search" size={14} color={colors?.action ?? '#102a43'} />
+          <Text style={[styles.searchAreaText, { color: colors?.action ?? '#102a43' }]}>Search this area</Text>
         </Pressable>
+      )}
+      {!showSearchArea && (
+        <View
+          pointerEvents="none"
+          style={[styles.mapContextBadge, { backgroundColor: colors?.actionGlass ?? '#173d5ed9', borderColor: colors?.actionGlassBorder ?? '#ffffff55' }]}
+        >
+          <Feather name="map" size={14} color={colors?.actionForeground ?? '#ffffff'} />
+          <View>
+            <Text style={[styles.mapContextKicker, { color: colors?.gold ?? '#d9b96d' }]}>LIVE LISTINGS</Text>
+            <Text style={[styles.mapContextTitle, { color: colors?.actionForeground ?? '#ffffff' }]}>Explore the area</Text>
+          </View>
+        </View>
+      )}
+      {validProps.length === 0 && (
+        <View pointerEvents="none" style={styles.mapEmpty}>
+          <View style={[styles.mapEmptyCard, { backgroundColor: colors?.card ?? '#ffffff', borderColor: colors?.border ?? '#d6e0e8' }]}>
+            <Feather name="map-pin" size={18} color={colors?.primary ?? '#c8a45a'} />
+            <Text style={[styles.mapEmptyTitle, { color: colors?.foreground ?? '#102a43' }]}>No listings in this area</Text>
+            <Text style={[styles.mapEmptyText, { color: colors?.mutedForeground ?? '#587089' }]}>Move the map or expand the range to explore more.</Text>
+          </View>
+        </View>
       )}
       <View style={styles.rangeOverlay}>
         <MapAreaRange
@@ -629,14 +682,32 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     paddingHorizontal: 12,
     paddingVertical: 9,
-    backgroundColor: '#ffffff',
+    borderWidth: 1,
     shadowColor: '#102a43',
     shadowOpacity: 0.18,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
     elevation: 4,
   },
-  searchAreaText: { color: '#102a43', fontSize: 12, fontWeight: '800' },
+  searchAreaText: { fontSize: 12, fontWeight: '800' },
+  mapContextBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 15,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  mapContextKicker: { fontSize: 8, fontWeight: '800', letterSpacing: 1.1, marginBottom: 2 },
+  mapContextTitle: { fontSize: 11, fontWeight: '700' },
+  mapEmpty: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30 },
+  mapEmptyCard: { alignItems: 'center', borderWidth: 1, borderRadius: 15, paddingHorizontal: 18, paddingVertical: 14, shadowColor: '#102a43', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
+  mapEmptyTitle: { fontSize: 13, fontWeight: '800', marginTop: 7 },
+  mapEmptyText: { fontSize: 10, lineHeight: 15, textAlign: 'center', marginTop: 4 },
   mapsUnavailable: {
     flex: 1, backgroundColor: '#e8f0f7', alignItems: 'center',
     justifyContent: 'center', padding: 24, gap: 7,

@@ -417,6 +417,18 @@ export function ExploreMapView({
           mutedForeground: colors?.mutedForeground ?? '#587089',
         }} />
       </View>
+      {!showSearchArea && (
+        <View
+          pointerEvents="none"
+          style={[s.mapContextBadge, { backgroundColor: colors?.actionGlass ?? '#173d5ed9', borderColor: colors?.actionGlassBorder ?? '#ffffff55' }]}
+        >
+          <Feather name="map" size={14} color={colors?.actionForeground ?? '#ffffff'} />
+          <View>
+            <Text style={[s.mapContextKicker, { color: colors?.gold ?? '#d9b96d' }]}>LIVE LISTINGS</Text>
+            <Text style={[s.mapContextTitle, { color: colors?.actionForeground ?? '#ffffff' }]}>Explore the area</Text>
+          </View>
+        </View>
+      )}
       <View style={[s.countBadge, {
         backgroundColor: colors?.card ?? '#ffffff',
         borderColor: colors?.border ?? '#d6e0e8',
@@ -426,9 +438,18 @@ export function ExploreMapView({
           {areaPropertyCount} on map
         </Text>
       </View>
+      {properties.filter((property) => property.lat && property.lng).length === 0 && (
+        <View pointerEvents="none" style={s.mapEmpty}>
+          <View style={[s.mapEmptyCard, { backgroundColor: colors?.card ?? '#ffffff', borderColor: colors?.border ?? '#d6e0e8' }]}>
+            <Feather name="map-pin" size={18} color={colors?.primary ?? '#c8a45a'} />
+            <Text style={[s.mapEmptyTitle, { color: colors?.foreground ?? '#102a43' }]}>No listings in this area</Text>
+            <Text style={[s.mapEmptyText, { color: colors?.mutedForeground ?? '#587089' }]}>Move the map or expand the range to explore more.</Text>
+          </View>
+        </View>
+      )}
       {showSearchArea && onSearchArea && (
         <Pressable
-          style={s.searchAreaButton}
+          style={[s.searchAreaButton, { backgroundColor: colors?.card ?? '#ffffff', borderColor: colors?.border ?? '#d6e0e8' }]}
           onPress={() => {
             if (lastBounds.current) onSearchArea(lastBounds.current);
             setShowSearchArea(false);
@@ -436,8 +457,8 @@ export function ExploreMapView({
           accessibilityRole="button"
           accessibilityLabel="Search properties in this map area"
         >
-          <Feather name="search" size={14} color="#102a43" />
-          <Text style={s.searchAreaText}>Search this area</Text>
+          <Feather name="search" size={14} color={colors?.action ?? '#102a43'} />
+          <Text style={[s.searchAreaText, { color: colors?.action ?? '#102a43' }]}>Search this area</Text>
         </Pressable>
       )}
     </View>
@@ -487,12 +508,30 @@ const s = StyleSheet.create({
     borderRadius: 17,
     paddingHorizontal: 12,
     paddingVertical: 9,
-    backgroundColor: '#ffffff',
+    borderWidth: 1,
     shadowColor: '#102a43',
     shadowOpacity: 0.18,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
     elevation: 4,
   },
-  searchAreaText: { color: '#102a43', fontSize: 12, fontWeight: '800' },
+  searchAreaText: { fontSize: 12, fontWeight: '800' },
+  mapContextBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 15,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  mapContextKicker: { fontSize: 8, fontWeight: '800', letterSpacing: 1.1, marginBottom: 2 },
+  mapContextTitle: { fontSize: 11, fontWeight: '700' },
+  mapEmpty: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30 },
+  mapEmptyCard: { alignItems: 'center', borderWidth: 1, borderRadius: 15, paddingHorizontal: 18, paddingVertical: 14, shadowColor: '#102a43', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
+  mapEmptyTitle: { fontSize: 13, fontWeight: '800', marginTop: 7 },
+  mapEmptyText: { fontSize: 10, lineHeight: 15, textAlign: 'center', marginTop: 4 },
 });

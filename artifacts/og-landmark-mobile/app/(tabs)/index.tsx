@@ -945,22 +945,64 @@ function AgentCarousel({ agents, colors, onAgentPress }: { agents: SampleAgent[]
   const visibleAgents = agents.length
     ? agents
     : [];
+  const scrollRef = useRef<ScrollView>(null);
+  const offsetRef = useRef(0);
+  const loopWidthRef = useRef(0);
+  const pausedRef = useRef(false);
+  const marqueeAgents = visibleAgents.length > 1
+    ? [...visibleAgents, ...visibleAgents]
+    : visibleAgents;
+
+  useEffect(() => {
+    if (visibleAgents.length < 2) return;
+
+    const timer = setInterval(() => {
+      if (pausedRef.current || !loopWidthRef.current) return;
+
+      let nextOffset = offsetRef.current + 0.55;
+      if (nextOffset >= loopWidthRef.current) {
+        nextOffset -= loopWidthRef.current;
+      }
+
+      offsetRef.current = nextOffset;
+      scrollRef.current?.scrollTo({ x: nextOffset, animated: false });
+    }, 32);
+
+    return () => clearInterval(timer);
+  }, [visibleAgents.length]);
 
   return (
     <ScrollView
+      ref={scrollRef}
       horizontal
       nestedScrollEnabled
       directionalLockEnabled
       scrollEnabled={visibleAgents.length > 1}
       decelerationRate="fast"
       keyboardShouldPersistTaps="handled"
+      scrollEventThrottle={16}
+      onContentSizeChange={(width) => {
+        loopWidthRef.current = visibleAgents.length > 1 ? width / 2 : 0;
+      }}
+      onScroll={(event) => {
+        offsetRef.current = event.nativeEvent.contentOffset.x;
+      }}
+      onScrollBeginDrag={() => {
+        pausedRef.current = true;
+      }}
+      onMomentumScrollEnd={() => {
+        pausedRef.current = false;
+      }}
+      onScrollEndDrag={() => {
+        pausedRef.current = false;
+      }}
       style={s.agentCarouselViewport}
       contentContainerStyle={[s.agentTrack, s.hRow]}
       showsHorizontalScrollIndicator={false}
     >
-      {visibleAgents.map((agent) => (
+      {marqueeAgents.map((agent, index) => (
           <AgentCard
-            key={agent.id}
+            key={`${agent.id}-${index}`}
             agent={agent}
             colors={colors}
             onPress={() => onAgentPress(agent.id)}

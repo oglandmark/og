@@ -6,7 +6,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert, FlatList, Image, InteractionManager, Modal, Platform, Pressable,
+  ActivityIndicator, Alert, FlatList, Image, InteractionManager, Modal, Platform, Pressable,
   ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -811,6 +811,22 @@ export default function ExploreScreen() {
             </Pressable>
           ))}
         </View>
+
+        {geoLoading && (
+          <View style={[ex.geoStatus, { backgroundColor: colors.actionGlassSoft, borderColor: colors.actionGlow + '55' }]}>
+            <ActivityIndicator size="small" color={colors.action} />
+            <Text style={[ex.geoStatusText, { color: colors.action }]}>Updating live listings…</Text>
+          </View>
+        )}
+        {!!geoError && !geoLoading && (
+          <View style={[ex.geoStatus, { backgroundColor: colors.accent, borderColor: colors.primary + '66' }]}>
+            <Feather name="alert-circle" size={14} color={colors.accentForeground} />
+            <Text style={[ex.geoStatusText, { color: colors.accentForeground }]} numberOfLines={2}>{geoError}</Text>
+            <Pressable onPress={() => setGeoError('')} hitSlop={8} accessibilityRole="button" accessibilityLabel="Dismiss listing refresh message">
+              <Feather name="x" size={14} color={colors.accentForeground} />
+            </Pressable>
+          </View>
+        )}
 
         {/* Search row */}
         <View style={ex.searchRow}>

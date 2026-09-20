@@ -12,6 +12,8 @@ import { PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold } from '@expo-go
 import { useFonts, type FontSource } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { LocalizedText as Text } from '@/components/LocalizedText';
+import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { SavedProvider } from '@/context/SavedContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
@@ -182,8 +184,14 @@ function RootLayoutNav() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#102a43', alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color="#c8a45a" size="large" />
+      <View style={[rootStyles.loading, { backgroundColor: colors.actionDeep }]}>
+        <OGLandmarkLogo size={92} variant="splash" />
+        <Text style={[rootStyles.loadingBrand, { color: colors.actionForeground }]}>OG Landmark</Text>
+        <Text style={[rootStyles.loadingCaption, { color: colors.gold }]}>REAL ESTATE</Text>
+        <View style={rootStyles.loadingStatus}>
+          <ActivityIndicator color={colors.gold} size="small" />
+          <Text style={[rootStyles.loadingStatusText, { color: colors.actionForeground }]}>Preparing your experience</Text>
+        </View>
       </View>
     );
   }
@@ -216,6 +224,38 @@ function RootLayoutNav() {
     </View>
   );
 }
+
+const rootStyles = {
+  loading: {
+    flex: 1,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingHorizontal: 32,
+  },
+  loadingBrand: {
+    fontFamily: 'PlayfairDisplay_600SemiBold',
+    fontSize: 24,
+    letterSpacing: 0.2,
+    marginTop: 18,
+  },
+  loadingCaption: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 9,
+    letterSpacing: 2.6,
+    marginTop: 4,
+  },
+  loadingStatus: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 9,
+    marginTop: 28,
+    opacity: 0.82,
+  },
+  loadingStatusText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 12,
+  },
+};
 
 function DirectionalApp() {
   const { isRTL } = useLanguage();

@@ -24,8 +24,20 @@ function TabIcon({
   size: number;
   focused: boolean;
 }) {
-  void focused;
-  return <Feather name={name} size={size} color={color as string} />;
+  const colors = useColors();
+  return (
+    <View
+      style={[
+        styles.tabIconWrap,
+        focused && {
+          backgroundColor: colors.selectionTint,
+          borderColor: colors.selectionBorder + '18',
+        },
+      ]}
+    >
+      <Feather name={name} size={Math.min(size, 21)} color={color as string} />
+    </View>
+  );
 }
 
 // ── Plus icon (post-ad) keeps its own raised circle treatment ────────────────
@@ -126,5 +138,14 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabGlass: { overflow: 'hidden', borderTopWidth: 1, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
+  tabIconWrap: {
+    width: 40,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   postIcon:  { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginTop: -16, borderWidth: 4 },
 });

@@ -126,3 +126,17 @@ mtime_ms = 1789840393839
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/c8d62807-9338-454a-b262-55d0057a4900/b643c211-44c2-4fd9-8e4c-69995f455bbe"
 storage_version_token = "1789840432956427"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "52mzhFhtgSUbMgNrako28"
+uri = "file://deliverables/og-landmark-hostinger-updated.zip"
+type = "unspecified"
+title = "OG Landmark — Updated Hostinger Website ZIP"
+description = "Complete updated Hostinger package with compiled website, backend server, MySQL schema and migrations, import scripts, media assets, deployment README, and environment template. Secrets and dependency folders are excluded."
+logical_id = "92673c42-d327-4017-b20d-2678f2585f88"
+content_hash = "sha256:709e56329ff8f17380b5ce3a3e5b03020aa809a801a1b0b01e979b149ca2b641"
+size = 10979549
+mtime_ms = 1789932204145
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/92673c42-d327-4017-b20d-2678f2585f88/aaafa63b-5a2b-446d-8100-9474eccf9c6e"
+storage_version_token = "1789932214125796"
+content_type = "application/octet-stream"

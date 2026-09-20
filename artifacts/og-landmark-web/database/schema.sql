@@ -1,27 +1,26 @@
--- OG Landmark Neon PostgreSQL schema
--- Run this once in the Neon SQL Editor before starting the Node server.
+-- OG Landmark MySQL schema.
+-- Run with `npm run migrate` before starting the Node server.
 
-create table if not exists public.app_data (
-  id bigint primary key,
-  data jsonb not null,
-  updated_at timestamptz not null default now()
-);
+CREATE TABLE IF NOT EXISTS app_data (
+  id BIGINT NOT NULL PRIMARY KEY,
+  data JSON NOT NULL,
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-create table if not exists public.auth_sessions (
-  token_hash text primary key,
-  user_id bigint not null,
-  expires_at timestamptz not null,
-  created_at timestamptz not null default now()
-);
+CREATE TABLE IF NOT EXISTS auth_sessions (
+  token_hash VARCHAR(255) NOT NULL PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  expires_at DATETIME(3) NOT NULL,
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  KEY idx_auth_sessions_user (user_id),
+  KEY idx_auth_sessions_expiry (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-create index if not exists idx_auth_sessions_user on public.auth_sessions (user_id);
-create index if not exists idx_auth_sessions_expiry on public.auth_sessions (expires_at);
-
-create table if not exists public.auth_challenges (
-  email text not null,
-  purpose text not null,
-  code_hash text not null,
-  attempts smallint not null default 0,
-  expires_at timestamptz not null,
-  primary key (email, purpose)
-);
+CREATE TABLE IF NOT EXISTS auth_challenges (
+  email VARCHAR(320) NOT NULL,
+  purpose VARCHAR(64) NOT NULL,
+  code_hash CHAR(64) NOT NULL,
+  attempts SMALLINT NOT NULL DEFAULT 0,
+  expires_at DATETIME(3) NOT NULL,
+  PRIMARY KEY (email, purpose)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

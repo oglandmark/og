@@ -8,18 +8,19 @@
     "./schema": "./src/schema/index.ts"
   },
   "scripts": {
+    "generate": "drizzle-kit generate --config ./drizzle.config.ts",
+    "migrate": "drizzle-kit migrate --config ./drizzle.config.ts",
     "push": "drizzle-kit push --config ./drizzle.config.ts",
     "push-force": "drizzle-kit push --force --config ./drizzle.config.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",
-    "pg": "^8.22.0",
+    "mysql2": "^3.14.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "25.9.5",
-    "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.10"
   }
 }

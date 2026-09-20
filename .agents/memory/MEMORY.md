@@ -26,3 +26,4 @@
 - [Listing edit media](listing-edit-media.md) — treat stored media URLs as remote and send explicit null when an editor removes optional media.
 - [Local auth test fixtures](local-auth-fixtures.md) — local JSON server fixtures must seed passwords in the server's PBKDF2 format before login tests.
 - [Post-merge setup](post-merge-setup.md) — this workspace needs a non-frozen pnpm install and the scoped @workspace/db filter.
+- [MySQL migration safety](mysql-migration-safety.md) — production cutover requires a verified live snapshot, protected empty-target import, and source/target parity checks.

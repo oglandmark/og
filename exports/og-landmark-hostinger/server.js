@@ -1,7 +1,7 @@
 /**
- * OG Landmark — Express Backend (Neon PostgreSQL Storage)
+ * OG Landmark — Express Backend (MySQL Storage)
  * --------------------------------------------------
- * Data stored in Neon PostgreSQL (persists across restarts)
+ * Data stored in Hostinger MySQL (persists across restarts)
  * Run: node server.js
  */
 
@@ -13,7 +13,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
-const { neon } = require('@neondatabase/serverless');
+const mysql = require('mysql2/promise');
 const multer = require('multer');
 
 // ─── File Upload (Multer) ─────────────────────────────────────────────────────
@@ -51,15 +51,25 @@ const upload = multer({
   }
 });
 
-// Neon is the production database. The local/Replit preview keeps its
+// MySQL is the production database. The local/Replit preview keeps its
 // JSON fallback so the website can run without exposing database credentials.
-const databaseUrl = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL || '';
-const databaseConfigured = Boolean(databaseUrl);
+const databaseUrl = process.env.DATABASE_URL || '';
+const mysqlUrl = /^(mysql|mariadb):\/\//i.test(databaseUrl);
+const databaseConfigured = mysqlUrl;
 const localPreview = Boolean(process.env.REPLIT_ENVIRONMENT) || (!databaseConfigured && process.env.NODE_ENV === 'development');
 if (!databaseConfigured && !localPreview) {
-  console.error('Neon settings are missing. Set DATABASE_URL to your Neon PostgreSQL connection string in production.');
+  console.error('MySQL settings are missing or invalid. Set DATABASE_URL to a mysql:// Hostinger connection string in production.');
 }
-const neonDb = databaseConfigured && !localPreview ? neon(databaseUrl) : null;
+const mysqlPool = databaseConfigured && !localPreview
+  ? mysql.createPool(databaseUrl)
+  : null;
+const mysqlDb = mysqlPool
+  ? async (strings, ...values) => {
+      const statement = strings.reduce((sql, chunk, index) => `${sql}${index ? '?' : ''}${chunk}`, '');
+      const [rows] = await mysqlPool.query(statement, values);
+      return rows;
+    }
+  : null;
 const fallbackFile = process.env.OG_LANDMARK_RUNTIME_DATA
   || path.join(__dirname, 'runtime-data.json');
 let dbReady = false;
@@ -74,12 +84,15 @@ function generateOTP() {
 }
 const codeDigest = code => crypto.createHash('sha256').update(String(code)).digest('hex');
 async function saveChallenge(email, purpose, code, minutes) {
-  if (neonDb) {
-    await neonDb`
+  if (mysqlDb) {
+    const expiresAt = new Date(Date.now() + Number(minutes) * 60000);
+    await mysqlDb`
       INSERT INTO auth_challenges (email, purpose, code_hash, attempts, expires_at)
-      VALUES (${email}, ${purpose}, ${codeDigest(code)}, 0, NOW() + ${minutes} * INTERVAL '1 minute')
-      ON CONFLICT (email, purpose)
-      DO UPDATE SET code_hash = EXCLUDED.code_hash, attempts = 0, expires_at = EXCLUDED.expires_at
+      VALUES (${email}, ${purpose}, ${codeDigest(code)}, 0, ${expiresAt})
+      ON DUPLICATE KEY UPDATE
+        code_hash = VALUES(code_hash),
+        attempts = 0,
+        expires_at = VALUES(expires_at)
     `;
     return;
   }
@@ -87,11 +100,11 @@ async function saveChallenge(email, purpose, code, minutes) {
     otpStore.set(`${purpose}:${email}`, { otp: code, expiry: Date.now() + minutes * 60000, attempts: 0 });
     return;
   }
-  throw new Error('Neon is not configured for production.');
+  throw new Error('MySQL is not configured for production.');
 }
 async function consumeChallenge(email, purpose, code) {
-  if (neonDb) {
-    const rows = await neonDb`
+  if (mysqlDb) {
+    const rows = await mysqlDb`
       SELECT email, purpose, code_hash, attempts, expires_at
       FROM auth_challenges
       WHERE email = ${email} AND purpose = ${purpose}
@@ -101,14 +114,14 @@ async function consumeChallenge(email, purpose, code) {
     if (!row || new Date(row.expires_at) < new Date()) return { ok: false, reason: 'expired' };
     if (row.attempts >= 3) return { ok: false, reason: 'attempts' };
     if (codeDigest(code) !== row.code_hash) {
-      await neonDb`
+      await mysqlDb`
         UPDATE auth_challenges
         SET attempts = ${row.attempts + 1}
         WHERE email = ${email} AND purpose = ${purpose}
       `;
       return { ok: false, reason: 'invalid', left: 2 - row.attempts };
     }
-    await neonDb`
+    await mysqlDb`
       DELETE FROM auth_challenges
       WHERE email = ${email} AND purpose = ${purpose}
     `;
@@ -121,7 +134,7 @@ async function consumeChallenge(email, purpose, code) {
     if (r.otp !== String(code)) { r.attempts++; return { ok: false, reason: 'invalid', left: 3 - r.attempts }; }
     otpStore.delete(`${purpose}:${email}`); return { ok: true };
   }
-  throw new Error('Neon is not configured for production.');
+  throw new Error('MySQL is not configured for production.');
 }
 
 // Create nodemailer transporter from environment variables.
@@ -290,7 +303,7 @@ const authRateBuckets = new Map();
 app.use('/api/auth', (req, res, next) => {
   if (!dbReady) {
     return res.status(503).json({
-      error: 'Database is not ready. Check the Neon settings and application log.',
+      error: 'Database is not ready. Check the MySQL settings and application log.',
       code: 'DB_NOT_READY',
     });
   }
@@ -299,7 +312,7 @@ app.use('/api/auth', (req, res, next) => {
 
 // Keep credential, OTP, and social endpoints resistant to repeated abuse
 // without adding a new dependency. Successful sessions are still persisted
-// in Neon; this is only a short-lived request throttle at the API edge.
+// in MySQL; this is only a short-lived request throttle at the API edge.
 app.use('/api/auth', (req, res, next) => {
   if (req.method !== 'POST') return next();
   const now = Date.now();
@@ -322,7 +335,7 @@ app.use('/api/auth', (req, res, next) => {
 app.use('/api', (req, res, next) => {
   if (req.path === '/health' || req.path === '/config' || dbReady) return next();
   return res.status(503).json({
-    error: 'Database is not ready. Check the Neon settings and application log.',
+    error: 'Database is not ready. Check the MySQL settings and application log.',
     code: 'DB_NOT_READY',
   });
 });
@@ -425,21 +438,21 @@ function getBearerToken(req) {
 async function createSession(user) {
   const token = generateToken(user.id);
   const expiry = new Date(Date.now() + Number(process.env.SESSION_TTL_HOURS || 168) * 3600000);
-  if (neonDb) {
-    await neonDb`
+  if (mysqlDb) {
+    await mysqlDb`
       INSERT INTO auth_sessions (token_hash, user_id, expires_at)
       VALUES (${tokenDigest(token)}, ${user.id}, ${expiry.toISOString()})
     `;
   } else if (localPreview) {
     tokenStore.set(token, { userId: user.id, expiresAt: expiry.getTime() });
   } else {
-    throw new Error('Neon is not configured for production.');
+    throw new Error('MySQL is not configured for production.');
   }
   return token;
 }
 async function invalidateUserSessions(userId) {
-  if (neonDb) {
-    await neonDb`DELETE FROM auth_sessions WHERE user_id = ${userId}`;
+  if (mysqlDb) {
+    await mysqlDb`DELETE FROM auth_sessions WHERE user_id = ${userId}`;
   } else if (localPreview) {
     for (const [token, session] of tokenStore.entries()) {
       if (session.userId === userId) tokenStore.delete(token);
@@ -451,8 +464,8 @@ async function getRequestUser(req) {
   if (!token) return null;
   let userId;
   try {
-    if (neonDb) {
-      const sessions = await neonDb`
+    if (mysqlDb) {
+      const sessions = await mysqlDb`
         SELECT user_id
         FROM auth_sessions
         WHERE token_hash = ${tokenDigest(token)}
@@ -672,8 +685,8 @@ function getSeedData() {
 
 // ─── Database initialization ───────────────────────────────────────────────────
 async function initDb() {
-  if (!neonDb) {
-    if (!localPreview) throw new Error('Neon is not configured for production.');
+  if (!mysqlDb) {
+    if (!localPreview) throw new Error('MySQL is not configured for production.');
     if (!fs.existsSync(fallbackFile)) {
       const seed = getSeedData();
       seed.users.forEach(u => { if (!u.password.startsWith('pbkdf2:')) u.password = hashPassword(u.password); });
@@ -684,40 +697,34 @@ async function initDb() {
   // Keep production self-healing when only the original app_data table was
   // created manually. Auth persistence is required by login, registration,
   // and password reset, so ensure all three tables exist before dbReady flips.
-  await neonDb`
-    CREATE TABLE IF NOT EXISTS public.app_data (
-      id bigint primary key,
-      data jsonb not null,
-      updated_at timestamptz not null default now()
+  await mysqlDb`
+    CREATE TABLE IF NOT EXISTS app_data (
+      id BIGINT NOT NULL PRIMARY KEY,
+      data JSON NOT NULL,
+      updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
     )
   `;
-  await neonDb`
-    CREATE TABLE IF NOT EXISTS public.auth_sessions (
-      token_hash text primary key,
-      user_id bigint not null,
-      expires_at timestamptz not null,
-      created_at timestamptz not null default now()
+  await mysqlDb`
+    CREATE TABLE IF NOT EXISTS auth_sessions (
+      token_hash VARCHAR(255) NOT NULL PRIMARY KEY,
+      user_id BIGINT NOT NULL,
+      expires_at DATETIME(3) NOT NULL,
+      created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+      KEY idx_auth_sessions_user (user_id),
+      KEY idx_auth_sessions_expiry (expires_at)
     )
   `;
-  await neonDb`
-    CREATE INDEX IF NOT EXISTS idx_auth_sessions_user
-    ON public.auth_sessions (user_id)
-  `;
-  await neonDb`
-    CREATE INDEX IF NOT EXISTS idx_auth_sessions_expiry
-    ON public.auth_sessions (expires_at)
-  `;
-  await neonDb`
-    CREATE TABLE IF NOT EXISTS public.auth_challenges (
-      email text not null,
-      purpose text not null,
-      code_hash text not null,
-      attempts smallint not null default 0,
-      expires_at timestamptz not null,
-      primary key (email, purpose)
+  await mysqlDb`
+    CREATE TABLE IF NOT EXISTS auth_challenges (
+      email VARCHAR(320) NOT NULL,
+      purpose VARCHAR(64) NOT NULL,
+      code_hash CHAR(64) NOT NULL,
+      attempts SMALLINT NOT NULL DEFAULT 0,
+      expires_at DATETIME(3) NOT NULL,
+      PRIMARY KEY (email, purpose)
     )
   `;
-  const existingRows = await neonDb`SELECT id, data FROM app_data WHERE id = 1 LIMIT 1`;
+  const existingRows = await mysqlDb`SELECT id, data FROM app_data WHERE id = 1 LIMIT 1`;
   const existing = existingRows[0];
   if (!existing) {
     // First run — seed the database
@@ -730,7 +737,7 @@ async function initDb() {
     }
     // Hash all seed passwords before saving
     seed.users.forEach(u => { u.password = hashPassword(u.password); });
-    await neonDb`INSERT INTO app_data (id, data) VALUES (1, ${JSON.stringify(seed)}::jsonb)`;
+    await mysqlDb`INSERT INTO app_data (id, data) VALUES (1, ${JSON.stringify(seed)})`;
     console.log('✅ Database seeded with initial data');
   } else {
     // Update admin email/password from env vars if set (runtime override)
@@ -752,13 +759,13 @@ async function initDb() {
           }
         }
         if (changed) {
-          await neonDb`UPDATE app_data SET data = ${JSON.stringify(data)}::jsonb, updated_at = NOW() WHERE id = 1`;
+          await mysqlDb`UPDATE app_data SET data = ${JSON.stringify(data)}, updated_at = CURRENT_TIMESTAMP(3) WHERE id = 1`;
           console.log('✅ Admin credentials updated from environment variables');
         }
       }
     }
     if (dataChanged && !(process.env.ADMIN_EMAIL || process.env.ADMIN_PASSWORD)) {
-      await neonDb`UPDATE app_data SET data = ${JSON.stringify(data)}::jsonb, updated_at = NOW() WHERE id = 1`;
+      await mysqlDb`UPDATE app_data SET data = ${JSON.stringify(data)}, updated_at = CURRENT_TIMESTAMP(3) WHERE id = 1`;
       console.log('✅ Mobile agent directory migrated into existing database data');
     }
     console.log('✅ Database already has data — skipping seed');
@@ -767,24 +774,24 @@ async function initDb() {
 
 // ─── Data persistence ──────────────────────────────────────────────────────────
 async function readData() {
-  if (!neonDb) {
-    if (!localPreview) throw new Error('Neon is not configured for production.');
+  if (!mysqlDb) {
+    if (!localPreview) throw new Error('MySQL is not configured for production.');
     const data = JSON.parse(fs.readFileSync(fallbackFile, 'utf8'));
     const changed = ensureMobileAgents(data) || ensurePropertyRecords(data);
     if (changed) {
-      // The JSON fallback and Neon app_data both use the same canonical
+      // The JSON fallback and MySQL app_data both use the same canonical
       // property shape after the first read.
       await writeData(data);
     }
     return data;
   }
-  const rows = await neonDb`SELECT data FROM app_data WHERE id = 1 LIMIT 1`;
+  const rows = await mysqlDb`SELECT data FROM app_data WHERE id = 1 LIMIT 1`;
   const row = rows[0];
   if (!row) {
     // Table exists but empty — seed it
     const seed = getSeedData();
     seed.users.forEach(u => { u.password = hashPassword(u.password); });
-    await neonDb`INSERT INTO app_data (id, data) VALUES (1, ${JSON.stringify(seed)}::jsonb)`;
+    await mysqlDb`INSERT INTO app_data (id, data) VALUES (1, ${JSON.stringify(seed)})`;
     console.log('✅ Database seeded from readData fallback');
     return seed;
   }
@@ -805,14 +812,14 @@ async function readData() {
 }
 
 async function writeData(data) {
-  if (!neonDb) {
-    if (!localPreview) throw new Error('Neon is not configured for production.');
+  if (!mysqlDb) {
+    if (!localPreview) throw new Error('MySQL is not configured for production.');
     const temp = `${fallbackFile}.${process.pid}.tmp`;
     fs.writeFileSync(temp, JSON.stringify(data), { mode: 0o600 });
     fs.renameSync(temp, fallbackFile);
     return;
   }
-  await neonDb`UPDATE app_data SET data = ${JSON.stringify(data)}::jsonb, updated_at = NOW() WHERE id = 1`;
+  await mysqlDb`UPDATE app_data SET data = ${JSON.stringify(data)}, updated_at = CURRENT_TIMESTAMP(3) WHERE id = 1`;
 }
 
 function nextId(data) {
@@ -2521,8 +2528,8 @@ app.post('/api/auth/logout', async (req, res) => {
   try {
     const token = getBearerToken(req);
     if (token) {
-      if (neonDb) {
-        await neonDb`DELETE FROM auth_sessions WHERE token_hash = ${tokenDigest(token)}`;
+      if (mysqlDb) {
+        await mysqlDb`DELETE FROM auth_sessions WHERE token_hash = ${tokenDigest(token)}`;
       } else if (localPreview) {
         tokenStore.delete(token);
       }
@@ -2598,9 +2605,9 @@ app.post('/api/auth/admin-otp', async (req, res) => {
 // ─── DB Debug endpoint ────────────────────────────────────────────────────────
 app.get('/api/debug/db', async (req, res) => {
   try {
-    if (!neonDb) return res.json({ dbConnected: false, previewFallback: localPreview, provider: localPreview ? 'local' : 'neon' });
-    const data = await neonDb`SELECT id FROM app_data WHERE id = 1 LIMIT 1`;
-    res.json({ dbConnected: true, tableExists: true, rowCount: data.length, provider: 'neon' });
+    if (!mysqlDb) return res.json({ dbConnected: false, previewFallback: localPreview, provider: localPreview ? 'local' : 'mysql' });
+    const data = await mysqlDb`SELECT id FROM app_data WHERE id = 1 LIMIT 1`;
+    res.json({ dbConnected: true, tableExists: true, rowCount: data.length, provider: 'mysql' });
   } catch (err) {
     res.json({ dbConnected: false, error: err.message });
   }
@@ -4762,7 +4769,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: dbReady ? 'ok' : 'degraded',
     database: dbReady ? 'connected' : 'not_connected',
-    databaseProvider: neonDb ? 'neon' : (localPreview ? 'local_preview' : 'neon'),
+    databaseProvider: mysqlDb ? 'mysql' : (localPreview ? 'local_preview' : 'mysql'),
     databaseError: dbReady ? null : (dbInitError ? dbInitError.message : (databaseConfigured ? 'Database initialization is still in progress' : 'DATABASE_URL is missing')),
     smtp: smtpConfigured ? 'configured' : 'not_configured',
     message: dbReady ? 'OG Landmark API running' : 'OG Landmark server is running but the database is not ready',
@@ -4877,9 +4884,9 @@ app.put('/api/account', requireAuth, async (req, res) => {
 app.delete('/api/account', requireAuth, async (req, res) => {
   const data = await readData(); const user = data.users.find(u => u.id === req.currentUser.id);
   if (user) { user.status = 'Deleted'; user.email = `deleted-${user.id}-${Date.now()}@invalid.local`; await writeData(data); }
-  if (neonDb) {
+  if (mysqlDb) {
     try {
-      await neonDb`DELETE FROM auth_sessions WHERE user_id = ${req.currentUser.id}`;
+      await mysqlDb`DELETE FROM auth_sessions WHERE user_id = ${req.currentUser.id}`;
     } catch {
       return res.status(500).json({ error: 'Could not clear sessions' });
     }
@@ -5769,7 +5776,7 @@ app.get('*', (req, res) => {
 
 // ─── START ────────────────────────────────────────────────────────────────────
 // Listen before database initialization so Hostinger's health check never
-// times out while Neon is unreachable. Database-backed routes remain guarded
+// times out while MySQL is unreachable. Database-backed routes remain guarded
 // until initDb succeeds, and the exact failure is visible in the app log.
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`OG Landmark listening on ${PORT}`);

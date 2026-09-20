@@ -447,11 +447,40 @@ export type PropertiesFilter = {
   lat?: number; lng?: number; radiusKm?: number;
 };
 
+export type PropertyPage = {
+  items: ApiProperty[];
+  total: number;
+  offset: number;
+  limit: number;
+  hasMore: boolean;
+};
+
 export async function getProperties(filters: PropertiesFilter = {}): Promise<ApiProperty[]> {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([k, v]) => { if (v !== undefined) params.set(k, String(v)); });
   const qs = params.toString();
   return apiFetch<ApiProperty[]>(`/api/properties${qs ? `?${qs}` : ''}`, {}, false);
+}
+
+/** Fetch one bounded page without loading the whole catalogue into memory. */
+export async function getPropertiesPage(filters: PropertiesFilter = {}): Promise<PropertyPage> {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([k, v]) => { if (v !== undefined) params.set(k, String(v)); });
+  params.set('response', 'page');
+  const qs = params.toString();
+  const response = await apiFetch<PropertyPage | ApiProperty[]>(`/api/properties?${qs}`, {}, false);
+  if (Array.isArray(response)) {
+    const offset = Number(filters.offset ?? 0);
+    const limit = Number(filters.limit ?? response.length);
+    return {
+      items: response,
+      total: offset + response.length,
+      offset,
+      limit,
+      hasMore: false,
+    };
+  }
+  return response;
 }
 
 /**

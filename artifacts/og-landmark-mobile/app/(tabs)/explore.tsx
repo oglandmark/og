@@ -18,7 +18,7 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { PropertyCard } from '@/components/PropertyCard';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { properties, apiPropertyToProperty } from '@/lib/properties';
-import { getProperties, getPropertiesInBounds, getNearbyProperties } from '@/lib/api';
+import { getPropertiesPage } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
 import { GlassCard } from '@/components/GlassCard';
 import { projects as staticProjects } from '@/lib/projects';
@@ -479,6 +479,9 @@ export default function ExploreScreen() {
   const [mapBoundsFilter, setMapBoundsFilter] = useState<MapBounds | null>(null);
   const [geoLoading, setGeoLoading]             = useState(false);
   const [geoError, setGeoError]                 = useState('');
+  const [remoteOffset, setRemoteOffset]         = useState(0);
+  const [remoteHasMore, setRemoteHasMore]       = useState(false);
+  const [remoteLoadingMore, setRemoteLoadingMore] = useState(false);
   const searchRef = useRef<React.ElementRef<typeof TextInput>>(null);
 
   // ── Effects ────────────────────────────────────────────────────────────────
@@ -508,9 +511,13 @@ export default function ExploreScreen() {
       const interactionTask = InteractionManager.runAfterInteractions(() => {
         setGeoError('');
         setGeoLoading(true);
-        getProperties({ limit: 100 })
-          .then((items) => {
-            if (!cancelled && items.length) setAllProperties(uniqueProperties(items.map(apiPropertyToProperty)));
+        getPropertiesPage({ limit: 24, offset: 0 })
+          .then((page) => {
+            if (!cancelled) {
+              if (page.items.length) setAllProperties(uniqueProperties(page.items.map(apiPropertyToProperty)));
+              setRemoteOffset(page.items.length);
+              setRemoteHasMore(page.hasMore);
+            }
           })
           .catch(() => {
             if (!cancelled) {
@@ -532,22 +539,30 @@ export default function ExploreScreen() {
     setGeoError('');
 
     const request = radiusLocation
-      ? getNearbyProperties({
+      ? getPropertiesPage({
           lat: radiusLocation.lat,
           lng: radiusLocation.lng,
           radiusKm: radiusLocation.radiusKm,
-        }, { limit: 100 })
-      : getPropertiesInBounds({
+           limit: 24,
+           offset: 0,
+        })
+      : getPropertiesPage({
           minLat: mapBoundsFilter!.south,
           maxLat: mapBoundsFilter!.north,
           minLng: mapBoundsFilter!.west,
           maxLng: mapBoundsFilter!.east,
-        }, { limit: 100 });
+           limit: 24,
+           offset: 0,
+        });
 
     const interactionTask = InteractionManager.runAfterInteractions(() => {
       request
-        .then((items) => {
-          if (!cancelled) setAllProperties(uniqueProperties(items.map(apiPropertyToProperty)));
+        .then((page) => {
+          if (!cancelled) {
+            setAllProperties(uniqueProperties(page.items.map(apiPropertyToProperty)));
+            setRemoteOffset(page.items.length);
+            setRemoteHasMore(page.hasMore);
+          }
         })
         .catch(() => {
           if (!cancelled) {
@@ -631,6 +646,38 @@ export default function ExploreScreen() {
   const activeChips = useMemo(() => buildChips(filters, query), [filters, query]);
 
   const hasActiveFilters = activeChips.length > 0;
+
+  const loadMoreProperties = useCallback(async () => {
+    if (remoteLoadingMore || !remoteHasMore || isProjectsMode || viewMode !== 'list') return;
+    setRemoteLoadingMore(true);
+    const radiusLocation = nearMe ?? searchedPlace;
+    const geoFilters = radiusLocation
+      ? { lat: radiusLocation.lat, lng: radiusLocation.lng, radiusKm: radiusLocation.radiusKm }
+      : mapBoundsFilter
+        ? {
+            minLat: mapBoundsFilter.south,
+            maxLat: mapBoundsFilter.north,
+            minLng: mapBoundsFilter.west,
+            maxLng: mapBoundsFilter.east,
+          }
+        : {};
+    try {
+      const page = await getPropertiesPage({ ...geoFilters, limit: 24, offset: remoteOffset });
+      setAllProperties((current) => uniqueProperties([
+        ...current,
+        ...page.items.map(apiPropertyToProperty),
+      ]));
+      setRemoteOffset((current) => current + page.items.length);
+      setRemoteHasMore(page.hasMore);
+    } catch {
+      // The already loaded page remains usable; the next scroll can retry.
+    } finally {
+      setRemoteLoadingMore(false);
+    }
+  }, [
+    remoteLoadingMore, remoteHasMore, isProjectsMode, viewMode,
+    nearMe, searchedPlace, mapBoundsFilter, remoteOffset,
+  ]);
 
   // Track which quick-filter sections have active state (for chip highlight)
   const activeFilterSections = useMemo(() => {
@@ -1106,9 +1153,16 @@ export default function ExploreScreen() {
         maxToRenderPerBatch={8}
         windowSize={5}
         updateCellsBatchingPeriod={30}
+        onEndReached={loadMoreProperties}
+        onEndReachedThreshold={0.65}
         renderItem={({ item: p }) => (
           <PropertyCard property={p} compact />
         )}
+        ListFooterComponent={remoteLoadingMore ? (
+          <View style={{ paddingVertical: 18 }}>
+            <ActivityIndicator size="small" color={colors.action} />
+          </View>
+        ) : null}
         ListEmptyComponent={
           !isProjectsMode && viewMode === 'list' ? (
             <NoResultsView colors={colors} onAdjust={() => openFilterSheet()} onClear={resetAllFilters} />

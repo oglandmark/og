@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
 
-const MIGRATION_ID = '0001_initial_mysql';
+const MIGRATIONS_DIR = path.join(__dirname, '..', 'database', 'migrations');
 
 async function main() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -19,24 +19,26 @@ async function main() {
         applied_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
-    const [rows] = await connection.execute(
-      'SELECT id FROM schema_migrations WHERE id = ? LIMIT 1',
-      [MIGRATION_ID],
-    );
-    if (rows.length > 0) {
-      console.log(`MySQL migration already applied: ${MIGRATION_ID}`);
-      return;
+    const migrationIds = fs.readdirSync(MIGRATIONS_DIR)
+      .filter((name) => /^\d+_.+\.sql$/.test(name))
+      .sort()
+      .map((name) => name.replace(/\.sql$/, ''));
+    for (const migrationId of migrationIds) {
+      const [rows] = await connection.execute(
+        'SELECT id FROM schema_migrations WHERE id = ? LIMIT 1',
+        [migrationId],
+      );
+      if (rows.length > 0) {
+        console.log(`MySQL migration already applied: ${migrationId}`);
+        continue;
+      }
+      const migration = fs.readFileSync(path.join(MIGRATIONS_DIR, `${migrationId}.sql`), 'utf8');
+      for (const statement of migration.split(';').map((item) => item.trim()).filter(Boolean)) {
+        await connection.query(statement);
+      }
+      await connection.execute('INSERT INTO schema_migrations (id) VALUES (?)', [migrationId]);
+      console.log(`Applied MySQL migration: ${migrationId}`);
     }
-
-    const migration = fs.readFileSync(
-      path.join(__dirname, '..', 'database', 'migrations', `${MIGRATION_ID}.sql`),
-      'utf8',
-    );
-    for (const statement of migration.split(';').map((item) => item.trim()).filter(Boolean)) {
-      await connection.query(statement);
-    }
-    await connection.execute('INSERT INTO schema_migrations (id) VALUES (?)', [MIGRATION_ID]);
-    console.log(`Applied MySQL migration: ${MIGRATION_ID}`);
   } finally {
     await connection.end();
   }

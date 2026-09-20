@@ -17,9 +17,16 @@ const mysql = require('mysql2/promise');
 const multer = require('multer');
 
 // ─── File Upload (Multer) ─────────────────────────────────────────────────────
+// Media bytes live on the configured file volume, never in MySQL. In
+// production MEDIA_STORAGE_DIR should point at Hostinger's persistent app
+// storage (or a mounted object-storage sync directory). MEDIA_PUBLIC_BASE_URL
+// can point at a CDN only after that storage is mirrored there.
+const mediaStorageDir = process.env.MEDIA_STORAGE_DIR
+  || path.join(__dirname, 'public/images/uploads');
+const mediaPublicBaseUrl = String(process.env.MEDIA_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = path.join(__dirname, 'public/images/uploads');
+    const dir = mediaStorageDir;
     fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
@@ -724,6 +731,47 @@ async function initDb() {
       PRIMARY KEY (email, purpose)
     )
   `;
+  await mysqlDb`
+    CREATE TABLE IF NOT EXISTS property_search_index (
+      property_id BIGINT NOT NULL PRIMARY KEY,
+      title VARCHAR(500) NOT NULL,
+      type VARCHAR(120) NOT NULL,
+      status VARCHAR(80) NOT NULL,
+      listing_status VARCHAR(80) NULL,
+      approval_status VARCHAR(80) NULL,
+      purpose VARCHAR(80) NULL,
+      city VARCHAR(160) NULL,
+      society VARCHAR(200) NULL,
+      seller_id BIGINT NULL,
+      agent_id BIGINT NULL,
+      price DECIMAL(20,2) NULL,
+      area_sqft DECIMAL(20,2) NULL,
+      bedrooms DECIMAL(10,2) NULL,
+      bathrooms DECIMAL(10,2) NULL,
+      featured TINYINT(1) NOT NULL DEFAULT 0,
+      priority TINYINT(1) NOT NULL DEFAULT 0,
+      score_overall DECIMAL(5,2) NULL,
+      latitude DECIMAL(10,7) NULL,
+      longitude DECIMAL(10,7) NULL,
+      construction_age VARCHAR(80) NULL,
+      furnishing VARCHAR(80) NULL,
+      availability VARCHAR(120) NULL,
+      tags JSON NULL,
+      search_text TEXT NOT NULL,
+      property_json JSON NOT NULL,
+      created_at DATETIME(3) NULL,
+      updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+      KEY idx_property_search_status (approval_status, listing_status, created_at),
+      KEY idx_property_search_city (city, type, status),
+      KEY idx_property_search_price (price),
+      KEY idx_property_search_area (area_sqft),
+      KEY idx_property_search_seller (seller_id),
+      KEY idx_property_search_agent (agent_id),
+      KEY idx_property_search_geo (latitude, longitude),
+      FULLTEXT KEY ft_property_search_text (search_text)
+    )
+  `;
+  let canonicalProperties = null;
   const existingRows = await mysqlDb`SELECT id, data FROM app_data WHERE id = 1 LIMIT 1`;
   const existing = existingRows[0];
   if (!existing) {
@@ -738,10 +786,12 @@ async function initDb() {
     // Hash all seed passwords before saving
     seed.users.forEach(u => { u.password = hashPassword(u.password); });
     await mysqlDb`INSERT INTO app_data (id, data) VALUES (1, ${JSON.stringify(seed)})`;
+    canonicalProperties = seed.properties;
     console.log('✅ Database seeded with initial data');
   } else {
     // Update admin email/password from env vars if set (runtime override)
     const data = typeof existing.data === 'string' ? JSON.parse(existing.data) : existing.data;
+    canonicalProperties = data.properties;
     let dataChanged = ensureMobileAgents(data) || ensurePropertyRecords(data);
     if (process.env.ADMIN_EMAIL || process.env.ADMIN_PASSWORD) {
       const adminUser = data.users.find(u => u.role === 'Admin');
@@ -770,6 +820,7 @@ async function initDb() {
     }
     console.log('✅ Database already has data — skipping seed');
   }
+  await syncPropertySearchIndex(canonicalProperties || []);
 }
 
 // ─── Data persistence ──────────────────────────────────────────────────────────
@@ -820,6 +871,7 @@ async function writeData(data) {
     return;
   }
   await mysqlDb`UPDATE app_data SET data = ${JSON.stringify(data)}, updated_at = CURRENT_TIMESTAMP(3) WHERE id = 1`;
+  await syncPropertySearchIndex(data.properties || []);
 }
 
 function nextId(data) {
@@ -1136,6 +1188,115 @@ function ensurePropertyRecords(data) {
   return changed;
 }
 
+let propertyIndexDigest = null;
+function propertyIndexText(property) {
+  const nearby = property.nearbyPlaces && typeof property.nearbyPlaces === 'object'
+    ? Object.values(property.nearbyPlaces).flat()
+    : [];
+  return [
+    property.id, property.title, property.type, property.status, property.purpose,
+    property.city, property.address, property.society, property.block, property.landmark,
+    property.sellerName, property.description, ...(property.tags || []),
+    ...(property.amenities || []), ...nearby,
+  ].filter(value => value !== null && value !== undefined).join(' ').toLowerCase();
+}
+
+function propertyIndexDate(value) {
+  const date = value ? new Date(value) : null;
+  return date && Number.isFinite(date.getTime()) ? date : null;
+}
+
+function propertyIndexRow(property) {
+  const score = property.propertyScore && typeof property.propertyScore === 'object'
+    ? Number(property.propertyScore.overall)
+    : null;
+  const areaSqft = Number(property.areaInSqft || toSqft(Number(property.area || 0), property.areaUnit || 'Square Feet'));
+  const latitude = Number(property.location?.latitude ?? property.lat);
+  const longitude = Number(property.location?.longitude ?? property.lng);
+  return {
+    id: Number(property.id),
+    title: String(property.title || ''),
+    type: String(property.type || ''),
+    status: String(property.status || ''),
+    listingStatus: property.listingStatus ? String(property.listingStatus) : null,
+    approvalStatus: property.approvalStatus ? String(property.approvalStatus) : null,
+    purpose: property.purpose ? String(property.purpose) : null,
+    city: property.city ? String(property.city) : null,
+    society: property.society ? String(property.society) : null,
+    sellerId: Number.isFinite(Number(property.sellerId)) ? Number(property.sellerId) : null,
+    agentId: Number.isFinite(Number(property.agentId)) ? Number(property.agentId) : null,
+    price: Number.isFinite(Number(property.price)) ? Number(property.price) : null,
+    areaSqft: Number.isFinite(areaSqft) ? areaSqft : null,
+    bedrooms: Number.isFinite(Number(property.bedrooms)) ? Number(property.bedrooms) : null,
+    bathrooms: Number.isFinite(Number(property.bathrooms)) ? Number(property.bathrooms) : null,
+    featured: property.featured === true ? 1 : 0,
+    priority: property.priority === true ? 1 : 0,
+    scoreOverall: Number.isFinite(score) ? score : null,
+    latitude: Number.isFinite(latitude) ? latitude : null,
+    longitude: Number.isFinite(longitude) ? longitude : null,
+    constructionAge: property.constructionAge ? String(property.constructionAge) : null,
+    furnishing: property.furnishing ? String(property.furnishing) : null,
+    availability: property.availability ? String(property.availability) : null,
+    tags: Array.isArray(property.tags) ? property.tags.map(String) : [],
+    searchText: propertyIndexText(property),
+    propertyJson: JSON.stringify(property),
+    createdAt: propertyIndexDate(property.createdAt),
+  };
+}
+
+async function syncPropertySearchIndex(properties) {
+  if (!mysqlPool || !Array.isArray(properties)) return;
+  const digest = crypto.createHash('sha1')
+    .update(JSON.stringify(properties))
+    .digest('hex');
+  if (digest === propertyIndexDigest) return;
+  const rows = properties.map(propertyIndexRow)
+    .filter(row => Number.isFinite(row.id) && row.id > 0);
+  const existingRows = await mysqlPool.query('SELECT property_id FROM property_search_index');
+  const existingIds = new Set(existingRows[0].map(row => Number(row.property_id)));
+  const currentIds = new Set(rows.map(row => row.id));
+  for (const id of existingIds) {
+    if (!currentIds.has(id)) await mysqlPool.execute('DELETE FROM property_search_index WHERE property_id = ?', [id]);
+  }
+  const sql = `
+    INSERT INTO property_search_index (
+      property_id, title, type, status, listing_status, approval_status, purpose,
+      city, society, seller_id, agent_id, price, area_sqft, bedrooms, bathrooms,
+      featured, priority, score_overall, latitude, longitude, construction_age,
+      furnishing, availability, tags, search_text, property_json, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+      title = VALUES(title), type = VALUES(type), status = VALUES(status),
+      listing_status = VALUES(listing_status), approval_status = VALUES(approval_status),
+      purpose = VALUES(purpose), city = VALUES(city), society = VALUES(society),
+      seller_id = VALUES(seller_id), agent_id = VALUES(agent_id), price = VALUES(price),
+      area_sqft = VALUES(area_sqft), bedrooms = VALUES(bedrooms), bathrooms = VALUES(bathrooms),
+      featured = VALUES(featured), priority = VALUES(priority), score_overall = VALUES(score_overall),
+      latitude = VALUES(latitude), longitude = VALUES(longitude),
+      construction_age = VALUES(construction_age), furnishing = VALUES(furnishing),
+      availability = VALUES(availability), tags = VALUES(tags), search_text = VALUES(search_text),
+      property_json = VALUES(property_json), created_at = VALUES(created_at),
+      updated_at = CURRENT_TIMESTAMP(3)
+  `;
+  const rowValues = row => [
+    row.id, row.title, row.type, row.status, row.listingStatus, row.approvalStatus,
+    row.purpose, row.city, row.society, row.sellerId, row.agentId, row.price,
+    row.areaSqft, row.bedrooms, row.bathrooms, row.featured, row.priority,
+    row.scoreOverall, row.latitude, row.longitude, row.constructionAge,
+    row.furnishing, row.availability, JSON.stringify(row.tags), row.searchText,
+    row.propertyJson, row.createdAt,
+  ];
+  const valuePlaceholders = '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+  for (let start = 0; start < rows.length; start += 100) {
+    const batch = rows.slice(start, start + 100);
+    await mysqlPool.execute(
+      sql.replace('VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', `VALUES ${batch.map(() => valuePlaceholders).join(', ')}`),
+      batch.flatMap(rowValues),
+    );
+  }
+  propertyIndexDigest = digest;
+}
+
 // ─── Area unit conversion ──────────────────────────────────────────────────────
 const UNIT_SQFT = { Marla: 272.25, Kanal: 5445, Acre: 43560, 'Square Feet': 1, 'Square Yards': 9 };
 function toSqft(val, unit) { return val * (UNIT_SQFT[unit] || 1); }
@@ -1174,9 +1335,130 @@ function parseNaturalLanguage(query) {
   return f;
 }
 
+async function queryIndexedProperties(req, caller) {
+  if (!mysqlPool) return null;
+  const q = req.query || {};
+  const clauses = [];
+  const params = [];
+  const add = (sql, ...values) => { clauses.push(sql); params.push(...values); };
+  const csv = (value) => String(value || '').split(',').map(item => item.trim()).filter(Boolean);
+  const numeric = (value) => Number(value);
+  const keyword = String(q.keyword || q.search || '').trim().toLowerCase();
+
+  add("(listing_status IS NULL OR listing_status = '' OR listing_status = 'Active')");
+  const isAdmin = caller?.role === 'Admin';
+  const callerId = caller?.id ? Number(caller.id) : null;
+  const approval = q.approvalStatus || q.approval_status;
+  if (!isAdmin) {
+    if (callerId) add("(approval_status = 'Active' OR seller_id = ? OR agent_id = ?)", callerId, callerId);
+    else add("approval_status = 'Active'");
+    if (approval && approval !== 'all') add('approval_status = ?', String(approval));
+  } else if (approval && approval !== 'all') {
+    add('approval_status = ?', String(approval));
+  }
+  const types = csv(q.type);
+  if (types.length) add(`type IN (${types.map(() => '?').join(',')})`, ...types);
+  const statuses = csv(q.status);
+  if (statuses.length) add(`status IN (${statuses.map(() => '?').join(',')})`, ...statuses);
+  const cities = csv(q.city);
+  if (cities.length) add(`(${cities.map(() => 'LOWER(city) LIKE ?').join(' OR ')})`, ...cities.map(v => `%${v.toLowerCase()}%`));
+  if (q.society) add('LOWER(society) LIKE ?', `%${String(q.society).toLowerCase()}%`);
+  if (q.purpose) add('(purpose = ? OR status = ?)', String(q.purpose), String(q.purpose));
+  if (Number.isFinite(numeric(q.minPrice))) add('price >= ?', numeric(q.minPrice));
+  if (Number.isFinite(numeric(q.maxPrice))) add('price <= ?', numeric(q.maxPrice));
+  if (Number.isFinite(numeric(q.minArea))) add('area_sqft >= ?', toSqft(numeric(q.minArea), q.areaUnit || 'Square Feet'));
+  if (Number.isFinite(numeric(q.maxArea))) add('area_sqft <= ?', toSqft(numeric(q.maxArea), q.areaUnit || 'Square Feet'));
+  if (Number.isFinite(numeric(q.minBeds))) add('bedrooms >= ?', numeric(q.minBeds));
+  if (Number.isFinite(numeric(q.minBaths))) add('bathrooms >= ?', numeric(q.minBaths));
+  if (q.constructionAge) {
+    const values = csv(q.constructionAge);
+    add(`construction_age IN (${values.map(() => '?').join(',')})`, ...values);
+  }
+  if (q.furnishing) add('furnishing = ?', String(q.furnishing));
+  if (q.availability) add('availability = ?', String(q.availability));
+  if (q.featured === 'true') add('featured = 1');
+  if (q.priority === 'true') add('priority = 1');
+  if (q.sellerId || q.seller_id) add('seller_id = ?', Number(q.sellerId || q.seller_id));
+  if (q.agentId || q.agent_id) add('agent_id = ?', Number(q.agentId || q.agent_id));
+  if (keyword) add('(CAST(property_id AS CHAR) = ? OR search_text LIKE ?)', keyword, `%${keyword}%`);
+  if (q.tags) {
+    const tagValues = csv(q.tags);
+    add(`(${tagValues.map(() => 'JSON_CONTAINS(tags, JSON_QUOTE(?))').join(' OR ')})`, ...tagValues);
+  }
+  const minLat = numeric(q.minLat), maxLat = numeric(q.maxLat);
+  const minLng = numeric(q.minLng), maxLng = numeric(q.maxLng);
+  if ([minLat, maxLat, minLng, maxLng].every(Number.isFinite)) {
+    add('latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?', minLat, maxLat, minLng, maxLng);
+  }
+  const queryLat = numeric(q.lat), queryLng = numeric(q.lng), radiusKm = numeric(q.radiusKm);
+  if ([queryLat, queryLng, radiusKm].every(Number.isFinite) && radiusKm >= 0) {
+    const latDelta = radiusKm / 111;
+    const lngDelta = radiusKm / (111 * Math.max(0.2, Math.cos(queryLat * Math.PI / 180)));
+    add('latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?',
+      queryLat - latDelta, queryLat + latDelta, queryLng - lngDelta, queryLng + lngDelta);
+  }
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+  let order = 'created_at DESC, property_id DESC';
+  if (q.sortBy === 'price-low') order = 'price ASC, property_id DESC';
+  else if (q.sortBy === 'price-high') order = 'price DESC, property_id DESC';
+  else if (q.sortBy === 'score') order = 'score_overall DESC, created_at DESC, property_id DESC';
+  const parsedLimit = q.limit === undefined ? 24 : parseInt(q.limit, 10);
+  const limit = Math.min(100, Math.max(1, Number.isFinite(parsedLimit) ? parsedLimit : 24));
+  const parsedOffset = q.offset !== undefined
+    ? parseInt(q.offset, 10)
+    : Math.max(0, (parseInt(q.page || '1', 10) - 1) * limit);
+  const offset = Math.max(0, Number.isFinite(parsedOffset) ? parsedOffset : 0);
+  const [countRows] = await mysqlPool.execute(`SELECT COUNT(*) AS total FROM property_search_index ${where}`, params);
+  const [rows] = await mysqlPool.execute(
+    `SELECT property_json FROM property_search_index ${where} ORDER BY ${order} LIMIT ? OFFSET ?`,
+    [...params, limit, offset],
+  );
+  let properties = rows.map(row => {
+    if (row.property_json && typeof row.property_json === 'object') return row.property_json;
+    try { return JSON.parse(row.property_json); } catch { return null; }
+  }).filter(Boolean);
+  if ([queryLat, queryLng, radiusKm].every(Number.isFinite) && radiusKm >= 0) {
+    const radians = value => value * Math.PI / 180;
+    properties = properties.map(property => {
+      const lat = Number(property.lat), lng = Number(property.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return { ...property, distanceKm: Infinity };
+      const dLat = radians(lat - queryLat), dLng = radians(lng - queryLng);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(radians(queryLat))
+        * Math.cos(radians(lat)) * Math.sin(dLng / 2) ** 2;
+      return { ...property, distanceKm: 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) };
+    }).filter(property => property.distanceKm <= radiusKm).sort((a, b) => a.distanceKm - b.distanceKm);
+  }
+  const total = Number(countRows[0]?.total || 0);
+  return { properties, total, offset, limit, hasMore: offset + properties.length < total };
+}
+
 // ─── PROPERTIES ────────────────────────────────────────────────────────────────
 app.get('/api/properties', async (req, res) => {
   try {
+    const token = getBearerToken(req);
+    const caller = token ? await getRequestUser(req).catch(() => null) : null;
+    if (mysqlPool) {
+      try {
+        const indexed = await queryIndexedProperties(req, caller);
+        if (indexed) {
+          const resolved = indexed.properties.map(property => ({
+            ...property,
+            images: (property.images || []).map(img => img ? resolveImg(String(img)) : null).filter(Boolean),
+            videoUrl: property.videoUrl ? resolveImg(String(property.videoUrl)) : null,
+          }));
+          res.set('X-Total-Count', String(indexed.total));
+          res.set('X-Page-Offset', String(indexed.offset));
+          res.set('X-Page-Size', String(indexed.limit));
+          res.set('X-Has-More', String(indexed.hasMore));
+          if (req.query.response === 'page' || req.query.paginated === 'true') {
+            return res.json({ items: resolved, total: indexed.total, offset: indexed.offset, limit: indexed.limit, hasMore: indexed.hasMore });
+          }
+          return res.json(resolved);
+        }
+      } catch (indexError) {
+        console.warn(`Property index unavailable; using compatibility path: ${indexError.message}`);
+      }
+    }
     const data = await readData();
     let props = data.properties;
     const {
@@ -1278,9 +1560,9 @@ app.get('/api/properties', async (req, res) => {
     // - If no filter AND caller is admin → return all
     // - If no filter AND public/non-admin → default to Active only
     const as = approvalStatus || approval_status;
-    const caller = await getRequestUser(req).catch(() => null);
-    const isAdminCaller = caller?.role === 'Admin';
-    const callerId = caller?.id;
+    const fallbackCaller = caller || await getRequestUser(req).catch(() => null);
+    const isAdminCaller = fallbackCaller?.role === 'Admin';
+    const callerId = fallbackCaller?.id;
     if (!isAdminCaller) {
       // Never let a public query parameter expose Pending/Rejected records.
       // Owners may still inspect their own records from the seller portal.
@@ -1306,9 +1588,10 @@ app.get('/api/properties', async (req, res) => {
     const total = props.length;
     const page  = req.query.offset !== undefined ? 1 : parseInt(req.query.page || '1', 10);
     const limit = parseInt(req.query.limit || '0', 10); // 0 = return all
+    let pageOffset = 0;
     if (limit > 0) {
-      const start = req.query.offset !== undefined ? Math.max(0, parseInt(req.query.offset, 10) || 0) : (page - 1) * limit;
-      props = props.slice(start, start + limit);
+      pageOffset = req.query.offset !== undefined ? Math.max(0, parseInt(req.query.offset, 10) || 0) : (page - 1) * limit;
+      props = props.slice(pageOffset, pageOffset + limit);
     }
     res.set('X-Total-Count', String(total));
     const resolvedProps = props.map(p => ({
@@ -1316,6 +1599,15 @@ app.get('/api/properties', async (req, res) => {
       images: (p.images||[]).map(img => img ? (img.startsWith('http') ? img : resolveImg(img)) : null).filter(Boolean),
       videoUrl: p.videoUrl ? (p.videoUrl.startsWith('http') ? p.videoUrl : resolveImg(p.videoUrl)) : null,
     }));
+    if (req.query.response === 'page' || req.query.paginated === 'true') {
+      return res.json({
+        items: resolvedProps,
+        total,
+        offset: pageOffset,
+        limit: limit || resolvedProps.length,
+        hasMore: pageOffset + resolvedProps.length < total,
+      });
+    }
     res.json(resolvedProps);
   } catch (err) {
     console.error(err);
@@ -3549,9 +3841,15 @@ app.post('/api/upload', requireAuth, upload.array('images', MAX_LISTING_IMAGES),
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: 'No image files provided' });
     }
-    const _mbase=(process.env.APP_URL||'https://oglandmark.com').replace(/\/$/,'');
-    const urls = req.files.map(f => `${_mbase}/images/uploads/${f.filename}`);
-    res.json({ success: true, urls });
+    const urls = req.files.map(f => mediaUrl(`/images/uploads/${f.filename}`));
+    res.json({
+      success: true,
+      urls,
+      media: req.files.map((file, index) => ({
+        url: urls[index], path: `/images/uploads/${file.filename}`, kind: 'image',
+        mimeType: file.mimetype, bytes: file.size,
+      })),
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Upload failed' });
@@ -3562,8 +3860,11 @@ app.post('/api/upload', requireAuth, upload.array('images', MAX_LISTING_IMAGES),
 app.post('/api/upload/single', requireAuth, upload.single('image'), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No image provided' });
-    const _sbase=(process.env.APP_URL||'https://oglandmark.com').replace(/\/$/,'');
-    res.json({ success: true, url: `${_sbase}/images/uploads/${req.file.filename}` });
+    const pathName = `/images/uploads/${req.file.filename}`;
+    res.json({
+      success: true, url: mediaUrl(pathName),
+      media: { url: mediaUrl(pathName), path: pathName, kind: 'image', mimeType: req.file.mimetype, bytes: req.file.size },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Upload failed' });
@@ -3574,8 +3875,11 @@ app.post('/api/upload/single', requireAuth, upload.single('image'), (req, res) =
 app.post('/api/upload/video', requireAuth, upload.single('video'), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No video provided' });
-    const base = (process.env.APP_URL || 'https://oglandmark.com').replace(/\/$/, '');
-    res.json({ success: true, url: `${base}/images/uploads/${req.file.filename}` });
+    const pathName = `/images/uploads/${req.file.filename}`;
+    res.json({
+      success: true, url: mediaUrl(pathName),
+      media: { url: mediaUrl(pathName), path: pathName, kind: 'video', mimeType: req.file.mimetype, bytes: req.file.size },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Video upload failed' });
@@ -4663,10 +4967,19 @@ function siteUrl(p) {
   return p.startsWith('http') ? p : `${base}${p.startsWith('/') ? '' : '/'}${p}`;
 }
 
-function resolveImg(url) {
+function mediaUrl(url) {
   if (!url) return null;
-  if (url.startsWith('http')) return url;
-  return siteUrl(url.startsWith('/') ? url : '/' + url);
+  if (/^https?:\/\//i.test(String(url))) return String(url);
+  const normalized = String(url).startsWith('/') ? String(url) : `/${url}`;
+  const isStoredMedia = normalized.startsWith('/images/uploads/')
+    || normalized.startsWith('/media/');
+  return isStoredMedia && mediaPublicBaseUrl
+    ? `${mediaPublicBaseUrl}${normalized}`
+    : siteUrl(normalized);
+}
+
+function resolveImg(url) {
+  return mediaUrl(url);
 }
 
 // ─── MOBILE BANNER SLIDES ────────────────────────────────────────────────────
@@ -5146,6 +5459,15 @@ app.get('/portal/buyer-dashboard',  buyerDashboard);
 app.get('/portal/buyer-dashboard/*', buyerDashboard);
 
 // ─── STATIC FILES (React build) ────────────────────────────────────────────────
+if (fs.existsSync(mediaStorageDir)) {
+  app.use('/images/uploads', express.static(mediaStorageDir, {
+    etag: true,
+    setHeaders: (res) => {
+      res.set('Cache-Control', 'public, max-age=31536000, immutable');
+      res.set('Accept-Ranges', 'bytes');
+    },
+  }));
+}
 if (fs.existsSync(publicDir)) {
   // HTML files — always no-cache so updates are instant
   app.use(express.static(publicDir, {
@@ -5158,8 +5480,10 @@ if (fs.existsSync(publicDir)) {
         res.set('Expires', '0');
         res.set('Surrogate-Control', 'no-store');
       } else {
-        // JS/CSS assets have hashed filenames — safe to cache long-term
+        const isStoredMedia = filePath.startsWith(mediaStorageDir)
+          || filePath.includes(`${path.sep}images${path.sep}uploads${path.sep}`);
         res.set('Cache-Control', 'public, max-age=31536000, immutable');
+        if (isStoredMedia) res.set('Accept-Ranges', 'bytes');
       }
     }
   }));

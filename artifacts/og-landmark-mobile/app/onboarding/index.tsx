@@ -57,11 +57,11 @@ function Slide({ slide, width, colors }: {
   colors: ReturnType<typeof useColors>;
 }) {
   return (
-    <View style={[styles.slide, { width }]}>
+    <View style={[styles.slide, { width, backgroundColor: colors.actionDeep }]}>
       <ImageBackground source={slide.image} style={styles.image} imageStyle={styles.imageRadius} resizeMode="cover">
         <LinearGradient
-          colors={[colors.actionDeep + '20', colors.action + 'a8', colors.actionDeep]}
-          locations={[0, 0.48, 1]}
+          colors={[colors.actionDeep + '10', colors.action + '72', colors.actionDeep + 'F4']}
+          locations={[0, 0.42, 1]}
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.slideContent}>
@@ -250,8 +250,8 @@ const styles = StyleSheet.create({
   introKicker: { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 2.5, marginBottom: 8 },
   introText: { fontFamily: 'Inter_500Medium', fontSize: 17, letterSpacing: 0.1 },
   carousel: { flex: 1 },
-  carouselContent: { paddingHorizontal: 20 },
-  slide: { flex: 1, paddingHorizontal: 0 },
+  carouselContent: { paddingHorizontal: 20, flexGrow: 1, gap: 12 },
+  slide: { flex: 1, minHeight: 0, paddingHorizontal: 0, borderRadius: 28, overflow: 'hidden' },
   image: { flex: 1, justifyContent: 'flex-end', overflow: 'hidden' },
   imageRadius: { borderRadius: 28 },
   slideContent: { padding: 24, paddingBottom: 28 },

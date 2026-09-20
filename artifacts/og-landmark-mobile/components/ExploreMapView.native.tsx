@@ -25,6 +25,7 @@ import {
   countPointsWithinRadius,
   MAP_AREA_DEFAULT_KM,
   mapAreaRadiusMeters,
+  mapAreaZoomForRadius,
   normalizeMapAreaRange,
 } from '@/components/mapRadius';
 import { ExpoGoMapFallback } from '@/components/ExpoGoMapFallback';
@@ -236,7 +237,7 @@ function ExploreMapViewWithExpoGoFallback({
       <ExpoGoMapFallback
         latitude={areaCenter.latitude}
         longitude={areaCenter.longitude}
-        zoom={12}
+        zoom={mapAreaZoomForRadius(areaRadiusKm)}
         points={points}
         radiusKm={areaRadiusKm}
         interactive

@@ -184,10 +184,16 @@ function buildMapHtml({
       window.__updateMapState = function (next) {
         if (!next) return;
         var current = map.getCenter();
-        if (next.latitude != null && next.longitude != null &&
-            (Math.abs(current.lat - next.latitude) > 0.000001 ||
-             Math.abs(current.lng - next.longitude) > 0.000001)) {
-          map.setView([next.latitude, next.longitude], next.zoom || map.getZoom(), { animate: false });
+         var centerChanged = next.latitude != null && next.longitude != null &&
+           (Math.abs(current.lat - next.latitude) > 0.000001 ||
+            Math.abs(current.lng - next.longitude) > 0.000001);
+         var zoomChanged = next.zoom != null && Math.abs(map.getZoom() - Number(next.zoom)) > 0.01;
+         if (centerChanged || zoomChanged) {
+           map.setView(
+             centerChanged ? [next.latitude, next.longitude] : [current.lat, current.lng],
+             next.zoom != null ? Number(next.zoom) : map.getZoom(),
+             { animate: true },
+           );
         }
         if (next.points) renderPoints(next.points);
         if (next.radiusKm != null) updateArea(next.latitude, next.longitude, next.radiusKm);

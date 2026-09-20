@@ -31,6 +31,16 @@ export function mapAreaRadiusMeters(km: number): number {
   return normalizeMapAreaRange(km) * 1000;
 }
 
+/**
+ * Returns a fractional Leaflet zoom level that keeps the selected radius
+ * comfortably visible while preserving the same scale used by native maps.
+ */
+export function mapAreaZoomForRadius(km: number): number {
+  const safeRadiusKm = normalizeMapAreaRange(km);
+  const latitudeDelta = Math.max(0.025, (safeRadiusKm * 2.8) / 111);
+  return Math.max(3, Math.min(19, Math.log(360 / latitudeDelta) / Math.LN2));
+}
+
 export function formatMapAreaRange(km: number): string {
   const safeKm = normalizeMapAreaRange(km);
   return safeKm < 1

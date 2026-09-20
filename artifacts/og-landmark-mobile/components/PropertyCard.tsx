@@ -88,7 +88,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
                   event.stopPropagation();
                   setActiveImage((current) => (current - 1 + images.length) % images.length);
                 }}
-                style={[styles.galleryArrow, styles.galleryArrowLeft]}
+                style={[styles.galleryArrow, styles.galleryArrowLeft, { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder }]}
                 hitSlop={6}
                 accessibilityLabel="Previous property image"
               >
@@ -99,15 +99,15 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
                   event.stopPropagation();
                   setActiveImage((current) => (current + 1) % images.length);
                 }}
-                style={[styles.galleryArrow, styles.galleryArrowRight]}
+                style={[styles.galleryArrow, styles.galleryArrowRight, { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder }]}
                 hitSlop={6}
                 accessibilityLabel="Next property image"
               >
                 <Feather name="chevron-right" size={17} color={colors.actionForeground} />
               </Pressable>
-              <View pointerEvents="none" style={styles.imageCounter}>
+              <View pointerEvents="none" style={[styles.imageCounter, { backgroundColor: colors.actionGlassStrong }]}>
                 <Feather name="image" size={10} color={colors.actionForeground} />
-                <Text style={styles.imageCounterText}>{activeImage + 1}/{images.length}</Text>
+                <Text style={[styles.imageCounterText, { color: colors.actionForeground }]}>{activeImage + 1}/{images.length}</Text>
               </View>
             </>
           )}
@@ -184,10 +184,9 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
         >
           {/* Solid tint instead of BlurView */}
           <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
-          <LinearGradient
+          <View
             pointerEvents="none"
-            colors={['#ffffff75', '#ffffff00']}
-            style={styles.bodyHighlight}
+            style={[styles.bodyHighlight, { backgroundColor: colors.card, opacity: 0.28 }]}
           />
           <Text style={[styles.price, { color: colors.foreground }]}>{formatPrice(property.price, property.status)}</Text>
           <Text numberOfLines={1} style={[styles.title, { color: colors.foreground }]}>{property.title}</Text>
@@ -202,7 +201,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
               </>
             )}
           </View>
-          <View style={styles.facts}>
+          <View style={[styles.facts, { borderTopColor: colors.border }]}>
             {(() => {
               const ptype = (property.type ?? '').toLowerCase();
               const areaFmt = formatAreaDisplay(property.area, property.areaUnit);
@@ -345,7 +344,7 @@ const styles = StyleSheet.create({
   galleryArrowLeft: { left: 8 },
   galleryArrowRight:{ right: 8 },
   imageCounter:  { position: 'absolute', bottom: 8, right: 9, zIndex: 4, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#071521bb', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 4 },
-  imageCounterText:{ color: '#fff', fontSize: 9, fontWeight: '700' },
+  imageCounterText:{ fontSize: 9, fontWeight: '700' },
   imageShade:    { ...StyleSheet.absoluteFill },
   status:        { position: 'absolute', top: 12, left: 12, borderRadius: 8, borderWidth: 1, paddingHorizontal: 9, paddingVertical: 6, overflow: 'hidden' },
   demoBadge:    { position: 'absolute', top: 48, left: 12 },
@@ -363,6 +362,6 @@ const styles = StyleSheet.create({
   location:      { fontFamily: 'Inter_400Regular', fontSize: 11 },
   facts:         { flexDirection: 'row', justifyContent: 'space-between', marginTop: 13, paddingTop: 11, borderTopWidth: 1, borderTopColor: '#ffffff55' },
   fact:          { flex: 1, alignItems: 'center', gap: 3, minWidth: 0 },
-  factValue:     { fontFamily: 'Inter_700Bold', fontSize: 10, maxWidth: 52 },
-  factLabel:     { fontFamily: 'Inter_400Regular', fontSize: 8 },
+  factValue:     { fontFamily: 'Inter_700Bold', fontSize: 11, maxWidth: 56 },
+  factLabel:     { fontFamily: 'Inter_400Regular', fontSize: 9 },
 });

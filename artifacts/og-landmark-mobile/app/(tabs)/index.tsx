@@ -291,7 +291,7 @@ function mapApiBanner(s: ApiBannerSlide): BannerSlideData | null {
   return null;
 }
 
-const BANNER_H            = 165;
+const BANNER_H            = 190;
 const BANNER_AUTO_INTERVAL = 4200;
 const VIDEO_MAX_DURATION   = 60_000; // 60 s — auto-advance after this even if looping
 
@@ -448,7 +448,7 @@ function CinematicBanner({ isScreenVisible, externalSlides, config, colors }: {
 }
 
 // ── Image slide (original Ken Burns) ──────────────────────────────────────────
-function BannerSlide({ slide, isActive }: {
+function BannerSlide({ slide, isActive, colors, onCta }: {
   slide: BannerSlideData;
   isActive: boolean;
   colors: Colors;
@@ -478,7 +478,7 @@ function BannerSlide({ slide, isActive }: {
 
 // ── Video slide — loops up to 60 s, with sound, mute toggle ───────────────────
 // isScreenVisible — false when user scrolls banner off screen or switches tab.
-function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible }: {
+function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, colors, onCta }: {
   slide: BannerSlideData;
   isActive: boolean;
   isMuted: boolean;
@@ -1711,7 +1711,13 @@ export default function HomeScreen() {
   const featuredProps    = allProps.filter((p) => p.featured);
   const agriProps        = allProps.filter((p) => p.type === 'Agriculture Land').slice(0, 6);
   const commercialProps  = allProps.filter((p) => p.type === 'Commercial').slice(0, 6);
-  const latestProps      = [...userListings, ...allProps.slice().sort((a, b) => b.id - a.id)].slice(0, 6);
+  const latestCandidates = [...userListings, ...allProps.slice().sort((a, b) => b.id - a.id)];
+  const seenLatestIds = new Set<number>();
+  const latestProps = latestCandidates.filter((property) => {
+    if (seenLatestIds.has(property.id)) return false;
+    seenLatestIds.add(property.id);
+    return true;
+  }).slice(0, 6);
   const recommendedProps = allProps
     .filter((p) => transaction === 'Rent' ? p.status === 'For Rent' : p.status === 'For Sale')
     .slice(0, 8);
@@ -1740,7 +1746,7 @@ export default function HomeScreen() {
             accessibilityRole="button" accessibilityLabel="Open navigation menu" testID="open-navigation-menu"
           >
             <View style={s.headerIcon}>
-              <Feather name="menu" size={21} color="#102a43" />
+              <Feather name="menu" size={21} color={colors.action} />
             </View>
           </Pressable>
           <BrandMark />
@@ -1805,7 +1811,7 @@ export default function HomeScreen() {
         // Track banner's bottom edge so we know when it has scrolled off screen
         bannerBottomRef.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height;
       }}>
-        <CinematicBanner isScreenVisible={isVideoScreenVisible} externalSlides={apiBannerSlides} config={homeContent} />
+        <CinematicBanner isScreenVisible={isVideoScreenVisible} externalSlides={apiBannerSlides} config={homeContent} colors={colors} />
       </View>
 
       {/* ─── FIND YOUR PROPERTY (Browse / Discovery) ────────────────────── */}
@@ -1895,7 +1901,7 @@ export default function HomeScreen() {
       </AnimatedReveal>
 
       {/* ─── PREMIUM PROJECTS ────────────────────────────────────────────── */}
-      <AnimatedReveal delay={200}>
+      {(devProjects.length > 0 || projects.length > 0) && <AnimatedReveal delay={200}>
         <SectionHeader eyebrow={homeSections.projectsEyebrow || 'PREMIUM PROJECTS'} title={homeSections.projectsTitle || 'Exceptional developments'} onViewAll={() => router.push({ pathname: '/explore', params: { propertyType: 'House,Apartment' } })} colors={colors} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={s.hRow}>
           {devProjects.map((p) => (
@@ -1905,7 +1911,7 @@ export default function HomeScreen() {
             <ProjectShowcaseCard key={p.id} project={p} colors={colors} onPress={() => router.push(`/project/${p.id}`)} />
           ))}
         </ScrollView>
-      </AnimatedReveal>
+      </AnimatedReveal>}
 
       {/* ─── AGRICULTURAL & COMMERCIAL OPPORTUNITIES ────────────────────── */}
       {(agriProps.length > 0 || commercialProps.length > 0) && (
@@ -1948,7 +1954,7 @@ export default function HomeScreen() {
       )}
 
       {/* ─── VERIFIED AGENTS ─────────────────────────────────────────────── */}
-      <AnimatedReveal delay={260}>
+      {managedAgents.length > 0 && <AnimatedReveal delay={260}>
         {/* Section header with inline See All */}
         <View style={s.agentSectionRow}>
           <View>
@@ -1967,7 +1973,7 @@ export default function HomeScreen() {
           colors={colors}
           onAgentPress={(agentId) => router.push(`/agent/${agentId}` as any)}
         />
-      </AnimatedReveal>
+      </AnimatedReveal>}
 
       {/* ─── TOOLS & CALCULATORS ─────────────────────────────────────────── */}
       <AnimatedReveal delay={290}>

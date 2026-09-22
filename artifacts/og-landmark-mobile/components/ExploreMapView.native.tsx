@@ -372,6 +372,10 @@ function ExploreMapViewWithGoogleMaps({
   }, [centerLat, centerLng, userLat, userLng]);
 
   const handleAreaRadiusChange = useCallback((nextRadiusKm: number) => {
+    setAreaRadiusKm(normalizeMapAreaRange(nextRadiusKm));
+  }, []);
+
+  const handleAreaRadiusCommit = useCallback((nextRadiusKm: number) => {
     const safeRadiusKm = normalizeMapAreaRange(nextRadiusKm);
     setAreaRadiusKm(safeRadiusKm);
     const latitudeDelta = Math.max(0.025, (safeRadiusKm * 2.8) / 111);
@@ -484,10 +488,6 @@ function ExploreMapViewWithGoogleMaps({
         provider={PROVIDER}
         initialRegion={initialRegion}
         customMapStyle={OG_MAP_STYLE}
-        onRegionChange={(region) => setAreaCenter({
-          latitude: region.latitude,
-          longitude: region.longitude,
-        })}
         onRegionChangeComplete={handleRegionChangeComplete}
         userInterfaceStyle="light"
         showsUserLocation={false}
@@ -587,6 +587,7 @@ function ExploreMapViewWithGoogleMaps({
         <MapAreaRange
           value={areaRadiusKm}
           onChange={handleAreaRadiusChange}
+           onChangeEnd={handleAreaRadiusCommit}
           colors={{
             card: '#ffffff',
             border: '#d6e0e8',

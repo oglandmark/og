@@ -220,7 +220,17 @@ function buildExploreHtml(
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>if (!L.MarkerClusterGroup) document.write('<script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"><\/script>');</script>
 <script>
-  var map = L.map('map',{zoomControl:true,attributionControl:false}).setView([${mapCenterLat},${mapCenterLng}],${zoom});
+  var map = L.map('map',{
+    zoomControl:true,
+    attributionControl:false,
+    dragging:true,
+    touchZoom:true,
+    doubleClickZoom:true,
+    scrollWheelZoom:true,
+    boxZoom:true,
+    keyboard:true,
+    tap:true
+  }).setView([${mapCenterLat},${mapCenterLng}],${zoom});
     var primaryTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
      maxZoom: 19, maxNativeZoom: 19, keepBuffer: 3,
      updateWhenIdle: false, updateWhenZooming: true
@@ -384,7 +394,7 @@ export function ExploreMapView({
   }, []);
 
   React.useEffect(() => {
-    syncAreaRadius(areaRadiusKm, true);
+    syncAreaRadius(areaRadiusKm, false);
   }, [areaRadiusKm, syncAreaRadius]);
 
   const blobUrl = useMemo(() => {
@@ -411,8 +421,8 @@ export function ExploreMapView({
         sandbox="allow-scripts allow-same-origin"
         onLoad={() => syncAreaRadius(areaRadiusKm)}
       />
-      <View style={s.rangeOverlay}>
-        <MapAreaRange value={areaRadiusKm} onChange={setAreaRadiusKm} colors={{
+       <View style={s.rangeOverlay}>
+         <MapAreaRange value={areaRadiusKm} onChange={setAreaRadiusKm} onChangeEnd={(value) => syncAreaRadius(value, true)} colors={{
           card: colors?.card ?? '#ffffff',
           border: colors?.border ?? '#d6e0e8',
           foreground: colors?.foreground ?? '#102a43',

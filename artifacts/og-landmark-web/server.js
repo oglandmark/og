@@ -1402,7 +1402,8 @@ async function queryIndexedProperties(req, caller) {
     add('latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?', minLat, maxLat, minLng, maxLng);
   }
   const queryLat = numeric(q.lat), queryLng = numeric(q.lng), radiusKm = numeric(q.radiusKm);
-  if ([queryLat, queryLng, radiusKm].every(Number.isFinite) && radiusKm >= 0) {
+  const hasNearbyQuery = [queryLat, queryLng, radiusKm].every(Number.isFinite) && radiusKm >= 0;
+  if (hasNearbyQuery) {
     const latDelta = radiusKm / 111;
     const lngDelta = radiusKm / (111 * Math.max(0.2, Math.cos(queryLat * Math.PI / 180)));
     add('latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?',
@@ -1425,19 +1426,27 @@ async function queryIndexedProperties(req, caller) {
     ? parseInt(q.offset, 10)
     : Math.max(0, (parseInt(q.page || '1', 10) - 1) * limit);
   const offset = Math.max(0, Number.isFinite(parsedOffset) ? parsedOffset : 0);
+  // Nearby results need exact-distance filtering before pagination. Fetch a
+  // bounded candidate window from the indexed bounding box, then slice the
+  // sorted exact-distance results below. Applying LIMIT first can hide valid
+  // nearby listings behind newer properties elsewhere in the same box.
+  const queryLimit = hasNearbyQuery
+    ? Math.min(5000, Math.max(limit + offset, 100))
+    : limit;
+  const queryOffset = hasNearbyQuery ? 0 : offset;
   const [countRows] = await mysqlPool.execute(
     `SELECT COUNT(*) AS total FROM property_search_index ${where}`, params,
   );
   const [rows] = await mysqlPool.execute(
     `SELECT property_json FROM property_search_index ${where} ORDER BY ${order} LIMIT ? OFFSET ?`,
-    [...params, limit, offset],
+    [...params, queryLimit, queryOffset],
   );
   let properties = rows.map(row => {
     if (row.property_json && typeof row.property_json === 'object') return row.property_json;
     try { return JSON.parse(row.property_json); } catch { return null; }
   }).filter(Boolean);
 
-  if ([queryLat, queryLng, radiusKm].every(Number.isFinite) && radiusKm >= 0) {
+  if (hasNearbyQuery) {
     const radians = value => value * Math.PI / 180;
     properties = properties.map(property => {
       const lat = Number(property.lat), lng = Number(property.lng);
@@ -1448,6 +1457,9 @@ async function queryIndexedProperties(req, caller) {
       return { ...property, distanceKm: 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) };
     }).filter(property => property.distanceKm <= radiusKm)
       .sort((a, b) => a.distanceKm - b.distanceKm);
+    const total = properties.length;
+    properties = properties.slice(offset, offset + limit);
+    return { properties, total, offset, limit, hasMore: offset + properties.length < total };
   }
   const total = Number(countRows[0]?.total || 0);
   return { properties, total, offset, limit, hasMore: offset + properties.length < total };

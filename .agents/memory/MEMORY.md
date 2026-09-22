@@ -29,3 +29,4 @@
 - [Post-merge setup](post-merge-setup.md) — this workspace needs a non-frozen pnpm install and the scoped @workspace/db filter.
 - [MySQL migration safety](mysql-migration-safety.md) — production cutover requires a verified live snapshot, protected empty-target import, and source/target parity checks.
 - [MySQL projection parity](mysql-projection-parity.md) — mirrored search projections must keep schema, migration, runtime bindings, and export copies aligned; validate batch placeholder counts before deploy.
+- [Nearby results fallback](nearby-results-fallback.md) — preserve cached mobile listings on empty geo responses and paginate after exact distance filtering.

@@ -559,7 +559,12 @@ export default function ExploreScreen() {
       request
         .then((page) => {
           if (!cancelled) {
-            setAllProperties(uniqueProperties(page.items.map(apiPropertyToProperty)));
+            // Keep bundled properties available when the remote catalogue is
+            // empty or temporarily unavailable. The local radius/bounds
+            // filter still produces correct Near Me results from that cache.
+            if (page.items.length) {
+              setAllProperties(uniqueProperties(page.items.map(apiPropertyToProperty)));
+            }
             setRemoteOffset(page.items.length);
             setRemoteHasMore(page.hasMore);
           }
@@ -750,19 +755,24 @@ export default function ExploreScreen() {
   const handleNearMe = useCallback(async () => {
     if (nearMe) {
       setNearMe(null);
+      setGeoError('');
       return;
     }
     setNearMeLoading(true);
+    setGeoError('');
     try {
       const pos = await getCurrentPosition();
-      if (!pos) { setNearMeLoading(false); return; }
+      if (!pos) {
+        setGeoError('We could not read your location. Keep Location Services on and try Near Me again.');
+        return;
+      }
       setNearMe({ lat: pos.latitude, lng: pos.longitude, radiusKm: 10 });
       setSearchedPlace(null);
       setMapBoundsFilter(null);
       // Switch to map so user sees their location
       setViewMode('map');
     } catch {
-      Alert.alert('Error', 'Could not get your location.');
+      setGeoError('We could not read your location. Keep Location Services on and try Near Me again.');
     } finally {
       setNearMeLoading(false);
     }

@@ -459,7 +459,7 @@ export function ExploreMapView({
       )}
       {showSearchArea && onSearchArea && (
         <Pressable
-          style={[s.searchAreaButton, { backgroundColor: colors?.card ?? '#ffffff', borderColor: colors?.border ?? '#d6e0e8' }]}
+          style={[s.searchAreaButton, fullScreen && s.fullScreenSearchAreaButton, { backgroundColor: colors?.card ?? '#ffffff', borderColor: colors?.border ?? '#d6e0e8' }]}
           onPress={() => {
             if (lastBounds.current) onSearchArea(lastBounds.current);
             setShowSearchArea(false);
@@ -531,6 +531,7 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 4,
   },
+  fullScreenSearchAreaButton: { top: 10, left: 18 },
   searchAreaText: { fontSize: 12, fontWeight: '800' },
   mapContextBadge: {
     position: 'absolute',

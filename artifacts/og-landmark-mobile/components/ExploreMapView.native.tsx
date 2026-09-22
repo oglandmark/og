@@ -6,7 +6,7 @@
  * preserving pan, pinch zoom, property pins, area search, and radius controls.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { MapAreaRange, MAP_AREA_BLUE } from '@/components/MapAreaRange';
@@ -42,7 +42,6 @@ interface MapProperty {
 interface Props {
   properties?: MapProperty[];
   onSelect: (id: string | number) => void;
-  onSearchArea?: (bounds: MapBounds) => void;
   selectedId?: string | number;
   userLat?: number;
   userLng?: number;
@@ -68,7 +67,6 @@ function formatPrice(price?: string | number): string {
 export function ExploreMapView({
   properties = [],
   onSelect,
-  onSearchArea,
   userLat,
   userLng,
   centerLat,
@@ -81,13 +79,6 @@ export function ExploreMapView({
   const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
   const [committedZoom, setCommittedZoom] = useState(mapAreaZoomForRadius(MAP_AREA_DEFAULT_KM));
   const [areaCenter, setAreaCenter] = useState({ latitude: initialLat, longitude: initialLng });
-  const [currentRegion, setCurrentRegion] = useState<{
-    latitude: number;
-    longitude: number;
-    latitudeDelta: number;
-    longitudeDelta: number;
-  } | null>(null);
-  const [showSearchArea, setShowSearchArea] = useState(false);
 
   useEffect(() => {
     setAreaCenter({ latitude: initialLat, longitude: initialLng });
@@ -128,21 +119,6 @@ export function ExploreMapView({
     longitudeDelta: number;
   }) => {
     setAreaCenter({ latitude: region.latitude, longitude: region.longitude });
-    setCurrentRegion(region);
-    setShowSearchArea(true);
-  };
-
-  const searchCurrentArea = () => {
-    if (!currentRegion || !onSearchArea) return;
-    onSearchArea({
-      north: currentRegion.latitude + currentRegion.latitudeDelta / 2,
-      south: currentRegion.latitude - currentRegion.latitudeDelta / 2,
-      east: currentRegion.longitude + currentRegion.longitudeDelta / 2,
-      west: currentRegion.longitude - currentRegion.longitudeDelta / 2,
-      centerLat: currentRegion.latitude,
-      centerLng: currentRegion.longitude,
-    });
-    setShowSearchArea(false);
   };
 
   return (
@@ -160,24 +136,7 @@ export function ExploreMapView({
         }}
       />
 
-      {showSearchArea && onSearchArea && (
-        <Pressable
-          style={[styles.searchAreaButton, {
-            backgroundColor: colors?.card ?? '#ffffff',
-            borderColor: colors?.border ?? '#d6e0e8',
-          }]}
-          onPress={searchCurrentArea}
-          accessibilityRole="button"
-          accessibilityLabel="Search properties in this map area"
-        >
-          <Feather name="search" size={14} color={colors?.action ?? '#102a43'} />
-          <Text style={[styles.searchAreaText, { color: colors?.action ?? '#102a43' }]}>
-            Search this area
-          </Text>
-        </Pressable>
-      )}
-
-      {!showSearchArea && !fullScreen && (
+      {!fullScreen && (
         <View
           pointerEvents="none"
           style={[styles.mapContextBadge, {
@@ -245,13 +204,6 @@ export function ExploreMapView({
 const styles = StyleSheet.create({
   container: { height: 420, overflow: 'hidden', borderRadius: 18, marginBottom: 20 },
   fullScreenContainer: { flex: 1, height: undefined, marginBottom: 0, borderRadius: 0 },
-  searchAreaButton: {
-    position: 'absolute', top: 12, left: 12, flexDirection: 'row',
-    alignItems: 'center', gap: 7, borderRadius: 17, paddingHorizontal: 12,
-    paddingVertical: 9, borderWidth: 1, shadowColor: '#102a43',
-    shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4,
-  },
-  searchAreaText: { fontSize: 12, fontWeight: '800' },
   mapContextBadge: {
     position: 'absolute', top: 12, left: 12, flexDirection: 'row',
     alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 15,

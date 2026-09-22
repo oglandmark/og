@@ -827,12 +827,6 @@ export default function ExploreScreen() {
     }
   }, [nearMe]);
 
-  const handleSearchArea = useCallback((bounds: MapBounds) => {
-    setMapBoundsFilter(bounds);
-    setNearMe(null);
-    setSearchedPlace(null);
-  }, []);
-
   const handlePlaceSuggestion = useCallback(async (suggestion: AutocompleteSuggestion) => {
     const details = await fetchPlaceDetails(suggestion.placeId);
     if (!details) {
@@ -1207,7 +1201,6 @@ export default function ExploreScreen() {
                 count={filteredProperties.length}
                 colors={colors}
                 onSelect={(id) => router.push(`/property/${id}` as any)}
-                onSearchArea={handleSearchArea}
                 userLat={nearMe?.lat}
                 userLng={nearMe?.lng}
                 centerLat={searchedPlace?.lat}
@@ -1288,7 +1281,6 @@ export default function ExploreScreen() {
                 closeMapScreen();
                 router.push(`/property/${id}` as any);
               }}
-              onSearchArea={handleSearchArea}
               userLat={nearMe?.lat}
               userLng={nearMe?.lng}
               centerLat={searchedPlace?.lat}
@@ -1344,15 +1336,6 @@ export default function ExploreScreen() {
                   </Pressable>
                 )}
               </View>
-
-              {!mapSearchFocused && !query.trim() && (
-                <View style={ex.mapSearchHint}>
-                  <Feather name="move" size={13} color={colors.actionForeground} />
-                  <Text style={[ex.mapSearchHintText, { color: colors.actionForeground }]}>
-                    Search a place to recenter the map
-                  </Text>
-                </View>
-              )}
 
               {mapSearchFocused && query.trim().length >= 2 && (placeSuggestionsLoading || placeSuggestions.length > 0) && (
                 <View style={[ex.mapSuggestions, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -2024,7 +2007,7 @@ const ex = StyleSheet.create({
   mapScreenTitle:   { fontFamily: 'Inter_700Bold', fontSize: 17 },
   mapScreenHeaderSide: { width: 92 },
   mapStage:        { flex: 1, position: 'relative' },
-  mapSearchOverlay: { position: 'absolute', top: 16, left: 18, right: 18, zIndex: 10 },
+  mapSearchOverlay: { position: 'absolute', top: 52, left: 18, right: 18, zIndex: 10 },
   mapSearchEyebrow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 5, marginBottom: 7 },
   mapSearchEyebrowLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   mapSearchEyebrowDot: { width: 6, height: 6, borderRadius: 3 },
@@ -2033,8 +2016,6 @@ const ex = StyleSheet.create({
   mapSearchBar:    { minHeight: 54, borderRadius: 18, borderWidth: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, gap: 10, shadowColor: '#102a43', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 6 },
   mapSearchIconWrap: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   mapSearchInput:  { flex: 1, fontFamily: 'Inter_500Medium', fontSize: 13, paddingVertical: 0 },
-  mapSearchHint: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, marginLeft: 5, paddingHorizontal: 9, paddingVertical: 6, borderRadius: 10, backgroundColor: 'rgba(16,42,67,0.68)' },
-  mapSearchHintText: { fontFamily: 'Inter_500Medium', fontSize: 10 },
   mapSuggestions:  { marginTop: 8, borderRadius: 16, borderWidth: 1, overflow: 'hidden', shadowColor: '#102a43', shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
   mapSuggestionsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, paddingTop: 12, paddingBottom: 8 },
   mapSuggestionsLabel: { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.2 },

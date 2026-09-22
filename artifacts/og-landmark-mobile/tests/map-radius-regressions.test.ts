@@ -82,14 +82,12 @@ test('Android map overrides reuse the shared Mapbox WebView implementation', () 
   assert.match(readComponent('ExpoGoMapFallback.tsx'), /EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN/);
 });
 
-test('Search this area stays available after a map move and a radius change', () => {
+test('full-screen map does not render a Search this area action', () => {
   const web = readComponent('ExploreMapView.tsx');
   const native = readComponent('ExploreMapView.native.tsx');
 
-  assert.match(web, /setShowSearchArea\(true\)/);
-  assert.match(web, /onSearchArea\(lastBounds\.current\)/);
-  assert.match(native, /setShowSearchArea\(true\)/);
-  assert.match(native, /onSearchArea\(\{/);
+  assert.doesNotMatch(web, /Search this area/);
+  assert.doesNotMatch(native, /Search this area/);
   assert.match(native, /onChange=\{setAreaRadiusKm\}/);
 });
 

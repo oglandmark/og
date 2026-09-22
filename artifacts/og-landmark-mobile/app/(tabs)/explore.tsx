@@ -804,10 +804,14 @@ export default function ExploreScreen() {
     if (nearMe) {
       setNearMe(null);
       setGeoError('');
+      setMapScreenOpen(false);
+      setViewMode('list');
       return;
     }
     setNearMeLoading(true);
     setGeoError('');
+    setViewMode('map');
+    setMapScreenOpen(true);
     try {
       const pos = await getCurrentPosition();
       if (!pos) {
@@ -817,9 +821,6 @@ export default function ExploreScreen() {
       setNearMe({ lat: pos.latitude, lng: pos.longitude, radiusKm: 10 });
       setSearchedPlace(null);
       setMapBoundsFilter(null);
-      // Switch to map so user sees their location
-      setViewMode('map');
-      setMapScreenOpen(true);
     } catch {
       setGeoError('We could not read your location. Keep Location Services on and try Near Me again.');
     } finally {
@@ -1263,12 +1264,15 @@ export default function ExploreScreen() {
               <Feather name="chevron-left" size={24} color={colors.mutedForeground} />
               <Text style={[ex.mapScreenBackText, { color: colors.mutedForeground }]}>Filters</Text>
             </Pressable>
-            <Text style={[ex.mapScreenTitle, { color: colors.foreground }]}>Map Search</Text>
+            <Text style={[ex.mapScreenTitle, { color: colors.foreground }]}>
+              {nearMe || nearMeLoading ? 'Properties Near Me' : 'Map Search'}
+            </Text>
             <View style={ex.mapScreenHeaderSide} />
           </View>
 
           <View style={ex.mapStage}>
             <ExploreMapView
+               key={nearMe ? 'near-me-10km' : 'map-default'}
               fullScreen
               properties={filteredProperties.map((p: any) => ({
                 ...p,
@@ -1286,6 +1290,24 @@ export default function ExploreScreen() {
               centerLat={searchedPlace?.lat}
               centerLng={searchedPlace?.lng}
             />
+
+             {nearMeLoading && !nearMe && (
+               <View style={[ex.locationMapStatus, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                 <ActivityIndicator size="small" color={colors.action} />
+                 <Text style={[ex.locationMapStatusTitle, { color: colors.foreground }]}>Finding your location</Text>
+                 <Text style={[ex.locationMapStatusText, { color: colors.mutedForeground }]}>
+                   Allow GPS access to show properties within 10 KM.
+                 </Text>
+               </View>
+             )}
+
+             {!nearMeLoading && !!geoError && !nearMe && (
+               <View style={[ex.locationMapStatus, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                 <Feather name="map-pin" size={18} color={colors.primary} />
+                 <Text style={[ex.locationMapStatusTitle, { color: colors.foreground }]}>Location unavailable</Text>
+                 <Text style={[ex.locationMapStatusText, { color: colors.mutedForeground }]}>{geoError}</Text>
+               </View>
+             )}
 
             <View style={ex.mapSearchOverlay}>
               <View style={[ex.mapSearchBar, {
@@ -1997,6 +2019,9 @@ const ex = StyleSheet.create({
   mapScreenHeaderSide: { width: 92 },
   mapStage:        { flex: 1, position: 'relative' },
   mapSearchOverlay: { position: 'absolute', top: 14, left: 60, right: 18, zIndex: 10 },
+  locationMapStatus: { position: 'absolute', top: '38%', left: 28, right: 28, alignItems: 'center', borderRadius: 18, borderWidth: 1, paddingHorizontal: 18, paddingVertical: 18, zIndex: 8, shadowColor: '#102a43', shadowOpacity: 0.16, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
+  locationMapStatusTitle: { fontFamily: 'Inter_700Bold', fontSize: 14, marginTop: 8, textAlign: 'center' },
+  locationMapStatusText: { fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 16, marginTop: 5, textAlign: 'center' },
   mapSearchBar:    { minHeight: 54, borderRadius: 18, borderWidth: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, gap: 10, shadowColor: '#102a43', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 6 },
   mapSearchIconWrap: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   mapSearchInput:  { flex: 1, fontFamily: 'Inter_500Medium', fontSize: 13, paddingVertical: 0 },

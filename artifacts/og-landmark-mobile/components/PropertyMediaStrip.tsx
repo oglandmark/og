@@ -26,9 +26,6 @@ const THUMB_SIZE  = 52;   // square thumbnail size
 const THUMB_RADIUS = 8;
 const STRIP_H     = THUMB_SIZE + 18; // strip total height (padding included)
 const MAX_THUMBS  = 5;    // max image thumbnails to show
-// Keep a playable local tour available even when an API property has no
-// uploaded video or its remote URL is temporarily unreachable.
-const DEFAULT_PROPERTY_VIDEO = require('@/assets/videos/property-tour-2.mp4') as number;
 
 function PropertyFullscreenVideo({
   source, muted, onPlayerReady, onBufferingChange, onPlayingChange, onError, onFinished,
@@ -105,7 +102,7 @@ export function PropertyMediaStrip({
       ? property.videoAsset
       : property.videoUrl
       ? { uri: property.videoUrl }
-      : DEFAULT_PROPERTY_VIDEO;
+      : null;
   const hasVideo = videoSource !== null;
   const canScrollLeft = stripOffset > 4;
   const canScrollRight = stripOffset < stripContentWidth - stripWidth - 4;

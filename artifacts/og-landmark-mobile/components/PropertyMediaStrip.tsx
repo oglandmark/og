@@ -326,6 +326,113 @@ export function PropertyMediaStrip({
   );
 }
 
+export function PropertyVideoModal({
+  property,
+  videoSource,
+  visible,
+  onClose,
+}: {
+  property: Property;
+  videoSource: VideoSource;
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const [isBuffering, setIsBuffering] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoPlayerRef = useRef<VideoPlayer | null>(null);
+
+  const closeVideo = () => {
+    videoPlayerRef.current?.pause();
+    if (videoPlayerRef.current) videoPlayerRef.current.currentTime = 0;
+    setIsPlaying(false);
+    onClose();
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="none"
+      statusBarTranslucent
+      supportedOrientations={['portrait', 'landscape']}
+      onRequestClose={closeVideo}
+    >
+      <StatusBar hidden />
+      <View style={fs.container}>
+        <Pressable style={fs.closeBtn} onPress={closeVideo} hitSlop={14}>
+          <View style={fs.closeBtnInner}>
+            <Feather name="x" size={20} color="#fff" />
+          </View>
+        </Pressable>
+
+        {hasError ? (
+          <View style={fs.errorBox}>
+            <Feather name="alert-circle" size={36} color="#c8a45a" />
+            <Text style={fs.errorText}>Video load nahi ho saka</Text>
+            <Pressable onPress={closeVideo} style={fs.errorClose}>
+              <Text style={fs.errorCloseText}>Close</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <>
+            <Pressable style={fs.videoWrap} onPress={() => {
+              if (isPlaying) videoPlayerRef.current?.pause();
+              else videoPlayerRef.current?.play();
+              setIsPlaying((current) => !current);
+            }}>
+              <PropertyFullscreenVideo
+                source={videoSource}
+                muted={isMuted}
+                onPlayerReady={(player) => { videoPlayerRef.current = player; }}
+                onBufferingChange={setIsBuffering}
+                onPlayingChange={setIsPlaying}
+                onError={() => setHasError(true)}
+                onFinished={closeVideo}
+              />
+              <VideoWatermark />
+            </Pressable>
+
+            {isBuffering && (
+              <View style={fs.bufferOverlay} pointerEvents="none">
+                <ActivityIndicator size="large" color="#c8a45a" />
+              </View>
+            )}
+
+            {!isPlaying && !isBuffering && (
+              <View style={fs.pauseIcon} pointerEvents="none">
+                <Feather name="play" size={38} color="#fff" />
+              </View>
+            )}
+
+            <View style={fs.controlBar}>
+              <TouchableOpacity
+                onPress={() => {
+                  const next = !isMuted;
+                  setIsMuted(next);
+                  if (videoPlayerRef.current) videoPlayerRef.current.muted = next;
+                }}
+                style={fs.muteBtn}
+                activeOpacity={0.8}
+                accessibilityLabel={isMuted ? 'Unmute video' : 'Mute video'}
+              >
+                <Feather name={isMuted ? 'volume-x' : 'volume-2'} size={18} color={isMuted ? '#888' : '#c8a45a'} />
+                <Text style={[fs.muteBtnLabel, { color: isMuted ? '#888' : '#c8a45a' }]}>
+                  {isMuted ? 'Unmute' : 'Sound On'}
+                </Text>
+              </TouchableOpacity>
+              <View style={fs.titleWrap}>
+                <Feather name="video" size={12} color="#c8a45a" />
+                <Text style={fs.titleText} numberOfLines={1}>{property.title}</Text>
+              </View>
+            </View>
+          </>
+        )}
+      </View>
+    </Modal>
+  );
+}
+
 // ─── Strip styles ───────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
   strip: {

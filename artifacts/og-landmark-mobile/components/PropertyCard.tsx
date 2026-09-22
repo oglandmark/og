@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { formatAreaDisplay, formatPrice, Property } from '@/lib/properties';
 import { useSaved } from '@/context/SavedContext';
-import { PropertyMediaStrip } from '@/components/PropertyMediaStrip';
+import { PropertyVideoModal } from '@/components/PropertyMediaStrip';
 import { PropertyGalleryModal } from '@/components/PropertyGalleryModal';
 import { PropertyDemoBadge } from '@/components/PropertyDemoBadge';
 import { propertyImages } from '@/lib/properties';
@@ -28,7 +28,14 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
   const { isSaved, toggleSaved } = useSaved();
   const [activeImage, setActiveImage] = useState(0);
   const [galleryVisible, setGalleryVisible] = useState(false);
+  const [videoVisible, setVideoVisible] = useState(false);
   const images = propertyImages(property);
+  const videoSource = property.videoAsset != null
+    ? property.videoAsset
+    : property.videoUrl
+      ? { uri: property.videoUrl }
+      : null;
+  const hasVideo = videoSource != null;
   const saved = isSaved(property.id);
   const swipeResponder = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_, gesture) =>
@@ -130,6 +137,21 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
               <Text style={[styles.featuredText, { color: colors.goldForeground }]}>FEATURED</Text>
             </View>
           )}
+          {hasVideo && (
+            <Pressable
+              onPress={(event) => {
+                event.stopPropagation();
+                setVideoVisible(true);
+              }}
+              style={[styles.videoTourButton, compact && styles.compactVideoTourButton, { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder }]}
+              hitSlop={6}
+              accessibilityRole="button"
+              accessibilityLabel={`Play video tour for ${property.title}`}
+            >
+              <Feather name="play" size={compact ? 11 : 13} color={colors.actionForeground} />
+              <Text style={[styles.videoTourText, compact && styles.compactVideoTourText, { color: colors.actionForeground }]}>Video tour</Text>
+            </Pressable>
+          )}
           {/* Action buttons */}
           <View style={[styles.cardActions, compact && styles.compactCardActions]}>
             <Pressable
@@ -170,13 +192,6 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
             </Pressable>
           </View>
         </View>
-
-        <PropertyMediaStrip
-          property={property}
-          activeIndex={activeImage}
-          onSelect={setActiveImage}
-          compact={compact}
-        />
 
           <Pressable
           onPress={() => router.push(`/property/${property.id}`)}
@@ -271,6 +286,14 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
         initialIndex={activeImage}
         onClose={() => setGalleryVisible(false)}
       />
+      {hasVideo && (
+        <PropertyVideoModal
+          property={property}
+          videoSource={videoSource}
+          visible={videoVisible}
+          onClose={() => setVideoVisible(false)}
+        />
+      )}
 
       {/* ── Contact buttons (Zameen-style) ─────────────────────────────── */}
       <View style={[ctaStyles.row, compact && ctaStyles.compactRow, { borderTopColor: colors.border, backgroundColor: colors.surfaceRaised }]}>
@@ -359,6 +382,10 @@ const styles = StyleSheet.create({
   compactStatusText: { fontSize: 9 },
   featuredBadge: { position: 'absolute', bottom: 10, left: 12, flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5 },
   featuredText:  { fontFamily: 'Inter_700Bold', fontSize: 8, color: '#1c2024', letterSpacing: 0.7 },
+  videoTourButton: { position: 'absolute', bottom: 10, right: 10, flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 9, borderWidth: 1, paddingHorizontal: 9, paddingVertical: 7 },
+  compactVideoTourButton: { bottom: 8, right: 8, gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6 },
+  videoTourText: { fontFamily: 'Inter_700Bold', fontSize: 10 },
+  compactVideoTourText: { fontSize: 9 },
   cardActions:   { position: 'absolute', top: 10, right: 10, flexDirection: 'row', gap: 7 },
   compactCardActions: { top: 8, right: 8, gap: 5 },
   circleAction:  { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1, overflow: 'hidden', shadowColor: '#d9b96d', shadowOpacity: 0.32, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 3 },

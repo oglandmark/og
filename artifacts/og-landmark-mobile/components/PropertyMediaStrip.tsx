@@ -338,6 +338,7 @@ const s = StyleSheet.create({
     borderBottomColor: 'rgba(200,164,90,0.15)',
     position: 'relative',
   },
+  compactStrip: { height: 58 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -345,6 +346,7 @@ const s = StyleSheet.create({
     paddingVertical: 10,
     gap: 8,
   },
+  compactRow: { paddingHorizontal: 10, paddingVertical: 7, gap: 6 },
   stripArrow: {
     position: 'absolute',
     top: 22,
@@ -360,6 +362,7 @@ const s = StyleSheet.create({
   },
   stripArrowLeft: { left: 4 },
   stripArrowRight: { right: 4 },
+  compactStripArrow: { top: 15, width: 24, height: 24, borderRadius: 12 },
 
   /* Image thumbnails */
   thumb: {
@@ -373,6 +376,7 @@ const s = StyleSheet.create({
   thumbSelected: {
     borderColor: '#c8a45a',
   },
+  compactThumb: { width: 42, height: 42, borderRadius: 7 },
   thumbImg: {
     width: '100%',
     height: '100%',
@@ -395,6 +399,7 @@ const s = StyleSheet.create({
     backgroundColor: '#0e2236',
     gap: 4,
   },
+  compactVideoTile: { width: 42, height: 42, borderRadius: 7 },
   videoTileDim: {
     opacity: 0.5,
   },

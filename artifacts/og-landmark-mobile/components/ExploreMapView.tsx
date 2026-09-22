@@ -427,7 +427,7 @@ export function ExploreMapView({
           mutedForeground: colors?.mutedForeground ?? '#587089',
         }} />
       </View>
-      {!showSearchArea && (
+       {!showSearchArea && !fullScreen && (
         <View
           pointerEvents="none"
           style={[s.mapContextBadge, { backgroundColor: colors?.actionGlass ?? '#173d5ed9', borderColor: colors?.actionGlassBorder ?? '#ffffff55' }]}
@@ -439,7 +439,7 @@ export function ExploreMapView({
           </View>
         </View>
       )}
-      <View style={[s.countBadge, {
+       {!fullScreen && <View style={[s.countBadge, {
         backgroundColor: colors?.card ?? '#ffffff',
         borderColor: colors?.border ?? '#d6e0e8',
       }]} pointerEvents="none">
@@ -447,7 +447,7 @@ export function ExploreMapView({
         <Text style={[s.countText, { color: colors?.foreground ?? '#102a43' }]}>
           {areaPropertyCount} on map
         </Text>
-      </View>
+       </View>}
       {properties.filter((property) => property.lat && property.lng).length === 0 && (
         <View pointerEvents="none" style={s.mapEmpty}>
           <View style={[s.mapEmptyCard, { backgroundColor: colors?.card ?? '#ffffff', borderColor: colors?.border ?? '#d6e0e8' }]}>

@@ -1296,7 +1296,25 @@ export default function ExploreScreen() {
             />
 
             <View style={ex.mapSearchOverlay}>
-              <View style={[ex.mapSearchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={ex.mapSearchEyebrow}>
+                <View style={ex.mapSearchEyebrowLabel}>
+                  <View style={[ex.mapSearchEyebrowDot, { backgroundColor: colors.gold }]} />
+                  <Text style={[ex.mapSearchEyebrowText, { color: colors.actionForeground }]}>
+                    SEARCH LOCATION
+                  </Text>
+                </View>
+                <Text style={[ex.mapSearchEyebrowValue, { color: colors.actionForeground }]}>
+                  Pakistan
+                </Text>
+              </View>
+              <View style={[ex.mapSearchBar, {
+                backgroundColor: colors.card,
+                borderColor: mapSearchFocused ? colors.action : colors.border,
+                borderWidth: mapSearchFocused ? 1.5 : 1,
+              }]}>
+                <View style={[ex.mapSearchIconWrap, { backgroundColor: colors.selectionBackground }]}>
+                  <Feather name="search" size={16} color={colors.action} />
+                </View>
                 <TextInput
                   value={query}
                   onChangeText={setQuery}
@@ -1307,18 +1325,48 @@ export default function ExploreScreen() {
                   onBlur={() => setTimeout(() => setMapSearchFocused(false), 250)}
                   onSubmitEditing={handleSearchSubmit}
                   returnKeyType="search"
-                  placeholder="Search Places"
+                  placeholder="Search a city, area or society"
                   placeholderTextColor={colors.mutedForeground}
                   style={[ex.mapSearchInput, { color: colors.foreground }]}
                 />
-                <Feather name="search" size={18} color={colors.mutedForeground} />
+                {query.length > 0 && (
+                  <Pressable
+                    onPress={() => {
+                      setQuery('');
+                      setSearchedPlace(null);
+                      setPlaceSuggestions([]);
+                    }}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear place search"
+                  >
+                    <Feather name="x-circle" size={17} color={colors.mutedForeground} />
+                  </Pressable>
+                )}
               </View>
+
+              {!mapSearchFocused && !query.trim() && (
+                <View style={ex.mapSearchHint}>
+                  <Feather name="move" size={13} color={colors.actionForeground} />
+                  <Text style={[ex.mapSearchHintText, { color: colors.actionForeground }]}>
+                    Search a place to recenter the map
+                  </Text>
+                </View>
+              )}
 
               {mapSearchFocused && query.trim().length >= 2 && (placeSuggestionsLoading || placeSuggestions.length > 0) && (
                 <View style={[ex.mapSuggestions, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={ex.mapSuggestionsHeader}>
+                    <Text style={[ex.mapSuggestionsLabel, { color: colors.mutedForeground }]}>
+                      SUGGESTED PLACES
+                    </Text>
+                    <Feather name="map-pin" size={13} color={colors.mutedForeground} />
+                  </View>
                   {placeSuggestionsLoading ? (
                     <View style={ex.mapSuggestionRow}>
-                      <ActivityIndicator size="small" color={colors.action} />
+                      <View style={[ex.mapSuggestionIcon, { backgroundColor: colors.selectionBackground }]}>
+                        <ActivityIndicator size="small" color={colors.action} />
+                      </View>
                       <Text style={[ex.mapSuggestionText, { color: colors.mutedForeground }]}>Finding locations…</Text>
                     </View>
                   ) : placeSuggestions.map((suggestion) => (
@@ -1330,7 +1378,9 @@ export default function ExploreScreen() {
                         handlePlaceSuggestion(suggestion);
                       }}
                     >
-                      <Feather name="map-pin" size={15} color={colors.action} />
+                      <View style={[ex.mapSuggestionIcon, { backgroundColor: colors.selectionBackground }]}>
+                        <Feather name="map-pin" size={14} color={colors.action} />
+                      </View>
                       <View style={{ flex: 1 }}>
                         <Text style={[ex.mapSuggestionText, { color: colors.foreground }]}>{suggestion.mainText}</Text>
                         {!!suggestion.secondaryText && (
@@ -1339,6 +1389,7 @@ export default function ExploreScreen() {
                           </Text>
                         )}
                       </View>
+                      <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
                     </Pressable>
                   ))}
                 </View>
@@ -1973,11 +2024,22 @@ const ex = StyleSheet.create({
   mapScreenTitle:   { fontFamily: 'Inter_700Bold', fontSize: 17 },
   mapScreenHeaderSide: { width: 92 },
   mapStage:        { flex: 1, position: 'relative' },
-  mapSearchOverlay: { position: 'absolute', top: 22, left: 18, right: 18, zIndex: 10 },
-  mapSearchBar:    { height: 52, borderRadius: 26, borderWidth: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, shadowColor: '#102a43', shadowOpacity: 0.16, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
-  mapSearchInput:  { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 14, paddingVertical: 0 },
-  mapSuggestions:  { marginTop: 8, borderRadius: 16, borderWidth: 1, overflow: 'hidden', shadowColor: '#102a43', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
-  mapSuggestionRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 15, paddingVertical: 12 },
+  mapSearchOverlay: { position: 'absolute', top: 16, left: 18, right: 18, zIndex: 10 },
+  mapSearchEyebrow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 5, marginBottom: 7 },
+  mapSearchEyebrowLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  mapSearchEyebrowDot: { width: 6, height: 6, borderRadius: 3 },
+  mapSearchEyebrowText: { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.4 },
+  mapSearchEyebrowValue: { fontFamily: 'Inter_500Medium', fontSize: 10, opacity: 0.82 },
+  mapSearchBar:    { minHeight: 54, borderRadius: 18, borderWidth: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, gap: 10, shadowColor: '#102a43', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 6 },
+  mapSearchIconWrap: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  mapSearchInput:  { flex: 1, fontFamily: 'Inter_500Medium', fontSize: 13, paddingVertical: 0 },
+  mapSearchHint: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, marginLeft: 5, paddingHorizontal: 9, paddingVertical: 6, borderRadius: 10, backgroundColor: 'rgba(16,42,67,0.68)' },
+  mapSearchHintText: { fontFamily: 'Inter_500Medium', fontSize: 10 },
+  mapSuggestions:  { marginTop: 8, borderRadius: 16, borderWidth: 1, overflow: 'hidden', shadowColor: '#102a43', shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
+  mapSuggestionsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, paddingTop: 12, paddingBottom: 8 },
+  mapSuggestionsLabel: { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.2 },
+  mapSuggestionRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 15, paddingVertical: 11 },
+  mapSuggestionIcon: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   mapSuggestionText: { fontFamily: 'Inter_500Medium', fontSize: 13 },
   mapSuggestionSub: { fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 2 },
   mapActions:      { flexDirection: 'row', gap: 12, paddingHorizontal: 18, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },

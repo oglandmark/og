@@ -177,7 +177,7 @@ export function ExploreMapView({
         </Pressable>
       )}
 
-      {!showSearchArea && (
+      {!showSearchArea && !fullScreen && (
         <View
           pointerEvents="none"
           style={[styles.mapContextBadge, {
@@ -193,7 +193,7 @@ export function ExploreMapView({
         </View>
       )}
 
-      <View
+      {!fullScreen && <View
         pointerEvents="none"
         style={[styles.countBadge, {
           backgroundColor: colors?.card ?? '#ffffff',
@@ -204,7 +204,7 @@ export function ExploreMapView({
         <Text style={[styles.countText, { color: colors?.foreground ?? '#102a43' }]}>
           {areaPropertyCount} on map
         </Text>
-      </View>
+      </View>}
 
       {validProperties.length === 0 && (
         <View pointerEvents="none" style={styles.mapEmpty}>

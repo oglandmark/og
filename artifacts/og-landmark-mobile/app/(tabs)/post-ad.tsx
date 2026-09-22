@@ -192,13 +192,29 @@ function NotLoggedInPrompt({ colors, topInset, insets, router }: any) {
         <Text style={[styles.loginCardBody, { color: colors.mutedForeground }]}>
           Log in or create a free account to list your property and reach thousands of verified buyers.
         </Text>
-        <AnimatedPressable
-          onPress={() => router.push({ pathname: '/(auth)/login', params: { from: 'post-ad' } })}
-          style={[styles.submit, { backgroundColor: colors.action }]}
-        >
-          <Text style={styles.submitText}>Log In / Sign Up</Text>
-          <Feather name="arrow-up-right" size={18} color={colors.actionForeground} />
-        </AnimatedPressable>
+        <View style={styles.authActionRow}>
+          <AnimatedPressable
+            onPress={() => router.push({ pathname: '/(auth)/login', params: { from: 'post-ad' } })}
+            style={[styles.authPrimaryButton, { backgroundColor: colors.action }]}
+            accessibilityRole="button"
+            accessibilityLabel="Log in to post an ad"
+          >
+            <Feather name="log-in" size={16} color={colors.actionForeground} />
+            <Text style={[styles.authPrimaryText, { color: colors.actionForeground }]}>Log In</Text>
+          </AnimatedPressable>
+          <Pressable
+            onPress={() => router.push('/(auth)/signup')}
+            style={({ pressed }) => [
+              styles.authSecondaryButton,
+              { borderColor: colors.action, backgroundColor: colors.card, opacity: pressed ? 0.72 : 1 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Sign up to post an ad"
+          >
+            <Feather name="user-plus" size={16} color={colors.action} />
+            <Text style={[styles.authSecondaryText, { color: colors.action }]}>Sign Up</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -1488,6 +1504,11 @@ const styles = StyleSheet.create({
   loginIconWrap: { width: 56, height: 56, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   loginCardTitle: { fontFamily: 'Inter_700Bold', fontSize: 17 },
   loginCardBody: { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 20, textAlign: 'center' },
+  authActionRow: { width: '100%', flexDirection: 'row', gap: 10, marginTop: 4 },
+  authPrimaryButton: { flex: 1, height: 48, borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  authPrimaryText: { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  authSecondaryButton: { flex: 1, height: 48, borderRadius: 13, borderWidth: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  authSecondaryText: { fontFamily: 'Inter_700Bold', fontSize: 13 },
   // selection screen
   postCard:          { flexDirection: 'row', alignItems: 'center', gap: 16, borderRadius: 18, borderWidth: 1, padding: 20, marginBottom: 14 },
   postIconWrap:      { width: 56, height: 56, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },

@@ -20,11 +20,6 @@
         "foregroundImage": "./assets/images/app-icon-adaptive-foreground.png",
         "backgroundColor": "#FFFFFF"
       },
-      "config": {
-        "googleMaps": {
-          "apiKey": ""
-        }
-      },
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",

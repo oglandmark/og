@@ -1,8 +1,10 @@
 /**
- * MapViewComponent — Web implementation using iframe + label-rich street tiles.
+ * MapViewComponent — Web implementation using iframe + Mapbox street tiles.
  */
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
+
+const MAPBOX_ACCESS_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
 
 interface InteractiveMapProps {
   region?: { latitude: number; longitude: number; latitudeDelta?: number; longitudeDelta?: number };
@@ -45,22 +47,15 @@ function buildLeafletHtml(lat: number, lng: number, zoom: number, interactive = 
     scrollWheelZoom:${interactive}, dragging:${interactive},
     touchZoom:${interactive}, doubleClickZoom:${interactive}
   }).setView([${lat},${lng}],${zoom});
-   // OSM includes street names, neighbourhoods, landmarks and POI labels.
-   // Esri World Street remains a readable fallback if OSM is unavailable.
-   var primaryTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-     maxZoom:19, maxNativeZoom:19, keepBuffer:3,
-     updateWhenIdle:false, updateWhenZooming:true,
-     attribution:'© OpenStreetMap contributors'
-   });
-   var detailTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-     maxZoom:19, maxNativeZoom:19, keepBuffer:3,
-     attribution:'Tiles © Esri'
-   });
-   var fallbackEnabled = false;
-   primaryTiles.on('tileerror', function() {
-     if (!fallbackEnabled) { fallbackEnabled = true; detailTiles.addTo(map); }
-   });
-   primaryTiles.addTo(map);
+    var mapboxTiles = L.tileLayer(
+      'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=' + encodeURIComponent(${JSON.stringify(MAPBOX_ACCESS_TOKEN)}),
+      {
+        maxZoom:22, maxNativeZoom:22, keepBuffer:3,
+        updateWhenIdle:false, updateWhenZooming:true,
+        attribution:'© Mapbox © OpenStreetMap'
+      }
+    );
+    mapboxTiles.addTo(map);
    var icon = L.divIcon({html:'<div class="custom-pin"></div>',iconSize:[28,28],iconAnchor:[14,28],className:''});
     var marker = L.marker([${lat},${lng}],{icon:icon, draggable:${interactive}}).addTo(map);
     function send(type, payload) {

@@ -68,7 +68,7 @@ test('web radius updates resize the existing circle without rebuilding the viewp
   );
 });
 
-test('Android map overrides reuse native Google Maps instead of Leaflet', () => {
+test('Android map overrides reuse the shared Mapbox WebView implementation', () => {
   const androidMap = readComponent('MapViewComponent.android.tsx');
   const androidExplore = readComponent('ExploreMapView.android.tsx');
   const nativeMap = readComponent('MapViewComponent.native.tsx');
@@ -76,10 +76,10 @@ test('Android map overrides reuse native Google Maps instead of Leaflet', () => 
 
   assert.match(androidMap, /MapViewComponent\.native/);
   assert.match(androidExplore, /ExploreMapView\.native/);
-  assert.doesNotMatch(androidMap, /Leaflet|WebView/);
-  assert.doesNotMatch(androidExplore, /Leaflet|WebView/);
-  assert.match(nativeMap, /const PROVIDER = PROVIDER_GOOGLE/);
-  assert.match(nativeExplore, /const PROVIDER = PROVIDER_GOOGLE/);
+  assert.match(nativeMap, /ExpoGoMapFallback/);
+  assert.match(nativeExplore, /ExpoGoMapFallback/);
+  assert.match(nativeMap, /satellite=\{satellite\}/);
+  assert.match(readComponent('ExpoGoMapFallback.tsx'), /EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN/);
 });
 
 test('Search this area stays available after a map move and a radius change', () => {
@@ -90,14 +90,11 @@ test('Search this area stays available after a map move and a radius change', ()
   assert.match(web, /onSearchArea\(lastBounds\.current\)/);
   assert.match(native, /setShowSearchArea\(true\)/);
   assert.match(native, /onSearchArea\(\{/);
-  assert.match(native, /onChange=\{handleAreaRadiusChange\}/);
+  assert.match(native, /onChange=\{setAreaRadiusKm\}/);
 });
 
-test('native maps expose loading, retry, and exact map-area bounds behavior', () => {
+test('native Mapbox maps keep exact map-area bounds behavior', () => {
   const native = readComponent('ExploreMapView.native.tsx');
-  assert.match(native, /Loading Google Maps/);
-  assert.match(native, /Google Maps could not load/);
-  assert.match(native, /Retry map/);
   assert.match(native, /north: currentRegion\.latitude \+ currentRegion\.latitudeDelta \/ 2/);
   assert.match(native, /centerLat: currentRegion\.latitude/);
 });
@@ -108,7 +105,8 @@ test('Expo Go map keeps its WebView mounted, supports touch gestures, and follow
   assert.match(fallback, /initialHtmlRef/);
   assert.match(fallback, /window\.__updateMapState/);
   assert.match(fallback, /window\.__zoomMap/);
-  assert.match(fallback, /scrollEnabled=\{true\}/);
+  assert.match(fallback, /scrollEnabled=\{false\}/);
+  assert.match(fallback, /overScrollMode="never"/);
   assert.match(fallback, /touchZoom: false/);
   assert.match(fallback, /pinchStartDistance/);
   assert.match(fallback, /areaCircle\.setLatLng\(map\.getCenter\(\)\)/);

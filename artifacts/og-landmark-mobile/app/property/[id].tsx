@@ -992,7 +992,7 @@ function PropertyDetailScreen() {
           </View>
         )}
 
-        {/* ── Google Maps card ──────────────────────────────────── */}
+        {/* ── Mapbox location card ───────────────────────────────── */}
         <PropertyDetailMap property={property} colors={colors} />
 
         {property.locationDetails && (
@@ -1367,7 +1367,7 @@ const styles = StyleSheet.create({
   fixedCallBtn: { flex: 1, height: 46, borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   fixedCallTxt: { fontFamily: 'Inter_700Bold', fontSize: 15 },
   fixedWaBtn:   { width: 46, height: 46, alignItems: 'center', justifyContent: 'center' },
-  // ── Property detail Google Maps card ────────────────────────────────────────
+  // ── Property detail Mapbox location card ────────────────────────────────────
   detailMapCard:         { borderWidth: 1, borderRadius: 20, overflow: 'hidden', marginBottom: 12, elevation: 2, shadowColor: '#1c2024', shadowOpacity: 0.06, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } },
   detailMapSurface:      { height: 200, overflow: 'hidden', position: 'relative' },
   detailMapNoCoords:     { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', gap: 10 },

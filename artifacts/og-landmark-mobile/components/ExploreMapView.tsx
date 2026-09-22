@@ -1,5 +1,5 @@
 /**
- * ExploreMapView — Web: iframe with Leaflet showing all property pins.
+ * ExploreMapView — Web: iframe with Mapbox-backed tiles showing all property pins.
  *
  * Web parity with native:
  *  • OG gold price-pill markers per property (with selected styling)
@@ -20,6 +20,8 @@ import {
   MAP_AREA_BLUE,
   mapAreaRadiusMeters,
 } from '@/components/mapRadius';
+
+const MAPBOX_ACCESS_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
 
 export interface PropertyLike {
   id: number;
@@ -231,22 +233,15 @@ function buildExploreHtml(
     keyboard:true,
     tap:true
   }).setView([${mapCenterLat},${mapCenterLng}],${zoom});
-    var primaryTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-     maxZoom: 19, maxNativeZoom: 19, keepBuffer: 3,
-     updateWhenIdle: false, updateWhenZooming: true
-  });
-   var detailTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 19, maxNativeZoom: 19, keepBuffer: 3, opacity: 0.98
-  });
-  var fallbackEnabled = false;
-  primaryTiles.on('tileerror', function() {
-    if (!fallbackEnabled) {
-       fallbackEnabled = true;
-       map.removeLayer(primaryTiles);
-      detailTiles.addTo(map);
-    }
-  });
-  primaryTiles.addTo(map);
+   var mapboxTiles = L.tileLayer(
+     'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=' + encodeURIComponent(${JSON.stringify(MAPBOX_ACCESS_TOKEN)}),
+     {
+       maxZoom: 22, maxNativeZoom: 22, keepBuffer: 3,
+       updateWhenIdle: false, updateWhenZooming: true,
+       attribution: '&copy; Mapbox &copy; OpenStreetMap'
+     }
+   );
+   mapboxTiles.addTo(map);
 
   var clusterGroup = L.markerClusterGroup && ${validProps.length} > 1
     ? L.markerClusterGroup({

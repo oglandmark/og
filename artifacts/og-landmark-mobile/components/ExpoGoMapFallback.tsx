@@ -3,6 +3,8 @@ import { Pressable, View, StyleSheet } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { Feather } from '@expo/vector-icons';
 
+const MAPBOX_ACCESS_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
+
 export type ExpoGoMapPoint = {
   id?: string | number;
   latitude: number;
@@ -17,6 +19,7 @@ type Props = {
   points?: ExpoGoMapPoint[];
   radiusKm?: number;
   interactive?: boolean;
+  satellite?: boolean;
   onSelect?: (id: string | number) => void;
   onPress?: (latitude: number, longitude: number) => void;
   onDragEnd?: (latitude: number, longitude: number) => void;
@@ -39,9 +42,12 @@ function buildMapHtml({
   points,
   radiusKm,
   interactive,
+  satellite,
 }: Required<Pick<Props, 'latitude' | 'longitude'>> & Omit<Props, 'latitude' | 'longitude'>) {
   const pointsJson = toSafeJson(points ?? []);
   const radius = Math.min(10, Math.max(0.4, Math.round(Number(radiusKm ?? 0) * 10) / 10));
+  const mapboxToken = toSafeJson(MAPBOX_ACCESS_TOKEN);
+  const mapboxStyle = satellite ? 'satellite-streets-v12' : 'streets-v12';
 
   return `<!doctype html>
 <html>
@@ -75,7 +81,9 @@ function buildMapHtml({
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     (function () {
-      var points = ${pointsJson};
+       var points = ${pointsJson};
+       var mapboxToken = ${mapboxToken};
+       var mapboxStyle = '${mapboxStyle}';
       var interactive = ${Boolean(interactive)};
       var map = L.map('map', {
         zoomControl: false,
@@ -87,17 +95,11 @@ function buildMapHtml({
         scrollWheelZoom: interactive,
         doubleClickZoom: interactive,
       }).setView([${latitude}, ${longitude}], ${zoom ?? 13});
-      var primary = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19, crossOrigin: true, attribution: '&copy; OpenStreetMap contributors'
-      });
-      var fallback = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 19, attribution: 'Tiles &copy; Esri'
-      });
-      var fallbackUsed = false;
-      primary.on('tileerror', function () {
-        if (!fallbackUsed) { fallbackUsed = true; fallback.addTo(map); }
-      });
-      primary.addTo(map);
+       var mapboxTiles = L.tileLayer(
+         'https://api.mapbox.com/styles/v1/mapbox/' + mapboxStyle + '/tiles/256/{z}/{x}/{y}@2x?access_token=' + encodeURIComponent(mapboxToken),
+         { maxZoom: 22, maxNativeZoom: 22, crossOrigin: true, attribution: '&copy; Mapbox &copy; OpenStreetMap' }
+       );
+       mapboxTiles.addTo(map);
 
       function send(type, payload) {
         window.ReactNativeWebView && window.ReactNativeWebView.postMessage(
@@ -229,6 +231,7 @@ export function ExpoGoMapFallback(props: Props) {
       points: props.points,
       radiusKm: props.radiusKm,
       interactive: props.interactive,
+       satellite: props.satellite,
     });
   }
 

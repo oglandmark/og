@@ -2,7 +2,7 @@
  * LocationPicker  — Professional property location picker
  *   • Google Places Autocomplete (Pakistan-scoped)
  *   • GPS with accuracy display + low-accuracy warning
- *   • Tap / drag on Google Maps to pin
+ *   • Tap / drag on the Mapbox map to pin
  *   • Manual coordinate entry
  *   • "Confirm Location" step before finalising
  *
@@ -888,7 +888,7 @@ export function LocationPicker({
       {showManual && (
         <View style={[lp.manualBox, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           <Text style={[lp.manualLabel, { color: colors.mutedForeground }]}>
-            Enter coordinates manually — open Google Maps, long-press any location to copy them.
+            Enter coordinates manually — open a map app, long-press any location to copy them.
           </Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <View style={{ flex: 1 }}>

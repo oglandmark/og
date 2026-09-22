@@ -9,7 +9,7 @@
  *  • Compact popup preview: title / type / area / location + select action
  */
 import React, { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import type { ImageSourcePropType } from 'react-native';
 import { Feather } from '@expo/vector-icons';
@@ -50,7 +50,6 @@ interface Props {
   count?: number;
   colors: any;
   onSelect: (id: number) => void;
-  onSearchArea?: (bounds: MapBounds) => void;
   selectedId?: string | number;
   userLat?: number;
   userLng?: number;
@@ -351,21 +350,15 @@ export function ExploreMapView({
   userLng,
   centerLat,
   centerLng,
-  onSearchArea,
   fullScreen,
 }: Props) {
   const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
   const [areaPropertyCount, setAreaPropertyCount] = useState(0);
   const iframeRef = React.useRef<any>(null);
-  const boundsInitialized = React.useRef(false);
-  const [showSearchArea, setShowSearchArea] = useState(false);
   const html = useMemo(
     () => buildExploreHtml(properties, selectedId, userLat, userLng, centerLat, centerLng),
     [properties, selectedId, userLat, userLng, centerLat, centerLng],
   );
-
-  // Track the latest bounds reported by the iframe so the search control can act on them.
-  const lastBounds = React.useRef<MapBounds | null>(null);
 
   // Listen for postMessage from iframe on web
   React.useEffect(() => {
@@ -374,10 +367,6 @@ export function ExploreMapView({
       if (!data || typeof data !== 'object') return;
       if (data.type === 'mapSelect') {
         onSelect(data.id);
-      } else if (data.type === 'mapBounds' && data.bounds) {
-        lastBounds.current = data.bounds as MapBounds;
-        if (boundsInitialized.current) setShowSearchArea(true);
-        else boundsInitialized.current = true;
       } else if (data.type === 'mapAreaCount' && Number.isFinite(data.count)) {
         setAreaPropertyCount(Math.max(0, Math.round(data.count)));
       }
@@ -427,7 +416,7 @@ export function ExploreMapView({
           mutedForeground: colors?.mutedForeground ?? '#587089',
         }} />
       </View>
-       {!showSearchArea && !fullScreen && (
+       {!fullScreen && (
         <View
           pointerEvents="none"
           style={[s.mapContextBadge, { backgroundColor: colors?.actionGlass ?? '#173d5ed9', borderColor: colors?.actionGlassBorder ?? '#ffffff55' }]}
@@ -456,20 +445,6 @@ export function ExploreMapView({
             <Text style={[s.mapEmptyText, { color: colors?.mutedForeground ?? '#587089' }]}>Move the map or expand the range to explore more.</Text>
           </View>
         </View>
-      )}
-      {showSearchArea && onSearchArea && (
-        <Pressable
-          style={[s.searchAreaButton, fullScreen && s.fullScreenSearchAreaButton, { backgroundColor: colors?.card ?? '#ffffff', borderColor: colors?.border ?? '#d6e0e8' }]}
-          onPress={() => {
-            if (lastBounds.current) onSearchArea(lastBounds.current);
-            setShowSearchArea(false);
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="Search properties in this map area"
-        >
-          <Feather name="search" size={14} color={colors?.action ?? '#102a43'} />
-          <Text style={[s.searchAreaText, { color: colors?.action ?? '#102a43' }]}>Search this area</Text>
-        </Pressable>
       )}
     </View>
   );
@@ -514,25 +489,6 @@ const s = StyleSheet.create({
   },
   countDot: { width: 7, height: 7, borderRadius: 4 },
   countText: { fontFamily: 'Inter_700Bold', fontSize: 11 },
-  searchAreaButton: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    borderRadius: 17,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderWidth: 1,
-    shadowColor: '#102a43',
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
-  },
-  fullScreenSearchAreaButton: { top: 10, left: 18 },
-  searchAreaText: { fontSize: 12, fontWeight: '800' },
   mapContextBadge: {
     position: 'absolute',
     top: 12,

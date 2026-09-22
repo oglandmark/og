@@ -91,10 +91,9 @@ test('full-screen map does not render a Search this area action', () => {
   assert.match(native, /onChange=\{setAreaRadiusKm\}/);
 });
 
-test('native Mapbox maps keep exact map-area bounds behavior', () => {
+test('native Mapbox maps keep the area center synced after map movement', () => {
   const native = readComponent('ExploreMapView.native.tsx');
-  assert.match(native, /north: currentRegion\.latitude \+ currentRegion\.latitudeDelta \/ 2/);
-  assert.match(native, /centerLat: currentRegion\.latitude/);
+  assert.match(native, /setAreaCenter\(\{ latitude: region\.latitude, longitude: region\.longitude \}\)/);
 });
 
 test('Expo Go map keeps its WebView mounted, supports touch gestures, and follows the map center', () => {

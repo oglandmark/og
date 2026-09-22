@@ -646,7 +646,7 @@ export default function ExploreScreen() {
         .sort((a: any, b: any) => a._distKm - b._distKm) as typeof matched;
     }
 
-    // Map bounds filter (after "Search this area" tap)
+    // Optional map bounds filter retained for existing saved map state.
     if (mapBoundsFilter && !radiusLocation) {
       const { north, south, east, west } = mapBoundsFilter;
       matched = matched.filter((p) => {

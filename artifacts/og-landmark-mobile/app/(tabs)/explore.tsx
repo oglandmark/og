@@ -1138,6 +1138,7 @@ export default function ExploreScreen() {
         data={isProjectsMode ? [] : (viewMode === 'list' ? visibleProperties : [])}
         keyExtractor={(p, index) => `${p.id}-${index}`}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={viewMode !== 'map'}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarHeight, paddingTop: 14 }}
         ListHeaderComponent={
           <>

@@ -494,6 +494,11 @@ function ExploreMapViewWithGoogleMaps({
          loadingEnabled
          loadingBackgroundColor="#f3f6f8"
          loadingIndicatorColor="#c8a45a"
+         scrollEnabled
+         zoomEnabled
+         zoomTapEnabled
+         rotateEnabled
+         pitchEnabled
          onMapLoaded={() => {
           setMapReady(true);
           setMapError(false);

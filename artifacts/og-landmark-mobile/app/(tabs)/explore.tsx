@@ -535,7 +535,7 @@ export default function ExploreScreen() {
           })
           .catch(() => {
             if (!cancelled) {
-              setGeoError('Live properties could not be refreshed. Showing the properties already loaded on this device.');
+              setGeoError('');
             }
           })
           .finally(() => {
@@ -585,7 +585,7 @@ export default function ExploreScreen() {
         })
         .catch(() => {
           if (!cancelled) {
-            setGeoError('Live map results could not be refreshed. Showing the properties already loaded on this device.');
+            setGeoError('');
           }
         })
         .finally(() => {
@@ -903,7 +903,6 @@ export default function ExploreScreen() {
       <View style={[ex.stickyHeader, { paddingTop: topInset + 10, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <View style={ex.headerIntro}>
           <Text style={[ex.headerEyebrow, { color: colors.primary }]}>THE LANDMARK SEARCH</Text>
-          <Text style={[ex.headerTitle, { color: colors.foreground }]}>Find your next address</Text>
         </View>
 
         {/* Buy / Rent toggle */}

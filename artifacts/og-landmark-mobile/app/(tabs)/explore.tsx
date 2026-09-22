@@ -2007,7 +2007,7 @@ const ex = StyleSheet.create({
   mapScreenTitle:   { fontFamily: 'Inter_700Bold', fontSize: 17 },
   mapScreenHeaderSide: { width: 92 },
   mapStage:        { flex: 1, position: 'relative' },
-  mapSearchOverlay: { position: 'absolute', top: 14, left: 30, right: 30, zIndex: 10 },
+  mapSearchOverlay: { position: 'absolute', top: 14, left: 60, right: 18, zIndex: 10 },
   mapSearchEyebrow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 5, marginBottom: 7 },
   mapSearchEyebrowLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   mapSearchEyebrowDot: { width: 6, height: 6, borderRadius: 3 },

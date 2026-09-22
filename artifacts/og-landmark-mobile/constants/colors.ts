@@ -19,15 +19,15 @@ const colors = {
     tint: '#c8a45a',
 
     // Core surfaces
-    background: '#f4f0e7',
+    background: '#f8fafc',
     foreground: '#1c2024',
 
     // Cards / elevated surfaces
-    card: '#fffaf1',
+    card: '#ffffff',
     cardForeground: '#1c2024',
-    glassCard: '#fffaf1f2',
-    glassBorder: '#eadfcb',
-    glassOverlay: '#fffaf180',
+    glassCard: '#fffffff2',
+    glassBorder: '#e4e9ef',
+    glassOverlay: '#ffffff80',
 
     // Primary action color (buttons, links, active states)
     primary: '#c7a263',
@@ -37,7 +37,7 @@ const colors = {
     action: '#102a43',
     actionDeep: '#081e34',
     actionSoft: '#244d6b',
-    actionForeground: '#fffaf1',
+    actionForeground: '#ffffff',
     actionPressed: '#0b1f33',
     // Premium glass control tokens
     gold: '#d8b36a',
@@ -52,8 +52,8 @@ const colors = {
     actionGlow: '#9ab5bd',
 
     // Editorial surfaces used for quiet hierarchy and premium depth
-    surfaceRaised: '#fffdf8',
-    surfaceTint: '#eee7d9',
+    surfaceRaised: '#ffffff',
+    surfaceTint: '#f1f4f7',
     surfaceDeep: '#173c52',
     shadow: '#173247',
     focusRing: '#b98d45',
@@ -65,11 +65,11 @@ const colors = {
     selectionForeground: '#102F49',
 
     // Secondary / less-emphasis interactive surfaces
-    secondary: '#ebe6da',
+    secondary: '#eef2f5',
     secondaryForeground: '#1c2024',
 
     // Muted / subdued elements (dividers, timestamps, placeholders)
-    muted: '#eeeae1',
+    muted: '#edf1f4',
     mutedForeground: '#72746f',
 
     // Accent highlights (badges, selected items, focus rings)
@@ -85,8 +85,8 @@ const colors = {
     warningForeground: '#ffffff',
 
     // Borders and input outlines
-    border: '#ded9cf',
-    input: '#ded9cf',
+    border: '#dfe5eb',
+    input: '#dfe5eb',
   },
 
   // Shared layout tokens. Keeping these beside the semantic palette prevents

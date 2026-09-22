@@ -1197,7 +1197,7 @@ export default function ExploreScreen() {
             )}
 
             {/* Map view */}
-            {!isProjectsMode && viewMode === 'map' && (
+            {!isProjectsMode && viewMode === 'map' && !mapScreenOpen && (
               <ExploreMapView
                 properties={filteredProperties.map((p: any) => ({
                   ...p,

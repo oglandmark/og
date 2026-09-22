@@ -901,10 +901,6 @@ export default function ExploreScreen() {
     <View style={[ex.screen, { backgroundColor: colors.background }]}>
       {/* ── Sticky header ── */}
       <View style={[ex.stickyHeader, { paddingTop: topInset + 10, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <View style={ex.headerIntro}>
-          <Text style={[ex.headerEyebrow, { color: colors.primary }]}>THE LANDMARK SEARCH</Text>
-        </View>
-
         {/* Buy / Rent toggle */}
         <View style={[ex.purposeRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {(['Buy', 'Rent'] as const).map((p) => (

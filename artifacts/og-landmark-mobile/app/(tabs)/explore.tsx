@@ -390,6 +390,19 @@ const QUICK_FILTERS: QuickFilter[] = [
   { label: 'Verified', icon: 'shield',        section: 'verified' },
 ];
 
+const EXPLORE_PAGE_SIZE = 12;
+
+function paginationItems(currentPage: number, totalPages: number): Array<number | 'ellipsis'> {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+  if (currentPage <= 3) return [1, 2, 3, 'ellipsis', totalPages];
+  if (currentPage >= totalPages - 2) {
+    return [1, 'ellipsis', totalPages - 2, totalPages - 1, totalPages];
+  }
+  return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages];
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // Main screen
 // ══════════════════════════════════════════════════════════════════════════════
@@ -482,6 +495,7 @@ export default function ExploreScreen() {
   const [remoteOffset, setRemoteOffset]         = useState(0);
   const [remoteHasMore, setRemoteHasMore]       = useState(false);
   const [remoteLoadingMore, setRemoteLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage]           = useState(1);
   const searchRef = useRef<React.ElementRef<typeof TextInput>>(null);
 
   // ── Effects ────────────────────────────────────────────────────────────────
@@ -643,6 +657,19 @@ export default function ExploreScreen() {
     return radiusLocation ? matched : sortProperties(matched, filters.sortBy);
   }, [allProperties, filters, query, nearMe, searchedPlace, mapBoundsFilter]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredProperties.length / EXPLORE_PAGE_SIZE));
+  const visibleProperties = useMemo(
+    () => filteredProperties.slice(
+      (currentPage - 1) * EXPLORE_PAGE_SIZE,
+      currentPage * EXPLORE_PAGE_SIZE,
+    ),
+    [filteredProperties, currentPage],
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, filters, nearMe, searchedPlace, mapBoundsFilter, viewMode]);
+
   const draftResultCount = useMemo(
     () => allProperties.filter((p) => matchesProperty(p, draftFilters, query)).length,
     [allProperties, draftFilters, query],
@@ -682,6 +709,21 @@ export default function ExploreScreen() {
   }, [
     remoteLoadingMore, remoteHasMore, isProjectsMode, viewMode,
     nearMe, searchedPlace, mapBoundsFilter, remoteOffset,
+  ]);
+
+  const handlePageChange = useCallback(async (page: number) => {
+    if (page < 1 || page === currentPage || isProjectsMode || viewMode !== 'list') return;
+
+    const loadedPages = Math.ceil(filteredProperties.length / EXPLORE_PAGE_SIZE);
+    if (page > loadedPages && remoteHasMore) {
+      await loadMoreProperties();
+    }
+
+    setCurrentPage(page);
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, [
+    currentPage, filteredProperties.length, isProjectsMode, viewMode,
+    remoteHasMore, loadMoreProperties,
   ]);
 
   // Track which quick-filter sections have active state (for chip highlight)
@@ -1094,7 +1136,7 @@ export default function ExploreScreen() {
       {/* ── Scrollable body ── */}
       <FlatList
         ref={flatListRef}
-        data={isProjectsMode ? [] : (viewMode === 'list' ? filteredProperties : [])}
+        data={isProjectsMode ? [] : (viewMode === 'list' ? visibleProperties : [])}
         keyExtractor={(p, index) => `${p.id}-${index}`}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarHeight, paddingTop: 14 }}
@@ -1167,16 +1209,24 @@ export default function ExploreScreen() {
         maxToRenderPerBatch={8}
         windowSize={5}
         updateCellsBatchingPeriod={30}
-        onEndReached={loadMoreProperties}
-        onEndReachedThreshold={0.65}
         renderItem={({ item: p }) => (
           <PropertyCard property={p} compact />
         )}
-        ListFooterComponent={remoteLoadingMore ? (
-          <View style={{ paddingVertical: 18 }}>
-            <ActivityIndicator size="small" color={colors.action} />
-          </View>
-        ) : null}
+        ListFooterComponent={
+          !isProjectsMode && viewMode === 'list' && filteredProperties.length > EXPLORE_PAGE_SIZE ? (
+            <ExplorePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              loading={remoteLoadingMore}
+              colors={colors}
+              onPageChange={handlePageChange}
+            />
+          ) : remoteLoadingMore ? (
+            <View style={{ paddingVertical: 18 }}>
+              <ActivityIndicator size="small" color={colors.action} />
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
           !isProjectsMode && viewMode === 'list' ? (
             <NoResultsView colors={colors} onAdjust={() => openFilterSheet()} onClear={resetAllFilters} />

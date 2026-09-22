@@ -7,7 +7,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator, Alert, FlatList, Image, InteractionManager, Modal, Platform, Pressable,
-  ScrollView, StyleSheet, View,
+  NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
@@ -498,7 +498,31 @@ export default function ExploreScreen() {
   const [remoteHasMore, setRemoteHasMore]       = useState(false);
   const [remoteLoadingMore, setRemoteLoadingMore] = useState(false);
   const [currentPage, setCurrentPage]           = useState(1);
+  const [exploreToolsVisible, setExploreToolsVisible] = useState(true);
   const searchRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const lastExploreScrollY = useRef(0);
+  const exploreScrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (exploreScrollTimer.current) clearTimeout(exploreScrollTimer.current);
+  }, []);
+
+  const handleExploreScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const nextY = Math.max(0, event.nativeEvent.contentOffset.y);
+    const delta = nextY - lastExploreScrollY.current;
+    lastExploreScrollY.current = nextY;
+
+    if (nextY <= 4 || delta < -3) {
+      setExploreToolsVisible((visible) => visible ? visible : true);
+    } else if (delta > 3) {
+      setExploreToolsVisible((visible) => visible ? false : visible);
+    }
+
+    if (exploreScrollTimer.current) clearTimeout(exploreScrollTimer.current);
+    exploreScrollTimer.current = setTimeout(() => {
+      setExploreToolsVisible(true);
+    }, 260);
+  }, []);
 
   // ── Effects ────────────────────────────────────────────────────────────────
 
@@ -904,7 +928,8 @@ export default function ExploreScreen() {
 
   return (
     <View style={[ex.screen, { backgroundColor: colors.background }]}>
-      {/* ── Sticky header ── */}
+      {/* ── Collapsible search and filter tools ── */}
+      {exploreToolsVisible && (
       <View style={[ex.stickyHeader, { paddingTop: topInset + 10, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         {/* Buy / Rent toggle */}
         <View style={[ex.purposeRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -966,26 +991,22 @@ export default function ExploreScreen() {
             {hasActiveFilters && <View style={[ex.filterDot, { backgroundColor: colors.gold }]}><Text style={[ex.filterDotText, { color: '#1c2024' }]}>{activeChips.length}</Text></View>}
           </Pressable>
 
-          {/* List / Map toggle */}
-          <View style={[ex.viewToggle, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceRaised + '18' }]} />
-             {(['list', 'map'] as const).map((m) => (
-                <Pressable
-                  key={m}
-                  onPress={() => {
-                    if (m === 'map') {
-                      setViewMode('map');
-                      setMapScreenOpen(true);
-                    } else {
-                      setViewMode('list');
-                    }
-                  }}
-                  style={({ pressed }) => [ex.viewToggleBtn, viewMode === m && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }, { opacity: pressed ? 0.74 : 1 }]}
-                >
-                 <Feather name={m === 'list' ? 'list' : 'map'} size={15} color={viewMode === m ? colors.selectionForeground : colors.mutedForeground} />
-              </Pressable>
-            ))}
-          </View>
+           {/* Map action */}
+           <Pressable
+             onPress={() => {
+               setViewMode('map');
+               setMapScreenOpen(true);
+             }}
+             style={({ pressed }) => [
+               ex.mapAction,
+               { backgroundColor: colors.actionDeep, borderColor: colors.actionDeep, opacity: pressed ? 0.8 : 1 },
+             ]}
+             accessibilityRole="button"
+             accessibilityLabel="Open map view"
+           >
+             <Text style={[ex.mapActionText, { color: colors.actionForeground }]}>Map</Text>
+             <Feather name="map" size={16} color={colors.actionForeground} />
+           </Pressable>
         </View>
 
         {/* Pakistan location autocomplete */}
@@ -1147,6 +1168,7 @@ export default function ExploreScreen() {
           </ScrollView>
         )}
       </View>
+      )}
 
       {/* ── Scrollable body ── */}
       <FlatList
@@ -1155,6 +1177,8 @@ export default function ExploreScreen() {
         keyExtractor={(p, index) => `${p.id}-${index}`}
         showsVerticalScrollIndicator={false}
         scrollEnabled={viewMode !== 'map'}
+        onScroll={handleExploreScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarHeight, paddingTop: 14 }}
         ListHeaderComponent={
           <>
@@ -2027,8 +2051,8 @@ const ex = StyleSheet.create({
   filterBtn:       { width: 50, height: 50, borderRadius: 17, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   filterDot:       { position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   filterDotText:   { fontFamily: 'Inter_700Bold', fontSize: 8 },
-  viewToggle:      { flexDirection: 'row', borderRadius: 15, borderWidth: 1, overflow: 'hidden', alignItems: 'center' },
-  viewToggleBtn:   { width: 36, height: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 14 },
+  mapAction:       { width: 72, height: 50, borderRadius: 17, borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  mapActionText:   { fontFamily: 'Inter_700Bold', fontSize: 12, letterSpacing: 0.2 },
   // Recent searches
   recentDropdown:  { borderRadius: 14, borderWidth: 1, marginBottom: 6, overflow: 'hidden' },
   recentHeader:    { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 10 },

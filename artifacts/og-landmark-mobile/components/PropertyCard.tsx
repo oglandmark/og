@@ -194,40 +194,6 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
           </View>
         </View>
 
-        <View style={[ctaStyles.row, compact && ctaStyles.compactRow, { borderTopColor: colors.border, backgroundColor: colors.surfaceRaised }]}>
-          <Pressable
-            onPress={(e) => { e.stopPropagation(); void Linking.openURL(`sms:${property.agentPhone ?? '03042569000'}`); }}
-            style={({ pressed }) => [ctaStyles.smsBtn, compact && ctaStyles.compactButton, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.75 : 1 }]}
-            hitSlop={6}
-            accessibilityRole="button"
-            accessibilityLabel="Send SMS"
-          >
-            <Feather name="message-square" size={14} color={colors.foreground} />
-            <Text style={[ctaStyles.smsTxt, { color: colors.foreground }]}>SMS</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={(e) => { e.stopPropagation(); void Linking.openURL(`tel:${property.agentPhone ?? '03042569000'}`); }}
-            style={({ pressed }) => [ctaStyles.callBtn, compact && ctaStyles.compactButton, { backgroundColor: colors.action, opacity: pressed ? 0.82 : 1 }]}
-            hitSlop={6}
-            accessibilityRole="button"
-            accessibilityLabel="Call agent"
-          >
-            <Feather name="phone" size={14} color={colors.actionForeground} />
-            <Text style={[ctaStyles.callTxt, { color: colors.actionForeground }]}>Call</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={(e) => { e.stopPropagation(); void Linking.openURL(`https://wa.me/92${(property.agentPhone ?? '03042569000').replace(/\D/g, '').replace(/^0/, '')}`); }}
-            style={({ pressed }) => [ctaStyles.waBtn, { opacity: pressed ? 0.75 : 1 }]}
-            hitSlop={6}
-            accessibilityRole="button"
-            accessibilityLabel="WhatsApp agent"
-          >
-            <WhatsAppLogo size={compact ? 30 : 34} />
-          </Pressable>
-        </View>
-
         <Pressable
           onPress={() => router.push(`/property/${property.id}`)}
             style={({ pressed }) => [styles.body, compact && styles.compactBody, { borderTopColor: colors.glassBorder, opacity: pressed ? 0.82 : 1 }]}
@@ -271,6 +237,40 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
               </Text>
             </View>
           </View>
+        </Pressable>
+      </View>
+
+      <View style={[ctaStyles.row, compact && ctaStyles.compactRow, { borderTopColor: colors.border, backgroundColor: colors.surfaceRaised }]}>
+        <Pressable
+          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`sms:${property.agentPhone ?? '03042569000'}`); }}
+          style={({ pressed }) => [ctaStyles.smsBtn, compact && ctaStyles.compactButton, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.75 : 1 }]}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel="Send SMS"
+        >
+          <Feather name="message-square" size={14} color={colors.foreground} />
+          <Text style={[ctaStyles.smsTxt, { color: colors.foreground }]}>SMS</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`tel:${property.agentPhone ?? '03042569000'}`); }}
+          style={({ pressed }) => [ctaStyles.callBtn, compact && ctaStyles.compactButton, { backgroundColor: colors.action, opacity: pressed ? 0.82 : 1 }]}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel="Call agent"
+        >
+          <Feather name="phone" size={14} color={colors.actionForeground} />
+          <Text style={[ctaStyles.callTxt, { color: colors.actionForeground }]}>Call</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`https://wa.me/92${(property.agentPhone ?? '03042569000').replace(/\D/g, '').replace(/^0/, '')}`); }}
+          style={({ pressed }) => [ctaStyles.waBtn, { opacity: pressed ? 0.75 : 1 }]}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel="WhatsApp agent"
+        >
+          <WhatsAppLogo size={compact ? 30 : 34} />
         </Pressable>
       </View>
 

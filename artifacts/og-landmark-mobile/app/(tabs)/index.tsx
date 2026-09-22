@@ -177,7 +177,7 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
             <View style={s.drawerLangRow}>
               {(['en', 'ur'] as const).map((l) => (
                 <Pressable key={l} onPress={() => { void setLang(l); }} style={[s.drawerLangBtn, { borderColor: lang === l ? colors.action : colors.border, backgroundColor: lang === l ? colors.action : 'transparent' }]}>
-                  <Text style={[s.drawerLangBtnText, { color: lang === l ? colors.actionForeground : colors.mutedForeground }]}>{l === 'en' ? '🇬🇧 English' : '🇵🇰 اردو'}</Text>
+                <Text style={[s.drawerLangBtnText, { color: lang === l ? colors.actionForeground : colors.mutedForeground }]}>{l === 'en' ? 'English' : 'اردو'}</Text>
                 </Pressable>
               ))}
             </View>
@@ -1797,7 +1797,7 @@ export default function HomeScreen() {
             onPress={() => setDrawerOpen(true)}
             accessibilityRole="button" accessibilityLabel="Open navigation menu" testID="open-navigation-menu"
           >
-            <View style={s.headerIcon}>
+            <View style={[s.headerIcon, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Feather name="menu" size={21} color={colors.action} />
             </View>
           </Pressable>
@@ -1807,7 +1807,7 @@ export default function HomeScreen() {
 
         {/* Buy / Rent toggle */}
         <View
-          style={[s.switcher, { backgroundColor: colors.secondary }]}
+          style={[s.switcher, { backgroundColor: colors.surfaceTint, borderColor: colors.border }]}
           onLayout={(e) => setSwitcherW(e.nativeEvent.layout.width)}
         >
           {/* Sliding pill */}
@@ -1831,7 +1831,7 @@ export default function HomeScreen() {
                 setTransaction(item);
                 setQuery('');
               }}
-              style={s.switchItem}
+              style={({ pressed }) => [s.switchItem, { opacity: pressed ? 0.72 : 1 }]}
             >
               <Text style={[s.switchText, { color: transaction === item ? colors.actionForeground : colors.mutedForeground }]}>{item}</Text>
             </Pressable>
@@ -1839,7 +1839,12 @@ export default function HomeScreen() {
         </View>
 
         {/* Smart Search */}
-        <Pressable style={[s.searchRow, { shadowColor: colors.foreground, shadowOpacity: 0.07, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 3 }]} onPress={() => router.push({ pathname: '/explore', params: { type: transaction, search: query } })}>
+        <Pressable
+          style={({ pressed }) => [s.searchRow, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, shadowColor: colors.shadow, opacity: pressed ? 0.9 : 1 }]}
+          onPress={() => router.push({ pathname: '/explore', params: { type: transaction, search: query } })}
+          accessibilityRole="button"
+          accessibilityLabel={`Search ${transaction === 'Buy' ? 'properties to buy' : 'properties to rent'}`}
+        >
           <View style={[s.searchIconWrap, { backgroundColor: colors.action + '18' }]}>
             <Feather name="search" size={16} color={colors.action} />
           </View>
@@ -2123,14 +2128,14 @@ const s = StyleSheet.create({
   screen: { flex: 1 },
 
   // Header
-  header:           { paddingHorizontal: 18, paddingBottom: 18 },
+  header:           { paddingHorizontal: 18, paddingBottom: 20 },
   topBar:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
-  headerIcon:       { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0, elevation: 0 },
-  switcher:         { flexDirection: 'row', borderRadius: 30, alignSelf: 'flex-start', padding: 4, marginBottom: 14 },
+  headerIcon:       { width: 42, height: 42, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0, elevation: 0 },
+  switcher:         { flexDirection: 'row', borderRadius: 30, alignSelf: 'flex-start', padding: 4, marginBottom: 15, borderWidth: 1 },
   switchPill:       { position: 'absolute', top: 4, left: 4, bottom: 4, borderRadius: 26 },
   switchItem:       { paddingHorizontal: 24, paddingVertical: 11, borderRadius: 26, zIndex: 1 },
   switchText:       { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
-  searchRow:        { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ffffff', borderRadius: 30, paddingLeft: 10, paddingRight: 10, height: 54, gap: 9 },
+  searchRow:        { flexDirection: 'row', alignItems: 'center', borderRadius: 22, borderWidth: 1, paddingLeft: 10, paddingRight: 10, height: 58, gap: 9, shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 3 },
   searchIconWrap:   { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   searchInput:      { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13 },
   locationChip:     { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 7, maxWidth: 128 },

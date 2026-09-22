@@ -31,7 +31,7 @@ function TabIcon({
         styles.tabIconWrap,
         focused && {
           backgroundColor: colors.selectionTint,
-          borderColor: colors.selectionBorder + '18',
+          borderColor: colors.selectionBorder + '55',
         },
       ]}
     >
@@ -43,11 +43,10 @@ function TabIcon({
 // ── Plus icon (post-ad) keeps its own raised circle treatment ────────────────
 function PostAdIcon({ color, focused }: { color: ColorValue; focused: boolean }) {
   const colors = useColors();
-  void focused;
 
   return (
-       <View style={[styles.postIcon, { backgroundColor: colors.action, borderColor: colors.background }]}>
-      <Feather name="plus" size={22} color={colors.actionForeground} />
+       <View style={[styles.postIcon, { backgroundColor: focused ? colors.gold : colors.action, borderColor: colors.background }]}>
+       <Feather name="plus" size={focused ? 23 : 21} color={focused ? colors.goldForeground : colors.actionForeground} />
     </View>
   );
 }
@@ -84,8 +83,8 @@ export default function TabLayout() {
         tabBarHideOnKeyboard: true,
         tabBarActiveTintColor:   colors.action,
         tabBarInactiveTintColor: colors.mutedForeground,
-        tabBarLabelStyle: { fontFamily: 'Inter_500Medium', fontSize: 10, letterSpacing: 0.2, marginTop: 1 },
-        tabBarItemStyle: { paddingTop: 1 },
+         tabBarLabelStyle: { fontFamily: 'Inter_600SemiBold', fontSize: 10, letterSpacing: 0.35, marginTop: 2 },
+         tabBarItemStyle: { paddingTop: 2 },
         tabBarStyle: {
           position: 'absolute',
           height:        tabBarHeight,
@@ -98,8 +97,8 @@ export default function TabLayout() {
         tabBarBackground: () =>
           Platform.OS === 'web' ? (
             <View style={[StyleSheet.absoluteFill, styles.tabGlass, { borderTopColor: colors.glassBorder }]}>
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceRaised + '20' }]} />
+               <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
             </View>
           ) : (
             <BlurView
@@ -139,15 +138,15 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  tabGlass: { overflow: 'hidden', borderTopWidth: 1, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
+  tabGlass: { overflow: 'hidden', borderTopWidth: 1, borderTopLeftRadius: 28, borderTopRightRadius: 28 },
   tabIconWrap: {
-    width: 40,
-    height: 30,
-    borderRadius: 15,
+    width: 44,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  postIcon:  { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginTop: -16, borderWidth: 4 },
+  postIcon:  { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', marginTop: -18, borderWidth: 4 },
 });

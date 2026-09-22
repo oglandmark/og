@@ -821,7 +821,7 @@ export default function ExploreScreen() {
     await saveSearch({ label, query, filters: { location: filters.cities.join(', '), minPrice: filters.minPrice, maxPrice: filters.maxPrice } });
     setSaveModalOpen(false);
     setSaveName('');
-    Alert.alert('Search Saved ✓', `"${label}" has been saved to your profile.`);
+    Alert.alert('Search Saved', `"${label}" has been saved to your profile.`);
   }, [saveName, query, filters, isLoggedIn]);
 
   function buildAutoLabel(): string {
@@ -845,6 +845,10 @@ export default function ExploreScreen() {
     <View style={[ex.screen, { backgroundColor: colors.background }]}>
       {/* ── Sticky header ── */}
       <View style={[ex.stickyHeader, { paddingTop: topInset + 10, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+        <View style={ex.headerIntro}>
+          <Text style={[ex.headerEyebrow, { color: colors.primary }]}>THE LANDMARK SEARCH</Text>
+          <Text style={[ex.headerTitle, { color: colors.foreground }]}>Find your next address</Text>
+        </View>
 
         {/* Buy / Rent toggle */}
         <View style={[ex.purposeRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -852,7 +856,7 @@ export default function ExploreScreen() {
             <Pressable
               key={p}
               onPress={() => setFilters((prev) => ({ ...prev, purpose: p }))}
-               style={[ex.purposeTab, filters.purpose === p && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }]}
+               style={({ pressed }) => [ex.purposeTab, filters.purpose === p && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }, { opacity: pressed ? 0.74 : 1 }]}
             >
                <Text style={[ex.purposeTabText, { color: filters.purpose === p ? colors.selectionForeground : colors.mutedForeground, fontWeight: filters.purpose === p ? '600' : '400' }]}>{p}</Text>
             </Pressable>
@@ -878,7 +882,7 @@ export default function ExploreScreen() {
         {/* Search row */}
         <View style={ex.searchRow}>
           <View style={[ex.searchBar, { backgroundColor: colors.glassCard, borderColor: searchFocused ? colors.action : colors.glassBorder }]}>
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.14)' }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceRaised + '18' }]} />
             <Feather name="search" size={17} color={colors.mutedForeground} style={ex.searchIcon} />
             <TextInput
               ref={searchRef}
@@ -900,17 +904,17 @@ export default function ExploreScreen() {
           </View>
 
           {/* Filter button */}
-           <Pressable onPress={() => openFilterSheet()} style={[ex.filterBtn, { backgroundColor: hasActiveFilters ? colors.selectionBackground : colors.glassCard, borderColor: hasActiveFilters ? colors.selectionBorder : colors.glassBorder, borderWidth: hasActiveFilters ? 1.5 : 1 }]}>
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+           <Pressable onPress={() => openFilterSheet()} style={({ pressed }) => [ex.filterBtn, { backgroundColor: hasActiveFilters ? colors.selectionBackground : colors.glassCard, borderColor: hasActiveFilters ? colors.selectionBorder : colors.glassBorder, borderWidth: hasActiveFilters ? 1.5 : 1, opacity: pressed ? 0.76 : 1 }]}>
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceRaised + '18' }]} />
              <Feather name="sliders" size={17} color={hasActiveFilters ? colors.selectionForeground : colors.foreground} />
             {hasActiveFilters && <View style={[ex.filterDot, { backgroundColor: colors.gold }]}><Text style={[ex.filterDotText, { color: '#1c2024' }]}>{activeChips.length}</Text></View>}
           </Pressable>
 
           {/* List / Map toggle */}
           <View style={[ex.viewToggle, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceRaised + '18' }]} />
             {(['list', 'map'] as const).map((m) => (
-               <Pressable key={m} onPress={() => setViewMode(m)} style={[ex.viewToggleBtn, viewMode === m && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }]}>
+               <Pressable key={m} onPress={() => setViewMode(m)} style={({ pressed }) => [ex.viewToggleBtn, viewMode === m && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }, { opacity: pressed ? 0.74 : 1 }]}>
                  <Feather name={m === 'list' ? 'list' : 'map'} size={15} color={viewMode === m ? colors.selectionForeground : colors.mutedForeground} />
               </Pressable>
             ))}
@@ -998,7 +1002,7 @@ export default function ExploreScreen() {
           >
              <Feather name="crosshair" size={12} color={nearMe ? colors.selectionForeground : colors.mutedForeground} />
              <Text style={[ex.quickChipText, { color: nearMe ? colors.selectionForeground : colors.foreground, fontWeight: nearMe ? '600' : '400' }]}>
-              {nearMeLoading ? 'Locating…' : nearMe ? 'Near Me ✓' : 'Near Me'}
+              {nearMeLoading ? 'Locating…' : 'Near Me'}
             </Text>
           </Pressable>
 
@@ -1096,13 +1100,13 @@ export default function ExploreScreen() {
                   {filteredProperties.length > 0 && (
                     <>
                       <Pressable
-                        onPress={() => Alert.alert('Search Alert Set ✓', 'We\'ll notify you when new matching properties are listed.')}
-                        style={[ex.saveBtn, { borderColor: colors.border }]}
+                        onPress={() => Alert.alert('Search Alert Set', 'We\'ll notify you when new matching properties are listed.')}
+                        style={({ pressed }) => [ex.saveBtn, { borderColor: colors.border, opacity: pressed ? 0.72 : 1 }]}
                       >
                         <Feather name="bell" size={13} color={colors.action} />
                         <Text style={[ex.saveBtnText, { color: colors.action }]}>Alert</Text>
                       </Pressable>
-                      <Pressable onPress={() => setSaveModalOpen(true)} style={[ex.saveBtn, { borderColor: colors.border }]}>
+                      <Pressable onPress={() => setSaveModalOpen(true)} style={({ pressed }) => [ex.saveBtn, { borderColor: colors.border, opacity: pressed ? 0.72 : 1 }]}>
                         <Feather name="bookmark" size={13} color={colors.action} />
                         <Text style={[ex.saveBtnText, { color: colors.action }]}>Save</Text>
                       </Pressable>
@@ -1674,10 +1678,10 @@ function NoResultsView({ colors, message, onAdjust, onClear }: { colors: any; me
       </Text>
       <View style={nr.suggestions}>
         {[
-          '• Increase your budget range',
-          '• Select additional cities',
-          '• Remove some specific filters',
-          '• Try a broader property type',
+          'Increase your budget range',
+          'Select additional cities',
+          'Remove some specific filters',
+          'Try a broader property type',
         ].map((s) => (
           <Text key={s} style={[nr.suggestion, { color: colors.mutedForeground }]}>{s}</Text>
         ))}
@@ -1700,21 +1704,24 @@ function NoResultsView({ colors, message, onAdjust, onClear }: { colors: any; me
 
 const ex = StyleSheet.create({
   screen:          { flex: 1 },
-  stickyHeader:    { borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 20, paddingBottom: 8 },
+  stickyHeader:    { borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 20, paddingBottom: 10 },
+  headerIntro:     { paddingTop: 2, paddingBottom: 15 },
+  headerEyebrow:   { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 2, marginBottom: 5 },
+  headerTitle:     { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 25, lineHeight: 30 },
   // Purpose toggle
   purposeRow:      { flexDirection: 'row', borderRadius: 16, borderWidth: 1, marginBottom: 12, overflow: 'hidden', alignSelf: 'stretch', padding: 3 },
   purposeTab:      { flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 13 },
   purposeTabText:  { fontFamily: 'Inter_700Bold', fontSize: 12, letterSpacing: 0.3 },
   // Search row
   searchRow:       { flexDirection: 'row', gap: 8, marginBottom: 10 },
-  searchBar:       { flex: 1, height: 46, borderRadius: 15, borderWidth: 1, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', paddingRight: 10 },
+  searchBar:       { flex: 1, height: 50, borderRadius: 17, borderWidth: 1, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', paddingRight: 10 },
   searchIcon:      { paddingHorizontal: 12, zIndex: 1 },
   searchInput:     { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, zIndex: 1, paddingVertical: 0 },
-  filterBtn:       { width: 46, height: 46, borderRadius: 15, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  filterBtn:       { width: 50, height: 50, borderRadius: 17, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   filterDot:       { position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   filterDotText:   { fontFamily: 'Inter_700Bold', fontSize: 8 },
   viewToggle:      { flexDirection: 'row', borderRadius: 15, borderWidth: 1, overflow: 'hidden', alignItems: 'center' },
-  viewToggleBtn:   { width: 34, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 13 },
+  viewToggleBtn:   { width: 36, height: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 14 },
   // Recent searches
   recentDropdown:  { borderRadius: 14, borderWidth: 1, marginBottom: 6, overflow: 'hidden' },
   recentHeader:    { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 10 },

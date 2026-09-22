@@ -19,37 +19,44 @@ const colors = {
     tint: '#c8a45a',
 
     // Core surfaces
-    background: '#f8f6f1',
+    background: '#f4f0e7',
     foreground: '#1c2024',
 
     // Cards / elevated surfaces
-    card: '#ffffff',
+    card: '#fffaf1',
     cardForeground: '#1c2024',
-    glassCard: '#fffffff0',
-    glassBorder: '#ffffffb8',
-    glassOverlay: '#ffffff80',
+    glassCard: '#fffaf1f2',
+    glassBorder: '#eadfcb',
+    glassOverlay: '#fffaf180',
 
     // Primary action color (buttons, links, active states)
-    primary: '#c8a45a',
+    primary: '#c7a263',
     primaryForeground: '#1c2024',
 
     // Official OG Landmark navy for interactive controls and CTAs
     action: '#102a43',
     actionDeep: '#081e34',
     actionSoft: '#244d6b',
-    actionForeground: '#ffffff',
+    actionForeground: '#fffaf1',
     actionPressed: '#0b1f33',
     // Premium glass control tokens
-    gold: '#d9b96d',
+    gold: '#d8b36a',
     goldForeground: '#1c2024',
     goldGlass: '#d9b96db8',
-    goldGlassBorder: '#f5dfa0',
+    goldGlassBorder: '#e8c985',
     actionGlass: '#173d5ed9',
     actionGlassStrong: '#081e34e8',
     actionGlassSoft: '#6d9bb52e',
     actionGlassBorder: '#ffffff55',
     actionGlassHighlight: '#ffffff24',
-    actionGlow: '#9bc6df',
+    actionGlow: '#9ab5bd',
+
+    // Editorial surfaces used for quiet hierarchy and premium depth
+    surfaceRaised: '#fffdf8',
+    surfaceTint: '#eee7d9',
+    surfaceDeep: '#173c52',
+    shadow: '#173247',
+    focusRing: '#b98d45',
 
     // Premium selected-state treatment for category/filter/tab/chip controls
     selectionBackground: '#fbfcfd',

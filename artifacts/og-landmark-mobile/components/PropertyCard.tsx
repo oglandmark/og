@@ -60,7 +60,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
     <View
       style={[
         styles.card,
-        { backgroundColor: colors.glassCard, borderColor: colors.glassBorder },
+        { backgroundColor: colors.glassCard, borderColor: colors.glassBorder, shadowColor: colors.shadow },
         compact && styles.compactCard,
       ]}
     >
@@ -175,9 +175,9 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
           onSelect={setActiveImage}
         />
 
-        <Pressable
+          <Pressable
           onPress={() => router.push(`/property/${property.id}`)}
-          style={[styles.body, { borderTopColor: colors.glassBorder }]}
+            style={({ pressed }) => [styles.body, { borderTopColor: colors.glassBorder, opacity: pressed ? 0.82 : 1 }]}
           testID={`property-card-${property.id}`}
           accessibilityRole="button"
           accessibilityLabel={`${property.title}. ${formatPrice(property.price, property.status)}. ${property.city}. Open property details.`}
@@ -270,7 +270,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
       />
 
       {/* ── Contact buttons (Zameen-style) ─────────────────────────────── */}
-      <View style={[ctaStyles.row, { borderTopColor: colors.border }]}>
+      <View style={[ctaStyles.row, { borderTopColor: colors.border, backgroundColor: colors.surfaceRaised }]}>
         <Pressable
           onPress={(e) => { e.stopPropagation(); void Linking.openURL(`sms:${property.agentPhone ?? '03042569000'}`); }}
           style={({ pressed }) => [ctaStyles.smsBtn, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.75 : 1 }]}
@@ -334,11 +334,11 @@ const ctaStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-  card:          { width: 268, borderRadius: 18, overflow: 'hidden', marginRight: 14, borderWidth: 1, shadowColor: '#1c2024', shadowOpacity: 0.07, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
+  card:          { width: 268, borderRadius: 22, overflow: 'hidden', marginRight: 14, borderWidth: 1, shadowOpacity: 0.1, shadowRadius: 16, shadowOffset: { width: 0, height: 7 }, elevation: 3 },
   compactCard:   { width: '100%', marginRight: 0, marginBottom: 14 },
   pressable:     { flex: 1 },
   imageTap:      { flex: 1 },
-  imageWrap:     { height: 174, position: 'relative' },
+  imageWrap:     { height: 182, position: 'relative' },
   image:         { width: '100%', height: '100%' },
   galleryArrow:  { position: 'absolute', top: '44%', width: 30, height: 30, borderRadius: 15, backgroundColor: '#07152199', borderWidth: 1, borderColor: '#ffffff55', alignItems: 'center', justifyContent: 'center', zIndex: 4 },
   galleryArrowLeft: { left: 8 },
@@ -353,10 +353,10 @@ const styles = StyleSheet.create({
   featuredText:  { fontFamily: 'Inter_700Bold', fontSize: 8, color: '#1c2024', letterSpacing: 0.7 },
   cardActions:   { position: 'absolute', top: 10, right: 10, flexDirection: 'row', gap: 7 },
   circleAction:  { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1, overflow: 'hidden', shadowColor: '#d9b96d', shadowOpacity: 0.32, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
-  body:          { padding: 13, overflow: 'hidden', borderTopWidth: 1 },
+  body:          { padding: 15, overflow: 'hidden', borderTopWidth: 1 },
   bodyHighlight: { position: 'absolute', top: 0, left: 0, right: 0, height: 36 },
-  price:         { fontFamily: 'Inter_700Bold', fontSize: 16, marginBottom: 6 },
-  title:         { fontFamily: 'PlayfairDisplay_500Medium', fontSize: 13, lineHeight: 18, marginBottom: 10 },
+  price:         { fontFamily: 'Inter_700Bold', fontSize: 17, letterSpacing: 0.1, marginBottom: 6 },
+  title:         { fontFamily: 'PlayfairDisplay_500Medium', fontSize: 14, lineHeight: 19, marginBottom: 10 },
   metaRow:       { flexDirection: 'row', alignItems: 'center', gap: 5 },
   metaSpacer:    { flex: 1 },
   location:      { fontFamily: 'Inter_400Regular', fontSize: 11 },

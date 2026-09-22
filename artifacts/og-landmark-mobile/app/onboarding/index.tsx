@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   ImageSourcePropType,
   Platform,
   Pressable,
@@ -92,6 +93,7 @@ export default function OnboardingScreen() {
   const { width } = useWindowDimensions();
   const { completeOnboarding } = useOnboarding();
   const [page, setPage] = useState(0);
+  const [isCompleting, setIsCompleting] = useState(false);
   const scrollRef = useRef<ScrollView | null>(null);
 
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
@@ -105,18 +107,22 @@ export default function OnboardingScreen() {
 
   const handleNext = useCallback(() => {
     if (isLastPage) {
-      void completeOnboarding().then(() => router.replace('/(tabs)'));
+      if (isCompleting) return;
+      setIsCompleting(true);
+      void completeOnboarding().then(() => router.replace('/(tabs)')).catch(() => setIsCompleting(false));
       return;
     }
     const nextPage = page + 1;
     scrollRef.current?.scrollTo({ x: nextPage * width, animated: true });
     handlePageChange(nextPage);
-  }, [completeOnboarding, handlePageChange, isLastPage, page, router, width]);
+  }, [completeOnboarding, handlePageChange, isCompleting, isLastPage, page, router, width]);
 
   const handleSkip = useCallback(() => {
+    if (isCompleting) return;
+    setIsCompleting(true);
     void Haptics.selectionAsync();
-    void completeOnboarding().then(() => router.replace('/(tabs)'));
-  }, [completeOnboarding, router]);
+    void completeOnboarding().then(() => router.replace('/(tabs)')).catch(() => setIsCompleting(false));
+  }, [completeOnboarding, isCompleting, router]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.actionDeep }]}>
@@ -147,7 +153,7 @@ export default function OnboardingScreen() {
         <View style={styles.topBar}>
           <BrandMark inverse />
           {!isLastPage ? (
-            <Pressable onPress={handleSkip} hitSlop={12} accessibilityRole="button" accessibilityLabel="Skip onboarding">
+            <Pressable onPress={handleSkip} disabled={isCompleting} hitSlop={12} accessibilityRole="button" accessibilityLabel="Skip onboarding">
               <Text style={[styles.skip, { color: colors.background + 'CC' }]}>Skip</Text>
             </Pressable>
           ) : (
@@ -207,18 +213,25 @@ export default function OnboardingScreen() {
         </View>
         <Pressable
           onPress={handleNext}
+          disabled={isCompleting}
           style={({ pressed }) => [
             styles.nextButton,
-            { backgroundColor: colors.primary, opacity: pressed ? 0.84 : 1 },
+            { backgroundColor: colors.primary, opacity: pressed || isCompleting ? 0.72 : 1 },
           ]}
           accessibilityRole="button"
           accessibilityLabel={isLastPage ? 'Get started' : 'Next'}
           testID={isLastPage ? 'get-started-button' : 'next-onboarding-button'}
         >
-          <Text style={[styles.nextText, { color: colors.action }]}>
-            {isLastPage ? 'Get Started' : 'Next'}
-          </Text>
-          <Feather name="arrow-right" size={17} color={colors.action} />
+          {isCompleting ? (
+            <ActivityIndicator size="small" color={colors.action} />
+          ) : (
+            <>
+              <Text style={[styles.nextText, { color: colors.action }]}>
+                {isLastPage ? 'Get Started' : 'Next'}
+              </Text>
+              <Feather name="arrow-right" size={17} color={colors.action} />
+            </>
+          )}
         </Pressable>
         <Text style={[styles.footer, { color: colors.background + '70' }]}>
           Verified property. Better living.

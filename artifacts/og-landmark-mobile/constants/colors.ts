@@ -72,6 +72,10 @@ const colors = {
     // Destructive actions (delete, error states)
     destructive: '#b94b42',
     destructiveForeground: '#ffffff',
+    success: '#2d7a57',
+    successForeground: '#ffffff',
+    warning: '#b9822b',
+    warningForeground: '#ffffff',
 
     // Borders and input outlines
     border: '#ded9cf',

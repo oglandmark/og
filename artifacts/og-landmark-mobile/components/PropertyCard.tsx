@@ -113,7 +113,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
           )}
           <LinearGradient
             pointerEvents="none"
-            colors={['#15191d00', '#15191d4d']}
+            colors={[colors.actionDeep + '00', colors.actionDeep + '66']}
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
             style={styles.imageShade}
@@ -210,10 +210,10 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
               if (property.agriDetails) {
                 return (
                   <>
-                    <Fact icon="maximize" value={`${property.agriDetails.sizeAcres}`} label="Acres" colors={colors} accentColor="#1a6b3a" />
-                    <Fact icon="droplet" value={property.agriDetails.nehriWater ? 'Yes' : 'No'} label="Nehri" colors={colors} accentColor="#1a6b3a" />
-                    <Fact icon="zap" value={property.agriDetails.tubeWell ? 'Yes' : 'No'} label="TubeWell" colors={colors} accentColor="#1a6b3a" />
-                    <Fact icon="sun" value={(property.agriDetails.mainCrop || '').split(' ')[0] || '—'} label="Crop" colors={colors} accentColor="#1a6b3a" />
+                    <Fact icon="maximize" value={`${property.agriDetails.sizeAcres}`} label="Acres" colors={colors} accentColor={colors.success} />
+                    <Fact icon="droplet" value={property.agriDetails.nehriWater ? 'Yes' : 'No'} label="Nehri" colors={colors} accentColor={colors.success} />
+                    <Fact icon="zap" value={property.agriDetails.tubeWell ? 'Yes' : 'No'} label="TubeWell" colors={colors} accentColor={colors.success} />
+                    <Fact icon="sun" value={(property.agriDetails.mainCrop || '').split(' ')[0] || '—'} label="Crop" colors={colors} accentColor={colors.success} />
                   </>
                 );
               }
@@ -223,10 +223,10 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
                 const hasTube  = (property.amenities ?? []).some((a) => a.toLowerCase().includes('tube'));
                 return (
                   <>
-                    <Fact icon="maximize" value={areaFmt.value} label={areaFmt.label} colors={colors} accentColor="#1a6b3a" />
-                    <Fact icon="droplet" value={hasNehri ? 'Yes' : '—'} label="Nehri" colors={colors} accentColor="#1a6b3a" />
-                    <Fact icon="zap" value={hasTube ? 'Yes' : '—'} label="TubeWell" colors={colors} accentColor="#1a6b3a" />
-                    <Fact icon="tag" value={property.type} label="Type" colors={colors} accentColor="#1a6b3a" />
+                    <Fact icon="maximize" value={areaFmt.value} label={areaFmt.label} colors={colors} accentColor={colors.success} />
+                    <Fact icon="droplet" value={hasNehri ? 'Yes' : '—'} label="Nehri" colors={colors} accentColor={colors.success} />
+                    <Fact icon="zap" value={hasTube ? 'Yes' : '—'} label="TubeWell" colors={colors} accentColor={colors.success} />
+                    <Fact icon="tag" value={property.type} label="Type" colors={colors} accentColor={colors.success} />
                   </>
                 );
               }

@@ -81,9 +81,11 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarHideOnKeyboard: true,
         tabBarActiveTintColor:   colors.action,
         tabBarInactiveTintColor: colors.mutedForeground,
-        tabBarLabelStyle: { fontFamily: 'Inter_500Medium', fontSize: 10 },
+        tabBarLabelStyle: { fontFamily: 'Inter_500Medium', fontSize: 10, letterSpacing: 0.2, marginTop: 1 },
+        tabBarItemStyle: { paddingTop: 1 },
         tabBarStyle: {
           position: 'absolute',
           height:        tabBarHeight,

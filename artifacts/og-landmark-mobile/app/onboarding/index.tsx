@@ -1,6 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
 import {
-  ImageBackground,
   ImageSourcePropType,
   Platform,
   Pressable,
@@ -13,6 +12,7 @@ import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Image as ExpoImage } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
@@ -51,28 +51,36 @@ const SLIDES: OnboardingSlide[] = [
   },
 ];
 
-function Slide({ slide, width, colors }: {
+function Slide({ slide, width, colors, index, total }: {
   slide: OnboardingSlide;
   width: number;
   colors: ReturnType<typeof useColors>;
+  index: number;
+  total: number;
 }) {
   return (
     <View style={[styles.slide, { width, backgroundColor: colors.actionDeep }]}>
-      <ImageBackground source={slide.image} style={styles.image} imageStyle={styles.imageRadius} resizeMode="cover">
+      <ExpoImage source={slide.image} style={styles.image} contentFit="cover" transition={250} />
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         <LinearGradient
-          colors={[colors.actionDeep + '10', colors.action + '72', colors.actionDeep + 'F4']}
-          locations={[0, 0.42, 1]}
+          colors={[colors.actionDeep + '18', colors.actionDeep + '30', colors.actionDeep + 'E8']}
+          locations={[0, 0.48, 1]}
           style={StyleSheet.absoluteFill}
         />
-        <View style={styles.slideContent}>
-          <View style={[styles.slideIcon, { backgroundColor: colors.primary }]}>
-            <Feather name={slide.icon} size={18} color={colors.action} />
-          </View>
-          <Text style={[styles.eyebrow, { color: colors.primary }]}>{slide.eyebrow}</Text>
-          <Text style={[styles.title, { color: colors.background }]}>{slide.title}</Text>
-          <Text style={[styles.description, { color: colors.background + 'CC' }]}>{slide.description}</Text>
+      </View>
+      <View style={styles.slideMeta}>
+        <View style={[styles.slideIcon, { backgroundColor: colors.primary }]}>
+          <Feather name={slide.icon} size={18} color={colors.action} />
         </View>
-      </ImageBackground>
+        <Text style={[styles.slideCount, { color: colors.background + 'CC' }]}>
+          {String(index + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
+        </Text>
+      </View>
+      <View style={styles.slideContent}>
+        <Text style={[styles.eyebrow, { color: colors.primary }]}>{slide.eyebrow}</Text>
+        <Text style={[styles.title, { color: colors.background }]}>{slide.title}</Text>
+        <Text style={[styles.description, { color: colors.background + 'CC' }]}>{slide.description}</Text>
+      </View>
     </View>
   );
 }
@@ -101,11 +109,12 @@ export default function OnboardingScreen() {
       return;
     }
     const nextPage = page + 1;
-    scrollRef.current?.scrollTo({ x: nextPage * width, animated: false });
+    scrollRef.current?.scrollTo({ x: nextPage * width, animated: true });
     handlePageChange(nextPage);
   }, [completeOnboarding, handlePageChange, isLastPage, page, router, width]);
 
   const handleSkip = useCallback(() => {
+    void Haptics.selectionAsync();
     void completeOnboarding().then(() => router.replace('/(tabs)'));
   }, [completeOnboarding, router]);
 
@@ -165,7 +174,7 @@ export default function OnboardingScreen() {
         contentContainerStyle={styles.carouselContent}
       >
         {SLIDES.map((slide, index) => (
-          <Slide key={slide.title} slide={slide} width={width - 40} colors={colors} />
+          <Slide key={slide.title} slide={slide} width={width - 40} colors={colors} index={index} total={SLIDES.length} />
         ))}
       </ScrollView>
 
@@ -252,8 +261,9 @@ const styles = StyleSheet.create({
   carousel: { flex: 1 },
   carouselContent: { paddingHorizontal: 20, flexGrow: 1, gap: 12 },
   slide: { flex: 1, minHeight: 0, paddingHorizontal: 0, borderRadius: 28, overflow: 'hidden' },
-  image: { flex: 1, justifyContent: 'flex-end', overflow: 'hidden' },
-  imageRadius: { borderRadius: 28 },
+  image: StyleSheet.absoluteFill,
+  slideMeta: { position: 'absolute', top: 20, left: 20, right: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  slideCount: { fontFamily: 'Inter_700Bold', fontSize: 11, letterSpacing: 1.4 },
   slideContent: { padding: 24, paddingBottom: 28 },
   slideIcon: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginBottom: 18 },
   eyebrow: { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 2, marginBottom: 9 },

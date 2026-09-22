@@ -245,22 +245,31 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
           <Text numberOfLines={1} style={[styles.title, compact && styles.compactTitle, { color: colors.foreground }]}>{property.title}</Text>
           <View style={styles.metaRow}>
             <Feather name="map-pin" size={13} color={colors.mutedForeground} />
-            <Text numberOfLines={1} style={[styles.location, compact && styles.compactLocation, { color: colors.mutedForeground }]}>{property.city}</Text>
-            <View style={styles.metaSpacer} />
-            {property.bedrooms > 0 && (
-              <>
-                <Feather name="home" size={13} color={colors.mutedForeground} />
-                <Text style={[styles.location, compact && styles.compactLocation, { color: colors.mutedForeground }]}>{property.bedrooms} bd</Text>
-              </>
-            )}
-            {property.area > 0 && (
-              <>
-                <Feather name="maximize" size={13} color={colors.mutedForeground} />
-                <Text style={[styles.location, compact && styles.compactLocation, { color: colors.mutedForeground }]}>
-                  {areaDisplay.value} {areaDisplay.label}
-                </Text>
-              </>
-            )}
+            <Text numberOfLines={1} style={[styles.location, styles.metaCity, compact && styles.compactLocation, { color: colors.mutedForeground }]}>{property.city}</Text>
+            <View style={[styles.metaMetric, compact && styles.compactMetaMetric]}>
+              <Feather name="home" size={12} color={colors.mutedForeground} />
+              <Text numberOfLines={1} style={[styles.metaMetricText, { color: colors.mutedForeground }]}>
+                {property.bedrooms > 0 ? `${property.bedrooms} Beds` : '— Beds'}
+              </Text>
+            </View>
+            <View style={[styles.metaMetric, compact && styles.compactMetaMetric]}>
+              <Feather name="droplet" size={12} color={colors.mutedForeground} />
+              <Text numberOfLines={1} style={[styles.metaMetricText, { color: colors.mutedForeground }]}>
+                {property.bathrooms > 0 ? `${property.bathrooms} Baths` : '— Baths'}
+              </Text>
+            </View>
+            <View style={[styles.metaMetric, compact && styles.compactMetaMetric]}>
+              <Feather name="maximize" size={12} color={colors.mutedForeground} />
+              <Text numberOfLines={1} style={[styles.metaMetricText, { color: colors.mutedForeground }]}>
+                {property.area > 0 ? `${areaDisplay.value} ${areaDisplay.label}` : '— Marla'}
+              </Text>
+            </View>
+            <View style={[styles.metaMetric, compact && styles.compactMetaMetric]}>
+              <Feather name="tag" size={12} color={colors.mutedForeground} />
+              <Text numberOfLines={1} style={[styles.metaMetricText, { color: colors.mutedForeground }]}>
+                {property.type || '—'}
+              </Text>
+            </View>
           </View>
         </Pressable>
       </View>
@@ -334,8 +343,11 @@ const styles = StyleSheet.create({
   compactPrice: { fontSize: 15, marginBottom: 4 },
   title:         { fontFamily: 'PlayfairDisplay_500Medium', fontSize: 14, lineHeight: 19, marginBottom: 10 },
   compactTitle: { fontSize: 13, lineHeight: 17, marginBottom: 7 },
-  metaRow:       { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  metaSpacer:    { flex: 1 },
+  metaRow:       { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
+  metaCity:      { flex: 1, minWidth: 62 },
+  metaMetric:    { flexDirection: 'row', alignItems: 'center', gap: 3, minWidth: 0 },
+  compactMetaMetric: { gap: 2 },
+  metaMetricText: { fontFamily: 'Inter_400Regular', fontSize: 10, maxWidth: 68 },
   location:      { fontFamily: 'Inter_400Regular', fontSize: 11 },
   compactLocation: { fontSize: 10 },
 });

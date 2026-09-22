@@ -1288,17 +1288,6 @@ export default function ExploreScreen() {
             />
 
             <View style={ex.mapSearchOverlay}>
-              <View style={ex.mapSearchEyebrow}>
-                <View style={ex.mapSearchEyebrowLabel}>
-                  <View style={[ex.mapSearchEyebrowDot, { backgroundColor: colors.gold }]} />
-                  <Text style={[ex.mapSearchEyebrowText, { color: colors.actionForeground }]}>
-                    SEARCH LOCATION
-                  </Text>
-                </View>
-                <Text style={[ex.mapSearchEyebrowValue, { color: colors.actionForeground }]}>
-                  Pakistan
-                </Text>
-              </View>
               <View style={[ex.mapSearchBar, {
                 backgroundColor: colors.card,
                 borderColor: mapSearchFocused ? colors.action : colors.border,
@@ -2008,11 +1997,6 @@ const ex = StyleSheet.create({
   mapScreenHeaderSide: { width: 92 },
   mapStage:        { flex: 1, position: 'relative' },
   mapSearchOverlay: { position: 'absolute', top: 14, left: 60, right: 18, zIndex: 10 },
-  mapSearchEyebrow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 5, marginBottom: 7 },
-  mapSearchEyebrowLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  mapSearchEyebrowDot: { width: 6, height: 6, borderRadius: 3 },
-  mapSearchEyebrowText: { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.4 },
-  mapSearchEyebrowValue: { fontFamily: 'Inter_500Medium', fontSize: 10, opacity: 0.82 },
   mapSearchBar:    { minHeight: 54, borderRadius: 18, borderWidth: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, gap: 10, shadowColor: '#102a43', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 6 },
   mapSearchIconWrap: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   mapSearchInput:  { flex: 1, fontFamily: 'Inter_500Medium', fontSize: 13, paddingVertical: 0 },

@@ -58,10 +58,10 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === 'web';
 
-  // Tab bar grows downward to cover the Android system-nav / iOS home-indicator.
-  // Icons sit above that zone; the height seen by the user stays 78 (icons+labels).
-  const tabBarHeight     = isWeb ? 84 : 78 + insets.bottom;
-  const tabBarPadBottom  = isWeb ? 30 : 11 + insets.bottom;
+  // Keep the visible navigation compact and let only the safe-area inset extend
+  // behind the Android system navigation / iOS home indicator.
+  const tabBarHeight     = isWeb ? 84 : 68 + insets.bottom;
+  const tabBarPadBottom  = isWeb ? 30 : 6 + insets.bottom;
 
   const isBuyer      = !role || role === 'buyer';
   const isAgent      = role === 'agent';
@@ -87,9 +87,9 @@ export default function TabLayout() {
          tabBarItemStyle: { paddingTop: 2 },
         tabBarStyle: {
           position: 'absolute',
-           bottom:        -4,
+           bottom:         0,
           height:        tabBarHeight,
-          paddingTop:    7,
+           paddingTop:    5,
           paddingBottom: tabBarPadBottom,
           backgroundColor: 'transparent',
           borderTopWidth:  0,
@@ -149,5 +149,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  postIcon:  { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', marginTop: -18, borderWidth: 4 },
+  postIcon:  { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginTop: -13, borderWidth: 3 },
 });

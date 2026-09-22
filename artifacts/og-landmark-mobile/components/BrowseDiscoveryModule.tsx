@@ -417,17 +417,15 @@ function DiscCard({
       onPress={onPress}
       style={({ pressed }) => [dc.pressable, { opacity: pressed ? 0.82 : 1 }]}
     >
-      <GlassCard
-        intensity={30}
-        style={[dc.card, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}
-        contentStyle={dc.content}
-      >
-        <View style={dc.body}>
-          <Text style={[dc.label, { color: colors.foreground }]} numberOfLines={2}>{label}</Text>
-          <Text style={[dc.sub, { color: colors.mutedForeground }]}>Curated search</Text>
+      <View style={[dc.card, { backgroundColor: 'transparent' }]}>
+        <View style={dc.content}>
+          <View style={dc.body}>
+            <Text style={[dc.label, { color: colors.foreground }]} numberOfLines={2}>{label}</Text>
+            <Text style={[dc.sub, { color: colors.mutedForeground }]}>Curated search</Text>
+          </View>
+          <Feather name="chevron-right" size={15} color={colors.action} />
         </View>
-        <Feather name="chevron-right" size={15} color={colors.action} />
-      </GlassCard>
+      </View>
     </Pressable>
   );
 }

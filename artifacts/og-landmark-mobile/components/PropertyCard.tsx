@@ -36,6 +36,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
       ? { uri: property.videoUrl }
       : null;
   const hasVideo = videoSource != null;
+  const areaDisplay = formatAreaDisplay(property.area, property.areaUnit);
   const saved = isSaved(property.id);
   const swipeResponder = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_, gesture) =>
@@ -193,7 +194,41 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
           </View>
         </View>
 
+        <View style={[ctaStyles.row, compact && ctaStyles.compactRow, { borderTopColor: colors.border, backgroundColor: colors.surfaceRaised }]}>
           <Pressable
+            onPress={(e) => { e.stopPropagation(); void Linking.openURL(`sms:${property.agentPhone ?? '03042569000'}`); }}
+            style={({ pressed }) => [ctaStyles.smsBtn, compact && ctaStyles.compactButton, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.75 : 1 }]}
+            hitSlop={6}
+            accessibilityRole="button"
+            accessibilityLabel="Send SMS"
+          >
+            <Feather name="message-square" size={14} color={colors.foreground} />
+            <Text style={[ctaStyles.smsTxt, { color: colors.foreground }]}>SMS</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={(e) => { e.stopPropagation(); void Linking.openURL(`tel:${property.agentPhone ?? '03042569000'}`); }}
+            style={({ pressed }) => [ctaStyles.callBtn, compact && ctaStyles.compactButton, { backgroundColor: colors.action, opacity: pressed ? 0.82 : 1 }]}
+            hitSlop={6}
+            accessibilityRole="button"
+            accessibilityLabel="Call agent"
+          >
+            <Feather name="phone" size={14} color={colors.actionForeground} />
+            <Text style={[ctaStyles.callTxt, { color: colors.actionForeground }]}>Call</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={(e) => { e.stopPropagation(); void Linking.openURL(`https://wa.me/92${(property.agentPhone ?? '03042569000').replace(/\D/g, '').replace(/^0/, '')}`); }}
+            style={({ pressed }) => [ctaStyles.waBtn, { opacity: pressed ? 0.75 : 1 }]}
+            hitSlop={6}
+            accessibilityRole="button"
+            accessibilityLabel="WhatsApp agent"
+          >
+            <WhatsAppLogo size={compact ? 30 : 34} />
+          </Pressable>
+        </View>
+
+        <Pressable
           onPress={() => router.push(`/property/${property.id}`)}
             style={({ pressed }) => [styles.body, compact && styles.compactBody, { borderTopColor: colors.glassBorder, opacity: pressed ? 0.82 : 1 }]}
           testID={`property-card-${property.id}`}
@@ -218,64 +253,14 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
                 <Text style={[styles.location, compact && styles.compactLocation, { color: colors.mutedForeground }]}>{property.bedrooms} bd</Text>
               </>
             )}
-          </View>
-          <View style={[styles.facts, compact && styles.compactFacts, { borderTopColor: colors.border }]}>
-            {(() => {
-              const ptype = (property.type ?? '').toLowerCase();
-              const areaFmt = formatAreaDisplay(property.area, property.areaUnit);
-
-              // ── Agriculture land ─────────────────────────────────────
-              if (property.agriDetails) {
-                return (
-                  <>
-                    <Fact icon="maximize" value={`${property.agriDetails.sizeAcres}`} label="Acres" colors={colors} accentColor={colors.success} />
-                    <Fact icon="droplet" value={property.agriDetails.nehriWater ? 'Yes' : 'No'} label="Nehri" colors={colors} accentColor={colors.success} />
-                    <Fact icon="zap" value={property.agriDetails.tubeWell ? 'Yes' : 'No'} label="TubeWell" colors={colors} accentColor={colors.success} />
-                    <Fact icon="sun" value={(property.agriDetails.mainCrop || '').split(' ')[0] || '—'} label="Crop" colors={colors} accentColor={colors.success} />
-                  </>
-                );
-              }
-              if (ptype.includes('agriculture') || ptype.includes('agri')) {
-                // Agri from API (no agriDetails object yet)
-                const hasNehri = (property.amenities ?? []).some((a) => a.toLowerCase().includes('nehri'));
-                const hasTube  = (property.amenities ?? []).some((a) => a.toLowerCase().includes('tube'));
-                return (
-                  <>
-                    <Fact icon="maximize" value={areaFmt.value} label={areaFmt.label} colors={colors} accentColor={colors.success} />
-                    <Fact icon="droplet" value={hasNehri ? 'Yes' : '—'} label="Nehri" colors={colors} accentColor={colors.success} />
-                    <Fact icon="zap" value={hasTube ? 'Yes' : '—'} label="TubeWell" colors={colors} accentColor={colors.success} />
-                    <Fact icon="tag" value={property.type} label="Type" colors={colors} accentColor={colors.success} />
-                  </>
-                );
-              }
-
-              // ── Plot / Commercial / Industrial ───────────────────────
-              const isNonResidential =
-                ptype.includes('plot') ||
-                ptype.includes('commercial') ||
-                ptype.includes('industrial') ||
-                ptype.includes('warehouse') ||
-                ptype.includes('office') ||
-                ptype.includes('building');
-              if (isNonResidential) {
-                return (
-                  <>
-                    <Fact icon="maximize" value={areaFmt.value} label={areaFmt.label} colors={colors} />
-                    <Fact icon="tag" value={property.type} label="Type" colors={colors} />
-                  </>
-                );
-              }
-
-              // ── Residential (House / Apartment / Farmhouse / etc.) ───
-              return (
-                <>
-                  <Fact icon="home"     value={property.bedrooms  > 0 ? `${property.bedrooms}`  : '—'} label="Beds"  colors={colors} />
-                  <Fact icon="droplet"  value={property.bathrooms > 0 ? `${property.bathrooms}` : '—'} label="Baths" colors={colors} />
-                  <Fact icon="maximize" value={areaFmt.value} label={areaFmt.label} colors={colors} />
-                  <Fact icon="tag"      value={property.type} label="Type" colors={colors} />
-                </>
-              );
-            })()}
+            {property.area > 0 && (
+              <>
+                <Feather name="maximize" size={13} color={colors.mutedForeground} />
+                <Text style={[styles.location, compact && styles.compactLocation, { color: colors.mutedForeground }]}>
+                  {areaDisplay.value} {areaDisplay.label}
+                </Text>
+              </>
+            )}
           </View>
         </Pressable>
       </View>
@@ -295,60 +280,12 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
         />
       )}
 
-      {/* ── Contact buttons (Zameen-style) ─────────────────────────────── */}
-      <View style={[ctaStyles.row, compact && ctaStyles.compactRow, { borderTopColor: colors.border, backgroundColor: colors.surfaceRaised }]}>
-        <Pressable
-          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`sms:${property.agentPhone ?? '03042569000'}`); }}
-          style={({ pressed }) => [ctaStyles.smsBtn, compact && ctaStyles.compactButton, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.75 : 1 }]}
-          hitSlop={6}
-          accessibilityRole="button"
-          accessibilityLabel="Send SMS"
-        >
-          <Feather name="message-square" size={14} color={colors.foreground} />
-          <Text style={[ctaStyles.smsTxt, { color: colors.foreground }]}>SMS</Text>
-        </Pressable>
-
-        <Pressable
-          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`tel:${property.agentPhone ?? '03042569000'}`); }}
-          style={({ pressed }) => [ctaStyles.callBtn, compact && ctaStyles.compactButton, { backgroundColor: colors.action, opacity: pressed ? 0.82 : 1 }]}
-          hitSlop={6}
-          accessibilityRole="button"
-          accessibilityLabel="Call agent"
-        >
-          <Feather name="phone" size={14} color={colors.actionForeground} />
-          <Text style={[ctaStyles.callTxt, { color: colors.actionForeground }]}>Call</Text>
-        </Pressable>
-
-        <Pressable
-          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`https://wa.me/92${(property.agentPhone ?? '03042569000').replace(/\D/g, '').replace(/^0/, '')}`); }}
-          style={({ pressed }) => [ctaStyles.waBtn, { opacity: pressed ? 0.75 : 1 }]}
-          hitSlop={6}
-          accessibilityRole="button"
-          accessibilityLabel="WhatsApp agent"
-        >
-          <WhatsAppLogo size={compact ? 30 : 34} />
-        </Pressable>
-      </View>
     </View>
   );
 }
 
 // React.memo prevents re-renders when parent list scrolls
 export const PropertyCard = React.memo(PropertyCardInner);
-
-function Fact({ icon, value, label, colors, accentColor }: {
-  icon: 'home' | 'droplet' | 'maximize' | 'tag' | 'zap' | 'sun';
-  value: string; label: string; colors: ReturnType<typeof useColors>; accentColor?: string;
-}) {
-  const iconColor = accentColor ?? colors.action;
-  return (
-    <View style={styles.fact}>
-      <Feather name={icon} size={11} color={iconColor} />
-      <Text numberOfLines={1} style={[styles.factValue, { color: colors.foreground }]}>{value}</Text>
-      <Text style={[styles.factLabel, { color: colors.mutedForeground }]}>{label}</Text>
-    </View>
-  );
-}
 
 const ctaStyles = StyleSheet.create({
   row:     { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 9, borderTopWidth: 1 },
@@ -401,9 +338,4 @@ const styles = StyleSheet.create({
   metaSpacer:    { flex: 1 },
   location:      { fontFamily: 'Inter_400Regular', fontSize: 11 },
   compactLocation: { fontSize: 10 },
-  facts:         { flexDirection: 'row', justifyContent: 'space-between', marginTop: 13, paddingTop: 11, borderTopWidth: 1, borderTopColor: '#ffffff55' },
-  compactFacts: { marginTop: 9, paddingTop: 8 },
-  fact:          { flex: 1, alignItems: 'center', gap: 3, minWidth: 0 },
-  factValue:     { fontFamily: 'Inter_700Bold', fontSize: 11, maxWidth: 56 },
-  factLabel:     { fontFamily: 'Inter_400Regular', fontSize: 9 },
 });

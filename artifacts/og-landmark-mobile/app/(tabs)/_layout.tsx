@@ -87,6 +87,7 @@ export default function TabLayout() {
          tabBarItemStyle: { paddingTop: 2 },
         tabBarStyle: {
           position: 'absolute',
+           bottom:        -4,
           height:        tabBarHeight,
           paddingTop:    7,
           paddingBottom: tabBarPadBottom,

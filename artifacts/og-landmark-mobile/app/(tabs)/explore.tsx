@@ -473,6 +473,8 @@ export default function ExploreScreen() {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [openSection, setOpenSection]         = useState<string | null>(null);
   const [viewMode, setViewMode]               = useState<'list' | 'map'>('list');
+  const [mapScreenOpen, setMapScreenOpen]     = useState(false);
+  const [mapSearchFocused, setMapSearchFocused] = useState(false);
   const [searchFocused, setSearchFocused]     = useState(false);
   const [saveModalOpen, setSaveModalOpen]     = useState(false);
   const [saveName, setSaveName]               = useState('');
@@ -817,6 +819,7 @@ export default function ExploreScreen() {
       setMapBoundsFilter(null);
       // Switch to map so user sees their location
       setViewMode('map');
+      setMapScreenOpen(true);
     } catch {
       setGeoError('We could not read your location. Keep Location Services on and try Near Me again.');
     } finally {
@@ -854,6 +857,7 @@ export default function ExploreScreen() {
     setNearMe(null);
     setMapBoundsFilter(null);
     setViewMode('map');
+    setMapScreenOpen(true);
     addRecentSearch(label).then(() => getRecentSearches().then(setRecentSearches)).catch(() => undefined);
   }, []);
 
@@ -867,6 +871,13 @@ export default function ExploreScreen() {
     setFilters(draftFilters);
     setFilterSheetOpen(false);
   }, [draftFilters]);
+
+  const closeMapScreen = useCallback(() => {
+    setMapScreenOpen(false);
+    setMapSearchFocused(false);
+    setSearchFocused(false);
+    setViewMode('list');
+  }, []);
 
   const handleSaveSearch = useCallback(async () => {
     if (!isLoggedIn) {
@@ -964,8 +975,19 @@ export default function ExploreScreen() {
           {/* List / Map toggle */}
           <View style={[ex.viewToggle, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceRaised + '18' }]} />
-            {(['list', 'map'] as const).map((m) => (
-               <Pressable key={m} onPress={() => setViewMode(m)} style={({ pressed }) => [ex.viewToggleBtn, viewMode === m && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }, { opacity: pressed ? 0.74 : 1 }]}>
+             {(['list', 'map'] as const).map((m) => (
+                <Pressable
+                  key={m}
+                  onPress={() => {
+                    if (m === 'map') {
+                      setViewMode('map');
+                      setMapScreenOpen(true);
+                    } else {
+                      setViewMode('list');
+                    }
+                  }}
+                  style={({ pressed }) => [ex.viewToggleBtn, viewMode === m && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }, { opacity: pressed ? 0.74 : 1 }]}
+                >
                  <Feather name={m === 'list' ? 'list' : 'map'} size={15} color={viewMode === m ? colors.selectionForeground : colors.mutedForeground} />
               </Pressable>
             ))}
@@ -1233,6 +1255,107 @@ export default function ExploreScreen() {
           ) : null
         }
       />
+
+      {/* ── Full-screen map search ── */}
+      <Modal visible={mapScreenOpen} animationType="slide" onRequestClose={closeMapScreen}>
+        <View style={[ex.mapScreen, { backgroundColor: colors.background }]}>
+          <View style={[ex.mapScreenHeader, { paddingTop: topInset + 8, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+            <Pressable
+              onPress={closeMapScreen}
+              style={ex.mapScreenBack}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Back to filters"
+            >
+              <Feather name="chevron-left" size={24} color={colors.mutedForeground} />
+              <Text style={[ex.mapScreenBackText, { color: colors.mutedForeground }]}>Filters</Text>
+            </Pressable>
+            <Text style={[ex.mapScreenTitle, { color: colors.foreground }]}>Map Search</Text>
+            <View style={ex.mapScreenHeaderSide} />
+          </View>
+
+          <View style={ex.mapStage}>
+            <ExploreMapView
+              fullScreen
+              properties={filteredProperties.map((p: any) => ({
+                ...p,
+                distance: p._distLabel,
+                image: typeof p.image === 'string' ? p.image : undefined,
+              }))}
+              count={filteredProperties.length}
+              colors={colors}
+              onSelect={(id) => {
+                closeMapScreen();
+                router.push(`/property/${id}` as any);
+              }}
+              onSearchArea={handleSearchArea}
+              userLat={nearMe?.lat}
+              userLng={nearMe?.lng}
+              centerLat={searchedPlace?.lat}
+              centerLng={searchedPlace?.lng}
+            />
+
+            <View style={ex.mapSearchOverlay}>
+              <View style={[ex.mapSearchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  onFocus={() => {
+                    setMapSearchFocused(true);
+                    setSearchFocused(true);
+                  }}
+                  onBlur={() => setTimeout(() => setMapSearchFocused(false), 250)}
+                  onSubmitEditing={handleSearchSubmit}
+                  returnKeyType="search"
+                  placeholder="Search Places"
+                  placeholderTextColor={colors.mutedForeground}
+                  style={[ex.mapSearchInput, { color: colors.foreground }]}
+                />
+                <Feather name="search" size={18} color={colors.mutedForeground} />
+              </View>
+
+              {mapSearchFocused && query.trim().length >= 2 && (placeSuggestionsLoading || placeSuggestions.length > 0) && (
+                <View style={[ex.mapSuggestions, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  {placeSuggestionsLoading ? (
+                    <View style={ex.mapSuggestionRow}>
+                      <ActivityIndicator size="small" color={colors.action} />
+                      <Text style={[ex.mapSuggestionText, { color: colors.mutedForeground }]}>Finding locations…</Text>
+                    </View>
+                  ) : placeSuggestions.map((suggestion) => (
+                    <Pressable
+                      key={suggestion.placeId}
+                      style={ex.mapSuggestionRow}
+                      onPress={() => {
+                        setMapSearchFocused(false);
+                        handlePlaceSuggestion(suggestion);
+                      }}
+                    >
+                      <Feather name="map-pin" size={15} color={colors.action} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[ex.mapSuggestionText, { color: colors.foreground }]}>{suggestion.mainText}</Text>
+                        {!!suggestion.secondaryText && (
+                          <Text style={[ex.mapSuggestionSub, { color: colors.mutedForeground }]} numberOfLines={1}>
+                            {suggestion.secondaryText}
+                          </Text>
+                        )}
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+
+          <View style={[ex.mapActions, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, 14) }]}>
+            <Pressable onPress={closeMapScreen} style={[ex.mapActionBack, { borderColor: colors.border }]} accessibilityRole="button">
+              <Text style={[ex.mapActionBackText, { color: colors.mutedForeground }]}>Back</Text>
+            </Pressable>
+            <Pressable onPress={closeMapScreen} style={[ex.mapActionDone, { backgroundColor: colors.action }]} accessibilityRole="button">
+              <Text style={[ex.mapActionDoneText, { color: colors.actionForeground }]}>Done</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       {/* ── Filter bottom sheet ── */}
       <FilterSheet
@@ -1843,6 +1966,25 @@ function ExplorePagination({
 const ex = StyleSheet.create({
   screen:          { flex: 1 },
   stickyHeader:    { borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 20, paddingBottom: 10 },
+  mapScreen:       { flex: 1 },
+  mapScreenHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingBottom: 14, borderBottomWidth: StyleSheet.hairlineWidth },
+  mapScreenBack:   { width: 92, flexDirection: 'row', alignItems: 'center', gap: 1 },
+  mapScreenBackText: { fontFamily: 'Inter_400Regular', fontSize: 15 },
+  mapScreenTitle:   { fontFamily: 'Inter_700Bold', fontSize: 17 },
+  mapScreenHeaderSide: { width: 92 },
+  mapStage:        { flex: 1, position: 'relative' },
+  mapSearchOverlay: { position: 'absolute', top: 22, left: 18, right: 18, zIndex: 10 },
+  mapSearchBar:    { height: 52, borderRadius: 26, borderWidth: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, shadowColor: '#102a43', shadowOpacity: 0.16, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
+  mapSearchInput:  { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 14, paddingVertical: 0 },
+  mapSuggestions:  { marginTop: 8, borderRadius: 16, borderWidth: 1, overflow: 'hidden', shadowColor: '#102a43', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
+  mapSuggestionRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 15, paddingVertical: 12 },
+  mapSuggestionText: { fontFamily: 'Inter_500Medium', fontSize: 13 },
+  mapSuggestionSub: { fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 2 },
+  mapActions:      { flexDirection: 'row', gap: 12, paddingHorizontal: 18, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
+  mapActionBack:   { flex: 1, height: 46, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  mapActionBackText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  mapActionDone:   { flex: 1, height: 46, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  mapActionDoneText: { fontFamily: 'Inter_700Bold', fontSize: 14 },
   headerIntro:     { paddingTop: 2, paddingBottom: 15 },
   headerEyebrow:   { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 2, marginBottom: 5 },
   headerTitle:     { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 25, lineHeight: 30 },

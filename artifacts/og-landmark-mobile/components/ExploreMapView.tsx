@@ -54,6 +54,7 @@ interface Props {
   userLng?: number;
   centerLat?: number;
   centerLng?: number;
+  fullScreen?: boolean;
 }
 
 const OKARA_DISTRICT_CENTER = { latitude: 30.8105, longitude: 73.4597 };
@@ -343,6 +344,7 @@ export function ExploreMapView({
   centerLat,
   centerLng,
   onSearchArea,
+  fullScreen,
 }: Props) {
   const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
   const [areaPropertyCount, setAreaPropertyCount] = useState(0);
@@ -398,7 +400,7 @@ export function ExploreMapView({
   }, [blobUrl]);
 
   return (
-    <View style={[s.container, { borderColor: colors?.border ?? '#1a3358' }]}>
+    <View style={[s.container, fullScreen && s.fullScreenContainer, { borderColor: colors?.border ?? '#1a3358' }]}>
       {/* @ts-ignore */}
       <iframe
         ref={iframeRef}
@@ -472,6 +474,12 @@ const s = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 20,
     borderWidth: 1,
+  } as any,
+  fullScreenContainer: {
+    flex: 1,
+    height: undefined,
+    marginBottom: 0,
+    borderRadius: 0,
   } as any,
   rangeOverlay: {
     position: 'absolute',

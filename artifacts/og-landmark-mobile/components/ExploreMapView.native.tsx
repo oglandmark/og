@@ -59,6 +59,7 @@ interface Props {
   centerLng?: number;
   count?: number;
   colors?: any;
+  fullScreen?: boolean;
 }
 
 const OKARA_DISTRICT_CENTER = { latitude: 30.8105, longitude: 73.4597 };
@@ -208,6 +209,7 @@ function ExploreMapViewWithExpoGoFallback({
   centerLat,
   centerLng,
   colors,
+  fullScreen,
 }: Props) {
   const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
   const cLat = centerLat ?? userLat ?? OKARA_DISTRICT_CENTER.latitude;
@@ -233,7 +235,7 @@ function ExploreMapViewWithExpoGoFallback({
   const areaCount = countPointsWithinRadius(validProps, areaCenter, areaRadiusKm);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, fullScreen && styles.fullScreenContainer]}>
       <ExpoGoMapFallback
         latitude={areaCenter.latitude}
         longitude={areaCenter.longitude}
@@ -300,6 +302,7 @@ function ExploreMapViewWithGoogleMaps({
   centerLng,
   onSearchArea,
   colors,
+  fullScreen,
 }: Props) {
   const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
@@ -473,7 +476,7 @@ function ExploreMapViewWithGoogleMaps({
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, fullScreen && styles.fullScreenContainer]}>
       <MapView
         ref={mapRef}
         key={`google-map-${mapAttempt}`}
@@ -551,7 +554,7 @@ function ExploreMapViewWithGoogleMaps({
       {showSearchArea && onSearchArea && (
         <Pressable
           style={[styles.searchAreaButton, { backgroundColor: colors?.card ?? '#ffffff', borderColor: colors?.border ?? '#d6e0e8' }]}
-          onPress={handleSearchArea}
+           onPress={handleSearchArea}
           accessibilityRole="button"
           accessibilityLabel="Search properties in this map area"
         >
@@ -651,6 +654,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 18,
     marginBottom: 20,
+  },
+  fullScreenContainer: {
+    flex: 1,
+    height: undefined,
+    marginBottom: 0,
+    borderRadius: 0,
   },
   map:       { flex: 1 },
   mapLoading: {

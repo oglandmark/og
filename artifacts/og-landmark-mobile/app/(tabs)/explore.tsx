@@ -657,7 +657,8 @@ export default function ExploreScreen() {
     return radiusLocation ? matched : sortProperties(matched, filters.sortBy);
   }, [allProperties, filters, query, nearMe, searchedPlace, mapBoundsFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredProperties.length / EXPLORE_PAGE_SIZE));
+  const loadedPages = Math.ceil(filteredProperties.length / EXPLORE_PAGE_SIZE);
+  const totalPages = Math.max(1, loadedPages + (remoteHasMore ? 1 : 0));
   const visibleProperties = useMemo(
     () => filteredProperties.slice(
       (currentPage - 1) * EXPLORE_PAGE_SIZE,
@@ -679,8 +680,8 @@ export default function ExploreScreen() {
 
   const hasActiveFilters = activeChips.length > 0;
 
-  const loadMoreProperties = useCallback(async () => {
-    if (remoteLoadingMore || !remoteHasMore || isProjectsMode || viewMode !== 'list') return;
+  const loadMoreProperties = useCallback(async (): Promise<boolean> => {
+    if (remoteLoadingMore || !remoteHasMore || isProjectsMode || viewMode !== 'list') return false;
     setRemoteLoadingMore(true);
     const radiusLocation = nearMe ?? searchedPlace;
     const geoFilters = radiusLocation
@@ -701,8 +702,10 @@ export default function ExploreScreen() {
       ]));
       setRemoteOffset((current) => current + page.items.length);
       setRemoteHasMore(page.hasMore);
+      return page.items.length > 0;
     } catch {
       // The already loaded page remains usable; the next scroll can retry.
+      return false;
     } finally {
       setRemoteLoadingMore(false);
     }
@@ -714,9 +717,10 @@ export default function ExploreScreen() {
   const handlePageChange = useCallback(async (page: number) => {
     if (page < 1 || page === currentPage || isProjectsMode || viewMode !== 'list') return;
 
-    const loadedPages = Math.ceil(filteredProperties.length / EXPLORE_PAGE_SIZE);
-    if (page > loadedPages && remoteHasMore) {
-      await loadMoreProperties();
+    const loadedPageCount = Math.ceil(filteredProperties.length / EXPLORE_PAGE_SIZE);
+    if (page > loadedPageCount && remoteHasMore) {
+      const loaded = await loadMoreProperties();
+      if (!loaded) return;
     }
 
     setCurrentPage(page);
@@ -1758,6 +1762,84 @@ function NoResultsView({ colors, message, onAdjust, onClear }: { colors: any; me
   );
 }
 
+function ExplorePagination({
+  currentPage,
+  totalPages,
+  loading,
+  colors,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  loading: boolean;
+  colors: any;
+  onPageChange: (page: number) => void | Promise<void>;
+}) {
+  const items = paginationItems(currentPage, totalPages);
+
+  return (
+    <View style={ex.pagination}>
+      <Pressable
+        accessibilityLabel="Previous properties page"
+        disabled={loading || currentPage === 1}
+        onPress={() => onPageChange(currentPage - 1)}
+        style={({ pressed }) => [
+          ex.paginationButton,
+          { backgroundColor: colors.glassCard, borderColor: colors.glassBorder },
+          (loading || currentPage === 1) && ex.paginationDisabled,
+          pressed && !loading && currentPage > 1 && ex.paginationPressed,
+        ]}
+      >
+        <Feather name="chevron-left" size={19} color={colors.action} />
+      </Pressable>
+
+      {items.map((item, index) => item === 'ellipsis' ? (
+        <View key={`ellipsis-${index}`} style={ex.paginationEllipsis}>
+          <Text style={[ex.paginationEllipsisText, { color: colors.mutedForeground }]}>…</Text>
+        </View>
+      ) : (
+        <Pressable
+          key={item}
+          accessibilityLabel={`Properties page ${item}`}
+          accessibilityState={{ selected: currentPage === item }}
+          disabled={loading}
+          onPress={() => onPageChange(item)}
+          style={({ pressed }) => [
+            ex.paginationButton,
+            {
+              backgroundColor: currentPage === item ? colors.action : colors.glassCard,
+              borderColor: currentPage === item ? colors.action : colors.glassBorder,
+            },
+            currentPage === item && ex.paginationActive,
+            pressed && !loading && ex.paginationPressed,
+          ]}
+        >
+          <Text style={[
+            ex.paginationText,
+            { color: currentPage === item ? colors.actionForeground : colors.foreground },
+          ]}>
+            {item}
+          </Text>
+        </Pressable>
+      ))}
+
+      <Pressable
+        accessibilityLabel="Next properties page"
+        disabled={loading || currentPage === totalPages}
+        onPress={() => onPageChange(currentPage + 1)}
+        style={({ pressed }) => [
+          ex.paginationButton,
+          { backgroundColor: colors.glassCard, borderColor: colors.glassBorder },
+          (loading || currentPage === totalPages) && ex.paginationDisabled,
+          pressed && !loading && currentPage < totalPages && ex.paginationPressed,
+        ]}
+      >
+        <Feather name="chevron-right" size={19} color={colors.action} />
+      </Pressable>
+    </View>
+  );
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // Styles
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1810,6 +1892,15 @@ const ex = StyleSheet.create({
   saveBtnText:     { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   sortBtn:         { flexDirection: 'row', alignItems: 'center', gap: 4 },
   sortBtnText:     { fontFamily: 'Inter_400Regular', fontSize: 11 },
+  // Page navigation
+  pagination:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 8, paddingBottom: 22 },
+  paginationButton:{ width: 46, height: 46, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  paginationActive:{ shadowColor: '#102a43', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
+  paginationDisabled:{ opacity: 0.38 },
+  paginationPressed:{ transform: [{ scale: 0.96 }], opacity: 0.82 },
+  paginationText:  { fontFamily: 'Inter_700Bold', fontSize: 15 },
+  paginationEllipsis:{ width: 24, height: 46, alignItems: 'center', justifyContent: 'center' },
+  paginationEllipsisText:{ fontFamily: 'Inter_700Bold', fontSize: 15 },
   // Save modal
   modalBackdrop:   { flex: 1, backgroundColor: '#102a4366', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28 },
   saveModal:       { width: '100%', borderRadius: 20, borderWidth: 1, padding: 24 },

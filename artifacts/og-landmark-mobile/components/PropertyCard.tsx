@@ -137,23 +137,23 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
               <Text style={[styles.featuredText, { color: colors.goldForeground }]}>FEATURED</Text>
             </View>
           )}
-          {hasVideo && (
-            <Pressable
-              onPress={(event) => {
-                event.stopPropagation();
-                setVideoVisible(true);
-              }}
-              style={[styles.videoTourButton, compact && styles.compactVideoTourButton, { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder }]}
-              hitSlop={6}
-              accessibilityRole="button"
-              accessibilityLabel={`Play video tour for ${property.title}`}
-            >
-              <Feather name="play" size={compact ? 11 : 13} color={colors.actionForeground} />
-              <Text style={[styles.videoTourText, compact && styles.compactVideoTourText, { color: colors.actionForeground }]}>Video tour</Text>
-            </Pressable>
-          )}
           {/* Action buttons */}
           <View style={[styles.cardActions, compact && styles.compactCardActions]}>
+            {hasVideo && (
+              <Pressable
+                onPress={(event) => {
+                  event.stopPropagation();
+                  setVideoVisible(true);
+                }}
+                style={[styles.videoTourButton, compact && styles.compactVideoTourButton, { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder }]}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel={`Play video visit for ${property.title}`}
+              >
+                <Feather name="play" size={compact ? 11 : 13} color={colors.actionForeground} />
+                <Text style={[styles.videoTourText, compact && styles.compactVideoTourText, { color: colors.actionForeground }]}>Video visit</Text>
+              </Pressable>
+            )}
             <Pressable
               onPress={handleShare}
               style={({ pressed }) => [
@@ -382,8 +382,8 @@ const styles = StyleSheet.create({
   compactStatusText: { fontSize: 9 },
   featuredBadge: { position: 'absolute', bottom: 10, left: 12, flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5 },
   featuredText:  { fontFamily: 'Inter_700Bold', fontSize: 8, color: '#1c2024', letterSpacing: 0.7 },
-  videoTourButton: { position: 'absolute', bottom: 10, right: 10, flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 9, borderWidth: 1, paddingHorizontal: 9, paddingVertical: 7 },
-  compactVideoTourButton: { bottom: 8, right: 8, gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6 },
+  videoTourButton: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 9, borderWidth: 1, paddingHorizontal: 9, paddingVertical: 7 },
+  compactVideoTourButton: { gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6 },
   videoTourText: { fontFamily: 'Inter_700Bold', fontSize: 10 },
   compactVideoTourText: { fontSize: 9 },
   cardActions:   { position: 'absolute', top: 10, right: 10, flexDirection: 'row', gap: 7 },

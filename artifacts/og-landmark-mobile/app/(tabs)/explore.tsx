@@ -7,7 +7,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator, Alert, FlatList, Image, InteractionManager, Modal, Platform, Pressable,
-  NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View,
+  ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
@@ -498,31 +498,7 @@ export default function ExploreScreen() {
   const [remoteHasMore, setRemoteHasMore]       = useState(false);
   const [remoteLoadingMore, setRemoteLoadingMore] = useState(false);
   const [currentPage, setCurrentPage]           = useState(1);
-  const [exploreToolsVisible, setExploreToolsVisible] = useState(true);
   const searchRef = useRef<React.ElementRef<typeof TextInput>>(null);
-  const lastExploreScrollY = useRef(0);
-  const exploreScrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => () => {
-    if (exploreScrollTimer.current) clearTimeout(exploreScrollTimer.current);
-  }, []);
-
-  const handleExploreScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const nextY = Math.max(0, event.nativeEvent.contentOffset.y);
-    const delta = nextY - lastExploreScrollY.current;
-    lastExploreScrollY.current = nextY;
-
-    if (nextY <= 4 || delta < -3) {
-      setExploreToolsVisible((visible) => visible ? visible : true);
-    } else if (delta > 3) {
-      setExploreToolsVisible((visible) => visible ? false : visible);
-    }
-
-    if (exploreScrollTimer.current) clearTimeout(exploreScrollTimer.current);
-    exploreScrollTimer.current = setTimeout(() => {
-      setExploreToolsVisible(true);
-    }, 260);
-  }, []);
 
   // ── Effects ────────────────────────────────────────────────────────────────
 
@@ -928,8 +904,7 @@ export default function ExploreScreen() {
 
   return (
     <View style={[ex.screen, { backgroundColor: colors.background }]}>
-      {/* ── Collapsible search and filter tools ── */}
-      {exploreToolsVisible && (
+      {/* ── Search and filter tools ── */}
       <View style={[ex.stickyHeader, { paddingTop: topInset + 10, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         {/* Buy / Rent toggle */}
         <View style={[ex.purposeRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -1168,7 +1143,6 @@ export default function ExploreScreen() {
           </ScrollView>
         )}
       </View>
-      )}
 
       {/* ── Scrollable body ── */}
       <FlatList
@@ -1177,8 +1151,6 @@ export default function ExploreScreen() {
         keyExtractor={(p, index) => `${p.id}-${index}`}
         showsVerticalScrollIndicator={false}
         scrollEnabled={viewMode !== 'map'}
-        onScroll={handleExploreScroll}
-        scrollEventThrottle={16}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarHeight, paddingTop: 14 }}
         ListHeaderComponent={
           <>

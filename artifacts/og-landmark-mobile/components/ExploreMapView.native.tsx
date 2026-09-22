@@ -79,6 +79,7 @@ export function ExploreMapView({
   const initialLat = centerLat ?? userLat ?? OKARA_DISTRICT_CENTER.latitude;
   const initialLng = centerLng ?? userLng ?? OKARA_DISTRICT_CENTER.longitude;
   const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
+  const [committedZoom, setCommittedZoom] = useState(mapAreaZoomForRadius(MAP_AREA_DEFAULT_KM));
   const [areaCenter, setAreaCenter] = useState({ latitude: initialLat, longitude: initialLng });
   const [currentRegion, setCurrentRegion] = useState<{
     latitude: number;
@@ -149,7 +150,7 @@ export function ExploreMapView({
       <ExpoGoMapFallback
         latitude={areaCenter.latitude}
         longitude={areaCenter.longitude}
-        zoom={mapAreaZoomForRadius(areaRadiusKm)}
+        zoom={committedZoom}
         points={points}
         radiusKm={areaRadiusKm}
         interactive
@@ -226,6 +227,9 @@ export function ExploreMapView({
         <MapAreaRange
           value={areaRadiusKm}
           onChange={setAreaRadiusKm}
+          onChangeEnd={(nextRadiusKm) => {
+            setCommittedZoom(mapAreaZoomForRadius(nextRadiusKm));
+          }}
           colors={{
             card: colors?.card ?? '#ffffff',
             border: colors?.border ?? '#d6e0e8',

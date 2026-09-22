@@ -142,8 +142,9 @@ function buildMapHtml({
         var nextRadius = nextRadiusKmSafe * 1000;
         if (!areaCircle) {
           areaCircle = L.circle([nextLatitude, nextLongitude], {
-            radius: nextRadius, color: '#1f6f8b', weight: 1.5,
-            fillColor: '#7fc8d6', fillOpacity: .16
+            radius: nextRadius, color: '#2f6f9f', weight: 2, opacity: .82,
+            dashArray: '6 8', fillColor: '#2f6f9f', fillOpacity: .10,
+            interactive: false
           }).addTo(map);
         } else {
           areaCircle.setLatLng([nextLatitude, nextLongitude]);

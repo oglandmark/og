@@ -264,9 +264,12 @@ function buildExploreHtml(
    var areaCircle = L.circle([${centerLat},${centerLng}], {
      radius: ${mapAreaRadiusMeters(MAP_AREA_DEFAULT_KM)},
     color: '${MAP_AREA_BLUE}',
-    weight: 1.5,
+     weight: 2,
+     opacity: 0.82,
+     dashArray: '6 8',
     fillColor: '${MAP_AREA_BLUE}',
-    fillOpacity: 0.18
+     fillOpacity: 0.10,
+     interactive: false
   }).addTo(map);
 
   map.on('move', function() {

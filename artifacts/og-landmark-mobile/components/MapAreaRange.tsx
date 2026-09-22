@@ -75,12 +75,13 @@ export function MapAreaRange({ value, onChange, onChangeEnd, colors }: Props) {
       <View
         style={styles.trackHitArea}
         onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
-        onStartShouldSetResponder={() => true}
-        onMoveShouldSetResponder={() => true}
+        onStartShouldSetResponderCapture={() => true}
+        onMoveShouldSetResponderCapture={() => true}
         onResponderGrant={(event) => updateFromLocation(event.nativeEvent.locationX)}
         onResponderMove={(event) => updateFromLocation(event.nativeEvent.locationX)}
         onResponderRelease={(event) => commitFromLocation(event.nativeEvent.locationX)}
         onResponderTerminate={(event) => commitFromLocation(event.nativeEvent.locationX)}
+        onResponderTerminationRequest={() => false}
         accessibilityRole="adjustable"
         accessibilityLabel="Area range"
         accessibilityValue={{

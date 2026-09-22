@@ -77,10 +77,12 @@ export function PropertyMediaStrip({
   property,
   activeIndex,
   onSelect,
+  compact = false,
 }: {
   property: Property;
   activeIndex: number;
   onSelect: (index: number) => void;
+  compact?: boolean;
 }) {
   const colors = useColors();
   const [videoVisible,  setVideoVisible]  = useState(false);
@@ -155,14 +157,14 @@ export function PropertyMediaStrip({
   return (
     <>
       {/* ── Thumbnail Strip ─────────────────────────────────────────── */}
-      <View style={[s.strip, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View style={[s.strip, compact && s.compactStrip, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <ScrollView
           ref={stripRef}
           horizontal
           nestedScrollEnabled
           directionalLockEnabled
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={s.row}
+          contentContainerStyle={[s.row, compact && s.compactRow]}
           scrollEventThrottle={16}
           onLayout={(event) => setStripWidth(event.nativeEvent.layout.width)}
           onContentSizeChange={(width) => setStripContentWidth(width)}
@@ -174,7 +176,7 @@ export function PropertyMediaStrip({
               <Pressable
                 key={i}
                 onPress={() => onSelect(i)}
-                style={[s.thumb, selected && s.thumbSelected]}
+                style={[s.thumb, compact && s.compactThumb, selected && s.thumbSelected]}
                 accessibilityLabel={`Property image ${i + 1}`}
               >
                 <Image source={src} style={s.thumbImg} resizeMode="cover" />
@@ -187,7 +189,7 @@ export function PropertyMediaStrip({
           {/* Video tile */}
           <Pressable
             onPress={hasVideo ? openVideo : undefined}
-            style={[s.videoTile, !hasVideo && s.videoTileDim]}
+            style={[s.videoTile, compact && s.compactVideoTile, !hasVideo && s.videoTileDim]}
             accessibilityLabel="Play property video tour"
           >
             {/* Blurred background from first image */}
@@ -214,7 +216,7 @@ export function PropertyMediaStrip({
               event.stopPropagation();
               moveStrip(-1);
             }}
-            style={[s.stripArrow, s.stripArrowLeft]}
+                style={[s.stripArrow, compact && s.compactStripArrow, s.stripArrowLeft]}
             hitSlop={4}
             accessibilityRole="button"
             accessibilityLabel="Scroll property images left"
@@ -228,7 +230,7 @@ export function PropertyMediaStrip({
               event.stopPropagation();
               moveStrip(1);
             }}
-            style={[s.stripArrow, s.stripArrowRight]}
+                style={[s.stripArrow, compact && s.compactStripArrow, s.stripArrowRight]}
             hitSlop={4}
             accessibilityRole="button"
             accessibilityLabel="Scroll property images right"

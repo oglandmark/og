@@ -68,7 +68,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
 
       <View style={styles.pressable}>
-        <View style={styles.imageWrap} {...swipeResponder.panHandlers}>
+        <View style={[styles.imageWrap, compact && styles.compactImageWrap]} {...swipeResponder.panHandlers}>
           <Pressable
             onPress={(event) => { event.stopPropagation(); setGalleryVisible(true); }}
             style={styles.imageTap}
@@ -119,8 +119,8 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
             style={styles.imageShade}
           />
           {/* Status badge */}
-          <View style={[styles.status, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
-            <Text style={[styles.statusText, { color: colors.foreground }]}>{property.status}</Text>
+          <View style={[styles.status, compact && styles.compactStatus, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
+            <Text style={[styles.statusText, compact && styles.compactStatusText, { color: colors.foreground }]}>{property.status}</Text>
           </View>
           <PropertyDemoBadge visible={property.isDemo === true} style={styles.demoBadge} />
           {/* Featured ribbon */}
@@ -131,11 +131,12 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
             </View>
           )}
           {/* Action buttons */}
-          <View style={styles.cardActions}>
+          <View style={[styles.cardActions, compact && styles.compactCardActions]}>
             <Pressable
               onPress={handleShare}
               style={({ pressed }) => [
                 styles.circleAction,
+                compact && styles.compactCircleAction,
                 { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder, opacity: pressed ? 0.78 : 1 },
               ]}
               hitSlop={10}
@@ -149,6 +150,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
               onPress={handleSave}
               style={({ pressed }) => [
                 styles.circleAction,
+                compact && styles.compactCircleAction,
                 {
                   backgroundColor: colors.goldGlass,
                   borderColor: saved ? colors.gold : colors.goldGlassBorder,
@@ -173,11 +175,12 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
           property={property}
           activeIndex={activeImage}
           onSelect={setActiveImage}
+          compact={compact}
         />
 
           <Pressable
           onPress={() => router.push(`/property/${property.id}`)}
-            style={({ pressed }) => [styles.body, { borderTopColor: colors.glassBorder, opacity: pressed ? 0.82 : 1 }]}
+            style={({ pressed }) => [styles.body, compact && styles.compactBody, { borderTopColor: colors.glassBorder, opacity: pressed ? 0.82 : 1 }]}
           testID={`property-card-${property.id}`}
           accessibilityRole="button"
           accessibilityLabel={`${property.title}. ${formatPrice(property.price, property.status)}. ${property.city}. Open property details.`}
@@ -188,20 +191,20 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
             pointerEvents="none"
             style={[styles.bodyHighlight, { backgroundColor: colors.card, opacity: 0.28 }]}
           />
-          <Text style={[styles.price, { color: colors.foreground }]}>{formatPrice(property.price, property.status)}</Text>
-          <Text numberOfLines={1} style={[styles.title, { color: colors.foreground }]}>{property.title}</Text>
+          <Text style={[styles.price, compact && styles.compactPrice, { color: colors.foreground }]}>{formatPrice(property.price, property.status)}</Text>
+          <Text numberOfLines={1} style={[styles.title, compact && styles.compactTitle, { color: colors.foreground }]}>{property.title}</Text>
           <View style={styles.metaRow}>
             <Feather name="map-pin" size={13} color={colors.mutedForeground} />
-            <Text numberOfLines={1} style={[styles.location, { color: colors.mutedForeground }]}>{property.city}</Text>
+            <Text numberOfLines={1} style={[styles.location, compact && styles.compactLocation, { color: colors.mutedForeground }]}>{property.city}</Text>
             <View style={styles.metaSpacer} />
             {property.bedrooms > 0 && (
               <>
                 <Feather name="home" size={13} color={colors.mutedForeground} />
-                <Text style={[styles.location, { color: colors.mutedForeground }]}>{property.bedrooms} bd</Text>
+                <Text style={[styles.location, compact && styles.compactLocation, { color: colors.mutedForeground }]}>{property.bedrooms} bd</Text>
               </>
             )}
           </View>
-          <View style={[styles.facts, { borderTopColor: colors.border }]}>
+          <View style={[styles.facts, compact && styles.compactFacts, { borderTopColor: colors.border }]}>
             {(() => {
               const ptype = (property.type ?? '').toLowerCase();
               const areaFmt = formatAreaDisplay(property.area, property.areaUnit);
@@ -270,10 +273,10 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
       />
 
       {/* ── Contact buttons (Zameen-style) ─────────────────────────────── */}
-      <View style={[ctaStyles.row, { borderTopColor: colors.border, backgroundColor: colors.surfaceRaised }]}>
+      <View style={[ctaStyles.row, compact && ctaStyles.compactRow, { borderTopColor: colors.border, backgroundColor: colors.surfaceRaised }]}>
         <Pressable
           onPress={(e) => { e.stopPropagation(); void Linking.openURL(`sms:${property.agentPhone ?? '03042569000'}`); }}
-          style={({ pressed }) => [ctaStyles.smsBtn, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.75 : 1 }]}
+          style={({ pressed }) => [ctaStyles.smsBtn, compact && ctaStyles.compactButton, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.75 : 1 }]}
           hitSlop={6}
           accessibilityRole="button"
           accessibilityLabel="Send SMS"
@@ -284,7 +287,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
 
         <Pressable
           onPress={(e) => { e.stopPropagation(); void Linking.openURL(`tel:${property.agentPhone ?? '03042569000'}`); }}
-          style={({ pressed }) => [ctaStyles.callBtn, { backgroundColor: colors.action, opacity: pressed ? 0.82 : 1 }]}
+          style={({ pressed }) => [ctaStyles.callBtn, compact && ctaStyles.compactButton, { backgroundColor: colors.action, opacity: pressed ? 0.82 : 1 }]}
           hitSlop={6}
           accessibilityRole="button"
           accessibilityLabel="Call agent"
@@ -300,7 +303,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
           accessibilityRole="button"
           accessibilityLabel="WhatsApp agent"
         >
-          <WhatsAppLogo size={34} />
+          <WhatsAppLogo size={compact ? 30 : 34} />
         </Pressable>
       </View>
     </View>
@@ -326,7 +329,9 @@ function Fact({ icon, value, label, colors, accentColor }: {
 
 const ctaStyles = StyleSheet.create({
   row:     { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 9, borderTopWidth: 1 },
+  compactRow: { gap: 5, paddingHorizontal: 9, paddingVertical: 7 },
   smsBtn:  { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderWidth: 1, borderRadius: 8, paddingVertical: 8 },
+  compactButton: { paddingVertical: 6 },
   smsTxt:  { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   callBtn: { flex: 1.6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 8, paddingVertical: 9 },
   callTxt: { fontFamily: 'Inter_700Bold', fontSize: 12 },
@@ -339,6 +344,7 @@ const styles = StyleSheet.create({
   pressable:     { flex: 1 },
   imageTap:      { flex: 1 },
   imageWrap:     { height: 182, position: 'relative' },
+  compactImageWrap: { height: 148 },
   image:         { width: '100%', height: '100%' },
   galleryArrow:  { position: 'absolute', top: '44%', width: 30, height: 30, borderRadius: 15, backgroundColor: '#07152199', borderWidth: 1, borderColor: '#ffffff55', alignItems: 'center', justifyContent: 'center', zIndex: 4 },
   galleryArrowLeft: { left: 8 },
@@ -349,18 +355,27 @@ const styles = StyleSheet.create({
   status:        { position: 'absolute', top: 12, left: 12, borderRadius: 8, borderWidth: 1, paddingHorizontal: 9, paddingVertical: 6, overflow: 'hidden' },
   demoBadge:    { position: 'absolute', top: 48, left: 12 },
   statusText:    { fontFamily: 'Inter_600SemiBold', fontSize: 10, letterSpacing: 0.4 },
+  compactStatus: { top: 9, left: 10, paddingHorizontal: 7, paddingVertical: 5 },
+  compactStatusText: { fontSize: 9 },
   featuredBadge: { position: 'absolute', bottom: 10, left: 12, flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5 },
   featuredText:  { fontFamily: 'Inter_700Bold', fontSize: 8, color: '#1c2024', letterSpacing: 0.7 },
   cardActions:   { position: 'absolute', top: 10, right: 10, flexDirection: 'row', gap: 7 },
+  compactCardActions: { top: 8, right: 8, gap: 5 },
   circleAction:  { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1, overflow: 'hidden', shadowColor: '#d9b96d', shadowOpacity: 0.32, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
+  compactCircleAction: { width: 32, height: 32, borderRadius: 16 },
   body:          { padding: 15, overflow: 'hidden', borderTopWidth: 1 },
+  compactBody: { padding: 12 },
   bodyHighlight: { position: 'absolute', top: 0, left: 0, right: 0, height: 36 },
   price:         { fontFamily: 'Inter_700Bold', fontSize: 17, letterSpacing: 0.1, marginBottom: 6 },
+  compactPrice: { fontSize: 15, marginBottom: 4 },
   title:         { fontFamily: 'PlayfairDisplay_500Medium', fontSize: 14, lineHeight: 19, marginBottom: 10 },
+  compactTitle: { fontSize: 13, lineHeight: 17, marginBottom: 7 },
   metaRow:       { flexDirection: 'row', alignItems: 'center', gap: 5 },
   metaSpacer:    { flex: 1 },
   location:      { fontFamily: 'Inter_400Regular', fontSize: 11 },
+  compactLocation: { fontSize: 10 },
   facts:         { flexDirection: 'row', justifyContent: 'space-between', marginTop: 13, paddingTop: 11, borderTopWidth: 1, borderTopColor: '#ffffff55' },
+  compactFacts: { marginTop: 9, paddingTop: 8 },
   fact:          { flex: 1, alignItems: 'center', gap: 3, minWidth: 0 },
   factValue:     { fontFamily: 'Inter_700Bold', fontSize: 11, maxWidth: 56 },
   factLabel:     { fontFamily: 'Inter_400Regular', fontSize: 9 },

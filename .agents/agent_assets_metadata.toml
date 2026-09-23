@@ -182,3 +182,17 @@ mtime_ms = 1790193798297
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/c099bf02-1f20-4ae6-9ffe-1362b40fe13c/9a808b6a-67e6-4dfd-bb3d-982f6dc1694a"
 storage_version_token = "1790193834746333"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "jmwwkKISnlxe1hPlpCZt4"
+uri = "file://artifacts/OG-Landmark-db-backend-MySQL.zip"
+type = "unspecified"
+title = "OG Landmark DB Backend MySQL ZIP"
+description = "Complete direct-root Laravel backend package with MySQL migrations/schema, reviewed OG Landmark data snapshot, guarded import and verification commands, vendor, and Hostinger deployment instructions."
+logical_id = "32819b6c-a9fd-4bb7-8804-c4d1b69d9b8f"
+content_hash = "sha256:83d81f280eb6f68b03df9eb2f6ea0cb821044c7d3e2341a69b5ab64bab1edee1"
+size = 37084091
+mtime_ms = 1790194532781
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/32819b6c-a9fd-4bb7-8804-c4d1b69d9b8f/ad5bad8e-c77c-4b15-a627-11c36c95b0c1"
+storage_version_token = "1790194546381323"
+content_type = "application/octet-stream"

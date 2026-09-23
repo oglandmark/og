@@ -140,3 +140,17 @@ mtime_ms = 1789932204145
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/92673c42-d327-4017-b20d-2678f2585f88/aaafa63b-5a2b-446d-8100-9474eccf9c6e"
 storage_version_token = "1789932214125796"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "X_7zF-7ue8wR1DqVjmqr5"
+uri = "file://artifacts/og-landmark-hostinger.zip"
+type = "unspecified"
+title = "OG Landmark Hostinger package"
+description = "Complete Hostinger package with website/, Laravel backend/, vendor dependencies, deployment README, and no secrets or local runtime data."
+logical_id = "5d582c5e-8875-4eed-965a-6cd691c4b30d"
+content_hash = "sha256:f2e5731ea195df14dd9dd878ee10dc5e06dc51657070b5c1bafa260a3229eefb"
+size = 48029119
+mtime_ms = 1790150744742
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/5d582c5e-8875-4eed-965a-6cd691c4b30d/7b3094db-051e-4df4-8ced-4185233034d4"
+storage_version_token = "1790150828235832"
+content_type = "application/octet-stream"

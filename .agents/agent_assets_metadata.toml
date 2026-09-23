@@ -154,3 +154,31 @@ mtime_ms = 1790150744742
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/5d582c5e-8875-4eed-965a-6cd691c4b30d/7b3094db-051e-4df4-8ced-4185233034d4"
 storage_version_token = "1790150828235832"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "cI0_DuB1ZZJJTZDWMWDGM"
+uri = "file://artifacts/og-landmark-website-hostinger.zip"
+type = "unspecified"
+title = "OG Landmark Hostinger website package"
+description = "Direct-root Node.js website ZIP. package.json and server.js are at the archive root for Hostinger Node deployment."
+logical_id = "81601b3a-452a-4fde-86ad-60c81a564d82"
+content_hash = "sha256:69bb8f19c1d1bc758549c4cfa0681201b1d605f6ce861ae60c32183442cc9a14"
+size = 10870539
+mtime_ms = 1790152120726
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/81601b3a-452a-4fde-86ad-60c81a564d82/61f88eea-694c-48a0-89a3-806985dd9b82"
+storage_version_token = "1790152144752562"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "ggjeai5ryJYrhHRGX7_wd"
+uri = "file://artifacts/og-landmark-laravel-api-hostinger.zip"
+type = "unspecified"
+title = "OG Landmark Hostinger Laravel API package"
+description = "Direct-root Laravel/PHP API ZIP. artisan, composer.json, public/, vendor/, and deployment instructions are included."
+logical_id = "c099bf02-1f20-4ae6-9ffe-1362b40fe13c"
+content_hash = "sha256:e2cf23b71a58763b7d54d519df588d9927e51beab05e7d464b6d2badfeb72e3d"
+size = 36553324
+mtime_ms = 1790152123958
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/c099bf02-1f20-4ae6-9ffe-1362b40fe13c/c1d31083-d941-4b41-90cc-1b2a7892b16b"
+storage_version_token = "1790152146678923"
+content_type = "application/octet-stream"

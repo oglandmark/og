@@ -50,11 +50,16 @@ Import the reviewed export separately, and never run this against a database
 that already serves live data:
 
 ```sh
-php artisan data:import /secure/path/og-landmark-data.json \
+php artisan data:import database/og-landmark-data.json \
   --expected-sha256=502666d5164fdff4f13081beafc3a28296d0ffd681ef67c7618f8053cb35f155
-php artisan data:verify /secure/path/og-landmark-data.json \
+php artisan data:verify database/og-landmark-data.json \
   --expected-sha256=502666d5164fdff4f13081beafc3a28296d0ffd681ef67c7618f8053cb35f155
 ```
+
+This complete package includes the reviewed snapshot at
+`database/og-landmark-data.json`. Keep the file outside the `public/` document
+root and remove it after a successful verified import if the server does not
+need it for future recovery checks.
 
 `data:import` allows the known empty seed row but refuses a populated
 `app_data` document or any existing account/session state. It writes inside a

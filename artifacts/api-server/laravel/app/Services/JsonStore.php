@@ -32,6 +32,12 @@ class JsonStore
                 }
             }
         } catch (\Throwable $exception) {
+            if (app()->environment('production')) {
+                Log::error('OG Landmark MySQL document unavailable in production.', [
+                    'error' => $exception->getMessage(),
+                ]);
+                throw new \RuntimeException('Canonical OG Landmark data is unavailable.', 0, $exception);
+            }
             Log::warning('OG Landmark MySQL document unavailable; using local fallback.', [
                 'error' => $exception->getMessage(),
             ]);
@@ -43,6 +49,10 @@ class JsonStore
             if (is_array($decoded)) {
                 return self::$cache = $decoded;
             }
+        }
+
+        if (app()->environment('production')) {
+            throw new \RuntimeException('Canonical OG Landmark data is missing.');
         }
 
         return self::$cache = [
@@ -73,6 +83,12 @@ class JsonStore
                 ['data' => $json, 'updated_at' => now()],
             );
         } catch (\Throwable $exception) {
+            if (app()->environment('production')) {
+                Log::error('OG Landmark MySQL document write failed in production.', [
+                    'error' => $exception->getMessage(),
+                ]);
+                throw new \RuntimeException('Canonical OG Landmark data could not be written.', 0, $exception);
+            }
             Log::warning('OG Landmark MySQL document write failed; writing local fallback.', [
                 'error' => $exception->getMessage(),
             ]);

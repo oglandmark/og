@@ -9,6 +9,7 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const { Readable } = require('stream');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -305,6 +306,44 @@ async function sendOtpEmail(toEmail, otp) {
 const app = express();
 const PORT = process.env.PORT || 3000;
 const authRateBuckets = new Map();
+const laravelApiUrl = String(process.env.LARAVEL_API_URL || '').trim().replace(/\/+$/, '');
+
+// Keep the public website on this Node process while allowing its existing
+// /api/* origin to be switched to Laravel with one environment change. The
+// proxy is opt-in so removing LARAVEL_API_URL is an immediate rollback to the
+// legacy API.
+if (laravelApiUrl) {
+  app.use('/api', async (req, res) => {
+    const target = `${laravelApiUrl}${req.originalUrl}`;
+    try {
+      const headers = { ...req.headers };
+      delete headers.host;
+      delete headers.connection;
+      const hasBody = !['GET', 'HEAD'].includes(req.method);
+      const upstream = await fetch(target, {
+        method: req.method,
+        headers,
+        body: hasBody ? req : undefined,
+        duplex: hasBody ? 'half' : undefined,
+        redirect: 'manual',
+      });
+      res.status(upstream.status);
+      upstream.headers.forEach((value, key) => {
+        if (!['connection', 'content-encoding', 'transfer-encoding'].includes(key)) {
+          res.setHeader(key, value);
+        }
+      });
+      if (upstream.body) {
+        Readable.fromWeb(upstream.body).pipe(res);
+      } else {
+        res.end();
+      }
+    } catch (error) {
+      console.error(`Laravel API proxy failed: ${error.message}`);
+      res.status(502).json({ error: 'Laravel API is unavailable.', code: 'LARAVEL_API_UNAVAILABLE' });
+    }
+  });
+}
 
 // ─── DB-guard middleware — returns 503 with clear message if DB not yet ready ──
 app.use('/api/auth', (req, res, next) => {

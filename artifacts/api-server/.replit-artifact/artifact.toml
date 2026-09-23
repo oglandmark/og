@@ -15,7 +15,7 @@ run = "cd laravel && php artisan serve --host=0.0.0.0 --port $PORT"
 [services.production]
 
 [services.production.build]
-args = ["sh", "-lc", "cd laravel && composer install --no-dev --optimize-autoloader --no-interaction"]
+args = ["sh", "-lc", "cd laravel && composer install --no-dev --optimize-autoloader --no-interaction && php artisan optimize:clear"]
 
 [services.production.build.env]
 NODE_ENV = "production"

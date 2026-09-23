@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -20,6 +21,13 @@ class ApiController extends Controller
 
         if (($segments[0] ?? '') === 'health' || ($segments[0] ?? '') === 'healthz') {
             return $this->health();
+        }
+
+        if (app()->environment('production') && !$this->databaseReady()) {
+            return $this->json([
+                'error' => 'Database is not ready. Check the MySQL settings and app_data import.',
+                'code' => 'DB_NOT_READY',
+            ], 503);
         }
 
         if (($segments[0] ?? '') === 'auth') {
@@ -91,20 +99,33 @@ class ApiController extends Controller
 
     private function health()
     {
-        $database = 'not_connected';
-        try {
-            DB::select('SELECT 1');
-            $database = 'connected';
-        } catch (\Throwable) {
-            // The HTTP process must remain available while configuration is fixed.
-        }
+        $database = $this->databaseReady() ? 'connected' : 'not_connected';
 
         return $this->json([
             'status' => $database === 'connected' ? 'ok' : 'degraded',
             'database' => $database,
             'databaseProvider' => 'mysql',
             'framework' => 'laravel',
+            'smtp' => config('mail.mailers.smtp.username') && config('mail.mailers.smtp.password')
+                ? 'configured'
+                : 'not_configured',
+            'mediaBaseUrl' => $this->mediaBaseUrl(),
         ]);
+    }
+
+    private function databaseReady(): bool
+    {
+        try {
+            DB::select('SELECT 1');
+            if (!app()->environment('production')) return true;
+            foreach (['app_data', 'auth_sessions', 'auth_challenges'] as $table) {
+                DB::select("SELECT 1 FROM `{$table}` LIMIT 0");
+            }
+            return DB::table('app_data')->where('id', 1)->exists();
+        } catch (\Throwable) {
+            // Keep healthz available so deployment configuration can be fixed.
+            return false;
+        }
     }
 
     private function auth(Request $request, array $parts, string $method)
@@ -182,11 +203,81 @@ class ApiController extends Controller
         }
 
         if (in_array($action, ['forgot-password', 'request-reset'], true) && $method === 'POST') {
-            return $this->json(['success' => true, 'message' => 'If the account exists, reset instructions have been sent.', 'smtpOff' => !config('mail.mailers.smtp.username')]);
+            $email = strtolower(trim((string) $request->input('email')));
+            if ($email === '') return $this->json(['error' => 'Email is required'], 400);
+            $user = $this->findUserByEmail($email);
+            if (!$user) {
+                return $this->json(['success' => true, 'message' => 'If an account exists with this email, a reset code has been sent.']);
+            }
+
+            $code = (string) random_int(100000, 999999);
+            try {
+                DB::table('auth_challenges')->updateOrInsert(
+                    ['email' => $email, 'purpose' => 'password-reset'],
+                    [
+                        'code_hash' => hash('sha256', $code),
+                        'attempts' => 0,
+                        'expires_at' => now()->addMinutes(15),
+                    ],
+                );
+            } catch (\Throwable $exception) {
+                Log::error('Password reset challenge could not be stored.', ['error' => $exception->getMessage()]);
+                return $this->json(['error' => 'Password reset is temporarily unavailable.'], 503);
+            }
+
+            $smtpOff = false;
+            try {
+                if (!config('mail.mailers.smtp.username') || !config('mail.mailers.smtp.password')) {
+                    $smtpOff = true;
+                } else {
+                    Mail::raw("Your OG Landmark password reset code is {$code}. It expires in 15 minutes. Do not share this code.", function ($message) use ($email) {
+                        $message->to($email)
+                            ->subject('OG Landmark — Password Reset Code');
+                    });
+                }
+            } catch (\Throwable $exception) {
+                $smtpOff = true;
+                Log::error('Password reset email could not be sent.', ['error' => $exception->getMessage()]);
+            }
+
+            return $this->json([
+                'success' => true,
+                'smtpOff' => $smtpOff,
+                'message' => $smtpOff
+                    ? 'Email service is not configured. Please contact admin to get your reset code.'
+                    : 'Reset code sent. Check your email.',
+            ]);
         }
 
         if (in_array($action, ['reset-password', 'confirm-reset'], true) && $method === 'POST') {
-            return $this->json(['success' => true, 'message' => 'Password reset request accepted.']);
+            $email = strtolower(trim((string) $request->input('email')));
+            $code = trim((string) ($request->input('code') ?? $request->input('otp')));
+            $newPassword = (string) $request->input('newPassword');
+            if ($email === '' || $code === '' || $newPassword === '') {
+                return $this->json(['error' => 'Email, code and new password are required'], 400);
+            }
+            if (strlen($newPassword) < 8) {
+                return $this->json(['error' => 'Password must be at least 8 characters'], 400);
+            }
+
+            $user = $this->findUserByEmail($email);
+            if (!$user) return $this->json(['error' => 'Invalid or expired reset code'], 400);
+            $challenge = $this->consumeChallenge($email, 'password-reset', $code);
+            if (!$challenge['ok']) {
+                return $this->json([
+                    'error' => $challenge['reason'] === 'expired'
+                        ? 'Reset code has expired. Please request a new one.'
+                        : 'Incorrect reset code. Please try again.',
+                ], 400);
+            }
+
+            $data = JsonStore::read();
+            $index = $this->indexById($data['users'] ?? [], $user['id']);
+            if ($index === null) return $this->json(['error' => 'Invalid or expired reset code'], 400);
+            $data['users'][$index]['password'] = $this->hashLegacyPassword($newPassword);
+            JsonStore::write($data);
+            $this->invalidateSessions($user['id']);
+            return $this->json(['success' => true]);
         }
 
         if ($action === 'admin-verify' && $method === 'POST') {
@@ -491,18 +582,33 @@ class ApiController extends Controller
         $files = $request->file($field);
         $files = is_array($files) ? $files : ($files ? [$files] : []);
         if (!$files) return $this->json(['error' => 'No upload received.'], 422);
-        $directory = public_path('images/uploads');
+        $configuredDirectory = (string) env('MEDIA_STORAGE_DIR', 'public/images/uploads');
+        $directory = str_starts_with($configuredDirectory, DIRECTORY_SEPARATOR)
+            ? $configuredDirectory
+            : base_path($configuredDirectory);
         if (!is_dir($directory)) mkdir($directory, 0775, true);
         $urls = [];
+        $media = [];
         foreach ($files as $file) {
             if (!$file->isValid() || !in_array(strtolower($file->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'mov'], true)) {
                 return $this->json(['error' => 'Allowed: JPG, PNG, WebP, MP4, MOV'], 422);
             }
             $name = now()->format('YmdHis') . '-' . Str::random(24) . '.' . strtolower($file->getClientOriginalExtension());
             $file->move($directory, $name);
-            $urls[] = '/images/uploads/' . $name;
+            $path = '/images/uploads/' . $name;
+            $url = $this->mediaUrl($path);
+            $urls[] = $url;
+            $media[] = [
+                'url' => $url,
+                'path' => $path,
+                'mimeType' => $file->getMimeType(),
+                'bytes' => filesize($directory . DIRECTORY_SEPARATOR . $name) ?: 0,
+                'kind' => str_starts_with((string) $file->getMimeType(), 'video/') ? 'video' : 'image',
+            ];
         }
-        return $this->json(count($urls) === 1 ? ['url' => $urls[0], 'media' => ['url' => $urls[0]]] : ['urls' => $urls]);
+        return $this->json(count($urls) === 1
+            ? ['url' => $urls[0], 'media' => $media[0]]
+            : ['urls' => $urls, 'media' => $media]);
     }
 
     private function mobile(Request $request, array $parts, string $method)
@@ -653,6 +759,45 @@ class ApiController extends Controller
         $token = preg_replace('/^Bearer\s+/i', '', $header);
         if (!$token) return;
         try { DB::table('auth_sessions')->where('token_hash', hash('sha256', $token))->delete(); } catch (\Throwable) {}
+    }
+
+    private function invalidateSessions($userId): void
+    {
+        try { DB::table('auth_sessions')->where('user_id', $userId)->delete(); } catch (\Throwable $exception) {
+            Log::warning('Laravel auth sessions could not be invalidated.', ['error' => $exception->getMessage()]);
+        }
+    }
+
+    private function consumeChallenge(string $email, string $purpose, string $code): array
+    {
+        try {
+            $challenge = DB::table('auth_challenges')
+                ->where('email', $email)
+                ->where('purpose', $purpose)
+                ->first();
+            if (!$challenge || now()->greaterThan($challenge->expires_at)) return ['ok' => false, 'reason' => 'expired'];
+            if ((int) $challenge->attempts >= 3) return ['ok' => false, 'reason' => 'attempts'];
+            if (!hash_equals((string) $challenge->code_hash, hash('sha256', $code))) {
+                DB::table('auth_challenges')->where('email', $email)->where('purpose', $purpose)->increment('attempts');
+                return ['ok' => false, 'reason' => 'invalid'];
+            }
+            DB::table('auth_challenges')->where('email', $email)->where('purpose', $purpose)->delete();
+            return ['ok' => true];
+        } catch (\Throwable $exception) {
+            Log::warning('Laravel auth challenge lookup failed.', ['error' => $exception->getMessage()]);
+            return ['ok' => false, 'reason' => 'expired'];
+        }
+    }
+
+    private function mediaBaseUrl(): string
+    {
+        return rtrim((string) env('MEDIA_PUBLIC_BASE_URL', ''), '/');
+    }
+
+    private function mediaUrl(string $path): string
+    {
+        $base = $this->mediaBaseUrl();
+        return $base === '' ? $path : $base . $path;
     }
 
     private function safeUser(array $user): array { unset($user['password']); return $user; }

@@ -43,6 +43,28 @@ The SQL file creates Laravel's users, sessions, cache, queue, migration,
 `app_data`, `auth_sessions`, and `auth_challenges` tables. It contains no
 passwords, API keys, mail credentials, or production listing data.
 
+### Import the reviewed application snapshot
+
+The schema and seeder intentionally create only an empty canonical document.
+Import the reviewed export separately, and never run this against a database
+that already serves live data:
+
+```sh
+php artisan data:import /secure/path/og-landmark-data.json \
+  --expected-sha256=502666d5164fdff4f13081beafc3a28296d0ffd681ef67c7618f8053cb35f155
+php artisan data:verify /secure/path/og-landmark-data.json \
+  --expected-sha256=502666d5164fdff4f13081beafc3a28296d0ffd681ef67c7618f8053cb35f155
+```
+
+`data:import` allows the known empty seed row but refuses a populated
+`app_data` document or any existing account/session state. It writes inside a
+transaction and reads the document back before reporting success. Both
+commands print source and target SHA-256 checksums plus collection counts;
+continue only when `"match": true`. The current reviewed repository snapshot's
+canonical checksum and counts are recorded in
+`database/import-manifest.json`; recalculate and update the manifest if the
+reviewed export changes.
+
 ## Verify
 
 Check these endpoints before setting the website's `LARAVEL_API_URL`:

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Services\JsonStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -54,5 +55,50 @@ class ApiCompatibilityTest extends TestCase
             'purpose' => 'password-reset',
             'attempts' => 1,
         ]);
+    }
+
+    public function test_imported_document_serves_listing_and_authenticated_user_routes(): void
+    {
+        JsonStore::reset();
+        $password = 'TestPassword123';
+        $salt = 'fixture-salt';
+        $hash = hash_pbkdf2('sha512', $password, $salt, 100000, 128, false);
+
+        DB::table('app_data')->insert([
+            'id' => 1,
+            'data' => json_encode([
+                'properties' => [[
+                    'id' => 41,
+                    'title' => 'Active test listing',
+                    'sellerId' => 9,
+                    'approvalStatus' => 'Active',
+                    'listingStatus' => 'Active',
+                ]],
+                'users' => [[
+                    'id' => 9,
+                    'email' => 'seller@example.com',
+                    'name' => 'Seller',
+                    'role' => 'Buyer',
+                    'status' => 'Active',
+                    'password' => "pbkdf2:{$salt}:{$hash}",
+                ]],
+            ]),
+        ]);
+
+        $login = $this->postJson('/api/auth/login', [
+            'identifier' => 'seller@example.com',
+            'password' => $password,
+        ])->assertOk();
+
+        $token = (string) $login->json('token');
+        $this->assertNotSame('', $token);
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/auth/me')
+            ->assertOk()
+            ->assertJsonPath('email', 'seller@example.com');
+
+        $this->getJson('/api/properties')
+            ->assertOk()
+            ->assertJsonPath('0.id', 41);
     }
 }

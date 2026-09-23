@@ -1,0 +1,17 @@
+{
+  "source": "artifacts/og-landmark-web/og-landmark-data.json",
+  "rawSha256": "ff3921dfabe921a498d7560ab16349387508b9f096889c7d793a1cde74ec2161",
+  "canonicalSha256": "502666d5164fdff4f13081beafc3a28296d0ffd681ef67c7618f8053cb35f155",
+  "counts": {
+    "appointments": 3,
+    "blogPosts": 3,
+    "conversations": 3,
+    "inquiries": 5,
+    "notifications": 7,
+    "offers": 3,
+    "properties": 8,
+    "savedProperties": 0,
+    "users": 11
+  },
+  "nextId": 1000
+}

@@ -17,6 +17,14 @@ class JsonStore
 {
     private static ?array $cache = null;
 
+    /**
+     * Clear the in-process document cache between isolated database fixtures.
+     */
+    public static function reset(): void
+    {
+        self::$cache = null;
+    }
+
     public static function read(): array
     {
         if (self::$cache !== null) {

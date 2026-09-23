@@ -14,3 +14,9 @@ The public Node website can remain the asset host while an opt-in `LARAVEL_API_U
 **Why:** This avoids changing website and Expo route bases during the observation window and keeps a reversible traffic boundary between the two runtimes.
 
 **How to apply:** Verify the Laravel API origin first, set the proxy only after MySQL/SMTP/media smoke checks pass, and do not silently fail over individual requests because split writes would make rollback unsafe.
+
+New Hostinger installs may seed an empty `app_data(id=1)` row, but that seed must be insert-only; importing existing canonical listings and users remains a separate, explicitly verified operation.
+
+**Why:** The canonical document contains the application's listings and account state, so a normal seed must never replace an existing production document.
+
+**How to apply:** Use migrations plus the non-destructive seed for a new database, or import a verified source snapshot separately before switching traffic.

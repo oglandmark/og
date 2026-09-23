@@ -35,10 +35,14 @@ server-only environment settings. Set:
 - `MAIL_MAILER=smtp`, `SMTP_HOST=smtp.hostinger.com`, `SMTP_PORT=465`,
   `SMTP_SECURE=true`, plus the full mailbox values for `SMTP_USER` and
   `SMTP_PASS`. Laravel accepts the existing `SMTP_*` names directly.
-- `MEDIA_STORAGE_DIR=public/images/uploads` on a persistent application volume.
-  Set `MEDIA_PUBLIC_BASE_URL=https://api.oglandmark.com` when the API is on a
-  separate subdomain so mobile and website listings receive public absolute
-  media URLs.
+- `MEDIA_STORAGE_DIR` to an absolute path on a persistent Hostinger volume (or
+  the local directory kept in sync by the chosen object-storage job), and
+  `MEDIA_STORAGE_PERSISTENT=true`. Do not put production media under the
+  release/deploy directory; that directory can be replaced during a restart,
+  rollback, or redeploy. The PHP process must be able to read and write it.
+- `MEDIA_PUBLIC_BASE_URL=https://api.oglandmark.com` when the API is on a
+  separate subdomain. Set it to the CDN/object-storage origin only after that
+  origin is synchronized with the same media directory.
 
 Never upload `.env`, commit the MySQL/SMTP values, or place `DATABASE_URL` in a
 browser/mobile build.
@@ -54,11 +58,53 @@ curl -fsS https://api.oglandmark.com/api/health
 
 The response must report `framework: "laravel"`, `status: "ok"`,
 `database: "connected"`, `databaseProvider: "mysql"`, and `smtp: "configured"`.
-Also verify one public `GET /api/properties` response, a real authenticated
-login plus `/api/auth/me`, password-reset mail delivery, and one authenticated
-image upload. Confirm the returned media URL loads over HTTPS and survives an
-API restart. `healthz` staying available while the database is unavailable is
-not a successful cutover; it is only a useful startup diagnostic.
+It must also report `mediaStorage.status: "ready"`,
+`mediaStorage.persistent: true`, and `mediaStorage.ready: true`. Also verify
+one public `GET /api/properties` response, a real authenticated login plus
+`/api/auth/me`, password-reset mail delivery, and one authenticated image
+upload. Confirm the returned media URL loads over HTTPS and survives an API
+restart. `healthz` staying available while the database is unavailable is not
+a successful cutover; it is only a useful startup diagnostic.
+
+## Media backup and restore policy
+
+The MySQL `app_data` row stores listing media references, while the bytes live
+under `MEDIA_STORAGE_DIR`. They are one recovery unit: never back up the
+database without the matching media directory, and never deploy a restored
+`app_data` snapshot without its matching files.
+
+Create a new, empty backup directory before every deploy, rollback, or planned
+storage change:
+
+```sh
+cd laravel
+php artisan media:backup --output=/home/USER/backups/og-landmark/2026-09-23T120000Z
+```
+
+The command refuses to overwrite a non-empty backup and writes
+`app_data.json`, a complete `media/` directory copy, and
+`media-manifest.json`. The manifest records every `/images/uploads/...` file
+referenced by the JSON snapshot, its byte count, and SHA-256 checksum. Store
+that directory in Hostinger backups or synchronized object storage with the
+same retention policy as the MySQL backup. Restrict backup permissions because
+`app_data.json` contains user and listing data.
+
+After restoring the media directory and the matching `app_data` snapshot on a
+staging deployment, run the local integrity check and then the live delivery
+check against the deployed API:
+
+```sh
+cd laravel
+php artisan media:restore-smoke-test /home/USER/backups/og-landmark/2026-09-23T120000Z
+php artisan media:restore-smoke-test /home/USER/backups/og-landmark/2026-09-23T120000Z \
+  --base-url=https://api.oglandmark.com
+```
+
+The second command verifies the restored photo and video files by checksum and
+requests the first byte of every referenced media URL, so it catches both a
+missing volume after redeploy and a broken public route/CDN sync. Run it after
+each restore/redeploy smoke test and before switching traffic. Do not delete
+the previous media directory or database backup until this check passes.
 
 ## Switch traffic with rollback
 
@@ -87,7 +133,9 @@ and database snapshot untouched until the observation window is complete.
    `npm install --omit=dev`.
 3. Copy `.env.example` into hPanel's environment settings. Keep
    `NODE_ENV=production`, `APP_URL=https://oglandmark.com`, and leave
-   `LARAVEL_API_URL` empty until the staged switch.
+   `LARAVEL_API_URL` empty until the staged switch. Set `MEDIA_STORAGE_DIR`
+   to the same persistent volume (or synchronized object-storage directory)
+   used by Laravel if this Node deployment handles uploads during rollback.
 4. For a new empty legacy database, run `npm run import-data` once with a
    verified export. It refuses to overwrite existing data.
 5. Set the startup file to `server.js` and start command to `npm start`.

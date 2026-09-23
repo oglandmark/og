@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Services\MediaStorage;
 
 Route::get('/', function () {
     return view('welcome');
@@ -9,11 +10,8 @@ Route::get('/', function () {
 // If MEDIA_STORAGE_DIR is outside public/, keep uploaded URLs readable while
 // rejecting path traversal. The normal public/ path is still served directly.
 Route::get('/images/uploads/{filename}', function (string $filename) {
-    $configuredDirectory = (string) env('MEDIA_STORAGE_DIR', 'public/images/uploads');
-    $directory = str_starts_with($configuredDirectory, DIRECTORY_SEPARATOR)
-        ? $configuredDirectory
-        : base_path($configuredDirectory);
-    $file = $directory . DIRECTORY_SEPARATOR . basename($filename);
-    abort_unless(is_file($file), 404);
+    $file = app(MediaStorage::class)->fileForPublicPath('/images/uploads/' . $filename);
+    abort_unless($file !== null && is_file($file), 404);
+
     return response()->file($file);
 })->where('filename', '[^/]+');

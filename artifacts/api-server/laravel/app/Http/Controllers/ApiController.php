@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\JsonStore;
+use App\Services\MediaStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -100,9 +101,11 @@ class ApiController extends Controller
     private function health()
     {
         $database = $this->databaseReady() ? 'connected' : 'not_connected';
+        $media = app(MediaStorage::class)->health();
+        $productionMediaReady = !app()->environment('production') || $media['status'] === 'ready';
 
         return $this->json([
-            'status' => $database === 'connected' ? 'ok' : 'degraded',
+            'status' => $database === 'connected' && $productionMediaReady ? 'ok' : 'degraded',
             'database' => $database,
             'databaseProvider' => 'mysql',
             'framework' => 'laravel',
@@ -110,6 +113,7 @@ class ApiController extends Controller
                 ? 'configured'
                 : 'not_configured',
             'mediaBaseUrl' => $this->mediaBaseUrl(),
+            'mediaStorage' => $media,
         ]);
     }
 
@@ -582,11 +586,18 @@ class ApiController extends Controller
         $files = $request->file($field);
         $files = is_array($files) ? $files : ($files ? [$files] : []);
         if (!$files) return $this->json(['error' => 'No upload received.'], 422);
-        $configuredDirectory = (string) env('MEDIA_STORAGE_DIR', 'public/images/uploads');
-        $directory = str_starts_with($configuredDirectory, DIRECTORY_SEPARATOR)
-            ? $configuredDirectory
-            : base_path($configuredDirectory);
-        if (!is_dir($directory)) mkdir($directory, 0775, true);
+        $mediaStorage = app(MediaStorage::class);
+        try {
+            $mediaStorage->ensureReady();
+        } catch (\Throwable $exception) {
+            Log::error('Media storage is not ready for upload.', ['error' => $exception->getMessage()]);
+
+            return $this->json([
+                'error' => 'Media storage is not available. Contact the administrator.',
+                'code' => 'MEDIA_STORAGE_NOT_READY',
+            ], 503);
+        }
+        $directory = $mediaStorage->directory();
         $urls = [];
         $media = [];
         foreach ($files as $file) {
@@ -596,7 +607,7 @@ class ApiController extends Controller
             $name = now()->format('YmdHis') . '-' . Str::random(24) . '.' . strtolower($file->getClientOriginalExtension());
             $file->move($directory, $name);
             $path = '/images/uploads/' . $name;
-            $url = $this->mediaUrl($path);
+            $url = $mediaStorage->url($path);
             $urls[] = $url;
             $media[] = [
                 'url' => $url,
@@ -792,12 +803,6 @@ class ApiController extends Controller
     private function mediaBaseUrl(): string
     {
         return rtrim((string) env('MEDIA_PUBLIC_BASE_URL', ''), '/');
-    }
-
-    private function mediaUrl(string $path): string
-    {
-        $base = $this->mediaBaseUrl();
-        return $base === '' ? $path : $base . $path;
     }
 
     private function safeUser(array $user): array { unset($user['password']); return $user; }

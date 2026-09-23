@@ -2,6 +2,7 @@
 - [Expo Go native modules](expo-go-media.md) — use supported media packages and guard remote push code so Android Expo Go can start.
 - [Hostinger package portability](hostinger-package-portability.md) — omit Replit lockfiles and force the public npm registry in external deployment ZIPs.
 - [Hostinger startup timeout](hostinger-startup-timeout.md) — bind the Node port before MySQL initialization so external health checks do not time out.
+- [Hostinger media recovery](hostinger-media-recovery.md) — back up app_data media references and files together, then verify live photo/video delivery after restore.
 - [Hostinger SMTP delivery](hostinger-smtp-delivery.md) — OTP mail needs a real mailbox credential pair, independently of the database connection.
 - [Mobile listing uploads](mobile-listing-uploads.md) — upload Android property photos one at a time, with a legacy collection-route fallback for deployed backend compatibility.
 - [Neon PostgreSQL production database](neon-database.md) — production persistence uses the user's Neon database through a server-only DATABASE_URL.

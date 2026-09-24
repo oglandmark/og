@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
 
   /* Register button */
   registerBtn:    { height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
-  registerBtnText:{ fontFamily: 'Inter_700Bold', fontSize: 15, color: '#fff', letterSpacing: 0.3 },
+  registerBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff', letterSpacing: 0.3 },
 
   /* Footer */
   footerRow:      { flexDirection: 'row', justifyContent: 'center', marginBottom: 14 },

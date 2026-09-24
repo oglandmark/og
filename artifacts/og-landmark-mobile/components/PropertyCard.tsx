@@ -299,11 +299,11 @@ export const PropertyCard = React.memo(PropertyCardInner);
 const ctaStyles = StyleSheet.create({
   row:     { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 9, borderTopWidth: 1 },
   compactRow: { gap: 5, paddingHorizontal: 9, paddingVertical: 7 },
-  smsBtn:  { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderWidth: 1, borderRadius: 8, paddingVertical: 8 },
+  smsBtn:  { flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderWidth: 1, borderRadius: 8, paddingVertical: 10 },
   compactButton: { paddingVertical: 6 },
-  smsTxt:  { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
-  callBtn: { flex: 1.6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 8, paddingVertical: 9 },
-  callTxt: { fontFamily: 'Inter_700Bold', fontSize: 12 },
+  smsTxt:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
+  callBtn: { flex: 1.6, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 8, paddingVertical: 10 },
+  callTxt: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
   waBtn:   { width: 38, height: 34, alignItems: 'center', justifyContent: 'center' },
 });
 
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   featuredText:  { fontFamily: 'Inter_700Bold', fontSize: 8, color: '#1c2024', letterSpacing: 0.7 },
   videoTourButton: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 9, borderWidth: 1, paddingHorizontal: 9, paddingVertical: 7 },
   compactVideoTourButton: { gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6 },
-  videoTourText: { fontFamily: 'Inter_700Bold', fontSize: 10 },
+  videoTourText: { fontFamily: 'Inter_600SemiBold', fontSize: 10 },
   compactVideoTourText: { fontSize: 9 },
   cardActions:   { position: 'absolute', top: 10, right: 10, flexDirection: 'row', gap: 7 },
   compactCardActions: { top: 8, right: 8, gap: 5 },

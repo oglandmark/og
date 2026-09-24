@@ -380,8 +380,8 @@ const vs = StyleSheet.create({
   stepperLabel:   { fontFamily: 'Inter_400Regular', fontSize: 13 },
 
   // Submit
-  submitBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 16 },
-  submitBtnText:  { fontFamily: 'Inter_700Bold', fontSize: 15 },
+  submitBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, minHeight: 48, paddingVertical: 13, paddingHorizontal: 16 },
+  submitBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
 
   // Success screen
   successWrap:    { alignItems: 'center', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 20, gap: 12 },
@@ -394,6 +394,6 @@ const vs = StyleSheet.create({
   confirmVal:     { fontFamily: 'Inter_400Regular', fontSize: 13, flex: 1, lineHeight: 18 },
   confirmDivider: { height: 1, marginVertical: 4 },
   noteText:       { fontFamily: 'Inter_400Regular', fontSize: 11, textAlign: 'center', lineHeight: 16, paddingHorizontal: 10 },
-  doneBtn:        { borderRadius: 14, paddingHorizontal: 48, paddingVertical: 14, marginTop: 4 },
-  doneBtnText:    { fontFamily: 'Inter_700Bold', fontSize: 14 },
+  doneBtn:        { borderRadius: 14, minHeight: 44, paddingHorizontal: 48, paddingVertical: 11, marginTop: 4 },
+  doneBtnText:    { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
 });

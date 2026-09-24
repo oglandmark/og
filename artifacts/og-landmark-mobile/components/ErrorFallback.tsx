@@ -206,7 +206,8 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   button: {
-    paddingVertical: 16,
+    minHeight: 48,
+    paddingVertical: 13,
     borderRadius: 8,
     paddingHorizontal: 24,
     minWidth: 200,
@@ -220,9 +221,10 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   buttonText: {
-    fontWeight: '600',
+    fontFamily: 'Inter_600SemiBold',
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: 14,
+    lineHeight: 20,
   },
   modalOverlay: {
     flex: 1,

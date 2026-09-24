@@ -1172,7 +1172,7 @@ const mStyles = StyleSheet.create({
   sectionTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 12, marginBottom: 2 },
   sectionHint: { fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 14 },
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7 },
-  addBtnText: { fontFamily: 'Inter_700Bold', fontSize: 11 },
+  addBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   divider: { height: 1, marginVertical: 4 },
   // photo strip
   thumbStrip: { marginBottom: 8 },
@@ -1493,7 +1493,7 @@ const styles = StyleSheet.create({
     shadowColor: '#1a6b3a', shadowOpacity: 0.2, shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },
-  submitText: { color: '#ffffff', fontFamily: 'Inter_700Bold', fontSize: 14 },
+  submitText: { color: '#ffffff', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   hint: { fontFamily: 'Inter_400Regular', fontSize: 11, textAlign: 'center', lineHeight: 17, marginTop: 10 },
   // error
   errorText: { fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 4, marginBottom: 6 },

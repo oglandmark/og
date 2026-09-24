@@ -556,8 +556,8 @@ const bn = StyleSheet.create({
   bannerEyebrow: { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1.5, marginBottom: 4 },
   bannerTitle: { color: '#ffffff', fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 20, lineHeight: 23, marginBottom: 3 },
   bannerSubtitle: { color: '#ffffffcc', fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 14 },
-  bannerCta: { position: 'absolute', right: 18, bottom: 18, minHeight: 32, borderRadius: 11, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 4 },
-  bannerCtaText: { fontFamily: 'Inter_700Bold', fontSize: 10 },
+  bannerCta: { position: 'absolute', right: 18, bottom: 18, minHeight: 36, borderRadius: 11, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 5 },
+  bannerCtaText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 });
 
 // ─── Static placeholder images ────────────────────────────────────────────────
@@ -937,7 +937,7 @@ const fp = StyleSheet.create({
   fsError:      { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
   fsErrorText:  { color: '#c8a45a', fontWeight: '700', fontSize: 15 },
   fsErrorBtn:   { marginTop: 8, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: '#c8a45a', borderRadius: 10 },
-  fsErrorBtnText:{ color: '#102a43', fontWeight: '700', fontSize: 13 },
+  fsErrorBtnText:{ color: '#102a43', fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });
 
 // ─── Agent Card (premium) ─────────────────────────────────────────────────────
@@ -1133,8 +1133,8 @@ const ac = StyleSheet.create({
   footerRow:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
   chip:         { flex: 1, borderRadius: 9, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 8 },
   chipText:     { fontFamily: 'Inter_600SemiBold', fontSize: 9, textAlign: 'center' },
-  cta:          { borderRadius: 10, paddingHorizontal: 11, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
-  ctaText:      { fontFamily: 'Inter_700Bold', fontSize: 10.5 },
+  cta:          { minHeight: 38, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
+  ctaText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 });
 
 // ─── Project Showcase Card ────────────────────────────────────────────────────
@@ -2154,8 +2154,8 @@ const s = StyleSheet.create({
   sectionHeader:    { paddingHorizontal: 18, paddingTop: 36, paddingBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   sectionEyebrow:   { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.8, marginBottom: 6 },
   sectionTitle:     { fontFamily: 'Inter_700Bold', fontSize: 22 },
-  viewAllBtn:       { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 12, paddingHorizontal: 11, paddingVertical: 8 },
-  viewAllText:      { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
+  viewAllBtn:       { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
+  viewAllText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   hRow:             { paddingHorizontal: 18, paddingBottom: 4 },
   agentCarouselViewport: { width: '100%', overflow: 'hidden' },
   agentTrack:       { flexDirection: 'row' },
@@ -2196,8 +2196,8 @@ const s = StyleSheet.create({
   trustPoint:       { flexDirection: 'row', alignItems: 'center', gap: 8, width: '47%' },
   trustIconWrap:    { width: 28, height: 28, borderRadius: 9, backgroundColor: '#c8a45a22', alignItems: 'center', justifyContent: 'center' },
   trustLabel:       { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#ffffffcc', flex: 1 },
-  heroButton:       { alignSelf: 'flex-start', paddingHorizontal: 18, paddingVertical: 12, borderRadius: 13, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#c8a45a' },
-  heroButtonText:   { color: '#ffffff', fontFamily: 'Inter_700Bold', fontSize: 13 },
+  heroButton:       { alignSelf: 'flex-start', minHeight: 44, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 13, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#c8a45a' },
+  heroButtonText:   { color: '#ffffff', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 
   // Smart CTA
   ctaCard:          { marginHorizontal: 18, marginTop: 36, borderRadius: 24, borderWidth: 1, padding: 24 },
@@ -2206,10 +2206,10 @@ const s = StyleSheet.create({
   ctaTitle:         { fontFamily: 'Inter_700Bold', fontSize: 26, lineHeight: 31, marginBottom: 10 },
   ctaDesc:          { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21, marginBottom: 22 },
   ctaBtns:          { flexDirection: 'row', gap: 12 },
-  ctaBtn1:          { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 15 },
-  ctaBtn1Text:      { fontFamily: 'Inter_700Bold', fontSize: 13 },
-  ctaBtn2:          { flex: 1, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 14, paddingVertical: 15 },
-  ctaBtn2Text:      { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  ctaBtn1:          { flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 12 },
+  ctaBtn1Text:      { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  ctaBtn2:          { flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 14, paddingVertical: 12 },
+  ctaBtn2Text:      { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 
   // Drawer styles (unchanged)
   drawerRoot:         { flex: 1, flexDirection: 'row' },

@@ -592,7 +592,7 @@ const iq = StyleSheet.create({
   altBtn:          { flex: 0.7, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 14, paddingVertical: 14 },
   altBtnText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   sendBtn:         { flex: 1, minHeight: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 16, paddingHorizontal: 18, paddingVertical: 14 },
-  sendBtnText:     { fontFamily: 'Inter_700Bold', fontSize: 14, lineHeight: 20, letterSpacing: 0.1 },
+  sendBtnText:     { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20, letterSpacing: 0.1 },
   // success
   successWrap:     { alignItems: 'center', paddingVertical: 24, gap: 10, paddingHorizontal: 10 },
   successIcon:     { width: 72, height: 72, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },

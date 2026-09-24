@@ -369,7 +369,7 @@ const st = StyleSheet.create({
   textArea:      { fontFamily: 'Inter_400Regular', fontSize: 14, padding: 14, zIndex: 1, minHeight: 120 },
   charCount:     { fontFamily: 'Inter_400Regular', fontSize: 10, textAlign: 'right', paddingRight: 12, paddingBottom: 8, zIndex: 1 },
   submit:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 16, marginTop: 8 },
-  submitText:    { fontFamily: 'Inter_700Bold', fontSize: 15 },
+  submitText:    { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   hint:          { fontFamily: 'Inter_400Regular', fontSize: 12, textAlign: 'center', marginTop: 10 },
   errorText:     { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#e53e3e', marginTop: 2, marginBottom: 8 },
   // Success
@@ -379,6 +379,6 @@ const st = StyleSheet.create({
   statusBadge:   { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8 },
   statusText:    { fontFamily: 'Inter_700Bold', fontSize: 11, letterSpacing: 0.8 },
   successBtn:    { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 16, paddingVertical: 15, paddingHorizontal: 28 },
-  successBtnText:{ fontFamily: 'Inter_700Bold', fontSize: 15 },
+  successBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   successLink:   { fontFamily: 'Inter_600SemiBold', fontSize: 14, textDecorationLine: 'underline' },
 });

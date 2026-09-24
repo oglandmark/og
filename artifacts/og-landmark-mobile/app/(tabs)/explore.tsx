@@ -2036,7 +2036,7 @@ const ex = StyleSheet.create({
   mapActionBack:   { flex: 1, height: 46, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   mapActionBackText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   mapActionDone:   { flex: 1, height: 46, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  mapActionDoneText: { fontFamily: 'Inter_700Bold', fontSize: 14 },
+  mapActionDoneText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   headerIntro:     { paddingTop: 2, paddingBottom: 15 },
   headerEyebrow:   { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 2, marginBottom: 5 },
   headerTitle:     { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 25, lineHeight: 30 },
@@ -2053,7 +2053,7 @@ const ex = StyleSheet.create({
   filterDot:       { position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   filterDotText:   { fontFamily: 'Inter_700Bold', fontSize: 8 },
   mapAction:       { width: 72, height: 50, borderRadius: 17, borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  mapActionText:   { fontFamily: 'Inter_700Bold', fontSize: 12, letterSpacing: 0.2 },
+  mapActionText:   { fontFamily: 'Inter_600SemiBold', fontSize: 12, letterSpacing: 0.2 },
   mapGlyph:        { height: 17, flexDirection: 'row', alignItems: 'center', gap: 1 },
   mapPanel:        { width: 5, height: 16, borderRadius: 1, borderWidth: StyleSheet.hairlineWidth, transform: [{ skewY: '-10deg' }] },
   // Recent searches
@@ -2104,7 +2104,7 @@ const ex = StyleSheet.create({
   saveModalCancel: { flex: 1, height: 46, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   saveModalCancelText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   saveModalConfirm: { flex: 1, height: 46, borderRadius: 13, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
-  saveModalConfirmText: { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  saveModalConfirmText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });
 
 const fs = StyleSheet.create({
@@ -2156,7 +2156,7 @@ const fs = StyleSheet.create({
   sortChipText:  { flex: 1, fontFamily: 'Inter_500Medium', fontSize: 10 },
   // Apply button
   applyBtn:      { height: 52, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 },
-  applyBtnText:  { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  applyBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });
 
 const map = StyleSheet.create({

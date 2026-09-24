@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   underlineLine:  { borderBottomWidth: 1, marginTop: 0 },
 
   submitBtn:      { height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
-  submitText:     { fontFamily: 'Inter_700Bold', fontSize: 15, color: '#fff', letterSpacing: 0.3 },
+  submitText:     { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff', letterSpacing: 0.3 },
 
   dividerRow:     { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
   dividerLine:    { flex: 1, height: 1, backgroundColor: BORDER },

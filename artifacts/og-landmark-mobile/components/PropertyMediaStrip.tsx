@@ -584,7 +584,7 @@ const fs = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 8,
   },
   muteBtnLabel: {
-    fontSize: 12, fontWeight: '700', letterSpacing: 0.3,
+    fontFamily: 'Inter_600SemiBold', fontSize: 12, letterSpacing: 0.3,
   },
 
   /* Title area */
@@ -601,5 +601,5 @@ const fs = StyleSheet.create({
   errorBox:       { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
   errorText:      { color: '#c8a45a', fontWeight: '700', fontSize: 15 },
   errorClose:     { marginTop: 8, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: '#c8a45a', borderRadius: 10 },
-  errorCloseText: { color: '#102a43', fontWeight: '700', fontSize: 13 },
+  errorCloseText: { color: '#102a43', fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });

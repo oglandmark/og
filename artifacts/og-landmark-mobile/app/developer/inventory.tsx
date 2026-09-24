@@ -452,10 +452,10 @@ const modal = StyleSheet.create({
   chip:       { borderWidth: 1, borderRadius: 20, paddingHorizontal: 13, paddingVertical: 7 },
   chipText:   { fontFamily: 'Inter_500Medium', fontSize: 11 },
   btns:       { flexDirection: 'row', gap: 10, marginTop: 10 },
-  cancelBtn:  { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 12, paddingVertical: 13, borderWidth: 1 },
+  cancelBtn:  { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 12, paddingVertical: 13, minHeight: 46, borderWidth: 1 },
   cancelText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  saveBtn:    { flex: 1.5, alignItems: 'center', justifyContent: 'center', borderRadius: 12, paddingVertical: 13 },
-  saveText:   { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#fff' },
+  saveBtn:    { flex: 1.5, alignItems: 'center', justifyContent: 'center', borderRadius: 12, paddingVertical: 13, minHeight: 46 },
+  saveText:   { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff' },
 });
 
 // ── Block section styles ──────────────────────────────────────────────────────
@@ -498,12 +498,12 @@ const sc = StyleSheet.create({
   backBtn:     { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   eyebrow:     { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.5, marginBottom: 2 },
   title:       { fontFamily: 'Inter_700Bold', fontSize: 17 },
-  addBlockBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 11, paddingHorizontal: 12, paddingVertical: 9 },
-  addBlockText:{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#fff' },
+  addBlockBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 11, paddingHorizontal: 14, paddingVertical: 11, minHeight: 44 },
+  addBlockText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff' },
   emptyWrap:   { borderWidth: 1, borderRadius: 20, padding: 32, alignItems: 'center', gap: 12, borderStyle: 'dashed', marginTop: 20 },
   emptyIcon:   { width: 72, height: 72, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   emptyTitle:  { fontFamily: 'Inter_700Bold', fontSize: 18 },
   emptyDesc:   { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 20, maxWidth: 280 },
   emptyBtn:    { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 13, paddingHorizontal: 20, paddingVertical: 12, marginTop: 4 },
-  emptyBtnText:{ fontFamily: 'Inter_700Bold', fontSize: 14, color: '#fff' },
+  emptyBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff' },
 });

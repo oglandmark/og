@@ -981,9 +981,9 @@ const lp = StyleSheet.create({
   skipButtonText: { fontFamily: 'Inter_500Medium', fontSize: 14 },
   doneButton: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 7, borderRadius: 12, paddingVertical: 14,
+    gap: 7, borderRadius: 12, minHeight: 46, paddingVertical: 11, paddingHorizontal: 14,
   },
-  doneButtonText: { fontFamily: 'Inter_700Bold', fontSize: 14, color: '#ffffff' },
+  doneButtonText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20, color: '#ffffff' },
 
   searchWrap:  { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 13, height: 46, gap: 8 },
   searchInput: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13, height: '100%', paddingHorizontal: 8 },
@@ -1018,12 +1018,12 @@ const lp = StyleSheet.create({
   badgeArea:  { fontFamily: 'Inter_400Regular', fontSize: 9, marginTop: 1, color: '#8a9fb8' },
 
   btnRow:    { flexDirection: 'row', gap: 10 },
-  btn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 14 },
+  btn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, minHeight: 44, paddingVertical: 10, paddingHorizontal: 14 },
   btnOutline:{ borderWidth: 1 },
-  btnText:   { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#ffffff' },
+  btnText:   { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20, color: '#ffffff' },
 
-  confirmLocationBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, paddingVertical: 13 },
-  confirmLocationText: { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#ffffff' },
+  confirmLocationBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, minHeight: 46, paddingVertical: 11, paddingHorizontal: 14 },
+  confirmLocationText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20, color: '#ffffff' },
   confirmedBadge:      { flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderRadius: 11, paddingHorizontal: 13, paddingVertical: 9 },
   confirmedText:       { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 
@@ -1033,7 +1033,7 @@ const lp = StyleSheet.create({
   input:       { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontFamily: 'Inter_400Regular', fontSize: 13 },
   manualErr:   { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#dc2626' },
   validationError: { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#dc2626' },
-  confirmBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, paddingVertical: 11 },
+  confirmBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, minHeight: 44, paddingVertical: 10, paddingHorizontal: 14 },
   confirmHint: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, marginTop: 4, marginBottom: 12 },
   locationError: { flexDirection: 'row', alignItems: 'flex-start', gap: 7, borderWidth: 1, borderRadius: 11, padding: 10, marginTop: 9 },
   locationErrorText: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17 },

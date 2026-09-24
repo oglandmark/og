@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   fieldInput: { fontFamily: 'Inter_500Medium', fontSize: 14 },
   helperText: { fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 16, marginTop: -14, marginBottom: 24 },
   saveBtn: { height: 52, borderRadius: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  saveBtnText: { fontFamily: 'Inter_700Bold', fontSize: 14 },
+  saveBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   cancelBtn: { alignItems: 'center', paddingVertical: 14 },
   cancelText: { fontFamily: 'Inter_400Regular', fontSize: 13 },
 });

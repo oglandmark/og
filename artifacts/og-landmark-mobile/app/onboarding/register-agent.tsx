@@ -230,5 +230,5 @@ const styles = StyleSheet.create({
   apiError: { borderRadius: 12, borderWidth: 1, padding: 10, marginBottom: 10 },
   apiErrorText: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18 },
   registerBtn: { height: 54, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  registerBtnText: { fontFamily: 'Inter_700Bold', fontSize: 15 },
+  registerBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });

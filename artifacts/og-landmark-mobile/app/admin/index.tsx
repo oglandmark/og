@@ -281,5 +281,5 @@ const s = StyleSheet.create({
   modalCancel: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, paddingVertical: 12 },
   modalCancelText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   modalReject: { flex: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, paddingVertical: 12, backgroundColor: '#dc2626' },
-  modalRejectText: { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#fff' },
+  modalRejectText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff' },
 });

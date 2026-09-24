@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   forgotText:    { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: GOLD },
 
   loginBtn:      { height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
-  loginBtnText:  { fontFamily: 'Inter_700Bold', fontSize: 15, color: '#fff', letterSpacing: 0.3 },
+  loginBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff', letterSpacing: 0.3 },
 
   dividerRow:    { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
   dividerLine:   { flex: 1, height: 1, backgroundColor: BORDER },

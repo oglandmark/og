@@ -2185,7 +2185,7 @@ const s = StyleSheet.create({
   transactionToggleLabel:{ fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.2, marginBottom: 9 },
   transactionToggleTrack:{ flexDirection: 'row', gap: 6, borderWidth: 1, borderRadius: 14, padding: 4 },
   transactionToggleOption:{ flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 11 },
-  transactionToggleText:{ fontFamily: 'Inter_700Bold', fontSize: 14 },
+  transactionToggleText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   stepEyebrow:          { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.5, marginBottom: 5 },
   stepTitle:            { fontFamily: 'Inter_700Bold', fontSize: 23, lineHeight: 28, marginBottom: 6 },
   stepSub:              { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, marginBottom: 16 },
@@ -2198,8 +2198,8 @@ const s = StyleSheet.create({
   typeLabel:            { fontFamily: 'Inter_600SemiBold', fontSize: 10, textAlign: 'center', lineHeight: 13 },
   // Purpose
   purposeRow:           { flexDirection: 'row', gap: 10, marginBottom: 18 },
-  purposeBtn:           { borderWidth: 1, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
-  purposeBtnText:       { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  purposeBtn:           { borderWidth: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  purposeBtnText:       { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   // Inputs
   inputWrap:            { borderRadius: 15, borderWidth: 1, overflow: 'hidden', marginBottom: 2 },
   input:                { fontFamily: 'Inter_400Regular', fontSize: 14, paddingHorizontal: 15, paddingVertical: 13 },
@@ -2282,7 +2282,7 @@ const s = StyleSheet.create({
   submitTitle:          { fontFamily: 'Inter_700Bold', fontSize: 18, marginBottom: 6 },
   submitHint:           { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, textAlign: 'center', marginBottom: 16 },
   submitBtn:            { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 14, paddingVertical: 15, paddingHorizontal: 18 },
-  submitBtnText:        { fontFamily: 'Inter_700Bold', fontSize: 14 },
+  submitBtnText:        { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   submitFootnote:        { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 10 },
   // Hint
   hintBox:              { flexDirection: 'row', gap: 8, alignItems: 'flex-start', borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 6 },
@@ -2306,7 +2306,7 @@ const s = StyleSheet.create({
   reviewBadge:          { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8 },
   reviewText:           { fontFamily: 'Inter_700Bold', fontSize: 11, letterSpacing: 0.8 },
   successBtn:           { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 28 },
-  successBtnText:       { fontFamily: 'Inter_700Bold', fontSize: 15 },
+  successBtnText:       { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   successLink:          { fontFamily: 'Inter_600SemiBold', fontSize: 14, textDecorationLine: 'underline' },
   // Misc
   errorText:            { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#e53e3e', marginTop: 2, marginBottom: 6 },

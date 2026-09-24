@@ -260,5 +260,5 @@ const al = StyleSheet.create({
   chip:        { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
   chipText:    { fontFamily: 'Inter_500Medium', fontSize: 11 },
   saveBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 16 },
-  saveBtnText: { fontFamily: 'Inter_700Bold', fontSize: 15, color: '#ffffff' },
+  saveBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
 });

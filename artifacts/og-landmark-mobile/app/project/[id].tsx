@@ -181,13 +181,13 @@ const iqm = StyleSheet.create({
   input:        { borderWidth: 1, borderRadius: 12, padding: 13, fontFamily: 'Inter_400Regular', fontSize: 13, marginBottom: 14 },
   multiline:    { minHeight: 80, textAlignVertical: 'top' },
   sendBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 15, marginTop: 4, marginBottom: 8 },
-  sendBtnText:  { fontFamily: 'Inter_700Bold', fontSize: 14 },
+  sendBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   successWrap:  { alignItems: 'center', paddingVertical: 24, gap: 12, paddingHorizontal: 8 },
   successIcon:  { width: 72, height: 72, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   successTitle: { fontFamily: 'Inter_700Bold', fontSize: 22 },
   successDesc:  { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 20, color: '#64748b' },
   successBtn:   { borderRadius: 14, paddingHorizontal: 40, paddingVertical: 14, marginTop: 8 },
-  successBtnText:{ fontFamily: 'Inter_700Bold', fontSize: 14 },
+  successBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });
 
 // ── Main screen ───────────────────────────────────────────────────────────────
@@ -767,8 +767,8 @@ const styles = StyleSheet.create({
   ctaBar:          { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: 1 },
   priceLabel:      { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1 },
   priceText:       { fontFamily: 'Inter_700Bold', fontSize: 16, marginTop: 2 },
-  enquireBtn:      { borderRadius: 12, paddingHorizontal: 18, paddingVertical: 12 },
-  enquireBtnText:  { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  enquireBtn:      { borderRadius: 12, paddingHorizontal: 18, paddingVertical: 14 },
+  enquireBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   // Quick actions
   quickActions:    { flexDirection: 'row', paddingVertical: 14, borderBottomWidth: 1 },
   quickAction:     { flex: 1, alignItems: 'center', gap: 6 },

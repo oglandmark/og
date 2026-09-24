@@ -576,7 +576,7 @@ const s = StyleSheet.create({
   modalCancel: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, paddingVertical: 12 },
   modalCancelText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   modalSave: { flex: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, paddingVertical: 12 },
-  modalSaveText: { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#102a43' },
+  modalSaveText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#102a43' },
   rejectSheet: { margin: 20, borderRadius: 18, padding: 18 },
   rejectInput: { minHeight: 110, borderWidth: 1, borderRadius: 11, padding: 12, marginTop: 16, fontFamily: 'Inter_400Regular', fontSize: 14 },
   reviewSheet: { maxHeight: '92%', borderTopLeftRadius: 22, borderTopRightRadius: 22, overflow: 'hidden' },

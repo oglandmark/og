@@ -291,8 +291,8 @@ function mapApiBanner(s: ApiBannerSlide): BannerSlideData | null {
   return null;
 }
 
-const BANNER_W            = Math.round(SCREEN_W * 0.9);
-const BANNER_H            = 190;
+const BANNER_W            = SCREEN_W;
+const BANNER_H            = 150;
 const BANNER_AUTO_INTERVAL = 4200;
 const VIDEO_MAX_DURATION   = 60_000; // 60 s — auto-advance after this even if looping
 

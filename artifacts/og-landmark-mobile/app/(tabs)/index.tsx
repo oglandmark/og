@@ -234,8 +234,8 @@ const VIDEO_SLIDE: BannerSlideData = {
   localVideo: LOCAL_PROMO_VIDEO as number,
   image: require('@/assets/images/property-1.jpg'),
   eyebrow: 'OKARA DISTRICT • PAKISTAN',
-  title: 'Find Your Perfect Property',
-  subtitle: 'Homes, plots and commercial spaces across Okara',
+  title: 'Find Your Dream Property',
+  subtitle: 'Premium homes, plots & commercial spaces across Okara & surroundings',
   cta: 'Explore Now',
   route: '/explore' as const,
   ctaParams: {},
@@ -248,8 +248,8 @@ const FALLBACK_SLIDES: BannerSlideData[] = Platform.OS !== 'web'
         type: 'image',
         image: require('@/assets/images/property-1.jpg'),
         eyebrow: 'OKARA DISTRICT • PAKISTAN',
-        title: 'Find Your Perfect Property',
-        subtitle: 'Homes, plots and commercial spaces across Okara',
+        title: 'Find Your Dream Property',
+        subtitle: 'Premium homes, plots & commercial spaces across Okara & surroundings',
         cta: 'Explore Now',
         route: '/explore' as const,
         ctaParams: {},
@@ -261,7 +261,7 @@ function mapApiBanner(s: ApiBannerSlide): BannerSlideData | null {
   if (!s.active) return null;
 
   const eyebrow  = (s as any).eyebrow  || 'OG LANDMARK';
-  const title    = (s as any).title    || 'Find Your Perfect Property';
+  const title    = (s as any).title    || 'Premium Properties\nin Okara District';
   const subtitle = (s as any).subtitle || 'Homes, plots & commercial spaces';
   const cta      = (s as any).cta      || 'Explore Now';
   const route    = ((s as any).route   || '/explore') as '/explore';
@@ -291,7 +291,7 @@ function mapApiBanner(s: ApiBannerSlide): BannerSlideData | null {
   return null;
 }
 
-const BANNER_H            = 210;
+const BANNER_H            = 190;
 const BANNER_AUTO_INTERVAL = 4200;
 const VIDEO_MAX_DURATION   = 60_000; // 60 s — auto-advance after this even if looping
 
@@ -352,7 +352,7 @@ function CinematicBanner({ isScreenVisible, externalSlides, config, colors }: {
           videoUri: videoUrl || undefined,
           image: imageUrl ? { uri: imageUrl } : require('@/assets/images/property-1.jpg'),
           eyebrow: fallback.eyebrow || 'OG LANDMARK',
-          title: fallback.title || 'Find Your Perfect Property',
+          title: fallback.title || 'Find Your Dream Property',
           subtitle: fallback.subtitle || 'Premium homes & commercial spaces',
           cta: fallback.cta || 'Explore Now',
           route: (fallback.route || '/explore') as '/explore',
@@ -541,7 +541,7 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, colors, o
 }
 
 const bn = StyleSheet.create({
-  container:  { width: SCREEN_W, height: BANNER_H, overflow: 'hidden', marginTop: 2 },
+  container:  { width: SCREEN_W, height: BANNER_H, overflow: 'hidden', marginTop: 4 },
   slideStack: { width: SCREEN_W, height: BANNER_H, overflow: 'hidden' },
   slide:      { width: SCREEN_W, height: BANNER_H },
   image:      { width: SCREEN_W, height: BANNER_H },
@@ -551,12 +551,12 @@ const bn = StyleSheet.create({
   dots:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 10 },
   dot:        { width: 6, height: 6, borderRadius: 3, backgroundColor: '#c8a45a55' },
   dotActive:  { width: 20, height: 6, borderRadius: 3, backgroundColor: '#c8a45a' },
-  bannerCopy: { position: 'absolute', left: 22, right: 96, bottom: 20 },
-  bannerEyebrow: { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.6, marginBottom: 7 },
-  bannerTitle: { color: '#ffffff', fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 25, lineHeight: 30, marginBottom: 5 },
-  bannerSubtitle: { color: '#ffffffd9', fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 15 },
-  bannerCta: { position: 'absolute', right: 18, bottom: 20, minHeight: 36, borderRadius: 12, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 5 },
-  bannerCtaText: { fontFamily: 'Inter_700Bold', fontSize: 11 },
+  bannerCopy: { position: 'absolute', left: 20, right: 88, bottom: 18 },
+  bannerEyebrow: { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1.5, marginBottom: 4 },
+  bannerTitle: { color: '#ffffff', fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 20, lineHeight: 23, marginBottom: 3 },
+  bannerSubtitle: { color: '#ffffffcc', fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 14 },
+  bannerCta: { position: 'absolute', right: 18, bottom: 18, minHeight: 32, borderRadius: 11, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 4 },
+  bannerCtaText: { fontFamily: 'Inter_700Bold', fontSize: 10 },
 });
 
 // ─── Static placeholder images ────────────────────────────────────────────────
@@ -1806,30 +1806,7 @@ export default function HomeScreen() {
           {user ? <NotificationBell compact /> : <View style={{ width: 36 }} />}
         </View>
 
-        <Pressable
-          onPress={() => setLocationOpen(true)}
-          style={({ pressed }) => [s.locationIndicator, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, opacity: pressed ? 0.82 : 1 }]}
-          accessibilityRole="button"
-          accessibilityLabel={`Change location, currently ${selectedLocation}`}
-        >
-          <Feather name="map-pin" size={15} color={colors.action} />
-          <Text style={[s.locationIndicatorText, { color: colors.action }]} numberOfLines={1}>
-            {selectedLocation === 'Okara District' ? 'Okara, Punjab' : `${selectedLocation}, Punjab`}
-          </Text>
-          <Feather name="chevron-down" size={14} color={colors.mutedForeground} />
-        </Pressable>
-      </View>
-
-      {/* ─── CINEMATIC PROPERTY HERO ─────────────────────────────────────── */}
-      <View onLayout={(e) => {
-        // Track banner's bottom edge so we know when it has scrolled off screen
-        bannerBottomRef.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height;
-      }}>
-        <CinematicBanner isScreenVisible={isVideoScreenVisible} externalSlides={apiBannerSlides} config={homeContent} colors={colors} />
-      </View>
-
-      {/* ─── BUY / RENT SEARCH ───────────────────────────────────────────── */}
-      <View style={s.heroSearch}>
+        {/* Buy / Rent toggle */}
         <View
           style={[s.switcher, { backgroundColor: colors.surfaceTint, borderColor: colors.border }]}
           onLayout={(e) => setSwitcherW(e.nativeEvent.layout.width)}
@@ -1861,10 +1838,17 @@ export default function HomeScreen() {
           ))}
         </View>
 
+        {/* Smart Search */}
         <View style={[s.searchRow, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, shadowColor: colors.shadow }]}>
-          <View style={[s.searchIconWrap, { backgroundColor: colors.action + '18' }]}>
-            <Feather name="search" size={16} color={colors.action} />
-          </View>
+          <Pressable
+            onPress={() => router.push({ pathname: '/explore', params: { type: transaction, search: query } })}
+            accessibilityRole="button"
+            accessibilityLabel={`Search ${transaction === 'Buy' ? 'properties to buy' : 'properties to rent'}`}
+          >
+            <View style={[s.searchIconWrap, { backgroundColor: colors.action + '18' }]}>
+              <Feather name="search" size={16} color={colors.action} />
+            </View>
+          </Pressable>
           <TextInput
             value={query}
             onChangeText={setQuery}
@@ -1875,14 +1859,24 @@ export default function HomeScreen() {
             onSubmitEditing={() => router.push({ pathname: '/explore', params: { type: transaction, search: query } })}
           />
           <Pressable
-            onPress={() => router.push({ pathname: '/explore', params: { type: transaction, search: query } })}
-            style={({ pressed }) => [s.searchSubmit, { backgroundColor: colors.action, opacity: pressed ? 0.8 : 1 }]}
+            onPress={() => setLocationOpen(true)}
+            style={[s.locationChip, { backgroundColor: colors.secondary, borderColor: colors.border }]}
             accessibilityRole="button"
-            accessibilityLabel={`Search ${transaction === 'Buy' ? 'properties to buy' : 'properties to rent'}`}
+            accessibilityLabel={`Change location, currently ${selectedLocation}`}
           >
-            <Feather name="arrow-right" size={17} color={colors.actionForeground} />
+            <Feather name="map-pin" size={11} color={colors.action} />
+            <Text style={[s.locationChipText, { color: colors.action }]} numberOfLines={1}>{selectedLocation}</Text>
+            <Feather name="chevron-down" size={11} color={colors.action} />
           </Pressable>
         </View>
+      </View>
+
+      {/* ─── CINEMATIC BANNER ───────────────────────────────────────────── */}
+      <View onLayout={(e) => {
+        // Track banner's bottom edge so we know when it has scrolled off screen
+        bannerBottomRef.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height;
+      }}>
+        <CinematicBanner isScreenVisible={isVideoScreenVisible} externalSlides={apiBannerSlides} config={homeContent} colors={colors} />
       </View>
 
       {/* ─── FIND YOUR PROPERTY (Browse / Discovery) ────────────────────── */}
@@ -2142,19 +2136,15 @@ const s = StyleSheet.create({
   screen: { flex: 1 },
 
   // Header
-  header:           { paddingHorizontal: 18, paddingBottom: 13 },
-  topBar:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  headerIcon:       { width: 40, height: 40, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0, elevation: 0 },
-  locationIndicator:{ minHeight: 36, alignSelf: 'flex-start', maxWidth: '100%', flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderWidth: 1, borderRadius: 18 },
-  locationIndicatorText: { fontFamily: 'Inter_600SemiBold', fontSize: 12, flexShrink: 1 },
-  heroSearch:       { paddingHorizontal: 18, paddingTop: 14, paddingBottom: 18 },
-  switcher:         { flexDirection: 'row', borderRadius: 30, alignSelf: 'flex-start', padding: 4, marginBottom: 10, borderWidth: 1 },
+  header:           { paddingHorizontal: 18, paddingBottom: 20 },
+  topBar:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
+  headerIcon:       { width: 42, height: 42, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0, elevation: 0 },
+  switcher:         { flexDirection: 'row', borderRadius: 30, alignSelf: 'flex-start', padding: 4, marginBottom: 15, borderWidth: 1 },
   switchPill:       { position: 'absolute', top: 4, left: 4, bottom: 4, borderRadius: 26 },
-  switchItem:       { paddingHorizontal: 23, paddingVertical: 9, borderRadius: 26, zIndex: 1 },
-  switchText:       { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  searchRow:        { flexDirection: 'row', alignItems: 'center', borderRadius: 18, borderWidth: 1, paddingLeft: 10, paddingRight: 8, height: 56, gap: 9, shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 3 },
+  switchItem:       { paddingHorizontal: 24, paddingVertical: 11, borderRadius: 26, zIndex: 1 },
+  switchText:       { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  searchRow:        { flexDirection: 'row', alignItems: 'center', borderRadius: 22, borderWidth: 1, paddingLeft: 10, paddingRight: 10, height: 58, gap: 9, shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 3 },
   searchIconWrap:   { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  searchSubmit:     { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   searchInput:      { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13 },
   locationChip:     { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 7, maxWidth: 128 },
   locationChipText: { fontFamily: 'Inter_600SemiBold', fontSize: 10, flex: 1 },

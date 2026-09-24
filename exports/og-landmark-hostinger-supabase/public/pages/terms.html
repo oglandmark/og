@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Terms & Conditions – OG Landmark</title>
+<link rel="icon" href="/og-logo.png"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0B1F3A;--gold:#C8A45A;--gold-light:#f0d9a0;--white:#fff;--bg:#f8f9fa;--text:#1e293b;--muted:#64748b;--border:#e2e8f0}
+body{font-family:'Segoe UI',Georgia,sans-serif;color:var(--text);background:var(--white)}
+nav{background:var(--navy);padding:0 5%;display:flex;align-items:center;justify-content:space-between;height:70px;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.3)}
+.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+.nav-logo img{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(200,164,90,.4))}
+.nav-brand{color:var(--gold);font-size:20px;font-weight:800;letter-spacing:.5px}
+.nav-brand small{display:block;color:rgba(255,255,255,.5);font-size:10px;font-weight:400;letter-spacing:2px;text-transform:uppercase}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{color:rgba(255,255,255,.75);text-decoration:none;font-size:14px;font-weight:500;transition:.2s}
+.nav-links a:hover{color:var(--gold)}
+.nav-cta{background:var(--gold);color:var(--navy)!important;padding:9px 20px;border-radius:6px;font-weight:700!important}
+.hero{background:linear-gradient(135deg,var(--navy) 0%,#112244 100%);padding:70px 5% 60px;text-align:center}
+.hero-badge{display:inline-block;background:rgba(200,164,90,.15);border:1px solid rgba(200,164,90,.3);color:var(--gold);padding:6px 20px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px}
+.hero h1{font-size:clamp(28px,4vw,46px);font-weight:900;color:var(--white);margin-bottom:14px}
+.hero-meta{color:rgba(255,255,255,.5);font-size:13px}
+.hero-meta span{color:var(--gold)}
+
+.layout{display:grid;grid-template-columns:260px 1fr;gap:40px;max-width:1100px;margin:60px auto;padding:0 5% 80px}
+.toc{position:sticky;top:90px;align-self:start}
+.toc-title{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px}
+.toc ul{list-style:none;display:flex;flex-direction:column;gap:2px}
+.toc ul li a{display:block;padding:8px 12px;border-radius:6px;font-size:13px;color:var(--muted);text-decoration:none;transition:.2s;border-left:3px solid transparent}
+.toc ul li a:hover{background:rgba(11,31,58,.05);color:var(--navy);border-left-color:var(--gold)}
+.toc ul li a.active{background:rgba(200,164,90,.08);color:var(--navy);font-weight:600;border-left-color:var(--gold)}
+
+.content{min-width:0}
+.last-updated{font-size:13px;color:var(--muted);margin-bottom:36px;padding:12px 16px;background:#f0f9ff;border-left:4px solid var(--gold);border-radius:4px}
+.last-updated strong{color:var(--navy)}
+
+.term-section{margin-bottom:52px;scroll-margin-top:90px}
+.term-section h2{font-size:22px;font-weight:800;color:var(--navy);margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:12px}
+.term-section h2 .sec-num{width:34px;height:34px;background:var(--navy);color:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0}
+.term-section h3{font-size:16px;font-weight:700;color:var(--navy);margin:24px 0 10px}
+.term-section p{font-size:14.5px;color:#374151;line-height:1.85;margin-bottom:14px}
+.term-section ul,.term-section ol{padding-left:20px;margin-bottom:14px}
+.term-section ul li,.term-section ol li{font-size:14.5px;color:#374151;line-height:1.8;margin-bottom:8px}
+.term-section ul li::marker{color:var(--gold)}
+.highlight-box{background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:16px 20px;margin:20px 0}
+.highlight-box p{margin:0;font-size:14px;color:#92400e}
+.highlight-box strong{color:#78350f}
+.warning-box{background:#fff1f2;border:1px solid #fca5a5;border-radius:10px;padding:16px 20px;margin:20px 0}
+.warning-box p{margin:0;font-size:14px;color:#991b1b}
+.contact-box{background:linear-gradient(135deg,var(--navy),#112244);border-radius:16px;padding:36px;text-align:center;margin-top:60px}
+.contact-box h3{color:var(--gold);font-size:20px;font-weight:800;margin-bottom:10px}
+.contact-box p{color:rgba(255,255,255,.75);font-size:14px;margin-bottom:20px}
+.contact-box a{color:var(--gold);font-weight:700;text-decoration:none}
+.contact-box a:hover{text-decoration:underline}
+footer{background:#07111f;padding:32px 5%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+footer p{color:rgba(255,255,255,.4);font-size:13px}
+.footer-socials{display:flex;gap:14px;align-items:center}
+.social-btn{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-decoration:none;transition:.2s;flex-shrink:0}
+.social-btn:hover{transform:scale(1.1)}
+.social-btn.fb{background:#1877F2}
+.social-btn.wa{background:#25D366}
+.social-btn.em{background:#c5a028}
+.social-btn svg{width:20px;height:20px;fill:#fff}
+@media(max-width:768px){.layout{grid-template-columns:1fr}.toc{display:none}.nav-links{display:none}}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <img src="/images/og-logo.png" alt="OG Landmark"/>
+    <div class="nav-brand">OG Landmark<small>Premium Real Estate</small></div>
+  </a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+    <a href="/terms">Terms</a>
+    <a href="/privacy-policy">Privacy</a>
+    <a href="/portal/seller" class="nav-cta">List Property</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge">Legal</div>
+  <h1>Terms & Conditions</h1>
+  <div class="hero-meta">Last Updated: <span>September 6, 2026</span> &nbsp;·&nbsp; Effective Date: <span>September 6, 2026</span></div>
+</div>
+
+<div class="layout">
+  <!-- TABLE OF CONTENTS -->
+  <aside class="toc">
+    <div class="toc-title">Contents</div>
+    <ul>
+      <li><a href="#acceptance">1. Acceptance of Terms</a></li>
+      <li><a href="#services">2. Our Services</a></li>
+      <li><a href="#accounts">3. User Accounts</a></li>
+      <li><a href="#listings">4. Property Listings</a></li>
+      <li><a href="#buyers">5. Buyer Responsibilities</a></li>
+      <li><a href="#sellers">6. Seller Responsibilities</a></li>
+      <li><a href="#agents">7. Agent Guidelines</a></li>
+      <li><a href="#payments">8. Fees & Payments</a></li>
+      <li><a href="#prohibited">9. Prohibited Activities</a></li>
+      <li><a href="#ip">10. Intellectual Property</a></li>
+      <li><a href="#disclaimer">11. Disclaimers</a></li>
+      <li><a href="#liability">12. Limitation of Liability</a></li>
+      <li><a href="#privacy">13. Privacy</a></li>
+      <li><a href="#termination">14. Termination</a></li>
+      <li><a href="#governing">15. Governing Law</a></li>
+      <li><a href="#contact">16. Contact Us</a></li>
+    </ul>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+    <div class="last-updated">
+      <strong>Important Notice:</strong> Please read these Terms & Conditions carefully before using the OG Landmark platform. By accessing or using our website or services, you agree to be bound by these terms. If you do not agree, please do not use our platform.
+    </div>
+
+    <div class="term-section" id="acceptance">
+      <h2><span class="sec-num">1</span> Acceptance of Terms</h2>
+      <p>These Terms and Conditions ("Terms") constitute a legally binding agreement between you ("User", "you", or "your") and OG Landmark ("Company", "we", "us", or "our"), governing your access to and use of the OG Landmark website, mobile applications, and all related services (collectively, the "Platform").</p>
+      <p>By registering an account, posting a listing, contacting a seller or agent, or otherwise using any part of our Platform, you acknowledge that you have read, understood, and agree to be bound by these Terms, along with our Privacy Policy and any other policies referenced herein.</p>
+      <p>These Terms apply to all users of the Platform including buyers, sellers, real estate agents, developers, and visitors.</p>
+    </div>
+
+    <div class="term-section" id="services">
+      <h2><span class="sec-num">2</span> Our Services</h2>
+      <p>OG Landmark provides an online real estate marketplace that enables:</p>
+      <ul>
+        <li>Listing and searching residential, commercial, agricultural, and plot properties across Pakistan</li>
+        <li>Connecting buyers directly with sellers and verified real estate agents</li>
+        <li>Submitting inquiries, offers, and scheduling property viewings</li>
+         <li>Access to Buyer, Seller, Agent, and Admin experiences for registered users</li>
+         <li>Land-area calculator tools, saved searches, favourites, notifications, and property history features</li>
+         <li>Educational content, market updates, and real estate blog posts</li>
+        <li>Virtual property tours and multimedia property presentations</li>
+      </ul>
+      <div class="highlight-box">
+        <p><strong>Important:</strong> OG Landmark is a platform facilitating connections between buyers and sellers. We are not a party to any property transaction and do not act as a broker, agent, or guarantor for any listing on our platform.</p>
+      </div>
+    </div>
+
+    <div class="term-section" id="accounts">
+      <h2><span class="sec-num">3</span> User Accounts</h2>
+      <h3>3.1 Registration</h3>
+       <p>To access certain features of the Platform, you must register and create an account. New registrations begin as Buyer accounts. A Buyer may also submit a property they own or are authorised to list; every submitted listing remains pending until OG Landmark reviews it. You agree to provide accurate, current, and complete information during registration and to update such information to keep it accurate, current, and complete.</p>
+      <h3>3.2 Account Security</h3>
+      <p>You are responsible for maintaining the confidentiality of your account credentials, including your password. You agree to immediately notify OG Landmark of any unauthorized use of your account. OG Landmark will not be liable for any loss or damage arising from your failure to protect your account information.</p>
+      <h3>3.3 Account Types</h3>
+      <ul>
+        <li><strong>Buyer Account:</strong> For individuals searching and inquiring about properties</li>
+         <li><strong>Seller Account:</strong> For individuals or companies listing properties for sale or rent</li>
+        <li><strong>Agent Account:</strong> For licensed real estate professionals representing clients</li>
+      </ul>
+      <h3>3.4 Account Eligibility</h3>
+      <p>You must be at least 18 years of age and legally capable of entering into binding contracts under Pakistani law to create an account on OG Landmark.</p>
+    </div>
+
+    <div class="term-section" id="listings">
+      <h2><span class="sec-num">4</span> Property Listings</h2>
+      <h3>4.1 Listing Approval</h3>
+      <p>All property listings submitted by sellers must be reviewed and approved by the OG Landmark admin team before being published on the Platform. We reserve the right to reject, modify, or remove any listing at our sole discretion.</p>
+      <h3>4.2 Listing Accuracy</h3>
+      <p>Sellers are solely responsible for the accuracy, completeness, and legality of all information provided in their listings, including but not limited to:</p>
+      <ul>
+        <li>Property title, description, and photographs</li>
+        <li>Accurate pricing and area measurements</li>
+        <li>Correct location details including city, society, and address</li>
+        <li>Ownership status and legal encumbrances</li>
+        <li>Amenities and features of the property</li>
+      </ul>
+      <h3>4.3 Prohibited Listings</h3>
+      <p>The following types of listings are strictly prohibited on OG Landmark:</p>
+      <ul>
+        <li>Properties with disputed or unclear ownership</li>
+        <li>Listings with fraudulent, misleading, or inaccurate information</li>
+        <li>Properties involved in ongoing legal disputes without proper disclosure</li>
+        <li>Duplicate listings for the same property</li>
+        <li>Properties that violate any applicable law or regulation</li>
+      </ul>
+    </div>
+
+    <div class="term-section" id="buyers">
+      <h2><span class="sec-num">5</span> Buyer Responsibilities</h2>
+      <p>As a buyer using OG Landmark, you agree to:</p>
+      <ul>
+        <li>Conduct your own due diligence before making any offer or payment for a property</li>
+        <li>Verify property ownership documents (Fard, Registry, Mutation) independently</li>
+        <li>Engage a qualified lawyer or property consultant to review legal documents</li>
+        <li>Not make payments to any party solely based on information provided on this Platform</li>
+        <li>Report any suspicious listings or fraudulent activity to OG Landmark immediately</li>
+      </ul>
+      <div class="warning-box">
+        <p><strong>Warning:</strong> OG Landmark strongly advises all buyers to personally visit properties and verify all documentation before making any financial commitment. Never transfer money based solely on online information.</p>
+      </div>
+    </div>
+
+    <div class="term-section" id="sellers">
+      <h2><span class="sec-num">6</span> Seller Responsibilities</h2>
+       <p>As a seller or any user submitting a property listing, you represent and warrant that:</p>
+      <ul>
+        <li>You are the legal owner of the listed property or have full authorization to list it</li>
+        <li>The property is free from undisclosed liens, encumbrances, or legal disputes</li>
+        <li>All information provided in your listing is accurate and up to date</li>
+        <li>You will respond to buyer inquiries in a timely and professional manner</li>
+        <li>You will not list the same property on multiple accounts simultaneously</li>
+        <li>You will promptly remove or update listings when a property is sold or rented</li>
+      </ul>
+    </div>
+
+    <div class="term-section" id="agents">
+      <h2><span class="sec-num">7</span> Agent Guidelines</h2>
+      <p>Real estate agents registered on OG Landmark must comply with the following guidelines:</p>
+      <ul>
+        <li>Maintain a valid real estate license or registration as required by Pakistani law</li>
+        <li>Act in the best interests of their clients at all times</li>
+        <li>Disclose any conflicts of interest to relevant parties</li>
+        <li>Not engage in any form of misrepresentation or fraud</li>
+        <li>Maintain professional conduct in all communications through the Platform</li>
+        <li>Comply with all applicable real estate regulations and codes of conduct</li>
+      </ul>
+    </div>
+
+    <div class="term-section" id="payments">
+      <h2><span class="sec-num">8</span> Fees & Payments</h2>
+      <p>OG Landmark currently provides basic listing services at no charge to sellers. Premium features and promotional placements may be subject to fees, which will be clearly disclosed prior to purchase. All fees are non-refundable unless stated otherwise.</p>
+      <p>OG Landmark does not handle, process, or intermediate any payments between buyers and sellers. All financial transactions related to property purchases or rentals are conducted directly between the parties and are outside the scope of our Platform.</p>
+    </div>
+
+    <div class="term-section" id="prohibited">
+      <h2><span class="sec-num">9</span> Prohibited Activities</h2>
+      <p>Users are strictly prohibited from engaging in any of the following activities on the Platform:</p>
+      <ul>
+        <li>Posting false, misleading, or fraudulent property listings</li>
+        <li>Attempting to defraud buyers, sellers, or other users</li>
+        <li>Collecting personal data of other users for unauthorized purposes</li>
+        <li>Using automated bots, scrapers, or other tools to access the Platform</li>
+        <li>Circumventing the Platform to conduct transactions without proper disclosure</li>
+        <li>Engaging in harassment, abuse, or threatening behavior toward other users</li>
+        <li>Posting spam, unsolicited communications, or irrelevant content</li>
+        <li>Attempting to gain unauthorized access to any part of the Platform</li>
+        <li>Uploading malware, viruses, or any harmful code</li>
+        <li>Violating any applicable Pakistani law or regulation</li>
+      </ul>
+      <p>Violation of these prohibitions may result in immediate account suspension or termination, and may be reported to relevant law enforcement authorities.</p>
+    </div>
+
+    <div class="term-section" id="ip">
+      <h2><span class="sec-num">10</span> Intellectual Property</h2>
+      <p>All content on the OG Landmark Platform, including but not limited to the OG Landmark logo, website design, text, graphics, software, and data compilations, is the exclusive property of OG Landmark or its licensors and is protected by Pakistani and international intellectual property laws.</p>
+      <p>Users grant OG Landmark a non-exclusive, royalty-free, worldwide license to use, display, and distribute content they upload to the Platform (such as property photographs and descriptions) solely for the purpose of operating the Platform and promoting listed properties.</p>
+      <p>You may not reproduce, distribute, modify, or create derivative works of any Platform content without our explicit written permission.</p>
+    </div>
+
+    <div class="term-section" id="disclaimer">
+      <h2><span class="sec-num">11</span> Disclaimers</h2>
+      <p>THE PLATFORM IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS. OG LANDMARK MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:</p>
+      <ul>
+        <li>The accuracy, completeness, or reliability of any property listing</li>
+        <li>The legal status or ownership of any listed property</li>
+        <li>The suitability of any property for a particular purpose</li>
+        <li>The conduct or reliability of any user, seller, buyer, or agent</li>
+        <li>Uninterrupted or error-free access to the Platform</li>
+      </ul>
+      <p>OG Landmark does not verify the legal ownership of every listed property and is not responsible for fraudulent listings. Users must exercise their own judgment and due diligence.</p>
+    </div>
+
+    <div class="term-section" id="liability">
+      <h2><span class="sec-num">12</span> Limitation of Liability</h2>
+      <p>To the maximum extent permitted by applicable law, OG Landmark, its directors, employees, partners, agents, suppliers, or affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to:</p>
+      <ul>
+        <li>Financial losses arising from property transactions conducted through or facilitated by the Platform</li>
+        <li>Loss of data, profits, goodwill, or business opportunities</li>
+        <li>Damages resulting from fraudulent or inaccurate listings</li>
+        <li>Unauthorized access to your account or personal information</li>
+        <li>Service interruptions or technical failures</li>
+      </ul>
+      <p>In no event shall OG Landmark's total liability exceed the amount paid by you, if any, to OG Landmark in the six (6) months preceding the event giving rise to the claim.</p>
+    </div>
+
+    <div class="term-section" id="privacy">
+      <h2><span class="sec-num">13</span> Privacy</h2>
+      <p>Your use of the Platform is also governed by our <a href="/privacy-policy" style="color:var(--navy);font-weight:700">Privacy Policy</a>, which is incorporated into these Terms by reference. By using the Platform, you consent to the collection, use, and sharing of your information as described in the Privacy Policy.</p>
+    </div>
+
+    <div class="term-section" id="termination">
+      <h2><span class="sec-num">14</span> Termination</h2>
+      <p>OG Landmark reserves the right to suspend or terminate your account and access to the Platform at any time, with or without notice, for any reason, including but not limited to a breach of these Terms.</p>
+      <p>You may terminate your account at any time by contacting us at <strong>support@oglandmark.com</strong>. Upon termination, your right to use the Platform ceases immediately, though certain provisions of these Terms shall survive termination.</p>
+    </div>
+
+    <div class="term-section" id="governing">
+      <h2><span class="sec-num">15</span> Governing Law</h2>
+      <p>These Terms shall be governed by and construed in accordance with the laws of the Islamic Republic of Pakistan. Any disputes arising from or relating to these Terms or your use of the Platform shall be subject to the exclusive jurisdiction of the courts located in Punjab, Pakistan.</p>
+      <p>In the event of any dispute, the parties agree to first attempt resolution through good-faith negotiation. If negotiation fails, disputes shall be submitted to binding arbitration in accordance with the Arbitration Act, 1940 of Pakistan.</p>
+    </div>
+
+    <div class="term-section" id="contact">
+      <h2><span class="sec-num">16</span> Contact Us</h2>
+      <p>If you have any questions about these Terms & Conditions, please contact us:</p>
+      <div class="contact-box">
+        <h3>OG Landmark Legal Department</h3>
+        <p>We are here to address your concerns and clarify any aspect of these Terms.</p>
+        <p>📧 <a href="mailto:support@oglandmark.com">support@oglandmark.com</a></p>
+        <p style="margin-top:8px">📞 <a href="tel:+923042569000">+92 304 256 9000</a></p>
+        <p style="margin-top:8px;color:rgba(255,255,255,.5);font-size:13px">OG Landmark, Okara District, Punjab, Pakistan</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer>
+  <p>© 2026 OG Landmark. All rights reserved. | Okara, Punjab, Pakistan</p>
+  <div class="footer-socials">
+    <a href="https://www.facebook.com/share/1cJgDSD2RB/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" class="social-btn fb" title="OG Landmark on Facebook">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+    </a>
+    <a href="https://wa.me/923042569000" target="_blank" rel="noopener noreferrer" class="social-btn wa" title="Chat on WhatsApp">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    </a>
+    <a href="mailto:support@oglandmark.com" class="social-btn em" title="Email Us">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+    </a>
+  </div>
+</footer>
+
+<script>
+// Highlight active TOC item on scroll
+const sections = document.querySelectorAll('.term-section');
+const links = document.querySelectorAll('.toc a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+  links.forEach(l => { l.classList.toggle('active', l.getAttribute('href') === '#' + current); });
+});
+</script>
+</body>
+</html>

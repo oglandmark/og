@@ -126,3 +126,17 @@ mtime_ms = 1790194532781
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/32819b6c-a9fd-4bb7-8804-c4d1b69d9b8f/ad5bad8e-c77c-4b15-a627-11c36c95b0c1"
 storage_version_token = "1790194546381323"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "kJZS7SfHPb5yDA0Sq3AUE"
+uri = "file://exports/og-landmark-hostinger-supabase.zip"
+type = "unspecified"
+title = "OG Landmark Hostinger Supabase package"
+description = "Updated Node API package with PostgreSQL support, guarded MySQL-to-Supabase migration scripts, and the existing website assets."
+logical_id = "32f93636-37c1-4502-9bc2-3aac7e45ae60"
+content_hash = "sha256:8b6a7812be0ce5e345a3410c44dd0031b5b8d7a18fd4cf3c0237e3a10efed841"
+size = 10986375
+mtime_ms = 1790234500458
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/32f93636-37c1-4502-9bc2-3aac7e45ae60/97d40a2d-c98d-4616-9335-9793a80da248"
+storage_version_token = "1790234607490498"
+content_type = "application/octet-stream"

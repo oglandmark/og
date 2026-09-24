@@ -1,7 +1,7 @@
 /**
- * OG Landmark — Express Backend (MySQL Storage)
+ * OG Landmark — Express Backend (MySQL or PostgreSQL Storage)
  * --------------------------------------------------
- * Data stored in Hostinger MySQL (persists across restarts)
+ * Data stored in a configured MySQL or PostgreSQL database
  * Run: node server.js
  */
 
@@ -14,8 +14,15 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
-const mysql = require('mysql2/promise');
 const multer = require('multer');
+const {
+  provider: databaseProvider,
+  configured: databaseConfigured,
+  localPreview,
+  pool: databasePool,
+  queryRows,
+  taggedQuery: dbQuery,
+} = require('./database/connection');
 
 // ─── File Upload (Multer) ─────────────────────────────────────────────────────
 // Media bytes live on the configured file volume, never in MySQL. In
@@ -59,25 +66,9 @@ const upload = multer({
   }
 });
 
-// MySQL is the production database. The local/Replit preview keeps its
-// JSON fallback so the website can run without exposing database credentials.
-const databaseUrl = process.env.DATABASE_URL || '';
-const mysqlUrl = /^(mysql|mariadb):\/\//i.test(databaseUrl);
-const databaseConfigured = mysqlUrl;
-const localPreview = Boolean(process.env.REPLIT_ENVIRONMENT) || (!databaseConfigured && process.env.NODE_ENV === 'development');
 if (!databaseConfigured && !localPreview) {
-  console.error('MySQL settings are missing or invalid. Set DATABASE_URL to a mysql:// Hostinger connection string in production.');
+  console.error('Database settings are missing or invalid. Set DATABASE_URL to a MySQL or PostgreSQL connection string in production.');
 }
-const mysqlPool = databaseConfigured && !localPreview
-  ? mysql.createPool(databaseUrl)
-  : null;
-const mysqlDb = mysqlPool
-  ? async (strings, ...values) => {
-      const statement = strings.reduce((sql, chunk, index) => `${sql}${index ? '?' : ''}${chunk}`, '');
-      const [rows] = await mysqlPool.query(statement, values);
-      return rows;
-    }
-  : null;
 const fallbackFile = process.env.OG_LANDMARK_RUNTIME_DATA
   || path.join(__dirname, 'runtime-data.json');
 let dbReady = false;
@@ -92,27 +83,38 @@ function generateOTP() {
 }
 const codeDigest = code => crypto.createHash('sha256').update(String(code)).digest('hex');
 async function saveChallenge(email, purpose, code, minutes) {
-  if (mysqlDb) {
+  if (dbQuery) {
     const expiresAt = new Date(Date.now() + Number(minutes) * 60000);
-    await mysqlDb`
-      INSERT INTO auth_challenges (email, purpose, code_hash, attempts, expires_at)
-      VALUES (${email}, ${purpose}, ${codeDigest(code)}, 0, ${expiresAt})
-      ON DUPLICATE KEY UPDATE
-        code_hash = VALUES(code_hash),
-        attempts = 0,
-        expires_at = VALUES(expires_at)
-    `;
+    if (databaseProvider === 'postgres') {
+      await dbQuery`
+        INSERT INTO auth_challenges (email, purpose, code_hash, attempts, expires_at)
+        VALUES (${email}, ${purpose}, ${codeDigest(code)}, 0, ${expiresAt})
+        ON CONFLICT (email, purpose) DO UPDATE SET
+          code_hash = EXCLUDED.code_hash,
+          attempts = 0,
+          expires_at = EXCLUDED.expires_at
+      `;
+    } else {
+      await dbQuery`
+        INSERT INTO auth_challenges (email, purpose, code_hash, attempts, expires_at)
+        VALUES (${email}, ${purpose}, ${codeDigest(code)}, 0, ${expiresAt})
+        ON DUPLICATE KEY UPDATE
+          code_hash = VALUES(code_hash),
+          attempts = 0,
+          expires_at = VALUES(expires_at)
+      `;
+    }
     return;
   }
   if (localPreview) {
     otpStore.set(`${purpose}:${email}`, { otp: code, expiry: Date.now() + minutes * 60000, attempts: 0 });
     return;
   }
-  throw new Error('MySQL is not configured for production.');
+  throw new Error('A production database connection is not configured.');
 }
 async function consumeChallenge(email, purpose, code) {
-  if (mysqlDb) {
-    const rows = await mysqlDb`
+  if (dbQuery) {
+    const rows = await dbQuery`
       SELECT email, purpose, code_hash, attempts, expires_at
       FROM auth_challenges
       WHERE email = ${email} AND purpose = ${purpose}
@@ -122,14 +124,14 @@ async function consumeChallenge(email, purpose, code) {
     if (!row || new Date(row.expires_at) < new Date()) return { ok: false, reason: 'expired' };
     if (row.attempts >= 3) return { ok: false, reason: 'attempts' };
     if (codeDigest(code) !== row.code_hash) {
-      await mysqlDb`
+      await dbQuery`
         UPDATE auth_challenges
         SET attempts = ${row.attempts + 1}
         WHERE email = ${email} AND purpose = ${purpose}
       `;
       return { ok: false, reason: 'invalid', left: 2 - row.attempts };
     }
-    await mysqlDb`
+    await dbQuery`
       DELETE FROM auth_challenges
       WHERE email = ${email} AND purpose = ${purpose}
     `;
@@ -142,7 +144,7 @@ async function consumeChallenge(email, purpose, code) {
     if (r.otp !== String(code)) { r.attempts++; return { ok: false, reason: 'invalid', left: 3 - r.attempts }; }
     otpStore.delete(`${purpose}:${email}`); return { ok: true };
   }
-  throw new Error('MySQL is not configured for production.');
+  throw new Error('A production database connection is not configured.');
 }
 
 // Create nodemailer transporter from environment variables.
@@ -349,7 +351,7 @@ if (laravelApiUrl) {
 app.use('/api/auth', (req, res, next) => {
   if (!dbReady) {
     return res.status(503).json({
-      error: 'Database is not ready. Check the MySQL settings and application log.',
+      error: 'Database is not ready. Check DATABASE_URL and the application log.',
       code: 'DB_NOT_READY',
     });
   }
@@ -381,7 +383,7 @@ app.use('/api/auth', (req, res, next) => {
 app.use('/api', (req, res, next) => {
   if (req.path === '/health' || req.path === '/config' || dbReady) return next();
   return res.status(503).json({
-      error: 'Database is not ready. Check the MySQL settings and application log.',
+      error: 'Database is not ready. Check DATABASE_URL and the application log.',
     code: 'DB_NOT_READY',
   });
 });
@@ -484,21 +486,21 @@ function getBearerToken(req) {
 async function createSession(user) {
   const token = generateToken(user.id);
   const expiry = new Date(Date.now() + Number(process.env.SESSION_TTL_HOURS || 168) * 3600000);
-  if (mysqlDb) {
-    await mysqlDb`
+  if (dbQuery) {
+    await dbQuery`
       INSERT INTO auth_sessions (token_hash, user_id, expires_at)
       VALUES (${tokenDigest(token)}, ${user.id}, ${expiry.toISOString()})
     `;
   } else if (localPreview) {
     tokenStore.set(token, { userId: user.id, expiresAt: expiry.getTime() });
   } else {
-    throw new Error('MySQL is not configured for production.');
+    throw new Error('A production database connection is not configured.');
   }
   return token;
 }
 async function invalidateUserSessions(userId) {
-  if (mysqlDb) {
-    await mysqlDb`DELETE FROM auth_sessions WHERE user_id = ${userId}`;
+  if (dbQuery) {
+    await dbQuery`DELETE FROM auth_sessions WHERE user_id = ${userId}`;
   } else if (localPreview) {
     for (const [token, session] of tokenStore.entries()) {
       if (session.userId === userId) tokenStore.delete(token);
@@ -510,8 +512,8 @@ async function getRequestUser(req) {
   if (!token) return null;
   let userId;
   try {
-    if (mysqlDb) {
-      const sessions = await mysqlDb`
+    if (dbQuery) {
+      const sessions = await dbQuery`
         SELECT user_id
         FROM auth_sessions
         WHERE token_hash = ${tokenDigest(token)}
@@ -731,8 +733,8 @@ function getSeedData() {
 
 // ─── Database initialization ───────────────────────────────────────────────────
 async function initDb() {
-  if (!mysqlDb) {
-    if (!localPreview) throw new Error('MySQL is not configured for production.');
+  if (!dbQuery) {
+    if (!localPreview) throw new Error('A production database connection is not configured.');
     if (!fs.existsSync(fallbackFile)) {
       const seed = getSeedData();
       seed.users.forEach(u => { if (!u.password.startsWith('pbkdf2:')) u.password = hashPassword(u.password); });
@@ -740,80 +742,144 @@ async function initDb() {
     }
     return;
   }
-  // Keep production self-healing when only the original app_data table was
-  // created manually. Auth persistence is required by login, registration,
-  // and password reset, so ensure all three tables exist before dbReady flips.
-  await mysqlDb`
-    CREATE TABLE IF NOT EXISTS app_data (
-      id BIGINT NOT NULL PRIMARY KEY,
-      data JSON NOT NULL,
-      updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
-    )
-  `;
-  await mysqlDb`
-    CREATE TABLE IF NOT EXISTS auth_sessions (
-      token_hash VARCHAR(255) NOT NULL PRIMARY KEY,
-      user_id BIGINT NOT NULL,
-      expires_at DATETIME(3) NOT NULL,
-      created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-      KEY idx_auth_sessions_user (user_id),
-      KEY idx_auth_sessions_expiry (expires_at)
-    )
-  `;
-  await mysqlDb`
-    CREATE TABLE IF NOT EXISTS auth_challenges (
-      email VARCHAR(320) NOT NULL,
-      purpose VARCHAR(64) NOT NULL,
-      code_hash CHAR(64) NOT NULL,
-      attempts SMALLINT NOT NULL DEFAULT 0,
-      expires_at DATETIME(3) NOT NULL,
-      PRIMARY KEY (email, purpose)
-    )
-  `;
-  await mysqlDb`
-    CREATE TABLE IF NOT EXISTS property_search_index (
-      property_id BIGINT NOT NULL PRIMARY KEY,
-      title VARCHAR(500) NOT NULL,
-      type VARCHAR(120) NOT NULL,
-      status VARCHAR(80) NOT NULL,
-      listing_status VARCHAR(80) NULL,
-      approval_status VARCHAR(80) NULL,
-      purpose VARCHAR(80) NULL,
-      city VARCHAR(160) NULL,
-      society VARCHAR(200) NULL,
-      seller_id BIGINT NULL,
-      agent_id BIGINT NULL,
-      price DECIMAL(20,2) NULL,
-      area_sqft DECIMAL(20,2) NULL,
-      bedrooms DECIMAL(10,2) NULL,
-      bathrooms DECIMAL(10,2) NULL,
-      featured TINYINT(1) NOT NULL DEFAULT 0,
-      priority TINYINT(1) NOT NULL DEFAULT 0,
-      score_overall DECIMAL(5,2) NULL,
-      latitude DECIMAL(10,7) NULL,
-      longitude DECIMAL(10,7) NULL,
-      construction_age VARCHAR(80) NULL,
-      furnishing VARCHAR(80) NULL,
-      availability VARCHAR(120) NULL,
-      tags JSON NULL,
-      search_text TEXT NOT NULL,
-      property_json JSON NOT NULL,
-      created_at DATETIME(3) NULL,
-      updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-      KEY idx_property_search_status (approval_status, listing_status, created_at),
-      KEY idx_property_search_city (city, type, status),
-      KEY idx_property_search_price (price),
-      KEY idx_property_search_area (area_sqft),
-      KEY idx_property_search_seller (seller_id),
-      KEY idx_property_search_agent (agent_id),
-      KEY idx_property_search_geo (latitude, longitude),
-      FULLTEXT KEY ft_property_search_text (search_text)
-    )
-  `;
+  // Keep startup safe when only the core tables have been provisioned. The
+  // PostgreSQL shape is also published in database/schema.postgres.sql.
+  const tableDefinitions = databaseProvider === 'postgres'
+    ? [
+        `CREATE TABLE IF NOT EXISTS app_data (
+          id BIGINT PRIMARY KEY,
+          data JSONB NOT NULL,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )`,
+        `CREATE TABLE IF NOT EXISTS auth_sessions (
+          token_hash VARCHAR(255) PRIMARY KEY,
+          user_id BIGINT NOT NULL,
+          expires_at TIMESTAMPTZ NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )`,
+        `CREATE INDEX IF NOT EXISTS idx_auth_sessions_user ON auth_sessions (user_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_auth_sessions_expiry ON auth_sessions (expires_at)`,
+        `CREATE TABLE IF NOT EXISTS auth_challenges (
+          email VARCHAR(320) NOT NULL,
+          purpose VARCHAR(64) NOT NULL,
+          code_hash CHAR(64) NOT NULL,
+          attempts SMALLINT NOT NULL DEFAULT 0,
+          expires_at TIMESTAMPTZ NOT NULL,
+          PRIMARY KEY (email, purpose)
+        )`,
+        `CREATE TABLE IF NOT EXISTS property_search_index (
+          property_id BIGINT PRIMARY KEY,
+          title VARCHAR(500) NOT NULL,
+          type VARCHAR(120) NOT NULL,
+          status VARCHAR(80) NOT NULL,
+          listing_status VARCHAR(80),
+          approval_status VARCHAR(80),
+          purpose VARCHAR(80),
+          city VARCHAR(160),
+          society VARCHAR(200),
+          seller_id BIGINT,
+          agent_id BIGINT,
+          price DECIMAL(20,2),
+          area_sqft DECIMAL(20,2),
+          bedrooms DECIMAL(10,2),
+          bathrooms DECIMAL(10,2),
+          featured BOOLEAN NOT NULL DEFAULT FALSE,
+          priority BOOLEAN NOT NULL DEFAULT FALSE,
+          score_overall DECIMAL(5,2),
+          latitude DECIMAL(10,7),
+          longitude DECIMAL(10,7),
+          construction_age VARCHAR(80),
+          furnishing VARCHAR(80),
+          availability VARCHAR(120),
+          tags JSONB,
+          search_text TEXT NOT NULL,
+          property_json JSONB NOT NULL,
+          created_at TIMESTAMPTZ,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )`,
+        `CREATE INDEX IF NOT EXISTS idx_property_search_status ON property_search_index (approval_status, listing_status, created_at)`,
+        `CREATE INDEX IF NOT EXISTS idx_property_search_city ON property_search_index (city, type, status)`,
+        `CREATE INDEX IF NOT EXISTS idx_property_search_price ON property_search_index (price)`,
+        `CREATE INDEX IF NOT EXISTS idx_property_search_area ON property_search_index (area_sqft)`,
+        `CREATE INDEX IF NOT EXISTS idx_property_search_seller ON property_search_index (seller_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_property_search_agent ON property_search_index (agent_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_property_search_geo ON property_search_index (latitude, longitude)`,
+        `CREATE INDEX IF NOT EXISTS idx_property_search_tags ON property_search_index USING GIN (tags)`,
+        `ALTER TABLE app_data ENABLE ROW LEVEL SECURITY`,
+        `ALTER TABLE auth_sessions ENABLE ROW LEVEL SECURITY`,
+        `ALTER TABLE auth_challenges ENABLE ROW LEVEL SECURITY`,
+        `ALTER TABLE property_search_index ENABLE ROW LEVEL SECURITY`,
+      ]
+    : [
+        `CREATE TABLE IF NOT EXISTS app_data (
+          id BIGINT NOT NULL PRIMARY KEY,
+          data JSON NOT NULL,
+          updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+        )`,
+        `CREATE TABLE IF NOT EXISTS auth_sessions (
+          token_hash VARCHAR(255) NOT NULL PRIMARY KEY,
+          user_id BIGINT NOT NULL,
+          expires_at DATETIME(3) NOT NULL,
+          created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          KEY idx_auth_sessions_user (user_id),
+          KEY idx_auth_sessions_expiry (expires_at)
+        )`,
+        `CREATE TABLE IF NOT EXISTS auth_challenges (
+          email VARCHAR(320) NOT NULL,
+          purpose VARCHAR(64) NOT NULL,
+          code_hash CHAR(64) NOT NULL,
+          attempts SMALLINT NOT NULL DEFAULT 0,
+          expires_at DATETIME(3) NOT NULL,
+          PRIMARY KEY (email, purpose)
+        )`,
+        `CREATE TABLE IF NOT EXISTS property_search_index (
+          property_id BIGINT NOT NULL PRIMARY KEY,
+          title VARCHAR(500) NOT NULL,
+          type VARCHAR(120) NOT NULL,
+          status VARCHAR(80) NOT NULL,
+          listing_status VARCHAR(80) NULL,
+          approval_status VARCHAR(80) NULL,
+          purpose VARCHAR(80) NULL,
+          city VARCHAR(160) NULL,
+          society VARCHAR(200) NULL,
+          seller_id BIGINT NULL,
+          agent_id BIGINT NULL,
+          price DECIMAL(20,2) NULL,
+          area_sqft DECIMAL(20,2) NULL,
+          bedrooms DECIMAL(10,2) NULL,
+          bathrooms DECIMAL(10,2) NULL,
+          featured TINYINT(1) NOT NULL DEFAULT 0,
+          priority TINYINT(1) NOT NULL DEFAULT 0,
+          score_overall DECIMAL(5,2) NULL,
+          latitude DECIMAL(10,7) NULL,
+          longitude DECIMAL(10,7) NULL,
+          construction_age VARCHAR(80) NULL,
+          furnishing VARCHAR(80) NULL,
+          availability VARCHAR(120) NULL,
+          tags JSON NULL,
+          search_text TEXT NOT NULL,
+          property_json JSON NOT NULL,
+          created_at DATETIME(3) NULL,
+          updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          KEY idx_property_search_status (approval_status, listing_status, created_at),
+          KEY idx_property_search_city (city, type, status),
+          KEY idx_property_search_price (price),
+          KEY idx_property_search_area (area_sqft),
+          KEY idx_property_search_seller (seller_id),
+          KEY idx_property_search_agent (agent_id),
+          KEY idx_property_search_geo (latitude, longitude),
+          FULLTEXT KEY ft_property_search_text (search_text)
+        )`,
+      ];
+  for (const statement of tableDefinitions) await queryRows(statement);
+
   let canonicalProperties = null;
-  const existingRows = await mysqlDb`SELECT id, data FROM app_data WHERE id = 1 LIMIT 1`;
+  const existingRows = await dbQuery`SELECT id, data FROM app_data WHERE id = 1 LIMIT 1`;
   const existing = existingRows[0];
   if (!existing) {
+    if (databaseProvider === 'postgres') {
+      throw new Error('Supabase tables are ready, but app_data is empty. Import a verified OG Landmark backup before starting production traffic.');
+    }
     // First run — seed the database
     const seed = getSeedData();
     // Apply env-var admin credentials if set
@@ -824,7 +890,7 @@ async function initDb() {
     }
     // Hash all seed passwords before saving
     seed.users.forEach(u => { u.password = hashPassword(u.password); });
-    await mysqlDb`INSERT INTO app_data (id, data) VALUES (1, ${JSON.stringify(seed)})`;
+    await dbQuery`INSERT INTO app_data (id, data) VALUES (1, ${JSON.stringify(seed)})`;
     canonicalProperties = seed.properties;
     console.log('✅ Database seeded with initial data');
   } else {
@@ -848,13 +914,13 @@ async function initDb() {
           }
         }
         if (changed) {
-          await mysqlDb`UPDATE app_data SET data = ${JSON.stringify(data)}, updated_at = CURRENT_TIMESTAMP(3) WHERE id = 1`;
+          await dbQuery`UPDATE app_data SET data = ${JSON.stringify(data)}, updated_at = CURRENT_TIMESTAMP(3) WHERE id = 1`;
           console.log('✅ Admin credentials updated from environment variables');
         }
       }
     }
     if (dataChanged && !(process.env.ADMIN_EMAIL || process.env.ADMIN_PASSWORD)) {
-      await mysqlDb`UPDATE app_data SET data = ${JSON.stringify(data)}, updated_at = CURRENT_TIMESTAMP(3) WHERE id = 1`;
+      await dbQuery`UPDATE app_data SET data = ${JSON.stringify(data)}, updated_at = CURRENT_TIMESTAMP(3) WHERE id = 1`;
       console.log('✅ Mobile agent directory migrated into existing database data');
     }
     console.log('✅ Database already has data — skipping seed');
@@ -864,8 +930,8 @@ async function initDb() {
 
 // ─── Data persistence ──────────────────────────────────────────────────────────
 async function readData() {
-  if (!mysqlDb) {
-    if (!localPreview) throw new Error('MySQL is not configured for production.');
+  if (!dbQuery) {
+    if (!localPreview) throw new Error('A production database connection is not configured.');
     const data = JSON.parse(fs.readFileSync(fallbackFile, 'utf8'));
     const changed = ensureMobileAgents(data) || ensurePropertyRecords(data);
     if (changed) {
@@ -875,13 +941,16 @@ async function readData() {
     }
     return data;
   }
-  const rows = await mysqlDb`SELECT data FROM app_data WHERE id = 1 LIMIT 1`;
+  const rows = await dbQuery`SELECT data FROM app_data WHERE id = 1 LIMIT 1`;
   const row = rows[0];
   if (!row) {
+    if (databaseProvider === 'postgres') {
+      throw new Error('Supabase app_data is empty. Import a verified OG Landmark backup before serving API traffic.');
+    }
     // Table exists but empty — seed it
     const seed = getSeedData();
     seed.users.forEach(u => { u.password = hashPassword(u.password); });
-    await mysqlDb`INSERT INTO app_data (id, data) VALUES (1, ${JSON.stringify(seed)})`;
+    await dbQuery`INSERT INTO app_data (id, data) VALUES (1, ${JSON.stringify(seed)})`;
     console.log('✅ Database seeded from readData fallback');
     return seed;
   }
@@ -902,14 +971,14 @@ async function readData() {
 }
 
 async function writeData(data) {
-  if (!mysqlDb) {
-    if (!localPreview) throw new Error('MySQL is not configured for production.');
+  if (!dbQuery) {
+    if (!localPreview) throw new Error('A production database connection is not configured.');
     const temp = `${fallbackFile}.${process.pid}.tmp`;
     fs.writeFileSync(temp, JSON.stringify(data), { mode: 0o600 });
     fs.renameSync(temp, fallbackFile);
     return;
   }
-  await mysqlDb`UPDATE app_data SET data = ${JSON.stringify(data)}, updated_at = CURRENT_TIMESTAMP(3) WHERE id = 1`;
+  await dbQuery`UPDATE app_data SET data = ${JSON.stringify(data)}, updated_at = CURRENT_TIMESTAMP(3) WHERE id = 1`;
   await syncPropertySearchIndex(data.properties || []);
 }
 
@@ -1268,8 +1337,8 @@ function propertyIndexRow(property) {
     areaSqft: Number.isFinite(areaSqft) ? areaSqft : null,
     bedrooms: Number.isFinite(Number(property.bedrooms)) ? Number(property.bedrooms) : null,
     bathrooms: Number.isFinite(Number(property.bathrooms)) ? Number(property.bathrooms) : null,
-    featured: property.featured === true ? 1 : 0,
-    priority: property.priority === true ? 1 : 0,
+    featured: property.featured === true,
+    priority: property.priority === true,
     scoreOverall: Number.isFinite(score) ? score : null,
     latitude: Number.isFinite(latitude) ? latitude : null,
     longitude: Number.isFinite(longitude) ? longitude : null,
@@ -1284,7 +1353,7 @@ function propertyIndexRow(property) {
 }
 
 async function syncPropertySearchIndex(properties) {
-  if (!mysqlPool || !Array.isArray(properties)) return;
+  if (!databasePool || !Array.isArray(properties)) return;
   const digest = crypto.createHash('sha1')
     .update(JSON.stringify(properties))
     .digest('hex');
@@ -1293,34 +1362,24 @@ async function syncPropertySearchIndex(properties) {
   const rows = properties
     .map(propertyIndexRow)
     .filter(row => Number.isFinite(row.id) && row.id > 0);
-  const existingRows = await mysqlPool.query('SELECT property_id FROM property_search_index');
-  const existingIds = new Set(existingRows[0].map(row => Number(row.property_id)));
+  const existingRows = await queryRows('SELECT property_id FROM property_search_index');
+  const existingIds = new Set(existingRows.map(row => Number(row.property_id)));
   const currentIds = new Set(rows.map(row => row.id));
   for (const id of existingIds) {
     if (!currentIds.has(id)) {
-      await mysqlPool.execute('DELETE FROM property_search_index WHERE property_id = ?', [id]);
+      await databasePool.execute('DELETE FROM property_search_index WHERE property_id = ?', [id]);
     }
   }
-  const sql = `
-    INSERT INTO property_search_index (
-      property_id, title, type, status, listing_status, approval_status, purpose,
-      city, society, seller_id, agent_id, price, area_sqft, bedrooms, bathrooms,
-      featured, priority, score_overall, latitude, longitude, construction_age,
-      furnishing, availability, tags, search_text, property_json, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON DUPLICATE KEY UPDATE
-      title = VALUES(title), type = VALUES(type), status = VALUES(status),
-      listing_status = VALUES(listing_status), approval_status = VALUES(approval_status),
-      purpose = VALUES(purpose), city = VALUES(city), society = VALUES(society),
-      seller_id = VALUES(seller_id), agent_id = VALUES(agent_id), price = VALUES(price),
-      area_sqft = VALUES(area_sqft), bedrooms = VALUES(bedrooms), bathrooms = VALUES(bathrooms),
-      featured = VALUES(featured), priority = VALUES(priority), score_overall = VALUES(score_overall),
-      latitude = VALUES(latitude), longitude = VALUES(longitude),
-      construction_age = VALUES(construction_age), furnishing = VALUES(furnishing),
-      availability = VALUES(availability), tags = VALUES(tags), search_text = VALUES(search_text),
-      property_json = VALUES(property_json), created_at = VALUES(created_at),
-      updated_at = CURRENT_TIMESTAMP(3)
-  `;
+  const columns = [
+    'property_id', 'title', 'type', 'status', 'listing_status', 'approval_status', 'purpose',
+    'city', 'society', 'seller_id', 'agent_id', 'price', 'area_sqft', 'bedrooms', 'bathrooms',
+    'featured', 'priority', 'score_overall', 'latitude', 'longitude', 'construction_age',
+    'furnishing', 'availability', 'tags', 'search_text', 'property_json', 'created_at',
+  ];
+  const mutableColumns = columns.slice(1);
+  const conflictClause = databaseProvider === 'postgres'
+    ? `ON CONFLICT (property_id) DO UPDATE SET ${mutableColumns.map(column => `${column} = EXCLUDED.${column}`).join(', ')}, updated_at = CURRENT_TIMESTAMP`
+    : `ON DUPLICATE KEY UPDATE ${mutableColumns.map(column => `${column} = VALUES(${column})`).join(', ')}, updated_at = CURRENT_TIMESTAMP(3)`;
   const rowValues = row => [
     row.id, row.title, row.type, row.status, row.listingStatus, row.approvalStatus,
     row.purpose, row.city, row.society, row.sellerId, row.agentId, row.price,
@@ -1329,11 +1388,16 @@ async function syncPropertySearchIndex(properties) {
     row.furnishing, row.availability, JSON.stringify(row.tags), row.searchText,
     row.propertyJson, row.createdAt,
   ];
-  const valuePlaceholders = '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
   for (let start = 0; start < rows.length; start += 100) {
     const batch = rows.slice(start, start + 100);
-    await mysqlPool.execute(
-      sql.replace('VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', `VALUES ${batch.map(() => valuePlaceholders).join(', ')}`),
+    const valueGroups = batch.map((_, rowIndex) => {
+      const placeholders = columns.map((_, columnIndex) => databaseProvider === 'postgres'
+        ? `$${rowIndex * columns.length + columnIndex + 1}`
+        : '?');
+      return `(${placeholders.join(', ')})`;
+    });
+    await databasePool.execute(
+      `INSERT INTO property_search_index (${columns.join(', ')}) VALUES ${valueGroups.join(', ')} ${conflictClause}`,
       batch.flatMap(rowValues),
     );
   }
@@ -1379,7 +1443,7 @@ function parseNaturalLanguage(query) {
 }
 
 async function queryIndexedProperties(req, caller) {
-  if (!mysqlPool) return null;
+  if (!databasePool) return null;
   const q = req.query || {};
   const clauses = [];
   const params = [];
@@ -1423,16 +1487,23 @@ async function queryIndexedProperties(req, caller) {
   }
   if (q.furnishing) add('furnishing = ?', String(q.furnishing));
   if (q.availability) add('availability = ?', String(q.availability));
-  if (q.featured === 'true') add('featured = 1');
-  if (q.priority === 'true') add('priority = 1');
+  if (q.featured === 'true') add(databaseProvider === 'postgres' ? 'featured = TRUE' : 'featured = 1');
+  if (q.priority === 'true') add(databaseProvider === 'postgres' ? 'priority = TRUE' : 'priority = 1');
   if (q.sellerId || q.seller_id) add('seller_id = ?', Number(q.sellerId || q.seller_id));
   if (q.agentId || q.agent_id) add('agent_id = ?', Number(q.agentId || q.agent_id));
   if (keyword) {
-    add('(CAST(property_id AS CHAR) = ? OR search_text LIKE ?)', keyword, `%${keyword}%`);
+    const idComparison = databaseProvider === 'postgres'
+      ? 'CAST(property_id AS TEXT) = ?'
+      : 'CAST(property_id AS CHAR) = ?';
+    add(`(${idComparison} OR search_text LIKE ?)`, keyword, `%${keyword}%`);
   }
   if (q.tags) {
     const tagValues = csv(q.tags);
-    add(`(${tagValues.map(() => 'JSON_CONTAINS(tags, JSON_QUOTE(?))').join(' OR ')})`, ...tagValues);
+    const tagPredicate = databaseProvider === 'postgres'
+      ? 'tags @> ?::jsonb'
+      : 'JSON_CONTAINS(tags, JSON_QUOTE(?))';
+    add(`(${tagValues.map(() => tagPredicate).join(' OR ')})`,
+      ...(databaseProvider === 'postgres' ? tagValues.map(tag => JSON.stringify([tag])) : tagValues));
   }
 
   const minLat = numeric(q.minLat), maxLat = numeric(q.maxLat);
@@ -1473,10 +1544,10 @@ async function queryIndexedProperties(req, caller) {
     ? Math.min(5000, Math.max(limit + offset, 100))
     : limit;
   const queryOffset = hasNearbyQuery ? 0 : offset;
-  const [countRows] = await mysqlPool.execute(
+  const [countRows] = await databasePool.execute(
     `SELECT COUNT(*) AS total FROM property_search_index ${where}`, params,
   );
-  const [rows] = await mysqlPool.execute(
+  const [rows] = await databasePool.execute(
     `SELECT property_json FROM property_search_index ${where} ORDER BY ${order} LIMIT ? OFFSET ?`,
     [...params, queryLimit, queryOffset],
   );
@@ -1512,7 +1583,7 @@ app.get('/api/properties', async (req, res) => {
     // their visibility rules without changing the legacy array response.
     const token = getBearerToken(req);
     const caller = token ? await getRequestUser(req).catch(() => null) : null;
-    if (mysqlPool) {
+    if (databasePool) {
       try {
         const indexed = await queryIndexedProperties(req, caller);
         if (indexed) {
@@ -2903,8 +2974,8 @@ app.post('/api/auth/logout', async (req, res) => {
   try {
     const token = getBearerToken(req);
     if (token) {
-      if (mysqlDb) {
-        await mysqlDb`DELETE FROM auth_sessions WHERE token_hash = ${tokenDigest(token)}`;
+      if (dbQuery) {
+        await dbQuery`DELETE FROM auth_sessions WHERE token_hash = ${tokenDigest(token)}`;
       } else if (localPreview) {
         tokenStore.delete(token);
       }
@@ -2980,8 +3051,8 @@ app.post('/api/auth/admin-otp', async (req, res) => {
 // ─── DB Debug endpoint ────────────────────────────────────────────────────────
 app.get('/api/debug/db', async (req, res) => {
   try {
-    if (!mysqlDb) return res.json({ dbConnected: false, previewFallback: localPreview, provider: localPreview ? 'local' : 'mysql' });
-    const data = await mysqlDb`SELECT id FROM app_data WHERE id = 1 LIMIT 1`;
+    if (!dbQuery) return res.json({ dbConnected: false, previewFallback: localPreview, provider: localPreview ? 'local' : 'not_configured' });
+    const data = await dbQuery`SELECT id FROM app_data WHERE id = 1 LIMIT 1`;
     res.json({ dbConnected: true, tableExists: true, rowCount: data.length, provider: 'mysql' });
   } catch (err) {
     res.json({ dbConnected: false, error: err.message });
@@ -5170,7 +5241,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: dbReady ? 'ok' : 'degraded',
     database: dbReady ? 'connected' : 'not_connected',
-    databaseProvider: mysqlDb ? 'mysql' : (localPreview ? 'local_preview' : 'mysql'),
+    databaseProvider: dbQuery ? databaseProvider : (localPreview ? 'local_preview' : 'not_configured'),
     databaseError: dbReady ? null : (dbInitError ? dbInitError.message : (databaseConfigured ? 'Database initialization is still in progress' : 'DATABASE_URL is missing')),
     smtp: smtpConfigured ? 'configured' : 'not_configured',
     message: dbReady ? 'OG Landmark API running' : 'OG Landmark server is running but the database is not ready',
@@ -5285,9 +5356,9 @@ app.put('/api/account', requireAuth, async (req, res) => {
 app.delete('/api/account', requireAuth, async (req, res) => {
   const data = await readData(); const user = data.users.find(u => u.id === req.currentUser.id);
   if (user) { user.status = 'Deleted'; user.email = `deleted-${user.id}-${Date.now()}@invalid.local`; await writeData(data); }
-  if (mysqlDb) {
+  if (dbQuery) {
     try {
-      await mysqlDb`DELETE FROM auth_sessions WHERE user_id = ${req.currentUser.id}`;
+      await dbQuery`DELETE FROM auth_sessions WHERE user_id = ${req.currentUser.id}`;
     } catch {
       return res.status(500).json({ error: 'Could not clear sessions' });
     }

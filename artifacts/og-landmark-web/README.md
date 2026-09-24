@@ -1,9 +1,10 @@
 # OG Landmark Hostinger deployment
 
-The public website remains the Node.js application at `/`. The Laravel application
-in `../api-server/laravel` is the shared API runtime. During the cutover the Node
-process proxies its existing `/api/*` origin to Laravel, so website and Expo
-clients do not need a route or token migration.
+The public website and its legacy API handlers are served by the Node.js
+application at `/`. If `LARAVEL_API_URL` is set, Node proxies `/api/*` to the
+Laravel application; otherwise Node handles those routes directly. The Node
+backend accepts MySQL/MariaDB or PostgreSQL URLs, including a Supabase
+PostgreSQL pooler URL, without changing the website or mobile API paths.
 
 ## Deploy Laravel first
 
@@ -127,13 +128,14 @@ and database snapshot untouched until the observation window is complete.
 
 ## Existing Node website setup
 
-1. Create or retain the Hostinger MySQL database and run `npm run migrate` from
-   the Node application root only when the legacy target is empty.
+1. For a MySQL/MariaDB target, run `npm run migrate`. For Supabase, follow
+   [Switch the Node backend to Supabase](#switch-the-node-backend-to-supabase).
 2. Upload the website package, select Node.js 18 or newer, and run
    `npm install --omit=dev`.
 3. Copy `.env.example` into hPanel's environment settings. Keep
-   `NODE_ENV=production`, `APP_URL=https://oglandmark.com`, and leave
-   `LARAVEL_API_URL` empty until the staged switch. Set `MEDIA_STORAGE_DIR`
+   `NODE_ENV=production` and `APP_URL=https://oglandmark.com`. Leave
+   `LARAVEL_API_URL` empty when this Node app should handle `/api` directly.
+   Set `MEDIA_STORAGE_DIR`
    to the same persistent volume (or synchronized object-storage directory)
    used by Laravel if this Node deployment handles uploads during rollback.
 4. For a new empty legacy database, run `npm run import-data` once with a
@@ -149,12 +151,50 @@ After restarting, `/api/health` reports `"smtp": "configured"` when both SMTP us
 
 The package intentionally does not include a generated lockfile: Replit lockfiles can contain workspace-only package-firewall URLs that are not reachable from Hostinger. `.npmrc` pins installation to the public npm registry.
 
-The MySQL connection string contains database credentials and must remain server-side: never put it in browser code, `public/`, Git, or chat.
+Database connection strings contain credentials and must remain server-side:
+never put them in browser code, `public/`, Git, or chat.
 
-After restarting, `/api/health` reports `status: "ok"`, `database: "connected"`, and `databaseProvider: "mysql"` when MySQL is reachable. If `DATABASE_URL` is missing or MySQL is unreachable, the HTTP server still opens its assigned port immediately, `/api/health` reports `status: "degraded"` and `database: "not_connected"`, and database-backed API routes return `503` with `DB_NOT_READY`.
+After restarting, `/api/health` reports `status: "ok"`, `database: "connected"`, and `databaseProvider: "postgres"` or `"mysql"` when the configured database is reachable. If `DATABASE_URL` is missing or the database is unreachable, the HTTP server still opens its assigned port immediately, `/api/health` reports `status: "degraded"` and `database: "not_connected"`, and database-backed API routes return `503` with `DB_NOT_READY`.
 
-`app_data` durably stores listings, users, mobile/developer resources, verification requests, promotions, device tokens, and account-scoped history. `auth_sessions` stores hashed expiring bearer sessions; `auth_challenges` stores hashed password-reset and admin-OTP challenges with attempt limits. Do not commit `.env` or the local fallback file.
+`app_data` durably stores listings, users, mobile/developer resources, verification requests, promotions, device tokens, and account-scoped history. `auth_sessions` stores hashed expiring bearer sessions; `auth_challenges` stores hashed password-reset and admin-OTP challenges with attempt limits. The Supabase schema enables row-level security on these tables; the server connects with its private PostgreSQL URL. Do not commit `.env` or the local fallback file.
 
 Uploaded images and videos are stored as files under `MEDIA_STORAGE_DIR`; MySQL stores only their URL/path and metadata in the listing JSON. Upload responses include `path`, `mimeType`, `bytes`, and `kind`. Static video delivery streams files and honors byte ranges. Set `MEDIA_PUBLIC_BASE_URL` only when the same files are mirrored to a CDN/object-storage public endpoint.
 
-`property_search_index` is a rebuildable, non-destructive MySQL projection of `app_data.data.properties`. It supplies indexed filtering, sorting, and bounded pagination for `/api/properties`; the legacy array response remains available. Use `response=page` for `{items,total,offset,limit,hasMore}`.
+`property_search_index` is a rebuildable, non-destructive projection of `app_data.data.properties`. It supplies indexed filtering, sorting, and bounded pagination for `/api/properties`; the legacy array response remains available. Use `response=page` for `{items,total,offset,limit,hasMore}`.
+
+## Switch the Node backend to Supabase
+
+This cutover changes only the Node backend's database provider. It keeps the
+existing `/api` routes, so an Android build already in review does not need a
+new API URL. Back up the current database and the matching `MEDIA_STORAGE_DIR`
+before switching; listing media files are not copied into PostgreSQL.
+
+1. Take a fresh MySQL and `MEDIA_STORAGE_DIR` backup, then pause all API writes
+   to that MySQL database for the final copy. Keep the backup until the new
+   database and media delivery pass production checks.
+2. In Hostinger's private environment settings, keep the current MySQL URL as
+   `SOURCE_MYSQL_DATABASE_URL` and set `DATABASE_URL` to the Supabase
+   PostgreSQL **pooler** URI with SSL enabled. Do not paste either value into
+   chat or commit them. Keep `LARAVEL_API_URL` empty if Node is the API serving
+   the failing request.
+3. Upload this Node package and install production dependencies with
+   `npm install --omit=dev`.
+4. While MySQL writes are paused, run `npm run migrate:data:postgres`. The
+   script creates the PostgreSQL schema, copies the canonical `app_data` record
+   and unexpired session digests, verifies JSON parity and session count before
+   commit, does not copy short-lived OTP challenges, and refuses to proceed if
+   the Supabase target already contains app/auth data.
+5. Restart Node so it picks up the PostgreSQL `DATABASE_URL`. Check
+   `/api/health` for `"status":"ok"`,
+   `"database":"connected"`, and `"databaseProvider":"postgres"`. Then verify
+   a real registration, login, `/api/auth/me`, email verification/reset, and
+   property search before removing `SOURCE_MYSQL_DATABASE_URL`.
+6. Keep the verified MySQL and media backups until the new database and
+   uploaded photos/videos have passed the production checks.
+
+If the old MySQL database is unavailable, first restore a verified OG Landmark
+JSON export to a fresh Supabase database. Set `DATABASE_URL`, run
+`npm run import:postgres -- /path/to/verified-export.json`, and then restart.
+The import also refuses to overwrite existing application or auth data.
+Never use a stale demo JSON file as a substitute for a current production
+backup. Supabase schema-only setup is available through `npm run migrate:postgres`.

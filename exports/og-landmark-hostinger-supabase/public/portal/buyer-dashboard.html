@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>OG Landmark — Buyer Dashboard</title>
+  <link rel="icon" href="/og-logo.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--gold:#C8A45A;--gold2:#b8943a;--navy:#0B1F3A;--sidebar:#0d1a2e;--bg:#f0f4f8;--card:#fff;--muted:#64748b;--border:#e2e8f0;--green:#16a34a;--danger:#dc2626;--blue:#2563eb;--warn:#d97706}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:#1e293b;display:flex;min-height:100vh}
+
+    /* ── SIDEBAR ── */
+    .sidebar{width:240px;background:var(--sidebar);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto;flex-shrink:0}
+    .sb-brand{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px}
+    .sb-brand img{width:34px;height:34px;object-fit:contain}
+    .sb-brand-title{font-size:13px;font-weight:700;color:#fff;line-height:1.2}
+    .sb-brand-sub{font-size:9px;color:var(--gold);letter-spacing:2px;text-transform:uppercase}
+    .sb-user{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px}
+    .sb-avatar{width:36px;height:36px;border-radius:50%;background:var(--gold);color:var(--navy);font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .sb-uname{font-size:13px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .sb-uemail{font-size:11px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .sb-nav{flex:1;padding:10px 8px}
+    .sb-section{font-size:10px;font-weight:700;color:#475569;letter-spacing:1.5px;text-transform:uppercase;padding:10px 8px 4px}
+    .sb-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:#94a3b8;font-size:13px;font-weight:500;cursor:pointer;transition:.2s;border:none;background:none;width:100%;text-align:left;position:relative}
+    .sb-item:hover{background:rgba(255,255,255,.07);color:#fff}
+    .sb-item.active{background:rgba(200,164,90,.15);color:var(--gold)}
+    .sb-item svg{flex-shrink:0;opacity:.7}
+    .sb-item.active svg{opacity:1}
+    .sb-badge{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--danger);color:#fff;border-radius:999px;font-size:10px;font-weight:700;padding:1px 6px;min-width:18px;text-align:center}
+    .sb-logout{margin:8px 8px 16px;width:calc(100% - 16px);padding:9px 10px;background:rgba(220,38,38,.1);color:#f87171;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;text-align:left;display:flex;align-items:center;gap:10px;transition:.2s}
+    .sb-logout:hover{background:var(--danger);color:#fff}
+
+    /* ── MAIN ── */
+    .main{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+    .topbar-title{font-size:16px;font-weight:700;color:var(--navy)}
+    .top-right{display:flex;align-items:center;gap:14px}
+    .notif-btn{position:relative;background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:var(--muted);transition:.2s}
+    .notif-btn:hover{background:#f1f5f9;color:var(--navy)}
+    .notif-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--danger);border:2px solid #fff;display:none}
+    .notif-dot.show{display:block}
+    .top-avatar{width:34px;height:34px;border-radius:50%;background:var(--gold);color:var(--navy);font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .content{padding:24px;flex:1}
+
+    /* ── STAT CARDS ── */
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+    .stat-card{background:#fff;border-radius:12px;padding:18px 20px;border:1px solid var(--border);display:flex;align-items:center;gap:16px;transition:.2s;cursor:pointer}
+    .stat-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);transform:translateY(-1px)}
+    .stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .stat-label{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:3px}
+    .stat-value{font-size:26px;font-weight:800;color:var(--navy)}
+
+    /* ── SECTION CARD ── */
+    .section-card{background:#fff;border-radius:12px;border:1px solid var(--border);margin-bottom:20px}
+    .section-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+    .section-head h3{font-size:15px;font-weight:700;color:var(--navy)}
+    .section-body{padding:16px 20px}
+
+    /* ── TABLE ── */
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:13px;min-width:580px}
+    th{text-align:left;padding:10px 12px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;background:#f8fafc;border-bottom:1px solid var(--border)}
+    td{padding:12px;border-bottom:1px solid #f1f5f9;color:#334155;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:#fafbfc}
+
+    /* ── BADGE ── */
+    .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;white-space:nowrap}
+    .badge-green{background:#dcfce7;color:#16a34a}
+    .badge-yellow{background:#fef9c3;color:#92400e}
+    .badge-red{background:#fee2e2;color:#dc2626}
+    .badge-blue{background:#dbeafe;color:#1d4ed8}
+    .badge-purple{background:#ede9fe;color:#7c3aed}
+    .badge-gray{background:#f1f5f9;color:#475569}
+    .badge-gold{background:rgba(200,164,90,.15);color:#92400e}
+
+    /* ── PROPERTY GRID ── */
+    .prop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+    .prop-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:.2s;position:relative}
+    .prop-card:hover{box-shadow:0 6px 24px rgba(0,0,0,.1);transform:translateY(-2px)}
+    .prop-img-wrap{position:relative;height:180px;overflow:hidden;background:#e2e8f0}
+    .prop-img{width:100%;height:100%;object-fit:cover}
+    .prop-badge{position:absolute;top:10px;left:10px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px}
+    .prop-save-btn{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.9);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:.2s;backdrop-filter:blur(4px)}
+    .prop-save-btn:hover{background:#fff;transform:scale(1.15)}
+    .prop-body{padding:12px 14px}
+    .prop-type-city{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px}
+    .prop-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .prop-price{font-size:17px;font-weight:800;color:var(--gold);margin-bottom:8px}
+    .prop-meta{font-size:11px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+    .prop-meta span{display:flex;align-items:center;gap:3px}
+    .prop-foot{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap}
+
+    /* ── BUTTONS ── */
+    .btn{padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:.2s;font-family:inherit;white-space:nowrap}
+    .btn-gold{background:var(--gold);color:var(--navy)}
+    .btn-gold:hover{background:var(--gold2)}
+    .btn-blue{background:#dbeafe;color:var(--blue)}
+    .btn-blue:hover{background:#bfdbfe}
+    .btn-green{background:#dcfce7;color:var(--green)}
+    .btn-green:hover{background:#bbf7d0}
+    .btn-red{background:#fee2e2;color:var(--danger)}
+    .btn-red:hover{background:#fecaca}
+    .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--muted)}
+    .btn-outline:hover{border-color:#94a3b8;color:#334155}
+    .btn-sm{padding:6px 11px;font-size:12px}
+    .btn-xs{padding:4px 9px;font-size:11px}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+
+    /* ── SEARCH BAR ── */
+    .search-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+    .search-input{flex:1;min-width:200px;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;transition:.2s}
+    .search-input:focus{border-color:var(--gold)}
+    .search-select{padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff;cursor:pointer}
+    .search-select:focus{border-color:var(--gold)}
+
+    /* ── MODAL ── */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+    .modal-overlay.show{display:flex}
+    .modal{background:#fff;border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;animation:mIn .2s ease}
+    .modal-lg{max-width:700px}
+    @keyframes mIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .modal-head{padding:18px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .modal-head h3{font-size:17px;font-weight:700;color:var(--navy)}
+    .modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:#94a3b8;line-height:1;padding:2px 6px;border-radius:6px}
+    .modal-close:hover{background:#f1f5f9;color:#334155}
+    .modal-body{padding:20px 24px}
+    .modal-foot{padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+
+    /* ── FORM FIELD ── */
+    .form-field{margin-bottom:16px}
+    .form-field label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
+    .form-field input,.form-field textarea,.form-field select{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;transition:.2s;background:#fff}
+    .form-field input:focus,.form-field textarea:focus,.form-field select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,164,90,.1)}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+    /* ── NOTIFICATIONS ── */
+    .notif-dropdown{position:absolute;top:calc(100% + 8px);right:0;width:320px;background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.12);z-index:300;display:none;max-height:380px;overflow-y:auto}
+    .notif-dropdown.show{display:block}
+    .notif-dhead{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1}
+    .notif-dhead h4{font-size:13px;font-weight:700;color:var(--navy)}
+    .notif-item{padding:12px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:.15s;display:flex;gap:10px}
+    .notif-item:hover{background:#f8fafc}
+    .notif-item.unread{background:#fafbff;border-left:3px solid var(--blue)}
+    .notif-item:last-child{border-bottom:none}
+    .notif-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+    .notif-txt{font-size:12px;color:#334155;line-height:1.4}
+    .notif-title{font-weight:600;font-size:12px;margin-bottom:2px}
+    .notif-time{font-size:11px;color:var(--muted);margin-top:3px}
+
+    /* ── PROPERTY DETAIL ── */
+    .detail-img{width:100%;height:240px;object-fit:cover;border-radius:8px;margin-bottom:16px;background:#e2e8f0}
+    .detail-price{font-size:24px;font-weight:800;color:var(--gold);margin-bottom:10px}
+    .detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+    .detail-stat{background:#f8fafc;border-radius:8px;padding:10px;text-align:center}
+    .detail-stat-val{font-size:16px;font-weight:700;color:var(--navy)}
+    .detail-stat-lbl{font-size:11px;color:var(--muted);margin-top:2px}
+    .detail-section{margin-top:16px}
+    .detail-section h4{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+    .detail-desc{font-size:13px;color:#334155;line-height:1.7}
+    .detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+
+    /* ── TOAST ── */
+    #toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;color:#fff;z-index:9999;transform:translateY(80px);opacity:0;transition:.3s;pointer-events:none;max-width:320px}
+    #toast.show{transform:translateY(0);opacity:1}
+    #toast.success{background:#16a34a}
+    #toast.error{background:#dc2626}
+    #toast.info{background:var(--blue)}
+
+    /* ── MISC ── */
+    .tab-hidden{display:none}
+    .empty{text-align:center;padding:40px 20px;color:var(--muted)}
+    .empty-icon{font-size:44px;margin-bottom:10px}
+    .empty p{font-size:14px;margin-bottom:14px}
+    .spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,.1);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .page-loading{text-align:center;padding:48px;color:var(--muted)}
+    .info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;font-size:13px;color:#1d4ed8;margin-bottom:14px}
+    .agent-reply{background:#f0fdf4;border-left:3px solid var(--green);border-radius:0 6px 6px 0;padding:8px 12px;font-size:12px;color:#15803d;margin-top:4px}
+
+    /* ── QUICK ACTIONS ── */
+    .quick-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+    .qa-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;display:flex;flex-direction:column;align-items:flex-start;gap:10px;cursor:pointer;transition:.2s}
+    .qa-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.07);transform:translateY(-2px)}
+    .qa-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+    .qa-label{font-size:14px;font-weight:700;color:var(--navy)}
+    .qa-desc{font-size:12px;color:var(--muted)}
+
+    @media(max-width:900px){
+      .sidebar{display:none}.main{margin-left:0}
+      .stat-grid{grid-template-columns:repeat(2,1fr)}
+      .quick-actions{grid-template-columns:1fr 1fr}
+      .form-row{grid-template-columns:1fr}
+    }
+    @media(max-width:500px){
+      .stat-grid{grid-template-columns:1fr 1fr}
+      .quick-actions{grid-template-columns:1fr}
+      .content{padding:14px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <img src="/og-logo.png" alt="OG Landmark"/>
+    <div><div class="sb-brand-title">OG Landmark</div><div class="sb-brand-sub">Buyer Portal</div></div>
+  </div>
+  <div class="sb-user">
+    <div class="sb-avatar" id="sb-avatar">B</div>
+    <div style="overflow:hidden;min-width:0">
+      <div class="sb-uname" id="sb-uname">Buyer</div>
+      <div class="sb-uemail" id="sb-uemail"></div>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Main</div>
+    <button class="sb-item active" id="nav-dashboard" onclick="showTab('dashboard')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Dashboard
+    </button>
+    <button class="sb-item" id="nav-properties" onclick="showTab('properties')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      Browse Properties
+    </button>
+    <button class="sb-item" id="nav-inquiries" onclick="showTab('inquiries')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+      My Inquiries
+      <span class="sb-badge" id="badge-inq" style="display:none">0</span>
+    </button>
+    <button class="sb-item" id="nav-appointments" onclick="showTab('appointments')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Appointments
+      <span class="sb-badge" id="badge-apt" style="display:none">0</span>
+    </button>
+    <button class="sb-item" id="nav-offers" onclick="showTab('offers')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      My Offers
+    </button>
+    <button class="sb-item" id="nav-saved" onclick="showTab('saved')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+      Saved Properties
+      <span class="sb-badge" id="badge-saved" style="display:none;background:var(--gold);color:var(--navy)">0</span>
+    </button>
+    <div class="sb-section" style="margin-top:8px">Account</div>
+    <button class="sb-item" id="nav-profile" onclick="showTab('profile')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      My Profile
+    </button>
+  </nav>
+  <button class="sb-logout" onclick="logout()">
+    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+    Logout
+  </button>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="top-right">
+      <div style="position:relative">
+        <button class="notif-btn" id="notif-btn" onclick="toggleNotifDropdown()">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <span class="notif-dot" id="notif-dot"></span>
+        </button>
+        <div class="notif-dropdown" id="notif-dropdown">
+          <div class="notif-dhead">
+            <h4>Notifications</h4>
+            <button class="btn btn-xs btn-outline" onclick="markAllNotifsRead()">Mark all read</button>
+          </div>
+          <div id="notif-list"><div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">No notifications</div></div>
+        </div>
+      </div>
+      <div class="top-avatar" id="top-avatar">B</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══ DASHBOARD TAB ═══ -->
+    <div id="tab-dashboard">
+      <div class="stat-grid">
+        <div class="stat-card" onclick="showTab('inquiries')">
+          <div class="stat-icon" style="background:#dbeafe"><svg width="22" height="22" fill="none" stroke="#2563eb" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg></div>
+          <div><div class="stat-label">My Inquiries</div><div class="stat-value" id="stat-inq">0</div></div>
+        </div>
+        <div class="stat-card" onclick="showTab('appointments')">
+          <div class="stat-icon" style="background:#dcfce7"><svg width="22" height="22" fill="none" stroke="#16a34a" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
+          <div><div class="stat-label">Upcoming Visits</div><div class="stat-value" id="stat-apt">0</div></div>
+        </div>
+        <div class="stat-card" onclick="showTab('offers')">
+          <div class="stat-icon" style="background:#fef9c3"><svg width="22" height="22" fill="none" stroke="#92400e" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div>
+          <div><div class="stat-label">Offers Sent</div><div class="stat-value" id="stat-off">0</div></div>
+        </div>
+        <div class="stat-card" onclick="showTab('saved')">
+          <div class="stat-icon" style="background:rgba(200,164,90,.15)"><svg width="22" height="22" fill="none" stroke="#92400e" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg></div>
+          <div><div class="stat-label">Saved Properties</div><div class="stat-value" id="stat-saved">0</div></div>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <div class="qa-card" onclick="showTab('properties')">
+          <div class="qa-icon" style="background:#eff6ff">🔍</div>
+          <div><div class="qa-label">Browse Properties</div><div class="qa-desc">Find your dream home</div></div>
+        </div>
+        <div class="qa-card" onclick="showTab('inquiries')">
+          <div class="qa-icon" style="background:#f0fdf4">💬</div>
+          <div><div class="qa-label">My Inquiries</div><div class="qa-desc">Track your inquiries</div></div>
+        </div>
+        <div class="qa-card" onclick="showTab('appointments')">
+          <div class="qa-icon" style="background:#fefce8">📅</div>
+          <div><div class="qa-label">Appointments</div><div class="qa-desc">View scheduled visits</div></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head"><h3>Recent Inquiries</h3><button class="btn btn-outline btn-sm" onclick="showTab('inquiries')">View All</button></div>
+        <div class="section-body"><div id="dash-inq-list"><div class="page-loading"><span class="spinner"></span></div></div></div>
+      </div>
+      <div class="section-card">
+        <div class="section-head"><h3>Upcoming Appointments</h3><button class="btn btn-outline btn-sm" onclick="showTab('appointments')">View All</button></div>
+        <div class="section-body"><div id="dash-apt-list"><div class="page-loading"><span class="spinner"></span></div></div></div>
+      </div>
+    </div>
+
+    <!-- ═══ BROWSE PROPERTIES TAB ═══ -->
+    <div id="tab-properties" class="tab-hidden">
+      <div class="search-bar">
+        <input class="search-input" id="prop-search" placeholder="🔍  Search by title, city, type…" oninput="filterProps()"/>
+        <select class="search-select" id="prop-purpose" onchange="filterProps()">
+          <option value="">All Purposes</option>
+          <option value="For Sale">For Sale</option>
+          <option value="For Rent">For Rent</option>
+        </select>
+        <select class="search-select" id="prop-type" onchange="filterProps()">
+          <option value="">All Types</option>
+          <option value="House">House</option>
+          <option value="Apartment">Apartment</option>
+          <option value="Villa">Villa</option>
+          <option value="Plot">Plot</option>
+          <option value="Commercial">Commercial</option>
+          <option value="Agriculture Land">Agriculture Land</option>
+          <option value="Farmhouse">Farmhouse</option>
+        </select>
+        <select class="search-select" id="prop-city" onchange="filterProps()">
+          <option value="">All Cities</option>
+          <option value="Lahore">Lahore</option>
+          <option value="Karachi">Karachi</option>
+          <option value="Islamabad">Islamabad</option>
+          <option value="Okara">Okara</option>
+          <option value="Rawalpindi">Rawalpindi</option>
+          <option value="Depalpur">Depalpur</option>
+          <option value="Faisalabad">Faisalabad</option>
+        </select>
+      </div>
+      <div id="props-count" style="font-size:13px;color:var(--muted);margin-bottom:14px"></div>
+      <div class="prop-grid" id="props-grid"><div class="page-loading" style="grid-column:1/-1"><span class="spinner"></span> Loading properties…</div></div>
+    </div>
+
+    <!-- ═══ INQUIRIES TAB ═══ -->
+    <div id="tab-inquiries" class="tab-hidden">
+      <div class="section-card">
+        <div class="section-head"><h3>My Inquiries</h3><span id="inq-count" style="font-size:12px;color:var(--muted)"></span></div>
+        <div class="section-body">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Property</th><th>My Message</th><th>Date</th><th>Status</th><th>Agent Reply</th></tr></thead>
+              <tbody id="inq-tbody"><tr><td colspan="5"><div class="page-loading"><span class="spinner"></span></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ APPOINTMENTS TAB ═══ -->
+    <div id="tab-appointments" class="tab-hidden">
+      <div class="section-card">
+        <div class="section-head">
+          <h3>My Appointments</h3>
+          <button class="btn btn-gold btn-sm" onclick="openApptModalNew()">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Schedule Visit
+          </button>
+        </div>
+        <div class="section-body">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Property</th><th>Date & Time</th><th>Type</th><th>Status</th><th>Notes</th><th>Action</th></tr></thead>
+              <tbody id="apt-tbody"><tr><td colspan="6"><div class="page-loading"><span class="spinner"></span></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ OFFERS TAB ═══ -->
+    <div id="tab-offers" class="tab-hidden">
+      <div class="section-card">
+        <div class="section-head"><h3>My Offers</h3><span id="off-count" style="font-size:12px;color:var(--muted)"></span></div>
+        <div class="section-body">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Property</th><th>Listed Price</th><th>My Offer</th><th>Counter Offer</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="off-tbody"><tr><td colspan="7"><div class="page-loading"><span class="spinner"></span></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SAVED PROPERTIES TAB ═══ -->
+    <div id="tab-saved" class="tab-hidden">
+      <div class="section-card" style="margin-bottom:16px">
+        <div class="section-body" style="padding:12px 20px">
+          <p style="font-size:13px;color:var(--muted)">Properties you've saved for later. Click ❤️ on any property card to save or unsave it.</p>
+        </div>
+      </div>
+      <div class="prop-grid" id="saved-grid"><div class="page-loading" style="grid-column:1/-1"><span class="spinner"></span></div></div>
+    </div>
+
+    <!-- ═══ PROFILE TAB ═══ -->
+    <div id="tab-profile" class="tab-hidden">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:860px">
+        <div class="section-card">
+          <div class="section-head"><h3>Personal Information</h3></div>
+          <div class="section-body">
+            <div class="form-field"><label>Full Name</label><input id="prof-name" placeholder="Your full name"/></div>
+            <div class="form-field"><label>Email Address</label><input id="prof-email" type="email" placeholder="your@email.com" readonly style="background:#f8fafc;cursor:not-allowed"/></div>
+            <div class="form-field"><label>Phone Number</label><input id="prof-phone" placeholder="+92 300 1234567"/></div>
+            <div class="form-field"><label>City</label><input id="prof-city" placeholder="Your city"/></div>
+            <button class="btn btn-gold" onclick="saveProfile()" style="width:100%">Save Changes</button>
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="section-head"><h3>Change Password</h3></div>
+          <div class="section-body">
+            <div class="form-field"><label>Current Password</label><input type="password" id="pw-current" placeholder="Current password"/></div>
+            <div class="form-field"><label>New Password</label><input type="password" id="pw-new" placeholder="Min 8 characters"/></div>
+            <div class="form-field"><label>Confirm New Password</label><input type="password" id="pw-confirm" placeholder="Re-enter new password"/></div>
+            <button class="btn btn-gold" onclick="changePassword()" style="width:100%">Update Password</button>
+          </div>
+        </div>
+      </div>
+      <div class="section-card" style="max-width:860px;margin-top:0">
+        <div class="section-head"><h3>Account Summary</h3></div>
+        <div class="section-body" style="display:flex;gap:20px;flex-wrap:wrap">
+          <div style="flex:1;min-width:130px;text-align:center;padding:14px;background:#f8fafc;border-radius:10px">
+            <div style="font-size:24px;font-weight:800;color:var(--navy)" id="prof-inq-cnt">0</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px">Total Inquiries</div>
+          </div>
+          <div style="flex:1;min-width:130px;text-align:center;padding:14px;background:#f8fafc;border-radius:10px">
+            <div style="font-size:24px;font-weight:800;color:var(--navy)" id="prof-apt-cnt">0</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px">Appointments</div>
+          </div>
+          <div style="flex:1;min-width:130px;text-align:center;padding:14px;background:#f8fafc;border-radius:10px">
+            <div style="font-size:24px;font-weight:800;color:var(--navy)" id="prof-off-cnt">0</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px">Offers Made</div>
+          </div>
+          <div style="flex:1;min-width:130px;text-align:center;padding:14px;background:#f8fafc;border-radius:10px">
+            <div style="font-size:24px;font-weight:800;color:var(--gold)" id="prof-saved-cnt">0</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px">Saved Properties</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ═══ INQUIRY MODAL ═══ -->
+<div class="modal-overlay" id="inq-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Send Inquiry</h3><button class="modal-close" onclick="closeModal('inq-modal')">&times;</button></div>
+    <div class="modal-body">
+      <div id="inq-prop-info" class="info-box" style="margin-bottom:16px"></div>
+      <div class="form-field"><label>Your Message *</label><textarea id="inq-msg" rows="4" placeholder="I am interested in this property. Please provide more details about availability and pricing…"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('inq-modal')">Cancel</button>
+      <button class="btn btn-gold" id="inq-submit-btn" onclick="submitInquiry()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+        Send Inquiry
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OFFER MODAL ═══ -->
+<div class="modal-overlay" id="off-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Make an Offer</h3><button class="modal-close" onclick="closeModal('off-modal')">&times;</button></div>
+    <div class="modal-body">
+      <div id="off-prop-info" class="info-box" style="margin-bottom:16px"></div>
+      <div class="form-field">
+        <label>Your Offer Amount (PKR) *</label>
+        <input type="number" id="off-amount" placeholder="e.g. 15000000" min="1"/>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px" id="off-amount-hint"></div>
+      </div>
+      <div class="form-field"><label>Message (optional)</label><textarea id="off-msg" rows="3" placeholder="Any conditions or notes with your offer…"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('off-modal')">Cancel</button>
+      <button class="btn btn-gold" id="off-submit-btn" onclick="submitOffer()">Submit Offer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APPOINTMENT MODAL ═══ -->
+<div class="modal-overlay" id="appt-modal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="appt-modal-title">Schedule Site Visit</h3><button class="modal-close" onclick="closeModal('appt-modal')">&times;</button></div>
+    <div class="modal-body">
+      <div id="appt-prop-info" class="info-box" style="margin-bottom:16px;display:none"></div>
+      <div class="form-field">
+        <label>Property Name *</label>
+        <input id="appt-prop-name" placeholder="Property name or purpose of visit"/>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label>Date *</label><input type="date" id="appt-date"/></div>
+        <div class="form-field"><label>Time *</label><input type="time" id="appt-time"/></div>
+      </div>
+      <div class="form-field">
+        <label>Visit Type</label>
+        <select id="appt-type">
+          <option value="In-Person">In-Person Site Visit</option>
+          <option value="Video Call">Video Call Tour</option>
+          <option value="Phone Call">Phone Consultation</option>
+        </select>
+      </div>
+      <div class="form-field"><label>Notes (optional)</label><textarea id="appt-notes" rows="3" placeholder="Any specific requirements or questions…"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('appt-modal')">Cancel</button>
+      <button class="btn btn-gold" id="appt-submit-btn" onclick="submitAppointment()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Schedule Visit
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PROPERTY DETAIL MODAL ═══ -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal modal-lg">
+    <div class="modal-head"><h3 id="detail-title">Property Details</h3><button class="modal-close" onclick="closeModal('detail-modal')">&times;</button></div>
+    <div class="modal-body" id="detail-body"></div>
+  </div>
+</div>
+
+<!-- ═══ CONFIRM MODAL ═══ -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head"><h3 id="confirm-title">Confirm Action</h3><button class="modal-close" onclick="closeModal('confirm-modal')">&times;</button></div>
+    <div class="modal-body">
+      <p id="confirm-msg" style="font-size:14px;color:#334155;line-height:1.6"></p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('confirm-modal')">Cancel</button>
+      <button class="btn btn-red" id="confirm-yes-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══ GLOBALS ═══
+let token = '', currentUser = null;
+let allProps = [], myInqs = [], myApts = [], myOffs = [], savedIds = [], myNotifs = [];
+// KEY FIX: property lookup map — avoids JSON.stringify in onclick
+const propMap = {};
+let activeInqPropId = null, activeOffPropId = null, activeApptPropId = null;
+let _confirmCb = null;
+
+// ═══ INIT ═══
+function init(){
+  token = localStorage.getItem('og_token') || '';
+  const u = localStorage.getItem('og_user');
+  if(!token || !u){ window.location.href = '/portal/buyer'; return; }
+  try { currentUser = JSON.parse(u); } catch(e){ window.location.href='/portal/buyer'; return; }
+  if(!currentUser || !['Buyer','Admin'].includes(currentUser.role)){
+    window.location.href = '/portal/buyer'; return;
+  }
+  const av = (currentUser.name || 'B')[0].toUpperCase();
+  document.getElementById('sb-avatar').textContent = av;
+  document.getElementById('top-avatar').textContent = av;
+  document.getElementById('sb-uname').textContent = currentUser.name || 'Buyer';
+  document.getElementById('sb-uemail').textContent = currentUser.email || '';
+  document.getElementById('prof-name').value = currentUser.name || '';
+  document.getElementById('prof-email').value = currentUser.email || '';
+  document.getElementById('prof-phone').value = currentUser.phone || '';
+  document.getElementById('prof-city').value = currentUser.city || '';
+  document.getElementById('appt-date').min = new Date().toISOString().split('T')[0];
+
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('#notif-btn') && !e.target.closest('#notif-dropdown')){
+      document.getElementById('notif-dropdown').classList.remove('show');
+    }
+  });
+  loadAll();
+}
+
+function logout(){
+  localStorage.removeItem('og_token');
+  localStorage.removeItem('og_user');
+  window.location.href = '/portal/buyer';
+}
+
+// ═══ API HELPER ═══
+async function apiFetch(method, path, body){
+  const opts = { method, headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token }};
+  if(body) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  // 401 = session expired → redirect
+  if(r.status === 401){ logout(); return null; }
+  if(!r.ok){
+    const e = await r.json().catch(()=>({}));
+    throw new Error(e.error || r.statusText || 'Request failed');
+  }
+  return r.json();
+}
+
+// ═══ LOAD ALL DATA ═══
+async function loadAll(){
+  try {
+    const uid = currentUser.id;
+    const [propsData, inqData, aptData, offData, savedData, notifData] = await Promise.all([
+      apiFetch('GET', '/api/properties').catch(()=>[]),
+      apiFetch('GET', `/api/inquiries?buyer_id=${uid}`).catch(()=>[]),
+      apiFetch('GET', `/api/appointments?buyer_id=${uid}`).catch(()=>[]),
+      apiFetch('GET', `/api/offers?buyer_id=${uid}`).catch(()=>[]),
+      apiFetch('GET', `/api/saved/${uid}`).catch(()=>[]),
+      apiFetch('GET', `/api/notifications`).catch(()=>[])
+    ]);
+
+    // Server already returns only Active props for non-admin; store all in propMap
+    allProps = Array.isArray(propsData) ? propsData : [];
+    allProps.forEach(p => propMap[p.id] = p);
+
+    myInqs   = Array.isArray(inqData)   ? inqData   : [];
+    myApts   = Array.isArray(aptData)   ? aptData   : [];
+    myOffs   = Array.isArray(offData)   ? offData   : [];
+    savedIds = Array.isArray(savedData) ? savedData.map(Number) : [];
+    myNotifs = Array.isArray(notifData) ? notifData : [];
+
+    renderAll();
+  } catch(e){
+    console.error('loadAll error:', e);
+    showToast('Failed to load data — please refresh','error');
+    // Still call renderAll to replace spinners with empty states
+    renderAll();
+  }
+}
+
+function renderAll(){
+  updateStats();
+  renderDashboard();
+  renderProps();
+  renderInquiries();
+  renderAppointments();
+  renderOffers();
+  renderSaved();
+  renderNotifications();
+  updateBadges();
+  document.getElementById('prof-inq-cnt').textContent = myInqs.length;
+  document.getElementById('prof-apt-cnt').textContent = myApts.length;
+  document.getElementById('prof-off-cnt').textContent = myOffs.length;
+  document.getElementById('prof-saved-cnt').textContent = savedIds.length;
+}
+
+// ═══ STATS ═══
+function updateStats(){
+  document.getElementById('stat-inq').textContent   = myInqs.length;
+  document.getElementById('stat-apt').textContent   = myApts.filter(a => isActiveAppt(a)).length;
+  document.getElementById('stat-off').textContent   = myOffs.length;
+  document.getElementById('stat-saved').textContent = savedIds.length;
+}
+
+function isActiveAppt(a){ return ['Upcoming','Confirmed','Pending'].includes(a.status); }
+
+function updateBadges(){
+  const newInqs = myInqs.filter(i => i.status==='New'||i.status==='Pending').length;
+  const upApts  = myApts.filter(a => isActiveAppt(a)).length;
+  setBadge('badge-inq', newInqs);
+  setBadge('badge-apt', upApts);
+  const sv = document.getElementById('badge-saved');
+  if(savedIds.length > 0){ sv.textContent = savedIds.length; sv.style.display = ''; }
+  else sv.style.display = 'none';
+  const unread = myNotifs.filter(n => !n.read).length;
+  document.getElementById('notif-dot').classList.toggle('show', unread > 0);
+}
+
+function setBadge(id, count){
+  const el = document.getElementById(id);
+  if(count > 0){ el.textContent = count; el.style.display = ''; }
+  else el.style.display = 'none';
+}
+
+// ═══ DASHBOARD ═══
+function renderDashboard(){
+  // Recent inquiries
+  const iel = document.getElementById('dash-inq-list');
+  const rec = [...myInqs].slice(0, 5);
+  if(!rec.length){
+    iel.innerHTML = '<div class="empty"><div class="empty-icon">💬</div><p>No inquiries yet.</p><button class="btn btn-gold btn-sm" onclick="showTab(\'properties\')">Browse Properties</button></div>';
+  } else {
+    iel.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Property</th><th>Date</th><th>Status</th><th>Reply</th></tr></thead>
+      <tbody>${rec.map(i=>`<tr>
+        <td style="font-weight:600;max-width:180px">${esc(i.propertyTitle||'—')}</td>
+        <td style="white-space:nowrap;color:var(--muted);font-size:12px">${fmtDate(i.date)}</td>
+        <td>${badgeStatus(i.status)}</td>
+        <td style="font-size:12px">${i.reply?'<span style="color:var(--green)">✅ Replied</span>':'<span style="color:var(--muted)">⏳ Awaiting</span>'}</td>
+      </tr>`).join('')}</tbody></table></div>`;
+  }
+  // Upcoming appointments
+  const ael = document.getElementById('dash-apt-list');
+  const ups = myApts.filter(a => isActiveAppt(a)).slice(0, 5);
+  if(!ups.length){
+    ael.innerHTML = '<div class="empty"><div class="empty-icon">📅</div><p>No upcoming appointments.</p><button class="btn btn-gold btn-sm" onclick="openApptModalNew()">Schedule a Visit</button></div>';
+  } else {
+    ael.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Property</th><th>Date & Time</th><th>Type</th><th>Status</th></tr></thead>
+      <tbody>${ups.map(a=>`<tr>
+        <td style="font-weight:600">${esc(a.propertyTitle||'—')}</td>
+        <td style="white-space:nowrap;font-size:12px">${fmtDate(a.date)} ${a.time||''}</td>
+        <td style="font-size:12px">${esc(a.type||'—')}</td>
+        <td>${badgeStatus(a.status)}</td>
+      </tr>`).join('')}</tbody></table></div>`;
+  }
+}
+
+// ═══ PROPERTIES ═══
+function fmtPrice(p){
+  if(!p) return '—';
+  if(p >= 10000000) return 'PKR '+(p/10000000).toFixed(1)+' Cr';
+  if(p >= 100000)   return 'PKR '+(p/100000).toFixed(0)+' Lac';
+  return 'PKR '+Number(p).toLocaleString();
+}
+
+function renderProps(){ filterProps(); }
+
+function filterProps(){
+  const q   = (document.getElementById('prop-search').value || '').toLowerCase().trim();
+  const pur = document.getElementById('prop-purpose').value;
+  const typ = document.getElementById('prop-type').value;
+  const cit = document.getElementById('prop-city').value;
+
+  let list = allProps.filter(p => {
+    if(q){
+      const haystack = [p.title,p.city,p.type,p.address,p.society].map(s=>(s||'').toLowerCase()).join(' ');
+      if(!haystack.includes(q)) return false;
+    }
+    const purpose = p.purpose || p.status || '';
+    if(pur && purpose !== pur) return false;
+    if(typ && p.type !== typ) return false;
+    if(cit && (p.city||'') !== cit) return false;
+    return true;
+  });
+
+  const g   = document.getElementById('props-grid');
+  const cnt = document.getElementById('props-count');
+  cnt.textContent = list.length + ' propert'+(list.length===1?'y':'ies')+' found';
+
+  if(!list.length){
+    g.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏠</div><p>No properties match your filters.</p><button class="btn btn-outline btn-sm" onclick="clearPropFilters()">Clear Filters</button></div>';
+    return;
+  }
+  g.innerHTML = list.map(p => buildPropCard(p, false)).join('');
+}
+
+function clearPropFilters(){
+  document.getElementById('prop-search').value = '';
+  document.getElementById('prop-purpose').value = '';
+  document.getElementById('prop-type').value = '';
+  document.getElementById('prop-city').value = '';
+  filterProps();
+}
+
+// KEY FIX: Build card using data-id, no JSON.stringify in onclick
+function buildPropCard(p, showRemoveHeart){
+  const purpose  = p.purpose || p.status || 'For Sale';
+  const isRent   = purpose.toLowerCase().includes('rent');
+  const isSaved  = savedIds.includes(Number(p.id));
+  const heart    = (showRemoveHeart || isSaved) ? '❤️' : '🤍';
+  const img      = (p.images && p.images[0]) || '/images/property-1.jpg';
+  return `<div class="prop-card">
+    <div class="prop-img-wrap">
+      <img class="prop-img" src="${esc(img)}" alt="${esc(p.title||'')}" onerror="this.src='/images/property-1.jpg'"/>
+      <span class="prop-badge" style="background:${isRent?'#dcfce7':'#dbeafe'};color:${isRent?'#16a34a':'#2563eb'}">${esc(purpose)}</span>
+      <button class="prop-save-btn" data-pid="${p.id}" onclick="toggleSave(${p.id},this)" title="${isSaved?'Remove from saved':'Save property'}">${heart}</button>
+    </div>
+    <div class="prop-body">
+      <div class="prop-type-city">${esc(p.type||'Property')} · ${esc(p.city||'')}</div>
+      <div class="prop-title">${esc(p.title||'')}</div>
+      <div class="prop-price">${fmtPrice(p.price)}${isRent?' / month':''}</div>
+      <div class="prop-meta">
+        ${p.bedrooms  ? `<span>🛏 ${p.bedrooms} Beds</span>`  : ''}
+        ${p.bathrooms ? `<span>🚿 ${p.bathrooms} Baths</span>`: ''}
+        ${p.area      ? `<span>📐 ${p.area} ${p.areaUnit||'sqft'}</span>` : ''}
+        ${p.city      ? `<span>📍 ${esc(p.city)}</span>` : ''}
+      </div>
+    </div>
+    <div class="prop-foot">
+      <button class="btn btn-gold btn-sm" onclick="openInqModal(${p.id})">💬 Inquire</button>
+      <button class="btn btn-blue btn-sm" onclick="openApptModal(${p.id})">📅 Visit</button>
+      <button class="btn btn-outline btn-sm" onclick="openDetailModal(${p.id})">View</button>
+    </div>
+  </div>`;
+}
+
+// ═══ SAVE / UNSAVE ═══
+async function toggleSave(propId, btn){
+  propId = Number(propId);
+  btn.disabled = true;
+  try {
+    const r = await apiFetch('POST', `/api/saved/${currentUser.id}/${propId}`);
+    if(!r) return;
+    if(r.saved){
+      if(!savedIds.includes(propId)) savedIds.push(propId);
+      btn.textContent = '❤️';
+      showToast('Property saved!','success');
+    } else {
+      savedIds = savedIds.filter(id => id !== propId);
+      btn.textContent = '🤍';
+      showToast('Removed from saved','info');
+    }
+    updateStats(); updateBadges(); renderSaved();
+    document.getElementById('prof-saved-cnt').textContent = savedIds.length;
+  } catch(e){ showToast(e.message||'Failed','error'); }
+  btn.disabled = false;
+}
+
+function renderSaved(){
+  const g = document.getElementById('saved-grid');
+  if(!savedIds.length){
+    g.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">❤️</div><p>No saved properties yet.<br>Browse properties and click 🤍 to save.</p><button class="btn btn-gold btn-sm" onclick="showTab(\'properties\')">Browse Properties</button></div>';
+    return;
+  }
+  const savedProps = allProps.filter(p => savedIds.includes(Number(p.id)));
+  if(!savedProps.length){
+    g.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔄</div><p>Loading saved properties…</p></div>';
+    return;
+  }
+  g.innerHTML = savedProps.map(p => buildPropCard(p, true)).join('');
+}
+
+// ═══ INQUIRIES ═══
+function renderInquiries(){
+  const tb = document.getElementById('inq-tbody');
+  document.getElementById('inq-count').textContent = myInqs.length + ' total';
+  if(!myInqs.length){
+    tb.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="empty-icon">💬</div><p>No inquiries yet. Browse properties and send an inquiry.</p><button class="btn btn-gold btn-sm" onclick="showTab('properties')">Browse Now</button></div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = myInqs.map(i => `<tr>
+    <td><div style="font-weight:600;font-size:13px">${esc(i.propertyTitle||'—')}</div></td>
+    <td style="max-width:200px;font-size:12px;color:var(--muted)">${esc((i.message||'').slice(0,80))}${(i.message||'').length>80?'…':''}</td>
+    <td style="white-space:nowrap;font-size:12px;color:var(--muted)">${fmtDate(i.date||i.createdAt)}</td>
+    <td>${badgeStatus(i.status)}</td>
+    <td style="max-width:220px">${i.reply
+      ? `<div class="agent-reply">${esc(i.reply.slice(0,100))}${i.reply.length>100?'…':''}</div>`
+      : '<span style="font-size:12px;color:var(--muted)">⏳ Awaiting reply</span>'}</td>
+  </tr>`).join('');
+}
+
+// ═══ APPOINTMENTS ═══
+function renderAppointments(){
+  const tb = document.getElementById('apt-tbody');
+  if(!myApts.length){
+    tb.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">📅</div><p>No appointments yet. Schedule a site visit!</p><button class="btn btn-gold btn-sm" onclick="openApptModalNew()">Schedule Now</button></div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = [...myApts].map(a => {
+    const canCancel = isActiveAppt(a);
+    return `<tr>
+      <td style="font-weight:600">${esc(a.propertyTitle||'—')}</td>
+      <td style="white-space:nowrap;font-size:12px">${fmtDate(a.date)} ${a.time||''}</td>
+      <td style="font-size:12px">${esc(a.type||'—')}</td>
+      <td>${badgeStatus(a.status)}</td>
+      <td style="font-size:12px;color:var(--muted);max-width:140px">${esc(a.notes||'—')}</td>
+      <td>${canCancel
+        ? `<button class="btn btn-red btn-xs" onclick="cancelAppointment(${a.id})">✗ Cancel</button>`
+        : '<span style="font-size:11px;color:var(--muted)">—</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function cancelAppointment(id){
+  showConfirm('Cancel Appointment','Are you sure you want to cancel this appointment?', async function(){
+    try {
+      await apiFetch('PATCH', `/api/appointments/${id}`, { status:'Cancelled' });
+      showToast('Appointment cancelled','info');
+      const fresh = await apiFetch('GET', `/api/appointments?buyer_id=${currentUser.id}`).catch(()=>[]);
+      myApts = Array.isArray(fresh) ? fresh : [];
+      updateStats(); renderDashboard(); renderAppointments(); updateBadges();
+    } catch(e){ showToast(e.message||'Failed','error'); }
+  });
+}
+
+// ═══ OFFERS ═══
+function renderOffers(){
+  const tb = document.getElementById('off-tbody');
+  document.getElementById('off-count').textContent = myOffs.length + ' total';
+  if(!myOffs.length){
+    tb.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="empty-icon">📋</div><p>No offers sent yet.</p><button class="btn btn-gold btn-sm" onclick="showTab('properties')">Browse Properties</button></div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = myOffs.map(o => {
+    const canWithdraw = o.status === 'Pending';
+    const listed      = propMap[o.propertyId] ? fmtPrice(propMap[o.propertyId].price) : '—';
+    return `<tr>
+      <td style="font-weight:600;max-width:160px">${esc(o.propertyTitle||'—')}</td>
+      <td style="font-size:12px;color:var(--muted)">${listed}</td>
+      <td style="color:var(--gold);font-weight:700">${fmtPrice(o.amount)}</td>
+      <td style="color:var(--blue);font-weight:600">${o.counterAmount ? fmtPrice(o.counterAmount) : '—'}</td>
+      <td style="white-space:nowrap;font-size:12px;color:var(--muted)">${fmtDate(o.date)}</td>
+      <td>${badgeOffer(o.status)}</td>
+      <td>${canWithdraw
+        ? `<button class="btn btn-red btn-xs" onclick="withdrawOffer(${o.id})">Withdraw</button>`
+        : '<span style="font-size:11px;color:var(--muted)">—</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function withdrawOffer(id){
+  showConfirm('Withdraw Offer','Are you sure you want to withdraw this offer?', async function(){
+    try {
+      await apiFetch('DELETE', `/api/offers/${id}`);
+      showToast('Offer withdrawn','info');
+      const fresh = await apiFetch('GET', `/api/offers?buyer_id=${currentUser.id}`).catch(()=>[]);
+      myOffs = Array.isArray(fresh) ? fresh : [];
+      updateStats(); renderOffers();
+    } catch(e){ showToast(e.message||'Failed','error'); }
+  });
+}
+
+// ═══ NOTIFICATIONS ═══
+function renderNotifications(){
+  const list = document.getElementById('notif-list');
+  if(!myNotifs.length){
+    list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">No notifications</div>';
+    return;
+  }
+  const iconMap = {appointment:'📅',message:'💬',offer:'📋',property:'🏠',info:'ℹ️'};
+  const bgMap   = {appointment:'#dcfce7',message:'#dbeafe',offer:'#fef9c3',property:'#ede9fe',info:'#f1f5f9'};
+  list.innerHTML = myNotifs.slice(0,15).map(n => `
+    <div class="notif-item ${n.read?'':'unread'}" onclick="markNotifRead(${n.id})">
+      <div class="notif-icon" style="background:${bgMap[n.type]||'#f1f5f9'}">${iconMap[n.type]||'🔔'}</div>
+      <div>
+        <div class="notif-title">${esc(n.title||'Notification')}</div>
+        <div class="notif-txt">${esc(n.message||'')}</div>
+        <div class="notif-time">${timeAgo(n.timestamp)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleNotifDropdown(){
+  document.getElementById('notif-dropdown').classList.toggle('show');
+}
+
+async function markNotifRead(id){
+  try {
+    await apiFetch('PATCH', `/api/notifications/${id}/read`);
+    const n = myNotifs.find(x => x.id === id);
+    if(n) n.read = true;
+    renderNotifications(); updateBadges();
+  } catch(e){}
+}
+
+async function markAllNotifsRead(){
+  try {
+    // FIX: send portal in BODY not query string (server reads req.body.portal)
+    await apiFetch('PATCH', '/api/notifications/mark-all-read', { portal:'buyer' });
+    myNotifs.forEach(n => { n.read = true; });
+    renderNotifications(); updateBadges();
+    showToast('All notifications marked read','info');
+  } catch(e){}
+}
+
+// ═══ MODALS ═══
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+// KEY FIX: Accept property ID, look up from propMap
+function openInqModal(propId){
+  const prop = propMap[propId];
+  if(!prop){ showToast('Property not found','error'); return; }
+  activeInqPropId = propId;
+  document.getElementById('inq-prop-info').innerHTML = `<strong>${esc(prop.title)}</strong><br><span style="color:var(--muted)">${fmtPrice(prop.price)} · ${esc(prop.city||'')}</span>`;
+  document.getElementById('inq-msg').value = '';
+  document.getElementById('inq-modal').classList.add('show');
+}
+
+function openOffModal(propId){
+  const prop = propMap[propId];
+  if(!prop){ showToast('Property not found','error'); return; }
+  activeOffPropId = propId;
+  document.getElementById('off-prop-info').innerHTML = `<strong>${esc(prop.title)}</strong><br><span style="color:var(--muted)">Listed: ${fmtPrice(prop.price)} · ${esc(prop.city||'')}</span>`;
+  document.getElementById('off-amount').value = '';
+  document.getElementById('off-msg').value = '';
+  document.getElementById('off-amount-hint').textContent = prop.price ? `Listed price: ${fmtPrice(prop.price)}` : '';
+  document.getElementById('off-modal').classList.add('show');
+}
+
+function openApptModal(propId){
+  const prop = propMap[propId];
+  if(!prop){ showToast('Property not found','error'); return; }
+  activeApptPropId = propId;
+  document.getElementById('appt-modal-title').textContent = 'Schedule Visit';
+  document.getElementById('appt-prop-info').innerHTML = `<strong>${esc(prop.title)}</strong> · ${esc(prop.city||'')}`;
+  document.getElementById('appt-prop-info').style.display = 'block';
+  document.getElementById('appt-prop-name').value = prop.title || '';
+  document.getElementById('appt-prop-name').readOnly = true;
+  document.getElementById('appt-date').value = '';
+  document.getElementById('appt-time').value = '';
+  document.getElementById('appt-notes').value = '';
+  document.getElementById('appt-modal').classList.add('show');
+}
+
+function openApptModalNew(){
+  activeApptPropId = null;
+  document.getElementById('appt-modal-title').textContent = 'Schedule Site Visit';
+  document.getElementById('appt-prop-info').style.display = 'none';
+  document.getElementById('appt-prop-name').value = '';
+  document.getElementById('appt-prop-name').readOnly = false;
+  document.getElementById('appt-date').value = '';
+  document.getElementById('appt-time').value = '';
+  document.getElementById('appt-notes').value = '';
+  document.getElementById('appt-modal').classList.add('show');
+}
+
+function openDetailModal(propId){
+  const prop = propMap[propId];
+  if(!prop){ showToast('Property not found','error'); return; }
+  const purpose = prop.purpose || prop.status || 'For Sale';
+  const isRent  = purpose.toLowerCase().includes('rent');
+  const img     = (prop.images && prop.images[0]) || '/images/property-1.jpg';
+  document.getElementById('detail-title').textContent = prop.title || 'Property Details';
+  document.getElementById('detail-body').innerHTML = `
+    <img class="detail-img" src="${esc(img)}" onerror="this.src='/images/property-1.jpg'" alt="${esc(prop.title||'')}"/>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <span class="badge ${isRent?'badge-green':'badge-blue'}">${esc(purpose)}</span>
+      <span class="badge badge-gray">${esc(prop.type||'Property')}</span>
+      ${prop.featured?'<span class="badge badge-gold">⭐ Featured</span>':''}
+    </div>
+    <div class="detail-price">${fmtPrice(prop.price)}${isRent?' / month':''}</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:14px">📍 ${esc(prop.address||prop.city||'Pakistan')}</div>
+    ${(prop.bedrooms||prop.bathrooms||prop.area)?`
+    <div class="detail-grid">
+      ${prop.bedrooms  ? `<div class="detail-stat"><div class="detail-stat-val">${prop.bedrooms}</div><div class="detail-stat-lbl">Bedrooms</div></div>`  : ''}
+      ${prop.bathrooms ? `<div class="detail-stat"><div class="detail-stat-val">${prop.bathrooms}</div><div class="detail-stat-lbl">Bathrooms</div></div>` : ''}
+      ${prop.area      ? `<div class="detail-stat"><div class="detail-stat-val">${prop.area} ${esc(prop.areaUnit||'sqft')}</div><div class="detail-stat-lbl">Area</div></div>` : ''}
+    </div>`:''}
+    ${prop.description ? `<div class="detail-section"><h4>Description</h4><div class="detail-desc">${esc(prop.description)}</div></div>` : ''}
+    <div class="detail-actions">
+      <button class="btn btn-gold" onclick="closeModal('detail-modal');openInqModal(${propId})">💬 Send Inquiry</button>
+      <button class="btn btn-blue" onclick="closeModal('detail-modal');openApptModal(${propId})">📅 Schedule Visit</button>
+      <button class="btn btn-outline" onclick="closeModal('detail-modal');openOffModal(${propId})">Make Offer</button>
+    </div>`;
+  document.getElementById('detail-modal').classList.add('show');
+}
+
+// ═══ SUBMIT ACTIONS ═══
+async function submitInquiry(){
+  const msg  = document.getElementById('inq-msg').value.trim();
+  const prop = propMap[activeInqPropId];
+  if(!msg)  { showToast('Please enter your message','error'); return; }
+  if(!prop) { showToast('Property not found','error'); return; }
+  const btn  = document.getElementById('inq-submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Sending…';
+  try {
+    await apiFetch('POST', '/api/inquiries', {
+      propertyId:    prop.id,
+      propertyTitle: prop.title,
+      buyerId:       currentUser.id,
+      buyerName:     currentUser.name,
+      name:          currentUser.name,
+      email:         currentUser.email,
+      phone:         currentUser.phone || '',
+      sellerId:      prop.sellerId || null,
+      message:       msg
+    });
+    showToast('Inquiry sent successfully!','success');
+    closeModal('inq-modal');
+    const fresh = await apiFetch('GET', `/api/inquiries?buyer_id=${currentUser.id}`).catch(()=>[]);
+    myInqs = Array.isArray(fresh) ? fresh : [];
+    updateStats(); renderDashboard(); renderInquiries(); updateBadges();
+  } catch(e){ showToast(e.message||'Failed to send inquiry','error'); }
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg> Send Inquiry';
+}
+
+async function submitOffer(){
+  const amount = parseInt(document.getElementById('off-amount').value) || 0;
+  const prop   = propMap[activeOffPropId];
+  if(amount < 1) { showToast('Please enter a valid offer amount','error'); return; }
+  if(!prop)      { showToast('Property not found','error'); return; }
+  const btn = document.getElementById('off-submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Submitting…';
+  try {
+    await apiFetch('POST', '/api/offers', {
+      propertyId:    prop.id,
+      propertyTitle: prop.title,
+      propertyImage: (prop.images && prop.images[0]) || '',
+      buyerId:       currentUser.id,
+      buyerName:     currentUser.name,
+      buyerPhone:    currentUser.phone || '',
+      sellerId:      prop.sellerId || null,
+      amount,
+      message: document.getElementById('off-msg').value.trim()
+    });
+    showToast('Offer submitted successfully!','success');
+    closeModal('off-modal');
+    const fresh = await apiFetch('GET', `/api/offers?buyer_id=${currentUser.id}`).catch(()=>[]);
+    myOffs = Array.isArray(fresh) ? fresh : [];
+    updateStats(); renderOffers();
+  } catch(e){ showToast(e.message||'Failed to submit offer','error'); }
+  btn.disabled = false;
+  btn.textContent = 'Submit Offer';
+}
+
+async function submitAppointment(){
+  const propName = document.getElementById('appt-prop-name').value.trim();
+  const date     = document.getElementById('appt-date').value;
+  const time     = document.getElementById('appt-time').value;
+  const type     = document.getElementById('appt-type').value;
+  const notes    = document.getElementById('appt-notes').value.trim();
+  if(!propName) { showToast('Please enter property name','error'); return; }
+  if(!date)     { showToast('Please select a date','error'); return; }
+  if(!time)     { showToast('Please select a time','error'); return; }
+  const prop = activeApptPropId ? propMap[activeApptPropId] : null;
+  const btn  = document.getElementById('appt-submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Scheduling…';
+  try {
+    await apiFetch('POST', '/api/appointments', {
+      propertyId:    prop ? prop.id : null,
+      propertyTitle: propName,
+      buyerId:       currentUser.id,
+      buyerName:     currentUser.name,
+      buyerPhone:    currentUser.phone || '',
+      buyerEmail:    currentUser.email,
+      agentId:       prop ? (prop.agentId || null) : null,
+      date, time, type, notes,
+      status: 'Upcoming'
+    });
+    showToast('Appointment scheduled!','success');
+    closeModal('appt-modal');
+    const fresh = await apiFetch('GET', `/api/appointments?buyer_id=${currentUser.id}`).catch(()=>[]);
+    myApts = Array.isArray(fresh) ? fresh : [];
+    updateStats(); renderDashboard(); renderAppointments(); updateBadges();
+  } catch(e){ showToast(e.message||'Failed to schedule','error'); }
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Schedule Visit';
+}
+
+// ═══ PROFILE ═══
+async function saveProfile(){
+  const name  = document.getElementById('prof-name').value.trim();
+  const phone = document.getElementById('prof-phone').value.trim();
+  const city  = document.getElementById('prof-city').value.trim();
+  if(!name){ showToast('Name is required','error'); return; }
+  try {
+    await apiFetch('PUT', `/api/users/${currentUser.id}`, { name, phone, city });
+    currentUser = {...currentUser, name, phone, city};
+    localStorage.setItem('og_user', JSON.stringify(currentUser));
+    document.getElementById('sb-uname').textContent = name;
+    const av = (name[0]||'B').toUpperCase();
+    document.getElementById('sb-avatar').textContent = av;
+    document.getElementById('top-avatar').textContent = av;
+    showToast('Profile saved!','success');
+  } catch(e){ showToast(e.message||'Failed to save','error'); }
+}
+
+async function changePassword(){
+  const cur = document.getElementById('pw-current').value;
+  const nw  = document.getElementById('pw-new').value;
+  const cf  = document.getElementById('pw-confirm').value;
+  if(!cur||!nw||!cf) { showToast('All fields are required','error'); return; }
+  if(nw.length < 8)  { showToast('New password must be at least 8 characters','error'); return; }
+  if(nw !== cf)      { showToast('Passwords do not match','error'); return; }
+  try {
+    await apiFetch('POST', '/api/auth/change-password', { userId:currentUser.id, currentPassword:cur, newPassword:nw });
+    document.getElementById('pw-current').value = '';
+    document.getElementById('pw-new').value = '';
+    document.getElementById('pw-confirm').value = '';
+    showToast('Password updated successfully!','success');
+  } catch(e){ showToast(e.message||'Failed to update password','error'); }
+}
+
+// ═══ CONFIRM DIALOG ═══
+function showConfirm(title, msg, cb){
+  _confirmCb = cb;
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent   = msg;
+  document.getElementById('confirm-yes-btn').onclick   = function(){ closeModal('confirm-modal'); if(_confirmCb) _confirmCb(); };
+  document.getElementById('confirm-modal').classList.add('show');
+}
+
+// ═══ TAB SWITCH ═══
+function showTab(tab){
+  ['dashboard','properties','inquiries','appointments','offers','saved','profile'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('tab-hidden', t !== tab);
+    const btn = document.getElementById('nav-'+t);
+    if(btn) btn.classList.toggle('active', t === tab);
+  });
+  const titles = {dashboard:'Dashboard',properties:'Browse Properties',inquiries:'My Inquiries',appointments:'My Appointments',offers:'My Offers',saved:'Saved Properties',profile:'My Profile'};
+  document.getElementById('page-title').textContent = titles[tab] || 'Dashboard';
+}
+
+// ═══ HELPERS ═══
+function esc(s){
+  if(s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function badgeStatus(s){
+  const map = {Pending:'badge-yellow',New:'badge-yellow',Contacted:'badge-blue',Responded:'badge-green',Replied:'badge-green',Closed:'badge-gray',Upcoming:'badge-blue',Confirmed:'badge-green',Completed:'badge-gray',Cancelled:'badge-red',Active:'badge-green',Inactive:'badge-gray'};
+  return `<span class="badge ${map[s]||'badge-gray'}">${esc(s||'—')}</span>`;
+}
+function badgeOffer(s){
+  const map = {Pending:'badge-yellow',Accepted:'badge-green',Rejected:'badge-red','Counter Offer':'badge-blue','Counter':'badge-blue',Withdrawn:'badge-gray'};
+  return `<span class="badge ${map[s]||'badge-gray'}">${esc(s||'—')}</span>`;
+}
+function fmtDate(d){
+  if(!d) return '—';
+  const dt = new Date(d);
+  if(isNaN(dt)) return String(d);
+  return dt.toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'});
+}
+function timeAgo(ts){
+  if(!ts) return '';
+  const diff = Date.now() - new Date(ts).getTime();
+  const m = Math.floor(diff/60000);
+  if(m < 1)  return 'Just now';
+  if(m < 60) return m+'m ago';
+  const h = Math.floor(m/60);
+  if(h < 24) return h+'h ago';
+  return Math.floor(h/24)+'d ago';
+}
+function showToast(msg, type='success'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show '+type;
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

@@ -291,6 +291,7 @@ function mapApiBanner(s: ApiBannerSlide): BannerSlideData | null {
   return null;
 }
 
+const BANNER_W            = Math.round(SCREEN_W * 0.9);
 const BANNER_H            = 190;
 const BANNER_AUTO_INTERVAL = 4200;
 const VIDEO_MAX_DURATION   = 60_000; // 60 s — auto-advance after this even if looping
@@ -541,10 +542,10 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, colors, o
 }
 
 const bn = StyleSheet.create({
-  container:  { width: SCREEN_W, height: BANNER_H, overflow: 'hidden', marginTop: 4 },
-  slideStack: { width: SCREEN_W, height: BANNER_H, overflow: 'hidden' },
-  slide:      { width: SCREEN_W, height: BANNER_H },
-  image:      { width: SCREEN_W, height: BANNER_H },
+  container:  { width: BANNER_W, height: BANNER_H, alignSelf: 'center', overflow: 'hidden', marginTop: 4 },
+  slideStack: { width: BANNER_W, height: BANNER_H, overflow: 'hidden' },
+  slide:      { width: BANNER_W, height: BANNER_H },
+  image:      { width: BANNER_W, height: BANNER_H },
   accentLine: { position: 'absolute', top: 0, left: 20, right: 20, height: 1.5, backgroundColor: '#c8a45a99', borderRadius: 1 },
   // Mute button — top-right corner, inside banner
   muteBtn:    { position: 'absolute', top: 10, right: 12, zIndex: 20, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 16, padding: 7 },

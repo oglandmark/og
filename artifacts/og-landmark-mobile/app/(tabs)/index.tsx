@@ -556,7 +556,7 @@ const bn = StyleSheet.create({
   bannerEyebrow: { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1.5, marginBottom: 4 },
   bannerTitle: { color: '#ffffff', fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 20, lineHeight: 23, marginBottom: 3 },
   bannerSubtitle: { color: '#ffffffcc', fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 14 },
-  bannerCta: { position: 'absolute', right: 18, bottom: 18, minHeight: 40, borderRadius: 11, paddingHorizontal: 12, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', gap: 5 },
+  bannerCta: { position: 'absolute', right: 18, bottom: 18, minHeight: 36, borderRadius: 11, paddingHorizontal: 12, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', gap: 5 },
   bannerCtaText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 });
 
@@ -1133,7 +1133,7 @@ const ac = StyleSheet.create({
   footerRow:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
   chip:         { flex: 1, borderRadius: 9, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 8 },
   chipText:     { fontFamily: 'Inter_600SemiBold', fontSize: 9, textAlign: 'center' },
-  cta:          { minHeight: 40, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
+  cta:          { minHeight: 36, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
   ctaText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 });
 
@@ -2154,7 +2154,7 @@ const s = StyleSheet.create({
   sectionHeader:    { paddingHorizontal: 18, paddingTop: 36, paddingBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   sectionEyebrow:   { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.8, marginBottom: 6 },
   sectionTitle:     { fontFamily: 'Inter_700Bold', fontSize: 22 },
-  viewAllBtn:       { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
+  viewAllBtn:       { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 4 },
   viewAllText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   hRow:             { paddingHorizontal: 18, paddingBottom: 4 },
   agentCarouselViewport: { width: '100%', overflow: 'hidden' },
@@ -2196,7 +2196,7 @@ const s = StyleSheet.create({
   trustPoint:       { flexDirection: 'row', alignItems: 'center', gap: 8, width: '47%' },
   trustIconWrap:    { width: 28, height: 28, borderRadius: 9, backgroundColor: '#c8a45a22', alignItems: 'center', justifyContent: 'center' },
   trustLabel:       { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#ffffffcc', flex: 1 },
-  heroButton:       { alignSelf: 'flex-start', minHeight: 44, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 13, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#c8a45a' },
+  heroButton:       { alignSelf: 'flex-start', minHeight: 40, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 13, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#c8a45a' },
   heroButtonText:   { color: '#ffffff', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 
   // Smart CTA
@@ -2206,9 +2206,9 @@ const s = StyleSheet.create({
   ctaTitle:         { fontFamily: 'Inter_700Bold', fontSize: 26, lineHeight: 31, marginBottom: 10 },
   ctaDesc:          { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21, marginBottom: 22 },
   ctaBtns:          { flexDirection: 'row', gap: 12 },
-  ctaBtn1:          { flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 10 },
+  ctaBtn1:          { flex: 1, minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 8 },
   ctaBtn1Text:      { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
-  ctaBtn2:          { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 14, paddingVertical: 10 },
+  ctaBtn2:          { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 14, paddingVertical: 8 },
   ctaBtn2Text:      { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 
   // Drawer styles (unchanged)
@@ -2244,7 +2244,7 @@ const s = StyleSheet.create({
   infoEyebrow:        { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.4, marginTop: 22, marginBottom: 6 },
   infoTitle:          { fontFamily: 'Inter_700Bold', fontSize: 22, lineHeight: 27 },
   infoBody:           { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 20, marginTop: 11 },
-  infoButton:         { height: 44, borderRadius: 13, marginTop: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  infoButton:         { height: 40, borderRadius: 13, marginTop: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   infoButtonText:     { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 });
 

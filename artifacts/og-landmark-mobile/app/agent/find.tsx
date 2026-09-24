@@ -449,7 +449,7 @@ const lc = StyleSheet.create({
   areasText:    { fontFamily: 'Inter_400Regular', fontSize: 12, flex: 1 },
   about:        { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18 },
   ctaRow:       { flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, paddingTop: 14 },
-  callBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 },
+  callBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7 },
   callBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   profileCta:   { flexDirection: 'row', alignItems: 'center', gap: 5 },
   profileCtaText:{ fontFamily: 'Inter_600SemiBold', fontSize: 13 },

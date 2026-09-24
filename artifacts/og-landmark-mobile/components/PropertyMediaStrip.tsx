@@ -581,8 +581,8 @@ const fs = StyleSheet.create({
     backgroundColor: 'rgba(200,164,90,0.12)',
     borderWidth: 1.5, borderColor: 'rgba(200,164,90,0.4)',
     borderRadius: 20,
-    minHeight: 40,
-    paddingHorizontal: 14, paddingVertical: 6,
+    minHeight: 36,
+    paddingHorizontal: 14, paddingVertical: 4,
   },
   muteBtnLabel: {
     fontFamily: 'Inter_600SemiBold', fontSize: 12, letterSpacing: 0.3,
@@ -601,6 +601,6 @@ const fs = StyleSheet.create({
   /* Error state */
   errorBox:       { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
   errorText:      { color: '#c8a45a', fontWeight: '700', fontSize: 15 },
-  errorClose:     { marginTop: 8, minHeight: 40, paddingHorizontal: 24, paddingVertical: 8, backgroundColor: '#c8a45a', borderRadius: 10 },
+  errorClose:     { marginTop: 8, minHeight: 36, paddingHorizontal: 24, paddingVertical: 6, backgroundColor: '#c8a45a', borderRadius: 10 },
   errorCloseText: { color: '#102a43', fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });

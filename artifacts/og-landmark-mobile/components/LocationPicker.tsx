@@ -180,7 +180,7 @@ const pmc = StyleSheet.create({
   infoArea:   { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   infoAddr:   { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 2, lineHeight: 14 },
   actionRow:  { flexDirection: 'row', borderTopWidth: 1, padding: 10, gap: 8 },
-  actionBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 40, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, flex: 1, justifyContent: 'center' },
+  actionBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 36, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10, flex: 1, justifyContent: 'center' },
   actionBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
 });
 
@@ -977,11 +977,11 @@ const lp = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 14,
     borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 12,
   },
-  skipButton: { paddingHorizontal: 12, paddingVertical: 12 },
+  skipButton: { paddingHorizontal: 12, paddingVertical: 10 },
   skipButtonText: { fontFamily: 'Inter_500Medium', fontSize: 14 },
   doneButton: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 7, borderRadius: 12, minHeight: 44, paddingVertical: 9, paddingHorizontal: 14,
+    gap: 7, borderRadius: 12, minHeight: 40, paddingVertical: 7, paddingHorizontal: 14,
   },
   doneButtonText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20, color: '#ffffff' },
 
@@ -1018,11 +1018,11 @@ const lp = StyleSheet.create({
   badgeArea:  { fontFamily: 'Inter_400Regular', fontSize: 9, marginTop: 1, color: '#8a9fb8' },
 
   btnRow:    { flexDirection: 'row', gap: 10 },
-  btn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, minHeight: 44, paddingVertical: 8, paddingHorizontal: 14 },
+  btn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, minHeight: 40, paddingVertical: 6, paddingHorizontal: 14 },
   btnOutline:{ borderWidth: 1 },
   btnText:   { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20, color: '#ffffff' },
 
-  confirmLocationBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, minHeight: 44, paddingVertical: 9, paddingHorizontal: 14 },
+  confirmLocationBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, minHeight: 40, paddingVertical: 7, paddingHorizontal: 14 },
   confirmLocationText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20, color: '#ffffff' },
   confirmedBadge:      { flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderRadius: 11, paddingHorizontal: 13, paddingVertical: 9 },
   confirmedText:       { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
@@ -1033,7 +1033,7 @@ const lp = StyleSheet.create({
   input:       { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontFamily: 'Inter_400Regular', fontSize: 13 },
   manualErr:   { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#dc2626' },
   validationError: { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#dc2626' },
-  confirmBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, minHeight: 44, paddingVertical: 8, paddingHorizontal: 14 },
+  confirmBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, minHeight: 40, paddingVertical: 6, paddingHorizontal: 14 },
   confirmHint: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, marginTop: 4, marginBottom: 12 },
   locationError: { flexDirection: 'row', alignItems: 'flex-start', gap: 7, borderWidth: 1, borderRadius: 11, padding: 10, marginTop: 9 },
   locationErrorText: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17 },

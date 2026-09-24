@@ -454,6 +454,6 @@ const styles = StyleSheet.create({
   emptyState:   { borderRadius: 20, borderWidth: 1, borderStyle: 'dashed', padding: 36, alignItems: 'center', gap: 10, marginTop: 20 },
   emptyTitle:   { fontFamily: 'Inter_700Bold', fontSize: 16 },
   emptyDesc:    { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center' },
-  emptyBtn:     { marginTop: 8, paddingHorizontal: 20, paddingVertical: 11, borderRadius: 12 },
+  emptyBtn:     { marginTop: 8, paddingHorizontal: 20, paddingVertical: 9, borderRadius: 12 },
   emptyBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });

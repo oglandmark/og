@@ -591,7 +591,7 @@ const iq = StyleSheet.create({
   actions:         { flexDirection: 'row', gap: 10, marginBottom: 4, marginTop: 4 },
   altBtn:          { flex: 0.7, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 14, paddingVertical: 11 },
   altBtnText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
-  sendBtn:         { flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 16, paddingHorizontal: 18, paddingVertical: 11 },
+  sendBtn:         { flex: 1, minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 16, paddingHorizontal: 18, paddingVertical: 9 },
   sendBtnText:     { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20, letterSpacing: 0.1 },
   // success
   successWrap:     { alignItems: 'center', paddingVertical: 24, gap: 10, paddingHorizontal: 10 },
@@ -605,7 +605,7 @@ const iq = StyleSheet.create({
 
 const ap = StyleSheet.create({
   typeRow:      { flexDirection: 'row', gap: 10 },
-  typeBtn:      { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 14, paddingVertical: 13 },
+  typeBtn:      { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 14, paddingVertical: 11 },
   typeBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   datePill:     { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
   datePillText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
@@ -1331,7 +1331,7 @@ const styles = StyleSheet.create({
   docNoteText:  { fontFamily: 'Inter_400Regular', fontSize: 9, flex: 1, lineHeight: 14 },
   actionRow:     { flexDirection: 'row', gap: 9, marginTop: 20 },
   sectionSpacer: { height: 20 },
-  cta: { minHeight: 44, borderRadius: 17, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
+  cta: { minHeight: 40, borderRadius: 17, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
   secondaryCta: { flex: 0.85, borderWidth: 1 },
   primaryCta: { flex: 1.35 },
   bookVisitCta: { borderWidth: 1 },

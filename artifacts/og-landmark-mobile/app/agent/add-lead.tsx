@@ -259,6 +259,6 @@ const al = StyleSheet.create({
   textarea:    { height: 80, textAlignVertical: 'top', paddingTop: 12 },
   chip:        { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
   chipText:    { fontFamily: 'Inter_500Medium', fontSize: 11 },
-  saveBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 13 },
+  saveBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 11 },
   saveBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
 });

@@ -1080,7 +1080,7 @@ const styles = StyleSheet.create({
   chip: { borderWidth: 1, borderRadius: 19, paddingHorizontal: 12, paddingVertical: 8 },
   chipText: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   actionRow: { flexDirection: 'row', gap: 8, marginTop: 4, marginBottom: 10 },
-  actionButton: { flex: 1, minHeight: 44, flexDirection: 'row', gap: 7, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
+  actionButton: { flex: 1, minHeight: 40, flexDirection: 'row', gap: 7, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
   actionButtonText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
   errorRow: { flexDirection: 'row', gap: 7, alignItems: 'flex-start', marginTop: 2, marginBottom: 8 },
   errorText: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 15 },

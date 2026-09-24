@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   remText:       { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#1c2024' },
   forgotText:    { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: GOLD },
 
-  loginBtn:      { height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
+  loginBtn:      { height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
   loginBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff', letterSpacing: 0.3 },
 
   dividerRow:    { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   dividerText:   { fontFamily: 'Inter_400Regular', fontSize: 12, color: MUTED },
 
   socialRow:     { flexDirection: 'row', gap: 10, marginBottom: 30 },
-  socialBtn:     { flex: 1, height: 48, borderRadius: 10, borderWidth: 1, borderColor: BORDER,
+  socialBtn:     { flex: 1, height: 44, borderRadius: 10, borderWidth: 1, borderColor: BORDER,
                    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
                    backgroundColor: '#fff' },
   socialText:    { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#1c2024' },

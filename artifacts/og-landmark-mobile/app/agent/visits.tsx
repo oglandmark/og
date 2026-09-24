@@ -227,9 +227,9 @@ function AddVisitForm({
 const af = StyleSheet.create({
   wrap:       { borderWidth: 1.5, borderRadius: 18, padding: 16, marginBottom: 20 },
   title:      { fontFamily: 'Inter_700Bold', fontSize: 16, marginBottom: 14 },
-  cancelBtn:  { flex: 1, alignItems: 'center', borderWidth: 1, borderRadius: 12, paddingVertical: 13 },
+  cancelBtn:  { flex: 1, alignItems: 'center', borderWidth: 1, borderRadius: 12, paddingVertical: 11 },
   cancelText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  saveBtn:    { flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 13 },
+  saveBtn:    { flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 11 },
   saveText:   { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
 });
 

@@ -370,7 +370,7 @@ const vs = StyleSheet.create({
 
   // Time grid
   timeGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  timeSlot:       { minHeight: 40, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8 },
+  timeSlot:       { minHeight: 36, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 6 },
   timeSlotText:   { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 
   // Stepper
@@ -380,7 +380,7 @@ const vs = StyleSheet.create({
   stepperLabel:   { fontFamily: 'Inter_400Regular', fontSize: 13 },
 
   // Submit
-  submitBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, minHeight: 48, paddingVertical: 10, paddingHorizontal: 16 },
+  submitBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, minHeight: 44, paddingVertical: 8, paddingHorizontal: 16 },
   submitBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
 
   // Success screen
@@ -394,6 +394,6 @@ const vs = StyleSheet.create({
   confirmVal:     { fontFamily: 'Inter_400Regular', fontSize: 13, flex: 1, lineHeight: 18 },
   confirmDivider: { height: 1, marginVertical: 4 },
   noteText:       { fontFamily: 'Inter_400Regular', fontSize: 11, textAlign: 'center', lineHeight: 16, paddingHorizontal: 10 },
-  doneBtn:        { borderRadius: 14, minHeight: 44, paddingHorizontal: 48, paddingVertical: 9, marginTop: 4 },
+  doneBtn:        { borderRadius: 14, minHeight: 40, paddingHorizontal: 48, paddingVertical: 7, marginTop: 4 },
   doneBtnText:    { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
 });

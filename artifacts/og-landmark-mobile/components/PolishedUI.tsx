@@ -129,11 +129,11 @@ export function EmptyState({
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 48,
+    minHeight: 40,
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 18,
-    paddingVertical: 12,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

@@ -180,13 +180,13 @@ const iqm = StyleSheet.create({
   label:        { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1, marginBottom: 7, marginTop: 4 },
   input:        { borderWidth: 1, borderRadius: 12, padding: 13, fontFamily: 'Inter_400Regular', fontSize: 13, marginBottom: 14 },
   multiline:    { minHeight: 80, textAlignVertical: 'top' },
-  sendBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 12, marginTop: 4, marginBottom: 8 },
+  sendBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 10, marginTop: 4, marginBottom: 8 },
   sendBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   successWrap:  { alignItems: 'center', paddingVertical: 24, gap: 12, paddingHorizontal: 8 },
   successIcon:  { width: 72, height: 72, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   successTitle: { fontFamily: 'Inter_700Bold', fontSize: 22 },
   successDesc:  { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 20, color: '#64748b' },
-  successBtn:   { borderRadius: 14, paddingHorizontal: 40, paddingVertical: 11, marginTop: 8 },
+  successBtn:   { borderRadius: 14, paddingHorizontal: 40, paddingVertical: 9, marginTop: 8 },
   successBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });
 
@@ -767,7 +767,7 @@ const styles = StyleSheet.create({
   ctaBar:          { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: 1 },
   priceLabel:      { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1 },
   priceText:       { fontFamily: 'Inter_700Bold', fontSize: 16, marginTop: 2 },
-  enquireBtn:      { borderRadius: 12, paddingHorizontal: 18, paddingVertical: 11 },
+  enquireBtn:      { borderRadius: 12, paddingHorizontal: 18, paddingVertical: 9 },
   enquireBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   // Quick actions
   quickActions:    { flexDirection: 'row', paddingVertical: 14, borderBottomWidth: 1 },
@@ -799,7 +799,7 @@ const styles = StyleSheet.create({
   devType:         { fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 2 },
   verifiedBadge:   { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 4 },
   verifiedText:    { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#1a6b3a' },
-  viewDevBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 12, paddingVertical: 11 },
+  viewDevBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 12, paddingVertical: 9 },
   viewDevText:     { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   // Gallery
   galleryThumb:    { width: 160, height: 110, borderRadius: 12, borderWidth: 1 },
@@ -825,7 +825,7 @@ const styles = StyleSheet.create({
   payRow:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12 },
   payRowLabel:     { fontFamily: 'Inter_400Regular', fontSize: 12 },
   payRowValue:     { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  payRequestBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, paddingVertical: 13 },
+  payRequestBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, paddingVertical: 11 },
   payRequestText:  { fontFamily: 'Inter_700Bold', fontSize: 13 },
   // Amenities
   amenitiesGrid:   { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -850,6 +850,6 @@ const styles = StyleSheet.create({
   locationInfo:    { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
   locationText:    { fontFamily: 'Inter_400Regular', fontSize: 13, flex: 1 },
   nearbyText:      { fontFamily: 'Inter_400Regular', fontSize: 12, marginBottom: 12 },
-  directionsBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 12, paddingVertical: 12, marginTop: 12 },
+  directionsBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 12, paddingVertical: 10, marginTop: 12 },
   directionsBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });

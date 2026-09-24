@@ -455,7 +455,7 @@ const st = StyleSheet.create({
   input:         { flex: 1, paddingHorizontal: 14, fontFamily: 'Inter_400Regular', fontSize: 13, zIndex: 1 },
   eyeBtn:        { paddingHorizontal: 14, zIndex: 1 },
   matchIcon:     { paddingRight: 8, zIndex: 1 },
-  btn:           { height: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, marginTop: 4 },
+  btn:           { height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, marginTop: 4 },
   btnText:       { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   errorBox:      { alignSelf: 'stretch', borderRadius: 12, borderWidth: 1, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
   errorText:     { fontFamily: 'Inter_400Regular', fontSize: 12, flex: 1 },

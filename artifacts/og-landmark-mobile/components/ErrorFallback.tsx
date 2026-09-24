@@ -206,8 +206,8 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   button: {
-    minHeight: 48,
-    paddingVertical: 13,
+    minHeight: 44,
+    paddingVertical: 11,
     borderRadius: 8,
     paddingHorizontal: 24,
     minWidth: 200,

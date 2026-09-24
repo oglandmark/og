@@ -2035,7 +2035,7 @@ const ex = StyleSheet.create({
   mapActions:      { flexDirection: 'row', gap: 12, paddingHorizontal: 18, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
   mapActionBack:   { flex: 1, height: 46, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   mapActionBackText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
-  mapActionDone:   { flex: 1, height: 46, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  mapActionDone:   { flex: 1, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   mapActionDoneText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   headerIntro:     { paddingTop: 2, paddingBottom: 15 },
   headerEyebrow:   { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 2, marginBottom: 5 },
@@ -2101,9 +2101,9 @@ const ex = StyleSheet.create({
   saveModalInput:  { height: 48, borderRadius: 13, borderWidth: 1, overflow: 'hidden', marginBottom: 18, flexDirection: 'row', alignItems: 'center' },
   saveModalInputText: { flex: 1, paddingHorizontal: 14, fontFamily: 'Inter_400Regular', fontSize: 13, zIndex: 1 },
   saveModalBtns:   { flexDirection: 'row', gap: 10 },
-  saveModalCancel: { flex: 1, height: 46, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  saveModalCancel: { flex: 1, height: 40, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   saveModalCancelText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  saveModalConfirm: { flex: 1, height: 46, borderRadius: 13, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
+  saveModalConfirm: { flex: 1, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
   saveModalConfirmText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });
 
@@ -2155,7 +2155,7 @@ const fs = StyleSheet.create({
   sortChip:      { width: '48%', borderRadius: 13, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 7 },
   sortChipText:  { flex: 1, fontFamily: 'Inter_500Medium', fontSize: 10 },
   // Apply button
-  applyBtn:      { height: 48, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 },
+  applyBtn:      { height: 44, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 },
   applyBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });
 

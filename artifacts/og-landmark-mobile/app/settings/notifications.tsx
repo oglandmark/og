@@ -149,6 +149,6 @@ const styles = StyleSheet.create({
   frequency: { borderRadius: 14, borderWidth: 1, padding: 5, flexDirection: 'row', gap: 4 },
   frequencyItem: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 10 },
   frequencyText: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
-  historyButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, borderWidth: 1, paddingVertical: 13, marginTop: 24 },
+  historyButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, borderWidth: 1, paddingVertical: 11, marginTop: 24 },
   historyText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 });

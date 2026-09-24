@@ -1505,9 +1505,9 @@ const styles = StyleSheet.create({
   loginCardTitle: { fontFamily: 'Inter_700Bold', fontSize: 17 },
   loginCardBody: { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 20, textAlign: 'center' },
   authActionRow: { width: '100%', flexDirection: 'row', gap: 10, marginTop: 4 },
-  authPrimaryButton: { flex: 1, height: 48, borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  authPrimaryButton: { flex: 1, height: 44, borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   authPrimaryText: { fontFamily: 'Inter_700Bold', fontSize: 13 },
-  authSecondaryButton: { flex: 1, height: 48, borderRadius: 13, borderWidth: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  authSecondaryButton: { flex: 1, height: 44, borderRadius: 13, borderWidth: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   authSecondaryText: { fontFamily: 'Inter_700Bold', fontSize: 13 },
   // selection screen
   postCard:          { flexDirection: 'row', alignItems: 'center', gap: 16, borderRadius: 18, borderWidth: 1, padding: 20, marginBottom: 14 },

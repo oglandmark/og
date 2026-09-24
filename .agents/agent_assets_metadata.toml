@@ -2,20 +2,6 @@ uploads = []
 generated = []
 
 [[outputs]]
-id = "6lr2xpOiHtnQg6Yulp-kd"
-uri = "file://exports/og-landmark-hostinger.zip"
-type = "unspecified"
-title = "OG Landmark Hostinger Website ZIP"
-description = "Hostinger-ready website package with Express server, public website, API, database schema, seed import script, and setup instructions. Replit lockfiles, node_modules, secrets, and local fallback data are excluded."
-logical_id = "6544ec84-7324-4170-ba52-68b406885d58"
-content_hash = "sha256:170b6a521b6763a61da348197b7522058ecba51a188c811bc7be943a0e7a9a1d"
-size = 10971982
-mtime_ms = 1788976333026
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/6544ec84-7324-4170-ba52-68b406885d58/c3022e93-1fb6-45e5-8053-fc18a3ce7bfb"
-storage_version_token = "1788976357265845"
-content_type = "application/octet-stream"
-
-[[outputs]]
 id = "RBpT5GzGNyXjfsQqOqGc7"
 uri = "file://attached_assets/og-landmark-expo-preview-qr.png"
 type = "image"
@@ -30,20 +16,6 @@ storage_version_token = "1789026931096358"
 content_type = "image/png"
 
 [[outputs]]
-id = "J4NTvMKobSMUBQevgJdi0"
-uri = "file://exports/OG%20Landmark%20Hostinger%2019-09-26.zip"
-type = "unspecified"
-title = "OG Landmark Hostinger Website ZIP"
-description = "Latest Hostinger-ready website package with the admin property photo/video upload and delete controls. Replit lockfiles, node_modules, local runtime data, and secrets are excluded."
-logical_id = "c8d62807-9338-454a-b262-55d0057a4900"
-content_hash = "sha256:8608b53397fb3bbc1712417cd0008ad3fbe11cae567932f588d8cf1d182821e0"
-size = 10975302
-mtime_ms = 1789840393839
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/c8d62807-9338-454a-b262-55d0057a4900/b643c211-44c2-4fd9-8e4c-69995f455bbe"
-storage_version_token = "1789840432956427"
-content_type = "application/octet-stream"
-
-[[outputs]]
 id = "52mzhFhtgSUbMgNrako28"
 uri = "file://deliverables/og-landmark-hostinger-updated.zip"
 type = "unspecified"
@@ -55,20 +27,6 @@ size = 10979549
 mtime_ms = 1789932204145
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/92673c42-d327-4017-b20d-2678f2585f88/aaafa63b-5a2b-446d-8100-9474eccf9c6e"
 storage_version_token = "1789932214125796"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "X_7zF-7ue8wR1DqVjmqr5"
-uri = "file://artifacts/og-landmark-hostinger.zip"
-type = "unspecified"
-title = "OG Landmark Hostinger package"
-description = "Complete Hostinger package with website/, Laravel backend/, vendor dependencies, deployment README, and no secrets or local runtime data."
-logical_id = "5d582c5e-8875-4eed-965a-6cd691c4b30d"
-content_hash = "sha256:f2e5731ea195df14dd9dd878ee10dc5e06dc51657070b5c1bafa260a3229eefb"
-size = 48029119
-mtime_ms = 1790150744742
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/5d582c5e-8875-4eed-965a-6cd691c4b30d/7b3094db-051e-4df4-8ced-4185233034d4"
-storage_version_token = "1790150828235832"
 content_type = "application/octet-stream"
 
 [[outputs]]
@@ -195,4 +153,18 @@ size = 10901063
 mtime_ms = 1790274837229
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/cb8d9867-debf-4373-ab78-86176ecb9390/841b757e-ec56-420e-9e8e-146ebec8ac93"
 storage_version_token = "1790274854411458"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "4LbkDIxdXf2kDUXG-vSHn"
+uri = "file://exports/OG-Landmark-Complete-App-Source.zip"
+type = "unspecified"
+title = "OG Landmark — Complete App Source"
+description = "Complete mobile, website, Laravel/API, and shared-workspace source archive. Active secrets, dependencies, build caches, and local runtime database data are excluded."
+logical_id = "92370edd-57dd-4b19-9ea9-c61aa05fa82a"
+content_hash = "sha256:b3a6402a779ff627b6ffef28bd411223b58424177240d0269cf48adc9ecd7313"
+size = 37416275
+mtime_ms = 1790276432556
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/92370edd-57dd-4b19-9ea9-c61aa05fa82a/ca124391-edc5-43f8-916b-73ec94b8cf74"
+storage_version_token = "1790276443650059"
 content_type = "application/octet-stream"

@@ -401,6 +401,6 @@ const sc = StyleSheet.create({
   empty:         { borderWidth: 1, borderRadius: 18, padding: 36, alignItems: 'center', gap: 10, borderStyle: 'dashed' },
   emptyTitle:    { fontFamily: 'Inter_700Bold', fontSize: 16 },
   emptyDesc:     { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 19, maxWidth: 260 },
-  emptyBtn:      { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 14, marginTop: 4 },
+  emptyBtn:      { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 11, marginTop: 4 },
   emptyBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
 });

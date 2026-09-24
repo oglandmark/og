@@ -1488,7 +1488,7 @@ const styles = StyleSheet.create({
   uploadText: { fontFamily: 'Inter_400Regular', fontSize: 10 },
   // submit
   submit: {
-    height: 54, borderRadius: 15, alignItems: 'center', justifyContent: 'center',
+    height: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center',
     flexDirection: 'row', gap: 8, marginTop: 20,
     shadowColor: '#1a6b3a', shadowOpacity: 0.2, shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 }, elevation: 6,

@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   apiErrorText:   { fontFamily: 'Inter_400Regular', fontSize: 12, color: DEST, flex: 1 },
 
   /* Register button */
-  registerBtn:    { height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
+  registerBtn:    { height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   registerBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff', letterSpacing: 0.3 },
 
   /* Footer */

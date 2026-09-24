@@ -199,7 +199,7 @@ const s = StyleSheet.create({
   eyeBtn:   { position: 'absolute', right: 14, top: 14 },
   otpInput: { textAlign: 'center', fontSize: 22, letterSpacing: 14 },
   otpNote:  { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#8a9ab5', textAlign: 'center', marginBottom: 16, lineHeight: 16 },
-  btn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 14, marginTop: 4, minHeight: 48 },
+  btn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 10, marginTop: 4, minHeight: 48 },
   btnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#0B1F3A' },
   resend:   { alignItems: 'center', marginTop: 14 },
 });

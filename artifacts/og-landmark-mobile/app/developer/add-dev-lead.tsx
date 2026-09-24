@@ -197,6 +197,6 @@ const s = StyleSheet.create({
   sourceChip:  { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
   sourceChipText:{ fontFamily: 'Inter_500Medium', fontSize: 11 },
   footer:      { paddingHorizontal: 16, paddingTop: 14, borderTopWidth: 1 },
-  saveBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 14, minHeight: 48 },
+  saveBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 10, minHeight: 44 },
   saveBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
 });

@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   eyeBtn:         { paddingLeft: 8 },
   underlineLine:  { borderBottomWidth: 1, marginTop: 0 },
 
-  submitBtn:      { height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
+  submitBtn:      { height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
   submitText:     { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff', letterSpacing: 0.3 },
 
   dividerRow:     { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },

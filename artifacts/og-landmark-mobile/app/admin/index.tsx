@@ -278,8 +278,8 @@ const s = StyleSheet.create({
   modalSub: { fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 4 },
   rejectInput: { minHeight: 110, borderWidth: 1, borderRadius: 11, padding: 12, marginTop: 16, fontFamily: 'Inter_400Regular', fontSize: 14 },
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 14 },
-  modalCancel: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, paddingVertical: 12 },
+  modalCancel: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, paddingVertical: 10, minHeight: 40 },
   modalCancelText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  modalReject: { flex: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, paddingVertical: 12, backgroundColor: '#dc2626' },
+  modalReject: { flex: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, paddingVertical: 10, minHeight: 44, backgroundColor: '#dc2626' },
   modalRejectText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff' },
 });

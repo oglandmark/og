@@ -137,15 +137,15 @@ const cm = StyleSheet.create({
   typeChipText:{ fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   input:      { borderWidth: 1, borderRadius: 14, padding: 13, fontFamily: 'Inter_400Regular', fontSize: 13, minHeight: 100, textAlignVertical: 'top', marginBottom: 16 },
   actions:    { flexDirection: 'row', gap: 10, marginBottom: 4 },
-  altBtn:     { flex: 0.7, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 14, paddingVertical: 14 },
+  altBtn:     { flex: 0.7, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 14, paddingVertical: 11 },
   altBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
-  sendBtn:    { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 14 },
+  sendBtn:    { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 11 },
   sendBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   successWrap:  { alignItems: 'center', paddingVertical: 28, gap: 12, paddingHorizontal: 8 },
   successIcon:  { width: 72, height: 72, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   successTitle: { fontFamily: 'Inter_700Bold', fontSize: 22 },
   successDesc:  { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 20 },
-  doneBtn:      { borderRadius: 14, paddingHorizontal: 40, paddingVertical: 14, marginTop: 8 },
+  doneBtn:      { borderRadius: 14, paddingHorizontal: 40, paddingVertical: 11, marginTop: 8 },
   doneBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });
 
@@ -580,8 +580,8 @@ const styles = StyleSheet.create({
   reviewSampleText:{ fontFamily: 'Inter_400Regular', fontSize: 10, flex: 1 },
   // Footer
   footerCTA:      { flexDirection: 'row', gap: 12, paddingHorizontal: 18, paddingTop: 18 },
-  callBtn:        { flex: 0.7, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 14, paddingVertical: 14 },
+  callBtn:        { flex: 0.7, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 14, paddingVertical: 11 },
   callBtnText:    { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  enquireBtn:     { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 14 },
+  enquireBtn:     { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 11 },
   enquireBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });

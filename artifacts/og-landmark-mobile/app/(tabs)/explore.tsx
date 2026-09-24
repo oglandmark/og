@@ -2155,7 +2155,7 @@ const fs = StyleSheet.create({
   sortChip:      { width: '48%', borderRadius: 13, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 7 },
   sortChipText:  { flex: 1, fontFamily: 'Inter_500Medium', fontSize: 10 },
   // Apply button
-  applyBtn:      { height: 52, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 },
+  applyBtn:      { height: 48, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 },
   applyBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });
 

@@ -300,7 +300,7 @@ const s = StyleSheet.create({
   emptyIcon:    { width: 80, height: 80, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   emptyTitle:   { fontFamily: 'Inter_700Bold', fontSize: 18, textAlign: 'center' },
   emptyDesc:    { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 20, maxWidth: 280 },
-  emptyBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingHorizontal: 20, paddingVertical: 14, marginTop: 8 },
+  emptyBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingHorizontal: 20, paddingVertical: 11, marginTop: 8 },
   emptyBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
   fab:          { position: 'absolute', right: 20, width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
 });

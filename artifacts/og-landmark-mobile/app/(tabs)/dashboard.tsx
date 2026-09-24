@@ -584,7 +584,7 @@ const ds = StyleSheet.create({
   emptyCard:     { borderWidth: 1, borderRadius: 18, padding: 28, alignItems: 'center', gap: 8, borderStyle: 'dashed' },
   emptyTitle:    { fontFamily: 'Inter_700Bold', fontSize: 15, textAlign: 'center' },
   emptyDesc:     { fontFamily: 'Inter_400Regular', fontSize: 12, textAlign: 'center', lineHeight: 18 },
-  emptyBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, marginTop: 8 },
+  emptyBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11, marginTop: 8 },
   emptyBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
   projectCard:   { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 16, padding: 14 },
   projectIconBox:{ width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },

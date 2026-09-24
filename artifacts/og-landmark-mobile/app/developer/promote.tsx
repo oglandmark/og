@@ -178,7 +178,7 @@ function PlatformBtn({
   );
 }
 const pb = StyleSheet.create({
-  btn:   { flex: 1, alignItems: 'center', borderRadius: 16, paddingVertical: 16, gap: 8 },
+  btn:   { flex: 1, alignItems: 'center', borderRadius: 16, paddingVertical: 14, gap: 8 },
   label: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
 });
 
@@ -478,9 +478,9 @@ const pr = StyleSheet.create({
   regenText:     { fontFamily: 'Inter_500Medium', fontSize: 11 },
   copyBox:       { borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
   copyInput:     { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 21, padding: 14, minHeight: 180 },
-  copyBtn:       { flexDirection: 'row', alignItems: 'center', gap: 7, margin: 12, marginTop: 0, borderRadius: 12, paddingVertical: 13, minHeight: 46, justifyContent: 'center' },
+  copyBtn:       { flexDirection: 'row', alignItems: 'center', gap: 7, margin: 12, marginTop: 0, borderRadius: 12, paddingVertical: 10, minHeight: 44, justifyContent: 'center' },
   copyBtnText:   { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
-  whatsappSend:  { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, paddingVertical: 15, paddingHorizontal: 18, marginTop: 10 },
+  whatsappSend:  { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 18, marginTop: 10, minHeight: 44 },
   whatsappSendText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
   tipsCard:      { borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
   tipRow:        { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },

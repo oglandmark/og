@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   indicators: { flexDirection: 'row', alignItems: 'center', gap: 7, height: 6 },
   indicator: { width: 7, height: 7, borderRadius: 4 },
   indicatorActive: { width: 25 },
-  nextButton: { height: 56, borderRadius: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
+  nextButton: { height: 48, borderRadius: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
   nextText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, letterSpacing: 0.1 },
   footer: { fontFamily: 'Inter_400Regular', fontSize: 10, textAlign: 'center', letterSpacing: 0.3 },
 });

@@ -2184,7 +2184,7 @@ const s = StyleSheet.create({
   transactionToggle:    { borderWidth: 1, borderRadius: 20, padding: 14, marginBottom: 12 },
   transactionToggleLabel:{ fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.2, marginBottom: 9 },
   transactionToggleTrack:{ flexDirection: 'row', gap: 6, borderWidth: 1, borderRadius: 14, padding: 4 },
-  transactionToggleOption:{ flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 11 },
+  transactionToggleOption:{ flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 11 },
   transactionToggleText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   stepEyebrow:          { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.5, marginBottom: 5 },
   stepTitle:            { fontFamily: 'Inter_700Bold', fontSize: 23, lineHeight: 28, marginBottom: 6 },
@@ -2198,7 +2198,7 @@ const s = StyleSheet.create({
   typeLabel:            { fontFamily: 'Inter_600SemiBold', fontSize: 10, textAlign: 'center', lineHeight: 13 },
   // Purpose
   purposeRow:           { flexDirection: 'row', gap: 10, marginBottom: 18 },
-  purposeBtn:           { borderWidth: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  purposeBtn:           { borderWidth: 1, borderRadius: 12, paddingVertical: 11, alignItems: 'center' },
   purposeBtnText:       { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   // Inputs
   inputWrap:            { borderRadius: 15, borderWidth: 1, overflow: 'hidden', marginBottom: 2 },
@@ -2281,7 +2281,7 @@ const s = StyleSheet.create({
   submitIcon:           { width: 46, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   submitTitle:          { fontFamily: 'Inter_700Bold', fontSize: 18, marginBottom: 6 },
   submitHint:           { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, textAlign: 'center', marginBottom: 16 },
-  submitBtn:            { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 14, paddingVertical: 15, paddingHorizontal: 18 },
+  submitBtn:            { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 18 },
   submitBtnText:        { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   submitFootnote:        { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 10 },
   // Hint
@@ -2305,7 +2305,7 @@ const s = StyleSheet.create({
   successBody:          { fontFamily: 'Inter_400Regular', fontSize: 15, textAlign: 'center', lineHeight: 22, marginBottom: 16 },
   reviewBadge:          { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8 },
   reviewText:           { fontFamily: 'Inter_700Bold', fontSize: 11, letterSpacing: 0.8 },
-  successBtn:           { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 28 },
+  successBtn:           { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 16, paddingVertical: 13, paddingHorizontal: 28 },
   successBtnText:       { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   successLink:          { fontFamily: 'Inter_600SemiBold', fontSize: 14, textDecorationLine: 'underline' },
   // Misc

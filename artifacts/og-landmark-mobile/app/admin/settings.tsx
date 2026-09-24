@@ -187,6 +187,6 @@ const s = StyleSheet.create({
   label:        { fontFamily: 'Inter_600SemiBold', fontSize: 11, letterSpacing: 0.5, marginBottom: 6 },
   input:        { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontFamily: 'Inter_400Regular', fontSize: 14, marginBottom: 12 },
   textArea:     { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontFamily: 'Inter_400Regular', fontSize: 14, marginBottom: 12, minHeight: 72, textAlignVertical: 'top' },
-  sendBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 13 },
+  sendBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 10, minHeight: 44 },
   sendText:     { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
 });

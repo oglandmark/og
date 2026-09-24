@@ -422,7 +422,7 @@ const st = StyleSheet.create({
   emptyIcon:          { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   emptyTitle:         { fontFamily: 'Inter_700Bold', fontSize: 17 },
   emptyText:          { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 19 },
-  emptyBtn:           { borderRadius: 13, paddingHorizontal: 20, paddingVertical: 14, marginTop: 4 },
+  emptyBtn:           { borderRadius: 13, paddingHorizontal: 20, paddingVertical: 11, marginTop: 4 },
   emptyBtnText:       { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });
 

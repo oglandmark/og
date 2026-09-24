@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   remText:       { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#1c2024' },
   forgotText:    { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: GOLD },
 
-  loginBtn:      { height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
+  loginBtn:      { height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
   loginBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff', letterSpacing: 0.3 },
 
   dividerRow:    { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },

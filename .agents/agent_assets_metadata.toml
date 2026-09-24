@@ -154,3 +154,17 @@ mtime_ms = 1790243358214
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/7eb3c005-8929-43e7-b96d-29b8328f0d63/8b85d4d6-5b41-4df4-aa37-19c03cd6682f"
 storage_version_token = "1790243619136406"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "-ZVnO5Qf7GOb8OwDLMSNK"
+uri = "file://exports/og-landmark-website-laravel-mysql.zip"
+type = "unspecified"
+title = "OG Landmark Website Frontend ZIP"
+description = "Website frontend and Node server package for Hostinger; configured to proxy API requests to Laravel when LARAVEL_API_URL is set."
+logical_id = "792b78ce-0189-471c-b975-e7635f82a4db"
+content_hash = "sha256:daeb0057abf021e842ab851ae6fce7f6728bd2374c17e8494cafe5722d1f1513"
+size = 11047654
+mtime_ms = 1790242381850
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/792b78ce-0189-471c-b975-e7635f82a4db/eabd3b4e-dce6-45d4-85d1-8e8fd70fa4c4"
+storage_version_token = "1790243692449583"
+content_type = "application/octet-stream"

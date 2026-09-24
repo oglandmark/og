@@ -30,20 +30,6 @@ storage_version_token = "1789026931096358"
 content_type = "image/png"
 
 [[outputs]]
-id = "fny4ujfLrofam2pTJS0Z4"
-uri = "file://exports/OG%20Landmark%2018-09-26.zip"
-type = "unspecified"
-title = "OG Landmark 18-09-26.zip"
-description = "Complete deployable OG Landmark website package with the latest agent cover-photo support. Includes source, public assets, database schema, seed data, Hostinger README, and public npm registry configuration; excludes node_modules, Replit lockfiles, runtime cache, and secrets."
-logical_id = "0904edbd-f8d3-482a-ac5b-fe8692950dc4"
-content_hash = "sha256:d6a74f9188d8bc3e8bd8cd4df97ebbdb0f22b92f61347e32a6eef006adb26207"
-size = 11046198
-mtime_ms = 1789748425142
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/0904edbd-f8d3-482a-ac5b-fe8692950dc4/14ea3327-8f94-4589-8ab6-0d709b632a49"
-storage_version_token = "1789748450590407"
-content_type = "application/octet-stream"
-
-[[outputs]]
 id = "J4NTvMKobSMUBQevgJdi0"
 uri = "file://exports/OG%20Landmark%20Hostinger%2019-09-26.zip"
 type = "unspecified"

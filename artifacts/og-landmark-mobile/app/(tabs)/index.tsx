@@ -49,6 +49,21 @@ const { width: SCREEN_W } = Dimensions.get('window');
 
 type Transaction = 'Buy' | 'Rent';
 
+const HOME_HERO_LINKS = [
+  { label: 'Homes', propertyType: 'House' },
+  { label: 'Plots', propertyType: 'Plot' },
+  { label: 'Commercial', propertyType: 'Commercial' },
+  { label: 'Agriculture', propertyType: 'Agriculture Land' },
+] as const;
+
+const HOME_CATEGORY_TILES = [
+  { label: 'Houses', icon: 'home', propertyType: 'House' },
+  { label: 'Plots', icon: 'map', propertyType: 'Plot' },
+  { label: 'Commercial', icon: 'briefcase', propertyType: 'Commercial' },
+  { label: 'Commercial', icon: 'feather', propertyType: 'Commercial' },
+  { label: 'Agriculture', icon: 'sun', propertyType: 'Agriculture Land' },
+] as const;
+
 // ─── Drawer types & data ──────────────────────────────────────────────────────
 
 type DrawerRoute = '/explore' | '/(tabs)/post-ad' | '/(tabs)/saved' | '/(auth)/login';
@@ -1787,109 +1802,201 @@ export default function HomeScreen() {
       style={[s.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingBottom: tabBarHeight }}
       showsVerticalScrollIndicator={false}
-      onScroll={handleMainScroll}
-      scrollEventThrottle={16}
     >
+      <StatusBar barStyle="light-content" backgroundColor={colors.actionDeep} />
 
-      {/* ─── HEADER ─────────────────────────────────────────────────────── */}
-      <View style={[s.header, { paddingTop: topInset + 12 }]}>
-        <View style={s.topBar}>
+      {/* Location header */}
+      <View style={[s.referenceHeader, { backgroundColor: colors.actionDeep }]}>
+        <View style={[s.referenceLocationRow, { paddingTop: topInset + 6 }]}>
           <Pressable
-            onPress={() => setDrawerOpen(true)}
-            accessibilityRole="button" accessibilityLabel="Open navigation menu" testID="open-navigation-menu"
+            onPress={() => setLocationOpen(true)}
+            onLongPress={() => setDrawerOpen(true)}
+            style={s.referenceLocationButton}
+            accessibilityRole="button"
+            accessibilityLabel={`Change location, currently ${selectedLocation === 'Okara District' ? 'Okara, Punjab' : selectedLocation}`}
+            accessibilityHint="Press and hold to open the navigation menu"
           >
-            <View style={[s.headerIcon, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Feather name="menu" size={21} color={colors.action} />
-            </View>
+            <Feather name="map-pin" size={16} color="#fff" />
+            <Text style={s.referenceLocationText} numberOfLines={1}>
+              {selectedLocation === 'Okara District' ? 'Okara, Punjab' : selectedLocation}
+            </Text>
           </Pressable>
-          <BrandMark />
-          {user ? <NotificationBell compact /> : <View style={{ width: 36 }} />}
-        </View>
-
-        {/* Buy / Rent toggle */}
-        <View
-          style={[s.switcher, { backgroundColor: colors.surfaceTint, borderColor: colors.border }]}
-          onLayout={(e) => setSwitcherW(e.nativeEvent.layout.width)}
-        >
-          {switcherW > 0 && (
-            <View
-              style={[
-                s.switchPill,
-                {
-                  width: switcherW / 2 - 4,
-                  left: transaction === 'Rent' ? switcherW / 2 + 2 : 2,
-                  backgroundColor: colors.action,
-                },
-              ]}
-              pointerEvents="none"
-            />
-          )}
-          {(['Buy', 'Rent'] as Transaction[]).map((item) => (
+          {user ? (
+            <NotificationBell compact tone="header" />
+          ) : (
             <Pressable
-              key={item}
-              onPress={() => {
-                setTransaction(item);
-                setQuery('');
-              }}
-              style={({ pressed }) => [s.switchItem, { opacity: pressed ? 0.72 : 1 }]}
+              onPress={() => router.push('/(auth)/login' as any)}
+              style={s.referenceGuestBell}
+              accessibilityRole="button"
+              accessibilityLabel="Sign in to view notifications"
             >
-              <Text style={[s.switchText, { color: transaction === item ? colors.actionForeground : colors.mutedForeground }]}>{item}</Text>
+              <Feather name="bell" size={18} color="#fff" />
             </Pressable>
-          ))}
+          )}
         </View>
+      </View>
 
-        {/* Smart Search */}
-        <View style={[s.searchRow, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, shadowColor: colors.shadow }]}>
+      {/* City hero */}
+      <View style={[s.referenceHero, { backgroundColor: colors.actionDeep }]}>
+        <ExpoImage
+          source={require('@/assets/images/og-okara-home-hero.jpg')}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          accessibilityLabel="Okara city mosque and skyline at dusk"
+        />
+        <LinearGradient
+          colors={['rgba(8,30,52,0.18)', 'rgba(8,30,52,0.72)', 'rgba(8,30,52,0.94)']}
+          locations={[0, 0.62, 1]}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={s.referenceHeroContent}>
+          <Text style={s.referenceHeroTitle}>Find Your{"\n"}Perfect Property</Text>
+          <View style={s.referenceHeroLinks}>
+            {HOME_HERO_LINKS.map((item, index) => (
+              <React.Fragment key={item.label}>
+                {index > 0 && <View style={s.referenceHeroDivider} />}
+                <Pressable
+                  onPress={() => router.push({
+                    pathname: '/explore',
+                    params: {
+                      propertyType: item.propertyType,
+                      ...(transaction === 'Rent' ? { type: 'rent' } : {}),
+                      city: selectedLocation === 'Okara District' ? 'Okara' : selectedLocation,
+                    },
+                  })}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Browse ${item.label}`}
+                  hitSlop={4}
+                >
+                  <Text style={s.referenceHeroLinkText}>{item.label}</Text>
+                </Pressable>
+              </React.Fragment>
+            ))}
+          </View>
+        </View>
+      </View>
+
+      {/* Search, category cards, and agriculture promotion */}
+      <View style={[s.referenceContent, { backgroundColor: colors.background }]}>
+        <View style={[s.referenceSearch, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Pressable
             onPress={() => router.push({ pathname: '/explore', params: { type: transaction, search: query } })}
             accessibilityRole="button"
-            accessibilityLabel={`Search ${transaction === 'Buy' ? 'properties to buy' : 'properties to rent'}`}
+            accessibilityLabel="Search properties"
+            hitSlop={6}
           >
-            <View style={[s.searchIconWrap, { backgroundColor: colors.action + '18' }]}>
-              <Feather name="search" size={16} color={colors.action} />
-            </View>
+            <Feather name="search" size={19} color={colors.action} />
           </Pressable>
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder={`Search ${transaction === 'Buy' ? 'homes, plots or projects' : 'rentals in Okara District'}`}
+            placeholder="Search by location, property type..."
             placeholderTextColor={colors.mutedForeground}
-            style={[s.searchInput, { color: colors.foreground }]}
+            style={[s.referenceSearchInput, { color: colors.foreground }]}
             returnKeyType="search"
             onSubmitEditing={() => router.push({ pathname: '/explore', params: { type: transaction, search: query } })}
+            accessibilityLabel="Search by location or property type"
           />
           <Pressable
-            onPress={() => setLocationOpen(true)}
-            style={[s.locationChip, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+            onPress={() => router.push({ pathname: '/explore', params: { type: transaction, search: query } })}
             accessibilityRole="button"
-            accessibilityLabel={`Change location, currently ${selectedLocation}`}
+            accessibilityLabel="Open property filters"
+            hitSlop={6}
           >
-            <Feather name="map-pin" size={11} color={colors.action} />
-            <Text style={[s.locationChipText, { color: colors.action }]} numberOfLines={1}>{selectedLocation}</Text>
-            <Feather name="chevron-down" size={11} color={colors.action} />
+            <Feather name="sliders" size={18} color={colors.action} />
           </Pressable>
         </View>
-      </View>
 
-      {/* ─── CINEMATIC BANNER ───────────────────────────────────────────── */}
-      <View onLayout={(e) => {
-        // Track banner's bottom edge so we know when it has scrolled off screen
-        bannerBottomRef.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height;
-      }}>
-        <CinematicBanner isScreenVisible={isVideoScreenVisible} externalSlides={apiBannerSlides} config={homeContent} colors={colors} />
-      </View>
+        {homeContent?.browse?.enabled !== false && (
+          <View style={s.referenceCategoryGrid}>
+            <View style={s.referenceCategoryRow}>
+              {HOME_CATEGORY_TILES.slice(0, 3).map((tile) => (
+                <Pressable
+                  key={`top-${tile.label}`}
+                  onPress={() => router.push({
+                    pathname: '/explore',
+                    params: {
+                      propertyType: tile.propertyType,
+                      ...(transaction === 'Rent' ? { type: 'rent' } : {}),
+                      city: selectedLocation === 'Okara District' ? 'Okara' : selectedLocation,
+                    },
+                  })}
+                  style={({ pressed }) => [
+                    s.referenceCategoryCard,
+                    { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.82 : 1 },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Browse ${tile.label}`}
+                >
+                  <Feather name={tile.icon} size={25} color={colors.action} />
+                  <Text style={[s.referenceCategoryLabel, { color: colors.foreground }]}>{tile.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+            <View style={s.referenceCategoryRow}>
+              {HOME_CATEGORY_TILES.slice(3).map((tile, index) => (
+                <Pressable
+                  key={`bottom-${tile.label}-${index}`}
+                  onPress={() => router.push({
+                    pathname: '/explore',
+                    params: {
+                      propertyType: tile.propertyType,
+                      ...(transaction === 'Rent' ? { type: 'rent' } : {}),
+                      city: selectedLocation === 'Okara District' ? 'Okara' : selectedLocation,
+                    },
+                  })}
+                  style={({ pressed }) => [
+                    s.referenceCategoryCard,
+                    s.referenceCategoryCardWide,
+                    { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.82 : 1 },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Browse ${tile.label}`}
+                >
+                  <Feather name={tile.icon} size={25} color={colors.action} />
+                  <Text style={[s.referenceCategoryLabel, { color: colors.foreground }]}>{tile.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
 
-      {/* ─── FIND YOUR PROPERTY (Browse / Discovery) ────────────────────── */}
-      <AnimatedReveal>
-        {homeContent?.browse?.enabled !== false && <BrowseDiscoveryModule
-          transaction={transaction}
-          selectedLocation={selectedLocation}
-          colors={colors}
-          router={router}
-          content={{ ...(homeContent?.browse || {}), eyebrow: homeSections.browseEyebrow, title: homeSections.browseTitle }}
-          categoryLabels={mobileContent?.screens?.categories}
-        />}
-      </AnimatedReveal>
+        <Pressable
+          onPress={() => router.push({
+            pathname: '/explore',
+            params: {
+              propertyType: 'Agriculture Land',
+              ...(transaction === 'Rent' ? { type: 'rent' } : {}),
+              city: selectedLocation === 'Okara District' ? 'Okara' : selectedLocation,
+            },
+          })}
+          style={({ pressed }) => [s.referencePromoCard, { opacity: pressed ? 0.9 : 1 }]}
+          accessibilityRole="button"
+          accessibilityLabel="Invest in Agriculture Land. A Secure Future for Generations"
+          testID="agriculture-land-promo"
+        >
+          <ExpoImage
+            source={require('@/assets/images/agriculture/agri-field-1.jpg')}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            accessibilityLabel="Green agricultural fields"
+          />
+          <LinearGradient
+            colors={['rgba(13,48,37,0.96)', 'rgba(13,48,37,0.79)', 'rgba(13,48,37,0.18)']}
+            locations={[0, 0.57, 1]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={s.referencePromoCopy}>
+            <Text style={s.referencePromoTitle}>Invest in{"\n"}Agriculture Land</Text>
+            <Text style={s.referencePromoSubtitle}>A Secure Future{"\n"}for Generations</Text>
+          </View>
+          <View style={[s.referencePromoArrow, { backgroundColor: colors.primary }]}>
+            <Feather name="arrow-right" size={17} color={colors.actionDeep} />
+          </View>
+        </Pressable>
+      </View>
 
       {/* ─── FEATURED PROPERTIES ────────────────────────────────────────── */}
       <View>
@@ -2134,6 +2241,166 @@ export default function HomeScreen() {
 
 const s = StyleSheet.create({
   screen: { flex: 1 },
+
+  referenceHeader: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  referenceLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 40,
+    paddingBottom: 4,
+  },
+  referenceLocationButton: {
+    flex: 1,
+    minHeight: 36,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  referenceGuestBell: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  referenceLocationText: {
+    color: '#fff',
+    fontFamily: Platform.OS === 'web' ? 'sans-serif' : 'Inter_600SemiBold',
+    fontSize: 14,
+    flexShrink: 1,
+  },
+  referenceHero: {
+    width: '100%',
+    height: 168,
+    overflow: 'hidden',
+  },
+  referenceHeroContent: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: 17,
+    paddingTop: 12,
+    paddingBottom: 12,
+  },
+  referenceHeroTitle: {
+    color: '#fff',
+    fontFamily: Platform.OS === 'web' ? 'sans-serif' : 'Inter_700Bold',
+    fontSize: 25,
+    lineHeight: 27,
+    letterSpacing: -0.45,
+  },
+  referenceHeroLinks: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 7,
+  },
+  referenceHeroDivider: {
+    width: 1,
+    height: 12,
+    backgroundColor: 'rgba(255,255,255,0.52)',
+  },
+  referenceHeroLinkText: {
+    color: '#fff',
+    fontFamily: Platform.OS === 'web' ? 'sans-serif' : 'Inter_600SemiBold',
+    fontSize: 10.5,
+  },
+  referenceContent: {
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 24,
+  },
+  referenceSearch: {
+    height: 46,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    borderWidth: 1,
+    borderRadius: 15,
+    paddingHorizontal: 13,
+    shadowColor: '#102a43',
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  referenceSearchInput: {
+    flex: 1,
+    height: '100%',
+    paddingVertical: 0,
+    fontFamily: Platform.OS === 'web' ? 'sans-serif' : 'Inter_400Regular',
+    fontSize: 12,
+  },
+  referenceCategoryGrid: {
+    gap: 10,
+    marginTop: 13,
+  },
+  referenceCategoryRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  referenceCategoryCard: {
+    flex: 1,
+    minHeight: 86,
+    borderWidth: 1,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    shadowColor: '#102a43',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 1,
+  },
+  referenceCategoryCardWide: {
+    minHeight: 80,
+  },
+  referenceCategoryLabel: {
+    fontFamily: Platform.OS === 'web' ? 'sans-serif' : 'Inter_600SemiBold',
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  referencePromoCard: {
+    height: 126,
+    overflow: 'hidden',
+    borderRadius: 16,
+    marginTop: 13,
+    justifyContent: 'center',
+  },
+  referencePromoCopy: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingLeft: 16,
+    paddingRight: 72,
+  },
+  referencePromoTitle: {
+    color: '#fff',
+    fontFamily: Platform.OS === 'web' ? 'sans-serif' : 'Inter_700Bold',
+    fontSize: 17,
+    lineHeight: 20,
+    letterSpacing: -0.2,
+  },
+  referencePromoSubtitle: {
+    color: 'rgba(255,255,255,0.92)',
+    fontFamily: Platform.OS === 'web' ? 'sans-serif' : 'Inter_500Medium',
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 4,
+  },
+  referencePromoArrow: {
+    position: 'absolute',
+    right: 13,
+    bottom: 13,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   // Header
   header:           { paddingHorizontal: 18, paddingBottom: 20 },

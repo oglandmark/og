@@ -556,7 +556,7 @@ const bn = StyleSheet.create({
   bannerEyebrow: { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1.5, marginBottom: 4 },
   bannerTitle: { color: '#ffffff', fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 20, lineHeight: 23, marginBottom: 3 },
   bannerSubtitle: { color: '#ffffffcc', fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 14 },
-  bannerCta: { position: 'absolute', right: 18, bottom: 18, minHeight: 36, borderRadius: 11, paddingHorizontal: 12, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', gap: 5 },
+  bannerCta: { position: 'absolute', right: 18, bottom: 18, minHeight: 32, borderRadius: 11, paddingHorizontal: 12, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', gap: 5 },
   bannerCtaText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 });
 
@@ -2140,11 +2140,11 @@ const s = StyleSheet.create({
   header:           { paddingHorizontal: 18, paddingBottom: 20 },
   topBar:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
   headerIcon:       { width: 42, height: 42, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0, elevation: 0 },
-  switcher:         { flexDirection: 'row', borderRadius: 30, alignSelf: 'flex-start', padding: 4, marginBottom: 15, borderWidth: 1 },
-  switchPill:       { position: 'absolute', top: 4, left: 4, bottom: 4, borderRadius: 26 },
-  switchItem:       { paddingHorizontal: 24, paddingVertical: 11, borderRadius: 26, zIndex: 1 },
+  switcher:         { flexDirection: 'row', borderRadius: 30, alignSelf: 'flex-start', padding: 3, marginBottom: 15, borderWidth: 1 },
+  switchPill:       { position: 'absolute', top: 3, left: 3, bottom: 3, borderRadius: 26 },
+  switchItem:       { paddingHorizontal: 24, paddingVertical: 7, borderRadius: 26, zIndex: 1 },
   switchText:       { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
-  searchRow:        { flexDirection: 'row', alignItems: 'center', borderRadius: 22, borderWidth: 1, paddingLeft: 10, paddingRight: 10, height: 58, gap: 9, shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 3 },
+  searchRow:        { flexDirection: 'row', alignItems: 'center', borderRadius: 22, borderWidth: 1, paddingLeft: 10, paddingRight: 10, height: 50, gap: 9, shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 3 },
   searchIconWrap:   { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   searchInput:      { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13 },
   locationChip:     { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 7, maxWidth: 128 },
@@ -2206,9 +2206,9 @@ const s = StyleSheet.create({
   ctaTitle:         { fontFamily: 'Inter_700Bold', fontSize: 26, lineHeight: 31, marginBottom: 10 },
   ctaDesc:          { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21, marginBottom: 22 },
   ctaBtns:          { flexDirection: 'row', gap: 12 },
-  ctaBtn1:          { flex: 1, minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 8 },
+  ctaBtn1:          { flex: 1, minHeight: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 6 },
   ctaBtn1Text:      { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
-  ctaBtn2:          { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 14, paddingVertical: 8 },
+  ctaBtn2:          { flex: 1, minHeight: 36, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 14, paddingVertical: 6 },
   ctaBtn2Text:      { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 
   // Drawer styles (unchanged)

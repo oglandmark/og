@@ -26,8 +26,15 @@ snapshot import, or run seed commands against it.
 3. Keep the existing `APP_KEY`. Set `MEDIA_STORAGE_DIR` to the same persistent
    directory that contains the current listing uploads, and configure the
    existing Hostinger SMTP mailbox values. Never put `.env` under `public/`.
-4. From the Laravel project root, clear stale cached settings and apply only
-   the non-destructive compatibility migrations:
+4. In phpMyAdmin, select the existing Hostinger database and import
+   `database/hostinger-schema-only.sql`. This optional helper contains only
+   `CREATE TABLE IF NOT EXISTS` statements for the Laravel compatibility
+   tables. It has no `INSERT`, `UPDATE`, `DELETE`, or `DROP` statements and
+   does not replace the existing `app_data` document.
+   Existing tables are left unchanged; if an existing table has an unexpected
+   structure, stop and inspect it rather than dropping or recreating it.
+5. From the Laravel project root, clear stale cached settings and apply the
+   Laravel migrations:
 
    ```sh
    php artisan optimize:clear
@@ -35,10 +42,10 @@ snapshot import, or run seed commands against it.
    php artisan config:cache
    ```
 
-   Do **not** add `--seed` and do not run `data:import` for this existing
-   database. The migration creates missing compatibility/auth tables without
-   replacing the existing `app_data` document.
-5. Verify that `/api/health` reports MySQL connected and that
+    The migration records the schema in Laravel's migration history and
+    creates any missing framework tables. Do **not** add `--seed` and do not
+    run `data:import` for this existing database.
+6. Verify that `/api/health` reports MySQL connected and that
    `/api/properties` returns the expected live listings. Confirm the health
    response reports persistent media as ready before switching traffic.
 
@@ -61,11 +68,13 @@ scheduler startup.
 
 ### Data import
 
-This live-restoration package intentionally omits the repository snapshot. Do
-not run `data:import`, `--seed`, or any import command against the existing
-Hostinger database; its current `app_data` row is the production source of
-truth. The guarded import tools remain available in the source repository for
-a separate, genuinely empty database and a separately reviewed export.
+This live-restoration package intentionally omits the repository snapshot.
+The phpMyAdmin SQL helper creates schema only and inserts no canonical app
+data. Do not run `data:import`, `--seed`, or any snapshot import against the
+existing Hostinger database; its current `app_data` row is the production
+source of truth. The guarded import tools remain available in the source
+repository for a separate, genuinely empty database and a separately reviewed
+export.
 
 ## Verify
 

@@ -127,6 +127,90 @@ CREATE TABLE IF NOT EXISTS `auth_challenges` (
   KEY `idx_auth_challenges_expiry` (`expires_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `app_users` (
+  `id` bigint unsigned NOT NULL,
+  `position` int unsigned NOT NULL DEFAULT 0,
+  `name` varchar(255) DEFAULT NULL,
+  `email` varchar(320) DEFAULT NULL,
+  `username` varchar(191) DEFAULT NULL,
+  `phone` varchar(96) DEFAULT NULL,
+  `city` varchar(191) DEFAULT NULL,
+  `role` varchar(64) DEFAULT NULL,
+  `status` varchar(64) DEFAULT NULL,
+  `password_hash` varchar(255) DEFAULT NULL,
+  `profile_photo_url` text,
+  `cover_photo_url` text,
+  `payload` json NOT NULL,
+  `created_at` timestamp(3) NULL DEFAULT NULL,
+  `updated_at` timestamp(3) NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_app_users_email` (`email`),
+  KEY `idx_app_users_username` (`username`),
+  KEY `idx_app_users_phone` (`phone`),
+  KEY `idx_app_users_role_status` (`role`,`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `properties` (
+  `id` bigint unsigned NOT NULL,
+  `position` int unsigned NOT NULL DEFAULT 0,
+  `seller_id` varchar(191) DEFAULT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `city` varchar(191) DEFAULT NULL,
+  `property_type` varchar(100) DEFAULT NULL,
+  `purpose` varchar(64) DEFAULT NULL,
+  `approval_status` varchar(64) DEFAULT NULL,
+  `listing_status` varchar(64) DEFAULT NULL,
+  `price_value` decimal(30,8) DEFAULT NULL,
+  `payload` json NOT NULL,
+  `created_at` timestamp(3) NULL DEFAULT NULL,
+  `updated_at` timestamp(3) NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_properties_seller` (`seller_id`),
+  KEY `idx_properties_city_type` (`city`,`property_type`),
+  KEY `idx_properties_status` (`approval_status`,`listing_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `agents` (
+  `directory` varchar(32) NOT NULL,
+  `legacy_id` varchar(191) NOT NULL,
+  `position` int unsigned NOT NULL DEFAULT 0,
+  `name` varchar(255) DEFAULT NULL,
+  `city` varchar(191) DEFAULT NULL,
+  `phone` varchar(96) DEFAULT NULL,
+  `status` varchar(64) DEFAULT NULL,
+  `profile_photo_url` text,
+  `cover_photo_url` text,
+  `payload` json NOT NULL,
+  `created_at` timestamp(3) NULL DEFAULT NULL,
+  `updated_at` timestamp(3) NULL DEFAULT NULL,
+  PRIMARY KEY (`directory`,`legacy_id`),
+  KEY `idx_agents_directory_city` (`directory`,`city`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `media_assets` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `owner_type` varchar(32) NOT NULL,
+  `owner_id` varchar(191) NOT NULL,
+  `field_path` varchar(255) NOT NULL,
+  `media_type` varchar(16) NOT NULL,
+  `position` int unsigned NOT NULL DEFAULT 0,
+  `url` text NOT NULL,
+  `created_at` timestamp(3) NULL DEFAULT NULL,
+  `updated_at` timestamp(3) NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_media_owner` (`owner_type`,`owner_id`),
+  KEY `idx_media_type` (`media_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `normalization_state` (
+  `state_key` varchar(64) NOT NULL,
+  `source_checksum` char(64) NOT NULL,
+  `counts` json NOT NULL,
+  `activated_at` datetime(3) NOT NULL,
+  `updated_at` datetime(3) NOT NULL,
+  PRIMARY KEY (`state_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT IGNORE INTO `app_data` (`id`, `data`, `updated_at`)
 VALUES (
   1,

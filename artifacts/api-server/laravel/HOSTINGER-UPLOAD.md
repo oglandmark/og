@@ -27,10 +27,10 @@ snapshot import, or run seed commands against it.
    directory that contains the current listing uploads, and configure the
    existing Hostinger SMTP mailbox values. Never put `.env` under `public/`.
 4. In phpMyAdmin, select the existing Hostinger database and import
-   `database/hostinger-schema-only.sql`. This optional helper contains only
-   `CREATE TABLE IF NOT EXISTS` statements for the Laravel compatibility
-   tables. It has no `INSERT`, `UPDATE`, `DELETE`, or `DROP` statements and
-   does not replace the existing `app_data` document.
+   `database/hostinger-schema-only.sql`. This helper contains only
+   `CREATE TABLE IF NOT EXISTS` statements for Laravel compatibility, normalized
+   core, and migration-state tables. It has no `INSERT`, `UPDATE`, `DELETE`, or
+   `DROP` statements and does not replace the existing `app_data` document.
    Existing tables are left unchanged; if an existing table has an unexpected
    structure, stop and inspect it rather than dropping or recreating it.
 5. From the Laravel project root, clear stale cached settings and apply the
@@ -45,9 +45,33 @@ snapshot import, or run seed commands against it.
     The migration records the schema in Laravel's migration history and
     creates any missing framework tables. Do **not** add `--seed` and do not
     run `data:import` for this existing database.
-6. Verify that `/api/health` reports MySQL connected and that
-   `/api/properties` returns the expected live listings. Confirm the health
-   response reports persistent media as ready before switching traffic.
+6. Keep API and website write traffic paused while normalizing, and take a
+   fresh verified MySQL backup first. Run the default read-only preview:
+
+    ```sh
+    php artisan data:normalize-core
+    ```
+
+    Review the reported counts and checksum. If it reports duplicate or invalid
+    IDs, stop and resolve those records in the backed-up source before retrying.
+    The command refuses to proceed if normalized target tables already contain
+    rows without an activation marker.
+7. Only after reviewing the preview, apply the one-time conversion:
+
+    ```sh
+    php artisan data:normalize-core --apply
+    ```
+
+    This copies users, properties, mobile and city agents, plus discovered
+    image/video URL references into relational tables in one transaction. Full
+    legacy entity payloads are retained, and `app_data` is not changed by the
+    conversion. After activation, Laravel reads the normalized tables and
+    writes both them and `app_data` atomically. Keep both representations and
+    the original media files as rollback sources; do not drop the new tables.
+8. Verify `/api/healthz` reports `status: ok`,
+   `normalizedCoreStorage: ready`, and persistent media as ready. Confirm
+   `/api/properties`, login, and agent-directory responses before resuming
+   writes or setting the website's `LARAVEL_API_URL`.
 
 ## Scheduled announcement delivery
 
@@ -70,11 +94,12 @@ scheduler startup.
 
 This live-restoration package intentionally omits the repository snapshot.
 The phpMyAdmin SQL helper creates schema only and inserts no canonical app
-data. Do not run `data:import`, `--seed`, or any snapshot import against the
-existing Hostinger database; its current `app_data` row is the production
-source of truth. The guarded import tools remain available in the source
-repository for a separate, genuinely empty database and a separately reviewed
-export.
+data. `data:normalize-core` reads the existing live `app_data` row and defaults
+to a read-only preview; it must be explicitly applied during a quiet,
+backed-up conversion window. Do not run `data:import`, `--seed`, or any
+repository snapshot import against the existing Hostinger database. The
+guarded import tools remain available in the source repository for a separate,
+genuinely empty database and a separately reviewed export.
 
 ## Verify
 

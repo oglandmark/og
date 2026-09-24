@@ -103,18 +103,33 @@ class ApiController extends Controller
         $database = $this->databaseReady() ? 'connected' : 'not_connected';
         $media = app(MediaStorage::class)->health();
         $productionMediaReady = !app()->environment('production') || $media['status'] === 'ready';
+        $normalizedStorage = $this->normalizedCoreStorageStatus();
+        $productionNormalizedReady = !app()->environment('production') || $normalizedStorage === 'ready';
+        $ready = $database === 'connected' && $productionMediaReady && $productionNormalizedReady;
 
         return $this->json([
-            'status' => $database === 'connected' && $productionMediaReady ? 'ok' : 'degraded',
+            'status' => $ready ? 'ok' : 'degraded',
             'database' => $database,
             'databaseProvider' => 'mysql',
             'framework' => 'laravel',
+            'normalizedCoreStorage' => $normalizedStorage,
             'smtp' => config('mail.mailers.smtp.username') && config('mail.mailers.smtp.password')
                 ? 'configured'
                 : 'not_configured',
             'mediaBaseUrl' => $this->mediaBaseUrl(),
             'mediaStorage' => $media,
-        ]);
+        ], $ready ? 200 : 503);
+    }
+
+    private function normalizedCoreStorageStatus(): string
+    {
+        try {
+            return app(\App\Services\NormalizedCoreStore::class)->isActive()
+                ? 'ready'
+                : 'not_active';
+        } catch (\Throwable) {
+            return 'not_ready';
+        }
     }
 
     private function databaseReady(): bool

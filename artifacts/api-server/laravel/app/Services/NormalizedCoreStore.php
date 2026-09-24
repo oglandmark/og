@@ -21,8 +21,10 @@ class NormalizedCoreStore
 
     public function isActive(): bool
     {
-        if (!Schema::hasTable('normalization_state')) {
-            return false;
+        foreach (['app_users', 'properties', 'agents', 'media_assets', 'normalization_state'] as $table) {
+            if (!Schema::hasTable($table)) {
+                return false;
+            }
         }
 
         return DB::table('normalization_state')
@@ -69,6 +71,7 @@ class NormalizedCoreStore
 
         $this->insertProjection($projection);
         $this->assertRoundTrip($document);
+        $this->assertMediaRoundTrip($projection['media']);
 
         DB::table('normalization_state')->insert([
             'state_key' => self::STATE_KEY,
@@ -148,7 +151,7 @@ class NormalizedCoreStore
                 'purpose' => $this->text($property['purpose'] ?? null, 64),
                 'approval_status' => $this->text($property['approvalStatus'] ?? null, 64),
                 'listing_status' => $this->text($property['listingStatus'] ?? null, 64),
-                'price_value' => is_numeric($price) ? (string) $price : null,
+                'price_value' => $this->decimalPrice($price),
                 'payload' => $this->encode($property),
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -304,6 +307,35 @@ class NormalizedCoreStore
         }
     }
 
+    private function assertMediaRoundTrip(array $expected): void
+    {
+        $columns = [
+            'owner_type',
+            'owner_id',
+            'field_path',
+            'media_type',
+            'position',
+            'url',
+        ];
+        $actual = DB::table('media_assets')->get($columns)
+            ->map(fn ($row): array => (array) $row)
+            ->all();
+        $expected = array_map(
+            fn (array $row): array => array_intersect_key($row, array_flip($columns)),
+            $expected,
+        );
+        $compare = fn (array $left, array $right): int => strcmp(
+            $this->canonicalJson($left),
+            $this->canonicalJson($right),
+        );
+        usort($expected, $compare);
+        usort($actual, $compare);
+
+        if ($this->canonicalJson($expected) !== $this->canonicalJson($actual)) {
+            throw new RuntimeException('Normalized media URL references did not match the source document.');
+        }
+    }
+
     private function readPayloads(string $table, string $orderColumn): array
     {
         return DB::table($table)->orderBy($orderColumn)->orderBy('id')->get(['payload'])
@@ -351,7 +383,7 @@ class NormalizedCoreStore
 
             $lastKey = strtolower((string) end($path));
             $isUrlField = in_array($lastKey, ['url', 'uri', 'src', 'path'], true);
-            $fieldLooksMedia = preg_match('/image|photo|video|avatar|thumbnail|media/', implode('.', $path)) === 1;
+            $fieldLooksMedia = preg_match('/image|photo|video|avatar|thumbnail|media/i', implode('.', $path)) === 1;
             if (!$fieldLooksMedia && !($insideMedia && $isUrlField)) {
                 return;
             }
@@ -446,6 +478,19 @@ class NormalizedCoreStore
         $text = (string) $value;
 
         return $limit === null || strlen($text) <= $limit ? $text : substr($text, 0, $limit);
+    }
+
+    private function decimalPrice(mixed $value): ?string
+    {
+        if (!is_scalar($value)) {
+            return null;
+        }
+
+        $price = trim((string) $value);
+
+        return preg_match('/^-?\d{1,22}(?:\.\d{1,8})?$/', $price) === 1
+            ? $price
+            : null;
     }
 
     private function encode(mixed $value): string

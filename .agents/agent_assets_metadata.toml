@@ -89,14 +89,14 @@ content_type = "application/octet-stream"
 id = "ggjeai5ryJYrhHRGX7_wd"
 uri = "file://artifacts/og-landmark-laravel-api-hostinger.zip"
 type = "unspecified"
-title = "Updated OG Landmark Laravel API + MySQL package"
-description = "Direct-root Laravel ZIP with MySQL migrations, safe starter seeder, database/mysql-schema.sql for phpMyAdmin, vendor, and Hostinger instructions."
+title = "OG Landmark Laravel API — Hostinger ZIP"
+description = "Updated Laravel API package with normalized core tables, dry-run/apply command, and safe Hostinger migration instructions. Environment secrets are excluded."
 logical_id = "c099bf02-1f20-4ae6-9ffe-1362b40fe13c"
-content_hash = "sha256:74eba3c8a4710b14cc017c44baea46a90959e89c80451f82fea937af20a84676"
-size = 37069836
-mtime_ms = 1790193798297
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/c099bf02-1f20-4ae6-9ffe-1362b40fe13c/9a808b6a-67e6-4dfd-bb3d-982f6dc1694a"
-storage_version_token = "1790193834746333"
+content_hash = "sha256:705445f3280428941952f61cd460ebb5d12ec18215f66556172dcef3ad234f20"
+size = 37097242
+mtime_ms = 1790245486702
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/c099bf02-1f20-4ae6-9ffe-1362b40fe13c/8d3249e3-6d59-4813-a680-f6013e4d6aa7"
+storage_version_token = "1790245544052510"
 content_type = "application/octet-stream"
 
 [[outputs]]
@@ -167,4 +167,18 @@ size = 11047654
 mtime_ms = 1790242381850
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/792b78ce-0189-471c-b975-e7635f82a4db/eabd3b4e-dce6-45d4-85d1-8e8fd70fa4c4"
 storage_version_token = "1790243692449583"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "UVvwiR9al3xUnJNQLL_Of"
+uri = "file://artifacts/api-server/laravel/database/hostinger-schema-only.sql"
+type = "unspecified"
+title = "OG Landmark Hostinger schema SQL"
+description = "Schema-only SQL for phpMyAdmin. It uses CREATE TABLE IF NOT EXISTS and does not insert or replace app data."
+logical_id = "cbb25b35-0b63-4ded-b4cb-66db56e84621"
+content_hash = "sha256:f856dda2a39c4c43ffe34a52f881b8865a9978134db24a9654046aa196d1e03d"
+size = 4487
+mtime_ms = 1790245405122
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/cbb25b35-0b63-4ded-b4cb-66db56e84621/b88ce8ab-8cfb-4cf2-ad2f-ddd34605bd6e"
+storage_version_token = "1790245542193462"
 content_type = "application/octet-stream"

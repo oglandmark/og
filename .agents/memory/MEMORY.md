@@ -33,3 +33,4 @@
 - [Nearby results fallback](nearby-results-fallback.md) — preserve cached mobile listings on empty geo responses and paginate after exact distance filtering.
 - [Laravel backend cutover](laravel-backend-cutover.md) — preserve the existing API contract and app_data document before switching production traffic.
 - [Laravel config cache smoke checks](laravel-config-cache.md) — clear stale DB config before local overrides; health alone may not prove JsonStore reads the target.
+- [Normalized core storage](normalized-core-storage.md) — keep app accounts in `app_users`, preserve full payloads, and dual-write `app_data` for rollback.

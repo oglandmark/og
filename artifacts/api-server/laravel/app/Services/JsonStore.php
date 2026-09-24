@@ -36,7 +36,10 @@ class JsonStore
             if ($row && $row->data) {
                 $decoded = json_decode((string) $row->data, true);
                 if (is_array($decoded)) {
-                    return self::$cache = $decoded;
+                    $store = app(NormalizedCoreStore::class);
+                    return self::$cache = $store->isActive()
+                        ? $store->hydrate($decoded)
+                        : $decoded;
                 }
             }
         } catch (\Throwable $exception) {
@@ -82,14 +85,24 @@ class JsonStore
 
     public static function write(array $data): array
     {
-        self::$cache = $data;
-        $json = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $json = json_encode(
+            $data,
+            JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR,
+        );
 
         try {
-            DB::table('app_data')->updateOrInsert(
-                ['id' => 1],
-                ['data' => $json, 'updated_at' => now()],
-            );
+            DB::transaction(function () use ($data, $json): void {
+                DB::table('app_data')->updateOrInsert(
+                    ['id' => 1],
+                    ['data' => $json, 'updated_at' => now()],
+                );
+
+                $store = app(NormalizedCoreStore::class);
+                if ($store->isActive()) {
+                    $store->sync($data);
+                }
+            });
+            self::$cache = $data;
         } catch (\Throwable $exception) {
             if (app()->environment('production')) {
                 Log::error('OG Landmark MySQL document write failed in production.', [

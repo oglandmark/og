@@ -6274,6 +6274,10 @@ app.get('*', (req, res) => {
 // until initDb succeeds, and the exact failure is visible in the app log.
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`OG Landmark listening on ${PORT}`);
+  if (laravelApiUrl) {
+    console.log('Laravel API proxy enabled; skipping legacy Node database, mail, and scheduler startup.');
+    return;
+  }
   setInterval(processScheduledAnnouncements, 30_000);
   verifySmtpConnection();
   initDb()

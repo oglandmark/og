@@ -1,10 +1,12 @@
 # OG Landmark Hostinger deployment
 
-The public website and its legacy API handlers are served by the Node.js
-application at `/`. If `LARAVEL_API_URL` is set, Node proxies `/api/*` to the
-Laravel application; otherwise Node handles those routes directly. The Node
-backend accepts MySQL/MariaDB or PostgreSQL URLs, including a Supabase
-PostgreSQL pooler URL, without changing the website or mobile API paths.
+The public website is served by the Node.js application at `/`. The production
+API is Laravel backed by the existing Hostinger MySQL database. Once Laravel's
+database, mail, and media checks pass, set `LARAVEL_API_URL` on the Node website
+to proxy the existing `/api/*` routes to Laravel. Browser and existing mobile
+API paths remain unchanged. Leaving the variable empty keeps the legacy Node
+handlers available as a rollback path; point their `DATABASE_URL` at the same
+Hostinger MySQL database before relying on that fallback.
 
 ## Deploy Laravel first
 
@@ -67,6 +69,17 @@ upload. Confirm the returned media URL loads over HTTPS and survives an API
 restart. `healthz` staying available while the database is unavailable is not
 a successful cutover; it is only a useful startup diagnostic.
 
+## Scheduled announcement delivery
+
+Laravel owns scheduled-announcement processing when API traffic is proxied.
+Configure a Hostinger Cron Job to run `php artisan schedule:run` every minute
+from the Laravel application directory. Confirm `php artisan schedule:list`
+includes `announcements:process-scheduled`; without the cron job, scheduled
+announcements remain pending. Test with a controlled announcement and eligible
+test account before relying on live broadcasts. Keep Node's `DATABASE_URL`
+unset while Laravel is primary so its legacy startup cannot write the same
+`app_data` document.
+
 ## Media backup and restore policy
 
 The MySQL `app_data` row stores listing media references, while the bytes live
@@ -128,20 +141,21 @@ and database snapshot untouched until the observation window is complete.
 
 ## Existing Node website setup
 
-1. For a MySQL/MariaDB target, run `npm run migrate`. For Supabase, follow
-   [Switch the Node backend to Supabase](#switch-the-node-backend-to-supabase).
-2. Upload the website package, select Node.js 18 or newer, and run
+1. Keep the Node application as the website/static-asset host and `/api/*`
+   proxy. Upload the package, select Node.js 18 or newer, and run
    `npm install --omit=dev`.
-3. Copy `.env.example` into hPanel's environment settings. Keep
-   `NODE_ENV=production` and `APP_URL=https://oglandmark.com`. Leave
-   `LARAVEL_API_URL` empty when this Node app should handle `/api` directly.
-   Set `MEDIA_STORAGE_DIR`
-   to the same persistent volume (or synchronized object-storage directory)
-   used by Laravel if this Node deployment handles uploads during rollback.
-4. For a new empty legacy database, run `npm run import-data` once with a
-   verified export. It refuses to overwrite existing data.
-5. Set the startup file to `server.js` and start command to `npm start`.
-6. Point `oglandmark.com` at the Node.js application and enable Hostinger SSL.
+2. Set `NODE_ENV=production` and `APP_URL=https://oglandmark.com`. After the
+   Laravel API passes the health checks below, set
+   `LARAVEL_API_URL=https://api.oglandmark.com` (API origin only; no `/api`).
+   Restart the Node application so all website and existing mobile API calls
+   go through Laravel.
+3. Leave Node's `DATABASE_URL` unset while Laravel is primary. The Node app
+   skips its legacy database, mail, and scheduled-job startup when proxying to
+   Laravel. Keep the previous MySQL URL private for rollback; restore it before
+   clearing `LARAVEL_API_URL` and restarting Node. Keep the same persistent
+   media directory available if Node may serve uploads during rollback.
+4. Set the startup file to `server.js` and start command to `npm start`.
+5. Point `oglandmark.com` at the Node.js application and enable Hostinger SSL.
 
 Do not create a fixed `PORT` environment variable. Hostinger assigns the application port and the server reads it from `process.env.PORT`; manually forcing `3000` can make the proxy wait on the wrong port.
 
@@ -154,47 +168,65 @@ The package intentionally does not include a generated lockfile: Replit lockfile
 Database connection strings contain credentials and must remain server-side:
 never put them in browser code, `public/`, Git, or chat.
 
-After restarting, `/api/health` reports `status: "ok"`, `database: "connected"`, and `databaseProvider: "postgres"` or `"mysql"` when the configured database is reachable. If `DATABASE_URL` is missing or the database is unreachable, the HTTP server still opens its assigned port immediately, `/api/health` reports `status: "degraded"` and `database: "not_connected"`, and database-backed API routes return `503` with `DB_NOT_READY`.
+The legacy Node API binds its assigned port before database initialization.
+When that fallback is used directly, `/api/health` reports the provider it is
+configured for; an unavailable database produces `status: "degraded"` and
+database-backed routes return `503` with `DB_NOT_READY`. In the production
+Laravel path, use the Laravel `/api/health` response as the source of truth.
 
-`app_data` durably stores listings, users, mobile/developer resources, verification requests, promotions, device tokens, and account-scoped history. `auth_sessions` stores hashed expiring bearer sessions; `auth_challenges` stores hashed password-reset and admin-OTP challenges with attempt limits. The Supabase schema enables row-level security on these tables; the server connects with its private PostgreSQL URL. Do not commit `.env` or the local fallback file.
+The existing MySQL `app_data` document remains the canonical store for
+listings, users, mobile/developer resources, verification requests, promotions,
+device tokens, and account-scoped history. `auth_sessions` stores hashed
+expiring bearer sessions; `auth_challenges` stores hashed password-reset and
+admin-OTP challenges with attempt limits. Laravel reads and writes this same
+document, so switching API runtimes does not require re-importing listing or
+account data. Do not commit `.env` or the local fallback file.
 
 Uploaded images and videos are stored as files under `MEDIA_STORAGE_DIR`; MySQL stores only their URL/path and metadata in the listing JSON. Upload responses include `path`, `mimeType`, `bytes`, and `kind`. Static video delivery streams files and honors byte ranges. Set `MEDIA_PUBLIC_BASE_URL` only when the same files are mirrored to a CDN/object-storage public endpoint.
 
 `property_search_index` is a rebuildable, non-destructive projection of `app_data.data.properties`. It supplies indexed filtering, sorting, and bounded pagination for `/api/properties`; the legacy array response remains available. Use `response=page` for `{items,total,offset,limit,hasMore}`.
 
-## Switch the Node backend to Supabase
+## Return production API to Laravel + the existing MySQL
 
-This cutover changes only the Node backend's database provider. It keeps the
-existing `/api` routes, so an Android build already in review does not need a
-new API URL. Back up the current database and the matching `MEDIA_STORAGE_DIR`
-before switching; listing media files are not copied into PostgreSQL.
+The original Hostinger MySQL database still contains the live users and
+listings. Reuse that database; do not import the repository snapshot or point
+Laravel at a new empty database.
 
-1. Take a fresh MySQL and `MEDIA_STORAGE_DIR` backup, then pause all API writes
-   to that MySQL database for the final copy. Keep the backup until the new
-   database and media delivery pass production checks.
-2. In Hostinger's private environment settings, keep the current MySQL URL as
-   `SOURCE_MYSQL_DATABASE_URL` and set `DATABASE_URL` to the Supabase
-   PostgreSQL **pooler** URI with SSL enabled. Do not paste either value into
-   chat or commit them. Keep `LARAVEL_API_URL` empty if Node is the API serving
-   the failing request.
-3. Upload this Node package and install production dependencies with
-   `npm install --omit=dev`.
-4. While MySQL writes are paused, run `npm run migrate:data:postgres`. The
-   script creates the PostgreSQL schema, copies the canonical `app_data` record
-   and unexpired session digests, verifies JSON parity and session count before
-   commit, does not copy short-lived OTP challenges, and refuses to proceed if
-   the Supabase target already contains app/auth data.
-5. Restart Node so it picks up the PostgreSQL `DATABASE_URL`. Check
-   `/api/health` for `"status":"ok"`,
-   `"database":"connected"`, and `"databaseProvider":"postgres"`. Then verify
-   a real registration, login, `/api/auth/me`, email verification/reset, and
-   property search before removing `SOURCE_MYSQL_DATABASE_URL`.
-6. Keep the verified MySQL and media backups until the new database and
-   uploaded photos/videos have passed the production checks.
+1. Back up the existing MySQL database and its matching uploaded-media
+   directory. Keep both backups until the Laravel API and media pass the live
+   checks.
+2. On the Laravel PHP app, configure `DB_CONNECTION=mysql` and the existing
+   MySQL connection in private hPanel settings as `DATABASE_URL` or `DB_URL`
+   (or use `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and
+   `DB_PASSWORD`). Keep the existing `APP_KEY`. Set `MEDIA_STORAGE_DIR` to the
+   same persistent directory as the current uploads, set
+   `MEDIA_STORAGE_PERSISTENT=true`, and configure the Hostinger SMTP mailbox.
+3. From the Laravel project root, clear stale config, apply only non-destructive
+   migrations, then cache the final settings:
 
-If the old MySQL database is unavailable, first restore a verified OG Landmark
-JSON export to a fresh Supabase database. Set `DATABASE_URL`, run
-`npm run import:postgres -- /path/to/verified-export.json`, and then restart.
-The import also refuses to overwrite existing application or auth data.
-Never use a stale demo JSON file as a substitute for a current production
-backup. Supabase schema-only setup is available through `npm run migrate:postgres`.
+   ```sh
+   php artisan optimize:clear
+   php artisan migrate --force
+   php artisan config:cache
+   ```
+
+   Do not run `--seed` or `data:import` against this live database. The existing
+   `app_data` document is already the production data source.
+4. Check `https://api.oglandmark.com/api/health`. Before routing traffic, it
+   must report `framework: "laravel"`, `databaseProvider: "mysql"`,
+   `database: "connected"`, SMTP configured, and persistent media ready. Also
+   verify that `/api/properties` returns the expected live listings and that a
+   real login works.
+5. Configure the Hostinger minute-level cron job described above and confirm
+   `php artisan schedule:list` includes `announcements:process-scheduled`.
+6. On the Node website application, set `LARAVEL_API_URL` to
+   `https://api.oglandmark.com` and restart it. This forwards the existing API
+   routes for the website and already-installed mobile apps; no API URL change
+   or mobile rebuild is needed.
+7. Verify `https://oglandmark.com/api/health`, registration/login,
+   `/api/auth/me`, email verification/reset, property search, and one image
+   upload through the main domain.
+
+For rollback, restore the Node app's private `DATABASE_URL` to the existing
+MySQL, remove `LARAVEL_API_URL`, and restart Node. Do not route traffic back to
+the unavailable PostgreSQL project.

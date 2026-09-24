@@ -10,65 +10,62 @@ subdomain such as `api.oglandmark.com`.
 - `artisan` and `composer.json` stay one level above `public/`
 - `vendor/` is included; run Composer only if Hostinger asks for it
 
-## Database setup
+## Restore the existing live Hostinger MySQL database
 
-Create an empty MySQL database and database user in Hostinger. Copy
-`.env.example` to `.env` and configure `APP_KEY`, `DB_HOST`, `DB_PORT`,
-`DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, SMTP values, and a persistent
-`MEDIA_STORAGE_DIR`. Never upload a populated `.env` to a public directory.
+The existing Hostinger MySQL database is the source of truth for live users and
+listings. Reuse it; do not create a replacement database, run the repository
+snapshot import, or run seed commands against it.
 
-Use **one** of these database setup methods:
+1. Take a verified MySQL backup and a matching backup of the existing uploaded
+   media directory before changing the API runtime.
+2. Copy `.env.example` to `.env` (or set the equivalent private hPanel
+   variables). Set `DB_CONNECTION=mysql` and point `DATABASE_URL` or `DB_URL`
+   at the existing Hostinger MySQL database. The Laravel config accepts either
+   URL variable; alternatively configure `DB_HOST`, `DB_PORT`, `DB_DATABASE`,
+   `DB_USERNAME`, and `DB_PASSWORD`.
+3. Keep the existing `APP_KEY`. Set `MEDIA_STORAGE_DIR` to the same persistent
+   directory that contains the current listing uploads, and configure the
+   existing Hostinger SMTP mailbox values. Never put `.env` under `public/`.
+4. From the Laravel project root, clear stale cached settings and apply only
+   the non-destructive compatibility migrations:
 
-### Recommended: Artisan migrations
+   ```sh
+   php artisan optimize:clear
+   php artisan migrate --force
+   php artisan config:cache
+   ```
 
-From the Laravel project root, run once:
+   Do **not** add `--seed` and do not run `data:import` for this existing
+   database. The migration creates missing compatibility/auth tables without
+   replacing the existing `app_data` document.
+5. Verify that `/api/health` reports MySQL connected and that
+   `/api/properties` returns the expected live listings. Confirm the health
+   response reports persistent media as ready before switching traffic.
+
+## Scheduled announcement delivery
+
+Laravel registers `announcements:process-scheduled` with the scheduler. Add a
+Hostinger Cron Job that runs every minute, using the absolute path to this
+Laravel application:
 
 ```sh
-php artisan key:generate --force
-php artisan migrate --seed --force
-php artisan optimize:clear
-php artisan config:cache
+cd /home/USER/domains/DOMAIN/laravel && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-The seeder creates only an empty canonical `app_data` document. It does not
-create a fake admin account and it never overwrites an existing `app_data` row.
+Confirm `php artisan schedule:list` includes the announcement command. Without
+the Hostinger cron job, scheduled announcements remain pending. Test a
+controlled announcement with an eligible test account before relying on live
+broadcasts. While Laravel is primary, leave the Node application's
+`DATABASE_URL` unset; the Node proxy mode skips its legacy database and
+scheduler startup.
 
-### Alternative: phpMyAdmin import
+### Data import
 
-If SSH/Terminal is unavailable, import `database/mysql-schema.sql` into the
-empty Hostinger MySQL database using phpMyAdmin. Do not run both methods on a
-new database.
-
-The SQL file creates Laravel's users, sessions, cache, queue, migration,
-`app_data`, `auth_sessions`, and `auth_challenges` tables. It contains no
-passwords, API keys, mail credentials, or production listing data.
-
-### Import the reviewed application snapshot
-
-The schema and seeder intentionally create only an empty canonical document.
-Import the reviewed export separately, and never run this against a database
-that already serves live data:
-
-```sh
-php artisan data:import database/og-landmark-data.json \
-  --expected-sha256=502666d5164fdff4f13081beafc3a28296d0ffd681ef67c7618f8053cb35f155
-php artisan data:verify database/og-landmark-data.json \
-  --expected-sha256=502666d5164fdff4f13081beafc3a28296d0ffd681ef67c7618f8053cb35f155
-```
-
-This complete package includes the reviewed snapshot at
-`database/og-landmark-data.json`. Keep the file outside the `public/` document
-root and remove it after a successful verified import if the server does not
-need it for future recovery checks.
-
-`data:import` allows the known empty seed row but refuses a populated
-`app_data` document or any existing account/session state. It writes inside a
-transaction and reads the document back before reporting success. Both
-commands print source and target SHA-256 checksums plus collection counts;
-continue only when `"match": true`. The current reviewed repository snapshot's
-canonical checksum and counts are recorded in
-`database/import-manifest.json`; recalculate and update the manifest if the
-reviewed export changes.
+This live-restoration package intentionally omits the repository snapshot. Do
+not run `data:import`, `--seed`, or any import command against the existing
+Hostinger database; its current `app_data` row is the production source of
+truth. The guarded import tools remain available in the source repository for
+a separate, genuinely empty database and a separately reviewed export.
 
 ## Verify
 

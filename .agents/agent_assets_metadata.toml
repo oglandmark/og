@@ -126,3 +126,31 @@ mtime_ms = 1790234500458
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/32f93636-37c1-4502-9bc2-3aac7e45ae60/97d40a2d-c98d-4616-9335-9793a80da248"
 storage_version_token = "1790234607490498"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "2-dodwu7qlUjNrpDHGU1w"
+uri = "file://exports/og-landmark-laravel-mysql-schema-only.zip"
+type = "unspecified"
+title = "phpMyAdmin schema SQL ZIP"
+description = "Schema-only SQL archive for the existing Hostinger database; no user or listing data is included."
+logical_id = "d36cc279-dfc9-49d0-820b-0e3ac21b852d"
+content_hash = "sha256:482991634c985c2ce29d83252feb52e6bccd5220672fd2350fe19839e1c83353"
+size = 743
+mtime_ms = 1790243551248
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/d36cc279-dfc9-49d0-820b-0e3ac21b852d/b51c205d-21d2-4975-9ac5-bb909941d7a2"
+storage_version_token = "1790243617318786"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "4XBLHfuab7dRIlv1fEmoI"
+uri = "file://exports/og-landmark-laravel-mysql-hostinger.zip"
+type = "unspecified"
+title = "Updated Hostinger Laravel ZIP"
+description = "Laravel API upload package with the schema helper and Hostinger setup guide."
+logical_id = "7eb3c005-8929-43e7-b96d-29b8328f0d63"
+content_hash = "sha256:40127ff2595d83f157061f6a20dfbebb61bfd2276d9bb9159ab110ff58a389c9"
+size = 36564621
+mtime_ms = 1790243358214
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/7eb3c005-8929-43e7-b96d-29b8328f0d63/8b85d4d6-5b41-4df4-aa37-19c03cd6682f"
+storage_version_token = "1790243619136406"
+content_type = "application/octet-stream"

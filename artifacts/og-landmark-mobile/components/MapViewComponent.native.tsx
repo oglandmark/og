@@ -19,6 +19,7 @@ interface StaticMapProps {
 
 interface InteractiveMapProps {
   region?: { latitude: number; longitude: number; latitudeDelta?: number; longitudeDelta?: number };
+  satellite?: boolean;
   onRegionChange?: (r: {
     latitude: number;
     longitude: number;
@@ -35,7 +36,7 @@ interface InteractiveMapProps {
 export function StaticMap({
   latitude,
   longitude,
-  satellite = false,
+  satellite = true,
   interactive = true,
 }: StaticMapProps) {
   if (latitude == null || longitude == null || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
@@ -62,6 +63,7 @@ export function InteractiveMap({
   onPress,
   onDragEnd,
   showMyLocation = true,
+  satellite = true,
 }: InteractiveMapProps) {
   const initialLatitude = pinLat ?? region?.latitude ?? 30.8141;
   const initialLongitude = pinLng ?? region?.longitude ?? 73.4502;
@@ -116,6 +118,7 @@ export function InteractiveMap({
         longitude={center.longitude}
         zoom={14}
         interactive
+        satellite={satellite}
         points={[{ latitude: pin.latitude, longitude: pin.longitude }]}
         onPress={handlePress}
         onDragEnd={handleDragEnd}

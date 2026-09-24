@@ -1128,7 +1128,7 @@ function PropertyDetailMap({
   };
   colors: ReturnType<typeof useColors>;
 }) {
-  const [satellite, setSatellite] = useState(false);
+  const [satellite, setSatellite] = useState(true);
   const latitude = Number.isFinite(property.location?.latitude)
     ? property.location!.latitude!
     : property.lat;

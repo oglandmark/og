@@ -8,6 +8,7 @@ const MAPBOX_ACCESS_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim() 
 
 interface InteractiveMapProps {
   region?: { latitude: number; longitude: number; latitudeDelta?: number; longitudeDelta?: number };
+  satellite?: boolean;
   onRegionChange?: (r: any) => void;
   onPress?: (e: any) => void;
   pinLat?: number;
@@ -23,7 +24,15 @@ interface StaticMapProps {
   interactive?: boolean;
 }
 
-function buildLeafletHtml(lat: number, lng: number, zoom: number, interactive = false, channel = 'og-map') {
+function buildLeafletHtml(
+  lat: number,
+  lng: number,
+  zoom: number,
+  interactive = false,
+  channel = 'og-map',
+  satellite = false,
+) {
+  const mapboxStyle = satellite ? 'satellite-streets-v12' : 'streets-v12';
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -48,7 +57,7 @@ function buildLeafletHtml(lat: number, lng: number, zoom: number, interactive = 
     touchZoom:${interactive}, doubleClickZoom:${interactive}
   }).setView([${lat},${lng}],${zoom});
     var mapboxTiles = L.tileLayer(
-      'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=' + encodeURIComponent(${JSON.stringify(MAPBOX_ACCESS_TOKEN)}),
+      'https://api.mapbox.com/styles/v1/mapbox/${mapboxStyle}/tiles/256/{z}/{x}/{y}@2x?access_token=' + encodeURIComponent(${JSON.stringify(MAPBOX_ACCESS_TOKEN)}),
       {
         maxZoom:22, maxNativeZoom:22, keepBuffer:3,
         updateWhenIdle:false, updateWhenZooming:true,
@@ -92,11 +101,14 @@ function buildLeafletHtml(lat: number, lng: number, zoom: number, interactive = 
 </body></html>`;
 }
 
-export function StaticMap({ latitude, longitude, interactive = true }: StaticMapProps) {
+export function StaticMap({ latitude, longitude, satellite = true, interactive = true }: StaticMapProps) {
   if (!latitude || !longitude || !isFinite(latitude) || !isFinite(longitude)) {
     return <View style={s.placeholder} />;
   }
-  const html = useMemo(() => buildLeafletHtml(latitude, longitude, 15, interactive), [latitude, longitude, interactive]);
+  const html = useMemo(
+    () => buildLeafletHtml(latitude, longitude, 15, interactive, 'og-map', satellite),
+    [latitude, longitude, interactive, satellite],
+  );
   const blob = useMemo(
     () => typeof Blob !== 'undefined' ? URL.createObjectURL(new Blob([html], { type: 'text/html' })) : null,
     [html],
@@ -115,7 +127,15 @@ export function StaticMap({ latitude, longitude, interactive = true }: StaticMap
   );
 }
 
-export function InteractiveMap({ region, pinLat, pinLng, onPress, onDragEnd, onRegionChange }: InteractiveMapProps) {
+export function InteractiveMap({
+  region,
+  pinLat,
+  pinLng,
+  onPress,
+  onDragEnd,
+  onRegionChange,
+  satellite = true,
+}: InteractiveMapProps) {
   const lat = pinLat ?? region?.latitude ?? 30.3753;
   const lng = pinLng ?? region?.longitude ?? 69.3451;
   const channel = useMemo(() => `og-map-${Math.random().toString(36).slice(2)}`, []);
@@ -146,7 +166,10 @@ export function InteractiveMap({ region, pinLat, pinLng, onPress, onDragEnd, onR
   useEffect(() => {
     syncMap();
   }, [syncMap]);
-  const html = useMemo(() => buildLeafletHtml(lat, lng, 14, true, channel), [channel]);
+  const html = useMemo(
+    () => buildLeafletHtml(lat, lng, 14, true, channel, satellite),
+    [channel, lat, lng, satellite],
+  );
   const blob = useMemo(
     () => typeof Blob !== 'undefined' ? URL.createObjectURL(new Blob([html], { type: 'text/html' })) : null,
     [html],

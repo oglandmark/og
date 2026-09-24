@@ -129,6 +129,7 @@ export function ExploreMapView({
         zoom={committedZoom}
         points={points}
         radiusKm={areaRadiusKm}
+        satellite
         interactive
         onRegionChange={handleRegionChange}
         onSelect={(id) => {

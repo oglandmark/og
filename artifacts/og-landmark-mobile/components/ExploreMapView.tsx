@@ -233,7 +233,7 @@ function buildExploreHtml(
     tap:true
   }).setView([${mapCenterLat},${mapCenterLng}],${zoom});
    var mapboxTiles = L.tileLayer(
-     'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=' + encodeURIComponent(${JSON.stringify(MAPBOX_ACCESS_TOKEN)}),
+     'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=' + encodeURIComponent(${JSON.stringify(MAPBOX_ACCESS_TOKEN)}),
      {
        maxZoom: 22, maxNativeZoom: 22, keepBuffer: 3,
        updateWhenIdle: false, updateWhenZooming: true,

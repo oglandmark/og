@@ -182,3 +182,17 @@ mtime_ms = 1790245405122
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/cbb25b35-0b63-4ded-b4cb-66db56e84621/b88ce8ab-8cfb-4cf2-ad2f-ddd34605bd6e"
 storage_version_token = "1790245542193462"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "zUUoidWOmqgoPSxdLGFxK"
+uri = "file://exports/OG-Landmark-Website-Frontend-Source.zip"
+type = "unspecified"
+title = "OG Landmark Website Frontend Source"
+description = "ZIP of the current served website frontend: HTML pages, portal views, CSS/JS assets, and images. Excludes backend, data, and secrets."
+logical_id = "cb8d9867-debf-4373-ab78-86176ecb9390"
+content_hash = "sha256:bd9773618803d962180df97f5c41fffbf2b4632a726649f6c3d54e18de7bf3b1"
+size = 10901063
+mtime_ms = 1790274837229
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/cb8d9867-debf-4373-ab78-86176ecb9390/841b757e-ec56-420e-9e8e-146ebec8ac93"
+storage_version_token = "1790274854411458"
+content_type = "application/octet-stream"

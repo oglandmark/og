@@ -1853,7 +1853,7 @@ export default function HomeScreen() {
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder={`Search ${transaction === 'Buy' ? 'homes, plots or projects' : 'rentals in Okara District'}`}
+            placeholder={`Search ${transaction === 'Buy' ? 'properties' : 'rentals in Okara District'}`}
             placeholderTextColor={colors.mutedForeground}
             style={[s.searchInput, { color: colors.foreground }]}
             returnKeyType="search"

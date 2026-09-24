@@ -22,6 +22,7 @@
 - [Location picker camera sync](location-picker-camera.md) — city/locality changes must drive the native map camera, while GPS recovery must persist the selected pin.
 - [Location flow testing](location-flow-testing.md) — keep native GPS recovery behind a provider seam so permission and fallback branches run in Node tests.
 - [Native Google Maps provider](native-google-maps.md) — Android and iOS map overrides must share react-native-maps; native builds require the injected restricted Maps key.
+- [Web map iframe mode switching](web-map-mode-switching.md) — update loaded same-origin map frames through their setter; use channel-scoped messages only before load.
 - [Expo web image preview](expo-web-image-preview.md) — use an explicit expo-image layer for reliable full-bleed local media in the proxied Expo web preview.
 - [Notification delivery pipeline](notification-system.md) — all broadcasts and lifecycle events must use per-user records, recipient-scoped dedupe keys, and the same push/preferences pipeline.
 - [Mobile polish guardrails](mobile-polish-guardrails.md) — reuse semantic UI tokens and keep card body actions separate from nested image/action controls.

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
+import { setMapViewModeForFrame } from '../components/MapViewModes';
 import {
   createMapAreaRadiusInjection,
   createMapAreaRadiusMessage,
@@ -57,7 +58,7 @@ test('web radius updates resize the existing circle without rebuilding the viewp
   });
   assert.match(web, /createMapAreaRadiusMessage\(radiusKm, fit\)/);
   assert.match(web, /areaCircle\.setRadius\(radiusKm \* 1000\)/);
-  assert.match(web, /\[properties, selectedId, userLat, userLng, centerLat, centerLng\]/);
+  assert.match(web, /\[properties, selectedId, userLat, userLng, centerLat, centerLng, channel, mapGlass, mapGlassBorder\]/);
   const htmlMemo = web.match(
     /const html = useMemo\([\s\S]*?\n\s*\);/,
   )?.[0];
@@ -82,22 +83,68 @@ test('Android map overrides reuse the shared Mapbox WebView implementation', () 
   assert.match(readComponent('ExpoGoMapFallback.tsx'), /EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN/);
 });
 
-test('map surfaces expose transparent Map, Satellite, and Street View modes', () => {
+test('map surfaces expose Map and Satellite modes without Street View', () => {
   const controls = readComponent('MapViewModes.ts');
+  const controlComponent = readComponent('MapViewModeControl.tsx');
   const nativeFallback = readComponent('ExpoGoMapFallback.tsx');
+  const nativeExplore = readComponent('ExploreMapView.native.tsx');
   const webMap = readComponent('MapViewComponent.tsx');
   const webExplore = readComponent('ExploreMapView.tsx');
+  const exploreScreen = readFileSync(
+    resolve(mobileRoot, 'app', '(tabs)', 'explore.tsx'),
+    'utf8',
+  );
 
-  assert.match(controls, /data-map-mode="map"/);
-  assert.match(controls, /data-map-mode="satellite"/);
-  assert.match(controls, /data-map-mode="street"/);
-  assert.match(controls, /background: transparent/);
-  assert.match(controls, /google\.com\/maps\/embed\/v1\/streetview/);
+  assert.match(controlComponent, /label: 'Map'/);
+  assert.match(controlComponent, /label: 'Satellite'/);
+  assert.doesNotMatch(controlComponent, /Street View/);
+  assert.match(controlComponent, /backgroundColor: colors\.mapGlass/);
+  assert.match(controlComponent, /backdropFilter: 'blur\(14px\)'/);
+  assert.match(controlComponent, /flexDirection: 'row'/);
+  assert.match(controlComponent, /buttonHeight\?: number/);
+  assert.match(controlComponent, /height: buttonHeight, minHeight: buttonHeight/);
+  assert.match(controlComponent, /map-view-mode-\$\{option\.value\}/);
+  assert.match(controlComponent, /top\?: number/);
   for (const source of [nativeFallback, webMap, webExplore]) {
-    assert.match(source, /MAP_VIEW_MODE_CONTROL_HTML/);
+    assert.match(source, /MapViewModeControl/);
     assert.match(source, /MAP_VIEW_MODE_SWITCH_SCRIPT/);
-    assert.match(source, /EXPO_PUBLIC_GOOGLE_MAPS_API_KEY/);
+    assert.doesNotMatch(source, /street-view|Street View|EXPO_PUBLIC_GOOGLE_MAPS_API_KEY/);
   }
+  assert.match(nativeFallback, /__setMapViewMode/);
+  assert.match(nativeFallback, /top=\{props\.modeControlTop\}/);
+  assert.match(nativeFallback, /buttonHeight=\{props\.modeControlButtonHeight\}/);
+  assert.match(nativeExplore, /modeControlTop=\{fullScreen \? 60 : 100\}/);
+  assert.match(nativeExplore, /modeControlButtonHeight=\{38\}/);
+  assert.match(webMap, /top=\{78\}/);
+  assert.match(webMap, /og-map-view-mode/);
+  assert.match(webExplore, /top=\{fullScreen \? 52 : 100\}/);
+  assert.match(webExplore, /left=\{fullScreen \? 60 : 12\}/);
+  assert.match(webExplore, /horizontal=\{Boolean\(fullScreen\)\}/);
+  assert.match(webExplore, /og-map-view-mode/);
+  assert.match(exploreScreen, /height: Platform\.OS === 'web' \? 30 : 38/);
+  assert.match(exploreScreen, /minHeight: Platform\.OS === 'web' \? 30 : 38/);
+  assert.doesNotMatch(controls, /streetview|Street View/);
+  assert.match(webMap, /setMapViewModeForFrame/);
+  assert.match(webExplore, /setMapViewModeForFrame/);
+});
+
+test('web map mode controls update loaded frames directly and message unloaded frames', () => {
+  const directCalls: string[] = [];
+  setMapViewModeForFrame({
+    __setMapViewMode: (mode: 'map' | 'satellite') => directCalls.push(mode),
+    postMessage: () => assert.fail('loaded frames should be updated directly'),
+  } as unknown as Window, 'test-map', 'satellite');
+  assert.deepEqual(directCalls, ['satellite']);
+
+  const messages: unknown[] = [];
+  setMapViewModeForFrame({
+    postMessage: (message: unknown) => messages.push(message),
+  } as unknown as Window, 'test-map', 'map');
+  assert.deepEqual(messages, [{
+    channel: 'test-map',
+    type: 'og-map-view-mode',
+    mode: 'map',
+  }]);
 });
 
 test('full-screen map does not render a Search this area action', () => {

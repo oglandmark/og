@@ -28,6 +28,10 @@ const colors = {
     glassCard: '#fffffff2',
     glassBorder: '#e4e9ef',
     glassOverlay: '#ffffff80',
+    mapGlass: 'rgba(255, 255, 255, 0.78)',
+    mapGlassBorder: 'rgba(255, 255, 255, 0.88)',
+    mapGlassPanel: 'rgba(255, 255, 255, 0.68)',
+    mapGlassPanelBorder: 'rgba(255, 255, 255, 0.94)',
 
     // Primary action color (buttons, links, active states)
     primary: '#c7a263',

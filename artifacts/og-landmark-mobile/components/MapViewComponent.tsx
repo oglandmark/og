@@ -1,17 +1,15 @@
 /**
  * MapViewComponent — Web implementation using iframe + Mapbox street tiles.
  */
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { MapViewModeControl, type MapViewMode } from '@/components/MapViewModeControl';
 import {
-  MAP_VIEW_MODE_CONTROL_CSS,
-  MAP_VIEW_MODE_CONTROL_HTML,
-  MAP_VIEW_MODE_CONTROL_SCRIPT,
   MAP_VIEW_MODE_SWITCH_SCRIPT,
+  setMapViewModeForFrame,
 } from '@/components/MapViewModes';
 
 const MAPBOX_ACCESS_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
-const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ?? '';
 
 interface InteractiveMapProps {
   region?: { latitude: number; longitude: number; latitudeDelta?: number; longitudeDelta?: number };
@@ -49,18 +47,12 @@ function buildLeafletHtml(
     * { margin:0; padding:0; }
     body { background:#e8f0f7; }
     #map { width:100%; height:100%; position:absolute;top:0;left:0;right:0;bottom:0; }
-    ${MAP_VIEW_MODE_CONTROL_CSS}
      .custom-pin { position:relative;width:28px;height:28px;background:#17324D;border-radius:50% 50% 50% 0;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);transform:rotate(-45deg); }
      .custom-pin::after { content:'';position:absolute;width:8px;height:8px;left:7px;top:7px;background:#fff;border-radius:50%; }
   </style>
 </head>
 <body>
 <div id="map"></div>
-<div id="street-view">
-  <iframe id="street-view-frame" title="Google Street View" allowfullscreen loading="eager"></iframe>
-  <div id="street-view-status" role="status"></div>
-</div>
-${MAP_VIEW_MODE_CONTROL_HTML}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>if (!window.L) document.write('<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"><\/script>');</script>
 <script>
@@ -70,7 +62,6 @@ ${MAP_VIEW_MODE_CONTROL_HTML}
     touchZoom:${interactive}, doubleClickZoom:${interactive}
   }).setView([${lat},${lng}],${zoom});
     var mapboxToken = ${JSON.stringify(MAPBOX_ACCESS_TOKEN)};
-    var googleMapsApiKey = ${JSON.stringify(GOOGLE_MAPS_API_KEY)};
     var currentMapMode = '${satellite ? 'satellite' : 'map'}';
     var mapboxTiles = L.tileLayer(
       'https://api.mapbox.com/styles/v1/mapbox/${mapboxStyle}/tiles/256/{z}/{x}/{y}@2x?access_token=' + encodeURIComponent(mapboxToken),
@@ -81,11 +72,9 @@ ${MAP_VIEW_MODE_CONTROL_HTML}
       }
     );
     mapboxTiles.addTo(map);
-    ${MAP_VIEW_MODE_CONTROL_SCRIPT}
     ${MAP_VIEW_MODE_SWITCH_SCRIPT}
    var icon = L.divIcon({html:'<div class="custom-pin"></div>',iconSize:[28,28],iconAnchor:[14,28],className:''});
     var marker = L.marker([${lat},${lng}],{icon:icon, draggable:${interactive}}).addTo(map);
-     window.__getStreetViewCenter = function() { return marker.getLatLng(); };
     function send(type, payload) {
       window.parent.postMessage(Object.assign({ type:type, channel:'${channel}' }, payload), '*');
     }
@@ -111,7 +100,12 @@ ${MAP_VIEW_MODE_CONTROL_HTML}
    });
    window.addEventListener('message', function(event) {
      var data = event.data;
-     if (!data || data.channel !== '${channel}' || data.type !== 'og-map-update') return;
+      if (!data || data.channel !== '${channel}') return;
+      if (data.type === 'og-map-view-mode') {
+        window.__setMapViewMode && window.__setMapViewMode(data.mode);
+        return;
+      }
+      if (data.type !== 'og-map-update') return;
      if (data.latitude == null || data.longitude == null) return;
      marker.setLatLng([data.latitude, data.longitude]);
      map.setView([data.latitude, data.longitude], data.zoom || map.getZoom(), { animate: false });
@@ -121,26 +115,47 @@ ${MAP_VIEW_MODE_CONTROL_HTML}
 }
 
 export function StaticMap({ latitude, longitude, satellite = true, interactive = true }: StaticMapProps) {
-  if (!latitude || !longitude || !isFinite(latitude) || !isFinite(longitude)) {
-    return <View style={s.placeholder} />;
-  }
+  const validCoordinates = latitude != null && longitude != null
+    && Number.isFinite(latitude) && Number.isFinite(longitude);
+  const safeLatitude = validCoordinates ? latitude : 0;
+  const safeLongitude = validCoordinates ? longitude : 0;
+  const channel = useMemo(() => `og-map-static-${Math.random().toString(36).slice(2)}`, []);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [mapMode, setMapMode] = useState<MapViewMode>(satellite ? 'satellite' : 'map');
+  const sendMapMode = useCallback((mode: MapViewMode) => {
+    setMapViewModeForFrame(iframeRef.current?.contentWindow, channel, mode);
+  }, [channel]);
   const html = useMemo(
-    () => buildLeafletHtml(latitude, longitude, 15, interactive, 'og-map', satellite),
-    [latitude, longitude, interactive, satellite],
+    () => buildLeafletHtml(safeLatitude, safeLongitude, 15, interactive, channel, satellite),
+    [safeLatitude, safeLongitude, interactive, channel, satellite],
   );
   const blob = useMemo(
     () => typeof Blob !== 'undefined' ? URL.createObjectURL(new Blob([html], { type: 'text/html' })) : null,
     [html],
   );
   useEffect(() => () => { if (blob) URL.revokeObjectURL(blob); }, [blob]);
+  useEffect(() => {
+    setMapMode(satellite ? 'satellite' : 'map');
+  }, [satellite]);
+  if (!validCoordinates) return <View style={s.placeholder} />;
   return (
     <View style={s.container}>
       {/* @ts-ignore — iframe is valid on web */}
       <iframe
-         src={blob ?? 'about:blank'}
-         srcDoc={!blob ? html : undefined}
+        ref={iframeRef}
+        src={blob ?? 'about:blank'}
+        srcDoc={!blob ? html : undefined}
+        onLoad={() => sendMapMode(mapMode)}
         style={{ width: '100%', height: '100%', border: 'none', borderRadius: 12 } as any}
         title="Property Location"
+      />
+      <MapViewModeControl
+        mode={mapMode}
+        top={78}
+        onChange={(mode) => {
+          setMapMode(mode);
+          sendMapMode(mode);
+        }}
       />
     </View>
   );
@@ -158,7 +173,11 @@ export function InteractiveMap({
   const lat = pinLat ?? region?.latitude ?? 30.3753;
   const lng = pinLng ?? region?.longitude ?? 69.3451;
   const channel = useMemo(() => `og-map-${Math.random().toString(36).slice(2)}`, []);
-  const iframeRef = React.useRef<HTMLIFrameElement | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [mapMode, setMapMode] = useState<MapViewMode>(satellite ? 'satellite' : 'map');
+  const sendMapMode = useCallback((mode: MapViewMode) => {
+    setMapViewModeForFrame(iframeRef.current?.contentWindow, channel, mode);
+  }, [channel]);
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       const data = event.data;
@@ -177,6 +196,9 @@ export function InteractiveMap({
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
   }, [channel, onDragEnd, onPress, onRegionChange]);
+  useEffect(() => {
+    setMapMode(satellite ? 'satellite' : 'map');
+  }, [satellite]);
   const syncMap = useCallback(() => {
     iframeRef.current?.contentWindow?.postMessage({
       channel, type: 'og-map-update', latitude: lat, longitude: lng, zoom: 14,
@@ -201,9 +223,20 @@ export function InteractiveMap({
         ref={iframeRef}
         src={blob ?? `about:blank`}
         srcDoc={!blob ? html : undefined}
-        onLoad={syncMap}
+        onLoad={() => {
+          syncMap();
+          sendMapMode(mapMode);
+        }}
         style={{ width: '100%', height: '100%', border: 'none' } as any}
         title="Map"
+      />
+      <MapViewModeControl
+        mode={mapMode}
+        top={78}
+        onChange={(mode) => {
+          setMapMode(mode);
+          sendMapMode(mode);
+        }}
       />
     </View>
   );

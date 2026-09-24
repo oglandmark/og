@@ -1315,10 +1315,13 @@ export default function ExploreScreen() {
 
             <View style={ex.mapSearchOverlay}>
               <View style={[ex.mapSearchBar, {
-                backgroundColor: colors.card,
-                borderColor: mapSearchFocused ? colors.action : colors.border,
+                backgroundColor: colors.mapGlass,
+                borderColor: mapSearchFocused ? colors.action : colors.mapGlassBorder,
                 borderWidth: mapSearchFocused ? 1.5 : 1,
-              }]}>
+              }, Platform.OS === 'web' && {
+                backdropFilter: 'blur(14px)',
+                WebkitBackdropFilter: 'blur(14px)',
+              } as any]}>
                 <View style={[ex.mapSearchIconWrap, { backgroundColor: colors.selectionBackground }]}>
                   <Feather name="search" size={16} color={colors.action} />
                 </View>
@@ -2026,8 +2029,8 @@ const ex = StyleSheet.create({
   locationMapStatus: { position: 'absolute', top: '38%', left: 28, right: 28, alignItems: 'center', borderRadius: 18, borderWidth: 1, paddingHorizontal: 18, paddingVertical: 18, zIndex: 8, shadowColor: '#102a43', shadowOpacity: 0.16, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
   locationMapStatusTitle: { fontFamily: 'Inter_700Bold', fontSize: 14, marginTop: 8, textAlign: 'center' },
   locationMapStatusText: { fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 16, marginTop: 5, textAlign: 'center' },
-  mapSearchBar:    { minHeight: 54, borderRadius: 18, borderWidth: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, gap: 10, shadowColor: '#102a43', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 6 },
-  mapSearchIconWrap: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  mapSearchBar:    { height: Platform.OS === 'web' ? 30 : 38, minHeight: Platform.OS === 'web' ? 30 : 38, borderRadius: Platform.OS === 'web' ? 10 : 12, borderWidth: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 9, gap: 7, shadowColor: '#102a43', shadowOpacity: 0.16, shadowRadius: 9, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
+  mapSearchIconWrap: { width: Platform.OS === 'web' ? 20 : 28, height: Platform.OS === 'web' ? 20 : 28, borderRadius: Platform.OS === 'web' ? 7 : 9, alignItems: 'center', justifyContent: 'center' },
   mapSearchInput:  { flex: 1, fontFamily: 'Inter_500Medium', fontSize: 13, paddingVertical: 0 },
   mapSuggestions:  { marginTop: 8, borderRadius: 16, borderWidth: 1, overflow: 'hidden', shadowColor: '#102a43', shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
   mapSuggestionsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, paddingTop: 12, paddingBottom: 8 },
@@ -2036,11 +2039,11 @@ const ex = StyleSheet.create({
   mapSuggestionIcon: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   mapSuggestionText: { fontFamily: 'Inter_500Medium', fontSize: 13 },
   mapSuggestionSub: { fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 2 },
-  mapActions:      { flexDirection: 'row', gap: 12, paddingHorizontal: 18, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
-  mapActionBack:   { flex: 1, height: 46, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  mapActionBackText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
-  mapActionDone:   { flex: 1, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  mapActionDoneText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  mapActions:      { flexDirection: 'row', gap: 10, paddingHorizontal: 18, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth },
+  mapActionBack:   { flex: 1, height: 38, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  mapActionBackText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  mapActionDone:   { flex: 1, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', shadowColor: '#102a43', shadowOpacity: 0.14, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 3 },
+  mapActionDoneText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   headerIntro:     { paddingTop: 2, paddingBottom: 15 },
   headerEyebrow:   { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 2, marginBottom: 5 },
   headerTitle:     { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 25, lineHeight: 30 },

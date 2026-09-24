@@ -131,6 +131,11 @@ export function ExploreMapView({
         radiusKm={areaRadiusKm}
         satellite
         interactive
+        modeControlTop={fullScreen ? 60 : 100}
+        modeControlLeft={fullScreen ? 60 : 12}
+        modeControlRight={fullScreen ? 18 : undefined}
+        modeControlHorizontal={Boolean(fullScreen)}
+        modeControlButtonHeight={38}
         onRegionChange={handleRegionChange}
         onSelect={(id) => {
           if (id !== '__user__') onSelect(id);
@@ -191,8 +196,8 @@ export function ExploreMapView({
             setCommittedZoom(mapAreaZoomForRadius(nextRadiusKm));
           }}
           colors={{
-            card: colors?.card ?? '#ffffff',
-            border: colors?.border ?? '#d6e0e8',
+            card: colors?.mapGlassPanel ?? 'rgba(255, 255, 255, 0.68)',
+            border: colors?.mapGlassPanelBorder ?? 'rgba(255, 255, 255, 0.94)',
             foreground: colors?.foreground ?? '#102a43',
             mutedForeground: colors?.mutedForeground ?? '#587089',
           }}
@@ -213,7 +218,7 @@ const styles = StyleSheet.create({
   mapContextKicker: { fontSize: 8, fontWeight: '800', letterSpacing: 1.1, marginBottom: 2 },
   mapContextTitle: { fontSize: 11, fontWeight: '700' },
   countBadge: {
-    position: 'absolute', top: 12, right: 12, flexDirection: 'row',
+    position: 'absolute', top: 58, right: 12, flexDirection: 'row',
     alignItems: 'center', gap: 7, borderWidth: 1, borderRadius: 14,
     paddingHorizontal: 11, paddingVertical: 8, shadowColor: '#102a43',
     shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 3,

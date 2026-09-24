@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import {
@@ -35,6 +35,9 @@ interface Props {
 }
 export function MapAreaRange({ value, onChange, onChangeEnd, colors }: Props) {
   const [trackWidth, setTrackWidth] = React.useState(0);
+  const glassBlur = Platform.OS === 'web'
+    ? { backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any
+    : undefined;
   const safeValue = normalizeMapAreaRange(value);
   const progress = (safeValue - MAP_AREA_MIN_KM) / (MAP_AREA_MAX_KM - MAP_AREA_MIN_KM);
 
@@ -57,7 +60,11 @@ export function MapAreaRange({ value, onChange, onChangeEnd, colors }: Props) {
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View style={[
+      styles.card,
+      glassBlur,
+      { backgroundColor: colors.card, borderColor: colors.border },
+    ]}>
         <View style={styles.header}>
         <View style={styles.labelWrap}>
             <View style={[styles.iconWrap, { backgroundColor: `${MAP_AREA_BLUE}16` }]}>

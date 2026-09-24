@@ -2,15 +2,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, View, StyleSheet } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { Feather } from '@expo/vector-icons';
-import {
-  MAP_VIEW_MODE_CONTROL_CSS,
-  MAP_VIEW_MODE_CONTROL_HTML,
-  MAP_VIEW_MODE_CONTROL_SCRIPT,
-  MAP_VIEW_MODE_SWITCH_SCRIPT,
-} from '@/components/MapViewModes';
+import { MapViewModeControl, type MapViewMode } from '@/components/MapViewModeControl';
+import { MAP_VIEW_MODE_SWITCH_SCRIPT } from '@/components/MapViewModes';
+import { useColors } from '@/hooks/useColors';
 
 const MAPBOX_ACCESS_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
-const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ?? '';
 
 export type ExpoGoMapPoint = {
   id?: string | number;
@@ -27,6 +23,11 @@ type Props = {
   radiusKm?: number;
   interactive?: boolean;
   satellite?: boolean;
+  modeControlTop?: number;
+  modeControlLeft?: number;
+  modeControlRight?: number;
+  modeControlHorizontal?: boolean;
+  modeControlButtonHeight?: number;
   onSelect?: (id: string | number) => void;
   onPress?: (latitude: number, longitude: number) => void;
   onDragEnd?: (latitude: number, longitude: number) => void;
@@ -66,7 +67,6 @@ function buildMapHtml({
     html, body, #map { width: 100%; height: 100%; margin: 0; background: #e8f0f7; overflow: hidden; }
     .leaflet-container { touch-action: none; }
     .leaflet-control-attribution { font-size: 8px; opacity: .72; }
-    ${MAP_VIEW_MODE_CONTROL_CSS}
     .pin, .user-pin {
       position: relative;
       width: 28px; height: 28px; border-radius: 50% 50% 50% 0;
@@ -86,17 +86,11 @@ function buildMapHtml({
 </head>
 <body>
   <div id="map"></div>
-  <div id="street-view">
-    <iframe id="street-view-frame" title="Google Street View" allowfullscreen loading="eager"></iframe>
-    <div id="street-view-status" role="status"></div>
-  </div>
-  ${MAP_VIEW_MODE_CONTROL_HTML}
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     (function () {
        var points = ${pointsJson};
        var mapboxToken = ${mapboxToken};
-        var googleMapsApiKey = ${toSafeJson(GOOGLE_MAPS_API_KEY)};
         var currentMapMode = '${satellite ? 'satellite' : 'map'}';
         var mapboxStyle = '${mapboxStyle}';
       var interactive = ${Boolean(interactive)};
@@ -115,7 +109,6 @@ function buildMapHtml({
          { maxZoom: 22, maxNativeZoom: 22, crossOrigin: true, attribution: '&copy; Mapbox &copy; OpenStreetMap' }
        );
        mapboxTiles.addTo(map);
-        ${MAP_VIEW_MODE_CONTROL_SCRIPT}
         ${MAP_VIEW_MODE_SWITCH_SCRIPT}
 
       function send(type, payload) {
@@ -169,11 +162,6 @@ function buildMapHtml({
         }
       }
       renderPoints(points);
-      window.__getStreetViewCenter = function() {
-        var layers = markerLayer.getLayers();
-        if (interactive && layers.length === 1) return layers[0].getLatLng();
-        return map.getCenter();
-      };
       if (${radiusKm != null}) updateArea(${latitude}, ${longitude}, ${radius});
       map.on('move', function () {
         if (areaCircle) areaCircle.setLatLng(map.getCenter());
@@ -242,10 +230,11 @@ function buildMapHtml({
 }
 
 export function ExpoGoMapFallback(props: Props) {
+  const colors = useColors();
   const webViewRef = useRef<WebView>(null);
   const readyRef = useRef(false);
   const [mapReady, setMapReady] = useState(false);
-  const [streetViewActive, setStreetViewActive] = useState(false);
+  const [mapMode, setMapMode] = useState<MapViewMode>(props.satellite ? 'satellite' : 'map');
   const initialHtmlRef = useRef<string | null>(null);
   if (!initialHtmlRef.current) {
     initialHtmlRef.current = buildMapHtml({
@@ -284,12 +273,22 @@ export function ExpoGoMapFallback(props: Props) {
   }, [syncMapState, mapReady]);
 
   useEffect(() => {
+    setMapMode(props.satellite ? 'satellite' : 'map');
+  }, [props.satellite]);
+
+  useEffect(() => {
     if (!mapReady) return;
-    const mode = props.satellite ? 'satellite' : 'map';
+    webViewRef.current?.injectJavaScript(
+      `window.__setMapViewMode && window.__setMapViewMode(${JSON.stringify(mapMode)}); true;`,
+    );
+  }, [mapMode, mapReady]);
+
+  const changeMapMode = useCallback((mode: MapViewMode) => {
+    setMapMode(mode);
     webViewRef.current?.injectJavaScript(
       `window.__setMapViewMode && window.__setMapViewMode(${JSON.stringify(mode)}); true;`,
     );
-  }, [props.satellite, mapReady]);
+  }, []);
 
   const onMessage = (event: WebViewMessageEvent) => {
     try {
@@ -308,8 +307,10 @@ export function ExpoGoMapFallback(props: Props) {
          syncMapState();
          return;
        }
-       if (message.type === 'mode') {
-         setStreetViewActive(message.mode === 'street');
+        if (message.type === 'mode') {
+           if (message.mode === 'map' || message.mode === 'satellite') {
+            setMapMode(message.mode);
+          }
          return;
        }
       if (message.type === 'select' && message.id != null) props.onSelect?.(message.id);
@@ -359,24 +360,33 @@ export function ExpoGoMapFallback(props: Props) {
         startInLoadingState
         renderLoading={() => <View style={styles.loading} />}
       />
-        {!streetViewActive && <View pointerEvents="box-none" style={styles.zoomControls}>
+      <MapViewModeControl
+        mode={mapMode}
+        onChange={changeMapMode}
+        top={props.modeControlTop}
+        left={props.modeControlLeft}
+        right={props.modeControlRight}
+        horizontal={props.modeControlHorizontal}
+        buttonHeight={props.modeControlButtonHeight}
+      />
+        <View pointerEvents="box-none" style={styles.zoomControls}>
          <Pressable
            accessibilityRole="button"
            accessibilityLabel="Zoom in map"
-           style={styles.zoomButton}
+            style={[styles.zoomButton, { backgroundColor: colors.mapGlass, borderColor: colors.mapGlassBorder }]}
            onPress={() => zoomBy(1)}
          >
-           <Feather name="plus" size={20} color="#102a43" />
+            <Feather name="plus" size={20} color={colors.foreground} />
          </Pressable>
          <Pressable
            accessibilityRole="button"
            accessibilityLabel="Zoom out map"
-           style={styles.zoomButton}
+            style={[styles.zoomButton, { backgroundColor: colors.mapGlass, borderColor: colors.mapGlassBorder }]}
            onPress={() => zoomBy(-1)}
          >
-           <Feather name="minus" size={20} color="#102a43" />
+            <Feather name="minus" size={20} color={colors.foreground} />
          </Pressable>
-        </View>}
+         </View>
     </View>
   );
 }
@@ -397,9 +407,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#d6e0e8',
     shadowColor: '#102a43',
     shadowOpacity: 0.18,
     shadowRadius: 6,

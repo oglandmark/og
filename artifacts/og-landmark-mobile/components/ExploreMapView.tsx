@@ -21,14 +21,12 @@ import {
   mapAreaRadiusMeters,
 } from '@/components/mapRadius';
 import {
-  MAP_VIEW_MODE_CONTROL_CSS,
-  MAP_VIEW_MODE_CONTROL_HTML,
-  MAP_VIEW_MODE_CONTROL_SCRIPT,
   MAP_VIEW_MODE_SWITCH_SCRIPT,
+  setMapViewModeForFrame,
 } from '@/components/MapViewModes';
+import { MapViewModeControl, type MapViewMode } from '@/components/MapViewModeControl';
 
 const MAPBOX_ACCESS_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
-const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ?? '';
 
 export interface PropertyLike {
   id: number;
@@ -93,6 +91,9 @@ function buildExploreHtml(
   userLng?: number,
   centerLat?: number,
   centerLng?: number,
+  channel = 'og-explore-map',
+  mapGlass = 'rgba(255, 255, 255, 0.78)',
+  mapGlassBorder = 'rgba(255, 255, 255, 0.88)',
 ) {
   const validProps = properties.filter(
     (p) => p.lat && p.lng && isFinite(p.lat!) && isFinite(p.lng!)
@@ -173,7 +174,6 @@ function buildExploreHtml(
     *{margin:0;padding:0;box-sizing:border-box;}
     html,body{width:100%;height:100%;background:#e8f0f7;}
     #map{width:100%;height:100%;position:absolute;top:0;left:0;background:#e8f0f7;}
-    ${MAP_VIEW_MODE_CONTROL_CSS}
     .leaflet-container{background:#e8f0f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
     .og-pin{
       background:#ffffff;color:#102a43;font-size:11px;font-weight:700;
@@ -217,18 +217,13 @@ function buildExploreHtml(
     }
     .og-pop-btn:hover{background:#e8c870;}
      .leaflet-control-attribution{display:none;}
-      .leaflet-bar{border:1px solid rgba(214,224,232,.95)!important;border-radius:12px!important;overflow:hidden;box-shadow:0 6px 18px rgba(16,42,67,.18)!important;}
-      .leaflet-bar a{width:30px;height:30px;line-height:30px;background:#ffffff;color:#102a43;border-bottom-color:#d6e0e8;}
-      .leaflet-bar a:hover{background:#edf3f7;}
+       .leaflet-bar{background:${mapGlass}!important;border:1px solid ${mapGlassBorder}!important;border-radius:12px!important;overflow:hidden;box-shadow:0 8px 20px rgba(16,42,67,.2)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+       .leaflet-bar a{width:30px;height:30px;line-height:30px;background:transparent;color:#102a43;border-bottom-color:${mapGlassBorder};}
+       .leaflet-bar a:hover{background:rgba(255,255,255,.32);}
   </style>
 </head>
 <body>
 <div id="map"></div>
-<div id="street-view">
-  <iframe id="street-view-frame" title="Google Street View" allowfullscreen loading="eager"></iframe>
-  <div id="street-view-status" role="status"></div>
-</div>
-${MAP_VIEW_MODE_CONTROL_HTML}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>if (!window.L) document.write('<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"><\/script>');</script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
@@ -246,7 +241,6 @@ ${MAP_VIEW_MODE_CONTROL_HTML}
     tap:true
   }).setView([${mapCenterLat},${mapCenterLng}],${zoom});
    var mapboxToken = ${JSON.stringify(MAPBOX_ACCESS_TOKEN)};
-   var googleMapsApiKey = ${JSON.stringify(GOOGLE_MAPS_API_KEY)};
    var currentMapMode = 'satellite';
    var mapboxTiles = L.tileLayer(
      'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=' + encodeURIComponent(mapboxToken),
@@ -257,10 +251,7 @@ ${MAP_VIEW_MODE_CONTROL_HTML}
      }
    );
    mapboxTiles.addTo(map);
-   ${MAP_VIEW_MODE_CONTROL_SCRIPT}
    ${MAP_VIEW_MODE_SWITCH_SCRIPT}
-  window.__getStreetViewCenter = function() { return map.getCenter(); };
-
   var clusterGroup = L.markerClusterGroup && ${validProps.length} > 1
     ? L.markerClusterGroup({
         showCoverageOnHover:false,
@@ -320,6 +311,10 @@ ${MAP_VIEW_MODE_CONTROL_HTML}
 
   window.addEventListener('message', function(event) {
     var data = event.data;
+    if (data && data.channel === '${channel}' && data.type === 'og-map-view-mode') {
+      window.__setMapViewMode && window.__setMapViewMode(data.mode);
+      return;
+    }
     if (!data || data.type !== 'mapAreaRadius') return;
     var radiusKm = Number(data.radiusKm);
     if (!isFinite(radiusKm) || radiusKm <= 0) return;
@@ -373,10 +368,14 @@ export function ExploreMapView({
 }: Props) {
   const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
   const [areaPropertyCount, setAreaPropertyCount] = useState(0);
+  const [mapMode, setMapMode] = useState<MapViewMode>('satellite');
+  const channel = useMemo(() => `og-explore-map-${Math.random().toString(36).slice(2)}`, []);
   const iframeRef = React.useRef<any>(null);
+  const mapGlass = colors?.mapGlass ?? 'rgba(255, 255, 255, 0.78)';
+  const mapGlassBorder = colors?.mapGlassBorder ?? 'rgba(255, 255, 255, 0.88)';
   const html = useMemo(
-    () => buildExploreHtml(properties, selectedId, userLat, userLng, centerLat, centerLng),
-    [properties, selectedId, userLat, userLng, centerLat, centerLng],
+    () => buildExploreHtml(properties, selectedId, userLat, userLng, centerLat, centerLng, channel, mapGlass, mapGlassBorder),
+    [properties, selectedId, userLat, userLng, centerLat, centerLng, channel, mapGlass, mapGlassBorder],
   );
 
   // Listen for postMessage from iframe on web
@@ -398,6 +397,9 @@ export function ExploreMapView({
     const message = createMapAreaRadiusMessage(radiusKm, fit);
     if (message) iframeRef.current?.contentWindow?.postMessage(message, '*');
   }, []);
+  const sendMapMode = React.useCallback((mode: MapViewMode) => {
+    setMapViewModeForFrame(iframeRef.current?.contentWindow, channel, mode);
+  }, [channel]);
 
   React.useEffect(() => {
     syncAreaRadius(areaRadiusKm, false);
@@ -425,12 +427,26 @@ export function ExploreMapView({
         style={{ width: '100%', height: '100%', border: 'none' } as any}
         title="Properties Map"
         sandbox="allow-scripts allow-same-origin"
-        onLoad={() => syncAreaRadius(areaRadiusKm)}
+        onLoad={() => {
+          syncAreaRadius(areaRadiusKm);
+          sendMapMode(mapMode);
+        }}
+      />
+      <MapViewModeControl
+        mode={mapMode}
+        top={fullScreen ? 52 : 100}
+        left={fullScreen ? 60 : 12}
+        right={fullScreen ? 18 : undefined}
+        horizontal={Boolean(fullScreen)}
+        onChange={(mode) => {
+          setMapMode(mode);
+          sendMapMode(mode);
+        }}
       />
        <View style={s.rangeOverlay}>
          <MapAreaRange value={areaRadiusKm} onChange={setAreaRadiusKm} onChangeEnd={(value) => syncAreaRadius(value, true)} colors={{
-          card: colors?.card ?? '#ffffff',
-          border: colors?.border ?? '#d6e0e8',
+           card: colors?.mapGlass ?? 'rgba(255, 255, 255, 0.78)',
+           border: colors?.mapGlassBorder ?? 'rgba(255, 255, 255, 0.88)',
           foreground: colors?.foreground ?? '#102a43',
           mutedForeground: colors?.mutedForeground ?? '#587089',
         }} />
@@ -491,7 +507,7 @@ const s = StyleSheet.create({
   },
   countBadge: {
     position: 'absolute',
-    top: 12,
+    top: 58,
     right: 12,
     flexDirection: 'row',
     alignItems: 'center',

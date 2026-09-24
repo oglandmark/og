@@ -7,6 +7,7 @@ import { useColors } from '@/hooks/useColors';
 import { useLanguage } from '@/context/LanguageContext';
 import { BrandMark } from '@/components/BrandMark';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 
 type Message = { id: number; text: string; fromMe: boolean; time: string };
 type Conversation = {
@@ -54,6 +55,7 @@ export default function MessagesScreen() {
   const [inputText, setInputText] = useState('');
   const [keyboardShowing, setKeyboardShowing] = useState(false);
   const listRef = useRef<FlatList>(null);
+  const onScroll = useTabBarScrollHandler();
 
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const botPad = insets.bottom + (Platform.OS === 'web' ? 96 : 0);
@@ -149,6 +151,8 @@ export default function MessagesScreen() {
           keyExtractor={(m) => String(m.id)}
           contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: listPadBottom }}
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+           onScroll={onScroll}
+           scrollEventThrottle={16}
           renderItem={({ item: m }) => (
             <View style={[styles.msgRow, m.fromMe ? styles.msgRowMe : styles.msgRowThem]}>
               {!m.fromMe && (
@@ -180,7 +184,12 @@ export default function MessagesScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: botPad + 96 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: botPad + 96 }}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
         <AnimatedReveal>
           <View style={[styles.listHeader, { paddingTop: topPad + 12, paddingHorizontal: 20, paddingBottom: 8 }]}>
             <BrandMark />

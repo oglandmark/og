@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import {
   DeveloperProject, ProjectStatus, getDevProjects, deleteDevProject,
@@ -145,6 +146,7 @@ function ProjectCard({
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function ProjectsScreen() {
+  const tabBarScrollHandler = useTabBarScrollHandler();
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -183,6 +185,8 @@ export default function ProjectsScreen() {
       <ScrollView
         contentContainerStyle={{ paddingTop: topPad + 16, paddingBottom: botPad + 110 }}
         showsVerticalScrollIndicator={false}
+        onScroll={tabBarScrollHandler}
+        scrollEventThrottle={16}
       >
         {/* ── Header ────────────────────────────────────── */}
         <AnimatedReveal>

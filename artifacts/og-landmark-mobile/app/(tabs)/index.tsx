@@ -31,6 +31,7 @@ import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { formatPrice, properties, propertyImages, Property } from '@/lib/properties';
 import { getUserListings, UserListing } from '@/lib/listingsStore';
 import { useAuth } from '@/context/AuthContext';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { getDevProjects, DeveloperProject } from '@/lib/developerStore';
 import { projects } from '@/lib/projects';
 import { apiAgentToSample, SAMPLE_AGENTS, SampleAgent } from '@/lib/agentsData';
@@ -1648,6 +1649,7 @@ export default function HomeScreen() {
   const navigation = useNavigation();
   const insets     = useSafeAreaInsets();
   const tabBarHeight = useTabBarHeight();
+  const tabBarScrollHandler = useTabBarScrollHandler();
   const { role, user } = useAuth();
   const { toggleSaved } = useSaved();
 
@@ -1788,7 +1790,10 @@ export default function HomeScreen() {
       style={[s.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingBottom: tabBarHeight }}
       showsVerticalScrollIndicator={false}
-      onScroll={handleMainScroll}
+      onScroll={(event) => {
+        handleMainScroll(event);
+        tabBarScrollHandler(event);
+      }}
       scrollEventThrottle={16}
     >
 

@@ -27,6 +27,7 @@ import { saveSearch, getSavedSearches } from '@/lib/savedSearchesStore';
 import { addRecentSearch, getRecentSearches, clearRecentSearches, removeRecentSearch } from '@/lib/recentSearchesStore';
 import { getVisitHistory, type VisitRecord } from '@/lib/visitHistoryStore';
 import { useAuth } from '@/context/AuthContext';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { ExploreMapView, type MapBounds } from '@/components/ExploreMapView';
 import { getCurrentPosition, haversineDistance, formatDistance } from '@/lib/locationService';
 import {
@@ -414,6 +415,7 @@ export default function ExploreScreen() {
   const router     = useRouter();
   const navigation = useNavigation();
   const { isLoggedIn } = useAuth();
+  const tabBarScrollHandler = useTabBarScrollHandler();
 
   // Scroll-to-top when user taps the Explore tab icon while already on this screen
   const flatListRef = useRef<FlatList>(null);
@@ -1156,6 +1158,8 @@ export default function ExploreScreen() {
         keyExtractor={(p, index) => `${p.id}-${index}`}
         showsVerticalScrollIndicator={false}
         scrollEnabled={viewMode !== 'map'}
+        onScroll={tabBarScrollHandler}
+        scrollEventThrottle={16}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarHeight, paddingTop: 14 }}
         ListHeaderComponent={
           <>

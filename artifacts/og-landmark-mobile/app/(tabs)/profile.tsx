@@ -27,6 +27,7 @@ import { getSiteVisitsByBuyer, visitStatusColor as siteVisitStatusColor } from '
 import { getAgentVisitsByBuyer, visitStatusColor as agentVisitStatusColor } from '@/lib/agentVisitsStore';
 import { deleteMyAccount } from '@/lib/api';
 import { clearLocalAccountData } from '@/lib/accountCleanup';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import {
   getNotificationPermissionState,
   registerPushTokenForUser,
@@ -877,6 +878,7 @@ function GuestScreen({
   colors: ReturnType<typeof useColors>; router: ReturnType<typeof useRouter>;
   topInset: number; tabBarHeight: number;
 }) {
+  const onScroll = useTabBarScrollHandler();
   const LOCKED_ITEMS: { icon: keyof typeof Feather.glyphMap; label: string; sub: string }[] = [
     { icon: 'heart',          label: 'Saved Properties',  sub: 'Your shortlisted properties' },
     { icon: 'search',         label: 'Saved Searches',    sub: 'Quick-access search filters' },
@@ -891,6 +893,8 @@ function GuestScreen({
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: tabBarHeight, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
     >
       {/* Header */}
       <AnimatedReveal>
@@ -976,6 +980,7 @@ export default function ProfileScreen() {
   const { user, role, isLoggedIn, logout } = useAuth();
   const { tr }  = useLanguage();
   const { savedIds } = useSaved();
+  const onScroll = useTabBarScrollHandler();
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [profileContent, setProfileContent] = useState<any>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermissionState | null>(null);
@@ -1250,6 +1255,8 @@ export default function ProfileScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: tabBarHeight, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
     >
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <AnimatedReveal>

@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { BrandMark } from '@/components/BrandMark';
 import { type Lead, type LeadStatus, getLeads, updateLeadStatus, updateLeadNotes } from '@/lib/leadsStore';
@@ -46,6 +47,7 @@ function openWhatsApp(phone: string) {
 //  DEVELOPER CRM
 // ─────────────────────────────────────────────────────────────────────────────
 function DeveloperCRM() {
+  const tabBarScrollHandler = useTabBarScrollHandler();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -106,7 +108,12 @@ function DeveloperCRM() {
 
   return (
     <View style={[d.screen, { backgroundColor: colors.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: botPad + 96 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: botPad + 96 }}
+        onScroll={tabBarScrollHandler}
+        scrollEventThrottle={16}
+      >
 
         {/* ── Header ───────────────────────────────────── */}
         <AnimatedReveal>
@@ -358,6 +365,7 @@ export default function LeadsScreen() {
   const insets = useSafeAreaInsets();
   const { tr, isRTL } = useLanguage();
   const { role } = useAuth();
+  const tabBarScrollHandler = useTabBarScrollHandler();
 
   // ── Developer branch ─────────────────────────────────────────────────────
   if (role === 'developer') {
@@ -401,7 +409,12 @@ export default function LeadsScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: botPad + 96 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: botPad + 96 }}
+        onScroll={tabBarScrollHandler}
+        scrollEventThrottle={16}
+      >
         <AnimatedReveal>
           <View style={[styles.header, { paddingTop: topPad + 12, paddingHorizontal: 20, paddingBottom: 8 }]}>
             <BrandMark />

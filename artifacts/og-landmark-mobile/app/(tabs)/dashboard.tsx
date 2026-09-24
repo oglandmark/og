@@ -9,6 +9,7 @@ import { useColors } from '@/hooks/useColors';
 import { useMobileContent } from '@/hooks/useMobileContent';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { BrandMark } from '@/components/BrandMark';
 import { getMyListings, calcListingStats } from '@/lib/listingsStore';
@@ -46,6 +47,7 @@ function DeveloperDashboard({
   isRTL: boolean;
   portalCopy?: MobileContent['screens']['portals'];
 }) {
+  const tabBarScrollHandler = useTabBarScrollHandler();
   const rtl = isRTL ? 'right' as const : 'left' as const;
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const botPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
@@ -103,6 +105,8 @@ function DeveloperDashboard({
       style={[ds.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topPad + 12, paddingBottom: botPad + 100 }}
       showsVerticalScrollIndicator={false}
+      onScroll={tabBarScrollHandler}
+      scrollEventThrottle={16}
     >
       {/* ── Top bar ──────────────────────────────────────────────── */}
       <AnimatedReveal>
@@ -320,6 +324,7 @@ export default function DashboardScreen() {
   const insets  = useSafeAreaInsets();
   const { user, role, logout } = useAuth();
   const { tr, isRTL } = useLanguage();
+  const tabBarScrollHandler = useTabBarScrollHandler();
 
   const isAgent     = role === 'agent';
   const isDeveloper = role === 'developer';
@@ -409,6 +414,8 @@ export default function DashboardScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topPad + 12, paddingBottom: botPad + 96 }}
       showsVerticalScrollIndicator={false}
+      onScroll={tabBarScrollHandler}
+      scrollEventThrottle={16}
     >
       <AnimatedReveal>
         <View style={[styles.header, { paddingHorizontal: 20 }]}>

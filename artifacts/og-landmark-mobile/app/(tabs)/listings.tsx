@@ -11,6 +11,7 @@ import {
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import {
   ListingStatus, UserListing,
   calcListingStats, deleteUserListing, getMyListings, resubmitUserListing, updateListingStatus,
@@ -40,6 +41,7 @@ const STATUS_BADGE: Record<ListingStatus, { bg: string; text: string }> = {
 // ─── main screen ──────────────────────────────────────────────────────────────
 
 export default function ListingsScreen() {
+  const tabBarScrollHandler = useTabBarScrollHandler();
   const colors   = useColors();
   const router   = useRouter();
   const insets   = useSafeAreaInsets();
@@ -141,6 +143,8 @@ export default function ListingsScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topPad + 12, paddingBottom: botPad + 96 }}
       showsVerticalScrollIndicator={false}
+      onScroll={tabBarScrollHandler}
+      scrollEventThrottle={16}
     >
       {/* Header */}
       <AnimatedReveal>

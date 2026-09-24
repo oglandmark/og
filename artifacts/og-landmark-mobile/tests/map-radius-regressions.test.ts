@@ -82,6 +82,24 @@ test('Android map overrides reuse the shared Mapbox WebView implementation', () 
   assert.match(readComponent('ExpoGoMapFallback.tsx'), /EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN/);
 });
 
+test('map surfaces expose transparent Map, Satellite, and Street View modes', () => {
+  const controls = readComponent('MapViewModes.ts');
+  const nativeFallback = readComponent('ExpoGoMapFallback.tsx');
+  const webMap = readComponent('MapViewComponent.tsx');
+  const webExplore = readComponent('ExploreMapView.tsx');
+
+  assert.match(controls, /data-map-mode="map"/);
+  assert.match(controls, /data-map-mode="satellite"/);
+  assert.match(controls, /data-map-mode="street"/);
+  assert.match(controls, /background: transparent/);
+  assert.match(controls, /google\.com\/maps\/embed\/v1\/streetview/);
+  for (const source of [nativeFallback, webMap, webExplore]) {
+    assert.match(source, /MAP_VIEW_MODE_CONTROL_HTML/);
+    assert.match(source, /MAP_VIEW_MODE_SWITCH_SCRIPT/);
+    assert.match(source, /EXPO_PUBLIC_GOOGLE_MAPS_API_KEY/);
+  }
+});
+
 test('full-screen map does not render a Search this area action', () => {
   const web = readComponent('ExploreMapView.tsx');
   const native = readComponent('ExploreMapView.native.tsx');

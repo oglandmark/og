@@ -1128,7 +1128,6 @@ function PropertyDetailMap({
   };
   colors: ReturnType<typeof useColors>;
 }) {
-  const [satellite, setSatellite] = useState(true);
   const latitude = Number.isFinite(property.location?.latitude)
     ? property.location!.latitude!
     : property.lat;
@@ -1157,23 +1156,10 @@ function PropertyDetailMap({
           <StaticMap
             latitude={latitude}
             longitude={longitude}
-            satellite={satellite}
             interactive
           />
         )}
 
-        {/* Satellite toggle — only when native map is rendering */}
-        {hasCoords && _nativeMapsAvailable && (
-          <Pressable
-            style={[styles.detailMapSatBtn, { backgroundColor: satellite ? colors.primary : colors.card, borderColor: colors.border }]}
-            onPress={() => setSatellite((v) => !v)}
-          >
-            <Feather name="layers" size={14} color={satellite ? '#fff' : colors.mutedForeground} />
-            <Text style={[styles.detailMapSatLabel, { color: satellite ? '#fff' : colors.mutedForeground }]}>
-              {satellite ? 'Satellite' : 'Map'}
-            </Text>
-          </Pressable>
-        )}
       </View>
 
       {/* Location details below map */}
@@ -1372,8 +1358,6 @@ const styles = StyleSheet.create({
   detailMapSurface:      { height: 200, overflow: 'hidden', position: 'relative' },
   detailMapNoCoords:     { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', gap: 10 },
   detailMapNoCoordsText: { fontFamily: 'Inter_400Regular', fontSize: 13 },
-  detailMapSatBtn:       { position: 'absolute', top: 10, right: 10, flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1, elevation: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
-  detailMapSatLabel:     { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   detailMapLocRow:       { flexDirection: 'row', alignItems: 'flex-start', gap: 7, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1 },
   detailMapLocText:      { fontFamily: 'Inter_400Regular', fontSize: 11, flex: 1, lineHeight: 16 },
   detailMapActions:      { flexDirection: 'row', borderTopWidth: 1 },

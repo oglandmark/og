@@ -2,8 +2,15 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, View, StyleSheet } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { Feather } from '@expo/vector-icons';
+import {
+  MAP_VIEW_MODE_CONTROL_CSS,
+  MAP_VIEW_MODE_CONTROL_HTML,
+  MAP_VIEW_MODE_CONTROL_SCRIPT,
+  MAP_VIEW_MODE_SWITCH_SCRIPT,
+} from '@/components/MapViewModes';
 
 const MAPBOX_ACCESS_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
+const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ?? '';
 
 export type ExpoGoMapPoint = {
   id?: string | number;
@@ -59,6 +66,7 @@ function buildMapHtml({
     html, body, #map { width: 100%; height: 100%; margin: 0; background: #e8f0f7; overflow: hidden; }
     .leaflet-container { touch-action: none; }
     .leaflet-control-attribution { font-size: 8px; opacity: .72; }
+    ${MAP_VIEW_MODE_CONTROL_CSS}
     .pin, .user-pin {
       position: relative;
       width: 28px; height: 28px; border-radius: 50% 50% 50% 0;
@@ -78,12 +86,19 @@ function buildMapHtml({
 </head>
 <body>
   <div id="map"></div>
+  <div id="street-view">
+    <iframe id="street-view-frame" title="Google Street View" allowfullscreen loading="eager"></iframe>
+    <div id="street-view-status" role="status"></div>
+  </div>
+  ${MAP_VIEW_MODE_CONTROL_HTML}
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     (function () {
        var points = ${pointsJson};
        var mapboxToken = ${mapboxToken};
-       var mapboxStyle = '${mapboxStyle}';
+        var googleMapsApiKey = ${toSafeJson(GOOGLE_MAPS_API_KEY)};
+        var currentMapMode = '${satellite ? 'satellite' : 'map'}';
+        var mapboxStyle = '${mapboxStyle}';
       var interactive = ${Boolean(interactive)};
       var map = L.map('map', {
         zoomControl: false,
@@ -100,6 +115,8 @@ function buildMapHtml({
          { maxZoom: 22, maxNativeZoom: 22, crossOrigin: true, attribution: '&copy; Mapbox &copy; OpenStreetMap' }
        );
        mapboxTiles.addTo(map);
+        ${MAP_VIEW_MODE_CONTROL_SCRIPT}
+        ${MAP_VIEW_MODE_SWITCH_SCRIPT}
 
       function send(type, payload) {
         window.ReactNativeWebView && window.ReactNativeWebView.postMessage(
@@ -152,6 +169,11 @@ function buildMapHtml({
         }
       }
       renderPoints(points);
+      window.__getStreetViewCenter = function() {
+        var layers = markerLayer.getLayers();
+        if (interactive && layers.length === 1) return layers[0].getLatLng();
+        return map.getCenter();
+      };
       if (${radiusKm != null}) updateArea(${latitude}, ${longitude}, ${radius});
       map.on('move', function () {
         if (areaCircle) areaCircle.setLatLng(map.getCenter());
@@ -223,6 +245,7 @@ export function ExpoGoMapFallback(props: Props) {
   const webViewRef = useRef<WebView>(null);
   const readyRef = useRef(false);
   const [mapReady, setMapReady] = useState(false);
+  const [streetViewActive, setStreetViewActive] = useState(false);
   const initialHtmlRef = useRef<string | null>(null);
   if (!initialHtmlRef.current) {
     initialHtmlRef.current = buildMapHtml({
@@ -260,10 +283,19 @@ export function ExpoGoMapFallback(props: Props) {
     syncMapState();
   }, [syncMapState, mapReady]);
 
+  useEffect(() => {
+    if (!mapReady) return;
+    const mode = props.satellite ? 'satellite' : 'map';
+    webViewRef.current?.injectJavaScript(
+      `window.__setMapViewMode && window.__setMapViewMode(${JSON.stringify(mode)}); true;`,
+    );
+  }, [props.satellite, mapReady]);
+
   const onMessage = (event: WebViewMessageEvent) => {
     try {
       const message = JSON.parse(event.nativeEvent.data) as {
         type?: string;
+        mode?: string;
         id?: string | number;
         latitude?: number;
         longitude?: number;
@@ -274,6 +306,10 @@ export function ExpoGoMapFallback(props: Props) {
          readyRef.current = true;
          setMapReady(true);
          syncMapState();
+         return;
+       }
+       if (message.type === 'mode') {
+         setStreetViewActive(message.mode === 'street');
          return;
        }
       if (message.type === 'select' && message.id != null) props.onSelect?.(message.id);
@@ -323,7 +359,7 @@ export function ExpoGoMapFallback(props: Props) {
         startInLoadingState
         renderLoading={() => <View style={styles.loading} />}
       />
-       <View pointerEvents="box-none" style={styles.zoomControls}>
+        {!streetViewActive && <View pointerEvents="box-none" style={styles.zoomControls}>
          <Pressable
            accessibilityRole="button"
            accessibilityLabel="Zoom in map"
@@ -340,7 +376,7 @@ export function ExpoGoMapFallback(props: Props) {
          >
            <Feather name="minus" size={20} color="#102a43" />
          </Pressable>
-       </View>
+        </View>}
     </View>
   );
 }

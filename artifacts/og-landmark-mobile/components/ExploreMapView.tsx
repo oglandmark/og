@@ -20,8 +20,15 @@ import {
   MAP_AREA_BLUE,
   mapAreaRadiusMeters,
 } from '@/components/mapRadius';
+import {
+  MAP_VIEW_MODE_CONTROL_CSS,
+  MAP_VIEW_MODE_CONTROL_HTML,
+  MAP_VIEW_MODE_CONTROL_SCRIPT,
+  MAP_VIEW_MODE_SWITCH_SCRIPT,
+} from '@/components/MapViewModes';
 
 const MAPBOX_ACCESS_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
+const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ?? '';
 
 export interface PropertyLike {
   id: number;
@@ -166,6 +173,7 @@ function buildExploreHtml(
     *{margin:0;padding:0;box-sizing:border-box;}
     html,body{width:100%;height:100%;background:#e8f0f7;}
     #map{width:100%;height:100%;position:absolute;top:0;left:0;background:#e8f0f7;}
+    ${MAP_VIEW_MODE_CONTROL_CSS}
     .leaflet-container{background:#e8f0f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
     .og-pin{
       background:#ffffff;color:#102a43;font-size:11px;font-weight:700;
@@ -216,6 +224,11 @@ function buildExploreHtml(
 </head>
 <body>
 <div id="map"></div>
+<div id="street-view">
+  <iframe id="street-view-frame" title="Google Street View" allowfullscreen loading="eager"></iframe>
+  <div id="street-view-status" role="status"></div>
+</div>
+${MAP_VIEW_MODE_CONTROL_HTML}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>if (!window.L) document.write('<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"><\/script>');</script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
@@ -232,8 +245,11 @@ function buildExploreHtml(
     keyboard:true,
     tap:true
   }).setView([${mapCenterLat},${mapCenterLng}],${zoom});
+   var mapboxToken = ${JSON.stringify(MAPBOX_ACCESS_TOKEN)};
+   var googleMapsApiKey = ${JSON.stringify(GOOGLE_MAPS_API_KEY)};
+   var currentMapMode = 'satellite';
    var mapboxTiles = L.tileLayer(
-     'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=' + encodeURIComponent(${JSON.stringify(MAPBOX_ACCESS_TOKEN)}),
+     'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=' + encodeURIComponent(mapboxToken),
      {
        maxZoom: 22, maxNativeZoom: 22, keepBuffer: 3,
        updateWhenIdle: false, updateWhenZooming: true,
@@ -241,6 +257,9 @@ function buildExploreHtml(
      }
    );
    mapboxTiles.addTo(map);
+   ${MAP_VIEW_MODE_CONTROL_SCRIPT}
+   ${MAP_VIEW_MODE_SWITCH_SCRIPT}
+  window.__getStreetViewCenter = function() { return map.getCenter(); };
 
   var clusterGroup = L.markerClusterGroup && ${validProps.length} > 1
     ? L.markerClusterGroup({

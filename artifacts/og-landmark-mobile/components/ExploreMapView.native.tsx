@@ -7,7 +7,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { MapAreaRange, MAP_AREA_BLUE } from '@/components/MapAreaRange';
 import {
@@ -146,14 +146,14 @@ export function ExploreMapView({
         <View
           pointerEvents="none"
           style={[styles.mapContextBadge, {
-            backgroundColor: colors?.actionGlass ?? '#173d5ed9',
-            borderColor: colors?.actionGlassBorder ?? '#ffffff55',
+            backgroundColor: '#ffffff',
+            borderColor: '#d6e0e8',
           }]}
         >
-          <Feather name="map" size={14} color={colors?.actionForeground ?? '#ffffff'} />
+          <FontAwesome5 name="map-marked-alt" size={16} color="#102a43" />
           <View>
-            <Text style={[styles.mapContextKicker, { color: colors?.gold ?? '#d9b96d' }]}>LIVE LISTINGS</Text>
-            <Text style={[styles.mapContextTitle, { color: colors?.actionForeground ?? '#ffffff' }]}>Explore the area</Text>
+            <Text style={[styles.mapContextKicker, { color: '#987332' }]}>LIVE LISTINGS</Text>
+            <Text style={[styles.mapContextTitle, { color: '#102a43' }]}>Explore the area</Text>
           </View>
         </View>
       )}
@@ -214,6 +214,8 @@ const styles = StyleSheet.create({
     position: 'absolute', top: 12, left: 12, flexDirection: 'row',
     alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 15,
     paddingHorizontal: 10, paddingVertical: 8,
+    shadowColor: '#102a43', shadowOpacity: 0.13, shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 }, elevation: 3,
   },
   mapContextKicker: { fontSize: 8, fontWeight: '800', letterSpacing: 1.1, marginBottom: 2 },
   mapContextTitle: { fontSize: 11, fontWeight: '700' },

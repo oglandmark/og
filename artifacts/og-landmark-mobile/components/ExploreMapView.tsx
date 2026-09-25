@@ -12,7 +12,7 @@ import React, { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import type { ImageSourcePropType } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { MapAreaRange } from '@/components/MapAreaRange';
 import {
   createMapAreaRadiusMessage,
@@ -454,12 +454,12 @@ export function ExploreMapView({
        {!fullScreen && (
         <View
           pointerEvents="none"
-          style={[s.mapContextBadge, { backgroundColor: colors?.actionGlass ?? '#173d5ed9', borderColor: colors?.actionGlassBorder ?? '#ffffff55' }]}
+          style={[s.mapContextBadge, { backgroundColor: '#ffffff', borderColor: '#d6e0e8' }]}
         >
-          <Feather name="map" size={14} color={colors?.actionForeground ?? '#ffffff'} />
+          <FontAwesome5 name="map-marked-alt" size={16} color="#102a43" />
           <View>
-            <Text style={[s.mapContextKicker, { color: colors?.gold ?? '#d9b96d' }]}>LIVE LISTINGS</Text>
-            <Text style={[s.mapContextTitle, { color: colors?.actionForeground ?? '#ffffff' }]}>Explore the area</Text>
+            <Text style={[s.mapContextKicker, { color: '#987332' }]}>LIVE LISTINGS</Text>
+            <Text style={[s.mapContextTitle, { color: '#102a43' }]}>Explore the area</Text>
           </View>
         </View>
       )}
@@ -535,6 +535,11 @@ const s = StyleSheet.create({
     borderRadius: 15,
     paddingHorizontal: 10,
     paddingVertical: 8,
+    shadowColor: '#102a43',
+    shadowOpacity: 0.13,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
   mapContextKicker: { fontSize: 8, fontWeight: '800', letterSpacing: 1.1, marginBottom: 2 },
   mapContextTitle: { fontSize: 11, fontWeight: '700' },

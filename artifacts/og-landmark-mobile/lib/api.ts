@@ -2,7 +2,7 @@
  * OG Landmark — Centralized API Client
  * -------------------------------------
  * Dev URL  : set EXPO_PUBLIC_API_URL in .env.local
- * Prod URL : https://oglandmark.com
+ * Prod URL : https://api.oglandmark.com
  *
  * All requests include the auth token stored in AsyncStorage.
  */
@@ -11,7 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ─── Base URL ──────────────────────────────────────────────────────────────────
 // Override via EXPO_PUBLIC_API_URL in .env.local (no trailing /api)
-// e.g.  EXPO_PUBLIC_API_URL=https://oglandmark.com
+// e.g.  EXPO_PUBLIC_API_URL=https://api.oglandmark.com
 // The mobile app's API must use the live OG Landmark backend by default.
 // EXPO_PUBLIC_DOMAIN is the Expo preview host, not the product API host, so
 // it must never silently redirect authentication requests to a temporary
@@ -19,7 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const configuredApiUrl = String(process.env.EXPO_PUBLIC_API_URL || '').trim().replace(/\/+$/, '');
 export const API_BASE: string =
   configuredApiUrl ||
-  'https://oglandmark.com';
+  'https://api.oglandmark.com';
 
 const TOKEN_KEY = '@og-landmark/api-token';
 

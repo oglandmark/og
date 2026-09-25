@@ -1,4 +1,5 @@
 import type { ImageSourcePropType } from 'react-native';
+import { API_BASE } from '@/lib/api';
 
 export type Property = {
   id: number;
@@ -843,13 +844,10 @@ export function formatAreaDisplay(area: number, areaUnit: string): { value: stri
 }
 
 // ─── Resolve backend image URL (relative or absolute) ────────────────────────
-const API_BASE_URL: string =
-  (process.env.EXPO_PUBLIC_API_URL as string | undefined) || 'https://oglandmark.com';
-
 function resolveImageUrl(url: string): string {
   if (!url) return '';
   if (url.startsWith('http')) return url;
-  return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
 }
 
 // ─── Placeholder images (cycled when backend property has no images) ───────────

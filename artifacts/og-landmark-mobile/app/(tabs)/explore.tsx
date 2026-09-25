@@ -476,6 +476,7 @@ export default function ExploreScreen() {
   const [openSection, setOpenSection]         = useState<string | null>(null);
   const [viewMode, setViewMode]               = useState<'list' | 'map'>('list');
   const [mapScreenOpen, setMapScreenOpen]     = useState(false);
+  const [mapScreenSession, setMapScreenSession] = useState(0);
   const [mapSearchFocused, setMapSearchFocused] = useState(false);
   const [searchFocused, setSearchFocused]     = useState(false);
   const [saveModalOpen, setSaveModalOpen]     = useState(false);
@@ -489,6 +490,7 @@ export default function ExploreScreen() {
   );
   const [allProperties, setAllProperties]     = useState(() => uniqueProperties(properties));
   const [nearMe, setNearMe]                   = useState<{ lat: number; lng: number; radiusKm: number } | null>(null);
+  const [mapAreaSearch, setMapAreaSearch]     = useState<{ lat: number; lng: number; radiusKm: number } | null>(null);
   const [nearMeLoading, setNearMeLoading]     = useState(false);
   const [searchedPlace, setSearchedPlace]     = useState<{ lat: number; lng: number; radiusKm: number; label: string } | null>(null);
   const [placeSuggestions, setPlaceSuggestions] = useState<AutocompleteSuggestion[]>([]);
@@ -523,7 +525,7 @@ export default function ExploreScreen() {
   }, []);
 
   useEffect(() => {
-    const radiusLocation = nearMe ?? searchedPlace;
+    const radiusLocation = nearMe ?? searchedPlace ?? mapAreaSearch;
     if (!radiusLocation && !mapBoundsFilter) {
       let cancelled = false;
       const interactionTask = InteractionManager.runAfterInteractions(() => {
@@ -601,7 +603,7 @@ export default function ExploreScreen() {
       cancelled = true;
       interactionTask.cancel();
     };
-  }, [nearMe, searchedPlace, mapBoundsFilter]);
+  }, [nearMe, searchedPlace, mapAreaSearch, mapBoundsFilter]);
 
   useEffect(() => {
     const text = query.trim();
@@ -633,7 +635,7 @@ export default function ExploreScreen() {
     let matched = allProperties.filter((p) => matchesProperty(p, filters, query));
 
     // GPS or searched-place radius filter
-    const radiusLocation = nearMe ?? searchedPlace;
+    const radiusLocation = nearMe ?? searchedPlace ?? mapAreaSearch;
     if (radiusLocation) {
       matched = matched
         .map((p) => {
@@ -659,7 +661,7 @@ export default function ExploreScreen() {
     }
 
     return radiusLocation ? matched : sortProperties(matched, filters.sortBy);
-  }, [allProperties, filters, query, nearMe, searchedPlace, mapBoundsFilter]);
+  }, [allProperties, filters, query, nearMe, searchedPlace, mapAreaSearch, mapBoundsFilter]);
 
   const loadedPages = Math.ceil(filteredProperties.length / EXPLORE_PAGE_SIZE);
   const totalPages = Math.max(1, loadedPages + (remoteHasMore ? 1 : 0));
@@ -673,7 +675,7 @@ export default function ExploreScreen() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [query, filters, nearMe, searchedPlace, mapBoundsFilter, viewMode]);
+  }, [query, filters, nearMe, searchedPlace, mapAreaSearch, mapBoundsFilter, viewMode]);
 
   const draftResultCount = useMemo(
     () => allProperties.filter((p) => matchesProperty(p, draftFilters, query)).length,
@@ -682,12 +684,14 @@ export default function ExploreScreen() {
 
   const activeChips = useMemo(() => buildChips(filters, query), [filters, query]);
 
-  const hasActiveFilters = activeChips.length > 0;
+  const activeFilterCount = activeChips.length
+    + Number(Boolean(nearMe || searchedPlace || mapAreaSearch || mapBoundsFilter));
+  const hasActiveFilters = activeFilterCount > 0;
 
   const loadMoreProperties = useCallback(async (): Promise<boolean> => {
     if (remoteLoadingMore || !remoteHasMore || isProjectsMode || viewMode !== 'list') return false;
     setRemoteLoadingMore(true);
-    const radiusLocation = nearMe ?? searchedPlace;
+    const radiusLocation = nearMe ?? searchedPlace ?? mapAreaSearch;
     const geoFilters = radiusLocation
       ? { lat: radiusLocation.lat, lng: radiusLocation.lng, radiusKm: radiusLocation.radiusKm }
       : mapBoundsFilter
@@ -715,7 +719,7 @@ export default function ExploreScreen() {
     }
   }, [
     remoteLoadingMore, remoteHasMore, isProjectsMode, viewMode,
-    nearMe, searchedPlace, mapBoundsFilter, remoteOffset,
+    nearMe, searchedPlace, mapAreaSearch, mapBoundsFilter, remoteOffset,
   ]);
 
   const handlePageChange = useCallback(async (page: number) => {
@@ -755,6 +759,11 @@ export default function ExploreScreen() {
   const isAgriDraft         = selectedTypes.some((t) => t === 'Agriculture Land') || selectedTypes.length === 0;
 
   // ── Handlers ───────────────────────────────────────────────────────────────
+
+  const openMapScreen = useCallback(() => {
+    setMapScreenSession((session) => session + 1);
+    setMapScreenOpen(true);
+  }, []);
 
   const handleSearchSubmit = useCallback(() => {
     if (query.trim()) {
@@ -799,12 +808,14 @@ export default function ExploreScreen() {
     setIsProjectsMode(false);
     setNearMe(null);
     setSearchedPlace(null);
+    setMapAreaSearch(null);
     setMapBoundsFilter(null);
   }, []);
 
   const handleNearMe = useCallback(async () => {
     if (nearMe) {
       setNearMe(null);
+      setMapAreaSearch(null);
       setGeoError('');
       setMapScreenOpen(false);
       setViewMode('list');
@@ -812,8 +823,9 @@ export default function ExploreScreen() {
     }
     setNearMeLoading(true);
     setGeoError('');
+    setMapAreaSearch(null);
     setViewMode('map');
-    setMapScreenOpen(true);
+    openMapScreen();
     try {
       const pos = await getCurrentPosition();
       if (!pos) {
@@ -828,7 +840,7 @@ export default function ExploreScreen() {
     } finally {
       setNearMeLoading(false);
     }
-  }, [nearMe]);
+  }, [nearMe, openMapScreen]);
 
   const handlePlaceSuggestion = useCallback(async (suggestion: AutocompleteSuggestion) => {
     const details = await fetchPlaceDetails(suggestion.placeId);
@@ -852,11 +864,12 @@ export default function ExploreScreen() {
       label,
     });
     setNearMe(null);
+    setMapAreaSearch(null);
     setMapBoundsFilter(null);
     setViewMode('map');
-    setMapScreenOpen(true);
+    openMapScreen();
     addRecentSearch(label).then(() => getRecentSearches().then(setRecentSearches)).catch(() => undefined);
-  }, []);
+  }, [openMapScreen]);
 
   const openFilterSheet = useCallback((section?: string) => {
     setDraftFilters({ ...filters });
@@ -875,6 +888,14 @@ export default function ExploreScreen() {
     setSearchFocused(false);
     setViewMode('list');
   }, []);
+
+  const applyMapAreaSearch = useCallback((area: { lat: number; lng: number; radiusKm: number }) => {
+    setMapAreaSearch(area);
+    setNearMe(null);
+    setSearchedPlace(null);
+    setMapBoundsFilter(null);
+    closeMapScreen();
+  }, [closeMapScreen]);
 
   const handleSaveSearch = useCallback(async () => {
     if (!isLoggedIn) {
@@ -956,7 +977,7 @@ export default function ExploreScreen() {
               style={[ex.searchInput, { color: colors.foreground }]}
             />
             {query.length > 0 && (
-              <Pressable onPress={() => { setQuery(''); setSearchedPlace(null); setPlaceSuggestions([]); }} hitSlop={8}>
+              <Pressable onPress={() => { setQuery(''); setSearchedPlace(null); setMapAreaSearch(null); setPlaceSuggestions([]); }} hitSlop={8}>
                 <Feather name="x-circle" size={16} color={colors.mutedForeground} />
               </Pressable>
             )}
@@ -966,14 +987,14 @@ export default function ExploreScreen() {
            <Pressable onPress={() => openFilterSheet()} style={({ pressed }) => [ex.filterBtn, { backgroundColor: hasActiveFilters ? colors.selectionBackground : colors.glassCard, borderColor: hasActiveFilters ? colors.selectionBorder : colors.glassBorder, borderWidth: hasActiveFilters ? 1.5 : 1, opacity: pressed ? 0.76 : 1 }]}>
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceRaised + '18' }]} />
              <Feather name="sliders" size={17} color={hasActiveFilters ? colors.selectionForeground : colors.foreground} />
-            {hasActiveFilters && <View style={[ex.filterDot, { backgroundColor: colors.gold }]}><Text style={[ex.filterDotText, { color: '#1c2024' }]}>{activeChips.length}</Text></View>}
+            {hasActiveFilters && <View style={[ex.filterDot, { backgroundColor: colors.gold }]}><Text style={[ex.filterDotText, { color: '#1c2024' }]}>{activeFilterCount}</Text></View>}
           </Pressable>
 
            {/* Map action */}
            <Pressable
              onPress={() => {
                setViewMode('map');
-               setMapScreenOpen(true);
+               openMapScreen();
              }}
              style={({ pressed }) => [
                ex.mapAction,
@@ -1272,8 +1293,9 @@ export default function ExploreScreen() {
 
           <View style={ex.mapStage}>
             <ExploreMapView
-               key={nearMe ? 'near-me-10km' : 'map-default'}
+               key={`${nearMe ? 'near-me-10km' : 'map-default'}-${mapScreenSession}`}
               fullScreen
+              initialRadiusKm={mapAreaSearch?.radiusKm ?? (nearMe ? nearMe.radiusKm : undefined)}
               properties={filteredProperties.map((p: any) => ({
                 ...p,
                 distance: p._distLabel,
@@ -1287,8 +1309,9 @@ export default function ExploreScreen() {
               }}
               userLat={nearMe?.lat}
               userLng={nearMe?.lng}
-              centerLat={searchedPlace?.lat}
-              centerLng={searchedPlace?.lng}
+              centerLat={mapAreaSearch?.lat ?? searchedPlace?.lat}
+              centerLng={mapAreaSearch?.lng ?? searchedPlace?.lng}
+              onApplyArea={applyMapAreaSearch}
             />
 
              {nearMeLoading && !nearMe && (
@@ -1340,6 +1363,7 @@ export default function ExploreScreen() {
                     onPress={() => {
                       setQuery('');
                       setSearchedPlace(null);
+                      setMapAreaSearch(null);
                       setPlaceSuggestions([]);
                     }}
                     hitSlop={10}

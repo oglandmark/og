@@ -150,13 +150,30 @@ test('web map mode controls update loaded frames directly and message unloaded f
   }]);
 });
 
-test('full-screen map does not render a Search this area action', () => {
+test('full-screen map lets users show the selected radius results in Explore', () => {
   const web = readComponent('ExploreMapView.tsx');
   const native = readComponent('ExploreMapView.native.tsx');
+  const range = readComponent('MapAreaRange.tsx');
+  const explore = readFileSync(resolve(mobileRoot, 'app/(tabs)/explore.tsx'), 'utf8');
 
-  assert.doesNotMatch(web, /Search this area/);
-  assert.doesNotMatch(native, /Search this area/);
+  assert.match(web, /onApply=\{fullScreen && onApplyArea/);
+  assert.match(native, /onApply=\{fullScreen && onApplyArea/);
+  assert.match(range, /Show \{resultCount\} properties in Explore/);
+  assert.match(explore, /onApplyArea=\{applyMapAreaSearch\}/);
+  assert.match(explore, /setMapAreaSearch\(area\)/);
+  assert.match(explore, /nearMe \?\? searchedPlace \?\? mapAreaSearch/);
   assert.match(native, /onChange=\{setAreaRadiusKm\}/);
+});
+
+test('Explore map opens in street-map mode by default', () => {
+  const web = readComponent('ExploreMapView.tsx');
+  const native = readComponent('ExploreMapView.native.tsx');
+  const fallback = readComponent('ExpoGoMapFallback.tsx');
+
+  assert.match(web, /var currentMapMode = 'map'/);
+  assert.match(web, /useState<MapViewMode>\('map'\)/);
+  assert.doesNotMatch(native, /\bsatellite\b/);
+  assert.match(fallback, /useState<MapViewMode>\(props\.satellite \? 'satellite' : 'map'\)/);
 });
 
 test('native Mapbox maps keep the area center synced after map movement', () => {

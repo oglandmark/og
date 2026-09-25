@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import {
@@ -26,6 +26,8 @@ interface Props {
   value: number;
   onChange: (value: number) => void;
   onChangeEnd?: (value: number) => void;
+  onApply?: () => void;
+  resultCount?: number;
   colors: {
     card: string;
     border: string;
@@ -33,7 +35,7 @@ interface Props {
     mutedForeground: string;
   };
 }
-export function MapAreaRange({ value, onChange, onChangeEnd, colors }: Props) {
+export function MapAreaRange({ value, onChange, onChangeEnd, onApply, resultCount = 0, colors }: Props) {
   const [trackWidth, setTrackWidth] = React.useState(0);
   const glassBlur = Platform.OS === 'web'
     ? { backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any
@@ -130,6 +132,23 @@ export function MapAreaRange({ value, onChange, onChangeEnd, colors }: Props) {
             {formatMapAreaRange(MAP_AREA_MAX_KM)}
           </Text>
         </View>
+        {onApply && (
+          <Pressable
+            onPress={onApply}
+            accessibilityRole="button"
+            accessibilityLabel={`Show ${resultCount} properties from this area in Explore`}
+            style={({ pressed }) => [
+              styles.applyButton,
+              { backgroundColor: colors.foreground, opacity: pressed ? 0.82 : 1 },
+            ]}
+          >
+            <Feather name="list" size={14} color={colors.card} />
+            <Text style={[styles.applyText, { color: colors.card }]}>
+              Show {resultCount} properties in Explore
+            </Text>
+            <Feather name="arrow-right" size={14} color={colors.card} />
+          </Pressable>
+        )}
     </View>
   );
 }
@@ -183,4 +202,15 @@ const styles = StyleSheet.create({
   },
   trackLabels: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 1 },
   trackLabel: { fontFamily: 'Inter_500Medium', fontSize: 9 },
+  applyButton: {
+    minHeight: 38,
+    marginTop: 11,
+    borderRadius: 10,
+    paddingHorizontal: 11,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  applyText: { flex: 1, fontFamily: 'Inter_700Bold', fontSize: 11 },
 });

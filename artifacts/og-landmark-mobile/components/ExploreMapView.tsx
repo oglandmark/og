@@ -19,6 +19,7 @@ import {
   MAP_AREA_DEFAULT_KM,
   MAP_AREA_BLUE,
   mapAreaRadiusMeters,
+  normalizeMapAreaRange,
 } from '@/components/mapRadius';
 import {
   MAP_VIEW_MODE_SWITCH_SCRIPT,
@@ -61,6 +62,8 @@ interface Props {
   centerLat?: number;
   centerLng?: number;
   fullScreen?: boolean;
+  initialRadiusKm?: number;
+  onApplyArea?: (area: { lat: number; lng: number; radiusKm: number }) => void;
 }
 
 const OKARA_DISTRICT_CENTER = { latitude: 30.8105, longitude: 73.4597 };
@@ -255,9 +258,9 @@ function buildExploreHtml(
     tap:true
   }).setView([${mapCenterLat},${mapCenterLng}],${zoom});
    var mapboxToken = ${JSON.stringify(MAPBOX_ACCESS_TOKEN)};
-   var currentMapMode = 'satellite';
+   var currentMapMode = 'map';
    var mapboxTiles = L.tileLayer(
-     'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=' + encodeURIComponent(mapboxToken),
+     'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token=' + encodeURIComponent(mapboxToken),
      {
        maxZoom: 22, maxNativeZoom: 22, keepBuffer: 3,
        updateWhenIdle: false, updateWhenZooming: true,
@@ -320,7 +323,13 @@ function buildExploreHtml(
         point
       ) <= radiusKm;
     }).length;
-    window.parent.postMessage({ type: 'mapAreaCount', count: count }, '*');
+    window.parent.postMessage({
+      type: 'mapAreaCount',
+      count: count,
+      latitude: center.lat,
+      longitude: center.lng,
+      radiusKm: radiusKm
+    }, '*');
   }
 
   window.addEventListener('message', function(event) {
@@ -379,10 +388,18 @@ export function ExploreMapView({
   centerLat,
   centerLng,
   fullScreen,
+  initialRadiusKm,
+  onApplyArea,
 }: Props) {
-  const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
+  const [areaRadiusKm, setAreaRadiusKm] = useState(() =>
+    normalizeMapAreaRange(initialRadiusKm ?? MAP_AREA_DEFAULT_KM),
+  );
   const [areaPropertyCount, setAreaPropertyCount] = useState(0);
-  const [mapMode, setMapMode] = useState<MapViewMode>('satellite');
+  const [areaCenter, setAreaCenter] = useState(() => ({
+    latitude: centerLat ?? userLat ?? OKARA_DISTRICT_CENTER.latitude,
+    longitude: centerLng ?? userLng ?? OKARA_DISTRICT_CENTER.longitude,
+  }));
+  const [mapMode, setMapMode] = useState<MapViewMode>('map');
   const channel = useMemo(() => `og-explore-map-${Math.random().toString(36).slice(2)}`, []);
   const iframeRef = React.useRef<any>(null);
   const mapGlass = colors?.mapGlass ?? 'rgba(255, 255, 255, 0.78)';
@@ -401,6 +418,9 @@ export function ExploreMapView({
         onSelect(data.id);
       } else if (data.type === 'mapAreaCount' && Number.isFinite(data.count)) {
         setAreaPropertyCount(Math.max(0, Math.round(data.count)));
+        if (Number.isFinite(data.latitude) && Number.isFinite(data.longitude)) {
+          setAreaCenter({ latitude: data.latitude, longitude: data.longitude });
+        }
       }
     };
     window.addEventListener('message', handler);
@@ -458,12 +478,23 @@ export function ExploreMapView({
         }}
       />
        <View style={s.rangeOverlay}>
-         <MapAreaRange value={areaRadiusKm} onChange={setAreaRadiusKm} onChangeEnd={(value) => syncAreaRadius(value, true)} colors={{
+        <MapAreaRange
+          value={areaRadiusKm}
+          onChange={setAreaRadiusKm}
+          onChangeEnd={(value) => syncAreaRadius(value, true)}
+          onApply={fullScreen && onApplyArea ? () => onApplyArea({
+            lat: areaCenter.latitude,
+            lng: areaCenter.longitude,
+            radiusKm: areaRadiusKm,
+          }) : undefined}
+          resultCount={areaPropertyCount}
+          colors={{
            card: colors?.mapGlass ?? 'rgba(255, 255, 255, 0.78)',
            border: colors?.mapGlassBorder ?? 'rgba(255, 255, 255, 0.88)',
           foreground: colors?.foreground ?? '#102a43',
           mutedForeground: colors?.mutedForeground ?? '#587089',
-        }} />
+         }}
+        />
       </View>
        {!fullScreen && (
         <View

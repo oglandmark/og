@@ -14,6 +14,7 @@ import {
   countPointsWithinRadius,
   MAP_AREA_DEFAULT_KM,
   mapAreaZoomForRadius,
+  normalizeMapAreaRange,
 } from '@/components/mapRadius';
 import { ExpoGoMapFallback, type ExpoGoMapPoint } from '@/components/ExpoGoMapFallback';
 
@@ -50,6 +51,8 @@ interface Props {
   count?: number;
   colors?: any;
   fullScreen?: boolean;
+  initialRadiusKm?: number;
+  onApplyArea?: (area: { lat: number; lng: number; radiusKm: number }) => void;
 }
 
 const OKARA_DISTRICT_CENTER = { latitude: 30.8105, longitude: 73.4597 };
@@ -73,11 +76,17 @@ export function ExploreMapView({
   centerLng,
   colors,
   fullScreen,
+  initialRadiusKm,
+  onApplyArea,
 }: Props) {
   const initialLat = centerLat ?? userLat ?? OKARA_DISTRICT_CENTER.latitude;
   const initialLng = centerLng ?? userLng ?? OKARA_DISTRICT_CENTER.longitude;
-  const [areaRadiusKm, setAreaRadiusKm] = useState(MAP_AREA_DEFAULT_KM);
-  const [committedZoom, setCommittedZoom] = useState(mapAreaZoomForRadius(MAP_AREA_DEFAULT_KM));
+  const [areaRadiusKm, setAreaRadiusKm] = useState(() =>
+    normalizeMapAreaRange(initialRadiusKm ?? MAP_AREA_DEFAULT_KM),
+  );
+  const [committedZoom, setCommittedZoom] = useState(() =>
+    mapAreaZoomForRadius(initialRadiusKm ?? MAP_AREA_DEFAULT_KM),
+  );
   const [areaCenter, setAreaCenter] = useState({ latitude: initialLat, longitude: initialLng });
 
   useEffect(() => {
@@ -129,7 +138,6 @@ export function ExploreMapView({
         zoom={committedZoom}
         points={points}
         radiusKm={areaRadiusKm}
-        satellite
         interactive
         modeControlTop={fullScreen ? 60 : 100}
         modeControlLeft={fullScreen ? 60 : 12}
@@ -195,6 +203,12 @@ export function ExploreMapView({
           onChangeEnd={(nextRadiusKm) => {
             setCommittedZoom(mapAreaZoomForRadius(nextRadiusKm));
           }}
+          onApply={fullScreen && onApplyArea ? () => onApplyArea({
+            lat: areaCenter.latitude,
+            lng: areaCenter.longitude,
+            radiusKm: areaRadiusKm,
+          }) : undefined}
+          resultCount={areaPropertyCount}
           colors={{
             card: colors?.mapGlassPanel ?? 'rgba(255, 255, 255, 0.68)',
             border: colors?.mapGlassPanelBorder ?? 'rgba(255, 255, 255, 0.94)',

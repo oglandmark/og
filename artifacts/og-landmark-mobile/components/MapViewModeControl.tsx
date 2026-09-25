@@ -1,12 +1,13 @@
 import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 
 export type MapViewMode = 'map' | 'satellite';
 
-const OPTIONS: { value: MapViewMode; label: string }[] = [
-  { value: 'map', label: 'Map' },
-  { value: 'satellite', label: 'Satellite' },
+const OPTIONS: { value: MapViewMode; label: string; icon: 'map-marked-alt' | 'satellite' }[] = [
+  { value: 'map', label: 'Map', icon: 'map-marked-alt' },
+  { value: 'satellite', label: 'Satellite', icon: 'satellite' },
 ];
 
 interface Props {
@@ -38,8 +39,8 @@ export function MapViewModeControl({
       styles.container,
       horizontal && styles.horizontalContainer,
       {
-        backgroundColor: colors.mapGlass,
-        borderColor: colors.mapGlassBorder,
+        backgroundColor: '#ffffff',
+        borderColor: '#d6e0e8',
       },
       glassBlur,
       { top, left, right },
@@ -60,17 +61,24 @@ export function MapViewModeControl({
               horizontal && { height: buttonHeight, minHeight: buttonHeight },
               horizontal && option.value === 'map' && [
                 styles.firstHorizontalButton,
-                { borderRightColor: colors.mapGlassBorder },
+                { borderRightColor: '#d6e0e8' },
               ],
               { borderBottomColor: selected ? colors.gold : 'transparent' },
             ]}
           >
-            <Text style={[
-              styles.label,
-              { color: selected ? colors.gold : colors.foreground },
-            ]}>
-              {option.label}
-            </Text>
+            <View style={styles.optionContent}>
+              <FontAwesome5
+                name={option.icon}
+                size={14}
+                color={selected ? '#987332' : '#102a43'}
+              />
+              <Text style={[
+                styles.label,
+                { color: selected ? '#987332' : '#102a43' },
+              ]}>
+                {option.label}
+              </Text>
+            </View>
           </Pressable>
         );
       })}
@@ -99,7 +107,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 0,
     padding: 0,
-    borderWidth: 0,
+    borderWidth: 1,
     overflow: 'hidden',
   },
   button: {
@@ -120,8 +128,14 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: '#d6e0e8',
   },
+  optionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
   label: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
 });

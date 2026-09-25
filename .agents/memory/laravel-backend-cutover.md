@@ -15,6 +15,12 @@ The public Node website can remain the asset host while an opt-in `LARAVEL_API_U
 
 **How to apply:** Verify the Laravel API origin first, set the proxy only after MySQL/SMTP/media smoke checks pass, and do not silently fail over individual requests because split writes would make rollback unsafe.
 
+An HTTP 200 from `/api/healthz` is not enough to approve a cutover: inspect the JSON readiness fields, then test an OPTIONS preflight from the actual Expo web origin.
+
+**Why:** A reachable Hostinger health route can report a disconnected database, while CORS may allow the public website but reject the separate Expo preview origin.
+
+**How to apply:** Before changing `EXPO_PUBLIC_API_URL`, verify database, media, and SMTP readiness and confirm that the mobile web origin receives `Access-Control-Allow-Origin`.
+
 New Hostinger installs may seed an empty `app_data(id=1)` row, but that seed must be insert-only; importing existing canonical listings and users remains a separate, explicitly verified operation.
 
 **Why:** The canonical document contains the application's listings and account state, so a normal seed must never replace an existing production document.

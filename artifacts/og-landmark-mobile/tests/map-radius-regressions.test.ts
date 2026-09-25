@@ -97,6 +97,7 @@ test('map surfaces expose Map and Satellite modes without Street View', () => {
 
   assert.match(controlComponent, /label: 'Map'/);
   assert.match(controlComponent, /label: 'Satellite'/);
+  assert.match(exploreScreen, /FontAwesome5 name="map-marked-alt"/);
   assert.doesNotMatch(controlComponent, /Street View/);
   assert.match(controlComponent, /backgroundColor: '#ffffff'/);
   assert.match(controlComponent, /icon: 'map-marked-alt'/);

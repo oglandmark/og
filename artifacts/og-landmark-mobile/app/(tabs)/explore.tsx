@@ -10,7 +10,7 @@ import {
   ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
-import { Feather } from '@expo/vector-icons';
+import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
@@ -983,11 +983,7 @@ export default function ExploreScreen() {
              accessibilityLabel="Open map view"
            >
              <Text style={[ex.mapActionText, { color: colors.foreground }]}>Map</Text>
-             <View style={ex.mapGlyph} accessibilityElementsHidden>
-               <View style={[ex.mapPanel, { backgroundColor: colors.actionDeep, borderColor: colors.actionDeep }]} />
-               <View style={[ex.mapPanel, { backgroundColor: colors.card, borderColor: colors.actionDeep }]} />
-               <View style={[ex.mapPanel, { backgroundColor: colors.actionDeep, borderColor: colors.actionDeep }]} />
-             </View>
+              <FontAwesome5 name="map-marked-alt" size={14} color="#102a43" />
            </Pressable>
         </View>
 
@@ -2061,8 +2057,6 @@ const ex = StyleSheet.create({
   filterDotText:   { fontFamily: 'Inter_700Bold', fontSize: 8 },
   mapAction:       { width: 72, height: 50, borderRadius: 17, borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   mapActionText:   { fontFamily: 'Inter_600SemiBold', fontSize: 12, letterSpacing: 0.2 },
-  mapGlyph:        { height: 17, flexDirection: 'row', alignItems: 'center', gap: 1 },
-  mapPanel:        { width: 5, height: 16, borderRadius: 1, borderWidth: StyleSheet.hairlineWidth, transform: [{ skewY: '-10deg' }] },
   // Recent searches
   recentDropdown:  { borderRadius: 14, borderWidth: 1, marginBottom: 6, overflow: 'hidden' },
   recentHeader:    { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 10 },

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Services\JsonStore;
 use App\Services\MediaStorage;
+use App\Services\DeveloperApiService;
+use App\Services\NotificationDeliveryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -37,6 +39,23 @@ class ApiController extends Controller
 
         if (($segments[0] ?? '') === 'properties') {
             return $this->properties($request, array_slice($segments, 1), $method);
+        }
+
+        if (($segments[0] ?? '') === 'projects') {
+            return app(DeveloperApiService::class)->publicProjects($request, array_slice($segments, 1), $method);
+        }
+
+        if (($segments[0] ?? '') === 'developer') {
+            $user = $this->currentUser($request, true);
+            return app(DeveloperApiService::class)->handle($request, array_slice($segments, 1), $method, $user);
+        }
+
+        if (($segments[0] ?? '') === 'saved-searches') {
+            return $this->savedSearches($request, array_slice($segments, 1), $method);
+        }
+
+        if (($segments[0] ?? '') === 'announcements') {
+            return $this->publicAnnouncement($request, array_slice($segments, 1), $method);
         }
 
         if (($segments[0] ?? '') === 'admin') {
@@ -182,12 +201,19 @@ class ApiController extends Controller
             return $this->json(['user' => $this->safeUser($user), 'token' => $this->createSession($user)]);
         }
 
+        if ($action === 'social' && $method === 'POST') {
+            return $this->json([
+                'error' => 'Social sign-in is unavailable until this app is configured to verify the provider token.',
+                'code' => 'SOCIAL_AUTH_NOT_CONFIGURED',
+            ], 501);
+        }
+
         if ($action === 'register' && $method === 'POST') {
             $input = $request->all();
             $validator = Validator::make($input, [
                 'email' => ['required', 'email', 'max:320'],
                 'password' => ['required', 'min:8'],
-                'role' => ['nullable', 'in:buyer,agent,Buyer,Agent'],
+                'role' => ['nullable', 'in:buyer,agent,seller,developer,Buyer,Agent,Seller,Developer'],
             ]);
             if ($validator->fails()) {
                 return $this->json(['error' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
@@ -199,7 +225,12 @@ class ApiController extends Controller
                 return $this->json(['error' => 'An account with this email already exists.'], 409);
             }
             $name = trim((string) ($input['name'] ?? trim(($input['firstName'] ?? '') . ' ' . ($input['lastName'] ?? ''))));
-            $role = strtolower((string) ($input['role'] ?? 'buyer')) === 'agent' ? 'Agent' : 'Buyer';
+            $role = match (strtolower((string) ($input['role'] ?? 'buyer'))) {
+                'agent' => 'Agent',
+                'seller' => 'Seller',
+                'developer' => 'Developer',
+                default => 'Buyer',
+            };
             $user = [
                 'id' => JsonStore::nextId($data),
                 'name' => $name !== '' ? $name : 'OG Landmark User',
@@ -300,15 +331,54 @@ class ApiController extends Controller
         }
 
         if ($action === 'admin-verify' && $method === 'POST') {
-            $user = $this->findUserByEmail((string) $request->input('email'));
+            $email = strtolower(trim((string) $request->input('email')));
+            $user = $this->findUserByEmail($email);
             if (!$user || !$this->isAdmin($user) || !$this->verifyLegacyPassword((string) $request->input('password'), (string) ($user['password'] ?? ''))) {
                 return $this->json(['error' => 'Invalid admin credentials.'], 401);
             }
-            return $this->json(['success' => true, 'message' => 'Admin verification successful.']);
+            if (!config('mail.mailers.smtp.username') || !config('mail.mailers.smtp.password')) {
+                return $this->json(['error' => 'Admin verification email is not configured.'], 503);
+            }
+            $code = (string) random_int(100000, 999999);
+            try {
+                DB::table('auth_challenges')->updateOrInsert(
+                    ['email' => $email, 'purpose' => 'admin-login'],
+                    [
+                        'code_hash' => hash('sha256', $code),
+                        'attempts' => 0,
+                        'expires_at' => now()->addMinutes(10),
+                    ],
+                );
+                Mail::raw("Your OG Landmark admin sign-in code is {$code}. It expires in 10 minutes. Do not share this code.", function ($message) use ($email) {
+                    $message->to($email)->subject('OG Landmark — Admin Sign-in Code');
+                });
+            } catch (\Throwable $exception) {
+                Log::error('Admin sign-in code could not be delivered.', ['error' => $exception->getMessage()]);
+                return $this->json(['error' => 'Admin verification email could not be sent.'], 503);
+            }
+            return $this->json(['success' => true, 'message' => 'Verification code sent.']);
         }
 
         if ($action === 'admin-otp' && $method === 'POST') {
-            return $this->json(['error' => 'Admin OTP is not configured in this environment.'], 503);
+            $email = strtolower(trim((string) $request->input('email')));
+            $code = trim((string) $request->input('otp'));
+            $user = $this->findUserByEmail($email);
+            if (!$user || !$this->isAdmin($user) || $code === '') {
+                return $this->json(['error' => 'Invalid or expired admin verification code.'], 400);
+            }
+            $challenge = $this->consumeChallenge($email, 'admin-login', $code);
+            if (!$challenge['ok']) {
+                return $this->json([
+                    'error' => $challenge['reason'] === 'expired'
+                        ? 'Admin verification code has expired. Please sign in again.'
+                        : 'Incorrect admin verification code.',
+                ], 400);
+            }
+            return $this->json([
+                'success' => true,
+                'user' => $this->safeUser($user),
+                'token' => $this->createSession($user),
+            ]);
         }
 
         return $this->json(['error' => 'Not found'], 404);
@@ -424,6 +494,25 @@ class ApiController extends Controller
         if (!$this->isAdmin($current) && (string) ($property['sellerId'] ?? $property['userId'] ?? '') !== (string) ($current['id'] ?? '')) {
             return $this->json(['error' => 'Forbidden'], 403);
         }
+        if ($method === 'PATCH' && $action === 'resubmit') {
+            $reviewStatus = strtolower((string) ($property['approvalStatus'] ?? $property['listingStatus'] ?? ''));
+            if (!in_array($reviewStatus, ['rejected', 'changes requested', 'draft', 'needs changes', 'needs updates'], true)) {
+                return $this->json(['error' => 'Only a draft or listing needing corrections can be resubmitted.'], 409);
+            }
+            $data['properties'][$index]['approvalStatus'] = 'Pending';
+            $data['properties'][$index]['listingStatus'] = 'Pending';
+            $data['properties'][$index]['submissionState'] = 'submitted';
+            $data['properties'][$index]['submittedAt'] = now()->toISOString();
+            $data['properties'][$index]['updatedAt'] = now()->toISOString();
+            unset($data['properties'][$index]['rejectionReason'], $data['properties'][$index]['changeRequest']);
+            $data['properties'][$index]['submissionHistory'][] = [
+                'action' => 'resubmitted',
+                'by' => $current['id'],
+                'createdAt' => now()->toISOString(),
+            ];
+            JsonStore::write($data);
+            return $this->json($data['properties'][$index]);
+        }
         if ($method === 'DELETE') {
             array_splice($data['properties'], $index, 1);
             JsonStore::write($data);
@@ -464,10 +553,31 @@ class ApiController extends Controller
                 'pendingApprovals' => count(array_filter($properties, fn ($p) => in_array($p['approvalStatus'] ?? '', ['Pending', 'Changes Requested'], true))),
                 'activeListings' => count(array_filter($properties, fn ($p) => ($p['listingStatus'] ?? $p['approvalStatus'] ?? '') === 'Active')),
                 'featuredListings' => count(array_filter($properties, fn ($p) => !empty($p['featured']))),
+                'pendingReports' => count(array_filter($data['reports'] ?? [], fn ($report) => strtolower((string) ($report['status'] ?? 'pending')) === 'pending')),
+                'totalReports' => count($data['reports'] ?? []),
                 'totalViews' => array_sum(array_map(fn ($p) => (int) ($p['views'] ?? 0), $properties)),
             ]);
         }
-        if ($resource === 'properties' && $method === 'GET' && $id === null) return $this->json($data['properties'] ?? []);
+        if ($resource === 'properties' && $id !== null && ($parts[2] ?? '') === 'feature' && $method === 'PATCH') {
+            return $this->properties($request, [$id, 'feature'], 'PATCH');
+        }
+        if ($resource === 'properties' && $id !== null && ($parts[2] ?? '') === 'verify' && $method === 'PATCH') {
+            return $this->properties($request, [$id, 'verify'], 'PATCH');
+        }
+        if ($resource === 'properties' && $id !== null && $method === 'DELETE') {
+            return $this->properties($request, [$id], 'DELETE');
+        }
+        if ($resource === 'properties' && $method === 'GET' && $id === null) {
+            $properties = collect($data['properties'] ?? []);
+            if ($request->filled('status') && strtolower((string) $request->input('status')) !== 'all') {
+                $status = strtolower((string) $request->input('status'));
+                $properties = $properties->filter(fn ($property) =>
+                    strtolower((string) ($property['approvalStatus'] ?? $property['listingStatus'] ?? '')) === $status
+                );
+            }
+            $limit = max(1, min(500, (int) $request->input('limit', 500)));
+            return $this->json($properties->take($limit)->values());
+        }
         if ($resource === 'properties' && $id !== null && ($parts[2] ?? '') === 'review' && $method === 'GET') {
             $property = $this->findById($data['properties'] ?? [], $id);
             if (!$property) return $this->json(['error' => 'Property not found'], 404);
@@ -478,22 +588,194 @@ class ApiController extends Controller
                 'audit' => $property['reviewHistory'] ?? [],
             ]);
         }
-        if ($resource === 'users' && $method === 'GET' && $id === null) return $this->json(array_map(fn ($u) => $this->safeUser($u), $data['users'] ?? []));
+        if ($resource === 'users' && $method === 'GET' && $id === null) {
+            $users = collect($data['users'] ?? []);
+            if ($request->filled('role') && strtolower((string) $request->input('role')) !== 'all') {
+                $role = strtolower((string) $request->input('role'));
+                $users = $users->filter(fn ($user) => strtolower((string) ($user['role'] ?? '')) === $role);
+            }
+            $limit = max(1, min(500, (int) $request->input('limit', 500)));
+            return $this->json($users->take($limit)->map(fn ($user) => $this->safeUser($user))->values());
+        }
         if ($resource === 'users' && $id !== null && $method === 'PATCH' && ($parts[2] ?? '') === 'role') {
             $index = $this->indexById($data['users'] ?? [], $id);
             if ($index === null) return $this->json(['error' => 'User not found'], 404);
-            $data['users'][$index]['role'] = $request->input('role', $data['users'][$index]['role']);
+            $roles = ['buyer' => 'Buyer', 'seller' => 'Seller', 'agent' => 'Agent', 'developer' => 'Developer', 'admin' => 'Admin'];
+            $requestedRole = strtolower(trim((string) $request->input('role', '')));
+            if (!isset($roles[$requestedRole])) return $this->json(['error' => 'Unsupported account role.'], 422);
+            $targetIsAdmin = strtolower((string) ($data['users'][$index]['role'] ?? '')) === 'admin';
+            if ($targetIsAdmin && $requestedRole !== 'admin') {
+                $adminCount = collect($data['users'] ?? [])->filter(fn ($user) => strtolower((string) ($user['role'] ?? '')) === 'admin')->count();
+                if ((string) $data['users'][$index]['id'] === (string) $admin['id'] || $adminCount <= 1) {
+                    return $this->json(['error' => 'The signed-in or final admin account cannot be demoted.'], 409);
+                }
+            }
+            $data['users'][$index]['role'] = $roles[$requestedRole];
             JsonStore::write($data);
             return $this->json($this->safeUser($data['users'][$index]));
         }
         if ($resource === 'users' && $id !== null && $method === 'DELETE') {
             $index = $this->indexById($data['users'] ?? [], $id);
             if ($index === null) return $this->json(['error' => 'User not found'], 404);
+            if (strtolower((string) ($data['users'][$index]['role'] ?? '')) === 'admin') {
+                $adminCount = collect($data['users'] ?? [])->filter(fn ($user) => strtolower((string) ($user['role'] ?? '')) === 'admin')->count();
+                if ((string) $data['users'][$index]['id'] === (string) $admin['id'] || $adminCount <= 1) {
+                    return $this->json(['error' => 'The signed-in or final admin account cannot be deleted.'], 409);
+                }
+            }
             array_splice($data['users'], $index, 1); JsonStore::write($data); return response()->noContent();
         }
-        if ($resource === 'reports') return $this->crudNamed($request, $data, 'reports', $id, $method);
-        if ($resource === 'announcements') return $this->crudNamed($request, $data, 'announcements', $id, $method);
+        if ($resource === 'reports') {
+            if ($method === 'GET' && $id === null && $request->filled('status')) {
+                return $this->json(collect($data['reports'] ?? [])
+                    ->filter(fn ($report) => strtolower((string) ($report['status'] ?? 'pending')) === strtolower((string) $request->input('status'))
+                    )->values());
+            }
+            return $this->crudNamed($request, $data, 'reports', $id, $method, $admin);
+        }
+        if ($resource === 'announcements') return $this->adminAnnouncements($request, $data, $parts, $method, $admin);
+        $adminCollections = [
+            'developer-projects' => 'developerProjects',
+            'developer-blocks' => 'inventoryBlocks',
+            'developer-units' => 'inventoryUnits',
+            'developer-leads' => 'developerLeads',
+            'developer-team' => 'developerTeam',
+            'developer-documents' => 'developerDocuments',
+            'developer-payment-plans' => 'paymentPlans',
+            'developer-site-visits' => 'developerSiteVisits',
+            'verification-requests' => 'verificationRequests',
+            'buyer-requests' => 'buyerRequests',
+            'agent-leads' => 'agentLeads',
+            'agent-visits' => 'agentVisits',
+            'promotions' => 'promotions',
+            'conversations' => 'conversations',
+            'notifications' => 'notifications',
+            'mobile-agents' => 'mobileAgents',
+            'city-agents' => 'cityAgents',
+        ];
+        if (isset($adminCollections[$resource])) {
+            return $this->crudNamed($request, $data, $adminCollections[$resource], $id, $method, $admin);
+        }
         return $this->json(['error' => 'Not found'], 404);
+    }
+
+    private function adminAnnouncements(Request $request, array $data, array $parts, string $method, array $admin)
+    {
+        $data['announcements'] = is_array($data['announcements'] ?? null) ? $data['announcements'] : [];
+        $id = $parts[1] ?? null;
+        $action = $parts[2] ?? null;
+
+        if ($method === 'GET' && $id === null) {
+            return $this->json($data['announcements']);
+        }
+
+        if ($method === 'POST' && $id === null) {
+            $payload = $request->only([
+                'title', 'message', 'imageUrl', 'type', 'priority', 'audience',
+                'scheduleAt', 'expiresAt',
+            ]);
+            $sendNow = $request->boolean('sendNow');
+            $scheduleAt = $payload['scheduleAt'] ?? null;
+            $isScheduled = !$sendNow && $scheduleAt && strtotime((string) $scheduleAt) > now()->timestamp;
+            $announcement = array_merge($payload, [
+                'id' => JsonStore::nextId($data),
+                'status' => $isScheduled ? 'scheduled' : 'draft',
+                'createdAt' => now()->toISOString(),
+                'createdBy' => $admin['id'],
+                'recipientCount' => 0,
+            ]);
+            $data['announcements'][] = $announcement;
+            if ($sendNow) {
+                $index = count($data['announcements']) - 1;
+                $this->deliverAnnouncement($data, $index);
+                $announcement = $data['announcements'][$index];
+            }
+            JsonStore::write($data);
+            return $this->json($announcement, 201);
+        }
+
+        $index = $this->indexById($data['announcements'], $id);
+        if ($index === null) return $this->json(['error' => 'Announcement not found'], 404);
+        if ($method === 'POST' && $action === 'send') {
+            if (($data['announcements'][$index]['status'] ?? '') === 'sent') {
+                return $this->json($data['announcements'][$index]);
+            }
+            $this->deliverAnnouncement($data, $index);
+            JsonStore::write($data);
+            return $this->json($data['announcements'][$index]);
+        }
+        if ($method === 'DELETE') {
+            array_splice($data['announcements'], $index, 1);
+            JsonStore::write($data);
+            return response()->noContent();
+        }
+        if (in_array($method, ['PUT', 'PATCH'], true)) {
+            $data['announcements'][$index] = array_merge(
+                $data['announcements'][$index],
+                $request->except(['id', 'createdBy', 'createdAt', 'sentAt', 'recipientCount']),
+                ['updatedAt' => now()->toISOString()],
+            );
+            JsonStore::write($data);
+            return $this->json($data['announcements'][$index]);
+        }
+        return $this->json(['error' => 'Method not allowed'], 405);
+    }
+
+    private function publicAnnouncement(Request $request, array $parts, string $method)
+    {
+        if ($method !== 'GET') return $this->json(['error' => 'Method not allowed'], 405);
+        $items = collect(JsonStore::read()['announcements'] ?? [])
+            ->filter(fn ($item) =>
+                ($item['status'] ?? '') === 'sent'
+                && (empty($item['expiresAt']) || strtotime((string) $item['expiresAt']) > now()->timestamp)
+            );
+        $id = $parts[0] ?? null;
+        if ($id === null) return $this->json($items->values());
+        $item = $items->first(fn ($announcement) => (string) ($announcement['id'] ?? '') === (string) $id);
+        return $item ? $this->json($item) : $this->json(['error' => 'Announcement not found'], 404);
+    }
+
+    private function deliverAnnouncement(array &$data, int $index): void
+    {
+        $announcement = $data['announcements'][$index];
+        $audience = (array) ($announcement['audience'] ?? []);
+        $role = strtolower((string) ($audience['role'] ?? ''));
+        $city = strtolower(trim((string) ($audience['city'] ?? '')));
+        $recipientIds = collect($data['users'] ?? [])
+            ->filter(function ($user) use ($role, $city) {
+                if (!is_array($user) || in_array(strtolower((string) ($user['status'] ?? 'active')), ['inactive', 'suspended', 'blocked'], true)) {
+                    return false;
+                }
+                if ($role !== '' && strtolower((string) ($user['role'] ?? '')) !== $role) return false;
+                if ($city !== '' && strtolower(trim((string) ($user['city'] ?? ''))) !== $city) return false;
+                return true;
+            })
+            ->pluck('id')->all();
+        $type = match (strtolower((string) ($announcement['type'] ?? 'general'))) {
+            'important' => 'IMPORTANT_ANNOUNCEMENT',
+            'promotional' => 'PROMOTIONAL_ANNOUNCEMENT',
+            'system' => 'SYSTEM_ANNOUNCEMENT',
+            default => 'GENERAL_ANNOUNCEMENT',
+        };
+        $created = app(NotificationDeliveryService::class)->deliver($data, $recipientIds, [
+            'type' => $type,
+            'category' => strtolower((string) ($announcement['type'] ?? '')) === 'promotional' ? 'promotional' : 'announcements',
+            'title' => $announcement['title'] ?? 'OG Landmark Update',
+            'message' => $announcement['message'] ?? '',
+            'body' => $announcement['message'] ?? '',
+            'imageUrl' => $announcement['imageUrl'] ?? null,
+            'entityType' => 'announcement',
+            'entityId' => $announcement['id'],
+            'announcementId' => $announcement['id'],
+            'eventKey' => 'announcement:' . $announcement['id'],
+            'priority' => $announcement['priority'] ?? 'NORMAL',
+            'deepLink' => '/announcements/' . $announcement['id'],
+            'expiresAt' => $announcement['expiresAt'] ?? null,
+            'metadata' => ['audience' => $audience],
+        ]);
+        $data['announcements'][$index]['status'] = 'sent';
+        $data['announcements'][$index]['sentAt'] = now()->toISOString();
+        $data['announcements'][$index]['recipientCount'] = count($created);
     }
 
     private function users(Request $request, array $parts, string $method)
@@ -560,6 +842,64 @@ class ApiController extends Controller
         return $this->json(['error' => 'Not found'], 404);
     }
 
+    private function savedSearches(Request $request, array $parts, string $method)
+    {
+        $user = $this->currentUser($request, true);
+        $userId = (string) $user['id'];
+        $data = JsonStore::read();
+        $data['savedSearches'] = array_values(array_filter(
+            is_array($data['savedSearches'] ?? null) ? $data['savedSearches'] : [],
+            'is_array',
+        ));
+        $items = collect($data['savedSearches']);
+        $id = $parts[0] ?? null;
+
+        if ($method === 'GET' && $id === null) {
+            return $this->json($items->filter(fn ($item) => (string) ($item['userId'] ?? '') === $userId)->values());
+        }
+
+        if ($method === 'POST' && $id === null) {
+            $item = array_merge($request->all(), [
+                'id' => JsonStore::nextId($data, 'savedSearches'),
+                'userId' => $user['id'],
+                'createdAt' => now()->toISOString(),
+                'updatedAt' => now()->toISOString(),
+            ]);
+            $data['savedSearches'][] = $item;
+            JsonStore::write($data);
+            return $this->json($item, 201);
+        }
+
+        if ($method === 'DELETE' && $id === null) {
+            $data['savedSearches'] = $items
+                ->reject(fn ($item) => (string) ($item['userId'] ?? '') === $userId)
+                ->values()->all();
+            JsonStore::write($data);
+            return response()->noContent();
+        }
+
+        $index = $this->indexById($data['savedSearches'], $id);
+        if ($index === null) return $this->json(['error' => 'Saved search not found'], 404);
+        if ((string) ($data['savedSearches'][$index]['userId'] ?? '') !== $userId) {
+            return $this->json(['error' => 'Forbidden'], 403);
+        }
+        if ($method === 'DELETE') {
+            array_splice($data['savedSearches'], $index, 1);
+            JsonStore::write($data);
+            return response()->noContent();
+        }
+        if (in_array($method, ['PUT', 'PATCH'], true)) {
+            $data['savedSearches'][$index] = array_merge(
+                $data['savedSearches'][$index],
+                $request->except(['id', 'userId', 'createdAt']),
+                ['updatedAt' => now()->toISOString()],
+            );
+            JsonStore::write($data);
+            return $this->json($data['savedSearches'][$index]);
+        }
+        return $this->json(['error' => 'Method not allowed'], 405);
+    }
+
     private function notifications(Request $request, array $segments, string $method)
     {
         $user = $this->currentUser($request, true);
@@ -573,11 +913,28 @@ class ApiController extends Controller
             if ($method === 'PUT') { $preferences = array_merge($preferences, $request->all()); $data[$key][(string) $user['id']] = $preferences; JsonStore::write($data); }
             return $this->json($preferences);
         }
-        $items = collect($data['notifications'] ?? [])->filter(fn ($n) => (string) ($n['recipientUserId'] ?? $n['userId'] ?? $n['forUserId'] ?? '') === (string) $user['id'])->values();
+        $category = strtolower((string) $request->input('category', 'all'));
+        $items = collect($data['notifications'] ?? [])
+            ->filter(fn ($n) =>
+                (string) ($n['recipientUserId'] ?? $n['userId'] ?? $n['forUserId'] ?? '') === (string) $user['id']
+                && empty($n['userDeletedAt'])
+                && empty($n['deletedAt'])
+            );
+        if ($category !== '' && $category !== 'all') {
+            $items = $items->filter(fn ($n) => strtolower((string) ($n['category'] ?? 'system')) === $category);
+        }
+        $items = $items->values();
         $id = $segments[1] ?? null;
         if ($id === 'unread-count') return $this->json(['unreadCount' => $items->filter(fn ($n) => empty($n['read']) && empty($n['isRead']))->count()]);
         if ($id === 'mark-all-read' && $method === 'PATCH') {
-            foreach ($data['notifications'] ?? [] as $index => $notification) if ((string) ($notification['recipientUserId'] ?? $notification['userId'] ?? '') === (string) $user['id']) { $data['notifications'][$index]['read'] = true; $data['notifications'][$index]['isRead'] = true; $data['notifications'][$index]['readAt'] = now()->toISOString(); }
+            $visibleIds = $items->pluck('id')->map(fn ($itemId) => (string) $itemId)->all();
+            foreach ($data['notifications'] ?? [] as $index => $notification) {
+                if ((string) ($notification['recipientUserId'] ?? $notification['userId'] ?? $notification['forUserId'] ?? '') !== (string) $user['id']
+                    || !in_array((string) ($notification['id'] ?? ''), $visibleIds, true)) continue;
+                $data['notifications'][$index]['read'] = true;
+                $data['notifications'][$index]['isRead'] = true;
+                $data['notifications'][$index]['readAt'] = now()->toISOString();
+            }
             JsonStore::write($data); return $this->json(['success' => true]);
         }
         if ($method === 'GET') {
@@ -588,8 +945,11 @@ class ApiController extends Controller
         if ($id !== null) {
             $index = $this->indexById($data['notifications'] ?? [], $id);
             if ($index === null) return $this->json(['error' => 'Notification not found'], 404);
+            if ((string) ($data['notifications'][$index]['recipientUserId'] ?? $data['notifications'][$index]['userId'] ?? $data['notifications'][$index]['forUserId'] ?? '') !== (string) $user['id']) {
+                return $this->json(['error' => 'Notification not found'], 404);
+            }
             if ($method === 'PATCH') { $data['notifications'][$index]['read'] = true; $data['notifications'][$index]['isRead'] = true; JsonStore::write($data); return $this->json($data['notifications'][$index]); }
-            if ($method === 'DELETE') { array_splice($data['notifications'], $index, 1); JsonStore::write($data); return response()->noContent(); }
+            if ($method === 'DELETE') { $data['notifications'][$index]['userDeletedAt'] = now()->toISOString(); JsonStore::write($data); return response()->noContent(); }
         }
         return $this->json(['error' => 'Method not allowed'], 405);
     }
@@ -665,8 +1025,39 @@ class ApiController extends Controller
             $data['banners'][$index] = array_merge($data['banners'][$index], $request->all()); JsonStore::write($data); return $this->json(['success' => true, 'banner' => $data['banners'][$index]]);
         }
         if ($resource === 'push' && $method === 'POST') {
-            $admin = $this->currentUser($request, true); if (!$this->isAdmin($admin)) return $this->json(['error' => 'Forbidden'], 403);
-            return $this->json(['success' => true, 'sent' => 0, 'totalRecipients' => count($data['users'] ?? []), 'title' => $request->input('title'), 'body' => $request->input('body'), 'sentAt' => now()->toISOString()]);
+            $admin = $this->currentUser($request, true);
+            if (!$this->isAdmin($admin)) return $this->json(['error' => 'Forbidden'], 403);
+            $title = trim((string) $request->input('title', ''));
+            $body = trim((string) $request->input('body', ''));
+            if ($title === '' || $body === '') return $this->json(['error' => 'Title and message are required.'], 422);
+            $recipientIds = collect($data['users'] ?? [])
+                ->filter(fn ($user) => is_array($user)
+                    && !in_array(strtolower((string) ($user['status'] ?? 'active')), ['inactive', 'suspended', 'blocked'], true))
+                ->pluck('id')->all();
+            if (!$recipientIds) return $this->json(['error' => 'There are no active accounts to notify.'], 409);
+
+            $notificationData = $request->input('data', []);
+            $created = app(NotificationDeliveryService::class)->deliver($data, $recipientIds, [
+                'type' => strtoupper((string) ($notificationData['type'] ?? 'SYSTEM_UPDATE')),
+                'category' => $notificationData['category'] ?? 'system',
+                'title' => $title,
+                'message' => $body,
+                'body' => $body,
+                'eventKey' => 'admin-broadcast:' . Str::uuid(),
+                'priority' => $notificationData['priority'] ?? 'NORMAL',
+                'deepLink' => $notificationData['deepLink'] ?? null,
+                'metadata' => is_array($notificationData) ? $notificationData : [],
+            ]);
+            JsonStore::write($data);
+            return $this->json([
+                'success' => true,
+                'sent' => count($created),
+                'notificationsCreated' => count($created),
+                'totalRecipients' => count($recipientIds),
+                'title' => $title,
+                'body' => $body,
+                'sentAt' => now()->toISOString(),
+            ]);
         }
         if ($resource === 'stats' && $method === 'GET') return $this->adminStats($data);
         if ($resource === 'developer-analytics' && $method === 'GET') return $this->json(['projects' => count($data['developerProjects'] ?? []), 'leads' => count($data['developerLeads'] ?? []), 'units' => count($data['inventoryUnits'] ?? []), 'generatedAt' => now()->toISOString()]);
@@ -694,21 +1085,164 @@ class ApiController extends Controller
     private function simpleCollection(Request $request, array $segments, string $method)
     {
         $key = match ($segments[0]) { 'inquiries' => 'inquiries', 'offers' => 'offers', default => 'appointments' };
-        return $this->crudNamed($request, JsonStore::read(), $key, $segments[1] ?? null, $method);
+        $user = $this->currentUser($request, true);
+        if ($key === 'inquiries' && $method === 'POST') {
+            return $this->createInquiry($request, $user);
+        }
+        return $this->crudNamed($request, JsonStore::read(), $key, $segments[1] ?? null, $method, $user);
+    }
+
+    private function createInquiry(Request $request, array $user)
+    {
+        $data = JsonStore::read();
+        $payload = $request->all();
+        $property = $this->findById($data['properties'] ?? [], $payload['propertyId'] ?? null);
+        $sellerId = $property['sellerId'] ?? $property['userId'] ?? null;
+        $agentId = $property['agentId'] ?? null;
+        $inquiry = array_merge($payload, [
+            'id' => JsonStore::nextId($data, 'inquiries'),
+            'userId' => $user['id'],
+            'buyerId' => $user['id'],
+            'sellerId' => $sellerId,
+            'agentId' => $agentId,
+            'createdAt' => now()->toISOString(),
+        ]);
+        if ($property) {
+            $inquiry['propertyTitle'] = $property['title'] ?? $inquiry['propertyTitle'] ?? null;
+        }
+
+        $recipientIds = collect([$agentId, $sellerId])
+            ->filter(fn ($id) => $id !== null && (string) $id !== (string) $user['id'])
+            ->map(fn ($id) => (string) $id)
+            ->unique()
+            ->values()
+            ->all();
+        $propertyId = $payload['propertyId'] ?? null;
+        $messageText = trim((string) ($payload['message'] ?? ''));
+
+        if ($property && $recipientIds && $messageText !== '') {
+            $data['conversations'] ??= [];
+            $conversationIndex = null;
+            foreach ($data['conversations'] as $index => $conversation) {
+                $participantIds = collect($conversation['participantIds'] ?? $conversation['participants'] ?? [])
+                    ->map(fn ($participant) => (string) (is_array($participant) ? ($participant['id'] ?? '') : $participant))
+                    ->all();
+                $matchesProperty = (string) ($conversation['propertyId'] ?? '') === (string) $propertyId;
+                $hasBuyer = in_array((string) $user['id'], $participantIds, true);
+                $hasRecipient = count(array_intersect($recipientIds, $participantIds)) > 0;
+                if ($matchesProperty && $hasBuyer && $hasRecipient) {
+                    $conversationIndex = $index;
+                    break;
+                }
+            }
+
+            if ($conversationIndex === null) {
+                $participants = array_values(array_unique(array_merge([(string) $user['id']], $recipientIds)));
+                $data['conversations'][] = [
+                    'id' => JsonStore::nextId($data, 'conversations'),
+                    'participants' => array_map(fn ($id) => is_numeric($id) ? (int) $id : $id, $participants),
+                    'participantIds' => $participants,
+                    'userId' => $user['id'],
+                    'propertyId' => $propertyId,
+                    'propertyTitle' => $property['title'] ?? $payload['propertyTitle'] ?? null,
+                    'messages' => [],
+                    'createdAt' => now()->toISOString(),
+                    'updatedAt' => now()->toISOString(),
+                ];
+                $conversationIndex = array_key_last($data['conversations']);
+            }
+
+            $conversationId = $data['conversations'][$conversationIndex]['id'];
+            $createdAt = now()->toISOString();
+            $message = [
+                'id' => count($data['conversations'][$conversationIndex]['messages'] ?? []) + 1,
+                'conversationId' => $conversationId,
+                'senderId' => $user['id'],
+                'senderName' => $user['name'] ?? 'User',
+                'text' => $messageText,
+                'createdAt' => $createdAt,
+                'timestamp' => $createdAt,
+            ];
+            $data['conversations'][$conversationIndex]['messages'][] = $message;
+            $data['conversations'][$conversationIndex]['lastMessage'] = $messageText;
+            $data['conversations'][$conversationIndex]['lastMessageAt'] = $createdAt;
+            $data['conversations'][$conversationIndex]['updatedAt'] = $createdAt;
+            $inquiry['conversationId'] = $conversationId;
+        }
+
+        $data['inquiries'] ??= [];
+        $data['inquiries'][] = $inquiry;
+        JsonStore::write($data);
+
+        return $this->json($inquiry, 201);
     }
 
     private function conversations(Request $request, array $parts, string $method)
     {
         $user = $this->currentUser($request, true);
         $data = JsonStore::read(); $items = $data['conversations'] ?? []; $id = $parts[0] ?? null;
-        if ($method === 'GET' && $id === null) return $this->json($items);
+        if ($method === 'GET' && $id === null) {
+            $conversations = collect($items)
+                ->filter(fn ($item) => $this->conversationBelongsToUser($item, $user))
+                ->map(fn ($item) => $this->presentConversation($item, $data, $user))
+                ->sortByDesc(fn ($item) => $item['lastMessageAt'] ?? $item['updatedAt'] ?? $item['createdAt'] ?? '')
+                ->values();
+            return $this->json($conversations);
+        }
+        if ($method === 'POST' && $id === null) {
+            $payload = $request->all();
+            $participants = collect($payload['participantIds'] ?? $payload['participants'] ?? [])
+                ->map(fn ($participant) => is_array($participant) ? (string) ($participant['id'] ?? '') : (string) $participant)
+                ->filter(fn ($participantId) => $participantId !== '')
+                ->push((string) $user['id'])->unique()->values()->all();
+            $conversation = array_merge($payload, [
+                'id' => JsonStore::nextId($data, 'conversations'),
+                'participantIds' => $participants,
+                'userId' => $user['id'],
+                'messages' => [],
+                'createdAt' => now()->toISOString(),
+                'updatedAt' => now()->toISOString(),
+            ]);
+            $data['conversations'][] = $conversation;
+            JsonStore::write($data);
+            return $this->json($conversation, 201);
+        }
         $index = $this->indexById($items, $id); if ($index === null) return $this->json(['error' => 'Conversation not found'], 404);
+        if (!$this->conversationBelongsToUser($items[$index], $user)) return $this->json(['error' => 'Conversation not found'], 404);
         if (($parts[1] ?? '') === 'messages') {
             if ($method === 'GET') return $this->json($items[$index]['messages'] ?? []);
             if ($method === 'POST') { $message = array_merge($request->all(), ['id' => JsonStore::nextId($data), 'senderId' => $user['id'], 'createdAt' => now()->toISOString(), 'timestamp' => now()->toISOString()]); $data['conversations'][$index]['messages'][] = $message; JsonStore::write($data); return $this->json($message, 201); }
         }
         if ($method === 'DELETE') { array_splice($data['conversations'], $index, 1); JsonStore::write($data); return response()->noContent(); }
         return $this->json($items[$index]);
+    }
+
+    private function presentConversation(array $conversation, array $data, array $user): array
+    {
+        $participantIds = collect($conversation['participantIds'] ?? $conversation['participants'] ?? $conversation['userIds'] ?? [])
+            ->map(fn ($participant) => (string) (is_array($participant) ? ($participant['id'] ?? '') : $participant))
+            ->filter(fn ($id) => $id !== '')
+            ->values();
+        $otherUser = collect($data['users'] ?? [])->first(fn ($candidate) =>
+            is_array($candidate)
+            && (string) ($candidate['id'] ?? '') !== (string) $user['id']
+            && $participantIds->contains((string) ($candidate['id'] ?? ''))
+        );
+        $lastMessage = collect($conversation['messages'] ?? [])->last();
+
+        $conversation['participants'] = $participantIds
+            ->map(fn ($id) => is_numeric($id) ? (int) $id : $id)
+            ->all();
+        if ($otherUser) {
+            $conversation['otherUserName'] = $otherUser['name'] ?? null;
+            $conversation['otherUserPhone'] = $otherUser['phone'] ?? null;
+        }
+        if (is_array($lastMessage)) {
+            $conversation['lastMessage'] = $lastMessage['text'] ?? $conversation['lastMessage'] ?? null;
+            $conversation['lastMessageAt'] = $lastMessage['createdAt'] ?? $lastMessage['timestamp'] ?? $conversation['lastMessageAt'] ?? null;
+        }
+
+        return $conversation;
     }
 
     private function genericCollection(Request $request, array $segments, string $method)
@@ -735,13 +1269,56 @@ class ApiController extends Controller
         }
         if ($method === 'POST') {
             $user ??= $this->currentUser($request, true);
-            $item = array_merge($request->all(), ['id' => JsonStore::nextId($data, $key), 'userId' => $user['id'], 'createdAt' => now()->toISOString()]);
+            $payload = $request->all();
+            if (!$this->isAdmin($user)) {
+                foreach (['id', 'userId', 'developerId', 'ownerId', 'createdBy', 'sellerId', 'buyerId', 'reporterId'] as $protectedKey) {
+                    unset($payload[$protectedKey]);
+                }
+            }
+            $item = array_merge($payload, [
+                'id' => JsonStore::nextId($data, $key),
+                'userId' => $this->isAdmin($user) ? ($payload['userId'] ?? $user['id']) : $user['id'],
+                'createdAt' => now()->toISOString(),
+            ]);
             $data[$key][] = $item; JsonStore::write($data); return $this->json($item, 201);
         }
         $index = $this->indexById($data[$key], $id); if ($index === null) return $this->json(['error' => 'Not found'], 404);
+        if ($user && !$this->isAdmin($user) && !$this->recordBelongsToUser($data[$key][$index], $user)) {
+            return $this->json(['error' => 'Not found'], 404);
+        }
         if ($method === 'DELETE') { array_splice($data[$key], $index, 1); JsonStore::write($data); return response()->noContent(); }
-        if (in_array($method, ['PUT', 'PATCH'], true)) { $data[$key][$index] = array_merge($data[$key][$index], $request->all()); JsonStore::write($data); return $this->json($data[$key][$index]); }
+        if (in_array($method, ['PUT', 'PATCH'], true)) {
+            $patch = $request->all();
+            if ($user && !$this->isAdmin($user)) {
+                foreach (['id', 'userId', 'developerId', 'ownerId', 'createdBy', 'sellerId', 'buyerId', 'reporterId'] as $protectedKey) {
+                    unset($patch[$protectedKey]);
+                }
+            }
+            $data[$key][$index] = array_merge($data[$key][$index], $patch, ['updatedAt' => now()->toISOString()]);
+            JsonStore::write($data);
+            return $this->json($data[$key][$index]);
+        }
         return $this->json($data[$key][$index]);
+    }
+
+    private function recordBelongsToUser(array $item, array $user): bool
+    {
+        foreach (['userId', 'developerId', 'ownerId', 'createdBy', 'sellerId', 'buyerId', 'reporterId'] as $key) {
+            if (isset($item[$key]) && (string) $item[$key] === (string) $user['id']) return true;
+        }
+        return false;
+    }
+
+    private function conversationBelongsToUser(array $item, array $user): bool
+    {
+        if ($this->isAdmin($user) || $this->recordBelongsToUser($item, $user)) return true;
+        foreach (['participantIds', 'participants', 'userIds'] as $key) {
+            foreach ((array) ($item[$key] ?? []) as $participant) {
+                $participantId = is_array($participant) ? ($participant['id'] ?? null) : $participant;
+                if ((string) $participantId === (string) $user['id']) return true;
+            }
+        }
+        return false;
     }
 
     private function currentUser(Request $request, bool $required = false): ?array

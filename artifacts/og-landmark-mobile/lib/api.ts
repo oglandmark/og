@@ -907,7 +907,7 @@ export async function deleteProperty(id: number): Promise<void> {
 
 // Returns the logged-in user's own properties — ALL approval statuses (Pending/Active/Rejected)
 export async function getMyProperties(): Promise<ApiProperty[]> {
-  return apiFetch<ApiProperty[]>('/api/my-properties').catch(() => []);
+  return apiFetch<ApiProperty[]>('/api/my-properties');
 }
 
 // ─── Offers ───────────────────────────────────────────────────────────────────
@@ -926,7 +926,7 @@ export type ApiOffer = {
 
 export async function getOffers(propertyId?: number): Promise<ApiOffer[]> {
   const qs = propertyId ? `?propertyId=${propertyId}` : '';
-  return apiFetch<ApiOffer[]>(`/api/offers${qs}`).catch(() => []);
+  return apiFetch<ApiOffer[]>(`/api/offers${qs}`);
 }
 
 export async function createOffer(
@@ -958,6 +958,8 @@ export type ApiConversation = {
   lastMessage?: string;
   lastMessageAt?: string;
   createdAt?: string;
+  otherUserName?: string;
+  otherUserPhone?: string;
 };
 
 export type ApiMessage = {
@@ -970,7 +972,7 @@ export type ApiMessage = {
 };
 
 export async function getConversations(): Promise<ApiConversation[]> {
-  return apiFetch<ApiConversation[]>('/api/conversations').catch(() => []);
+  return apiFetch<ApiConversation[]>('/api/conversations');
 }
 
 export async function createConversation(payload: {
@@ -984,7 +986,7 @@ export async function createConversation(payload: {
 }
 
 export async function getMessages(conversationId: number): Promise<ApiMessage[]> {
-  return apiFetch<ApiMessage[]>(`/api/conversations/${conversationId}/messages`).catch(() => []);
+  return apiFetch<ApiMessage[]>(`/api/conversations/${conversationId}/messages`);
 }
 
 export async function sendMessage(
@@ -1026,7 +1028,7 @@ export async function getBlogPosts(
     `/api/blog${qs.toString() ? `?${qs}` : ''}`,
     {},
     false,
-  ).catch(() => []);
+  );
 }
 
 export async function getBlogPost(id: number): Promise<ApiBlogPost> {
@@ -1134,7 +1136,7 @@ export async function getAdminUsers(
   if (params.role) qs.set('role', params.role);
   return apiFetch<ApiUser[]>(
     `/api/admin/users${qs.toString() ? `?${qs}` : ''}`,
-  ).catch(() => []);
+  );
 }
 
 export async function updateUserRole(userId: number, role: string): Promise<void> {
@@ -1208,7 +1210,7 @@ export type AdminReport = {
 };
 export async function getAdminReports(status?: string): Promise<AdminReport[]> {
   const qs = status ? `?status=${status}` : '';
-  return apiFetch<AdminReport[]>(`/api/admin/reports${qs}`).catch(() => []);
+  return apiFetch<AdminReport[]>(`/api/admin/reports${qs}`);
 }
 export async function updateAdminReport(id: number, status: string, adminNote?: string): Promise<void> {
   await apiFetch(`/api/admin/reports/${id}`, {

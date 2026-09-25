@@ -5,7 +5,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import React, { useCallback, useState } from 'react';
 import {
-  Alert, Linking, Platform, Pressable,
+  ActivityIndicator, Alert, Linking, Platform, Pressable,
   ScrollView, Share, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
@@ -50,13 +50,23 @@ export default function ListingsScreen() {
 
   const [activeTab, setActiveTab]     = useState<FilterTab>('All');
   const [myListings, setMyListings]   = useState<UserListing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const botPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
 
   const reload = useCallback(() => {
-    if (!isLoggedIn || !user) return;
-    void getMyListings(user.id).then(setMyListings);
+    if (!isLoggedIn || !user) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setLoadError('');
+    void getMyListings(user.id)
+      .then(setMyListings)
+      .catch((cause: unknown) => setLoadError(cause instanceof Error ? cause.message : 'Could not load your listings. Check the API connection and try again.'))
+      .finally(() => setLoading(false));
   }, [isLoggedIn, user]);
 
   useFocusEffect(reload);
@@ -207,7 +217,20 @@ export default function ListingsScreen() {
 
       {/* Listings */}
       <View style={{ paddingHorizontal: 20, marginTop: 16, gap: 12 }}>
-        {filtered.length === 0 ? (
+        {loading ? (
+          <View style={[styles.emptyState, { borderColor: colors.border }]}>
+            <ActivityIndicator size="large" color={colors.action} />
+          </View>
+        ) : loadError ? (
+          <View style={[styles.emptyState, { borderColor: colors.border }]}>
+            <Feather name="alert-circle" size={36} color={colors.mutedForeground} />
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Could not load listings</Text>
+            <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>{loadError}</Text>
+            <Pressable onPress={reload} style={[styles.emptyBtn, { backgroundColor: colors.action }]}>
+              <Text style={[styles.emptyBtnText, { color: colors.actionForeground }]}>Try again</Text>
+            </Pressable>
+          </View>
+        ) : filtered.length === 0 ? (
           <AnimatedReveal delay={100}>
             <View style={[styles.emptyState, { borderColor: colors.border }]}>
               <Feather name="home" size={36} color={colors.mutedForeground} />

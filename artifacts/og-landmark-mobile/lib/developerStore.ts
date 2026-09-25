@@ -260,7 +260,7 @@ export function newProjectId(): string {
 
 /** Find a single project by ID across all developers — for buyer-facing screens. */
 export async function getDevProjectById(id: string): Promise<DeveloperProject | null> {
-  return migrateProject(await apiRequest<DeveloperProject>(`/api/developer/projects/${encodeURIComponent(id)}`));
+  return migrateProject(await apiRequest<DeveloperProject>(`/api/projects/${encodeURIComponent(id)}`, {}, false));
 }
 
 /** Return all approved/live projects for buyer-facing browsing (not scoped to a developer). */

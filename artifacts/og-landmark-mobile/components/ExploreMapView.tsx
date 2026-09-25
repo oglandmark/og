@@ -122,6 +122,7 @@ function buildExploreHtml(
       const areaText = `${p.area ?? ''}${p.areaUnit ? ' ' + p.areaUnit : ''}`.trim();
       const location = p.address || p.city || '';
       const title = p.title || p.type || 'Property';
+      const markerWidth = Math.max(72, Math.min(180, String(label || '').length * 7 + 20));
 
       const popupHtml =
         `<div class="og-pop">` +
@@ -138,8 +139,8 @@ function buildExploreHtml(
       return `
   (function() {
     var icon = L.divIcon({
-      html: '<div class="og-pin${selected ? ' og-pin-sel' : ''}">PKR ${esc(label)}</div>',
-      iconSize: [null, null], iconAnchor: [0,0], className: ''
+      html: '<div class="og-pin${selected ? ' og-pin-sel' : ''}">PKR ${esc(label)}<span class="og-pin-tip"></span></div>',
+      iconSize: [${markerWidth}, 32], iconAnchor: [${markerWidth / 2}, 32], className: ''
     });
     var m = L.marker([${p.lat}, ${p.lng}], {icon: icon, zIndexOffset: ${selected ? 1000 : 0}});
      if (clusterGroup && !${selected}) clusterGroup.addLayer(m); else m.addTo(map);
@@ -176,14 +177,27 @@ function buildExploreHtml(
     #map{width:100%;height:100%;position:absolute;top:0;left:0;background:#e8f0f7;}
     .leaflet-container{background:#e8f0f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
     .og-pin{
+      position:absolute;left:50%;bottom:7px;transform:translateX(-50%);
       background:#ffffff;color:#102a43;font-size:11px;font-weight:700;
       padding:4px 8px;border-radius:10px;white-space:nowrap;
       box-shadow:0 2px 6px rgba(0,0,0,0.4);border:1.5px solid #c8a45a;cursor:pointer;
+    }
+    .og-pin-tip{
+      position:absolute;top:calc(100% - 1px);left:50%;transform:translateX(-50%);
+      width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;
+      border-top:8px solid #c8a45a;
+    }
+    .og-pin-tip:after{
+      content:'';position:absolute;left:-5.5px;top:-8px;width:0;height:0;
+      border-left:5.5px solid transparent;border-right:5.5px solid transparent;
+      border-top:6px solid #ffffff;
     }
     .og-pin-sel{
       background:#c8a45a;color:#102a43;border-color:#e8c870;
       box-shadow:0 3px 10px rgba(200,164,90,0.5);
     }
+    .og-pin-sel .og-pin-tip{border-top-color:#e8c870;}
+    .og-pin-sel .og-pin-tip:after{border-top-color:#c8a45a;}
     .og-user{
       width:18px;height:18px;border-radius:9px;background:rgba(66,133,244,0.3);
       display:flex;align-items:center;justify-content:center;

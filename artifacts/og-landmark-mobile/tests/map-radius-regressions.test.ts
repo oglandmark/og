@@ -179,6 +179,17 @@ test('Expo Go map keeps its WebView mounted, supports touch gestures, and follow
   assert.match(native, /setAreaCenter\(\{ latitude: region\.latitude, longitude: region\.longitude \}\)/);
 });
 
+test('price-card pointer tips stay anchored to each property coordinate', () => {
+  const web = readComponent('ExploreMapView.tsx');
+  const fallback = readComponent('ExpoGoMapFallback.tsx');
+
+  assert.match(web, /iconSize: \[\$\{markerWidth\}, 32\], iconAnchor: \[\$\{markerWidth \/ 2\}, 32\]/);
+  assert.match(web, /og-pin-tip/);
+  assert.match(fallback, /iconSize: point\.label \? \[priceWidth, 32\] : \[28, 28\]/);
+  assert.match(fallback, /iconAnchor: point\.label \? \[priceWidth \/ 2, 32\] : \[14, 28\]/);
+  assert.match(fallback, /price-pill-tip/);
+});
+
 test('Okara district keeps city and tehsil identities separate', () => {
   assert.deepEqual([...cities], [
     'Okara',

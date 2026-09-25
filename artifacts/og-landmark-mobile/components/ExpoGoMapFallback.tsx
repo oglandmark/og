@@ -77,10 +77,21 @@ function buildMapHtml({
     .pin::after { content: ''; position: absolute; width: 8px; height: 8px; left: 7px; top: 7px; border-radius: 50%; background: #ffffff; }
     .user-pin { width: 18px; height: 18px; background: #4285f4; border-color: #fff; }
     .price-pill {
+      position: absolute; left: 50%; bottom: 7px; transform: translateX(-50%);
       display: inline-block; padding: 5px 8px; border-radius: 9px;
       color: #102a43; background: #fff; border: 1.5px solid #c8a45a;
       box-shadow: 0 2px 7px rgba(16,42,67,.28); font: 700 11px Arial, sans-serif;
       white-space: nowrap;
+    }
+    .price-pill-tip {
+      position: absolute; top: calc(100% - 1px); left: 50%; transform: translateX(-50%);
+      width: 0; height: 0; border-left: 7px solid transparent;
+      border-right: 7px solid transparent; border-top: 8px solid #c8a45a;
+    }
+    .price-pill-tip::after {
+      content: ''; position: absolute; left: -5.5px; top: -8px; width: 0; height: 0;
+      border-left: 5.5px solid transparent; border-right: 5.5px solid transparent;
+      border-top: 6px solid #fff;
     }
   </style>
 </head>
@@ -122,12 +133,16 @@ function buildMapHtml({
         });
       }
       function pointIcon(point) {
+        var priceWidth = point.label
+          ? Math.max(70, Math.min(190, String(point.label).length * 7 + 20))
+          : 28;
         var html = point.label
-          ? '<div class="price-pill">' + escapeHtml(point.label) + '</div>'
+          ? '<div class="price-pill">' + escapeHtml(point.label) + '<span class="price-pill-tip"></span></div>'
           : '<div class="pin"></div>';
         return L.divIcon({
-           html: html, className: '', iconSize: point.label ? [70, 30] : [28, 28],
-           iconAnchor: point.label ? [35, 15] : [14, 28]
+           html: html, className: '',
+           iconSize: point.label ? [priceWidth, 32] : [28, 28],
+           iconAnchor: point.label ? [priceWidth / 2, 32] : [14, 28]
         });
       }
       var markerLayer = L.layerGroup().addTo(map);

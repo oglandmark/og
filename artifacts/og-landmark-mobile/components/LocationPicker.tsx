@@ -69,8 +69,8 @@ const CITY_REGIONS: Record<string, MapRegion> = {
   Depalpur: { latitude: 30.6698, longitude: 73.6554, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
   'Renala Khurd': { latitude: 30.8895, longitude: 73.5986, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
   'Hujra Shah Muqeem': { latitude: 30.7417, longitude: 73.8238, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
-  Basirpur: { latitude: 30.6688, longitude: 73.8386, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
-  'Haveli Lakha': { latitude: 30.7208, longitude: 73.7537, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
+  Basirpur: { latitude: 30.5802, longitude: 73.8317, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
+  'Haveli Lakha': { latitude: 30.4508, longitude: 73.6936, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
 };
 
 function getCityRegion(city?: string) {

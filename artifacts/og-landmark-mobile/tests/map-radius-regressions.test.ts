@@ -182,6 +182,7 @@ test('listing location picker follows the selected city with a fixed center pin 
   const webMap = readComponent('MapViewComponent.tsx');
   const fallback = readComponent('ExpoGoMapFallback.tsx');
   const postAd = readFileSync(resolve(mobileRoot, 'app/(tabs)/post-ad.tsx'), 'utf8');
+  const home = readFileSync(resolve(mobileRoot, 'app/(tabs)/index.tsx'), 'utf8');
 
   const postAdPickers = [...postAd.matchAll(/<LocationPicker[\s\S]*?\/>/g)];
   assert.equal(postAdPickers.length, 3);
@@ -190,6 +191,10 @@ test('listing location picker follows the selected city with a fixed center pin 
   assert.match(picker, /regionCityKey !== selectedCityKey/);
   assert.match(picker, /if \(!fullScreen \|\| !nextRegion\.userGesture \|\| !centerMoved\) return;/);
   assert.match(picker, /Depalpur: \{ latitude: 30\.6698, longitude: 73\.6554,[^}]*zoom: 13 \}/);
+  assert.match(picker, /Basirpur: \{ latitude: 30\.5802, longitude: 73\.8317,/);
+  assert.match(picker, /'Haveli Lakha': \{ latitude: 30\.4508, longitude: 73\.6936,/);
+  assert.match(home, /'Basirpur':\s+\{ lat: 30\.5802, lng: 73\.8317 \}/);
+  assert.match(home, /'Haveli Lakha':\s+\{ lat: 30\.4508, lng: 73\.6936 \}/);
   assert.match(picker, /key=\{selectedCityKey \|\| 'default'\}/);
   assert.match(picker, /brandCenterPin/);
   assert.match(picker, /brandPinBody/);

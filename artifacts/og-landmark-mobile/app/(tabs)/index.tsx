@@ -2260,8 +2260,8 @@ const CITY_CENTRE: Record<string, { lat: number; lng: number }> = {
   'Depalpur':          { lat: 30.6647, lng: 73.9742 },
   'Renala Khurd':      { lat: 30.8794, lng: 73.5975 },
   'Hujra Shah Muqeem': { lat: 30.7389, lng: 73.8237 },
-  'Basirpur':          { lat: 31.0419, lng: 73.8369 },
-  'Haveli Lakha':      { lat: 30.5419, lng: 73.6861 },
+  'Basirpur':          { lat: 30.5802, lng: 73.8317 },
+  'Haveli Lakha':      { lat: 30.4508, lng: 73.6936 },
 };
 
 function userListingToProperty(l: UserListing, index: number): Property {

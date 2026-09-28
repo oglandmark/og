@@ -12,14 +12,22 @@ import {
 const MAPBOX_ACCESS_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
 
 interface InteractiveMapProps {
-  region?: { latitude: number; longitude: number; latitudeDelta?: number; longitudeDelta?: number };
+  region?: { latitude: number; longitude: number; latitudeDelta?: number; longitudeDelta?: number; zoom?: number };
   satellite?: boolean;
-  onRegionChange?: (r: any) => void;
+  onRegionChange?: (r: {
+    latitude: number;
+    longitude: number;
+    latitudeDelta: number;
+    longitudeDelta: number;
+    zoom?: number;
+  }) => void;
   onPress?: (e: any) => void;
   pinLat?: number;
   pinLng?: number;
   onDragEnd?: (lat: number, lng: number) => void;
   showMyLocation?: boolean;
+  centerPin?: boolean;
+  zoomControlsBottomRight?: boolean;
 }
 
 interface StaticMapProps {
@@ -36,6 +44,8 @@ function buildLeafletHtml(
   interactive = false,
   channel = 'og-map',
   satellite = false,
+  centerPin = false,
+  zoomControlsBottomRight = false,
 ) {
   const mapboxStyle = satellite ? 'satellite-streets-v12' : 'streets-v12';
   return `<!DOCTYPE html>
@@ -61,6 +71,7 @@ function buildLeafletHtml(
     scrollWheelZoom:${interactive}, dragging:${interactive},
     touchZoom:${interactive}, doubleClickZoom:${interactive}
   }).setView([${lat},${lng}],${zoom});
+    ${interactive && zoomControlsBottomRight ? "map.zoomControl.setPosition('bottomright');" : ""}
     var mapboxToken = ${JSON.stringify(MAPBOX_ACCESS_TOKEN)};
     var currentMapMode = '${satellite ? 'satellite' : 'map'}';
     var mapboxTiles = L.tileLayer(
@@ -74,7 +85,12 @@ function buildLeafletHtml(
     mapboxTiles.addTo(map);
     ${MAP_VIEW_MODE_SWITCH_SCRIPT}
    var icon = L.divIcon({html:'<div class="custom-pin"></div>',iconSize:[28,28],iconAnchor:[14,28],className:''});
-    var marker = L.marker([${lat},${lng}],{icon:icon, draggable:${interactive}}).addTo(map);
+    var marker = L.marker([${lat},${lng}],{
+      icon:icon,
+      draggable:${interactive && !centerPin},
+      opacity:${centerPin ? 0 : 1},
+      interactive:${!centerPin}
+    }).addTo(map);
     function send(type, payload) {
       window.parent.postMessage(Object.assign({ type:type, channel:'${channel}' }, payload), '*');
     }
@@ -91,7 +107,8 @@ function buildLeafletHtml(
         send('og-map-region', {
           latitude:c.lat, longitude:c.lng,
           latitudeDelta:Math.abs(b.getNorth() - b.getSouth()),
-          longitudeDelta:Math.abs(b.getEast() - b.getWest())
+          longitudeDelta:Math.abs(b.getEast() - b.getWest()),
+          zoom:map.getZoom()
         });
       });
     }
@@ -168,7 +185,9 @@ export function InteractiveMap({
   onPress,
   onDragEnd,
   onRegionChange,
-  satellite = true,
+  centerPin = false,
+  zoomControlsBottomRight = false,
+  satellite = false,
 }: InteractiveMapProps) {
   const lat = pinLat ?? region?.latitude ?? 30.3753;
   const lng = pinLng ?? region?.longitude ?? 69.3451;
@@ -201,15 +220,15 @@ export function InteractiveMap({
   }, [satellite]);
   const syncMap = useCallback(() => {
     iframeRef.current?.contentWindow?.postMessage({
-      channel, type: 'og-map-update', latitude: lat, longitude: lng, zoom: 14,
+      channel, type: 'og-map-update', latitude: lat, longitude: lng, zoom: region?.zoom ?? 14,
     }, '*');
-  }, [channel, lat, lng]);
+  }, [channel, lat, lng, region?.zoom]);
   useEffect(() => {
     syncMap();
   }, [syncMap]);
   const html = useMemo(
-    () => buildLeafletHtml(lat, lng, 14, true, channel, satellite),
-    [channel, lat, lng, satellite],
+    () => buildLeafletHtml(lat, lng, 14, true, channel, satellite, centerPin, zoomControlsBottomRight),
+    [channel, satellite, centerPin, zoomControlsBottomRight],
   );
   const blob = useMemo(
     () => typeof Blob !== 'undefined' ? URL.createObjectURL(new Blob([html], { type: 'text/html' })) : null,

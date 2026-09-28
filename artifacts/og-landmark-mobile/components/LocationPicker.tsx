@@ -48,6 +48,14 @@ import { createGpsLocationData, lowAccuracyMessage } from '@/lib/locationFlow';
 
 type Colors = ReturnType<typeof useColors>;
 
+interface MapRegion {
+  latitude: number;
+  longitude: number;
+  latitudeDelta: number;
+  longitudeDelta: number;
+  zoom?: number;
+}
+
 const OKARA_REGION = {
   latitude: 30.8077, longitude: 73.4561,
   latitudeDelta: 0.08, longitudeDelta: 0.08,
@@ -246,6 +254,7 @@ export function LocationPicker({
   const [accuracyMetres, setAccuracyMetres] = useState<number | null>(null);
   const [localityLoading, setLocalityLoading] = useState(false);
   const localityRequestRef = useRef(0);
+  const mapPinGeocodeRequestRef = useRef(0);
 
   const [showManual, setShowManual] = useState(false);
   const [latInput,   setLatInput]   = useState(latitude  != null ? String(latitude)  : '');
@@ -294,7 +303,7 @@ export function LocationPicker({
       : null);
   }, [fullScreen, visible, hasCommittedPin, latitude, longitude, address]);
 
-  const [region, setRegion] = useState(
+  const [region, setRegion] = useState<MapRegion>(
     hasPin
       ? { latitude: mapLatitude!, longitude: mapLongitude!, latitudeDelta: 0.02, longitudeDelta: 0.02 }
       : getCityRegion(city),
@@ -302,7 +311,13 @@ export function LocationPicker({
 
   useEffect(() => {
     if (hasPin) {
-      setRegion({ latitude: mapLatitude!, longitude: mapLongitude!, latitudeDelta: 0.02, longitudeDelta: 0.02 });
+      setRegion((current) => ({
+        ...current,
+        latitude: mapLatitude!,
+        longitude: mapLongitude!,
+        latitudeDelta: current.latitudeDelta || 0.02,
+        longitudeDelta: current.longitudeDelta || 0.02,
+      }));
     }
   }, [hasPin, mapLatitude, mapLongitude]);
 
@@ -364,7 +379,7 @@ export function LocationPicker({
     setShowSuggestions(false);
     setLocationError('');
     if (loc.fullAddress) setQuery(loc.fullAddress);
-    setRegion({ latitude: lat, longitude: lng, latitudeDelta: 0.02, longitudeDelta: 0.02 });
+    setRegion({ latitude: lat, longitude: lng, latitudeDelta: 0.02, longitudeDelta: 0.02, zoom: 14 });
   }, [fullScreen, onChange, onLocationChange, requireConfirm]);
 
   // ── Autocomplete ──────────────────────────────────────────────────────────
@@ -487,6 +502,56 @@ export function LocationPicker({
     [applyLocation],
   );
 
+  const handleMapRegionChange = useCallback((nextRegion: MapRegion) => {
+    const centerMoved = Math.abs(nextRegion.latitude - region.latitude) > 0.0000001
+      || Math.abs(nextRegion.longitude - region.longitude) > 0.0000001;
+    setRegion(nextRegion);
+    if (!fullScreen || !centerMoved) return;
+
+    const requestId = ++mapPinGeocodeRequestRef.current;
+    const fallback: LocationData = {
+      latitude: nextRegion.latitude,
+      longitude: nextRegion.longitude,
+      fullAddress: `Pinned location · ${nextRegion.latitude.toFixed(5)}, ${nextRegion.longitude.toFixed(5)}`,
+      locationSource: 'map_tap',
+    };
+    setDraftLocation(fallback);
+    setPinnedAddr(fallback.fullAddress);
+    setLocationData(fallback);
+    setLatInput(String(nextRegion.latitude));
+    setLngInput(String(nextRegion.longitude));
+    setAddressLoading(true);
+    setLocationError('');
+    if (requireConfirm) setConfirmed(false);
+
+    void reverseGeocode(nextRegion.latitude, nextRegion.longitude)
+      .then((resolved) => {
+        if (!resolved || mapPinGeocodeRequestRef.current !== requestId) return;
+        const location: LocationData = {
+          ...fallback,
+          fullAddress: resolved.fullAddress ?? fallback.fullAddress,
+          streetAddress: resolved.streetAddress,
+          city: resolved.city,
+          locality: resolved.locality,
+          district: resolved.district,
+          tehsil: resolved.tehsil,
+          province: resolved.province,
+          country: resolved.country,
+          postalCode: resolved.postalCode,
+          placeId: resolved.placeId,
+        };
+        setDraftLocation(location);
+        setPinnedAddr(location.fullAddress);
+        setLocationData(location);
+      })
+      .catch(() => {
+        // The exact map center remains usable if address lookup is unavailable.
+      })
+      .finally(() => {
+        if (mapPinGeocodeRequestRef.current === requestId) setAddressLoading(false);
+      });
+  }, [fullScreen, region, requireConfirm]);
+
   // ── Manual entry ──────────────────────────────────────────────────────────
 
   const confirmManual = async () => {
@@ -569,13 +634,19 @@ export function LocationPicker({
             <View style={lp.fullMap}>
               <InteractiveMap
                 region={region}
-                onRegionChange={setRegion}
+                onRegionChange={handleMapRegionChange}
                 onPress={undefined}
                 pinLat={hasPin ? mapLatitude! : undefined}
                 pinLng={hasPin ? mapLongitude! : undefined}
                 onDragEnd={handleDragEnd}
                 showMyLocation={false}
+                centerPin
+                zoomControlsBottomRight
+                satellite={false}
               />
+              <View pointerEvents="none" style={lp.fixedCenterPin}>
+                <Feather name="map-pin" size={38} color={accent} />
+              </View>
 
               <View style={[lp.selectedCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={{ flex: 1 }}>
@@ -585,7 +656,7 @@ export function LocationPicker({
                   </Text>
                   {!hasPin && (
                     <Text style={[lp.selectedCardSub, { color: colors.mutedForeground }]} numberOfLines={1}>
-                      Drag the pin to choose the exact point
+                      Move the map under the pin to choose the exact point
                     </Text>
                   )}
                   {addressLoading && (
@@ -619,7 +690,7 @@ export function LocationPicker({
               <View pointerEvents="none" style={lp.fullMapHint}>
                 <View style={lp.fullMapHintPill}>
                   <Feather name="move" size={12} color="#ffffff" />
-                  <Text style={lp.fullMapHintText}>Drag the pin to adjust</Text>
+                  <Text style={lp.fullMapHintText}>Move the map to adjust the pin</Text>
                 </View>
               </View>
             </View>
@@ -777,6 +848,7 @@ export function LocationPicker({
            pinLng={hasPin ? mapLongitude! : undefined}
           onDragEnd={handleDragEnd}
           showMyLocation={false}
+          satellite={false}
         />
         {localityLoading && !hasPin && (
           <View pointerEvents="none" style={lp.localityLoading}>
@@ -952,6 +1024,13 @@ const lp = StyleSheet.create({
   fullHeaderTitle: { fontFamily: 'Inter_700Bold', fontSize: 16 },
   fullHeaderSub: { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 2 },
   fullMap: { flex: 1, position: 'relative' },
+  fixedCenterPin: {
+    position: 'absolute', top: '50%', left: '50%', width: 38, height: 38,
+    alignItems: 'center', justifyContent: 'center', zIndex: 5, elevation: 5,
+    transform: [{ translateX: -19 }, { translateY: -36 }],
+    shadowColor: '#000000', shadowOpacity: 0.25, shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
   selectedCard: {
     position: 'absolute', top: 18, left: 16, right: 16,
     borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12,

@@ -804,7 +804,18 @@ function AgentForm({ colors, topInset, user, router }: any) {
               <Text style={[styles.label, { color: colors.foreground }]}>City</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
                 {CITIES.map((c) => (
-                  <Pressable key={c} onPress={() => { setCity(c); setNeighborhood(''); }}
+                  <Pressable key={c} onPress={() => {
+                    const cityChanged = c !== city;
+                    setCity(c);
+                    setNeighborhood('');
+                    if (cityChanged) {
+                      setLatitude(null);
+                      setLongitude(null);
+                      setSelectedLocation(null);
+                      setLocationConfirmed(false);
+                      setGpsBoundary('');
+                    }
+                  }}
                      style={[styles.pill, { borderColor: city === c ? colors.selectionBorder : colors.border, backgroundColor: city === c ? colors.selectionBackground : colors.glassCard }]}>
                      <Text style={[styles.pillText, { color: city === c ? colors.selectionForeground : colors.mutedForeground, fontWeight: city === c ? '600' : '400' }]}>{c}</Text>
                   </Pressable>
@@ -939,7 +950,18 @@ function AgentForm({ colors, topInset, user, router }: any) {
               <Text style={[styles.label, { color: colors.foreground }]}>City</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
                 {CITIES.map((c) => (
-                  <Pressable key={c} onPress={() => { setCity(c); setNeighborhood(''); }}
+                  <Pressable key={c} onPress={() => {
+                    const cityChanged = c !== city;
+                    setCity(c);
+                    setNeighborhood('');
+                    if (cityChanged) {
+                      setLatitude(null);
+                      setLongitude(null);
+                      setSelectedLocation(null);
+                      setLocationConfirmed(false);
+                      setGpsBoundary('');
+                    }
+                  }}
                      style={[styles.pill, { borderColor: city === c ? colors.selectionBorder : colors.border, backgroundColor: city === c ? colors.selectionBackground : colors.glassCard }]}>
                      <Text style={[styles.pillText, { color: city === c ? colors.selectionForeground : colors.mutedForeground, fontWeight: city === c ? '600' : '400' }]}>{c}</Text>
                   </Pressable>

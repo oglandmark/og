@@ -28,6 +28,7 @@ type Props = {
   modeControlRight?: number;
   modeControlHorizontal?: boolean;
   modeControlButtonHeight?: number;
+  zoomControlsBottomRight?: boolean;
   onSelect?: (id: string | number) => void;
   onPress?: (latitude: number, longitude: number) => void;
   onDragEnd?: (latitude: number, longitude: number) => void;
@@ -36,6 +37,7 @@ type Props = {
     longitude: number;
     latitudeDelta: number;
     longitudeDelta: number;
+    zoom?: number;
   }) => void;
 };
 
@@ -234,7 +236,8 @@ function buildMapHtml({
         send('region', {
           latitude: c.lat, longitude: c.lng,
           latitudeDelta: Math.abs(b.getNorth() - b.getSouth()),
-          longitudeDelta: Math.abs(b.getEast() - b.getWest())
+          longitudeDelta: Math.abs(b.getEast() - b.getWest()),
+          zoom: map.getZoom()
         });
       });
       send('ready');
@@ -315,6 +318,7 @@ export function ExpoGoMapFallback(props: Props) {
         longitude?: number;
         latitudeDelta?: number;
         longitudeDelta?: number;
+        zoom?: number;
       };
        if (message.type === 'ready') {
          readyRef.current = true;
@@ -347,6 +351,7 @@ export function ExpoGoMapFallback(props: Props) {
           longitude: message.longitude,
           latitudeDelta: message.latitudeDelta,
           longitudeDelta: message.longitudeDelta,
+            zoom: message.zoom ?? props.zoom ?? 14,
         });
       }
     } catch {
@@ -384,7 +389,18 @@ export function ExpoGoMapFallback(props: Props) {
         horizontal={props.modeControlHorizontal}
         buttonHeight={props.modeControlButtonHeight}
       />
-        <View pointerEvents="box-none" style={styles.zoomControls}>
+         <View
+           pointerEvents="box-none"
+           style={[
+             styles.zoomControls,
+             props.zoomControlsBottomRight && {
+               top: undefined,
+               left: undefined,
+               right: 12,
+               bottom: 76,
+             },
+           ]}
+         >
          <Pressable
            accessibilityRole="button"
            accessibilityLabel="Zoom in map"

@@ -176,6 +176,31 @@ test('Explore map opens in street-map mode by default', () => {
   assert.match(fallback, /useState<MapViewMode>\(props\.satellite \? 'satellite' : 'map'\)/);
 });
 
+test('listing location picker follows the selected city with a fixed center pin and persistent zoom', () => {
+  const picker = readComponent('LocationPicker.tsx');
+  const nativeMap = readComponent('MapViewComponent.native.tsx');
+  const webMap = readComponent('MapViewComponent.tsx');
+  const fallback = readComponent('ExpoGoMapFallback.tsx');
+  const postAd = readFileSync(resolve(mobileRoot, 'app/(tabs)/post-ad.tsx'), 'utf8');
+
+  assert.match(picker, /setRegion\(getCityRegion\(city\)\)/);
+  assert.match(picker, /centerPin/);
+  assert.match(picker, /zoomControlsBottomRight/);
+  assert.match(picker, /satellite=\{false\}/);
+  assert.match(picker, /Move the map under the pin/);
+  assert.match(nativeMap, /region\?\.latitude/);
+  assert.match(nativeMap, /zoom=\{region\?\.zoom \?\? 14\}/);
+  assert.match(nativeMap, /points=\{centerPin \? \[\] : \[/);
+  assert.match(webMap, /draggable:\$\{interactive && !centerPin\}/);
+  assert.match(webMap, /map\.zoomControl\.setPosition\('bottomright'\)/);
+  assert.match(webMap, /zoom:map\.getZoom\(\)/);
+  assert.match(webMap, /zoomControl:\$\{interactive\}/);
+  assert.match(fallback, /zoom: map\.getZoom\(\)/);
+  assert.match(fallback, /accessibilityLabel="Zoom in map"/);
+  assert.match(fallback, /accessibilityLabel="Zoom out map"/);
+  assert.match(postAd, /if \(cityChanged\) \{[\s\S]*setLatitude\(null\);[\s\S]*setLongitude\(null\);[\s\S]*setSelectedLocation\(null\);[\s\S]*setLocationConfirmed\(false\);/);
+});
+
 test('native Mapbox maps keep the area center synced after map movement', () => {
   const native = readComponent('ExploreMapView.native.tsx');
   assert.match(native, /setAreaCenter\(\{ latitude: region\.latitude, longitude: region\.longitude \}\)/);

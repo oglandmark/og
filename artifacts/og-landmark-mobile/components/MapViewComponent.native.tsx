@@ -18,19 +18,22 @@ interface StaticMapProps {
 }
 
 interface InteractiveMapProps {
-  region?: { latitude: number; longitude: number; latitudeDelta?: number; longitudeDelta?: number };
+  region?: { latitude: number; longitude: number; latitudeDelta?: number; longitudeDelta?: number; zoom?: number };
   satellite?: boolean;
   onRegionChange?: (r: {
     latitude: number;
     longitude: number;
     latitudeDelta: number;
     longitudeDelta: number;
+    zoom?: number;
   }) => void;
   onPress?: (e: any) => void;
   pinLat?: number;
   pinLng?: number;
   onDragEnd?: (lat: number, lng: number) => void;
   showMyLocation?: boolean;
+  centerPin?: boolean;
+  zoomControlsBottomRight?: boolean;
 }
 
 export function StaticMap({
@@ -63,7 +66,9 @@ export function InteractiveMap({
   onPress,
   onDragEnd,
   showMyLocation = true,
-  satellite = true,
+  centerPin = false,
+  zoomControlsBottomRight = false,
+  satellite = false,
 }: InteractiveMapProps) {
   const initialLatitude = pinLat ?? region?.latitude ?? 30.8141;
   const initialLongitude = pinLng ?? region?.longitude ?? 73.4502;
@@ -78,11 +83,13 @@ export function InteractiveMap({
   const [locating, setLocating] = useState(false);
 
   useEffect(() => {
-    if (pinLat == null || pinLng == null) return;
-    const next = { latitude: pinLat, longitude: pinLng };
+    const next = {
+      latitude: pinLat ?? region?.latitude ?? 30.8141,
+      longitude: pinLng ?? region?.longitude ?? 73.4502,
+    };
     setCenter(next);
     setPin(next);
-  }, [pinLat, pinLng]);
+  }, [pinLat, pinLng, region?.latitude, region?.longitude]);
 
   const handlePress = (latitude: number, longitude: number) => {
     const next = { latitude, longitude };
@@ -116,10 +123,11 @@ export function InteractiveMap({
       <ExpoGoMapFallback
         latitude={center.latitude}
         longitude={center.longitude}
-        zoom={14}
+        zoom={region?.zoom ?? 14}
         interactive
         satellite={satellite}
-        points={[{ latitude: pin.latitude, longitude: pin.longitude }]}
+        zoomControlsBottomRight={zoomControlsBottomRight}
+        points={centerPin ? [] : [{ latitude: pin.latitude, longitude: pin.longitude }]}
         onPress={handlePress}
         onDragEnd={handleDragEnd}
         onRegionChange={(nextRegion) => {

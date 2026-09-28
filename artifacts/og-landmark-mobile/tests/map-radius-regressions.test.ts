@@ -184,6 +184,10 @@ test('listing location picker follows the selected city with a fixed center pin 
   const postAd = readFileSync(resolve(mobileRoot, 'app/(tabs)/post-ad.tsx'), 'utf8');
 
   assert.match(picker, /setRegion\(getCityRegion\(city\)\)/);
+  assert.match(picker, /Depalpur: \{ latitude: 30\.6698, longitude: 73\.6554,[^}]*zoom: 13 \}/);
+  assert.match(picker, /key=\{city \?\? 'default'\}/);
+  assert.match(picker, /brandCenterPin/);
+  assert.match(picker, /brandPinBody/);
   assert.match(picker, /centerPin/);
   assert.match(picker, /zoomControlsBottomRight/);
   assert.match(picker, /satellite=\{false\}/);
@@ -216,6 +220,12 @@ test('Expo Go map keeps its WebView mounted, supports touch gestures, and follow
   assert.match(fallback, /overScrollMode="never"/);
   assert.match(fallback, /touchZoom: false/);
   assert.match(fallback, /pinchStartDistance/);
+  assert.match(fallback, /map\.setZoomAround\(pinchAnchor, nextZoom, \{ animate: false \}\)/);
+  assert.match(fallback, /map\.dragging\.disable\(\)/);
+  assert.match(fallback, /map\.dragging\.enable\(\)/);
+  assert.match(fallback, /addEventListener\('touchcancel', resetPinch/);
+  assert.match(fallback, /capture: true/);
+  assert.match(fallback, /zoomSnap: 0\.25/);
   assert.match(fallback, /areaCircle\.setLatLng\(map\.getCenter\(\)\)/);
   assert.match(fallback, /areaCircle\.setRadius\(nextRadius\)/);
   assert.match(native, /setAreaCenter\(\{ latitude: region\.latitude, longitude: region\.longitude \}\)/);

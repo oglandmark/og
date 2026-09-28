@@ -288,9 +288,11 @@ function Step2({ data, set, tr, colors }: StepProps) {
       <LocationPicker
         latitude={data.latitude}
         longitude={data.longitude}
+        city={data.city}
         onChange={(lat, lng) => set({ latitude: lat, longitude: lng })}
         onClear={() => set({ latitude: undefined, longitude: undefined })}
         colors={colors}
+        fullScreen
       />
 
       <SectionDiv label="Contact & Online" colors={colors} />

@@ -687,6 +687,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 colors={colors}
                 accentColor="#1a6b3a"
                 requireConfirm
+                fullScreen
                 onConfirmationChange={setLocationConfirmed}
                 errorMessage={errors.location}
               />
@@ -855,6 +856,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 colors={colors}
                 accentColor={INDUSTRIAL_COLOR}
                 requireConfirm
+                fullScreen
                 onConfirmationChange={setLocationConfirmed}
                 errorMessage={errors.location}
               />
@@ -1014,6 +1016,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 }}
                 colors={colors}
                 requireConfirm
+                fullScreen
                 onConfirmationChange={setLocationConfirmed}
                 errorMessage={errors.location}
               />

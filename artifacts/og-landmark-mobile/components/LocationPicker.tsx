@@ -54,6 +54,7 @@ interface MapRegion {
   latitudeDelta: number;
   longitudeDelta: number;
   zoom?: number;
+  userGesture?: boolean;
 }
 
 const OKARA_REGION: MapRegion = {
@@ -224,10 +225,21 @@ export function LocationPicker({
   onChange, onLocationChange, onClear,
   colors, accentColor, requireConfirm = false,
   onConfirmationChange, errorMessage,
-  fullScreen = false, visible = false, onOpen, onClose, onDone,
+  fullScreen = false, visible, onOpen, onClose, onDone,
 }: LocationPickerProps) {
   const accent  = accentColor ?? (colors as any).action ?? colors.primary;
   const insets = useSafeAreaInsets();
+  const selectedCityKey = city?.trim().toLowerCase() ?? '';
+  const [internalMapVisible, setInternalMapVisible] = useState(false);
+  const mapVisible = visible ?? internalMapVisible;
+  const openMap = () => {
+    onOpen?.();
+    if (visible === undefined) setInternalMapVisible(true);
+  };
+  const closeMap = () => {
+    onClose?.();
+    if (visible === undefined) setInternalMapVisible(false);
+  };
   const hasCommittedPin = typeof latitude === 'number' && typeof longitude === 'number'
                         && isFinite(latitude) && isFinite(longitude);
   const [draftLocation, setDraftLocation] = useState<LocationData | null>(() => (
@@ -276,7 +288,7 @@ export function LocationPicker({
   // Full-screen picking is a draft transaction. Re-open with the committed
   // parent value, or with no pin after the city has been changed.
   useEffect(() => {
-    if (!fullScreen || !visible) return;
+    if (!fullScreen || !mapVisible) return;
     if (!hasCommittedPin) {
       setDraftLocation(null);
       return;
@@ -293,10 +305,10 @@ export function LocationPicker({
             locationSource: 'manual',
           }
     ));
-  }, [fullScreen, visible, hasCommittedPin, latitude, longitude, address]);
+  }, [fullScreen, mapVisible, hasCommittedPin, latitude, longitude, address]);
 
   useEffect(() => {
-    if (!fullScreen || visible) return;
+    if (!fullScreen || mapVisible) return;
     setDraftLocation(hasCommittedPin
       ? {
           latitude: latitude!,
@@ -305,13 +317,17 @@ export function LocationPicker({
           locationSource: 'manual',
         }
       : null);
-  }, [fullScreen, visible, hasCommittedPin, latitude, longitude, address]);
+  }, [fullScreen, mapVisible, hasCommittedPin, latitude, longitude, address]);
 
   const [region, setRegion] = useState<MapRegion>(
     hasPin
       ? { latitude: mapLatitude!, longitude: mapLongitude!, latitudeDelta: 0.02, longitudeDelta: 0.02 }
       : getCityRegion(city),
   );
+  const [regionCityKey, setRegionCityKey] = useState(selectedCityKey);
+  const displayedMapRegion = fullScreen && !hasPin && regionCityKey !== selectedCityKey
+    ? getCityRegion(city)
+    : region;
 
   useEffect(() => {
     if (hasPin) {
@@ -334,6 +350,7 @@ export function LocationPicker({
 
     const requestId = ++localityRequestRef.current;
     let cancelled = false;
+    setRegionCityKey(selectedCityKey);
     setRegion(getCityRegion(city));
     setLocalityLoading(Boolean(locality?.trim()));
 
@@ -360,7 +377,7 @@ export function LocationPicker({
     });
 
     return () => { cancelled = true; };
-  }, [city, locality, hasPin]);
+  }, [city, locality, hasPin, selectedCityKey]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -510,7 +527,7 @@ export function LocationPicker({
     const centerMoved = Math.abs(nextRegion.latitude - region.latitude) > 0.0000001
       || Math.abs(nextRegion.longitude - region.longitude) > 0.0000001;
     setRegion(nextRegion);
-    if (!fullScreen || !centerMoved) return;
+    if (!fullScreen || !nextRegion.userGesture || !centerMoved) return;
 
     const requestId = ++mapPinGeocodeRequestRef.current;
     const fallback: LocationData = {
@@ -592,7 +609,7 @@ export function LocationPicker({
       <>
         <Pressable
           testID="open-fullscreen-location-map"
-          onPress={onOpen}
+          onPress={openMap}
           style={({ pressed }) => [
             lp.fullScreenTrigger,
             { backgroundColor: colors.secondary, borderColor: hasPin ? accent : colors.border, opacity: pressed ? 0.82 : 1 },
@@ -613,17 +630,17 @@ export function LocationPicker({
         </Pressable>
 
         <Modal
-          visible={visible}
+          visible={mapVisible}
           animationType="none"
           presentationStyle="fullScreen"
           statusBarTranslucent
-          onRequestClose={onClose}
+          onRequestClose={closeMap}
         >
           <View style={[lp.fullScreen, { backgroundColor: colors.background }]}>
             <View style={[lp.fullHeader, { backgroundColor: colors.background, borderBottomColor: colors.border, paddingTop: insets.top + 8 }]}>
               <Pressable
                 testID="close-fullscreen-location-map"
-                onPress={onClose}
+                onPress={closeMap}
                 hitSlop={10}
                 style={[lp.fullHeaderButton, { backgroundColor: colors.secondary, borderColor: colors.border }]}
               >
@@ -637,8 +654,8 @@ export function LocationPicker({
 
             <View style={lp.fullMap}>
               <InteractiveMap
-                key={city ?? 'default'}
-                region={region}
+                key={selectedCityKey || 'default'}
+                region={displayedMapRegion}
                 onRegionChange={handleMapRegionChange}
                 onPress={undefined}
                 pinLat={hasPin ? mapLatitude! : undefined}
@@ -677,6 +694,8 @@ export function LocationPicker({
                   onPress={() => {
                     if (!fullScreen) onClear();
                     setDraftLocation(null);
+                    setRegion(getCityRegion(city));
+                    setRegionCityKey(selectedCityKey);
                     setPinnedAddr('');
                     setLocationData({});
                     setConfirmed(false);
@@ -703,7 +722,7 @@ export function LocationPicker({
             </View>
 
             <View style={[lp.fullFooter, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: insets.bottom + 12 }]}>
-              <Pressable onPress={onClose} hitSlop={10} style={lp.skipButton}>
+              <Pressable onPress={closeMap} hitSlop={10} style={lp.skipButton}>
                 <Text style={[lp.skipButtonText, { color: colors.mutedForeground }]}>Skip</Text>
               </Pressable>
               <Pressable
@@ -721,7 +740,8 @@ export function LocationPicker({
                   onChange(locationToSave.latitude, locationToSave.longitude, locationToSave.fullAddress);
                   onLocationChange?.(locationToSave);
                   setConfirmed(true);
-                  onDone?.();
+                  if (onDone) onDone();
+                  else closeMap();
                 }}
                 style={({ pressed }) => [
                   lp.doneButton,
@@ -847,8 +867,8 @@ export function LocationPicker({
         <InteractiveMap
           // Keep the camera controlled by the resolved city/locality region
           // until the user selects an exact pin.
-          key={`${city ?? 'default'}-${hasPin ? `${latitude}-${longitude}` : 'location'}`}
-          region={region}
+          key={`${selectedCityKey || 'default'}-${hasPin ? `${latitude}-${longitude}` : 'location'}`}
+          region={displayedMapRegion}
           onRegionChange={setRegion}
            onPress={undefined}
            pinLat={hasPin ? mapLatitude! : undefined}

@@ -389,6 +389,7 @@ export default function AdminProperties() {
                 latitude={editLatitude}
                 longitude={editLongitude}
                 address={editLocation?.fullAddress || editingProperty?.address}
+                city={editingProperty?.city}
                 onChange={(lat, lng) => {
                   setEditLatitude(lat);
                   setEditLongitude(lng);
@@ -403,6 +404,7 @@ export default function AdminProperties() {
                 colors={colors}
                 accentColor={GOLD}
                 requireConfirm
+                fullScreen
                 onConfirmationChange={setEditConfirmed}
                 errorMessage={editLatitude == null || editLongitude == null ? 'Set an exact property pin' : undefined}
               />

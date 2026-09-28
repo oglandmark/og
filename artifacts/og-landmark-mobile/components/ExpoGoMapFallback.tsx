@@ -38,6 +38,7 @@ type Props = {
     latitudeDelta: number;
     longitudeDelta: number;
     zoom?: number;
+    userGesture?: boolean;
   }) => void;
 };
 
@@ -189,6 +190,19 @@ function buildMapHtml({
        var pinchStartZoom = 0;
        var pinchAnchor = null;
        var pinchActive = false;
+       var userGestureActive = false;
+       var userGestureResetTimer = null;
+       var regionReportTimer = null;
+       function markUserGesture() {
+         userGestureActive = true;
+         if (userGestureResetTimer) clearTimeout(userGestureResetTimer);
+       }
+       function finishUserGesture(delay) {
+         if (userGestureResetTimer) clearTimeout(userGestureResetTimer);
+         userGestureResetTimer = setTimeout(function () {
+           userGestureActive = false;
+         }, delay);
+       }
       function touchDistance(touches) {
         var dx = touches[0].clientX - touches[1].clientX;
         var dy = touches[0].clientY - touches[1].clientY;
@@ -196,7 +210,10 @@ function buildMapHtml({
       }
       var mapElement = map.getContainer();
        function startPinch(event) {
-        if (!interactive || event.touches.length !== 2) return;
+         if (!interactive) return;
+         markUserGesture();
+         if (event.touches.length !== 2) return;
+         event.stopPropagation();
         pinchStartDistance = touchDistance(event.touches);
         pinchStartZoom = map.getZoom();
          var rect = mapElement.getBoundingClientRect();
@@ -210,7 +227,9 @@ function buildMapHtml({
          event.stopPropagation();
        }
        function movePinch(event) {
-         if (!interactive || event.touches.length !== 2 || !pinchActive) return;
+         if (!interactive) return;
+         if (event.touches.length !== 2 || !pinchActive) return;
+         event.stopPropagation();
         var scale = touchDistance(event.touches) / pinchStartDistance;
         var nextZoom = Math.max(3, Math.min(19, pinchStartZoom + Math.log(scale) / Math.LN2));
          map.setZoomAround(pinchAnchor, nextZoom, { animate: false });
@@ -225,12 +244,20 @@ function buildMapHtml({
          if (interactive) map.dragging.enable();
        }
        function endPinch(event) {
+         if (pinchActive) event.stopPropagation();
          if (event.touches.length < 2) resetPinch();
+         if (event.touches.length === 0) finishUserGesture(250);
+       }
+       function cancelPinch(event) {
+         var wasPinching = pinchActive;
+         resetPinch();
+         if (wasPinching) event.stopPropagation();
+         finishUserGesture(0);
        }
        mapElement.addEventListener('touchstart', startPinch, { passive: false, capture: true });
        mapElement.addEventListener('touchmove', movePinch, { passive: false, capture: true });
        mapElement.addEventListener('touchend', endPinch, { passive: false, capture: true });
-       mapElement.addEventListener('touchcancel', resetPinch, { passive: false, capture: true });
+       mapElement.addEventListener('touchcancel', cancelPinch, { passive: false, capture: true });
       window.__zoomMap = function (delta) {
         var nextZoom = Math.max(3, Math.min(19, map.getZoom() + Number(delta || 0)));
         map.setZoom(nextZoom, { animate: true });
@@ -255,14 +282,23 @@ function buildMapHtml({
       map.on('click', function (event) {
         if (interactive) send('press', { latitude: event.latlng.lat, longitude: event.latlng.lng });
       });
-      map.on('moveend', function () {
+       function sendRegion() {
         var c = map.getCenter(), b = map.getBounds();
         send('region', {
           latitude: c.lat, longitude: c.lng,
           latitudeDelta: Math.abs(b.getNorth() - b.getSouth()),
           longitudeDelta: Math.abs(b.getEast() - b.getWest()),
-          zoom: map.getZoom()
+           zoom: map.getZoom(),
+           userGesture: userGestureActive
         });
+       }
+       map.on('moveend', function () {
+         if (regionReportTimer) clearTimeout(regionReportTimer);
+         if (!userGestureActive) {
+           sendRegion();
+           return;
+         }
+         regionReportTimer = setTimeout(sendRegion, 100);
       });
       send('ready');
     })();
@@ -343,6 +379,7 @@ export function ExpoGoMapFallback(props: Props) {
         latitudeDelta?: number;
         longitudeDelta?: number;
         zoom?: number;
+         userGesture?: boolean;
       };
        if (message.type === 'ready') {
          readyRef.current = true;
@@ -376,6 +413,7 @@ export function ExpoGoMapFallback(props: Props) {
           latitudeDelta: message.latitudeDelta,
           longitudeDelta: message.longitudeDelta,
             zoom: message.zoom ?? props.zoom ?? 14,
+             userGesture: message.userGesture === true,
         });
       }
     } catch {

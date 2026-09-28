@@ -26,6 +26,7 @@ interface InteractiveMapProps {
     latitudeDelta: number;
     longitudeDelta: number;
     zoom?: number;
+    userGesture?: boolean;
   }) => void;
   onPress?: (e: any) => void;
   pinLat?: number;

@@ -183,9 +183,14 @@ test('listing location picker follows the selected city with a fixed center pin 
   const fallback = readComponent('ExpoGoMapFallback.tsx');
   const postAd = readFileSync(resolve(mobileRoot, 'app/(tabs)/post-ad.tsx'), 'utf8');
 
+  const postAdPickers = [...postAd.matchAll(/<LocationPicker[\s\S]*?\/>/g)];
+  assert.equal(postAdPickers.length, 3);
+  assert.ok(postAdPickers.every(([pickerCall]) => /fullScreen/.test(pickerCall)));
   assert.match(picker, /setRegion\(getCityRegion\(city\)\)/);
+  assert.match(picker, /regionCityKey !== selectedCityKey/);
+  assert.match(picker, /if \(!fullScreen \|\| !nextRegion\.userGesture \|\| !centerMoved\) return;/);
   assert.match(picker, /Depalpur: \{ latitude: 30\.6698, longitude: 73\.6554,[^}]*zoom: 13 \}/);
-  assert.match(picker, /key=\{city \?\? 'default'\}/);
+  assert.match(picker, /key=\{selectedCityKey \|\| 'default'\}/);
   assert.match(picker, /brandCenterPin/);
   assert.match(picker, /brandPinBody/);
   assert.match(picker, /centerPin/);
@@ -198,6 +203,8 @@ test('listing location picker follows the selected city with a fixed center pin 
   assert.match(webMap, /draggable:\$\{interactive && !centerPin\}/);
   assert.match(webMap, /map\.zoomControl\.setPosition\('bottomright'\)/);
   assert.match(webMap, /zoom:map\.getZoom\(\)/);
+  assert.match(webMap, /userGesture:userGestureActive/);
+  assert.match(webMap, /touch-action:none/);
   assert.match(webMap, /zoomControl:\$\{interactive\}/);
   assert.match(fallback, /zoom: map\.getZoom\(\)/);
   assert.match(fallback, /accessibilityLabel="Zoom in map"/);
@@ -220,10 +227,13 @@ test('Expo Go map keeps its WebView mounted, supports touch gestures, and follow
   assert.match(fallback, /overScrollMode="never"/);
   assert.match(fallback, /touchZoom: false/);
   assert.match(fallback, /pinchStartDistance/);
+  assert.match(fallback, /userGesture: userGestureActive/);
+  assert.match(fallback, /event\.stopPropagation\(\)/);
+  assert.match(fallback, /regionReportTimer = setTimeout\(sendRegion, 100\)/);
   assert.match(fallback, /map\.setZoomAround\(pinchAnchor, nextZoom, \{ animate: false \}\)/);
   assert.match(fallback, /map\.dragging\.disable\(\)/);
   assert.match(fallback, /map\.dragging\.enable\(\)/);
-  assert.match(fallback, /addEventListener\('touchcancel', resetPinch/);
+  assert.match(fallback, /addEventListener\('touchcancel', cancelPinch/);
   assert.match(fallback, /capture: true/);
   assert.match(fallback, /zoomSnap: 0\.25/);
   assert.match(fallback, /areaCircle\.setLatLng\(map\.getCenter\(\)\)/);

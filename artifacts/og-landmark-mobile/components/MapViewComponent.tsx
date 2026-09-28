@@ -20,6 +20,7 @@ interface InteractiveMapProps {
     latitudeDelta: number;
     longitudeDelta: number;
     zoom?: number;
+    userGesture?: boolean;
   }) => void;
   onPress?: (e: any) => void;
   pinLat?: number;
@@ -57,6 +58,7 @@ function buildLeafletHtml(
     * { margin:0; padding:0; }
     body { background:#e8f0f7; }
     #map { width:100%; height:100%; position:absolute;top:0;left:0;right:0;bottom:0; }
+     .leaflet-container { touch-action:none; }
      .custom-pin { position:relative;width:28px;height:28px;background:#17324D;border-radius:50% 50% 50% 0;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);transform:rotate(-45deg); }
      .custom-pin::after { content:'';position:absolute;width:8px;height:8px;left:7px;top:7px;background:#fff;border-radius:50%; }
   </style>
@@ -102,14 +104,70 @@ function buildLeafletHtml(
         var p = e.target.getLatLng();
         send('og-map-drag', { latitude:p.lat, longitude:p.lng });
       });
-      map.on('moveend', function() {
+       var userGestureActive = false;
+       var userGestureResetTimer = null;
+       var regionReportTimer = null;
+       var mapElement = map.getContainer();
+       function markUserGesture() {
+         userGestureActive = true;
+         if (userGestureResetTimer) clearTimeout(userGestureResetTimer);
+       }
+       function finishUserGesture(delay) {
+         if (userGestureResetTimer) clearTimeout(userGestureResetTimer);
+         userGestureResetTimer = setTimeout(function() {
+           userGestureActive = false;
+         }, delay);
+       }
+       mapElement.addEventListener('touchstart', function(event) {
+         if (!${interactive}) return;
+         markUserGesture();
+       }, { passive:true, capture:true });
+       mapElement.addEventListener('touchmove', function(event) {
+         if (${interactive}) markUserGesture();
+       }, { passive:true, capture:true });
+       mapElement.addEventListener('touchend', function(event) {
+         if (!${interactive}) return;
+         if (event.touches.length === 0) finishUserGesture(250);
+       }, { passive:true, capture:true });
+       mapElement.addEventListener('touchcancel', function(event) {
+         if (!${interactive}) return;
+         finishUserGesture(0);
+       }, { passive:true, capture:true });
+       mapElement.addEventListener('pointerdown', function(event) {
+         if (!${interactive}) return;
+         markUserGesture();
+       }, { passive:true, capture:true });
+       mapElement.addEventListener('pointerup', function(event) {
+         if (!${interactive}) return;
+         finishUserGesture(250);
+       }, { passive:true, capture:true });
+       mapElement.addEventListener('wheel', function(event) {
+         if (!${interactive}) return;
+         markUserGesture();
+         finishUserGesture(250);
+       }, { passive:true, capture:true });
+       mapElement.addEventListener('dblclick', function(event) {
+         if (!${interactive}) return;
+         markUserGesture();
+         finishUserGesture(250);
+       }, { passive:true, capture:true });
+       map.on('moveend', function() {
+         function sendRegion() {
         var c = map.getCenter(), b = map.getBounds();
         send('og-map-region', {
           latitude:c.lat, longitude:c.lng,
           latitudeDelta:Math.abs(b.getNorth() - b.getSouth()),
           longitudeDelta:Math.abs(b.getEast() - b.getWest()),
-          zoom:map.getZoom()
+           zoom:map.getZoom(),
+           userGesture:userGestureActive
         });
+         }
+         if (regionReportTimer) clearTimeout(regionReportTimer);
+         if (!userGestureActive) {
+           sendRegion();
+           return;
+         }
+         regionReportTimer = setTimeout(sendRegion, 100);
       });
     }
    marker.on('click', function () {
@@ -208,7 +266,8 @@ export function InteractiveMap({
       } else if (data.type === 'og-map-region') {
         onRegionChange?.({
           latitude: data.latitude, longitude: data.longitude,
-          latitudeDelta: data.latitudeDelta, longitudeDelta: data.longitudeDelta,
+            latitudeDelta: data.latitudeDelta, longitudeDelta: data.longitudeDelta,
+            zoom: data.zoom, userGesture: data.userGesture === true,
         });
       }
     };

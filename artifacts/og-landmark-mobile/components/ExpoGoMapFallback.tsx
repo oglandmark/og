@@ -112,10 +112,8 @@ function buildMapHtml({
         attributionControl: true,
         dragging: interactive,
         // Expo Go's Android WebView can swallow Leaflet's built-in pinch
-         // handler. A capture-phase touch bridge below handles two-finger zoom.
+        // handler. A small native touch bridge below handles two-finger zoom.
         touchZoom: false,
-         zoomSnap: 0.25,
-         zoomDelta: 0.5,
         scrollWheelZoom: interactive,
         doubleClickZoom: interactive,
       }).setView([${latitude}, ${longitude}], ${zoom ?? 13});
@@ -185,52 +183,30 @@ function buildMapHtml({
       map.on('move', function () {
         if (areaCircle) areaCircle.setLatLng(map.getCenter());
       });
-       var pinchStartDistance = 0;
-       var pinchStartZoom = 0;
-       var pinchAnchor = null;
-       var pinchActive = false;
+      var pinchStartDistance = 0;
+      var pinchStartZoom = 0;
       function touchDistance(touches) {
         var dx = touches[0].clientX - touches[1].clientX;
         var dy = touches[0].clientY - touches[1].clientY;
         return Math.sqrt(dx * dx + dy * dy);
       }
       var mapElement = map.getContainer();
-       function startPinch(event) {
+      mapElement.addEventListener('touchstart', function (event) {
         if (!interactive || event.touches.length !== 2) return;
         pinchStartDistance = touchDistance(event.touches);
         pinchStartZoom = map.getZoom();
-         var rect = mapElement.getBoundingClientRect();
-         pinchAnchor = L.point(
-           (event.touches[0].clientX + event.touches[1].clientX) / 2 - rect.left,
-           (event.touches[0].clientY + event.touches[1].clientY) / 2 - rect.top
-         );
-         pinchActive = pinchStartDistance > 0;
-         if (pinchActive && map.dragging.enabled()) map.dragging.disable();
         event.preventDefault();
-         event.stopPropagation();
-       }
-       function movePinch(event) {
-         if (!interactive || event.touches.length !== 2 || !pinchActive) return;
+      }, { passive: false });
+      mapElement.addEventListener('touchmove', function (event) {
+        if (!interactive || event.touches.length !== 2 || !pinchStartDistance) return;
         var scale = touchDistance(event.touches) / pinchStartDistance;
         var nextZoom = Math.max(3, Math.min(19, pinchStartZoom + Math.log(scale) / Math.LN2));
-         map.setZoomAround(pinchAnchor, nextZoom, { animate: false });
+        map.setZoom(nextZoom, { animate: false });
         event.preventDefault();
-         event.stopPropagation();
-       }
-       function resetPinch() {
-         if (!pinchActive) return;
-         pinchStartDistance = 0;
-         pinchAnchor = null;
-         pinchActive = false;
-         if (interactive) map.dragging.enable();
-       }
-       function endPinch(event) {
-         if (event.touches.length < 2) resetPinch();
-       }
-       mapElement.addEventListener('touchstart', startPinch, { passive: false, capture: true });
-       mapElement.addEventListener('touchmove', movePinch, { passive: false, capture: true });
-       mapElement.addEventListener('touchend', endPinch, { passive: false, capture: true });
-       mapElement.addEventListener('touchcancel', resetPinch, { passive: false, capture: true });
+      }, { passive: false });
+      mapElement.addEventListener('touchend', function (event) {
+        if (event.touches.length < 2) pinchStartDistance = 0;
+      }, { passive: false });
       window.__zoomMap = function (delta) {
         var nextZoom = Math.max(3, Math.min(19, map.getZoom() + Number(delta || 0)));
         map.setZoom(nextZoom, { animate: true });

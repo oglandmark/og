@@ -56,28 +56,24 @@ interface MapRegion {
   zoom?: number;
 }
 
-const OKARA_REGION: MapRegion = {
+const OKARA_REGION = {
   latitude: 30.8077, longitude: 73.4561,
-  latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13,
+  latitudeDelta: 0.08, longitudeDelta: 0.08,
 };
 
 // City centers are used only as a starting viewport. The user can still
 // search, use GPS, tap the map, or drag the pin to the exact property.
-const CITY_REGIONS: Record<string, MapRegion> = {
-  Okara: { latitude: 30.8077, longitude: 73.4561, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
-  Depalpur: { latitude: 30.6698, longitude: 73.6554, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
-  'Renala Khurd': { latitude: 30.8895, longitude: 73.5986, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
-  'Hujra Shah Muqeem': { latitude: 30.7417, longitude: 73.8238, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
-  Basirpur: { latitude: 30.6688, longitude: 73.8386, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
-  'Haveli Lakha': { latitude: 30.7208, longitude: 73.7537, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
+const CITY_REGIONS: Record<string, typeof OKARA_REGION> = {
+  Okara: { latitude: 30.8077, longitude: 73.4561, latitudeDelta: 0.08, longitudeDelta: 0.08 },
+  Depalpur: { latitude: 30.6698, longitude: 73.6554, latitudeDelta: 0.08, longitudeDelta: 0.08 },
+  'Renala Khurd': { latitude: 30.8895, longitude: 73.5986, latitudeDelta: 0.08, longitudeDelta: 0.08 },
+  'Hujra Shah Muqeem': { latitude: 30.7417, longitude: 73.8238, latitudeDelta: 0.08, longitudeDelta: 0.08 },
+  Basirpur: { latitude: 30.6688, longitude: 73.8386, latitudeDelta: 0.08, longitudeDelta: 0.08 },
+  'Haveli Lakha': { latitude: 30.7208, longitude: 73.7537, latitudeDelta: 0.08, longitudeDelta: 0.08 },
 };
 
 function getCityRegion(city?: string) {
-  const selectedCity = city?.trim();
-  if (!selectedCity) return OKARA_REGION;
-  return CITY_REGIONS[selectedCity]
-    ?? Object.entries(CITY_REGIONS).find(([name]) => name.toLowerCase() === selectedCity.toLowerCase())?.[1]
-    ?? OKARA_REGION;
+  return CITY_REGIONS[city ?? ''] ?? OKARA_REGION;
 }
 
 function fmtCoord(n: number, isLat: boolean) {
@@ -637,7 +633,6 @@ export function LocationPicker({
 
             <View style={lp.fullMap}>
               <InteractiveMap
-                key={city ?? 'default'}
                 region={region}
                 onRegionChange={handleMapRegionChange}
                 onPress={undefined}
@@ -649,10 +644,8 @@ export function LocationPicker({
                 zoomControlsBottomRight
                 satellite={false}
               />
-              <View pointerEvents="none" style={lp.brandCenterPin}>
-                <View style={lp.brandPinBody}>
-                  <View style={lp.brandPinDot} />
-                </View>
+              <View pointerEvents="none" style={lp.fixedCenterPin}>
+                <Feather name="map-pin" size={38} color={accent} />
               </View>
 
               <View style={[lp.selectedCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -1031,22 +1024,12 @@ const lp = StyleSheet.create({
   fullHeaderTitle: { fontFamily: 'Inter_700Bold', fontSize: 16 },
   fullHeaderSub: { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 2 },
   fullMap: { flex: 1, position: 'relative' },
-  brandCenterPin: {
-    position: 'absolute', top: '50%', left: '50%', width: 28, height: 28,
-    zIndex: 5, elevation: 5,
-    transform: [{ translateX: -14 }, { translateY: -34 }],
-  },
-  brandPinBody: {
-    width: 28, height: 28, backgroundColor: '#17324d', borderWidth: 3,
-    borderColor: '#ffffff', borderTopLeftRadius: 14, borderTopRightRadius: 14,
-    borderBottomRightRadius: 14, borderBottomLeftRadius: 2,
-    transform: [{ rotate: '-45deg' }],
-    shadowColor: '#102a43', shadowOpacity: 0.35, shadowRadius: 5,
+  fixedCenterPin: {
+    position: 'absolute', top: '50%', left: '50%', width: 38, height: 38,
+    alignItems: 'center', justifyContent: 'center', zIndex: 5, elevation: 5,
+    transform: [{ translateX: -19 }, { translateY: -36 }],
+    shadowColor: '#000000', shadowOpacity: 0.25, shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
-  },
-  brandPinDot: {
-    position: 'absolute', left: 7, top: 7, width: 8, height: 8,
-    borderRadius: 4, backgroundColor: '#ffffff',
   },
   selectedCard: {
     position: 'absolute', top: 18, left: 16, right: 16,

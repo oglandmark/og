@@ -19,7 +19,7 @@ export function BrandMark({
       <OGLandmarkLogo size={size === 'hero' ? (!showName ? 116 : 68) : 46} inverse={inverse} />
       {showName && (
         <View>
-          <Text style={[styles.title, { color: inverse ? colors.background : colors.foreground }, size === 'hero' && styles.heroTitle]}>OG Landmark</Text>
+          <Text style={[styles.title, { color: inverse ? colors.background : colors.action }, size === 'hero' && styles.heroTitle]}>OG Landmark</Text>
           <Text style={[styles.subtitle, { color: inverse ? colors.gold : colors.primary }, size === 'hero' && styles.heroSubtitle]}>REAL ESTATE</Text>
         </View>
       )}

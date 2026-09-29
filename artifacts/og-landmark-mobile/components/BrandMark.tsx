@@ -16,7 +16,7 @@ export function BrandMark({
   const colors = useColors();
   return (
     <View style={[styles.container, size === 'hero' && styles.heroContainer]}>
-      <OGLandmarkLogo size={size === 'hero' ? (!showName ? 116 : 68) : 46} />
+      <OGLandmarkLogo size={size === 'hero' ? (!showName ? 116 : 68) : 46} inverse={inverse} />
       {showName && (
         <View>
           <Text style={[styles.title, { color: inverse ? colors.background : colors.foreground }, size === 'hero' && styles.heroTitle]}>OG Landmark</Text>

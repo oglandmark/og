@@ -185,9 +185,7 @@ function RootLayoutNav() {
   if (isLoading) {
     return (
       <View style={[rootStyles.loading, { backgroundColor: colors.actionDeep }]}>
-        <OGLandmarkLogo size={92} variant="splash" />
-        <Text style={[rootStyles.loadingBrand, { color: colors.actionForeground }]}>OG Landmark</Text>
-        <Text style={[rootStyles.loadingCaption, { color: colors.gold }]}>REAL ESTATE</Text>
+        <OGLandmarkLogo size={92} inverse />
         <View style={rootStyles.loadingStatus}>
           <ActivityIndicator color={colors.gold} size="small" />
           <Text style={[rootStyles.loadingStatusText, { color: colors.actionForeground }]}>Preparing your experience</Text>
@@ -231,18 +229,6 @@ const rootStyles = {
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
     paddingHorizontal: 32,
-  },
-  loadingBrand: {
-    fontFamily: 'PlayfairDisplay_600SemiBold',
-    fontSize: 24,
-    letterSpacing: 0.2,
-    marginTop: 18,
-  },
-  loadingCaption: {
-    fontFamily: 'Inter_700Bold',
-    fontSize: 9,
-    letterSpacing: 2.6,
-    marginTop: 4,
   },
   loadingStatus: {
     flexDirection: 'row' as const,

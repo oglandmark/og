@@ -174,9 +174,9 @@ export default function SiteVisitsScreen() {
             <View style={[sv.actions, { marginTop: 12 }]}>
               {canConfirm && (
                 <Pressable onPress={() => { void handleAction(visit, 'confirm'); }}
-                  style={[sv.actionBtn, { backgroundColor: '#1a6b3a18' }]}>
-                  <Feather name="check" size={12} color="#1a6b3a" />
-                  <Text style={[sv.actionBtnText, { color: '#1a6b3a' }]}>{tr('visitActionConfirm')}</Text>
+                  style={[sv.actionBtn, { backgroundColor: '#183B6018' }]}>
+                  <Feather name="check" size={12} color="#183B60" />
+                  <Text style={[sv.actionBtnText, { color: '#183B60' }]}>{tr('visitActionConfirm')}</Text>
                 </Pressable>
               )}
               {canReschedule && (

@@ -37,36 +37,36 @@ const colors = {
     primary: '#c7a263',
     primaryForeground: '#1c2024',
 
-    // Official OG Landmark deep green for interactive controls and CTAs
-    action: '#064e3b',
-    actionDeep: '#022c22',
-    actionSoft: '#166534',
+    // Official OG Landmark navy for interactive controls and CTAs
+    action: '#0B1F3A',
+    actionDeep: '#071428',
+    actionSoft: '#183B60',
     actionForeground: '#ffffff',
-    actionPressed: '#033f31',
+    actionPressed: '#082036',
     // Premium glass control tokens
     gold: '#d8b36a',
     goldForeground: '#1c2024',
     goldGlass: '#d9b96db8',
     goldGlassBorder: '#e8c985',
-    actionGlass: '#065f46d9',
-    actionGlassStrong: '#022c22e8',
-    actionGlassSoft: '#6aa8892e',
+    actionGlass: '#0B1F3AD9',
+    actionGlassStrong: '#071428E8',
+    actionGlassSoft: '#6A8DAF2E',
     actionGlassBorder: '#ffffff55',
     actionGlassHighlight: '#ffffff24',
-    actionGlow: '#86b59f',
+    actionGlow: '#86A7C5',
 
     // Editorial surfaces used for quiet hierarchy and premium depth
     surfaceRaised: '#ffffff',
     surfaceTint: '#f1f4f7',
-    surfaceDeep: '#0f513f',
-    shadow: '#0b3d30',
+    surfaceDeep: '#0B1F3A',
+    shadow: '#071428',
     focusRing: '#b98d45',
 
     // Premium selected-state treatment for category/filter/tab/chip controls
     selectionBackground: '#fbfcfd',
     selectionTint: '#f3f7fa',
-    selectionBorder: '#065f46',
-    selectionForeground: '#065f46',
+    selectionBorder: '#0B1F3A',
+    selectionForeground: '#0B1F3A',
 
     // Secondary / less-emphasis interactive surfaces
     secondary: '#eef2f5',

@@ -116,6 +116,7 @@ test('authenticated listing lifecycle keeps media, seller review context, and st
         ...process.env,
         NODE_ENV: 'development',
         REPLIT_ENVIRONMENT: '1',
+        LARAVEL_API_URL: '',
         DATABASE_URL: '',
         NEON_DATABASE_URL: '',
         SMTP_USER: '',

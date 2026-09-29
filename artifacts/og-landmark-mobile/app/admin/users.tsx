@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { getAdminUsers, updateUserRole, deleteAdminUser, ApiUser } from '@/lib/api';
 
-const NAVY = '#064e3b';
+const NAVY = '#0B1F3A';
 const GOLD = '#C8A45A';
 
 const ROLE_COLORS: Record<string, string> = {

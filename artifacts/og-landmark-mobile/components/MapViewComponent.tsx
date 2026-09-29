@@ -59,7 +59,7 @@ function buildLeafletHtml(
     body { background:#e8f0f7; }
     #map { width:100%; height:100%; position:absolute;top:0;left:0;right:0;bottom:0; }
      .leaflet-container { touch-action:none; }
-     .custom-pin { position:relative;width:28px;height:28px;background:#07523f;border-radius:50% 50% 50% 0;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);transform:rotate(-45deg); }
+     .custom-pin { position:relative;width:28px;height:28px;background:#183B60;border-radius:50% 50% 50% 0;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);transform:rotate(-45deg); }
      .custom-pin::after { content:'';position:absolute;width:8px;height:8px;left:7px;top:7px;background:#fff;border-radius:50%; }
   </style>
 </head>

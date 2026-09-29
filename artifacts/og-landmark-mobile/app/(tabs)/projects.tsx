@@ -109,9 +109,9 @@ function ProjectCard({
       <View style={card.statsRow}>
         {[
           { label: tr('unitsTotal'),    value: project.totalUnits,     color: colors.foreground },
-          { label: tr('availableLabel'),value: project.availableUnits, color: '#1a6b3a' },
+          { label: tr('availableLabel'),value: project.availableUnits, color: '#183B60' },
           { label: tr('reservedLabel'), value: project.reservedUnits,  color: '#c8a45a' },
-          { label: tr('soldLabel'),     value: project.soldUnits,      color: '#064e3b' },
+          { label: tr('soldLabel'),     value: project.soldUnits,      color: '#0B1F3A' },
         ].map((stat) => (
           <View key={stat.label} style={card.stat}>
             <Text style={[card.statValue, { color: stat.color }]}>{stat.value}</Text>

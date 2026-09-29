@@ -12,7 +12,7 @@ import {
   type AdminAnnouncement,
 } from '@/lib/api';
 
-const NAVY = '#064e3b';
+const NAVY = '#0B1F3A';
 const GOLD = '#C8A45A';
 
 export default function AdminNotifications() {

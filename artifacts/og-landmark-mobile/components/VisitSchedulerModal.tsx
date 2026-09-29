@@ -163,8 +163,8 @@ export default function VisitSchedulerModal({
           {submitted ? (
             /* ── Success screen ─────────────────────────────────────────── */
             <ScrollView contentContainerStyle={vs.successWrap} showsVerticalScrollIndicator={false}>
-              <View style={[vs.successIcon, { backgroundColor: '#1a6b3a15' }]}>
-                <Feather name="check-circle" size={40} color="#1a6b3a" />
+              <View style={[vs.successIcon, { backgroundColor: '#183B6015' }]}>
+                <Feather name="check-circle" size={40} color="#183B60" />
               </View>
               <Text style={[vs.successTitle, { color: colors.foreground }]}>Visit Requested!</Text>
               <Text style={[vs.successSub, { color: colors.mutedForeground }]}>
@@ -344,7 +344,7 @@ export default function VisitSchedulerModal({
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const vs = StyleSheet.create({
-  overlay:        { flex: 1, justifyContent: 'flex-end', backgroundColor: '#062f26aa' },
+  overlay:        { flex: 1, justifyContent: 'flex-end', backgroundColor: '#071428aa' },
   sheet:          { borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 10, maxHeight: '92%' },
   handle:         { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 8 },
 

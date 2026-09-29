@@ -665,8 +665,8 @@ export default function ListingWizard() {
   if (submitted) {
     return (
       <View style={[s.screen, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
-        <View style={[s.successIcon, { backgroundColor: '#1a6b3a14', borderColor: '#1a6b3a33' }]}>
-          <Feather name="check-circle" size={42} color="#1a6b3a" />
+        <View style={[s.successIcon, { backgroundColor: '#183B6014', borderColor: '#183B6033' }]}>
+          <Feather name="check-circle" size={42} color="#183B60" />
         </View>
         <Text style={[s.successTitle, { color: colors.foreground }]}>
           {editingListing ? 'Listing Updated!' : 'Property Submitted!'}
@@ -1846,9 +1846,9 @@ function StepDocs({ form, update, colors, errors, user, category }: any) {
         <ToggleRow label="Allow phone calls" value={form.allowCalls} onChange={(v: boolean) => update({ allowCalls: v })} colors={colors} />
       </View>
 
-      <View style={[s.hintBox, { backgroundColor: '#1a6b3a0e', borderColor: '#1a6b3a33', marginTop: 14 }]}>
-        <Feather name="shield" size={12} color="#1a6b3a" />
-        <Text style={[s.hintText, { color: '#1a6b3a' }]}>
+      <View style={[s.hintBox, { backgroundColor: '#183B600e', borderColor: '#183B6033', marginTop: 14 }]}>
+        <Feather name="shield" size={12} color="#183B60" />
+        <Text style={[s.hintText, { color: '#183B60' }]}>
           Your listing will be reviewed by the OG Landmark team before it goes live.
         </Text>
       </View>
@@ -1919,7 +1919,7 @@ function StepPreview({ form, colors, category }: any) {
         )}
         <View style={s.previewBody}>
           <View style={s.previewRow}>
-            <View style={[s.statusBadge, { backgroundColor: form.purpose === 'Rent' ? '#1a6b3a' : colors.action }]}>
+            <View style={[s.statusBadge, { backgroundColor: form.purpose === 'Rent' ? '#183B60' : colors.action }]}>
               <Text style={s.statusBadgeText}>FOR {form.purpose.toUpperCase()}</Text>
             </View>
             <View style={[s.statusBadge, { backgroundColor: colors.secondary, borderColor: colors.border, borderWidth: 1 }]}>
@@ -1975,9 +1975,9 @@ function StepPreview({ form, colors, category }: any) {
               </View>
             </View>
           )}
-          <View style={[s.previewReview, { backgroundColor: '#1a6b3a0e', borderColor: '#1a6b3a33' }]}>
-            <Feather name="clock" size={12} color="#1a6b3a" />
-            <Text style={[s.previewReviewText, { color: '#1a6b3a' }]}>Pending review · Not yet public · {form.photos.length} photo(s) · {form.documents.length} doc(s)</Text>
+          <View style={[s.previewReview, { backgroundColor: '#183B600e', borderColor: '#183B6033' }]}>
+            <Feather name="clock" size={12} color="#183B60" />
+            <Text style={[s.previewReviewText, { color: '#183B60' }]}>Pending review · Not yet public · {form.photos.length} photo(s) · {form.documents.length} doc(s)</Text>
           </View>
         </View>
       </View>

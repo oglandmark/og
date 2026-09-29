@@ -242,10 +242,10 @@ export default function DeveloperProfileScreen() {
       </View>
 
       {/* ── VERIFICATION CARD ─────────────────────────────────────────── */}
-      <View style={[styles.verCard, { backgroundColor: '#1a6b3a08', borderColor: '#1a6b3a20' }]}>
+      <View style={[styles.verCard, { backgroundColor: '#183B6008', borderColor: '#183B6020' }]}>
         <View style={styles.verHeader}>
-          <Feather name="shield" size={16} color="#1a6b3a" />
-          <Text style={[styles.verTitle, { color: '#1a6b3a' }]}>Why is this developer verified?</Text>
+          <Feather name="shield" size={16} color="#183B60" />
+          <Text style={[styles.verTitle, { color: '#183B60' }]}>Why is this developer verified?</Text>
         </View>
         {[
           'Company information reviewed',
@@ -254,7 +254,7 @@ export default function DeveloperProfileScreen() {
           'Legal & NOC status checked',
         ].map((c) => (
           <View key={c} style={styles.verItem}>
-            <Feather name="check-circle" size={12} color="#1a6b3a" />
+            <Feather name="check-circle" size={12} color="#183B60" />
             <Text style={[styles.verItemText, { color: colors.foreground }]}>{c}</Text>
           </View>
         ))}

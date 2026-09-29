@@ -23,7 +23,7 @@ import {
 // ── Agent CRM config ──────────────────────────────────────────────────────────
 const statusConfig: Record<LeadStatus, { color: string; label: string }> = {
   new:        { color: '#059669', label: 'New' },
-  contacted:  { color: '#064e3b', label: 'Contacted' },
+  contacted:  { color: '#0B1F3A', label: 'Contacted' },
   interested: { color: '#c8a45a', label: 'Interested' },
   viewing:    { color: '#7c3aed', label: 'Viewing' },
   closed:     { color: '#6b7280', label: 'Closed' },

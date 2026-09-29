@@ -1004,7 +1004,7 @@ export default function ExploreScreen() {
              accessibilityLabel="Open map view"
            >
              <Text style={[ex.mapActionText, { color: colors.foreground }]}>Map</Text>
-              <FontAwesome5 name="map-marked-alt" size={14} color="#064e3b" />
+              <FontAwesome5 name="map-marked-alt" size={14} color="#0B1F3A" />
            </Pressable>
         </View>
 
@@ -1668,35 +1668,35 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
                 <View style={fs.checkGrid}>
                   {AGRI_WATER.map((w) => (
                     <CheckChip key={w} label={w} selected={draft.agriWater.includes(w)}
-                      onToggle={() => toggleArr('agriWater', w)} colors={colors} accentColor="#1a6b3a" />
+                      onToggle={() => toggleArr('agriWater', w)} colors={colors} accentColor="#183B60" />
                   ))}
                 </View>
                 <Text style={[fs.subLabel, { color: colors.mutedForeground, marginTop: 10 }]}>Electricity</Text>
                 <View style={fs.checkGrid}>
                   {AGRI_ELECTRICITY.map((e) => (
                     <CheckChip key={e} label={e} selected={draft.agriElectricity.includes(e)}
-                      onToggle={() => toggleArr('agriElectricity', e)} colors={colors} accentColor="#1a6b3a" />
+                      onToggle={() => toggleArr('agriElectricity', e)} colors={colors} accentColor="#183B60" />
                   ))}
                 </View>
                 <Text style={[fs.subLabel, { color: colors.mutedForeground, marginTop: 10 }]}>Road Access</Text>
                 <View style={fs.checkGrid}>
                   {AGRI_ROAD.map((r) => (
                     <CheckChip key={r} label={r} selected={draft.agriRoad.includes(r)}
-                      onToggle={() => toggleArr('agriRoad', r)} colors={colors} accentColor="#1a6b3a" />
+                      onToggle={() => toggleArr('agriRoad', r)} colors={colors} accentColor="#183B60" />
                   ))}
                 </View>
                 <Text style={[fs.subLabel, { color: colors.mutedForeground, marginTop: 10 }]}>Land Features</Text>
                 <View style={fs.checkGrid}>
                   {AGRI_LAND_FEATS.map((feat) => (
                     <CheckChip key={feat} label={feat} selected={draft.agriLandFeatures.includes(feat)}
-                      onToggle={() => toggleArr('agriLandFeatures', feat)} colors={colors} accentColor="#1a6b3a" />
+                      onToggle={() => toggleArr('agriLandFeatures', feat)} colors={colors} accentColor="#183B60" />
                   ))}
                 </View>
                 <Text style={[fs.subLabel, { color: colors.mutedForeground, marginTop: 10 }]}>Crop Type</Text>
                 <View style={fs.checkGrid}>
                   {AGRI_CROPS.map((c) => (
                     <CheckChip key={c} label={c} selected={draft.agriCrop.includes(c)}
-                      onToggle={() => toggleArr('agriCrop', c)} colors={colors} accentColor="#1a6b3a" />
+                      onToggle={() => toggleArr('agriCrop', c)} colors={colors} accentColor="#183B60" />
                   ))}
                 </View>
               </Section>
@@ -2046,13 +2046,13 @@ const ex = StyleSheet.create({
   mapScreenHeaderSide: { width: 92 },
   mapStage:        { flex: 1, position: 'relative' },
   mapSearchOverlay: { position: 'absolute', top: 14, left: 60, right: 18, zIndex: 10 },
-  locationMapStatus: { position: 'absolute', top: '38%', left: 28, right: 28, alignItems: 'center', borderRadius: 18, borderWidth: 1, paddingHorizontal: 18, paddingVertical: 18, zIndex: 8, shadowColor: '#064e3b', shadowOpacity: 0.16, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
+  locationMapStatus: { position: 'absolute', top: '38%', left: 28, right: 28, alignItems: 'center', borderRadius: 18, borderWidth: 1, paddingHorizontal: 18, paddingVertical: 18, zIndex: 8, shadowColor: '#0B1F3A', shadowOpacity: 0.16, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
   locationMapStatusTitle: { fontFamily: 'Inter_700Bold', fontSize: 14, marginTop: 8, textAlign: 'center' },
   locationMapStatusText: { fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 16, marginTop: 5, textAlign: 'center' },
-  mapSearchBar:    { height: Platform.OS === 'web' ? 30 : 38, minHeight: Platform.OS === 'web' ? 30 : 38, borderRadius: Platform.OS === 'web' ? 10 : 12, borderWidth: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 9, gap: 7, shadowColor: '#064e3b', shadowOpacity: 0.16, shadowRadius: 9, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
+  mapSearchBar:    { height: Platform.OS === 'web' ? 30 : 38, minHeight: Platform.OS === 'web' ? 30 : 38, borderRadius: Platform.OS === 'web' ? 10 : 12, borderWidth: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 9, gap: 7, shadowColor: '#0B1F3A', shadowOpacity: 0.16, shadowRadius: 9, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
   mapSearchIconWrap: { width: Platform.OS === 'web' ? 20 : 28, height: Platform.OS === 'web' ? 20 : 28, borderRadius: Platform.OS === 'web' ? 7 : 9, alignItems: 'center', justifyContent: 'center' },
   mapSearchInput:  { flex: 1, fontFamily: 'Inter_500Medium', fontSize: 13, paddingVertical: 0 },
-  mapSuggestions:  { marginTop: 8, borderRadius: 16, borderWidth: 1, overflow: 'hidden', shadowColor: '#064e3b', shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
+  mapSuggestions:  { marginTop: 8, borderRadius: 16, borderWidth: 1, overflow: 'hidden', shadowColor: '#0B1F3A', shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
   mapSuggestionsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, paddingTop: 12, paddingBottom: 8 },
   mapSuggestionsLabel: { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.2 },
   mapSuggestionRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 15, paddingVertical: 11 },
@@ -2062,7 +2062,7 @@ const ex = StyleSheet.create({
   mapActions:      { flexDirection: 'row', gap: 10, paddingHorizontal: 18, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth },
   mapActionBack:   { flex: 1, height: 38, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   mapActionBackText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  mapActionDone:   { flex: 1, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', shadowColor: '#064e3b', shadowOpacity: 0.14, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 3 },
+  mapActionDone:   { flex: 1, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', shadowColor: '#0B1F3A', shadowOpacity: 0.14, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 3 },
   mapActionDoneText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   headerIntro:     { paddingTop: 2, paddingBottom: 15 },
   headerEyebrow:   { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 2, marginBottom: 5 },
@@ -2112,14 +2112,14 @@ const ex = StyleSheet.create({
   // Page navigation
   pagination:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 8, paddingBottom: 22 },
   paginationButton:{ width: 46, height: 46, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  paginationActive:{ shadowColor: '#064e3b', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
+  paginationActive:{ shadowColor: '#0B1F3A', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
   paginationDisabled:{ opacity: 0.38 },
   paginationPressed:{ transform: [{ scale: 0.96 }], opacity: 0.82 },
   paginationText:  { fontFamily: 'Inter_700Bold', fontSize: 15 },
   paginationEllipsis:{ width: 24, height: 46, alignItems: 'center', justifyContent: 'center' },
   paginationEllipsisText:{ fontFamily: 'Inter_700Bold', fontSize: 15 },
   // Save modal
-  modalBackdrop:   { flex: 1, backgroundColor: '#064e3b66', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28 },
+  modalBackdrop:   { flex: 1, backgroundColor: '#0B1F3A66', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28 },
   saveModal:       { width: '100%', borderRadius: 20, borderWidth: 1, padding: 24 },
   saveModalTitle:  { fontFamily: 'Inter_700Bold', fontSize: 18, marginBottom: 6 },
   saveModalSub:    { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, marginBottom: 18 },
@@ -2133,7 +2133,7 @@ const ex = StyleSheet.create({
 });
 
 const fs = StyleSheet.create({
-  root:          { flex: 1, justifyContent: 'flex-end', backgroundColor: '#064e3b66' },
+  root:          { flex: 1, justifyContent: 'flex-end', backgroundColor: '#0B1F3A66' },
   backdrop:      { ...StyleSheet.absoluteFill },
   sheet:         { maxHeight: '92%', borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 24 },
   handle:        { alignSelf: 'center', width: 42, height: 4, borderRadius: 2, backgroundColor: '#c8a45a', opacity: 0.7, marginBottom: 18 },

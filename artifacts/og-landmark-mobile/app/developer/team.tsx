@@ -245,9 +245,9 @@ export default function TeamScreen() {
                     {/* Actions */}
                     <View style={[tm.memberActions, { borderTopColor: colors.border }]}>
                       <Pressable onPress={() => { void handleToggle(m.id); }}
-                        style={[tm.memberActionBtn, { backgroundColor: m.active ? colors.secondary : '#1a6b3a18' }]}>
-                        <Feather name={m.active ? 'pause-circle' : 'play-circle'} size={13} color={m.active ? colors.mutedForeground : '#1a6b3a'} />
-                        <Text style={[tm.memberActionText, { color: m.active ? colors.mutedForeground : '#1a6b3a' }]}>
+                        style={[tm.memberActionBtn, { backgroundColor: m.active ? colors.secondary : '#183B6018' }]}>
+                        <Feather name={m.active ? 'pause-circle' : 'play-circle'} size={13} color={m.active ? colors.mutedForeground : '#183B60'} />
+                        <Text style={[tm.memberActionText, { color: m.active ? colors.mutedForeground : '#183B60' }]}>
                           {m.active ? tr('teamInactiveLabel') : tr('teamActiveLabel')}
                         </Text>
                       </Pressable>

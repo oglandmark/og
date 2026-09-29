@@ -461,7 +461,7 @@ function BannerSlide({ slide, isActive, colors, onCta }: {
       <Image source={slide.image} style={bn.image} resizeMode="cover" />
       <LinearGradient
         pointerEvents="none"
-        colors={['#064e3b00', '#022c22e8']}
+        colors={['#0B1F3A00', '#071428e8']}
         locations={[0.16, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -525,7 +525,7 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, colors, o
       ) : null}
       <LinearGradient
         pointerEvents="none"
-        colors={['#064e3b00', '#022c22e8']}
+        colors={['#0B1F3A00', '#071428e8']}
         locations={[0.16, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -765,7 +765,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
             <Text style={fp.badgeText}>{property.type.toUpperCase()}</Text>
           </View>
           <PropertyDemoBadge visible={property.isDemo === true} compact />
-          <View style={[fp.badge, { backgroundColor: '#1a6b3acc', flexDirection: 'row', gap: 4, alignItems: 'center' }]}>
+          <View style={[fp.badge, { backgroundColor: '#183B60cc', flexDirection: 'row', gap: 4, alignItems: 'center' }]}>
             <Feather name="check-circle" size={9} color="#fff" />
             <Text style={fp.badgeText}>VERIFIED</Text>
           </View>
@@ -803,7 +803,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
               hitSlop={6}
             >
               <View style={fp.videoTourIcon}>
-                <Feather name="play" size={9} color="#064e3b" />
+                <Feather name="play" size={9} color="#0B1F3A" />
               </View>
               <Text style={fp.videoTourText}>Video Tour</Text>
             </Pressable>
@@ -892,7 +892,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
 
 const fp = StyleSheet.create({
   // ── Card ──────────────────────────────────────────────────────────────────
-  card:         { width: 300, height: 320, borderRadius: 22, overflow: 'hidden', marginRight: 16, shadowColor: '#064e3b', shadowOpacity: 0.18, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
+  card:         { width: 300, height: 320, borderRadius: 22, overflow: 'hidden', marginRight: 16, shadowColor: '#0B1F3A', shadowOpacity: 0.18, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
   image:        { ...StyleSheet.absoluteFill },
   galleryStatus:{ position: 'absolute', top: 56, right: 14, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#071521aa', borderWidth: 1, borderColor: '#ffffff33', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 5 },
   galleryDots:  { flexDirection: 'row', alignItems: 'center', gap: 3 },
@@ -917,7 +917,7 @@ const fp = StyleSheet.create({
   // Video Tour pill
   videoTourBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#c8a45a', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5 },
   videoTourIcon: { width: 16, height: 16, borderRadius: 8, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
-  videoTourText: { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#064e3b', letterSpacing: 0.3 },
+  videoTourText: { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#0B1F3A', letterSpacing: 0.3 },
 
   viewBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#ffffff22', borderWidth: 1, borderColor: '#ffffff44', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 6 },
   viewBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#ffffff' },
@@ -938,7 +938,7 @@ const fp = StyleSheet.create({
   fsError:      { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
   fsErrorText:  { color: '#c8a45a', fontWeight: '700', fontSize: 15 },
   fsErrorBtn:   { marginTop: 8, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: '#c8a45a', borderRadius: 10 },
-  fsErrorBtnText:{ color: '#064e3b', fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  fsErrorBtnText:{ color: '#0B1F3A', fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });
 
 // ─── Agent Card (premium) ─────────────────────────────────────────────────────
@@ -1104,8 +1104,8 @@ function AgentCard({ agent, colors, onPress }: { agent: SampleAgent; colors: Col
 
 const ac = StyleSheet.create({
   card:         { width: 250, borderRadius: 22, borderWidth: 1, overflow: 'hidden', marginRight: 14,
-                  shadowColor: '#064e3b', shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
-  photoWrap:    { height: 142, backgroundColor: '#064e3b', overflow: 'hidden' },
+                  shadowColor: '#0B1F3A', shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
+  photoWrap:    { height: 142, backgroundColor: '#0B1F3A', overflow: 'hidden' },
   photo:        { width: '100%', height: '100%' },
   photoAccent:  { position: 'absolute', left: 0, bottom: 0, width: 4, height: 46, backgroundColor: '#c8a45a' },
   avatar:       { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -1156,7 +1156,7 @@ function ProjectShowcaseCard({ project, colors, onPress }: { project: typeof pro
           <View style={[pc.typeBadge, { backgroundColor: '#c8a45acc' }]}>
             <Text style={pc.typeBadgeText}>{project.category}</Text>
           </View>
-          <View style={[pc.verifiedBadge, { backgroundColor: '#1a6b3acc' }]}>
+          <View style={[pc.verifiedBadge, { backgroundColor: '#183B60cc' }]}>
             <Feather name="check-circle" size={9} color="#ffffff" />
             <Text style={pc.verifiedText}>VERIFIED</Text>
           </View>
@@ -1295,7 +1295,7 @@ function RecommendedCard({ property, colors, onPress }: { property: Property; co
 }
 
 const rc = StyleSheet.create({
-  card:         { width: 220, borderRadius: 18, overflow: 'hidden', marginRight: 14, borderWidth: 1, shadowColor: '#064e3b', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  card:         { width: 220, borderRadius: 18, overflow: 'hidden', marginRight: 14, borderWidth: 1, shadowColor: '#0B1F3A', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   image:        { width: '100%', height: 140 },
   imageGradient:{ position: 'absolute', top: 0, left: 0, right: 0, height: 140 },
   saveBtn:      { position: 'absolute', top: 10, right: 10, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
@@ -1315,7 +1315,7 @@ const rc = StyleSheet.create({
 function AgriCommCard({ property, colors, isAgri, onPress }: {
   property: Property; colors: Colors; isAgri: boolean; onPress: () => void;
 }) {
-  const accentColor = isAgri ? '#1a6b3a' : '#064e3b';
+  const accentColor = isAgri ? '#183B60' : '#0B1F3A';
   return (
     <Pressable
       onPress={onPress}
@@ -1373,7 +1373,7 @@ function LocationSheet({ visible, selected, onSelect, onClose, colors, insets, m
   return (
     <Modal visible transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#062f26bb' }]}>
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#071428bb' }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         </View>
         <View style={[ls.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20, borderColor: colors.border }]}>
@@ -1420,7 +1420,7 @@ function LocationSheet({ visible, selected, onSelect, onClose, colors, insets, m
 }
 
 const ls = StyleSheet.create({
-  sheet:    { maxHeight: '92%', borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1, paddingTop: 12, paddingHorizontal: 20, shadowColor: '#064e3b', shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: -6 }, elevation: 12 },
+  sheet:    { maxHeight: '92%', borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1, paddingTop: 12, paddingHorizontal: 20, shadowColor: '#0B1F3A', shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: -6 }, elevation: 12 },
   scrollContent: { paddingBottom: 4 },
   handle:   { width: 36, height: 3, borderRadius: 2, alignSelf: 'center', marginBottom: 18 },
   heading:  { fontFamily: 'Inter_700Bold', fontSize: 20, marginBottom: 4 },
@@ -1991,14 +1991,14 @@ export default function HomeScreen() {
           <View style={[s.acHeader, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {/* Agricultural */}
             <Pressable onPress={() => router.push({ pathname: '/explore', params: { propertyType: 'Agriculture Land' } })} style={[s.acTab, { borderRightColor: colors.border }]}>
-              <View style={[s.acTabIcon, { backgroundColor: '#1a6b3a18' }]}>
-                <Feather name="sun" size={16} color="#1a6b3a" />
+              <View style={[s.acTabIcon, { backgroundColor: '#183B6018' }]}>
+                <Feather name="sun" size={16} color="#183B60" />
               </View>
               <View>
-                <Text style={[s.acTabEyebrow, { color: '#1a6b3a' }]}>AGRICULTURE</Text>
+                <Text style={[s.acTabEyebrow, { color: '#183B60' }]}>AGRICULTURE</Text>
                 <Text style={[s.acTabTitle, { color: colors.foreground }]}>Farm & Land</Text>
               </View>
-              <Feather name="arrow-up-right" size={14} color="#1a6b3a" style={{ marginLeft: 'auto' }} />
+              <Feather name="arrow-up-right" size={14} color="#183B60" style={{ marginLeft: 'auto' }} />
             </Pressable>
             {/* Commercial */}
             <Pressable onPress={() => router.push({ pathname: '/explore', params: { propertyType: 'Commercial' } })} style={s.acTab}>
@@ -2218,7 +2218,7 @@ const s = StyleSheet.create({
 
   // Drawer styles (unchanged)
   drawerRoot:         { flex: 1, flexDirection: 'row' },
-  drawerBackdrop:     { backgroundColor: '#062f2699' },
+  drawerBackdrop:     { backgroundColor: '#07142899' },
   drawerPanel:        { height: '100%', overflow: 'hidden', borderRightWidth: 1, shadowColor: '#03251d', shadowOpacity: 0.3, shadowRadius: 24, shadowOffset: { width: 8, height: 0 }, elevation: 16 },
   drawerScrollContent:{ paddingTop: 0, paddingBottom: 18, flexGrow: 1 },
   drawerHeader:       { paddingHorizontal: 18, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

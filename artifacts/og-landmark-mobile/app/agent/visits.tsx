@@ -108,16 +108,16 @@ function VisitCard({
         <View style={[vc.actions, { borderTopColor: colors.border }]}>
           {visit.status === 'Requested' && (
             <Pressable onPress={() => onStatusChange(visit.id, 'Confirmed')}
-              style={[vc.actionBtn, { backgroundColor: '#1a6b3a18' }]}>
-              <Feather name="check" size={13} color="#1a6b3a" />
-              <Text style={[vc.actionBtnText, { color: '#1a6b3a' }]}>Confirm</Text>
+              style={[vc.actionBtn, { backgroundColor: '#183B6018' }]}>
+              <Feather name="check" size={13} color="#183B60" />
+              <Text style={[vc.actionBtnText, { color: '#183B60' }]}>Confirm</Text>
             </Pressable>
           )}
           {visit.status === 'Confirmed' && (
             <Pressable onPress={() => onStatusChange(visit.id, 'Completed')}
-              style={[vc.actionBtn, { backgroundColor: '#064e3b18' }]}>
-              <Feather name="check-circle" size={13} color="#064e3b" />
-              <Text style={[vc.actionBtnText, { color: '#064e3b' }]}>Complete</Text>
+              style={[vc.actionBtn, { backgroundColor: '#0B1F3A18' }]}>
+              <Feather name="check-circle" size={13} color="#0B1F3A" />
+              <Text style={[vc.actionBtnText, { color: '#0B1F3A' }]}>Complete</Text>
             </Pressable>
           )}
           <Pressable onPress={() => onStatusChange(visit.id, 'Rescheduled')}

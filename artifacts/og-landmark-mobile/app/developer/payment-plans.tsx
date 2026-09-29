@@ -97,9 +97,9 @@ function PlanCard({
           <Text style={[pc.chipLabel, { color: colors.mutedForeground }]}>Booking</Text>
           <Text style={[pc.chipValue, { color: colors.action }]}>PKR {fmtPKR(plan.bookingAmount)}</Text>
         </View>
-        <View style={[pc.chip, { backgroundColor: '#1a6b3a12' }]}>
+        <View style={[pc.chip, { backgroundColor: '#183B6012' }]}>
           <Text style={[pc.chipLabel, { color: colors.mutedForeground }]}>Monthly</Text>
-          <Text style={[pc.chipValue, { color: '#1a6b3a' }]}>PKR {fmtPKR(plan.monthlyInstallment)}</Text>
+          <Text style={[pc.chipValue, { color: '#183B60' }]}>PKR {fmtPKR(plan.monthlyInstallment)}</Text>
         </View>
         <View style={[pc.chip, { backgroundColor: colors.secondary }]}>
           <Text style={[pc.chipLabel, { color: colors.mutedForeground }]}>× {plan.installmentCount}</Text>
@@ -125,7 +125,7 @@ function PlanCard({
           </View>
           <View style={[pc.breakRow, { borderBottomColor: colors.border }]}>
             <Text style={[pc.breakLabel, { color: colors.mutedForeground }]}>{tr('planCalcInstTotal')}</Text>
-            <Text style={[pc.breakValue, { color: '#1a6b3a' }]}>PKR {fmtPKR(summary.totalInstallments)}</Text>
+            <Text style={[pc.breakValue, { color: '#183B60' }]}>PKR {fmtPKR(summary.totalInstallments)}</Text>
           </View>
           <View style={pc.breakRow}>
             <Text style={[pc.breakLabel, { color: colors.mutedForeground, fontFamily: 'Inter_700Bold' }]}>{tr('planTotalPrice')}</Text>

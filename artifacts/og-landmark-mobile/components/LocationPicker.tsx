@@ -172,10 +172,10 @@ export function PinnedMapCard({
           {showDirections && (
             <Pressable
               onPress={handleDirections}
-              style={({ pressed }) => [pmc.actionBtn, { backgroundColor: '#1a6b3a15', opacity: pressed ? 0.7 : 1 }]}
+              style={({ pressed }) => [pmc.actionBtn, { backgroundColor: '#183B6015', opacity: pressed ? 0.7 : 1 }]}
             >
-              <Feather name="navigation" size={13} color="#1a6b3a" />
-              <Text style={[pmc.actionBtnText, { color: '#1a6b3a' }]}>Get Directions</Text>
+              <Feather name="navigation" size={13} color="#183B60" />
+              <Text style={[pmc.actionBtnText, { color: '#183B60' }]}>Get Directions</Text>
             </Pressable>
           )}
         </View>
@@ -703,7 +703,7 @@ export function LocationPicker({
                   hitSlop={8}
                   style={lp.changeLocationButton}
                 >
-                  <Feather name="map-pin" size={14} color="#1a6b3a" />
+                  <Feather name="map-pin" size={14} color="#183B60" />
                   <Text style={lp.changeLocationText}>Change</Text>
                 </Pressable>
                 {hasPin && !addressLoading && (
@@ -1057,11 +1057,11 @@ const lp = StyleSheet.create({
     transform: [{ translateX: -14 }, { translateY: -34 }],
   },
   brandPinBody: {
-    width: 28, height: 28, backgroundColor: '#07523f', borderWidth: 3,
+    width: 28, height: 28, backgroundColor: '#183B60', borderWidth: 3,
     borderColor: '#ffffff', borderTopLeftRadius: 14, borderTopRightRadius: 14,
     borderBottomRightRadius: 14, borderBottomLeftRadius: 2,
     transform: [{ rotate: '-45deg' }],
-    shadowColor: '#064e3b', shadowOpacity: 0.35, shadowRadius: 5,
+    shadowColor: '#0B1F3A', shadowOpacity: 0.35, shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
   },
   brandPinDot: {
@@ -1080,7 +1080,7 @@ const lp = StyleSheet.create({
   selectedCardSub: { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 4 },
   addressLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
   changeLocationButton: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6 },
-  changeLocationText: { fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#1a6b3a' },
+  changeLocationText: { fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#183B60' },
   selectedCardCoordinates: { position: 'absolute', left: 14, bottom: 5, fontFamily: 'Inter_400Regular', fontSize: 8 },
   fullMapHint: { position: 'absolute', left: 0, right: 0, bottom: 16, alignItems: 'center' },
   fullMapHintPill: {

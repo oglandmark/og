@@ -352,12 +352,12 @@ export default function ForgotPasswordScreen() {
               <View style={st.strengthRow}>
                 {[4, 6, 8, 10].map((threshold, i) => {
                   const filled = newPass.length >= threshold;
-                  const barColor = newPass.length < 6 ? '#e53e3e' : newPass.length < 8 ? '#f59e0b' : '#1a6b3a';
+                  const barColor = newPass.length < 6 ? '#e53e3e' : newPass.length < 8 ? '#f59e0b' : '#183B60';
                   return (
                     <View key={i} style={[st.strengthBar, { backgroundColor: filled ? barColor : colors.border }]} />
                   );
                 })}
-                <Text style={[st.strengthLabel, { color: newPass.length < 8 ? '#e53e3e' : newPass.length < 10 ? '#f59e0b' : '#1a6b3a' }]}>
+                <Text style={[st.strengthLabel, { color: newPass.length < 8 ? '#e53e3e' : newPass.length < 10 ? '#f59e0b' : '#183B60' }]}>
                   {newPass.length < 8 ? 'Too short' : newPass.length < 10 ? 'Fair' : 'Strong'}
                 </Text>
               </View>
@@ -383,7 +383,7 @@ export default function ForgotPasswordScreen() {
                   <Feather
                     name={confirmPass === newPass ? 'check-circle' : 'x-circle'}
                     size={15}
-                    color={confirmPass === newPass ? '#1a6b3a' : '#e53e3e'}
+                    color={confirmPass === newPass ? '#183B60' : '#e53e3e'}
                   />
                 </View>
               )}

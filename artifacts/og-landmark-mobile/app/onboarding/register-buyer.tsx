@@ -18,7 +18,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { okaraDistrict } from '@/lib/cities';
 import { getMobileSettings } from '@/lib/api';
 
-const ACTION  = '#064e3b';
+const ACTION  = '#0B1F3A';
 const GOLD    = '#c8a45a';
 const MUTED   = '#8a8f98';
 const BORDER  = '#e4e6ea';

@@ -208,7 +208,7 @@ export default function DocumentsScreen() {
                     <Image source={{ uri: docUri }} style={dc.preview} resizeMode="cover" />
                     <View style={{ flex: 1, marginLeft: 10 }}>
                       <Text style={[dc.previewName, { color: colors.foreground }]} numberOfLines={2}>{docFileName}</Text>
-                      <Text style={[dc.previewOk, { color: '#1a6b3a' }]}>✓ File selected</Text>
+                      <Text style={[dc.previewOk, { color: '#183B60' }]}>✓ File selected</Text>
                     </View>
                     <Pressable onPress={() => { setDocUri(''); setDocFileName(''); }} hitSlop={8}>
                       <Feather name="x" size={16} color={colors.mutedForeground} />

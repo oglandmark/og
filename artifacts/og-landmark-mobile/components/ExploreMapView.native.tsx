@@ -158,10 +158,10 @@ export function ExploreMapView({
             borderColor: '#d6e0e8',
           }]}
         >
-          <FontAwesome5 name="map-marked-alt" size={16} color="#064e3b" />
+          <FontAwesome5 name="map-marked-alt" size={16} color="#0B1F3A" />
           <View>
             <Text style={[styles.mapContextKicker, { color: '#987332' }]}>LIVE LISTINGS</Text>
-            <Text style={[styles.mapContextTitle, { color: '#064e3b' }]}>Explore the area</Text>
+            <Text style={[styles.mapContextTitle, { color: '#0B1F3A' }]}>Explore the area</Text>
           </View>
         </View>
       )}
@@ -174,7 +174,7 @@ export function ExploreMapView({
         }]}
       >
         <View style={[styles.countDot, { backgroundColor: MAP_AREA_BLUE }]} />
-        <Text style={[styles.countText, { color: colors?.foreground ?? '#064e3b' }]}>
+        <Text style={[styles.countText, { color: colors?.foreground ?? '#0B1F3A' }]}>
           {areaPropertyCount} on map
         </Text>
       </View>}
@@ -186,7 +186,7 @@ export function ExploreMapView({
             borderColor: colors?.border ?? '#d6e0e8',
           }]}>
             <Feather name="map-pin" size={18} color={colors?.primary ?? '#c8a45a'} />
-            <Text style={[styles.mapEmptyTitle, { color: colors?.foreground ?? '#064e3b' }]}>
+            <Text style={[styles.mapEmptyTitle, { color: colors?.foreground ?? '#0B1F3A' }]}>
               No listings in this area
             </Text>
             <Text style={[styles.mapEmptyText, { color: colors?.mutedForeground ?? '#587089' }]}>
@@ -212,7 +212,7 @@ export function ExploreMapView({
           colors={{
             card: colors?.mapGlassPanel ?? 'rgba(255, 255, 255, 0.68)',
             border: colors?.mapGlassPanelBorder ?? 'rgba(255, 255, 255, 0.94)',
-            foreground: colors?.foreground ?? '#064e3b',
+            foreground: colors?.foreground ?? '#0B1F3A',
             mutedForeground: colors?.mutedForeground ?? '#587089',
           }}
         />
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     position: 'absolute', top: 12, left: 12, flexDirection: 'row',
     alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 15,
     paddingHorizontal: 10, paddingVertical: 8,
-    shadowColor: '#064e3b', shadowOpacity: 0.13, shadowRadius: 8,
+    shadowColor: '#0B1F3A', shadowOpacity: 0.13, shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 }, elevation: 3,
   },
   mapContextKicker: { fontSize: 8, fontWeight: '800', letterSpacing: 1.1, marginBottom: 2 },
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   countBadge: {
     position: 'absolute', top: 58, right: 12, flexDirection: 'row',
     alignItems: 'center', gap: 7, borderWidth: 1, borderRadius: 14,
-    paddingHorizontal: 11, paddingVertical: 8, shadowColor: '#064e3b',
+    paddingHorizontal: 11, paddingVertical: 8, shadowColor: '#0B1F3A',
     shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 3,
   },
   countDot: { width: 7, height: 7, borderRadius: 4 },
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   mapEmpty: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30 },
   mapEmptyCard: {
     alignItems: 'center', borderWidth: 1, borderRadius: 15, paddingHorizontal: 18,
-    paddingVertical: 14, shadowColor: '#064e3b', shadowOpacity: 0.14,
+     paddingVertical: 14, shadowColor: '#0B1F3A', shadowOpacity: 0.14,
     shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 4,
   },
   mapEmptyTitle: { fontSize: 13, fontWeight: '800', marginTop: 7 },

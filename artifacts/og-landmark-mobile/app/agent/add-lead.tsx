@@ -20,16 +20,16 @@ import {
 } from '@/lib/leadsStore';
 
 const STATUSES: { key: LeadStatus; label: string; color: string }[] = [
-  { key: 'new',        label: 'New',       color: '#064e3b' },
+  { key: 'new',        label: 'New',       color: '#0B1F3A' },
   { key: 'contacted',  label: 'Contacted', color: '#c8a45a' },
-  { key: 'interested', label: 'Interested',color: '#1a6b3a' },
+  { key: 'interested', label: 'Interested',color: '#183B60' },
   { key: 'viewing',    label: 'Viewing',   color: '#7c3aed' },
 ];
 
 const PRIORITIES: { key: LeadPriority; label: string; color: string }[] = [
   { key: 'high',   label: '🔴 High',   color: '#b94b42' },
   { key: 'medium', label: '🟡 Medium', color: '#c8a45a' },
-  { key: 'low',    label: '🟢 Low',    color: '#1a6b3a' },
+  { key: 'low',    label: '🟢 Low',    color: '#183B60' },
 ];
 
 function FieldLabel({ label, required }: { label: string; required?: boolean }) {

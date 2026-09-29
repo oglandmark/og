@@ -405,7 +405,7 @@ export default function PromoteScreen() {
                   {/* Copy button overlay */}
                   <Pressable
                     onPress={() => { void copyToClipboard(); }}
-                    style={[pr.copyBtn, { backgroundColor: copied ? '#1a6b3a' : colors.action }]}
+                    style={[pr.copyBtn, { backgroundColor: copied ? '#183B60' : colors.action }]}
                   >
                     <Feather name={copied ? 'check' : 'copy'} size={13} color="#ffffff" />
                     <Text style={pr.copyBtnText}>{copied ? tr('promoteCopied') : tr('promoteCopyText')}</Text>

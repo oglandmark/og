@@ -73,7 +73,7 @@ function buildMapHtml({
     .pin, .user-pin {
       position: relative;
       width: 28px; height: 28px; border-radius: 50% 50% 50% 0;
-      background: #07523f; border: 3px solid #ffffff;
+      background: #183B60; border: 3px solid #ffffff;
       box-shadow: 0 2px 7px rgba(16,42,67,.45);
       transform: rotate(-45deg);
     }
@@ -82,7 +82,7 @@ function buildMapHtml({
     .price-pill {
       position: absolute; left: 50%; bottom: 7px; transform: translateX(-50%);
       display: inline-block; padding: 5px 8px; border-radius: 9px;
-      color: #064e3b; background: #fff; border: 1.5px solid #c8a45a;
+      color: #0B1F3A; background: #fff; border: 1.5px solid #c8a45a;
       box-shadow: 0 2px 7px rgba(16,42,67,.28); font: 700 11px Arial, sans-serif;
       white-space: nowrap;
     }
@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    shadowColor: '#064e3b',
+    shadowColor: '#0B1F3A',
     shadowOpacity: 0.18,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },

@@ -25,8 +25,8 @@ import type { MobileContent } from '@/lib/api';
 
 // ── Lead status display map ───────────────────────────────────────────────────
 const LEAD_STATUS_MAP: Record<string, { label: string; color: string }> = {
-  new:        { label: 'New',       color: '#1a6b3a' },
-  contacted:  { label: 'Contacted', color: '#064e3b' },
+  new:        { label: 'New',       color: '#183B60' },
+  contacted:  { label: 'Contacted', color: '#0B1F3A' },
   interested: { label: 'Interested',color: '#c8a45a' },
   viewing:    { label: 'Viewing',   color: '#7c3aed' },
   closed:     { label: 'Closed',   color: '#888888' },
@@ -73,18 +73,18 @@ function DeveloperDashboard({
   const portal = portalCopy?.developer;
 
   const kpiCards = [
-    { key: 'totalProjects', label: portal?.kpiLabels?.totalProjects || tr('totalProjects'), value: String(stats.totalProjects), icon: 'layers' as const, color: '#064e3b' },
-    { key: 'activeProjects', label: portal?.kpiLabels?.activeProjects || tr('activeProjects'), value: String(stats.activeProjects), icon: 'activity' as const, color: '#1a6b3a' },
+    { key: 'totalProjects', label: portal?.kpiLabels?.totalProjects || tr('totalProjects'), value: String(stats.totalProjects), icon: 'layers' as const, color: '#0B1F3A' },
+    { key: 'activeProjects', label: portal?.kpiLabels?.activeProjects || tr('activeProjects'), value: String(stats.activeProjects), icon: 'activity' as const, color: '#183B60' },
     { key: 'availableUnits', label: portal?.kpiLabels?.availableUnits || tr('availableUnits'), value: String(stats.availableUnits), icon: 'grid' as const, color: '#c8a45a' },
     { key: 'reservedUnits', label: portal?.kpiLabels?.reservedUnits || tr('reservedUnits'), value: String(stats.reservedUnits), icon: 'lock' as const, color: '#6b3a1a' },
-    { key: 'newLeads', label: portal?.kpiLabels?.newLeads || tr('devNewLeads'), value: String(devLeadStats.newCount), icon: 'users' as const, color: '#064e3b' },
-    { key: 'siteVisits', label: portal?.kpiLabels?.siteVisits || tr('devSiteVisits'), value: String(visitCount), icon: 'calendar' as const, color: '#1a6b3a' },
+    { key: 'newLeads', label: portal?.kpiLabels?.newLeads || tr('devNewLeads'), value: String(devLeadStats.newCount), icon: 'users' as const, color: '#0B1F3A' },
+    { key: 'siteVisits', label: portal?.kpiLabels?.siteVisits || tr('devSiteVisits'), value: String(visitCount), icon: 'calendar' as const, color: '#183B60' },
   ].filter((card) => portal?.statVisibility?.[card.key] !== false);
 
   const financialCards = [
-    { key: 'totalListed', label: portal?.financialLabels?.totalListed || tr('totalListedValue'), value: stats.totalListedValue > 0 ? `PKR ${formatPKR(stats.totalListedValue)}` : '—', icon: 'trending-up' as const, color: '#064e3b' },
+    { key: 'totalListed', label: portal?.financialLabels?.totalListed || tr('totalListedValue'), value: stats.totalListedValue > 0 ? `PKR ${formatPKR(stats.totalListedValue)}` : '—', icon: 'trending-up' as const, color: '#0B1F3A' },
     { key: 'reserved', label: portal?.financialLabels?.reserved || tr('reservedValue'), value: stats.reservedValue > 0 ? `PKR ${formatPKR(stats.reservedValue)}` : '—', icon: 'lock' as const, color: '#c8a45a' },
-    { key: 'sold', label: portal?.financialLabels?.sold || tr('soldValue'), value: stats.soldValue > 0 ? `PKR ${formatPKR(stats.soldValue)}` : '—', icon: 'check-circle' as const, color: '#1a6b3a' },
+    { key: 'sold', label: portal?.financialLabels?.sold || tr('soldValue'), value: stats.soldValue > 0 ? `PKR ${formatPKR(stats.soldValue)}` : '—', icon: 'check-circle' as const, color: '#183B60' },
   ];
 
   const quickActions = [
@@ -130,9 +130,9 @@ function DeveloperDashboard({
             </Text>
             <View style={ds.badgeRow}>
               {isVerified ? (
-                <View style={[ds.badge, { backgroundColor: '#1a6b3a18' }]}>
-                  <Feather name="shield" size={9} color="#1a6b3a" />
-                  <Text style={[ds.badgeText, { color: '#1a6b3a' }]}>{tr('verifiedBadge')}</Text>
+                <View style={[ds.badge, { backgroundColor: '#183B6018' }]}>
+                  <Feather name="shield" size={9} color="#183B60" />
+                  <Text style={[ds.badgeText, { color: '#183B60' }]}>{tr('verifiedBadge')}</Text>
                 </View>
               ) : isPending ? (
                 <View style={[ds.badge, { backgroundColor: '#c8a45a18' }]}>
@@ -183,7 +183,7 @@ function DeveloperDashboard({
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}>
             {[
             { label: `${portal?.inventoryLabels?.total || tr('unitsTotal')}: ${stats.totalInventory}`, color: colors.foreground, bg: colors.secondary },
-            { label: `${portal?.inventoryLabels?.available || tr('availableLabel')}: ${stats.availableUnits}`, color: '#1a6b3a', bg: '#1a6b3a18' },
+            { label: `${portal?.inventoryLabels?.available || tr('availableLabel')}: ${stats.availableUnits}`, color: '#183B60', bg: '#183B6018' },
             { label: `${portal?.inventoryLabels?.reserved || tr('reservedLabel')}: ${stats.reservedUnits}`, color: '#c8a45a', bg: '#c8a45a18' },
             { label: `${portal?.inventoryLabels?.sold || tr('soldLabel')}: ${stats.soldUnits}`, color: colors.mutedForeground, bg: colors.secondary },
           ].map((chip) => (
@@ -393,10 +393,10 @@ export default function DashboardScreen() {
 
   // ── Agent / other dashboard ──────────────────────────────────────
   const agentStats = [
-    { key: 'activeListings', label: agentPortal?.statLabels?.activeListings || tr('activeListings'), value: String(activeListingsCount), icon: 'home' as const, color: '#064e3b', route: '/(tabs)/listings' },
-    { key: 'totalViews', label: agentPortal?.statLabels?.totalViews || tr('totalViews'), value: String(totalViews), icon: 'eye' as const, color: '#1a6b3a', route: '/settings/analytics' },
+    { key: 'activeListings', label: agentPortal?.statLabels?.activeListings || tr('activeListings'), value: String(activeListingsCount), icon: 'home' as const, color: '#0B1F3A', route: '/(tabs)/listings' },
+    { key: 'totalViews', label: agentPortal?.statLabels?.totalViews || tr('totalViews'), value: String(totalViews), icon: 'eye' as const, color: '#183B60', route: '/settings/analytics' },
     { key: 'newLeads', label: agentPortal?.statLabels?.newLeads || tr('newLeads'), value: String(newLeadsCount), icon: 'users' as const, color: '#c8a45a', route: '/(tabs)/leads' },
-    { key: 'totalLeads', label: agentPortal?.statLabels?.totalLeads || agentPortal?.totalLeadsLabel || 'Total Leads', value: String(totalLeadsCount), icon: 'user-check' as const, color: '#1a6b3a', route: '/(tabs)/leads' },
+    { key: 'totalLeads', label: agentPortal?.statLabels?.totalLeads || agentPortal?.totalLeadsLabel || 'Total Leads', value: String(totalLeadsCount), icon: 'user-check' as const, color: '#183B60', route: '/(tabs)/leads' },
     { key: 'todayVisits', label: agentPortal?.statLabels?.todayVisits || agentPortal?.todayVisitsLabel || "Today's Visits", value: String(todayVisits), icon: 'calendar' as const, color: '#7c3aed', route: '/agent/visits' },
     { key: 'upcomingVisits', label: agentPortal?.statLabels?.upcomingVisits || agentPortal?.upcomingVisitsLabel || 'Upcoming Visits', value: String(upcomingVisits), icon: 'clock' as const, color: '#b94b42', route: '/agent/visits' },
   ].filter((card) => agentPortal?.statVisibility?.[card.key] !== false);

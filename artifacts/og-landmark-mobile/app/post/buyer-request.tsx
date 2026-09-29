@@ -106,9 +106,9 @@ export default function BuyerRequestScreen() {
         <Text style={[st.successBody, { color: colors.mutedForeground }]}>
           Verified agents and sellers will reach out with matching properties via your preferred contact method.
         </Text>
-        <View style={[st.statusBadge, { backgroundColor: '#1a6b3a14', borderColor: '#1a6b3a33' }]}>
-          <Feather name="radio" size={12} color="#1a6b3a" />
-          <Text style={[st.statusText, { color: '#1a6b3a' }]}>ACTIVE REQUEST</Text>
+        <View style={[st.statusBadge, { backgroundColor: '#183B6014', borderColor: '#183B6033' }]}>
+          <Feather name="radio" size={12} color="#183B60" />
+          <Text style={[st.statusText, { color: '#183B60' }]}>ACTIVE REQUEST</Text>
         </View>
         <AnimatedPressable onPress={() => router.push('/(tabs)/listings')} style={[st.successBtn, { backgroundColor: colors.action, marginTop: 24 }]}>
           <Text style={[st.successBtnText, { color: colors.actionForeground }]}>View My Requests</Text>

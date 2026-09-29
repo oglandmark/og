@@ -181,7 +181,7 @@ function buildExploreHtml(
     .leaflet-container{background:#e8f0f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
     .og-pin{
       position:absolute;left:50%;bottom:7px;transform:translateX(-50%);
-      background:#ffffff;color:#064e3b;font-size:11px;font-weight:700;
+      background:#ffffff;color:#0B1F3A;font-size:11px;font-weight:700;
       padding:4px 8px;border-radius:10px;white-space:nowrap;
       box-shadow:0 2px 6px rgba(0,0,0,0.4);border:1.5px solid #c8a45a;cursor:pointer;
     }
@@ -196,7 +196,7 @@ function buildExploreHtml(
       border-top:6px solid #ffffff;
     }
     .og-pin-sel{
-      background:#c8a45a;color:#064e3b;border-color:#e8c870;
+      background:#c8a45a;color:#0B1F3A;border-color:#e8c870;
       box-shadow:0 3px 10px rgba(200,164,90,0.5);
     }
     .og-pin-sel .og-pin-tip{border-top-color:#e8c870;}
@@ -210,17 +210,17 @@ function buildExploreHtml(
     }
     .og-cluster{
       width:42px;height:42px;border-radius:21px;display:flex;align-items:center;justify-content:center;
-      background:#c8a45a;color:#064e3b;border:3px solid #f2d996;
+      background:#c8a45a;color:#0B1F3A;border:3px solid #f2d996;
       font-size:12px;font-weight:900;box-shadow:0 7px 18px rgba(0,0,0,.45);
     }
     .og-popup .leaflet-popup-content-wrapper{
-       background:#ffffff;color:#064e3b;border-radius:14px;border:1px solid #d6e0e8;
+       background:#ffffff;color:#0B1F3A;border-radius:14px;border:1px solid #d6e0e8;
       box-shadow:0 8px 24px rgba(0,0,0,0.5);
     }
      .og-popup .leaflet-popup-tip{background:#ffffff;}
     .og-popup .leaflet-popup-content{margin:12px 14px;line-height:1.35;}
     .og-popup a.leaflet-popup-close-button{color:#8a94a3;}
-     .og-pop-title{font-size:14px;font-weight:800;color:#064e3b;margin-bottom:6px;}
+     .og-pop-title{font-size:14px;font-weight:800;color:#0B1F3A;margin-bottom:6px;}
     .og-pop-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
     .og-pop-tag{
       font-size:10px;font-weight:700;color:#c8a45a;background:rgba(200,164,90,0.12);
@@ -229,13 +229,13 @@ function buildExploreHtml(
      .og-pop-loc{font-size:11px;color:#587089;margin-bottom:8px;}
     .og-pop-price{font-size:13px;font-weight:800;color:#c8a45a;margin-bottom:10px;}
     .og-pop-btn{
-      width:100%;background:#c8a45a;color:#064e3b;border:none;border-radius:10px;
+      width:100%;background:#c8a45a;color:#0B1F3A;border:none;border-radius:10px;
       padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer;
     }
     .og-pop-btn:hover{background:#e8c870;}
      .leaflet-control-attribution{display:none;}
        .leaflet-bar{background:${mapGlass}!important;border:1px solid ${mapGlassBorder}!important;border-radius:12px!important;overflow:hidden;box-shadow:0 8px 20px rgba(16,42,67,.2)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
-       .leaflet-bar a{width:30px;height:30px;line-height:30px;background:transparent;color:#064e3b;border-bottom-color:${mapGlassBorder};}
+       .leaflet-bar a{width:30px;height:30px;line-height:30px;background:transparent;color:#0B1F3A;border-bottom-color:${mapGlassBorder};}
        .leaflet-bar a:hover{background:rgba(255,255,255,.32);}
   </style>
 </head>
@@ -491,7 +491,7 @@ export function ExploreMapView({
           colors={{
            card: colors?.mapGlass ?? 'rgba(255, 255, 255, 0.78)',
            border: colors?.mapGlassBorder ?? 'rgba(255, 255, 255, 0.88)',
-          foreground: colors?.foreground ?? '#064e3b',
+          foreground: colors?.foreground ?? '#0B1F3A',
           mutedForeground: colors?.mutedForeground ?? '#587089',
          }}
         />
@@ -501,10 +501,10 @@ export function ExploreMapView({
           pointerEvents="none"
           style={[s.mapContextBadge, { backgroundColor: '#ffffff', borderColor: '#d6e0e8' }]}
         >
-          <FontAwesome5 name="map-marked-alt" size={16} color="#064e3b" />
+          <FontAwesome5 name="map-marked-alt" size={16} color="#0B1F3A" />
           <View>
             <Text style={[s.mapContextKicker, { color: '#987332' }]}>LIVE LISTINGS</Text>
-            <Text style={[s.mapContextTitle, { color: '#064e3b' }]}>Explore the area</Text>
+            <Text style={[s.mapContextTitle, { color: '#0B1F3A' }]}>Explore the area</Text>
           </View>
         </View>
       )}
@@ -513,7 +513,7 @@ export function ExploreMapView({
         borderColor: colors?.border ?? '#d6e0e8',
       }]} pointerEvents="none">
         <View style={[s.countDot, { backgroundColor: MAP_AREA_BLUE }]} />
-        <Text style={[s.countText, { color: colors?.foreground ?? '#064e3b' }]}>
+        <Text style={[s.countText, { color: colors?.foreground ?? '#0B1F3A' }]}>
           {areaPropertyCount} on map
         </Text>
        </View>}
@@ -521,7 +521,7 @@ export function ExploreMapView({
         <View pointerEvents="none" style={s.mapEmpty}>
           <View style={[s.mapEmptyCard, { backgroundColor: colors?.card ?? '#ffffff', borderColor: colors?.border ?? '#d6e0e8' }]}>
             <Feather name="map-pin" size={18} color={colors?.primary ?? '#c8a45a'} />
-            <Text style={[s.mapEmptyTitle, { color: colors?.foreground ?? '#064e3b' }]}>No listings in this area</Text>
+        <Text style={[s.mapEmptyTitle, { color: colors?.foreground ?? '#0B1F3A' }]}>No listings in this area</Text>
             <Text style={[s.mapEmptyText, { color: colors?.mutedForeground ?? '#587089' }]}>Move the map or expand the range to explore more.</Text>
           </View>
         </View>
@@ -561,7 +561,7 @@ const s = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 11,
     paddingVertical: 8,
-    shadowColor: '#064e3b',
+    shadowColor: '#0B1F3A',
     shadowOpacity: 0.12,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
@@ -580,7 +580,7 @@ const s = StyleSheet.create({
     borderRadius: 15,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    shadowColor: '#064e3b',
+    shadowColor: '#0B1F3A',
     shadowOpacity: 0.13,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
@@ -589,7 +589,7 @@ const s = StyleSheet.create({
   mapContextKicker: { fontSize: 8, fontWeight: '800', letterSpacing: 1.1, marginBottom: 2 },
   mapContextTitle: { fontSize: 11, fontWeight: '700' },
   mapEmpty: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30 },
-  mapEmptyCard: { alignItems: 'center', borderWidth: 1, borderRadius: 15, paddingHorizontal: 18, paddingVertical: 14, shadowColor: '#064e3b', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
+  mapEmptyCard: { alignItems: 'center', borderWidth: 1, borderRadius: 15, paddingHorizontal: 18, paddingVertical: 14, shadowColor: '#0B1F3A', shadowOpacity: 0.14, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
   mapEmptyTitle: { fontSize: 13, fontWeight: '800', marginTop: 7 },
   mapEmptyText: { fontSize: 10, lineHeight: 15, textAlign: 'center', marginTop: 4 },
 });

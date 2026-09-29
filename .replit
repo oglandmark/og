@@ -26,7 +26,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pnpm --filter @workspace/mobile test:location && pnpm --filter @workspace/mobile typecheck"
+args = "pnpm --filter @workspace/mobile test:location && pnpm --filter @workspace/mobile check:brand-assets && pnpm --filter @workspace/mobile typecheck"
 
 [workflows.workflow.metadata]
 isValidation = true

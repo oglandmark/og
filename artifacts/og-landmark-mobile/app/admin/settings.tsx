@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { getMobileSettings, updateMobileSettings, sendBroadcastPush, MobileSettings } from '@/lib/api';
 
-const NAVY = '#102a43';
+const NAVY = '#064e3b';
 const GOLD = '#C8A45A';
 
 export default function AdminSettings() {

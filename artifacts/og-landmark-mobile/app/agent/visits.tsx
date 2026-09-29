@@ -115,9 +115,9 @@ function VisitCard({
           )}
           {visit.status === 'Confirmed' && (
             <Pressable onPress={() => onStatusChange(visit.id, 'Completed')}
-              style={[vc.actionBtn, { backgroundColor: '#102a4318' }]}>
-              <Feather name="check-circle" size={13} color="#102a43" />
-              <Text style={[vc.actionBtnText, { color: '#102a43' }]}>Complete</Text>
+              style={[vc.actionBtn, { backgroundColor: '#064e3b18' }]}>
+              <Feather name="check-circle" size={13} color="#064e3b" />
+              <Text style={[vc.actionBtnText, { color: '#064e3b' }]}>Complete</Text>
             </Pressable>
           )}
           <Pressable onPress={() => onStatusChange(visit.id, 'Rescheduled')}

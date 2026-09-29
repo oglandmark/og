@@ -602,5 +602,5 @@ const fs = StyleSheet.create({
   errorBox:       { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
   errorText:      { color: '#c8a45a', fontWeight: '700', fontSize: 15 },
   errorClose:     { marginTop: 8, minHeight: 36, paddingHorizontal: 24, paddingVertical: 6, backgroundColor: '#c8a45a', borderRadius: 10 },
-  errorCloseText: { color: '#102a43', fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  errorCloseText: { color: '#064e3b', fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });

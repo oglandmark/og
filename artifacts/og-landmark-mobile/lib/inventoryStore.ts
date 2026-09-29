@@ -108,7 +108,7 @@ export function unitStatusColor(status: UnitStatus): { bg: string; text: string 
   switch (status) {
     case 'Available': return { bg: '#1a6b3a18', text: '#1a6b3a' };
     case 'Reserved':  return { bg: '#c8a45a18', text: '#c8a45a' };
-    case 'Booked':    return { bg: '#102a4318', text: '#102a43' };
+    case 'Booked':    return { bg: '#064e3b18', text: '#064e3b' };
     case 'Sold':      return { bg: '#0a8c6218', text: '#0a8c62' };
     case 'Blocked':   return { bg: '#88888818', text: '#888888' };
     default:          return { bg: '#88888818', text: '#888888' };

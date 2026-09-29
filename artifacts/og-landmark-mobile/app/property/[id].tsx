@@ -560,7 +560,7 @@ function AppointmentModal({
   );
 }
 const iq = StyleSheet.create({
-  overlay:         { flex: 1, justifyContent: 'flex-end', backgroundColor: '#0d1d2baa' },
+  overlay:         { flex: 1, justifyContent: 'flex-end', backgroundColor: '#062f26aa' },
   sheet:           { borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingTop: 10, paddingHorizontal: 18, maxHeight: '90%' },
   handle:          { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 18 },
   header:          { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16, gap: 10 },
@@ -831,17 +831,17 @@ function PropertyDetailScreen() {
         <View style={styles.actionRow}>
           <Pressable
             onPress={openBooking}
-            style={({ pressed }) => [styles.cta, styles.primaryCta, { backgroundColor: '#102a43', opacity: pressed ? 0.85 : 1 }]}
+            style={({ pressed }) => [styles.cta, styles.primaryCta, { backgroundColor: '#064e3b', opacity: pressed ? 0.85 : 1 }]}
           >
             <Feather name="calendar" size={16} color="#ffffff" />
             <Text style={[styles.ctaText, { color: '#ffffff' }]}>Schedule a Visit</Text>
           </Pressable>
           <Pressable
             onPress={openInquiry}
-            style={({ pressed }) => [styles.cta, styles.secondaryCta, { borderColor: '#102a43', backgroundColor: '#102a4312', opacity: pressed ? 0.8 : 1 }]}
+            style={({ pressed }) => [styles.cta, styles.secondaryCta, { borderColor: '#064e3b', backgroundColor: '#064e3b12', opacity: pressed ? 0.8 : 1 }]}
           >
-            <Feather name="message-circle" size={16} color="#102a43" />
-            <Text style={[styles.secondaryCtaText, { color: '#102a43' }]}>Inquire</Text>
+            <Feather name="message-circle" size={16} color="#064e3b" />
+            <Text style={[styles.secondaryCtaText, { color: '#064e3b' }]}>Inquire</Text>
           </Pressable>
         </View>
 
@@ -1055,7 +1055,7 @@ function PropertyDetailScreen() {
       {/* Schedule Visit — primary navy CTA */}
       <Pressable
         onPress={openBooking}
-        style={({ pressed }) => [styles.fixedCallBtn, { backgroundColor: '#102a43', opacity: pressed ? 0.85 : 1 }]}
+        style={({ pressed }) => [styles.fixedCallBtn, { backgroundColor: '#064e3b', opacity: pressed ? 0.85 : 1 }]}
         accessibilityRole="button" accessibilityLabel="Schedule a site visit"
       >
         <Feather name="calendar" size={17} color="#ffffff" />
@@ -1242,7 +1242,7 @@ const styles = StyleSheet.create({
   backRow: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between' },
   topActions: { flexDirection: 'row', gap: 8 },
   roundButton: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
-  shareButton: { shadowColor: '#102a43', shadowOpacity: 0.28, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
+  shareButton: { shadowColor: '#064e3b', shadowOpacity: 0.28, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
   favoriteButton: { shadowColor: '#d9b96d', shadowOpacity: 0.35, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
   imageLabel: { position: 'absolute', bottom: 18, left: 20, backgroundColor: '#f1e6c9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
   imageStatusBadge: { backgroundColor: '#f1e6c9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },

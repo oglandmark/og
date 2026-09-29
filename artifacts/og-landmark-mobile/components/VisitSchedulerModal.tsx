@@ -344,7 +344,7 @@ export default function VisitSchedulerModal({
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const vs = StyleSheet.create({
-  overlay:        { flex: 1, justifyContent: 'flex-end', backgroundColor: '#0d1d2baa' },
+  overlay:        { flex: 1, justifyContent: 'flex-end', backgroundColor: '#062f26aa' },
   sheet:          { borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 10, maxHeight: '92%' },
   handle:         { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 8 },
 

@@ -83,7 +83,7 @@ function SlideSheet({
 
 const sh = StyleSheet.create({
   root:        { flex: 1, justifyContent: 'flex-end' },
-  backdrop:    { backgroundColor: '#0d1d2baa' },
+  backdrop:    { backgroundColor: '#062f26aa' },
   sheet:       { borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1, maxHeight: '88%' },
   handle:      { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 10, marginBottom: 0 },
   sheetHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 18, paddingBottom: 12 },
@@ -1547,7 +1547,7 @@ const gst = StyleSheet.create({
   welcomeName:   { fontFamily: 'Inter_700Bold', fontSize: 28, color: '#ffffff', letterSpacing: -0.5 },
   welcomeSub:    { fontFamily: 'Inter_400Regular', fontSize: 13, color: 'rgba(255,255,255,0.65)', textAlign: 'center', lineHeight: 19, paddingHorizontal: 10, marginTop: 4 },
   loginBtn:      { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#c8a45a', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 9, marginTop: 14, width: '100%', justifyContent: 'center' },
-  loginBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#102a43' },
+  loginBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#064e3b' },
   registerBtn:   { backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 9, width: '100%', alignItems: 'center' },
   registerBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
   lockPill:      { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 },
@@ -1564,7 +1564,7 @@ const styles = StyleSheet.create({
   profileCard:   { borderRadius: 22, padding: 18, flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginBottom: 10 },
   avatar:        { width: 60, height: 60, borderRadius: 20, backgroundColor: '#c8a45a', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarPhoto:   { width: 60, height: 60, borderRadius: 20 },
-  avatarText:    { fontFamily: 'Inter_700Bold', fontSize: 20, color: '#102a43' },
+  avatarText:    { fontFamily: 'Inter_700Bold', fontSize: 20, color: '#064e3b' },
   profileCopy:   { flex: 1 },
   pcGreeting:    { fontFamily: 'Inter_400Regular', fontSize: 11, color: 'rgba(255,255,255,0.6)', marginBottom: 2 },
   pcName:        { fontFamily: 'Inter_700Bold', fontSize: 19, color: '#ffffff', letterSpacing: -0.3, marginBottom: 6 },

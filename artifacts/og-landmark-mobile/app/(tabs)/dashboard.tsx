@@ -26,7 +26,7 @@ import type { MobileContent } from '@/lib/api';
 // ── Lead status display map ───────────────────────────────────────────────────
 const LEAD_STATUS_MAP: Record<string, { label: string; color: string }> = {
   new:        { label: 'New',       color: '#1a6b3a' },
-  contacted:  { label: 'Contacted', color: '#102a43' },
+  contacted:  { label: 'Contacted', color: '#064e3b' },
   interested: { label: 'Interested',color: '#c8a45a' },
   viewing:    { label: 'Viewing',   color: '#7c3aed' },
   closed:     { label: 'Closed',   color: '#888888' },
@@ -73,16 +73,16 @@ function DeveloperDashboard({
   const portal = portalCopy?.developer;
 
   const kpiCards = [
-    { key: 'totalProjects', label: portal?.kpiLabels?.totalProjects || tr('totalProjects'), value: String(stats.totalProjects), icon: 'layers' as const, color: '#102a43' },
+    { key: 'totalProjects', label: portal?.kpiLabels?.totalProjects || tr('totalProjects'), value: String(stats.totalProjects), icon: 'layers' as const, color: '#064e3b' },
     { key: 'activeProjects', label: portal?.kpiLabels?.activeProjects || tr('activeProjects'), value: String(stats.activeProjects), icon: 'activity' as const, color: '#1a6b3a' },
     { key: 'availableUnits', label: portal?.kpiLabels?.availableUnits || tr('availableUnits'), value: String(stats.availableUnits), icon: 'grid' as const, color: '#c8a45a' },
     { key: 'reservedUnits', label: portal?.kpiLabels?.reservedUnits || tr('reservedUnits'), value: String(stats.reservedUnits), icon: 'lock' as const, color: '#6b3a1a' },
-    { key: 'newLeads', label: portal?.kpiLabels?.newLeads || tr('devNewLeads'), value: String(devLeadStats.newCount), icon: 'users' as const, color: '#102a43' },
+    { key: 'newLeads', label: portal?.kpiLabels?.newLeads || tr('devNewLeads'), value: String(devLeadStats.newCount), icon: 'users' as const, color: '#064e3b' },
     { key: 'siteVisits', label: portal?.kpiLabels?.siteVisits || tr('devSiteVisits'), value: String(visitCount), icon: 'calendar' as const, color: '#1a6b3a' },
   ].filter((card) => portal?.statVisibility?.[card.key] !== false);
 
   const financialCards = [
-    { key: 'totalListed', label: portal?.financialLabels?.totalListed || tr('totalListedValue'), value: stats.totalListedValue > 0 ? `PKR ${formatPKR(stats.totalListedValue)}` : '—', icon: 'trending-up' as const, color: '#102a43' },
+    { key: 'totalListed', label: portal?.financialLabels?.totalListed || tr('totalListedValue'), value: stats.totalListedValue > 0 ? `PKR ${formatPKR(stats.totalListedValue)}` : '—', icon: 'trending-up' as const, color: '#064e3b' },
     { key: 'reserved', label: portal?.financialLabels?.reserved || tr('reservedValue'), value: stats.reservedValue > 0 ? `PKR ${formatPKR(stats.reservedValue)}` : '—', icon: 'lock' as const, color: '#c8a45a' },
     { key: 'sold', label: portal?.financialLabels?.sold || tr('soldValue'), value: stats.soldValue > 0 ? `PKR ${formatPKR(stats.soldValue)}` : '—', icon: 'check-circle' as const, color: '#1a6b3a' },
   ];
@@ -393,7 +393,7 @@ export default function DashboardScreen() {
 
   // ── Agent / other dashboard ──────────────────────────────────────
   const agentStats = [
-    { key: 'activeListings', label: agentPortal?.statLabels?.activeListings || tr('activeListings'), value: String(activeListingsCount), icon: 'home' as const, color: '#102a43', route: '/(tabs)/listings' },
+    { key: 'activeListings', label: agentPortal?.statLabels?.activeListings || tr('activeListings'), value: String(activeListingsCount), icon: 'home' as const, color: '#064e3b', route: '/(tabs)/listings' },
     { key: 'totalViews', label: agentPortal?.statLabels?.totalViews || tr('totalViews'), value: String(totalViews), icon: 'eye' as const, color: '#1a6b3a', route: '/settings/analytics' },
     { key: 'newLeads', label: agentPortal?.statLabels?.newLeads || tr('newLeads'), value: String(newLeadsCount), icon: 'users' as const, color: '#c8a45a', route: '/(tabs)/leads' },
     { key: 'totalLeads', label: agentPortal?.statLabels?.totalLeads || agentPortal?.totalLeadsLabel || 'Total Leads', value: String(totalLeadsCount), icon: 'user-check' as const, color: '#1a6b3a', route: '/(tabs)/leads' },

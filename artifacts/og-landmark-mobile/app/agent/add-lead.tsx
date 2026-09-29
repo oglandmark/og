@@ -20,7 +20,7 @@ import {
 } from '@/lib/leadsStore';
 
 const STATUSES: { key: LeadStatus; label: string; color: string }[] = [
-  { key: 'new',        label: 'New',       color: '#102a43' },
+  { key: 'new',        label: 'New',       color: '#064e3b' },
   { key: 'contacted',  label: 'Contacted', color: '#c8a45a' },
   { key: 'interested', label: 'Interested',color: '#1a6b3a' },
   { key: 'viewing',    label: 'Viewing',   color: '#7c3aed' },

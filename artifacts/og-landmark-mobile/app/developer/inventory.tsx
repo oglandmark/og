@@ -358,7 +358,7 @@ export default function InventoryScreen() {
               <Chip label="Total Units"  value={stats.totalUnits}  color={colors.foreground}   bg={colors.secondary} />
               <Chip label="Available"    value={stats.available}   color="#1a6b3a"             bg="#1a6b3a18" />
               <Chip label="Reserved"     value={stats.reserved}    color="#c8a45a"             bg="#c8a45a18" />
-              <Chip label="Booked"       value={stats.booked}      color="#102a43"             bg="#102a4318" />
+              <Chip label="Booked"       value={stats.booked}      color="#064e3b"             bg="#064e3b18" />
               <Chip label="Sold"         value={stats.sold}        color="#0a8c62"             bg="#0a8c6218" />
               <Chip label="Blocked"      value={stats.blocked}     color={colors.mutedForeground} bg={colors.secondary} />
             </ScrollView>

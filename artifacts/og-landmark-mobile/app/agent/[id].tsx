@@ -126,7 +126,7 @@ function ContactModal({
 }
 
 const cm = StyleSheet.create({
-  overlay:    { flex: 1, justifyContent: 'flex-end', backgroundColor: '#0d1d2baa' },
+  overlay:    { flex: 1, justifyContent: 'flex-end', backgroundColor: '#062f26aa' },
   sheet:      { borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingTop: 10, paddingHorizontal: 18 },
   handle:     { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 18 },
   header:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
@@ -222,7 +222,7 @@ export default function AgentProfileScreen() {
         years: Number(user.yearsExperience ?? 0),
         listings: 0,
         areas: user.areasServed ?? [],
-        color: '#102a43',
+        color: '#064e3b',
         phone: user.phone ?? '',
         specialties: user.specializations ?? [],
         about: '',
@@ -324,7 +324,7 @@ export default function AgentProfileScreen() {
           { icon: 'phone',    label: 'Call',     color: '#1a6b3a', onPress: () => Linking.openURL(`tel:${agent.phone}`) },
           { icon: 'message-circle', label: 'WhatsApp', color: '#25d366', onPress: () => Linking.openURL(`https://wa.me/92${agent.phone.replace(/^0/, '')}`) },
           { icon: 'calendar', label: 'Schedule', color: '#c8a45a', onPress: () => setVisitOpen(true) },
-          { icon: 'send',     label: 'Enquire',  color: '#102a43', onPress: () => setContactOpen(true) },
+          { icon: 'send',     label: 'Enquire',  color: '#064e3b', onPress: () => setContactOpen(true) },
         ].map((a) => (
           <Pressable key={a.label} onPress={a.onPress} style={({ pressed }) => [styles.actionBtn, { opacity: pressed ? 0.8 : 1 }]}>
             <View style={[styles.actionIcon, { backgroundColor: a.color + '18', borderColor: a.color + '44' }]}>

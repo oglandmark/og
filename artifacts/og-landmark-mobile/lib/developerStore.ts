@@ -190,7 +190,7 @@ export function statusColor(status: ProjectStatus): { bg: string; text: string }
     case 'Live':             return { bg: '#1a6b3a18', text: '#1a6b3a' };
     case 'Approved':         return { bg: '#1a6b3a12', text: '#1a6b3a' };
     case 'Draft':            return { bg: '#c8a45a18', text: '#c8a45a' };
-    case 'Pending Review':   return { bg: '#102a4318', text: '#102a43' };
+    case 'Pending Review':   return { bg: '#064e3b18', text: '#064e3b' };
     case 'Under Development':return { bg: '#1a6b3a12', text: '#1a6b3a' };
     case 'Coming Soon':      return { bg: '#6b3a1a18', text: '#6b3a1a' };
     case 'Completed':        return { bg: '#0a8c6218', text: '#0a8c62' };

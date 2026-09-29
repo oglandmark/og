@@ -34,7 +34,7 @@ const STATUS_BADGE: Record<ListingStatus, { bg: string; text: string }> = {
   Pending: { bg: '#c8a45a18', text: '#c8a45a' },
   Draft:   { bg: '#88888818', text: '#888888' },
   Paused:  { bg: '#7c3aed18', text: '#7c3aed' },
-  Sold:    { bg: '#102a4318', text: '#102a43' },
+  Sold:    { bg: '#064e3b18', text: '#064e3b' },
   Rented:  { bg: '#b94b4218', text: '#b94b42' },
 };
 

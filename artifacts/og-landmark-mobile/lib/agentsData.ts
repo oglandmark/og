@@ -65,7 +65,7 @@ export function apiAgentToSample(agent: ManagedAgentRecord): SampleAgent {
     years: Number(agent.years || 0),
     listings: Number(agent.listings || 0),
     areas: Array.isArray(agent.areas) ? agent.areas : [],
-    color: agent.color || '#102a43',
+    color: agent.color || '#064e3b',
     phone: agent.phone || '',
     specialties: Array.isArray(agent.specialties) ? agent.specialties : [],
     about: agent.about || '',
@@ -105,7 +105,7 @@ export const SAMPLE_AGENTS: SampleAgent[] = [
     years: 8,
     listings: 32,
     areas: ['Renala Khurd', 'Okara City'],
-    color: '#102a43',
+    color: '#064e3b',
     phone: '03042569000',
     specialties: ['Commercial', 'Residential', 'Rentals'],
     about:

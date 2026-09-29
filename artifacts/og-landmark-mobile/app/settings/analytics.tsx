@@ -139,7 +139,7 @@ export default function AnalyticsScreen() {
   const conversionRate = leads.length > 0 ? Math.round((closedLeads / leads.length) * 100) : 0;
 
   const kpis = [
-    { label: 'Active Listings',  value: lstats.active,  icon: 'home'       as const, color: '#102a43', change: 0 },
+    { label: 'Active Listings',  value: lstats.active,  icon: 'home'       as const, color: '#064e3b', change: 0 },
     { label: 'Total Leads',      value: leads.length,   icon: 'users'      as const, color: '#1a6b3a', change: 0 },
     { label: 'New Leads',        value: newLeads,       icon: 'user-plus'  as const, color: '#c8a45a', change: 0 },
     { label: 'Deals Closed',     value: wonDeals,       icon: 'check-circle'as const,color: '#7c3aed', change: 0 },
@@ -150,7 +150,7 @@ export default function AnalyticsScreen() {
   ];
 
   const funnelRows = [
-    { label: 'Listings',  value: lstats.total,                                   color: '#102a43' },
+    { label: 'Listings',  value: lstats.total,                                   color: '#064e3b' },
     { label: 'Views',     value: totalViews,                                      color: '#1a6b3a' },
     { label: 'Leads',     value: leads.length,                                   color: '#c8a45a' },
     { label: 'Interested',value: leads.filter((l) => l.status === 'interested').length, color: '#7c3aed' },
@@ -227,7 +227,7 @@ export default function AnalyticsScreen() {
           <View style={[st.chartCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[st.chartTitle, { color: colors.foreground }]}>Listings Posted</Text>
             <Text style={[st.chartSub, { color: colors.mutedForeground }]}>Last {PERIOD_LABELS[period]}</Text>
-            <BarChart data={chartListings} color="#102a43" />
+            <BarChart data={chartListings} color="#064e3b" />
           </View>
         </AnimatedReveal>
       )}
@@ -308,7 +308,7 @@ export default function AnalyticsScreen() {
         <View style={[st.listingsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {[
             { label: 'New',        count: leads.filter((l) => l.status === 'new').length,        color: '#1a6b3a' },
-            { label: 'Contacted',  count: leads.filter((l) => l.status === 'contacted').length,  color: '#102a43' },
+            { label: 'Contacted',  count: leads.filter((l) => l.status === 'contacted').length,  color: '#064e3b' },
             { label: 'Interested', count: leads.filter((l) => l.status === 'interested').length, color: '#c8a45a' },
             { label: 'Viewing',    count: leads.filter((l) => l.status === 'viewing').length,    color: '#7c3aed' },
             { label: 'Closed',     count: closedLeads,                                           color: '#059669' },

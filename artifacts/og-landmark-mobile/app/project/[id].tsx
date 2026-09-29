@@ -170,7 +170,7 @@ function ProjectInquiryModal({
 }
 
 const iqm = StyleSheet.create({
-  overlay:      { flex: 1, justifyContent: 'flex-end', backgroundColor: '#0d1d2baa' },
+  overlay:      { flex: 1, justifyContent: 'flex-end', backgroundColor: '#062f26aa' },
   sheet:        { borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingTop: 10, paddingHorizontal: 18, maxHeight: '90%' },
   handle:       { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 18 },
   header:       { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 },

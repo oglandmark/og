@@ -70,11 +70,11 @@ export function MapViewModeControl({
               <FontAwesome5
                 name={option.icon}
                 size={14}
-                color={selected ? '#987332' : '#102a43'}
+                color={selected ? '#987332' : '#064e3b'}
               />
               <Text style={[
                 styles.label,
-                { color: selected ? '#987332' : '#102a43' },
+                { color: selected ? '#987332' : '#064e3b' },
               ]}>
                 {option.label}
               </Text>
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     padding: 3,
     borderWidth: 1,
     borderRadius: 10,
-    shadowColor: '#102a43',
+    shadowColor: '#064e3b',
     shadowOpacity: 0.18,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },

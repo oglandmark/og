@@ -66,7 +66,7 @@ export function visitStatusColor(status: VisitStatus): { bg: string; text: strin
   switch (status) {
     case 'Confirmed':    return { bg: '#1a6b3a18', text: '#1a6b3a' };
     case 'Requested':    return { bg: '#c8a45a18', text: '#c8a45a' };
-    case 'Completed':    return { bg: '#102a4318', text: '#102a43' };
+    case 'Completed':    return { bg: '#064e3b18', text: '#064e3b' };
     case 'Cancelled':    return { bg: '#b94b4218', text: '#b94b42' };
     case 'No Show':      return { bg: '#b94b4218', text: '#b94b42' };
     case 'Rescheduled':  return { bg: '#7c3aed18', text: '#7c3aed' };

@@ -461,7 +461,7 @@ function BannerSlide({ slide, isActive, colors, onCta }: {
       <Image source={slide.image} style={bn.image} resizeMode="cover" />
       <LinearGradient
         pointerEvents="none"
-        colors={['#102a4300', '#081e34e8']}
+        colors={['#064e3b00', '#022c22e8']}
         locations={[0.16, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -525,7 +525,7 @@ function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, colors, o
       ) : null}
       <LinearGradient
         pointerEvents="none"
-        colors={['#102a4300', '#081e34e8']}
+        colors={['#064e3b00', '#022c22e8']}
         locations={[0.16, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -803,7 +803,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
               hitSlop={6}
             >
               <View style={fp.videoTourIcon}>
-                <Feather name="play" size={9} color="#102a43" />
+                <Feather name="play" size={9} color="#064e3b" />
               </View>
               <Text style={fp.videoTourText}>Video Tour</Text>
             </Pressable>
@@ -892,7 +892,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
 
 const fp = StyleSheet.create({
   // ── Card ──────────────────────────────────────────────────────────────────
-  card:         { width: 300, height: 320, borderRadius: 22, overflow: 'hidden', marginRight: 16, shadowColor: '#102a43', shadowOpacity: 0.18, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
+  card:         { width: 300, height: 320, borderRadius: 22, overflow: 'hidden', marginRight: 16, shadowColor: '#064e3b', shadowOpacity: 0.18, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
   image:        { ...StyleSheet.absoluteFill },
   galleryStatus:{ position: 'absolute', top: 56, right: 14, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#071521aa', borderWidth: 1, borderColor: '#ffffff33', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 5 },
   galleryDots:  { flexDirection: 'row', alignItems: 'center', gap: 3 },
@@ -917,7 +917,7 @@ const fp = StyleSheet.create({
   // Video Tour pill
   videoTourBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#c8a45a', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5 },
   videoTourIcon: { width: 16, height: 16, borderRadius: 8, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
-  videoTourText: { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#102a43', letterSpacing: 0.3 },
+  videoTourText: { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#064e3b', letterSpacing: 0.3 },
 
   viewBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#ffffff22', borderWidth: 1, borderColor: '#ffffff44', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 6 },
   viewBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#ffffff' },
@@ -938,7 +938,7 @@ const fp = StyleSheet.create({
   fsError:      { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
   fsErrorText:  { color: '#c8a45a', fontWeight: '700', fontSize: 15 },
   fsErrorBtn:   { marginTop: 8, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: '#c8a45a', borderRadius: 10 },
-  fsErrorBtnText:{ color: '#102a43', fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  fsErrorBtnText:{ color: '#064e3b', fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });
 
 // ─── Agent Card (premium) ─────────────────────────────────────────────────────
@@ -1104,8 +1104,8 @@ function AgentCard({ agent, colors, onPress }: { agent: SampleAgent; colors: Col
 
 const ac = StyleSheet.create({
   card:         { width: 250, borderRadius: 22, borderWidth: 1, overflow: 'hidden', marginRight: 14,
-                  shadowColor: '#102a43', shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
-  photoWrap:    { height: 142, backgroundColor: '#102a43', overflow: 'hidden' },
+                  shadowColor: '#064e3b', shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
+  photoWrap:    { height: 142, backgroundColor: '#064e3b', overflow: 'hidden' },
   photo:        { width: '100%', height: '100%' },
   photoAccent:  { position: 'absolute', left: 0, bottom: 0, width: 4, height: 46, backgroundColor: '#c8a45a' },
   avatar:       { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -1295,7 +1295,7 @@ function RecommendedCard({ property, colors, onPress }: { property: Property; co
 }
 
 const rc = StyleSheet.create({
-  card:         { width: 220, borderRadius: 18, overflow: 'hidden', marginRight: 14, borderWidth: 1, shadowColor: '#102a43', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  card:         { width: 220, borderRadius: 18, overflow: 'hidden', marginRight: 14, borderWidth: 1, shadowColor: '#064e3b', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   image:        { width: '100%', height: 140 },
   imageGradient:{ position: 'absolute', top: 0, left: 0, right: 0, height: 140 },
   saveBtn:      { position: 'absolute', top: 10, right: 10, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
@@ -1315,7 +1315,7 @@ const rc = StyleSheet.create({
 function AgriCommCard({ property, colors, isAgri, onPress }: {
   property: Property; colors: Colors; isAgri: boolean; onPress: () => void;
 }) {
-  const accentColor = isAgri ? '#1a6b3a' : '#102a43';
+  const accentColor = isAgri ? '#1a6b3a' : '#064e3b';
   return (
     <Pressable
       onPress={onPress}
@@ -1373,7 +1373,7 @@ function LocationSheet({ visible, selected, onSelect, onClose, colors, insets, m
   return (
     <Modal visible transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#0d1d2bbb' }]}>
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#062f26bb' }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         </View>
         <View style={[ls.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20, borderColor: colors.border }]}>
@@ -1420,7 +1420,7 @@ function LocationSheet({ visible, selected, onSelect, onClose, colors, insets, m
 }
 
 const ls = StyleSheet.create({
-  sheet:    { maxHeight: '92%', borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1, paddingTop: 12, paddingHorizontal: 20, shadowColor: '#102a43', shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: -6 }, elevation: 12 },
+  sheet:    { maxHeight: '92%', borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1, paddingTop: 12, paddingHorizontal: 20, shadowColor: '#064e3b', shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: -6 }, elevation: 12 },
   scrollContent: { paddingBottom: 4 },
   handle:   { width: 36, height: 3, borderRadius: 2, alignSelf: 'center', marginBottom: 18 },
   heading:  { fontFamily: 'Inter_700Bold', fontSize: 20, marginBottom: 4 },
@@ -2218,8 +2218,8 @@ const s = StyleSheet.create({
 
   // Drawer styles (unchanged)
   drawerRoot:         { flex: 1, flexDirection: 'row' },
-  drawerBackdrop:     { backgroundColor: '#0d1d2b99' },
-  drawerPanel:        { height: '100%', overflow: 'hidden', borderRightWidth: 1, shadowColor: '#081522', shadowOpacity: 0.3, shadowRadius: 24, shadowOffset: { width: 8, height: 0 }, elevation: 16 },
+  drawerBackdrop:     { backgroundColor: '#062f2699' },
+  drawerPanel:        { height: '100%', overflow: 'hidden', borderRightWidth: 1, shadowColor: '#03251d', shadowOpacity: 0.3, shadowRadius: 24, shadowOffset: { width: 8, height: 0 }, elevation: 16 },
   drawerScrollContent:{ paddingTop: 0, paddingBottom: 18, flexGrow: 1 },
   drawerHeader:       { paddingHorizontal: 18, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   drawerClose:        { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
@@ -2243,7 +2243,7 @@ const s = StyleSheet.create({
   drawerFooter:       { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 4 },
   drawerFooterText:   { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 5 },
   infoOverlay:        { ...StyleSheet.absoluteFill, justifyContent: 'center', padding: 18 },
-  infoCard:           { borderWidth: 1, borderRadius: 22, padding: 18, overflow: 'hidden', shadowColor: '#081522', shadowOpacity: 0.28, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 12 },
+  infoCard:           { borderWidth: 1, borderRadius: 22, padding: 18, overflow: 'hidden', shadowColor: '#03251d', shadowOpacity: 0.28, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 12 },
   infoCardTop:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   infoCardIcon:       { width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   infoEyebrow:        { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.4, marginTop: 22, marginBottom: 6 },

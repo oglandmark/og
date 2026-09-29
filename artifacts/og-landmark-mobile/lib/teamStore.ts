@@ -25,7 +25,7 @@ export function newMemberId(): string {
 
 export function roleColor(role: TeamRole): { bg: string; text: string } {
   switch (role) {
-    case 'Admin':    return { bg: '#102a4318', text: '#102a43' };
+    case 'Admin':    return { bg: '#064e3b18', text: '#064e3b' };
     case 'Manager':  return { bg: '#7c3aed18', text: '#7c3aed' };
     case 'Agent':    return { bg: '#c8a45a18', text: '#c8a45a' };
     case 'Sales Rep':return { bg: '#1a6b3a18', text: '#1a6b3a' };

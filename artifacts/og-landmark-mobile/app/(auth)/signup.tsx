@@ -25,7 +25,7 @@ import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { useFacebookAuth } from '@/lib/facebookAuth';
 import { Button } from '@/components/PolishedUI';
 
-const ACTION = '#102a43';
+const ACTION = '#064e3b';
 const GOLD   = '#c8a45a';
 const MUTED  = '#8a8f98';
 const BORDER = '#e4e6ea';

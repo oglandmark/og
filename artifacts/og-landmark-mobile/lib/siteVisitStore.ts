@@ -42,7 +42,7 @@ export function visitStatusColor(status: VisitStatus): { bg: string; text: strin
     case 'Requested':    return { bg: '#c8a45a18', text: '#c8a45a' };
     case 'Confirmed':    return { bg: '#1a6b3a18', text: '#1a6b3a' };
     case 'Rescheduled':  return { bg: '#0891b218', text: '#0891b2' };
-    case 'Completed':    return { bg: '#10293818', text: '#102a43' };
+    case 'Completed':    return { bg: '#10293818', text: '#064e3b' };
     case 'Cancelled':    return { bg: '#dc262618', text: '#dc2626' };
   }
 }

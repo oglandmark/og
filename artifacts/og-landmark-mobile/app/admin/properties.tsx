@@ -21,7 +21,7 @@ import {
   getAdminPropertyReview, AdminPropertyReview,
 } from '@/lib/api';
 
-const NAVY = '#102a43';
+const NAVY = '#064e3b';
 const GOLD = '#C8A45A';
 
 const STATUS_TABS = ['Pending', 'Active', 'Rejected', 'All'] as const;
@@ -418,7 +418,7 @@ export default function AdminProperties() {
                 disabled={savingLocation || !editConfirmed}
                 style={[s.modalSave, { backgroundColor: GOLD, opacity: savingLocation || !editConfirmed ? 0.55 : 1 }]}
               >
-                {savingLocation ? <ActivityIndicator size="small" color="#102a43" /> : <Feather name="check" size={15} color="#102a43" />}
+                {savingLocation ? <ActivityIndicator size="small" color="#064e3b" /> : <Feather name="check" size={15} color="#064e3b" />}
                 <Text style={s.modalSaveText}>{savingLocation ? 'Saving…' : 'Save Location'}</Text>
               </Pressable>
             </View>
@@ -578,7 +578,7 @@ const s = StyleSheet.create({
   modalCancel: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, paddingVertical: 8, minHeight: 36 },
   modalCancelText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   modalSave: { flex: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, paddingVertical: 8, minHeight: 40 },
-  modalSaveText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#102a43' },
+  modalSaveText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#064e3b' },
   rejectSheet: { margin: 20, borderRadius: 18, padding: 18 },
   rejectInput: { minHeight: 110, borderWidth: 1, borderRadius: 11, padding: 12, marginTop: 16, fontFamily: 'Inter_400Regular', fontSize: 14 },
   reviewSheet: { maxHeight: '92%', borderTopLeftRadius: 22, borderTopRightRadius: 22, overflow: 'hidden' },
@@ -586,7 +586,7 @@ const s = StyleSheet.create({
   reviewImages: { gap: 8, paddingBottom: 16 },
   reviewImage: { width: 138, height: 96, borderRadius: 10, backgroundColor: '#dfe5eb' },
   reviewGrid: { gap: 1, marginBottom: 18 },
-  reviewRow: { flexDirection: 'row', gap: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#102a4312' },
+  reviewRow: { flexDirection: 'row', gap: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#064e3b12' },
   reviewLabel: { width: 76, fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   reviewValue: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12 },
   reviewSectionTitle: { fontFamily: 'Inter_700Bold', fontSize: 14, marginTop: 8, marginBottom: 6 },

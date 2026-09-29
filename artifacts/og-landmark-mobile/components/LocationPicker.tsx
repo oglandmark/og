@@ -1057,11 +1057,11 @@ const lp = StyleSheet.create({
     transform: [{ translateX: -14 }, { translateY: -34 }],
   },
   brandPinBody: {
-    width: 28, height: 28, backgroundColor: '#17324d', borderWidth: 3,
+    width: 28, height: 28, backgroundColor: '#07523f', borderWidth: 3,
     borderColor: '#ffffff', borderTopLeftRadius: 14, borderTopRightRadius: 14,
     borderBottomRightRadius: 14, borderBottomLeftRadius: 2,
     transform: [{ rotate: '-45deg' }],
-    shadowColor: '#102a43', shadowOpacity: 0.35, shadowRadius: 5,
+    shadowColor: '#064e3b', shadowOpacity: 0.35, shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
   },
   brandPinDot: {

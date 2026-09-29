@@ -183,15 +183,7 @@ function RootLayoutNav() {
   }, [hasCompletedOnboarding, isLoggedIn, isLoading, onboardingLoading, segments, router]);
 
   if (isLoading) {
-    return (
-      <View style={[rootStyles.loading, { backgroundColor: colors.actionDeep }]}>
-        <OGLandmarkLogo size={92} inverse />
-        <View style={rootStyles.loadingStatus}>
-          <ActivityIndicator color={colors.gold} size="small" />
-          <Text style={[rootStyles.loadingStatusText, { color: colors.actionForeground }]}>Preparing your experience</Text>
-        </View>
-      </View>
-    );
+    return <StartupSplash colors={colors} />;
   }
 
   return (
@@ -206,18 +198,7 @@ function RootLayoutNav() {
         <Stack.Screen name="(auth)" options={{ presentation: 'card', animation: 'none' }} />
       </Stack>
       {!navigationReady && (
-        <View
-          pointerEvents="auto"
-          style={[{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            zIndex: 200,
-            elevation: 200,
-          }, { backgroundColor: colors.action }]}
-        />
+        <StartupSplash colors={colors} overlay />
       )}
     </View>
   );
@@ -241,7 +222,44 @@ const rootStyles = {
     fontFamily: 'Inter_500Medium',
     fontSize: 12,
   },
+  startupOverlay: {
+    position: 'absolute' as const,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 200,
+    elevation: 200,
+  },
 };
+
+function StartupSplash({
+  colors,
+  overlay = false,
+}: {
+  colors: ReturnType<typeof useColors>;
+  overlay?: boolean;
+}) {
+  return (
+    <View
+      accessible
+      accessibilityLabel="Loading OG Landmark"
+      style={[
+        rootStyles.loading,
+        { backgroundColor: '#ffffff' },
+        overlay && rootStyles.startupOverlay,
+      ]}
+    >
+      <OGLandmarkLogo size={156} />
+      <View style={rootStyles.loadingStatus}>
+        <ActivityIndicator color={colors.action} size="small" />
+        <Text style={[rootStyles.loadingStatusText, { color: colors.actionDeep }]}>
+          Preparing your experience
+        </Text>
+      </View>
+    </View>
+  );
+}
 
 function DirectionalApp() {
   const { isRTL } = useLanguage();

@@ -315,6 +315,9 @@ const laravelApiUrl = String(process.env.LARAVEL_API_URL || '').trim().replace(/
 // proxy is opt-in so removing LARAVEL_API_URL is an immediate rollback to the
 // legacy API.
 if (laravelApiUrl) {
+  // Handle browser preflight locally; the upstream API allowlist does not
+  // include Replit preview origins.
+  app.use('/api', cors({ origin: '*' }));
   app.use('/api', async (req, res) => {
     const target = `${laravelApiUrl}${req.originalUrl}`;
     try {
@@ -331,7 +334,10 @@ if (laravelApiUrl) {
       });
       res.status(upstream.status);
       upstream.headers.forEach((value, key) => {
-        if (!['connection', 'content-encoding', 'transfer-encoding'].includes(key)) {
+        if (
+          !['connection', 'content-encoding', 'content-length', 'transfer-encoding'].includes(key) &&
+          !key.toLowerCase().startsWith('access-control-')
+        ) {
           res.setHeader(key, value);
         }
       });

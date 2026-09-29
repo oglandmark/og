@@ -8,17 +8,23 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 // ─── Base URL ──────────────────────────────────────────────────────────────────
 // Override via EXPO_PUBLIC_API_URL in .env.local (no trailing /api)
 // e.g.  EXPO_PUBLIC_API_URL=https://api.oglandmark.com
-// The mobile app's API must use the live OG Landmark backend by default.
-// EXPO_PUBLIC_DOMAIN is the Expo preview host, not the product API host, so
-// it must never silently redirect authentication requests to a temporary
-// Replit domain.
 const configuredApiUrl = String(process.env.EXPO_PUBLIC_API_URL || '').trim().replace(/\/+$/, '');
+// Replit's browser preview cannot call the production API directly because
+// api.oglandmark.com only allows product-site origins. In the web preview,
+// route /api requests through the Replit website server's Laravel proxy; native
+// apps and production builds continue to use the canonical API directly.
+const replitWebPreviewApiBase =
+  Platform.OS === 'web' && process.env.EXPO_PUBLIC_REPL_ID && process.env.EXPO_PUBLIC_DOMAIN
+    ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
+    : '';
 export const API_BASE: string =
   configuredApiUrl ||
+  replitWebPreviewApiBase ||
   'https://api.oglandmark.com';
 
 const TOKEN_KEY = '@og-landmark/api-token';

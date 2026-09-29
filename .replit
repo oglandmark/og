@@ -61,3 +61,6 @@ packages = ["glib", "nspr", "nss", "dbus", "atk", "at-spi2-atk", "cups", "gtk3",
 FACEBOOK_APP_ID = "2260207684544121"
 EXPO_PUBLIC_FACEBOOK_APP_ID = "2260207684544121"
 EXPO_PUBLIC_FACEBOOK_REDIRECT_URI = "2260207684544121"
+
+[userenv.development]
+LARAVEL_API_URL = "https://api.oglandmark.com"

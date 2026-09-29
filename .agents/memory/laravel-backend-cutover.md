@@ -21,6 +21,12 @@ An HTTP 200 from `/api/healthz` is not enough to approve a cutover: compare its 
 
 **How to apply:** Before changing `EXPO_PUBLIC_API_URL`, verify database, media, and SMTP readiness, confirm deployed response parity, and ensure the mobile web origin receives `Access-Control-Allow-Origin`.
 
+For the Replit Expo browser preview, route web-only API traffic through the workspace website's opt-in `/api` proxy while native clients keep the canonical API URL. The proxy should answer CORS preflight locally, retain its own CORS headers, and not forward upstream `content-length` or `content-encoding` after Node fetch decompresses the body.
+
+**Why:** The production API allowlist excludes the temporary Expo preview origin, and forwarding the compressed response length after decompression truncates JSON responses, which can break screen loading.
+
+**How to apply:** Enable the development proxy only after API health confirms database, media, and SMTP readiness; keep all operations on the same canonical upstream and test browser preflight plus complete JSON parsing.
+
 New Hostinger installs may seed an empty `app_data(id=1)` row, but that seed must be insert-only; importing existing canonical listings and users remains a separate, explicitly verified operation.
 
 **Why:** The canonical document contains the application's listings and account state, so a normal seed must never replace an existing production document.

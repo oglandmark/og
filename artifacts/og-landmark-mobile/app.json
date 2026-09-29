@@ -46,7 +46,7 @@
         {
           "backgroundColor": "#FFFFFF",
           "image": "./assets/images/og-landmark-brand-splash.png",
-          "imageWidth": 260,
+          "imageWidth": 300,
           "resizeMode": "contain",
           "dark": {
             "backgroundColor": "#FFFFFF",

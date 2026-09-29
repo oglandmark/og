@@ -211,14 +211,6 @@ const rootStyles = {
     justifyContent: 'center' as const,
     paddingHorizontal: 32,
   },
-  loadingBrandName: {
-    marginTop: 12,
-    fontFamily: Platform.OS === 'web' ? undefined : 'Inter_600SemiBold',
-    fontSize: 19,
-    fontWeight: '600' as const,
-    lineHeight: 26,
-    letterSpacing: 0.3,
-  },
   loadingStatus: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
@@ -259,12 +251,6 @@ function StartupSplash({
       ]}
     >
       <OGLandmarkLogo size={156} />
-      <Text
-        accessibilityRole="header"
-        style={[rootStyles.loadingBrandName, { color: colors.action }]}
-      >
-        OG Landmark
-      </Text>
       <View style={rootStyles.loadingStatus}>
         <ActivityIndicator color={colors.action} size="small" />
         <Text style={[rootStyles.loadingStatusText, { color: colors.actionDeep }]}>

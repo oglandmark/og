@@ -182,3 +182,17 @@ mtime_ms = 1790280544096
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/50182d62-606e-4b8e-865c-310cd9c03d38/26558e1c-c3ee-48dd-a3c1-8bcbf23e5436"
 storage_version_token = "1790280556011039"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "b9-rU18sBG9GDOOeq2z1j"
+uri = "file://artifacts/og-landmark-mobile/assets/images/og-landmark-brand-splash.png"
+type = "image"
+title = "Updated OG Landmark splash"
+description = "Navy OG house mark with a centered “OG Landmark” label beneath it."
+logical_id = "710df03a-0b66-4f70-9cd4-d64d260292d8"
+content_hash = "sha256:d114e59a3eb89fce3043346aa9a204fabf439163c0ac125c9fe25c046f240739"
+size = 82689
+mtime_ms = 1790699573285
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/710df03a-0b66-4f70-9cd4-d64d260292d8/acec4899-68f8-4467-b0b7-d04bc45aa26c"
+storage_version_token = "1790699701804373"
+content_type = "image/png"

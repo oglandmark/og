@@ -196,3 +196,17 @@ mtime_ms = 1790700361237
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/710df03a-0b66-4f70-9cd4-d64d260292d8/ebdd7f2d-929f-4ad0-a050-a15d586c2b48"
 storage_version_token = "1790700544525488"
 content_type = "image/png"
+
+[[outputs]]
+id = "Z5KDxnBWAiTSfxOwOQwJY"
+uri = "file://artifacts/og-landmark-mobile/assets/images/og-landmark-brand-square.png"
+type = "image"
+title = "OG Landmark Android/iOS icon source"
+description = "The configured launcher icon uses the new navy OG house mark. Android also uses its navy adaptive foreground asset."
+logical_id = "95379b85-160e-4a41-8506-133bdf3dba2e"
+content_hash = "sha256:2d759f2599122b7af3cbe86cba4400e5b4829238e4b4358362981ee294280ca9"
+size = 185870
+mtime_ms = 1790698354828
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/95379b85-160e-4a41-8506-133bdf3dba2e/7b94e8ff-2889-4458-9706-bf9e00e1497c"
+storage_version_token = "1790747115598310"
+content_type = "image/png"

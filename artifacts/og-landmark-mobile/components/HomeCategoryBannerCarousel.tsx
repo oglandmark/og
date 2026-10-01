@@ -48,6 +48,8 @@ export default function HomeCategoryBannerCarousel({
   const [activeIndex, setActiveIndex] = useState(0);
   const [carouselWidth, setCarouselWidth] = useState(windowWidth);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const renderedSlides =
+    slides.length > 1 ? [...slides, slides[0]] : slides;
 
   const setIndex = useCallback((index: number) => {
     activeIndexRef.current = index;
@@ -83,10 +85,13 @@ export default function HomeCategoryBannerCarousel({
     if (!isVisible || reduceMotion || slides.length < 2) return undefined;
 
     const timer = setInterval(() => {
-      const nextIndex = (activeIndexRef.current + 1) % slides.length;
+      const currentIndex = activeIndexRef.current;
+      const nextIndex = (currentIndex + 1) % slides.length;
+      const targetIndex =
+        currentIndex === slides.length - 1 ? slides.length : nextIndex;
       setIndex(nextIndex);
       scrollRef.current?.scrollTo({
-        x: nextIndex * carouselWidth,
+        x: targetIndex * carouselWidth,
         animated: true,
       });
     }, AUTOPLAY_INTERVAL_MS);
@@ -97,14 +102,16 @@ export default function HomeCategoryBannerCarousel({
   const handleScrollEnd = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       if (!carouselWidth) return;
-      const nextIndex = Math.max(
+      const physicalIndex = Math.max(
         0,
-        Math.min(
-          slides.length - 1,
-          Math.round(event.nativeEvent.contentOffset.x / carouselWidth),
-        ),
+        Math.round(event.nativeEvent.contentOffset.x / carouselWidth),
       );
-      setIndex(nextIndex);
+      if (physicalIndex >= slides.length) {
+        setIndex(0);
+        scrollRef.current?.scrollTo({ x: 0, animated: false });
+        return;
+      }
+      setIndex(physicalIndex);
     },
     [carouselWidth, setIndex, slides.length],
   );
@@ -152,9 +159,12 @@ export default function HomeCategoryBannerCarousel({
         style={styles.scroller}
         contentContainerStyle={styles.scrollerContent}
       >
-        {slides.map((slide, index) => (
+        {renderedSlides.map((slide, index) => {
+          const isLoopClone = index >= slides.length;
+          const logicalIndex = index % slides.length;
+          return (
           <View
-            key={slide.id}
+            key={isLoopClone ? `${slide.id}-loop-clone` : slide.id}
             style={[
               styles.slide,
               {
@@ -164,6 +174,10 @@ export default function HomeCategoryBannerCarousel({
               },
             ]}
             accessibilityLabel={`${slide.eyebrow}. ${slide.title}. ${slide.subtitle}`}
+            accessibilityElementsHidden={isLoopClone}
+            importantForAccessibility={
+              isLoopClone ? 'no-hide-descendants' : 'auto'
+            }
             testID={`home-category-slide-${slide.category}`}
           >
             <Image
@@ -200,7 +214,7 @@ export default function HomeCategoryBannerCarousel({
                 ]}
               >
                 <Text style={[styles.countText, { color: colors.actionForeground }]}>
-                  {String(index + 1).padStart(2, '0')}
+                  {String(logicalIndex + 1).padStart(2, '0')}
                   <Text style={[styles.countDivider, { color: colors.glassOverlay }]}>
                     {' / '}
                   </Text>
@@ -258,7 +272,8 @@ export default function HomeCategoryBannerCarousel({
               </Pressable>
             </View>
           </View>
-        ))}
+          );
+        })}
       </ScrollView>
       {slides.length > 1 ? (
         <View
@@ -317,16 +332,16 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
   },
   slide: {
-    height: 190,
+    height: 176,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
   },
   topLine: {
     position: 'absolute',
     zIndex: 1,
-    top: 14,
-    left: 18,
-    right: 16,
+    top: 12,
+    left: 16,
+    right: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -366,31 +381,31 @@ const styles = StyleSheet.create({
   },
   copy: {
     position: 'absolute',
-    left: 20,
-    right: 20,
-    bottom: 14,
+    left: 18,
+    right: 18,
+    bottom: 12,
     alignItems: 'flex-start',
   },
   title: {
     maxWidth: '100%',
     fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 22,
-    lineHeight: 27,
+    fontSize: 21,
+    lineHeight: 25,
     letterSpacing: -0.35,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 8,
   },
   subtitle: {
-    marginTop: 4,
-    marginBottom: 9,
+    marginTop: 3,
+    marginBottom: 7,
     maxWidth: 310,
     fontFamily: 'Inter_400Regular',
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 10,
+    lineHeight: 14,
     letterSpacing: 0.1,
   },
   cta: {
-    minHeight: 38,
+    minHeight: 36,
     paddingHorizontal: 14,
     borderRadius: 8,
     flexDirection: 'row',

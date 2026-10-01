@@ -162,6 +162,7 @@ export default function HomeCategoryBannerCarousel({
         {renderedSlides.map((slide, index) => {
           const isLoopClone = index >= slides.length;
           const logicalIndex = index % slides.length;
+          const loopCloneSuffix = isLoopClone ? '-loop-clone' : '';
           return (
           <View
             key={isLoopClone ? `${slide.id}-loop-clone` : slide.id}
@@ -178,7 +179,7 @@ export default function HomeCategoryBannerCarousel({
             importantForAccessibility={
               isLoopClone ? 'no-hide-descendants' : 'auto'
             }
-            testID={`home-category-slide-${slide.category}`}
+            testID={`home-category-slide-${slide.category}${loopCloneSuffix}`}
           >
             <Image
               source={slide.image}
@@ -244,7 +245,7 @@ export default function HomeCategoryBannerCarousel({
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`${slide.cta}: ${slide.title}`}
-                testID={`home-category-cta-${slide.category}`}
+                testID={`home-category-cta-${slide.category}${loopCloneSuffix}`}
                 onPress={() =>
                   router.push({
                     pathname: slide.route as never,

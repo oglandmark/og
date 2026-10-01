@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Dimensions, Image, ImageBackground, ImageSourcePropType,
+  ActivityIndicator, Image, ImageBackground,
   Modal, PanResponder, Platform, Pressable, ScrollView, StatusBar,
   StyleSheet, View, useWindowDimensions,
 } from 'react-native';
@@ -22,6 +22,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { BrandMark } from '@/components/BrandMark';
 import { NotificationBell } from '@/components/NotificationBell';
 import { BrowseDiscoveryModule } from '@/components/BrowseDiscoveryModule';
+import HomeCategoryBannerCarousel, { type HomeCategoryBannerSlide } from '@/components/HomeCategoryBannerCarousel';
 import { PropertyDemoBadge } from '@/components/PropertyDemoBadge';
 import { VideoWatermark } from '@/components/VideoWatermark';
 import { getAgents, getBanners, getMobileSettings, getProperties, API_BASE, type BannerSlide as ApiBannerSlide, type MobileContent } from '@/lib/api';
@@ -45,8 +46,6 @@ import {
 } from '@/lib/plotCalculator';
 import { PlotMeasurementCalculator } from '@/components/PlotMeasurementCalculator';
 import { StatusNotice } from '@/components/PolishedUI';
-
-const { width: SCREEN_W } = Dimensions.get('window');
 
 type Transaction = 'Buy' | 'Rent';
 
@@ -203,363 +202,137 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
   );
 }
 
-// ─── Cinematic Banner ─────────────────────────────────────────────────────────
+// ─── Home category banners ────────────────────────────────────────────────────
+type HomeBannerCategory = HomeCategoryBannerSlide['category'];
 
-// Each slide is either an image slide or a video slide (up to 60 s, loops).
-// To add a video slide, set type:'video' and provide a videoUri (remote URL or
-// local require() cast to any). Image slides keep the original Ken Burns effect.
-type BannerSlideData = {
-  type?: 'image' | 'video';          // default = 'image'
-  image?: ImageSourcePropType;
-  videoUri?: string;                  // remote URL
-  localVideo?: number;                // local require() asset
-  eyebrow: string;
-  title: string;
-  subtitle: string;
-  cta: string;
-  route: '/explore';
-  ctaParams: Record<string, string>;
+const HOME_BANNER_COPY: Record<HomeBannerCategory, Omit<HomeCategoryBannerSlide, 'id' | 'image' | 'route' | 'ctaParams'>> = {
+  homes: {
+    category: 'homes',
+    eyebrow: 'Find your place',
+    title: 'Homes that feel like home',
+    subtitle: 'Explore verified homes across Pakistan.',
+    cta: 'Explore homes',
+  },
+  commercial: {
+    category: 'commercial',
+    eyebrow: 'Make your next move',
+    title: 'Commercial spaces with potential',
+    subtitle: 'Discover shops, offices and commercial properties.',
+    cta: 'Explore commercial',
+  },
+  agriculture: {
+    category: 'agriculture',
+    eyebrow: 'Room to grow',
+    title: 'Agricultural land for tomorrow',
+    subtitle: 'Find fertile land and investment opportunities.',
+    cta: 'Explore land',
+  },
+  plots: {
+    category: 'plots',
+    eyebrow: 'Build what’s next',
+    title: 'The right plot starts here',
+    subtitle: 'Explore plots in the locations you love.',
+    cta: 'Explore plots',
+  },
+  projects: {
+    category: 'projects',
+    eyebrow: 'A better way forward',
+    title: 'Discover exceptional projects',
+    subtitle: 'Explore thoughtfully selected developments.',
+    cta: 'Explore projects',
+  },
 };
 
-// ── Background music — low-volume ambient piano, loops while home screen is open
-
-// ── Local fallback slides (shown while API loads or if backend unreachable) ────
-// On web, Range requests for the MP4 asset cause 422 errors from the dev proxy,
-// so we use an image-only slide on web.
-// On web, Range requests for the MP4 asset cause 422 errors from the dev proxy,
-// so native gets the real video slide; web gets a still image fallback.
-const LOCAL_PROMO_VIDEO = Platform.OS !== 'web' ? require('@/assets/videos/banner-promo.mp4') : null;
-
-const VIDEO_SLIDE: BannerSlideData = {
-  type: 'video',
-  localVideo: LOCAL_PROMO_VIDEO as number,
-  image: require('@/assets/images/property-1.jpg'),
-  eyebrow: 'OKARA DISTRICT • PAKISTAN',
-  title: 'Find Your Dream Property',
-  subtitle: 'Premium homes, plots & commercial spaces across Okara & surroundings',
-  cta: 'Explore Now',
-  route: '/explore' as const,
-  ctaParams: {},
+const HOME_BANNER_IMAGES: Record<HomeBannerCategory, HomeCategoryBannerSlide['image']> = {
+  homes: require('@/assets/images/banner-categories/homes.jpg'),
+  commercial: require('@/assets/images/banner-categories/commercial.jpg'),
+  agriculture: require('@/assets/images/banner-categories/agriculture.jpg'),
+  plots: require('@/assets/images/banner-categories/plots.jpg'),
+  projects: require('@/assets/images/banner-categories/projects.jpg'),
 };
 
-const FALLBACK_SLIDES: BannerSlideData[] = Platform.OS !== 'web'
-  ? [VIDEO_SLIDE]
-  : [
-      {
-        type: 'image',
-        image: require('@/assets/images/property-1.jpg'),
-        eyebrow: 'OKARA DISTRICT • PAKISTAN',
-        title: 'Find Your Dream Property',
-        subtitle: 'Premium homes, plots & commercial spaces across Okara & surroundings',
-        cta: 'Explore Now',
-        route: '/explore' as const,
-        ctaParams: {},
-      },
-    ];
+const CATEGORY_PROPERTY_TYPE: Record<HomeBannerCategory, string> = {
+  homes: 'House',
+  commercial: 'Commercial',
+  agriculture: 'Agriculture Land',
+  plots: 'Plot',
+  projects: 'Project',
+};
 
-// Map API BannerSlide → BannerSlideData
-function mapApiBanner(s: ApiBannerSlide): BannerSlideData | null {
-  if (!s.active) return null;
+const CATEGORY_QUERY_LABEL: Record<HomeBannerCategory, string> = {
+  homes: 'Homes',
+  commercial: 'Commercial',
+  agriculture: 'Agriculture Land',
+  plots: 'Plots',
+  projects: 'Projects',
+};
 
-  const eyebrow  = (s as any).eyebrow  || 'OG LANDMARK';
-  const title    = (s as any).title    || 'Premium Properties\nin Okara District';
-  const subtitle = (s as any).subtitle || 'Homes, plots & commercial spaces';
-  const cta      = (s as any).cta      || 'Explore Now';
-  const route    = ((s as any).route   || '/explore') as '/explore';
-  const ctaP     = (s.ctaParams || {}) as Record<string, string>;
+const LOCAL_HOME_BANNER_SLIDES: HomeCategoryBannerSlide[] = (
+  Object.keys(HOME_BANNER_COPY) as HomeBannerCategory[]
+).map((category) => ({
+  id: category,
+  ...HOME_BANNER_COPY[category],
+  image: HOME_BANNER_IMAGES[category],
+  route: '/explore',
+  ctaParams: {
+    category: CATEGORY_QUERY_LABEL[category],
+    propertyType: CATEGORY_PROPERTY_TYPE[category],
+  },
+}));
 
-  // ── Video banner ──────────────────────────────────────────────────────────
-  if (s.type === 'video' && s.videoUrl) {
-    const videoUri = s.videoUrl.startsWith('http') ? s.videoUrl : `${API_BASE}${s.videoUrl}`;
-    return {
-      type: 'video',
-      videoUri,
-      image: require('@/assets/images/property-1.jpg'),
-      eyebrow, title, subtitle, cta, route, ctaParams: ctaP,
-    };
+function normalizeHomeBannerCategory(value?: string | null): HomeBannerCategory | null {
+  const normalized = value?.trim().toLowerCase().replace(/[\s_-]+/g, '');
+  switch (normalized) {
+    case 'home':
+    case 'homes':
+    case 'house':
+    case 'houses':
+      return 'homes';
+    case 'commercial':
+      return 'commercial';
+    case 'agriculture':
+    case 'agriculturalland':
+      return 'agriculture';
+    case 'plot':
+    case 'plots':
+      return 'plots';
+    case 'project':
+    case 'projects':
+      return 'projects';
+    default:
+      return null;
   }
-
-  // ── Image banner ──────────────────────────────────────────────────────────
-  if (s.type === 'image' && s.imageUrl) {
-    const resolvedImage = s.imageUrl.startsWith('http') ? s.imageUrl : `${API_BASE}${s.imageUrl}`;
-    return {
-      type: 'image',
-      image: { uri: resolvedImage },
-      eyebrow, title, subtitle, cta, route, ctaParams: ctaP,
-    };
-  }
-
-  return null;
 }
 
-const BANNER_W            = SCREEN_W;
-const BANNER_H            = 150;
-const BANNER_AUTO_INTERVAL = 4200;
-const VIDEO_MAX_DURATION   = 60_000; // 60 s — auto-advance after this even if looping
+function mapApiBanner(slide: ApiBannerSlide): HomeCategoryBannerSlide | null {
+  if (!slide.active || slide.type !== 'image') return null;
 
-function CinematicBanner({ isScreenVisible, externalSlides, config, colors }: {
-  isScreenVisible: boolean;
-  externalSlides?: BannerSlideData[];
-  config?: MobileContent['homepage'];
-  colors: Colors;
-}) {
-  const router = useRouter();
-  const [slides, setSlides]       = useState<BannerSlideData[]>(FALLBACK_SLIDES);
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [isMuted, setIsMuted]     = useState(false);
-  const autoRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const category =
+    normalizeHomeBannerCategory(slide.category) ??
+    normalizeHomeBannerCategory(slide.ctaParams?.category) ??
+    normalizeHomeBannerCategory(slide.ctaParams?.propertyType);
+  if (!category) return null;
 
-  // When parent provides fresh API slides:
-  // — On native: always show local promo video first, then append API slides (incl. API videos).
-  // — On web: replace entirely (local video causes 422 from Replit proxy on web).
-  useEffect(() => {
-    if (externalSlides && externalSlides.length > 0) {
-      if (Platform.OS !== 'web' && LOCAL_PROMO_VIDEO) {
-        // Keep the homepage banner video-only on native. API image slides are
-        // intentionally excluded so no other banner content replaces the video.
-        setSlides([VIDEO_SLIDE, ...externalSlides.filter((slide) => slide.type === 'video')]);
-      } else {
-        setSlides(externalSlides);
-      }
-      setActiveIdx(0);
-    }
-  }, [externalSlides]);
+  const defaults = HOME_BANNER_COPY[category];
+  const image = slide.imageUrl
+    ? { uri: slide.imageUrl.startsWith('http') ? slide.imageUrl : `${API_BASE}${slide.imageUrl}` }
+    : HOME_BANNER_IMAGES[category];
 
-  useEffect(() => {
-    if (externalSlides && externalSlides.length === 0 && config?.fallback) {
-      const fallback = config.fallback;
-      const videoUrl = fallback.videoUrl
-        ? (fallback.videoUrl.startsWith('http') ? fallback.videoUrl : `${API_BASE}${fallback.videoUrl}`)
-        : '';
-      const imageUrl = fallback.imageUrl
-        ? (fallback.imageUrl.startsWith('http') ? fallback.imageUrl : `${API_BASE}${fallback.imageUrl}`)
-        : '';
-      if (Platform.OS !== 'web') {
-        if (videoUrl) {
-          setSlides([{
-            ...VIDEO_SLIDE,
-            type: 'video',
-            localVideo: undefined,
-            videoUri: videoUrl,
-          }]);
-        } else {
-          setSlides([VIDEO_SLIDE]);
-        }
-        setActiveIdx(0);
-        return;
-      }
-      if (videoUrl || imageUrl) {
-        setSlides([{
-          type: videoUrl ? 'video' : 'image',
-          videoUri: videoUrl || undefined,
-          image: imageUrl ? { uri: imageUrl } : require('@/assets/images/property-1.jpg'),
-          eyebrow: fallback.eyebrow || 'OG LANDMARK',
-          title: fallback.title || 'Find Your Dream Property',
-          subtitle: fallback.subtitle || 'Premium homes & commercial spaces',
-          cta: fallback.cta || 'Explore Now',
-          route: (fallback.route || '/explore') as '/explore',
-          ctaParams: {},
-        }]);
-        setActiveIdx(0);
-      }
-    }
-  }, [config, externalSlides]);
-
-  const activeSlide  = slides[activeIdx] ?? slides[0];
-  const isVideoSlide = activeSlide?.type === 'video';
-  const handleSlideCta = useCallback(() => {
-    if (!activeSlide) return;
-    router.push({
-      pathname: activeSlide.route,
-      params: activeSlide.ctaParams,
-    } as Parameters<typeof router.push>[0]);
-  }, [activeSlide, router]);
-
-  const carouselInterval = Math.max(1500, Number(config?.carousel?.intervalMs) || BANNER_AUTO_INTERVAL);
-  const startTimer = useCallback(() => {
-    if (autoRef.current) clearInterval(autoRef.current);
-    if (isVideoSlide) return;
-    autoRef.current = setInterval(() => {
-      setActiveIdx(prev => (prev + 1) % slides.length);
-    }, carouselInterval);
-  }, [carouselInterval, isVideoSlide, slides.length]);
-
-  useEffect(() => {
-    startTimer();
-    return () => { if (autoRef.current) clearInterval(autoRef.current); };
-  }, [startTimer, activeIdx]);
-
-  // Video slides loop indefinitely — no auto-advance needed.
-  // (Safety-cap and handleVideoEnd removed; isLooping handles restart.)
-
-  const goTo = useCallback((idx: number) => {
-    setActiveIdx(idx);
-    Haptics.selectionAsync();
-  }, []);
-
-  const panHandlers = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy),
-      onPanResponderRelease: (_, g) => {
-        if (Math.abs(g.dx) < 30) return;
-        setActiveIdx(prev =>
-          g.dx < 0
-            ? (prev + 1) % slides.length
-            : (prev - 1 + slides.length) % slides.length,
-        );
-        Haptics.selectionAsync();
-      },
-    }),
-  ).current;
-
-  return (
-    <View style={bn.container}>
-      <View style={bn.slideStack} {...panHandlers.panHandlers}>
-        {slides.map((slide, i) =>
-          slide.type === 'video' ? (
-            <BannerVideoSlide
-              key={i}
-              slide={slide}
-              isActive={i === activeIdx}
-              isMuted={isMuted}
-              isScreenVisible={isScreenVisible}
-              colors={colors}
-              onCta={handleSlideCta}
-            />
-          ) : (
-            <BannerSlide key={i} slide={slide} isActive={i === activeIdx} colors={colors} onCta={handleSlideCta} />
-          ),
-        )}
-      </View>
-
-      {isVideoSlide && (
-        <Pressable onPress={() => setIsMuted(m => !m)} style={bn.muteBtn} hitSlop={10}>
-          <Feather name={isMuted ? 'volume-x' : 'volume-2'} size={14} color="#ffffff" />
-        </Pressable>
-      )}
-
-      {config?.carousel?.showDots !== false && <View style={bn.dots}>
-        {slides.map((_, i) => (
-          <Pressable key={i} onPress={() => goTo(i)} hitSlop={8}>
-            <View style={[bn.dot, i === activeIdx && bn.dotActive]} />
-          </Pressable>
-        ))}
-      </View>}
-    </View>
-  );
+  return {
+    id: slide.id,
+    category,
+    image,
+    eyebrow: slide.eyebrow || defaults.eyebrow,
+    title: slide.title || defaults.title,
+    subtitle: slide.subtitle || defaults.subtitle,
+    cta: slide.cta || defaults.cta,
+    route: slide.route || '/explore',
+    ctaParams: {
+      category: CATEGORY_QUERY_LABEL[category],
+      propertyType: CATEGORY_PROPERTY_TYPE[category],
+    },
+  };
 }
-
-// ── Image slide (original Ken Burns) ──────────────────────────────────────────
-function BannerSlide({ slide, isActive, colors, onCta }: {
-  slide: BannerSlideData;
-  isActive: boolean;
-  colors: Colors;
-  onCta: () => void;
-}) {
-  return (
-    <View style={[bn.slide, StyleSheet.absoluteFill, { opacity: isActive ? 1 : 0 }]} pointerEvents={isActive ? 'auto' : 'none'}>
-      <Image source={slide.image} style={bn.image} resizeMode="cover" />
-      <LinearGradient
-        pointerEvents="none"
-        colors={['#0B1F3A00', '#071428e8']}
-        locations={[0.16, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-      <View pointerEvents="none" style={bn.bannerCopy}>
-        <Text style={[bn.bannerEyebrow, { color: colors.gold }]}>{slide.eyebrow}</Text>
-        <Text style={bn.bannerTitle} numberOfLines={2}>{slide.title}</Text>
-        <Text style={bn.bannerSubtitle} numberOfLines={2}>{slide.subtitle}</Text>
-      </View>
-      <Pressable onPress={onCta} style={({ pressed }) => [bn.bannerCta, { backgroundColor: colors.gold, opacity: pressed ? 0.82 : 1 }]}>
-        <Text style={[bn.bannerCtaText, { color: colors.actionDeep }]}>{slide.cta}</Text>
-        <Feather name="arrow-up-right" size={13} color={colors.actionDeep} />
-      </Pressable>
-    </View>
-  );
-}
-
-// ── Video slide — loops up to 60 s, with sound, mute toggle ───────────────────
-// isScreenVisible — false when user scrolls banner off screen or switches tab.
-function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible, colors, onCta }: {
-  slide: BannerSlideData;
-  isActive: boolean;
-  isMuted: boolean;
-  isScreenVisible: boolean;
-  colors: Colors;
-  onCta: () => void;
-}) {
-  const shouldPlay = isActive && isScreenVisible;
-  const source: VideoSource = slide.localVideo ?? (slide.videoUri ? { uri: slide.videoUri } : null);
-  const player = useVideoPlayer(source, (videoPlayer) => {
-    videoPlayer.loop = true;
-    videoPlayer.muted = isMuted;
-  });
-
-  // Play when active; pause + rewind when becoming inactive so it starts fresh next cycle
-  useEffect(() => {
-    if (shouldPlay) {
-      player.play();
-    } else {
-      player.pause();
-      player.currentTime = 0;
-    }
-  }, [player, shouldPlay]);
-
-  useEffect(() => {
-    player.muted = isMuted;
-  }, [isMuted, player]);
-
-  return (
-    <View style={[bn.slide, StyleSheet.absoluteFill, { opacity: isActive ? 1 : 0 }]} pointerEvents={isActive ? 'auto' : 'none'}>
-      {/* Remote video only on native — web uses image fallback (avoids byte-range 422 errors) */}
-      {isActive && (slide.localVideo || slide.videoUri) && Platform.OS !== 'web' ? (
-        <VideoView
-          player={player}
-          style={bn.image}
-          contentFit="cover"
-          nativeControls={false}
-          surfaceType={Platform.OS === 'android' ? 'textureView' : undefined}
-        />
-      ) : isActive ? (
-        <Image source={slide.image ?? require('@/assets/images/property-1.jpg')} style={bn.image} resizeMode="cover" />
-      ) : null}
-      <LinearGradient
-        pointerEvents="none"
-        colors={['#0B1F3A00', '#071428e8']}
-        locations={[0.16, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-      <View pointerEvents="none" style={bn.bannerCopy}>
-        <Text style={[bn.bannerEyebrow, { color: colors.gold }]}>{slide.eyebrow}</Text>
-        <Text style={bn.bannerTitle} numberOfLines={2}>{slide.title}</Text>
-        <Text style={bn.bannerSubtitle} numberOfLines={2}>{slide.subtitle}</Text>
-      </View>
-      <Pressable onPress={onCta} style={({ pressed }) => [bn.bannerCta, { backgroundColor: colors.gold, opacity: pressed ? 0.82 : 1 }]}>
-        <Text style={[bn.bannerCtaText, { color: colors.actionDeep }]}>{slide.cta}</Text>
-        <Feather name="arrow-up-right" size={13} color={colors.actionDeep} />
-      </Pressable>
-    </View>
-  );
-}
-
-const bn = StyleSheet.create({
-  container:  { width: BANNER_W, height: BANNER_H, alignSelf: 'center', overflow: 'hidden', marginTop: 4 },
-  slideStack: { width: BANNER_W, height: BANNER_H, overflow: 'hidden' },
-  slide:      { width: BANNER_W, height: BANNER_H },
-  image:      { width: BANNER_W, height: BANNER_H },
-  accentLine: { position: 'absolute', top: 0, left: 20, right: 20, height: 1.5, backgroundColor: '#c8a45a99', borderRadius: 1 },
-  // Mute button — top-right corner, inside banner
-  muteBtn:    { position: 'absolute', top: 10, right: 12, zIndex: 20, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 16, padding: 7 },
-  dots:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 10 },
-  dot:        { width: 6, height: 6, borderRadius: 3, backgroundColor: '#c8a45a55' },
-  dotActive:  { width: 20, height: 6, borderRadius: 3, backgroundColor: '#c8a45a' },
-  bannerCopy: { position: 'absolute', left: 20, right: 88, bottom: 18 },
-  bannerEyebrow: { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1.5, marginBottom: 4 },
-  bannerTitle: { color: '#ffffff', fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 20, lineHeight: 23, marginBottom: 3 },
-  bannerSubtitle: { color: '#ffffffcc', fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 14 },
-  bannerCta: { position: 'absolute', right: 18, bottom: 18, minHeight: 32, borderRadius: 11, paddingHorizontal: 12, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', gap: 5 },
-  bannerCtaText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
-});
 
 // ─── Static placeholder images ────────────────────────────────────────────────
 
@@ -1684,13 +1457,13 @@ export default function HomeScreen() {
   // ── Static toggle pill ────────────────────────────────────────────────────
   const [switcherW,   setSwitcherW]   = useState(0);
 
-  // ── Video scroll-visibility tracking ──────────────────────────────────────
+  // ── Home banner visibility tracking ───────────────────────────────────────
   const [tabFocused,     setTabFocused]     = useState(true);
   const [bannerVisible,  setBannerVisible]  = useState(true);
   const bannerBottomRef  = useRef(400);        // updated by onLayout; generous default
   const lastVisibleRef   = useRef(true);
 
-  const isVideoScreenVisible = bannerVisible && tabFocused;
+  const isHomeBannerVisible = bannerVisible && tabFocused;
 
   const handleMainScroll = useCallback((e: { nativeEvent: { contentOffset: { y: number } } }) => {
     const scrollY   = e.nativeEvent.contentOffset.y;
@@ -1703,15 +1476,17 @@ export default function HomeScreen() {
 
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
-  // ── Tab focus → video auto-resume / auto-pause ────────────────────────────
+  // ── Tab focus → pause banner auto-advance while Home is inactive ──────────
   useFocusEffect(useCallback(() => {
     setTabFocused(true);
     return () => setTabFocused(false);
   }, []));
 
 
-  // ── Fetch banner slides on every focus so newly-uploaded banners appear ──────
-  const [apiBannerSlides, setApiBannerSlides] = useState<BannerSlideData[]>([]);
+  // ── Fetch banner slides on focus; local categories are only the offline fallback.
+  const [homeBannerSlides, setHomeBannerSlides] = useState<HomeCategoryBannerSlide[]>(
+    LOCAL_HOME_BANNER_SLIDES,
+  );
   const [propertyError, setPropertyError] = useState('');
   useFocusEffect(useCallback(() => {
     getMobileSettings()
@@ -1720,12 +1495,21 @@ export default function HomeScreen() {
   }, []));
 
   useFocusEffect(useCallback(() => {
+    let active = true;
     getBanners()
       .then((raw) => {
-        const mapped = raw.map(mapApiBanner).filter(Boolean) as BannerSlideData[];
-        if (mapped.length) setApiBannerSlides(mapped);
+        if (!active) return;
+        const mapped = raw.map(mapApiBanner).filter(
+          (slide): slide is HomeCategoryBannerSlide => slide !== null,
+        );
+        setHomeBannerSlides(mapped);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (active) setHomeBannerSlides(LOCAL_HOME_BANNER_SLIDES);
+      });
+    return () => {
+      active = false;
+    };
   }, []));
 
   useFocusEffect(useCallback(() => {
@@ -1877,12 +1661,14 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* ─── CINEMATIC BANNER ───────────────────────────────────────────── */}
+      {/* ─── HOME CATEGORY BANNERS ──────────────────────────────────────── */}
       <View onLayout={(e) => {
-        // Track banner's bottom edge so we know when it has scrolled off screen
         bannerBottomRef.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height;
       }}>
-        <CinematicBanner isScreenVisible={isVideoScreenVisible} externalSlides={apiBannerSlides} config={homeContent} colors={colors} />
+        <HomeCategoryBannerCarousel
+          slides={homeBannerSlides}
+          isVisible={isHomeBannerVisible}
+        />
       </View>
 
       {/* ─── FIND YOUR PROPERTY (Browse / Discovery) ────────────────────── */}

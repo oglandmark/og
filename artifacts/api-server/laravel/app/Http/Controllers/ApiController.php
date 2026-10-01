@@ -1011,6 +1011,9 @@ class ApiController extends Controller
     private function mobile(Request $request, array $parts, string $method)
     {
         $resource = $parts[0] ?? '';
+        if ($resource === 'banners') {
+            return $this->mobileBanners($request, $parts, $method);
+        }
         $data = JsonStore::read();
         if ($resource === 'settings') {
             $settings = $data['mobileSettings'] ?? [
@@ -1022,18 +1025,6 @@ class ApiController extends Controller
             $admin = $this->currentUser($request, true); if (!$this->isAdmin($admin)) return $this->json(['error' => 'Forbidden'], 403);
             $settings = $this->deepMerge($settings, $request->all()); $data['mobileSettings'] = $settings; JsonStore::write($data);
             return $this->json(['success' => true, 'settings' => $settings]);
-        }
-        if ($resource === 'banners') {
-            $all = $data['banners'] ?? [];
-            if ($method === 'GET' && ($parts[1] ?? '') !== 'all') return $this->json(array_values(array_filter($all, fn ($b) => ($b['active'] ?? true) === true)));
-            $admin = $this->currentUser($request, true); if (!$this->isAdmin($admin)) return $this->json(['error' => 'Forbidden'], 403);
-            if ($method === 'GET') return $this->json($all);
-            $id = $parts[1] ?? null;
-            if ($method === 'POST') { $banner = array_merge($request->except(['media']), ['id' => JsonStore::nextId($data), 'active' => $request->has('active') ? $request->boolean('active') : true, 'order' => (int) $request->input('order', count($all))]); $data['banners'][] = $banner; JsonStore::write($data); return $this->json(['success' => true, 'banner' => $banner], 201); }
-            $index = $this->indexById($all, $id); if ($index === null) return $this->json(['error' => 'Banner not found'], 404);
-            if ($method === 'DELETE') { array_splice($data['banners'], $index, 1); JsonStore::write($data); return $this->json(['success' => true]); }
-            if ($method === 'PATCH' && ($parts[2] ?? '') === 'toggle') { $data['banners'][$index]['active'] = !($data['banners'][$index]['active'] ?? false); JsonStore::write($data); return $this->json(['success' => true, 'active' => $data['banners'][$index]['active']]); }
-            $data['banners'][$index] = array_merge($data['banners'][$index], $request->all()); JsonStore::write($data); return $this->json(['success' => true, 'banner' => $data['banners'][$index]]);
         }
         if ($resource === 'push' && $method === 'POST') {
             $admin = $this->currentUser($request, true);
@@ -1073,6 +1064,266 @@ class ApiController extends Controller
         if ($resource === 'stats' && $method === 'GET') return $this->adminStats($data);
         if ($resource === 'developer-analytics' && $method === 'GET') return $this->json(['projects' => count($data['developerProjects'] ?? []), 'leads' => count($data['developerLeads'] ?? []), 'units' => count($data['inventoryUnits'] ?? []), 'generatedAt' => now()->toISOString()]);
         return $this->json(['error' => 'Not found'], 404);
+    }
+
+    private function mobileBanners(Request $request, array $parts, string $method)
+    {
+        $adminRead = ($parts[1] ?? '') === 'all';
+        if ($method !== 'GET' || $adminRead) {
+            $admin = $this->currentUser($request, true);
+            if (!$this->isAdmin($admin)) return $this->json(['error' => 'Forbidden'], 403);
+        }
+
+        $data = JsonStore::read();
+        $usingLegacyBanners = !array_key_exists('mobileBanners', $data) && array_key_exists('banners', $data);
+        $banners = $data['mobileBanners'] ?? $data['banners'] ?? [];
+        $banners = is_array($banners) ? array_values($banners) : [];
+        $data['mobileBanners'] = $banners;
+        unset($data['banners']);
+
+        if ($method === 'GET' && empty($data['mobileBannersSeeded'])) {
+            $data['mobileBanners'] = $this->seedMobileBanners($data);
+            $data['mobileBannersSeeded'] = true;
+            JsonStore::write($data);
+        } elseif ($method === 'GET' && $usingLegacyBanners) {
+            JsonStore::write($data);
+        }
+
+        $all = $this->sortMobileBanners($data['mobileBanners']);
+        if ($method === 'GET') {
+            if ($adminRead) return $this->json($all);
+            return $this->json(array_values(array_filter(
+                $all,
+                fn ($banner) => filter_var($banner['active'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            )));
+        }
+
+        $id = $parts[1] ?? null;
+        if ($method === 'POST') {
+            return $this->createMobileBanner($request, $data, $all);
+        }
+
+        $index = $this->indexById($data['mobileBanners'], $id);
+        if ($index === null) return $this->json(['error' => 'Banner not found'], 404);
+        $banner = $data['mobileBanners'][$index];
+
+        if ($method === 'DELETE') {
+            array_splice($data['mobileBanners'], $index, 1);
+            JsonStore::write($data);
+            $this->deleteUnreferencedBannerMedia($banner, $data);
+            return $this->json(['success' => true]);
+        }
+
+        if ($method === 'PATCH' && ($parts[2] ?? '') === 'toggle') {
+            $data['mobileBanners'][$index]['active'] = array_key_exists('active', $request->all())
+                ? $request->boolean('active')
+                : !filter_var($banner['active'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            JsonStore::write($data);
+            return $this->json(['success' => true, 'active' => $data['mobileBanners'][$index]['active']]);
+        }
+
+        if ($method === 'PUT' || ($method === 'PATCH' && ($parts[2] ?? '') === '')) {
+            $changes = $request->except(['media', 'id', 'type']);
+            if (array_key_exists('ctaParams', $changes) && is_string($changes['ctaParams'])) {
+                $decodedParams = json_decode($changes['ctaParams'], true);
+                if (json_last_error() !== JSON_ERROR_NONE || !is_array($decodedParams)) {
+                    return $this->json(['error' => 'ctaParams must be a JSON object.'], 422);
+                }
+                $changes['ctaParams'] = $decodedParams;
+            } elseif (array_key_exists('ctaParams', $changes) && !is_array($changes['ctaParams'])) {
+                return $this->json(['error' => 'ctaParams must be a JSON object.'], 422);
+            }
+            if (array_key_exists('category', $changes)) {
+                if (($banner['type'] ?? 'image') === 'image' && !in_array($changes['category'], ['homes', 'commercial', 'agriculture', 'plots', 'projects'], true)) {
+                    return $this->json(['error' => 'Invalid image banner category.'], 422);
+                }
+                if (($banner['type'] ?? 'image') === 'image' && $this->hasImageBannerCategory($data['mobileBanners'], $changes['category'], $id)) {
+                    return $this->json(['error' => 'An image banner already exists for this category.'], 409);
+                }
+            }
+            $data['mobileBanners'][$index] = array_merge($banner, $changes);
+            JsonStore::write($data);
+            return $this->json(['success' => true, 'banner' => $data['mobileBanners'][$index]]);
+        }
+
+        return $this->json(['error' => 'Method not allowed'], 405);
+    }
+
+    private function seedMobileBanners(array &$data): array
+    {
+        $banners = $data['mobileBanners'] ?? [];
+        $seed = [
+            ['homes', 'Homes', 'House', 'Find your place', 'Homes that feel like home', 'Explore verified homes across Pakistan.', 'Explore homes'],
+            ['commercial', 'Commercial', 'Commercial', 'Make your next move', 'Commercial spaces with potential', 'Discover shops, offices and commercial properties.', 'Explore commercial'],
+            ['agriculture', 'Agriculture Land', 'Agriculture Land', 'Room to grow', 'Agricultural land for tomorrow', 'Find fertile land and investment opportunities.', 'Explore land'],
+            ['plots', 'Plots', 'Plot', 'Build what’s next', 'The right plot starts here', 'Explore plots in the locations you love.', 'Explore plots'],
+            ['projects', 'Projects', 'Project', 'A better way forward', 'Discover exceptional projects', 'Explore thoughtfully selected developments.', 'Explore projects'],
+        ];
+
+        foreach ($seed as $order => [$category, $ctaCategory, $propertyType, $eyebrow, $title, $subtitle, $cta]) {
+            $exists = collect($banners)->contains(fn ($banner) =>
+                (string) ($banner['category'] ?? '') === $category
+                && strtolower((string) ($banner['type'] ?? 'image')) === 'image'
+            );
+            if ($exists) continue;
+            $banners[] = [
+                'id' => JsonStore::nextId($data),
+                'type' => 'image',
+                'category' => $category,
+                'imageUrl' => '/images/mobile-banners/' . $category . '.jpg',
+                'eyebrow' => $eyebrow,
+                'title' => $title,
+                'subtitle' => $subtitle,
+                'cta' => $cta,
+                'route' => '/explore',
+                'ctaParams' => ['category' => $ctaCategory, 'propertyType' => $propertyType],
+                'active' => true,
+                'order' => $order,
+            ];
+        }
+
+        return array_values($banners);
+    }
+
+    private function sortMobileBanners(array $banners): array
+    {
+        $indexed = [];
+        foreach (array_values($banners) as $position => $banner) {
+            $indexed[] = ['position' => $position, 'banner' => $banner];
+        }
+        usort($indexed, fn ($left, $right) =>
+            ((int) ($left['banner']['order'] ?? 0) <=> (int) ($right['banner']['order'] ?? 0))
+            ?: ($left['position'] <=> $right['position'])
+        );
+
+        return array_values(array_map(fn ($item) => $item['banner'], $indexed));
+    }
+
+    private function createMobileBanner(Request $request, array $data, array $banners)
+    {
+        $type = strtolower(trim((string) $request->input('type', '')));
+        if (!in_array($type, ['image', 'video'], true)) {
+            return $this->json(['error' => 'Banner type must be image or video.'], 422);
+        }
+        $category = trim((string) $request->input('category', $type === 'video' ? 'video' : ''));
+        if ($type === 'image' && !in_array($category, ['homes', 'commercial', 'agriculture', 'plots', 'projects'], true)) {
+            return $this->json(['error' => 'A valid image banner category is required.'], 422);
+        }
+        if ($type === 'video' && !in_array($category, ['video', 'homes', 'commercial', 'agriculture', 'plots', 'projects'], true)) {
+            return $this->json(['error' => 'A valid video category is required.'], 422);
+        }
+
+        $upload = $request->file('media');
+        $imageUrl = trim((string) $request->input('imageUrl', ''));
+        $videoUrl = '';
+        $mediaInfo = null;
+        if ($upload) {
+            $extension = strtolower($upload->getClientOriginalExtension());
+            $allowed = $type === 'image' ? ['jpg', 'jpeg', 'png', 'webp'] : ['mp4', 'mov'];
+            $maxBytes = $type === 'image' ? 20 * 1024 * 1024 : 300 * 1024 * 1024;
+            if (!$upload->isValid() || !in_array($extension, $allowed, true) || (int) $upload->getSize() > $maxBytes) {
+                return $this->json([
+                    'error' => $type === 'image'
+                        ? 'Image uploads must be JPG, PNG or WebP and no larger than 20 MiB.'
+                        : 'Video uploads must be MP4 or MOV and no larger than 300 MiB.',
+                ], 422);
+            }
+            $storage = app(MediaStorage::class);
+            try {
+                $storage->ensureReady();
+                $filename = now()->format('YmdHis') . '-' . Str::random(32) . '.' . $extension;
+                $upload->move($storage->directory(), $filename);
+                $path = $storage->publicPath($filename);
+                $mediaUrl = $storage->url($path);
+                if ($type === 'video') $videoUrl = $mediaUrl;
+                else $imageUrl = $mediaUrl;
+                $filePath = $storage->fileForPublicPath($path);
+                $mediaInfo = [
+                    'url' => $mediaUrl,
+                    'path' => $path,
+                    'mimeType' => $upload->getMimeType(),
+                    'bytes' => $filePath && is_file($filePath) ? (filesize($filePath) ?: 0) : 0,
+                    'kind' => $type,
+                ];
+            } catch (\Throwable $exception) {
+                Log::error('Banner media storage is not ready for upload.', ['error' => $exception->getMessage()]);
+                return $this->json(['error' => 'Media storage is not available. Contact the administrator.', 'code' => 'MEDIA_STORAGE_NOT_READY'], 503);
+            }
+        } elseif ($imageUrl === '') {
+            return $this->json(['error' => 'A media upload or imageUrl is required.'], 422);
+        }
+        if ($type === 'video' && !$upload) {
+            return $this->json(['error' => 'Video banners require a media upload.'], 422);
+        }
+
+        $ctaParams = $request->input('ctaParams');
+        if (is_string($ctaParams) && $ctaParams !== '') {
+            $ctaParams = json_decode($ctaParams, true);
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($ctaParams)) {
+                return $this->json(['error' => 'ctaParams must be a JSON object.'], 422);
+            }
+        } elseif ($ctaParams !== null && !is_array($ctaParams)) {
+            return $this->json(['error' => 'ctaParams must be a JSON object.'], 422);
+        }
+
+        $metadata = [];
+        foreach (['eyebrow', 'title', 'subtitle', 'cta', 'route'] as $field) {
+            if (array_key_exists($field, $request->all())) $metadata[$field] = $request->input($field);
+        }
+        $metadata['type'] = $type;
+        $metadata['category'] = $category;
+        if ($type === 'image') $metadata['imageUrl'] = $imageUrl;
+        else $metadata['videoUrl'] = $videoUrl;
+        if ($mediaInfo !== null) $metadata['media'] = $mediaInfo;
+        if ($ctaParams !== null) $metadata['ctaParams'] = $ctaParams;
+        if ($request->has('active')) $metadata['active'] = $request->boolean('active');
+        if ($request->has('order')) $metadata['order'] = (int) $request->input('order');
+
+        if ($type === 'image') {
+            $existingIndex = null;
+            foreach ($data['mobileBanners'] as $position => $existing) {
+                if ((string) ($existing['category'] ?? '') === $category
+                    && strtolower((string) ($existing['type'] ?? 'image')) === 'image') {
+                    $existingIndex = $position;
+                    break;
+                }
+            }
+            if ($existingIndex !== null) {
+                $previousBanner = $data['mobileBanners'][$existingIndex];
+                $metadata['id'] = $previousBanner['id'] ?? JsonStore::nextId($data);
+                $data['mobileBanners'][$existingIndex] = array_merge($data['mobileBanners'][$existingIndex], $metadata);
+                JsonStore::write($data);
+                $this->deleteUnreferencedBannerMedia($previousBanner, $data);
+                return $this->json(['success' => true, 'banner' => $data['mobileBanners'][$existingIndex]]);
+            }
+        }
+
+        if (!array_key_exists('active', $metadata)) $metadata['active'] = true;
+        if (!array_key_exists('order', $metadata)) $metadata['order'] = count($banners);
+        $banner = array_merge($metadata, ['id' => JsonStore::nextId($data)]);
+        $data['mobileBanners'][] = $banner;
+        JsonStore::write($data);
+        return $this->json(['success' => true, 'banner' => $banner], 201);
+    }
+
+    private function hasImageBannerCategory(array $banners, string $category, $exceptId = null): bool
+    {
+        foreach ($banners as $banner) {
+            if ((string) ($banner['id'] ?? '') === (string) $exceptId) continue;
+            if ((string) ($banner['category'] ?? '') === $category
+                && strtolower((string) ($banner['type'] ?? 'image')) === 'image') return true;
+        }
+        return false;
+    }
+
+    private function deleteUnreferencedBannerMedia(array $banner, array $data): void
+    {
+        $storage = app(MediaStorage::class);
+        foreach ($storage->referencedPaths($banner) as $path) {
+            if (in_array($path, $storage->referencedPaths($data), true)) continue;
+            $file = $storage->fileForPublicPath($path);
+            if ($file !== null && is_file($file)) @unlink($file);
+        }
     }
 
     private function blog(Request $request, array $parts, string $method)

@@ -7,11 +7,54 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class BackendGapClosureTest extends TestCase
 {
     use RefreshDatabase;
+
+    private ?string $mediaStorageDirectory = null;
+    private ?string $previousMediaStorageDirectory = null;
+
+    protected function tearDown(): void
+    {
+        if ($this->mediaStorageDirectory !== null) {
+            if (is_dir($this->mediaStorageDirectory)) {
+                $this->removeDirectory($this->mediaStorageDirectory);
+            }
+            if ($this->previousMediaStorageDirectory === null) {
+                putenv('MEDIA_STORAGE_DIR');
+                unset($_ENV['MEDIA_STORAGE_DIR'], $_SERVER['MEDIA_STORAGE_DIR']);
+            } else {
+                putenv('MEDIA_STORAGE_DIR=' . $this->previousMediaStorageDirectory);
+                $_ENV['MEDIA_STORAGE_DIR'] = $this->previousMediaStorageDirectory;
+                $_SERVER['MEDIA_STORAGE_DIR'] = $this->previousMediaStorageDirectory;
+            }
+        }
+
+        parent::tearDown();
+    }
+
+    private function useTemporaryMediaStorage(): void
+    {
+        $previous = getenv('MEDIA_STORAGE_DIR');
+        $this->previousMediaStorageDirectory = $previous === false ? null : (string) $previous;
+        $this->mediaStorageDirectory = sys_get_temp_dir() . '/og-landmark-banner-tests-' . bin2hex(random_bytes(8));
+        putenv('MEDIA_STORAGE_DIR=' . $this->mediaStorageDirectory);
+        $_ENV['MEDIA_STORAGE_DIR'] = $this->mediaStorageDirectory;
+        $_SERVER['MEDIA_STORAGE_DIR'] = $this->mediaStorageDirectory;
+    }
+
+    private function removeDirectory(string $directory): void
+    {
+        foreach (array_diff(scandir($directory) ?: [], ['.', '..']) as $entry) {
+            $path = $directory . DIRECTORY_SEPARATOR . $entry;
+            if (is_dir($path)) $this->removeDirectory($path);
+            else @unlink($path);
+        }
+        @rmdir($directory);
+    }
 
     private function seedData(array $data): void
     {
@@ -410,5 +453,188 @@ class BackendGapClosureTest extends TestCase
             'email' => 'admin@example.com',
             'otp' => '123456',
         ])->assertStatus(400);
+    }
+
+    public function test_mobile_banner_read_seeds_canonical_records_and_stably_orders_active_items(): void
+    {
+        $this->seedData([
+            'users' => [$this->user(1, 'admin@example.com', 'Admin')],
+            'banners' => [[
+                'id' => 81,
+                'type' => 'video',
+                'category' => 'video',
+                'imageUrl' => '/images/uploads/existing.mp4',
+                'active' => true,
+                'order' => -1,
+            ]],
+        ]);
+        $adminToken = $this->token('admin@example.com');
+
+        $this->getJson('/api/mobile/banners')
+            ->assertOk()
+            ->assertJsonCount(6)
+            ->assertJsonPath('0.id', 81)
+            ->assertJsonPath('1.category', 'homes')
+            ->assertJsonPath('2.category', 'commercial')
+            ->assertJsonPath('3.category', 'agriculture')
+            ->assertJsonPath('4.category', 'plots')
+            ->assertJsonPath('5.category', 'projects')
+            ->assertJsonPath('1.imageUrl', '/images/mobile-banners/homes.jpg')
+            ->assertJsonPath('1.route', '/explore')
+            ->assertJsonPath('1.ctaParams.category', 'Homes')
+            ->assertJsonPath('1.ctaParams.propertyType', 'House');
+
+        $secondRead = $this->getJson('/api/mobile/banners')->assertOk();
+        $this->assertCount(6, $secondRead->json());
+        $this->assertSame(
+            [
+                ['Homes', 'House'],
+                ['Commercial', 'Commercial'],
+                ['Agriculture Land', 'Agriculture Land'],
+                ['Plots', 'Plot'],
+                ['Projects', 'Project'],
+            ],
+            array_map(fn ($banner) => [
+                $banner['ctaParams']['category'],
+                $banner['ctaParams']['propertyType'],
+            ], array_slice($secondRead->json(), 1)),
+        );
+        foreach (array_slice($secondRead->json(), 1) as $seededBanner) {
+            $this->assertIsInt($seededBanner['id']);
+        }
+
+        $this->patchJson('/api/mobile/banners/81', ['title' => 'Legacy metadata patch'], ['Authorization' => "Bearer {$adminToken}"])
+            ->assertOk()
+            ->assertJsonPath('banner.title', 'Legacy metadata patch')
+            ->assertJsonPath('banner.active', true);
+        $this->patchJson('/api/mobile/banners/81/toggle', [], ['Authorization' => "Bearer {$adminToken}"])
+            ->assertOk()
+            ->assertJsonPath('active', false);
+        $this->getJson('/api/mobile/banners')->assertOk()->assertJsonCount(5);
+        $this->getJson('/api/mobile/banners/all', ['Authorization' => "Bearer {$adminToken}"])
+            ->assertOk()
+            ->assertJsonCount(6)
+            ->assertJsonPath('0.id', 81);
+
+        JsonStore::reset();
+        $saved = JsonStore::read();
+        $this->assertArrayHasKey('mobileBanners', $saved);
+        $this->assertArrayNotHasKey('banners', $saved);
+        $this->assertTrue($saved['mobileBannersSeeded']);
+        $this->assertSame('Agriculture Land', $saved['mobileBanners'][3]['ctaParams']['propertyType']);
+    }
+
+    public function test_banner_admin_read_authorization_precedes_initialization_or_mutation(): void
+    {
+        $this->seedData(['users' => [
+            $this->user(1, 'admin@example.com', 'Admin'),
+            $this->user(2, 'buyer@example.com', 'Buyer'),
+        ]]);
+
+        $this->getJson('/api/mobile/banners/all')->assertUnauthorized();
+        $buyerToken = $this->token('buyer@example.com');
+        $this->getJson('/api/mobile/banners/all', ['Authorization' => "Bearer {$buyerToken}"])->assertForbidden();
+
+        JsonStore::reset();
+        $saved = JsonStore::read();
+        $this->assertArrayNotHasKey('mobileBannersSeeded', $saved);
+        $this->assertArrayNotHasKey('mobileBanners', $saved);
+        $this->assertArrayNotHasKey('banners', $saved);
+    }
+
+    public function test_admin_can_upsert_image_categories_and_append_uploaded_video_banners(): void
+    {
+        $this->useTemporaryMediaStorage();
+        $this->seedData(['users' => [$this->user(1, 'admin@example.com', 'Admin')]]);
+        $adminToken = $this->token('admin@example.com');
+        $headers = ['Authorization' => "Bearer {$adminToken}"];
+
+        $first = $this->post('/api/mobile/banners', [
+            'media' => UploadedFile::fake()->image('homes.jpg')->size(40),
+            'type' => 'image',
+            'category' => 'homes',
+            'eyebrow' => 'First',
+            'title' => 'First title',
+            'subtitle' => 'First subtitle',
+            'cta' => 'Explore',
+            'route' => '/explore',
+            'ctaParams' => '{"type":"House"}',
+            'order' => 2,
+            'active' => '0',
+        ], $headers)->assertCreated();
+        $firstBanner = $first->json('banner');
+        $this->assertStringStartsWith('/images/uploads/', $firstBanner['imageUrl']);
+        $this->assertSame(['type' => 'House'], $firstBanner['ctaParams']);
+        $this->assertFileExists($this->mediaStorageDirectory . '/' . basename($firstBanner['imageUrl']));
+
+        $second = $this->post('/api/mobile/banners', [
+            'media' => UploadedFile::fake()->image('homes-new.png')->size(40),
+            'type' => 'image',
+            'category' => 'homes',
+            'title' => 'Updated title',
+            'order' => 1,
+        ], $headers)->assertOk();
+        $this->assertSame((string) $firstBanner['id'], (string) $second->json('banner.id'));
+        $this->assertSame('Updated title', $second->json('banner.title'));
+        $this->assertFalse($second->json('banner.active'));
+        $this->assertFileDoesNotExist($this->mediaStorageDirectory . '/' . basename($firstBanner['imageUrl']));
+
+        $put = $this->putJson('/api/mobile/banners/' . $second->json('banner.id'), [
+            'ctaParams' => '{"category":"Homes","propertyType":"House"}',
+        ], $headers)->assertOk();
+        $this->assertSame(['category' => 'Homes', 'propertyType' => 'House'], $put->json('banner.ctaParams'));
+
+        $video = $this->post('/api/mobile/banners', [
+            'media' => UploadedFile::fake()->create('tour.mp4', 512, 'video/mp4'),
+            'type' => 'video',
+            'category' => 'commercial',
+            'title' => 'Property tour',
+            'order' => 8,
+        ], $headers)->assertCreated();
+        $this->assertSame('commercial', $video->json('banner.category'));
+        $this->assertSame('video', $video->json('banner.type'));
+        $this->assertStringStartsWith('/images/uploads/', $video->json('banner.videoUrl'));
+        $this->assertArrayNotHasKey('imageUrl', $video->json('banner'));
+        $this->assertTrue($video->json('banner.active'));
+
+        $this->getJson('/api/mobile/banners/all', $headers)
+            ->assertOk()
+            ->assertJsonCount(6);
+        $this->assertSame(1, collect($this->getJson('/api/mobile/banners/all', $headers)->json())
+            ->filter(fn ($banner) => ($banner['category'] ?? null) === 'homes' && ($banner['type'] ?? null) === 'image')
+            ->count());
+    }
+
+    public function test_banner_delete_keeps_referenced_uploads_and_removes_unreferenced_uploads(): void
+    {
+        $this->useTemporaryMediaStorage();
+        $this->seedData(['users' => [$this->user(1, 'admin@example.com', 'Admin')]]);
+        $adminToken = $this->token('admin@example.com');
+        $headers = ['Authorization' => "Bearer {$adminToken}"];
+
+        $referenced = $this->post('/api/mobile/banners', [
+            'media' => UploadedFile::fake()->image('commercial.jpg')->size(40),
+            'type' => 'image',
+            'category' => 'commercial',
+        ], $headers)->assertCreated()->json('banner');
+        $referencedFile = $this->mediaStorageDirectory . '/' . basename($referenced['imageUrl']);
+        JsonStore::reset();
+        $data = JsonStore::read();
+        $data['properties'] = [['id' => 42, 'photo' => $referenced['imageUrl']]];
+        JsonStore::write($data);
+
+        $this->deleteJson('/api/mobile/banners/' . $referenced['id'], [], $headers)->assertOk();
+        $this->assertFileExists($referencedFile);
+
+        $unreferenced = $this->post('/api/mobile/banners', [
+            'media' => UploadedFile::fake()->image('agriculture.jpg')->size(40),
+            'type' => 'image',
+            'category' => 'agriculture',
+        ], $headers)->assertCreated()->json('banner');
+        $unreferencedFile = $this->mediaStorageDirectory . '/' . basename($unreferenced['imageUrl']);
+        $this->assertFileExists($unreferencedFile);
+        $this->deleteJson('/api/mobile/banners/' . $unreferenced['id'], [], $headers)->assertOk();
+        $this->assertFileDoesNotExist($unreferencedFile);
+        $this->assertFileExists($referencedFile);
     }
 }

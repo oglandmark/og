@@ -2,9 +2,9 @@
   "expo": {
     "name": "OG Landmark",
     "slug": "og-landmark-uin4dnqfp8-zl28mrpom",
-    "version": "2.0.19",
+    "version": "2.0.20",
     "orientation": "portrait",
-    "icon": "./assets/images/app-icon-professional.png",
+    "icon": "./assets/images/og-landmark-brand-square.png",
     "scheme": "og-land-mobile",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -13,11 +13,11 @@
     },
     "android": {
       "package": "com.oglandmark.app",
-      "versionCode": 19,
+      "versionCode": 20,
       "softwareKeyboardLayoutMode": "resize",
-      "icon": "./assets/images/app-icon-professional.png",
+      "icon": "./assets/images/og-landmark-brand-square.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/app-icon-adaptive-foreground.png",
+        "foregroundImage": "./assets/images/og-landmark-brand-adaptive.png",
         "backgroundColor": "#FFFFFF"
       },
       "config": {
@@ -33,7 +33,7 @@
       ]
     },
     "web": {
-      "favicon": "./assets/images/app-icon-professional.png"
+      "favicon": "./assets/images/og-landmark-brand-square.png"
     },
     "assetBundlePatterns": [
       "assets/images/*",

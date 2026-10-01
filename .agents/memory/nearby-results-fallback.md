@@ -1,10 +1,10 @@
 ---
-name: Nearby results fallback
-description: Geographic catalogue queries must preserve the mobile fallback catalogue when the remote response is empty.
+name: Mobile empty-response fallbacks
+description: Mobile Home banners and nearby catalogues should retain local or cached content when remote responses are empty.
 ---
 
-Nearby filtering must not replace the existing mobile property cache with an empty remote page. The UI should keep bundled or previously loaded properties so its client-side radius filter remains usable during an empty result, unavailable database, or temporary API failure.
+When the public banner endpoint returns no valid active category image slides, keep the five bundled Home banner slides instead of replacing them with an empty list. Nearby filtering must also preserve its existing mobile property cache when a remote page is empty, so client-side radius filtering remains usable.
 
-**Why:** The nearby request can legitimately return no rows, and the deployed catalogue may temporarily be unavailable; clearing the cache makes a successful GPS lookup look like a broken Near Me action.
+**Why:** Older or deployed banner APIs can return a successful but empty response while the app already has usable bundled banners. Clearing local content then makes the Home banner disappear after the first render. Nearby requests can also legitimately return no rows, and clearing their cache makes a valid GPS lookup look broken.
 
-**How to apply:** When adding geo-scoped fetches or pagination, update the remote cache only when a usable page is returned, and keep exact-distance filtering before server-side pagination.
+**How to apply:** Replace mobile fallbacks only with usable remote content. If product behavior later needs an intentional “hide all banners” action, add an explicit signal rather than interpreting an empty array as that command. For nearby search, keep exact-distance filtering before server-side pagination.

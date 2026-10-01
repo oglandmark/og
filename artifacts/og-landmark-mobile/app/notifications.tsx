@@ -6,6 +6,7 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LocalizedText as Text } from '@/components/LocalizedText';
+import { useAuth } from '@/context/AuthContext';
 import { useColors } from '@/hooks/useColors';
 import {
   deleteNotification,
@@ -46,6 +47,7 @@ export default function NotificationsScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { isLoggedIn } = useAuth();
   const [filter, setFilter] = useState<NotificationCategory | 'all'>('all');
   const [items, setItems] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,9 +76,16 @@ export default function NotificationsScreen() {
   }, [filter]);
 
   useFocusEffect(useCallback(() => {
+    if (!isLoggedIn) {
+      setItems([]);
+      setUnreadCount(0);
+      setLoading(false);
+      setRefreshing(false);
+      return undefined;
+    }
     void load(1, true);
     return undefined;
-  }, [load]));
+  }, [isLoggedIn, load]));
 
   const openNotification = async (item: AppNotification) => {
     if (!item.isRead && !item.read) {
@@ -110,39 +119,63 @@ export default function NotificationsScreen() {
           <Text style={[styles.eyebrow, { color: colors.action }]}>OG LANDMARK</Text>
           <Text style={[styles.title, { color: colors.foreground }]}>Notifications</Text>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Mark all notifications as read"
-          onPress={async () => {
-            await markAllNotificationsRead(filter).catch(() => undefined);
-            setItems((current) => current.map(item => ({ ...item, isRead: true, read: true })));
-            setUnreadCount(0);
-          }}
-          style={[styles.markAll, { borderColor: colors.border }]}
-        >
-          <Feather name="check-circle" size={17} color={colors.action} />
-        </Pressable>
+        {isLoggedIn ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Mark all notifications as read"
+            onPress={async () => {
+              await markAllNotificationsRead(filter).catch(() => undefined);
+              setItems((current) => current.map(item => ({ ...item, isRead: true, read: true })));
+              setUnreadCount(0);
+            }}
+            style={[styles.markAll, { borderColor: colors.border }]}
+          >
+            <Feather name="check-circle" size={17} color={colors.action} />
+          </Pressable>
+        ) : <View style={{ width: 38, height: 38 }} />}
       </View>
 
-      <View style={[styles.filterRow, { borderBottomColor: colors.border }]}>
-        {filters.map((entry) => (
-          <Pressable
-            key={entry.key}
-            onPress={() => handleFilter(entry.key)}
-            style={[styles.filter, filter === entry.key && { backgroundColor: colors.action }]}
-          >
-            <Text style={[styles.filterText, { color: filter === entry.key ? colors.actionForeground : colors.mutedForeground }]}>
-              {entry.label}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      {isLoggedIn ? (
+        <View style={[styles.filterRow, { borderBottomColor: colors.border }]}>
+          {filters.map((entry) => (
+            <Pressable
+              key={entry.key}
+              onPress={() => handleFilter(entry.key)}
+              style={[styles.filter, filter === entry.key && { backgroundColor: colors.action }]}
+            >
+              <Text style={[styles.filterText, { color: filter === entry.key ? colors.actionForeground : colors.mutedForeground }]}>
+                {entry.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
 
       {unreadCount > 0 ? (
         <Text style={[styles.unreadSummary, { color: colors.action }]}>{unreadCount} unread update{unreadCount === 1 ? '' : 's'}</Text>
       ) : null}
 
-      {loading ? (
+      {!isLoggedIn ? (
+        <View style={styles.center} testID="notification-signin-required">
+          <View style={[styles.emptyIcon, { backgroundColor: colors.secondary }]}>
+            <Feather name="bell" size={26} color={colors.action} />
+          </View>
+          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Sign in to view notifications</Text>
+          <Text style={[styles.centerText, { color: colors.mutedForeground }]}>
+            Sign in to see your property alerts, project updates and important announcements.
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sign in to view your notifications"
+            testID="notification-sign-in"
+            onPress={() => router.push('/(auth)/login' as any)}
+            style={[styles.signInButton, { backgroundColor: colors.action }]}
+          >
+            <Feather name="log-in" size={16} color={colors.actionForeground} />
+            <Text style={[styles.signInText, { color: colors.actionForeground }]}>Sign in</Text>
+          </Pressable>
+        </View>
+      ) : loading ? (
         <View style={styles.center}>
           <ActivityIndicator color={colors.action} size="large" />
           <Text style={[styles.centerText, { color: colors.mutedForeground }]}>Loading your updates…</Text>
@@ -236,4 +269,6 @@ const styles = StyleSheet.create({
   centerText: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, textAlign: 'center', marginTop: 10 },
   emptyIcon: { width: 62, height: 62, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   emptyTitle: { fontFamily: 'Inter_700Bold', fontSize: 16, marginTop: 16 },
+  signInButton: { minHeight: 44, borderRadius: 13, paddingHorizontal: 18, marginTop: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  signInText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });

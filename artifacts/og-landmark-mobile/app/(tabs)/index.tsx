@@ -1809,7 +1809,7 @@ export default function HomeScreen() {
             </View>
           </Pressable>
           <BrandMark />
-          {user ? <NotificationBell compact /> : <View style={{ width: 36 }} />}
+          <NotificationBell compact />
         </View>
 
         {/* Buy / Rent toggle */}

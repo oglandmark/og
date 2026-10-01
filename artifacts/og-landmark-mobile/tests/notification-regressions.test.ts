@@ -5,6 +5,8 @@ import { test } from 'node:test';
 const server = readFileSync(new URL('../../og-landmark-web/server.js', import.meta.url), 'utf8');
 const api = readFileSync(new URL('../lib/api.ts', import.meta.url), 'utf8');
 const center = readFileSync(new URL('../app/notifications.tsx', import.meta.url), 'utf8');
+const home = readFileSync(new URL('../app/(tabs)/index.tsx', import.meta.url), 'utf8');
+const bell = readFileSync(new URL('../components/NotificationBell.tsx', import.meta.url), 'utf8');
 const push = readFileSync(new URL('../lib/pushNotifications.ts', import.meta.url), 'utf8');
 
 test('notification APIs are user scoped and support durable read/delete state', () => {
@@ -30,6 +32,14 @@ test('mobile notification contract includes pagination, preferences and deep lin
   assert.match(center, /onEndReached/);
   assert.match(center, /\/property\/\[id\]/);
   assert.match(center, /\/announcements\/\[id\]/);
+});
+
+test('home notification bell and notification center remain accessible to guests', () => {
+  assert.match(home, /<NotificationBell compact \/>/);
+  assert.doesNotMatch(home, /\{user \? <NotificationBell compact \/>/);
+  assert.match(bell, /router\.push\('\/notifications'/);
+  assert.match(center, /Sign in to view notifications/);
+  assert.match(center, /notification-sign-in/);
 });
 
 test('foreground pushes defer to the in-app notification center', () => {

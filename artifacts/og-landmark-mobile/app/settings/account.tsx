@@ -11,8 +11,11 @@ import * as ImagePicker from 'expo-image-picker';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
-import { getProfilePhoto, saveProfilePhoto, removeProfilePhoto } from '@/lib/profilePhotoStore';
-import { updateUser, uploadProfilePhoto } from '@/lib/api';
+import {
+  getProfilePhoto, saveProfilePhoto, removeProfilePhoto,
+  getCoverPhoto, saveCoverPhoto, removeCoverPhoto,
+} from '@/lib/profilePhotoStore';
+import { updateUser, uploadProfilePhoto, uploadCoverPhoto } from '@/lib/api';
 import { useMobileContent } from '@/hooks/useMobileContent';
 
 type Field = { key: string; label: string; icon: keyof typeof Feather.glyphMap; placeholder: string; keyboard?: 'default' | 'email-address' | 'phone-pad' };
@@ -40,6 +43,8 @@ export default function AccountSettingsScreen() {
   const [saving, setSaving] = useState(false);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [photoLoading, setPhotoLoading] = useState(false);
+  const [coverUri, setCoverUri] = useState<string | null>(null);
+  const [coverLoading, setCoverLoading] = useState(false);
 
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
@@ -54,12 +59,18 @@ export default function AccountSettingsScreen() {
       return () => { active = false; };
     }
 
-    void getProfilePhoto()
-      .then((uri) => {
-        if (active) setPhotoUri(uri);
+    void Promise.all([getProfilePhoto(), getCoverPhoto()])
+      .then(([profileUri, coverPhotoUri]) => {
+        if (active) {
+          setPhotoUri(profileUri);
+          setCoverUri(coverPhotoUri);
+        }
       })
       .catch(() => {
-        if (active) setPhotoUri(null);
+        if (active) {
+          setPhotoUri(null);
+          setCoverUri(null);
+        }
       });
 
     return () => { active = false; };
@@ -87,9 +98,22 @@ export default function AccountSettingsScreen() {
     ]);
   };
 
-  const pickImage = async (source: 'camera' | 'gallery') => {
-    if (photoLoading) return;
-    setPhotoLoading(true);
+  const handleCoverPress = () => {
+    Alert.alert('Agent Cover Photo', 'Choose an option:', [
+      { text: '📷  Take Photo', onPress: () => void pickImage('camera', 'cover') },
+      { text: '🖼  Choose from Gallery', onPress: () => void pickImage('gallery', 'cover') },
+      coverUri
+        ? { text: '🗑  Remove Cover Photo', style: 'destructive' as const, onPress: () => void removeCover() }
+        : { text: 'Cancel', style: 'cancel' as const },
+      ...(coverUri ? [{ text: 'Cancel', style: 'cancel' as const }] : []),
+    ]);
+  };
+
+  const pickImage = async (source: 'camera' | 'gallery', kind: 'profile' | 'cover' = 'profile') => {
+    const isCover = kind === 'cover';
+    if (isCover ? coverLoading : photoLoading) return;
+    if (isCover) setCoverLoading(true);
+    else setPhotoLoading(true);
     try {
       let result: ImagePicker.ImagePickerResult;
       if (source === 'camera') {
@@ -99,7 +123,7 @@ export default function AccountSettingsScreen() {
           return;
         }
         result = await ImagePicker.launchCameraAsync({
-          allowsEditing: true, aspect: [1, 1], quality: 0.8,
+          allowsEditing: true, aspect: isCover ? [16, 7] : [1, 1], quality: 0.8,
         });
       } else {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -109,28 +133,49 @@ export default function AccountSettingsScreen() {
         }
         result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true, aspect: [1, 1], quality: 0.8,
+          allowsEditing: true, aspect: isCover ? [16, 7] : [1, 1], quality: 0.8,
         });
       }
       if (!result.canceled && result.assets[0]) {
         const uri = result.assets[0].uri;
-        setPhotoUri(uri);
-        // The server is authoritative. Do not display a local-only successful
-        // profile photo update when the upload fails.
-        const uploaded = await uploadProfilePhoto(uri);
-        setPhotoUri(uploaded.url);
-        await saveProfilePhoto(uploaded.url);
+        if (isCover) {
+          setCoverUri(uri);
+          const uploaded = await uploadCoverPhoto(uri);
+          setCoverUri(uploaded.url);
+          await saveCoverPhoto(uploaded.url);
+        } else {
+          setPhotoUri(uri);
+          // The server is authoritative. Do not display a local-only successful
+          // profile photo update when the upload fails.
+          const uploaded = await uploadProfilePhoto(uri);
+          setPhotoUri(uploaded.url);
+          await saveProfilePhoto(uploaded.url);
+        }
       }
     } catch (err: unknown) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Could not update profile photo. Please try again.');
     } finally {
-      setPhotoLoading(false);
+      if (isCover) setCoverLoading(false);
+      else setPhotoLoading(false);
     }
   };
 
   const removePhoto = async () => {
-    setPhotoUri(null);
-    await removeProfilePhoto();
+    try {
+      await removeProfilePhoto();
+      setPhotoUri(null);
+    } catch (err: unknown) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Could not remove profile photo.');
+    }
+  };
+
+  const removeCover = async () => {
+    try {
+      await removeCoverPhoto();
+      setCoverUri(null);
+    } catch (err: unknown) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Could not remove cover photo.');
+    }
   };
 
   // ── Save ──────────────────────────────────────────────────────────────────
@@ -221,6 +266,35 @@ export default function AccountSettingsScreen() {
               </Pressable>
             </View>
           </View>
+        </AnimatedReveal>
+
+        {/* Agent cover photo */}
+        <AnimatedReveal delay={35}>
+          <Pressable
+            onPress={handleCoverPress}
+            disabled={coverLoading}
+            style={[styles.coverCard, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+          >
+            {coverUri ? (
+              <Image source={{ uri: coverUri }} style={styles.coverImage} resizeMode="cover" />
+            ) : (
+              <View style={[styles.coverPlaceholder, { backgroundColor: colors.action + '18' }]}>
+                <Feather name="image" size={26} color={colors.action} />
+              </View>
+            )}
+            <View style={styles.coverShade} />
+            <View style={styles.coverContent}>
+              <View style={styles.coverCopy}>
+                <Text style={styles.coverTitle}>Agent Cover Photo</Text>
+                <Text style={styles.coverSub}>
+                  {coverLoading ? 'Uploading…' : coverUri ? 'Shown on your public agent profile' : 'Add a banner for your public profile'}
+                </Text>
+              </View>
+              <View style={[styles.coverAction, { backgroundColor: colors.action }]}>
+                <Feather name={coverLoading ? 'loader' : coverUri ? 'edit-2' : 'camera'} size={14} color={colors.actionForeground} />
+              </View>
+            </View>
+          </Pressable>
         </AnimatedReveal>
 
         {/* Fields */}
@@ -314,6 +388,15 @@ const styles = StyleSheet.create({
   avatarSub: { fontFamily: 'Inter_400Regular', fontSize: 11, marginBottom: 6 },
   changePhotoLink: {},
   changePhotoText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
+  coverCard: { height: 142, borderRadius: 18, borderWidth: 1, overflow: 'hidden', marginBottom: 28, position: 'relative' },
+  coverImage: { ...StyleSheet.absoluteFill },
+  coverPlaceholder: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
+  coverShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(8,24,40,0.28)' },
+  coverContent: { flex: 1, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', padding: 14 },
+  coverCopy: { flex: 1 },
+  coverTitle: { fontFamily: 'Inter_700Bold', fontSize: 14, color: '#ffffff' },
+  coverSub: { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#ffffffcc', marginTop: 3 },
+  coverAction: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   sectionLabel: { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.5, marginBottom: 10 },
   fieldsCard: { borderRadius: 18, borderWidth: 1, marginBottom: 22, overflow: 'hidden' },
   divider: { height: 1, marginHorizontal: 16 },
@@ -322,8 +405,8 @@ const styles = StyleSheet.create({
   fieldLabel: { fontFamily: 'Inter_400Regular', fontSize: 10, marginBottom: 3 },
   fieldInput: { fontFamily: 'Inter_500Medium', fontSize: 14 },
   helperText: { fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 16, marginTop: -14, marginBottom: 24 },
-  saveBtn: { height: 52, borderRadius: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  saveBtnText: { fontFamily: 'Inter_700Bold', fontSize: 14 },
-  cancelBtn: { alignItems: 'center', paddingVertical: 14 },
+  saveBtn: { height: 44, borderRadius: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  saveBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  cancelBtn: { alignItems: 'center', paddingVertical: 9 },
   cancelText: { fontFamily: 'Inter_400Regular', fontSize: 13 },
 });

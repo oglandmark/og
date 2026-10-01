@@ -1,8 +1,9 @@
 export const MAP_AREA_RANGE_STEPS = [0.4, 0.9, 4, 10] as const;
-export const MAP_AREA_BLUE = '#102A43';
-export const MAP_AREA_BLUE_FILL = 'rgba(16,42,67,0.16)';
+export const MAP_AREA_BLUE = '#2F6F9F';
+export const MAP_AREA_BLUE_FILL = 'rgba(47,111,159,0.14)';
 export const MAP_AREA_MIN_KM = MAP_AREA_RANGE_STEPS[0];
 export const MAP_AREA_MAX_KM = MAP_AREA_RANGE_STEPS[MAP_AREA_RANGE_STEPS.length - 1];
+export const MAP_AREA_DEFAULT_KM = 4;
 
 export interface MapCoordinate {
   latitude?: number;
@@ -18,7 +19,26 @@ export type MapAreaRadiusMessage = {
 };
 
 export function normalizeMapAreaRange(km: number): number {
-  return Number.isFinite(km) && km > 0 ? km : MAP_AREA_RANGE_STEPS[0];
+  const numericKm = Number(km);
+  if (!Number.isFinite(numericKm) || numericKm <= 0) return MAP_AREA_MIN_KM;
+  return Math.min(
+    MAP_AREA_MAX_KM,
+    Math.max(MAP_AREA_MIN_KM, Math.round(numericKm * 10) / 10),
+  );
+}
+
+export function mapAreaRadiusMeters(km: number): number {
+  return normalizeMapAreaRange(km) * 1000;
+}
+
+/**
+ * Returns a fractional Leaflet zoom level that keeps the selected radius
+ * comfortably visible while preserving the same scale used by native maps.
+ */
+export function mapAreaZoomForRadius(km: number): number {
+  const safeRadiusKm = normalizeMapAreaRange(km);
+  const latitudeDelta = Math.max(0.025, (safeRadiusKm * 2.8) / 111);
+  return Math.max(3, Math.min(19, Math.log(360 / latitudeDelta) / Math.LN2));
 }
 
 export function formatMapAreaRange(km: number): string {
@@ -44,7 +64,10 @@ export function countPointsWithinRadius(
   const earthRadiusKm = 6371;
   const centerLat = (center.latitude * Math.PI) / 180;
   const centerLng = (center.longitude * Math.PI) / 180;
-  const safeRadius = Math.max(0, Number(radiusKm) || 0);
+  const numericRadius = Number(radiusKm);
+  const safeRadius = Number.isFinite(numericRadius)
+    ? Math.min(MAP_AREA_MAX_KM, Math.max(0, numericRadius))
+    : 0;
 
   return points.reduce((count, point) => {
     const coordinate = coordinateValue(point);
@@ -63,7 +86,7 @@ export function countPointsWithinRadius(
 
 export function createMapAreaRadiusMessage(km: number, fit = false): MapAreaRadiusMessage | null {
   if (!Number.isFinite(km) || km <= 0) return null;
-  return { type: 'mapAreaRadius', radiusKm: km, fit };
+  return { type: 'mapAreaRadius', radiusKm: normalizeMapAreaRange(km), fit };
 }
 
 export function createMapAreaRadiusInjection(km: number, fit = false): string | null {

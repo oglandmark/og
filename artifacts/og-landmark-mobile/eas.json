@@ -1,24 +1,24 @@
 {
-  "build": {
-    "preview": {
-      "android": {
-        "buildType": "apk",
-        "image": "ubuntu-22.04-jdk-17-ndk-r21e"
-      },
-      "distribution": "internal",
-      "node": "20.19.4"
-    },
-    "production": {
-      "android": {
-        "buildType": "app-bundle",
-        "image": "ubuntu-22.04-jdk-17-ndk-r21e"
-      },
-      "distribution": "store",
-      "environment": "production",
-      "node": "20.19.4"
-    }
-  },
   "cli": {
     "appVersionSource": "local"
+  },
+  "build": {
+    "preview": {
+      "node": "20.19.4",
+      "distribution": "internal",
+      "android": {
+        "image": "ubuntu-22.04-jdk-17-ndk-r21e",
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "node": "20.19.4",
+      "environment": "production",
+      "distribution": "store",
+      "android": {
+        "image": "ubuntu-22.04-jdk-17-ndk-r21e",
+        "buildType": "app-bundle"
+      }
+    }
   }
 }

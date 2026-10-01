@@ -110,15 +110,15 @@ function ProjectInquiryModal({
   if (!visible) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={iqm.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <View style={[iqm.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}>
           <View style={[iqm.handle, { backgroundColor: colors.border }]} />
           {sent ? (
             <View style={iqm.successWrap}>
-              <View style={[iqm.successIcon, { backgroundColor: '#1a6b3a18' }]}>
-                <Feather name="check-circle" size={36} color="#1a6b3a" />
+              <View style={[iqm.successIcon, { backgroundColor: '#183B6018' }]}>
+                <Feather name="check-circle" size={36} color="#183B60" />
               </View>
               <Text style={[iqm.successTitle, { color: colors.foreground }]}>Inquiry Sent!</Text>
               <Text style={[iqm.successDesc, { color: colors.mutedForeground }]}>
@@ -170,7 +170,7 @@ function ProjectInquiryModal({
 }
 
 const iqm = StyleSheet.create({
-  overlay:      { flex: 1, justifyContent: 'flex-end', backgroundColor: '#0d1d2baa' },
+  overlay:      { flex: 1, justifyContent: 'flex-end', backgroundColor: '#071428aa' },
   sheet:        { borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingTop: 10, paddingHorizontal: 18, maxHeight: '90%' },
   handle:       { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 18 },
   header:       { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 },
@@ -180,14 +180,14 @@ const iqm = StyleSheet.create({
   label:        { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1, marginBottom: 7, marginTop: 4 },
   input:        { borderWidth: 1, borderRadius: 12, padding: 13, fontFamily: 'Inter_400Regular', fontSize: 13, marginBottom: 14 },
   multiline:    { minHeight: 80, textAlignVertical: 'top' },
-  sendBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 15, marginTop: 4, marginBottom: 8 },
-  sendBtnText:  { fontFamily: 'Inter_700Bold', fontSize: 14 },
+  sendBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 10, marginTop: 4, marginBottom: 8 },
+  sendBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   successWrap:  { alignItems: 'center', paddingVertical: 24, gap: 12, paddingHorizontal: 8 },
   successIcon:  { width: 72, height: 72, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   successTitle: { fontFamily: 'Inter_700Bold', fontSize: 22 },
   successDesc:  { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 20, color: '#64748b' },
-  successBtn:   { borderRadius: 14, paddingHorizontal: 40, paddingVertical: 14, marginTop: 8 },
-  successBtnText:{ fontFamily: 'Inter_700Bold', fontSize: 14 },
+  successBtn:   { borderRadius: 14, paddingHorizontal: 40, paddingVertical: 9, marginTop: 8 },
+  successBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });
 
 // ── Main screen ───────────────────────────────────────────────────────────────
@@ -411,9 +411,9 @@ export default function ProjectDetailScreen() {
                 </View>
               ) : null}
               {devProject.nocStatus === 'Approved' && (
-                <View style={[styles.statusChip, { backgroundColor: '#1a6b3a15' }]}>
-                  <Feather name="check-circle" size={10} color="#1a6b3a" />
-                  <Text style={[styles.statusChipText, { color: '#1a6b3a' }]}>NOC Approved</Text>
+                <View style={[styles.statusChip, { backgroundColor: '#183B6015' }]}>
+                  <Feather name="check-circle" size={10} color="#183B60" />
+                  <Text style={[styles.statusChipText, { color: '#183B60' }]}>NOC Approved</Text>
                 </View>
               )}
               {devProject.approvedBy.length > 0 && (
@@ -440,8 +440,8 @@ export default function ProjectDetailScreen() {
             <View style={{ flex: 1 }}>
               <View style={styles.devNameRow}>
                 <Text style={[styles.devName, { color: colors.foreground }]}>{developer}</Text>
-                <View style={[styles.verifiedBadge, { backgroundColor: '#1a6b3a15' }]}>
-                  <Feather name="check-circle" size={10} color="#1a6b3a" />
+                <View style={[styles.verifiedBadge, { backgroundColor: '#183B6015' }]}>
+                  <Feather name="check-circle" size={10} color="#183B60" />
                   <Text style={styles.verifiedText}>Verified</Text>
                 </View>
               </View>
@@ -534,8 +534,8 @@ export default function ProjectDetailScreen() {
                     <Text style={[styles.unitNumber, { color: colors.foreground }]}>{u.name}</Text>
                     {u.bedrooms !== '—' && <Text style={[styles.unitType, { color: colors.mutedForeground }]}>{u.bedrooms} Bed · {u.bathrooms} Bath</Text>}
                   </View>
-                  <View style={[styles.unitStatus, { backgroundColor: '#1a6b3a18' }]}>
-                    <Text style={[styles.unitStatusText, { color: '#1a6b3a' }]}>Available</Text>
+                  <View style={[styles.unitStatus, { backgroundColor: '#183B6018' }]}>
+                    <Text style={[styles.unitStatusText, { color: '#183B60' }]}>Available</Text>
                   </View>
                 </View>
                 <View style={[styles.unitDivider, { backgroundColor: colors.border }]} />
@@ -611,7 +611,7 @@ export default function ProjectDetailScreen() {
                 <Text style={[styles.featureTitle, { color: colors.foreground }]}>{group.title}</Text>
                 {group.items.map((item) => (
                   <View key={item} style={styles.featureItem}>
-                    <Feather name="check-circle" size={12} color="#1a6b3a" />
+                    <Feather name="check-circle" size={12} color="#183B60" />
                     <Text style={[styles.featureText, { color: colors.mutedForeground }]}>{item}</Text>
                   </View>
                 ))}
@@ -638,8 +638,8 @@ export default function ProjectDetailScreen() {
                 const done = i < milestonesComplete(devStatus);
                 return (
                   <View key={m} style={styles.milestoneRow}>
-                    <View style={[styles.milestoneIcon, { backgroundColor: done ? '#1a6b3a18' : colors.border }]}>
-                      <Feather name={done ? 'check' : 'circle'} size={11} color={done ? '#1a6b3a' : colors.mutedForeground} />
+                    <View style={[styles.milestoneIcon, { backgroundColor: done ? '#183B6018' : colors.border }]}>
+                      <Feather name={done ? 'check' : 'circle'} size={11} color={done ? '#183B60' : colors.mutedForeground} />
                     </View>
                     <Text style={[styles.milestoneText, { color: done ? colors.foreground : colors.mutedForeground }]}>{m}</Text>
                   </View>
@@ -709,7 +709,7 @@ export default function ProjectDetailScreen() {
 
     {/* ── GALLERY MODAL ────────────────────────────────────────────────── */}
     {/* ── INLINE GALLERY MODAL ─────────────────────────────────────── */}
-    <Modal visible={galleryOpen} transparent animationType="fade" onRequestClose={() => setGalleryOpen(false)} statusBarTranslucent>
+    <Modal visible={galleryOpen} transparent animationType="none" onRequestClose={() => setGalleryOpen(false)} statusBarTranslucent>
       <View style={{ flex: 1, backgroundColor: '#000000ee', justifyContent: 'center', alignItems: 'center' }}>
         <Pressable style={{ position: 'absolute', top: 50, right: 20, zIndex: 10, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }} onPress={() => setGalleryOpen(false)}>
           <Feather name="x" size={20} color="#ffffff" />
@@ -767,8 +767,8 @@ const styles = StyleSheet.create({
   ctaBar:          { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: 1 },
   priceLabel:      { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1 },
   priceText:       { fontFamily: 'Inter_700Bold', fontSize: 16, marginTop: 2 },
-  enquireBtn:      { borderRadius: 12, paddingHorizontal: 18, paddingVertical: 12 },
-  enquireBtnText:  { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  enquireBtn:      { borderRadius: 12, paddingHorizontal: 18, paddingVertical: 9 },
+  enquireBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   // Quick actions
   quickActions:    { flexDirection: 'row', paddingVertical: 14, borderBottomWidth: 1 },
   quickAction:     { flex: 1, alignItems: 'center', gap: 6 },
@@ -798,8 +798,8 @@ const styles = StyleSheet.create({
   devName:         { fontFamily: 'Inter_700Bold', fontSize: 14 },
   devType:         { fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 2 },
   verifiedBadge:   { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 4 },
-  verifiedText:    { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#1a6b3a' },
-  viewDevBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 12, paddingVertical: 11 },
+  verifiedText:    { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#183B60' },
+  viewDevBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 12, paddingVertical: 9 },
   viewDevText:     { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   // Gallery
   galleryThumb:    { width: 160, height: 110, borderRadius: 12, borderWidth: 1 },
@@ -825,7 +825,7 @@ const styles = StyleSheet.create({
   payRow:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12 },
   payRowLabel:     { fontFamily: 'Inter_400Regular', fontSize: 12 },
   payRowValue:     { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  payRequestBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, paddingVertical: 13 },
+  payRequestBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, paddingVertical: 11 },
   payRequestText:  { fontFamily: 'Inter_700Bold', fontSize: 13 },
   // Amenities
   amenitiesGrid:   { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -850,6 +850,6 @@ const styles = StyleSheet.create({
   locationInfo:    { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
   locationText:    { fontFamily: 'Inter_400Regular', fontSize: 13, flex: 1 },
   nearbyText:      { fontFamily: 'Inter_400Regular', fontSize: 12, marginBottom: 12 },
-  directionsBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 12, paddingVertical: 12, marginTop: 12 },
+  directionsBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 12, paddingVertical: 10, marginTop: 12 },
   directionsBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });

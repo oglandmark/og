@@ -1,16 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
 import { useColors } from '@/hooks/useColors';
 
 export type BrowseIconName =
@@ -87,32 +78,12 @@ export function PremiumBrowseIcon({
   size?: 'small' | 'medium';
 }) {
   const colors = useColors();
-  const pulse = useSharedValue(1);
   const isMedium = size === 'medium';
   const frameSize = isMedium ? 38 : 32;
   const iconSize = isMedium ? 17 : 14;
 
-  useEffect(() => {
-    pulse.value = withDelay(
-      active ? 0 : 180,
-      withRepeat(
-        withSequence(
-          withTiming(1.08, { duration: 1200, easing: Easing.inOut(Easing.cubic) }),
-          withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.cubic) }),
-        ),
-        -1,
-        false,
-      ),
-    );
-  }, [active, pulse]);
-
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulse.value }],
-    opacity: active ? 1 : 0.72,
-  }));
-
   return (
-    <Animated.View style={[styles.halo, { width: frameSize + 8, height: frameSize + 8 }, pulseStyle]}>
+    <View style={[styles.halo, { width: frameSize + 8, height: frameSize + 8, opacity: active ? 1 : 0.72 }]}>
       <LinearGradient
         colors={active ? [colors.primary, '#f4d992', colors.primary] : [colors.border, colors.secondary, colors.border]}
         start={{ x: 0, y: 0 }}
@@ -124,7 +95,7 @@ export function PremiumBrowseIcon({
         </View>
       </LinearGradient>
       {active && <View style={[styles.status, { backgroundColor: colors.primary, borderColor: colors.card }]} />}
-    </Animated.View>
+    </View>
   );
 }
 

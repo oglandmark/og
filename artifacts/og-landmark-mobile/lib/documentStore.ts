@@ -35,8 +35,8 @@ export function newDocId(): string {
 
 export function docTypeColor(type: DocType): { bg: string; text: string; icon: string } {
   switch (type) {
-    case 'NOC':            return { bg: '#1a6b3a18', text: '#1a6b3a', icon: 'shield' };
-    case 'Layout Plan':    return { bg: '#102a4318', text: '#102a43', icon: 'map' };
+    case 'NOC':            return { bg: '#183B6018', text: '#183B60', icon: 'shield' };
+    case 'Layout Plan':    return { bg: '#0B1F3A18', text: '#0B1F3A', icon: 'map' };
     case 'Title Deed':     return { bg: '#c8a45a18', text: '#c8a45a', icon: 'award' };
     case 'Registration':   return { bg: '#7c3aed18', text: '#7c3aed', icon: 'file-text' };
     case 'NTN Certificate':return { bg: '#0891b218', text: '#0891b2', icon: 'credit-card' };

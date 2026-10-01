@@ -191,7 +191,7 @@ function InquiryModal({
   const agentPhone = property.agentPhone;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose} statusBarTranslucent>
       <View style={iq.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         <View style={[iq.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}>
@@ -200,8 +200,8 @@ function InquiryModal({
           {sent ? (
             /* ── Success State ── */
             <View style={iq.successWrap}>
-              <View style={[iq.successIcon, { backgroundColor: '#1a6b3a18' }]}>
-                <Feather name="check-circle" size={36} color="#1a6b3a" />
+              <View style={[iq.successIcon, { backgroundColor: '#183B6018' }]}>
+                <Feather name="check-circle" size={36} color="#183B60" />
               </View>
               <Text style={[iq.successTitle, { color: colors.foreground }]}>
                 {sentAppt ? 'Viewing Booked!' : 'Inquiry Sent!'}
@@ -253,8 +253,8 @@ function InquiryModal({
                   <Text style={[iq.agentName, { color: colors.foreground }]}>{property.agent}</Text>
                   <Text style={[iq.agentTitle, { color: colors.mutedForeground }]}>{property.agentTitle}</Text>
                 </View>
-                <View style={[iq.verifiedBadge, { backgroundColor: '#1a6b3a15' }]}>
-                  <Feather name="check-circle" size={10} color="#1a6b3a" />
+                <View style={[iq.verifiedBadge, { backgroundColor: '#183B6015' }]}>
+                  <Feather name="check-circle" size={10} color="#183B60" />
                   <Text style={iq.verifiedText}>Verified</Text>
                 </View>
               </View>
@@ -423,7 +423,7 @@ function AppointmentModal({
   if (!visible) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose} statusBarTranslucent>
       <View style={iq.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         <View style={[iq.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}>
@@ -431,8 +431,8 @@ function AppointmentModal({
 
           {booked ? (
             <View style={iq.successWrap}>
-              <View style={[iq.successIcon, { backgroundColor: '#1a6b3a18' }]}>
-                <Feather name="calendar" size={36} color="#1a6b3a" />
+              <View style={[iq.successIcon, { backgroundColor: '#183B6018' }]}>
+                <Feather name="calendar" size={36} color="#183B60" />
               </View>
               <Text style={[iq.successTitle, { color: colors.foreground }]}>Visit Booked!</Text>
               <Text style={[iq.successDesc, { color: colors.mutedForeground }]}>
@@ -560,7 +560,7 @@ function AppointmentModal({
   );
 }
 const iq = StyleSheet.create({
-  overlay:         { flex: 1, justifyContent: 'flex-end', backgroundColor: '#0d1d2baa' },
+  overlay:         { flex: 1, justifyContent: 'flex-end', backgroundColor: '#071428aa' },
   sheet:           { borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingTop: 10, paddingHorizontal: 18, maxHeight: '90%' },
   handle:          { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 18 },
   header:          { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16, gap: 10 },
@@ -573,7 +573,7 @@ const iq = StyleSheet.create({
   agentName:       { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   agentTitle:      { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 1 },
   verifiedBadge:   { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 5 },
-  verifiedText:    { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#1a6b3a' },
+  verifiedText:    { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#183B60' },
   fieldLabel:      { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1, marginBottom: 8 },
   inputSingle:     { borderWidth: 1, borderRadius: 12, paddingHorizontal: 13, paddingVertical: 11, fontFamily: 'Inter_400Regular', fontSize: 13, marginBottom: 14 },
   input:           { borderWidth: 1, borderRadius: 14, padding: 13, fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 20, minHeight: 80, textAlignVertical: 'top', marginBottom: 14 },
@@ -589,23 +589,23 @@ const iq = StyleSheet.create({
   timeChip:        { borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 },
   timeChipText:    { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   actions:         { flexDirection: 'row', gap: 10, marginBottom: 4, marginTop: 4 },
-  altBtn:          { flex: 0.7, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 14, paddingVertical: 14 },
+  altBtn:          { flex: 0.7, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 14, paddingVertical: 11 },
   altBtnText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
-  sendBtn:         { flex: 1, minHeight: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 16, paddingHorizontal: 18, paddingVertical: 14 },
-  sendBtnText:     { fontFamily: 'Inter_700Bold', fontSize: 14, lineHeight: 20, letterSpacing: 0.1 },
+  sendBtn:         { flex: 1, minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 16, paddingHorizontal: 18, paddingVertical: 9 },
+  sendBtnText:     { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20, letterSpacing: 0.1 },
   // success
   successWrap:     { alignItems: 'center', paddingVertical: 24, gap: 10, paddingHorizontal: 10 },
   successIcon:     { width: 72, height: 72, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   successTitle:    { fontFamily: 'Inter_700Bold', fontSize: 22 },
   successDesc:     { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 20, color: '#64748b' },
   successBtns:     { flexDirection: 'row', gap: 10, marginTop: 8, width: '100%' },
-  successBtn:      { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 14 },
+  successBtn:      { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 11 },
   successBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });
 
 const ap = StyleSheet.create({
   typeRow:      { flexDirection: 'row', gap: 10 },
-  typeBtn:      { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 14, paddingVertical: 13 },
+  typeBtn:      { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 14, paddingVertical: 11 },
   typeBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   datePill:     { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
   datePillText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
@@ -831,17 +831,17 @@ function PropertyDetailScreen() {
         <View style={styles.actionRow}>
           <Pressable
             onPress={openBooking}
-            style={({ pressed }) => [styles.cta, styles.primaryCta, { backgroundColor: '#102a43', opacity: pressed ? 0.85 : 1 }]}
+            style={({ pressed }) => [styles.cta, styles.primaryCta, { backgroundColor: '#0B1F3A', opacity: pressed ? 0.85 : 1 }]}
           >
             <Feather name="calendar" size={16} color="#ffffff" />
             <Text style={[styles.ctaText, { color: '#ffffff' }]}>Schedule a Visit</Text>
           </Pressable>
           <Pressable
             onPress={openInquiry}
-            style={({ pressed }) => [styles.cta, styles.secondaryCta, { borderColor: '#102a43', backgroundColor: '#102a4312', opacity: pressed ? 0.8 : 1 }]}
+            style={({ pressed }) => [styles.cta, styles.secondaryCta, { borderColor: '#0B1F3A', backgroundColor: '#0B1F3A12', opacity: pressed ? 0.8 : 1 }]}
           >
-            <Feather name="message-circle" size={16} color="#102a43" />
-            <Text style={[styles.secondaryCtaText, { color: '#102a43' }]}>Inquire</Text>
+            <Feather name="message-circle" size={16} color="#0B1F3A" />
+            <Text style={[styles.secondaryCtaText, { color: '#0B1F3A' }]}>Inquire</Text>
           </Pressable>
         </View>
 
@@ -849,10 +849,10 @@ function PropertyDetailScreen() {
         <View style={styles.sectionSpacer} />
 
         {/* Document & verification status */}
-        <View style={[styles.docCard, { backgroundColor: colors.secondary, borderColor: '#1a6b3a33' }]}>
+        <View style={[styles.docCard, { backgroundColor: colors.secondary, borderColor: '#183B6033' }]}>
           <View style={styles.docHeader}>
-            <Feather name="shield" size={14} color="#1a6b3a" />
-            <Text style={[styles.docTitle, { color: '#1a6b3a' }]}>Property Verification</Text>
+            <Feather name="shield" size={14} color="#183B60" />
+            <Text style={[styles.docTitle, { color: '#183B60' }]}>Property Verification</Text>
           </View>
           {[
             'Listing reviewed by OG Landmark',
@@ -861,11 +861,11 @@ function PropertyDetailScreen() {
             'Contact information confirmed',
           ].map((doc) => (
             <View key={doc} style={styles.docItem}>
-              <Feather name="check-circle" size={11} color="#1a6b3a" />
+              <Feather name="check-circle" size={11} color="#183B60" />
               <Text style={[styles.docItemText, { color: colors.foreground }]}>{doc}</Text>
             </View>
           ))}
-          <View style={[styles.docNote, { borderTopColor: '#1a6b3a22' }]}>
+          <View style={[styles.docNote, { borderTopColor: '#183B6022' }]}>
             <Feather name="info" size={10} color={colors.mutedForeground} />
             <Text style={[styles.docNoteText, { color: colors.mutedForeground }]}>
               Title deed verification and full legal due diligence available on request. Contact agent.
@@ -896,24 +896,24 @@ function PropertyDetailScreen() {
         {/* ── Agricultural Land Details ── */}
         {property.agriDetails && (
           <>
-            <View style={[styles.agriHeader, { borderColor: '#1a6b3a44' }]}>
-              <View style={[styles.agriHeaderIcon, { backgroundColor: '#1a6b3a18' }]}>
+            <View style={[styles.agriHeader, { borderColor: '#183B6044' }]}>
+              <View style={[styles.agriHeaderIcon, { backgroundColor: '#183B6018' }]}>
                 <Text style={styles.agriEmoji}>🌾</Text>
               </View>
               <View>
-                <Text style={[styles.agriHeaderEyebrow, { color: '#1a6b3a' }]}>LAND DETAILS</Text>
+                <Text style={[styles.agriHeaderEyebrow, { color: '#183B60' }]}>LAND DETAILS</Text>
                 <Text style={[styles.agriHeaderTitle, { color: colors.foreground }]}>Agricultural Information</Text>
               </View>
             </View>
 
-            <View style={[styles.agriGrid, { borderColor: '#1a6b3a22', backgroundColor: '#1a6b3a08' }]}>
+            <View style={[styles.agriGrid, { borderColor: '#183B6022', backgroundColor: '#183B6008' }]}>
               {/* Size */}
               <AgriRow
                 icon="maximize"
                 label="Land Size"
                 value={`${property.agriDetails.sizeAcres} Acres · ${property.agriDetails.sizeKanal} Kanal`}
                 colors={colors}
-                accent="#1a6b3a"
+                accent="#183B60"
               />
               {/* Main Crop */}
               <AgriRow
@@ -921,7 +921,7 @@ function PropertyDetailScreen() {
                 label="Main Crop"
                 value={property.agriDetails.mainCrop}
                 colors={colors}
-                accent="#1a6b3a"
+                accent="#183B60"
               />
               {/* Nehri Water */}
               <AgriRow
@@ -929,7 +929,7 @@ function PropertyDetailScreen() {
                 label="Nehri (Canal) Water"
                 value={property.agriDetails.nehriWater ? '✅ Available' : '❌ Not available'}
                 colors={colors}
-                accent={property.agriDetails.nehriWater ? '#1a6b3a' : '#b94b42'}
+                accent={property.agriDetails.nehriWater ? '#183B60' : '#b94b42'}
               />
               {/* Tube Well */}
               <AgriRow
@@ -937,7 +937,7 @@ function PropertyDetailScreen() {
                 label="Tube Well"
                 value={property.agriDetails.tubeWell ? '✅ Installed' : '❌ Not installed'}
                 colors={colors}
-                accent={property.agriDetails.tubeWell ? '#1a6b3a' : '#b94b42'}
+                accent={property.agriDetails.tubeWell ? '#183B60' : '#b94b42'}
               />
               {/* Soil Type */}
               <AgriRow
@@ -945,23 +945,23 @@ function PropertyDetailScreen() {
                 label="Soil Type"
                 value={property.agriDetails.soilType}
                 colors={colors}
-                accent="#1a6b3a"
+                accent="#183B60"
               />
               {/* Village */}
               {property.agriDetails.village && (
-                <AgriRow icon="map-pin" label="Village / Mauza" value={property.agriDetails.village} colors={colors} accent="#1a6b3a" />
+                <AgriRow icon="map-pin" label="Village / Mauza" value={property.agriDetails.village} colors={colors} accent="#183B60" />
               )}
               {/* Tehsil */}
               {property.agriDetails.tehsil && (
-                <AgriRow icon="map" label="Tehsil" value={property.agriDetails.tehsil} colors={colors} accent="#1a6b3a" />
+                <AgriRow icon="map" label="Tehsil" value={property.agriDetails.tehsil} colors={colors} accent="#183B60" />
               )}
               {/* Union Council */}
               {property.agriDetails.unionCouncil && (
-                <AgriRow icon="users" label="Union Council" value={property.agriDetails.unionCouncil} colors={colors} accent="#1a6b3a" />
+                <AgriRow icon="users" label="Union Council" value={property.agriDetails.unionCouncil} colors={colors} accent="#183B60" />
               )}
               {/* GPS */}
               {property.agriDetails.gpsBoundary && (
-                <AgriRow icon="crosshair" label="GPS Boundary" value={property.agriDetails.gpsBoundary} colors={colors} accent="#1a6b3a" isLast />
+                <AgriRow icon="crosshair" label="GPS Boundary" value={property.agriDetails.gpsBoundary} colors={colors} accent="#183B60" isLast />
               )}
             </View>
           </>
@@ -992,7 +992,7 @@ function PropertyDetailScreen() {
           </View>
         )}
 
-        {/* ── Google Maps card ──────────────────────────────────── */}
+        {/* ── Mapbox location card ───────────────────────────────── */}
         <PropertyDetailMap property={property} colors={colors} />
 
         {property.locationDetails && (
@@ -1055,7 +1055,7 @@ function PropertyDetailScreen() {
       {/* Schedule Visit — primary navy CTA */}
       <Pressable
         onPress={openBooking}
-        style={({ pressed }) => [styles.fixedCallBtn, { backgroundColor: '#102a43', opacity: pressed ? 0.85 : 1 }]}
+        style={({ pressed }) => [styles.fixedCallBtn, { backgroundColor: '#0B1F3A', opacity: pressed ? 0.85 : 1 }]}
         accessibilityRole="button" accessibilityLabel="Schedule a site visit"
       >
         <Feather name="calendar" size={17} color="#ffffff" />
@@ -1128,7 +1128,6 @@ function PropertyDetailMap({
   };
   colors: ReturnType<typeof useColors>;
 }) {
-  const [satellite, setSatellite] = useState(false);
   const latitude = Number.isFinite(property.location?.latitude)
     ? property.location!.latitude!
     : property.lat;
@@ -1157,23 +1156,10 @@ function PropertyDetailMap({
           <StaticMap
             latitude={latitude}
             longitude={longitude}
-            satellite={satellite}
             interactive
           />
         )}
 
-        {/* Satellite toggle — only when native map is rendering */}
-        {hasCoords && _nativeMapsAvailable && (
-          <Pressable
-            style={[styles.detailMapSatBtn, { backgroundColor: satellite ? colors.primary : colors.card, borderColor: colors.border }]}
-            onPress={() => setSatellite((v) => !v)}
-          >
-            <Feather name="layers" size={14} color={satellite ? '#fff' : colors.mutedForeground} />
-            <Text style={[styles.detailMapSatLabel, { color: satellite ? '#fff' : colors.mutedForeground }]}>
-              {satellite ? 'Satellite' : 'Map'}
-            </Text>
-          </Pressable>
-        )}
       </View>
 
       {/* Location details below map */}
@@ -1212,11 +1198,11 @@ function PropertyDetailMap({
             onPress={() => openDirections(latitude, longitude)}
             style={({ pressed }) => [
               styles.detailMapAction,
-              { flex: 1, backgroundColor: '#1a6b3a15', opacity: pressed ? 0.72 : 1 },
+              { flex: 1, backgroundColor: '#183B6015', opacity: pressed ? 0.72 : 1 },
             ]}
           >
-            <Feather name="navigation" size={13} color="#1a6b3a" />
-            <Text style={[styles.detailMapActionText, { color: '#1a6b3a' }]}>Get Directions</Text>
+            <Feather name="navigation" size={13} color="#183B60" />
+            <Text style={[styles.detailMapActionText, { color: '#183B60' }]}>Get Directions</Text>
           </Pressable>
         </View>
       )}
@@ -1237,7 +1223,7 @@ function AgriRow({ icon, label, value, colors, accent, isLast }: {
   colors: ReturnType<typeof useColors>; accent: string; isLast?: boolean;
 }) {
   return (
-    <View style={[styles.agriRow, !isLast && { borderBottomWidth: 1, borderBottomColor: '#1a6b3a18' }]}>
+    <View style={[styles.agriRow, !isLast && { borderBottomWidth: 1, borderBottomColor: '#183B6018' }]}>
       <View style={[styles.agriRowIcon, { backgroundColor: accent + '18' }]}>
         <Feather name={icon} size={14} color={accent} />
       </View>
@@ -1256,7 +1242,7 @@ const styles = StyleSheet.create({
   backRow: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between' },
   topActions: { flexDirection: 'row', gap: 8 },
   roundButton: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
-  shareButton: { shadowColor: '#102a43', shadowOpacity: 0.28, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
+  shareButton: { shadowColor: '#0B1F3A', shadowOpacity: 0.28, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
   favoriteButton: { shadowColor: '#d9b96d', shadowOpacity: 0.35, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
   imageLabel: { position: 'absolute', bottom: 18, left: 20, backgroundColor: '#f1e6c9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
   imageStatusBadge: { backgroundColor: '#f1e6c9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
@@ -1331,7 +1317,7 @@ const styles = StyleSheet.create({
   docNoteText:  { fontFamily: 'Inter_400Regular', fontSize: 9, flex: 1, lineHeight: 14 },
   actionRow:     { flexDirection: 'row', gap: 9, marginTop: 20 },
   sectionSpacer: { height: 20 },
-  cta: { minHeight: 55, borderRadius: 17, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
+  cta: { minHeight: 40, borderRadius: 17, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
   secondaryCta: { flex: 0.85, borderWidth: 1 },
   primaryCta: { flex: 1.35 },
   bookVisitCta: { borderWidth: 1 },
@@ -1367,13 +1353,11 @@ const styles = StyleSheet.create({
   fixedCallBtn: { flex: 1, height: 46, borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   fixedCallTxt: { fontFamily: 'Inter_700Bold', fontSize: 15 },
   fixedWaBtn:   { width: 46, height: 46, alignItems: 'center', justifyContent: 'center' },
-  // ── Property detail Google Maps card ────────────────────────────────────────
+  // ── Property detail Mapbox location card ────────────────────────────────────
   detailMapCard:         { borderWidth: 1, borderRadius: 20, overflow: 'hidden', marginBottom: 12, elevation: 2, shadowColor: '#1c2024', shadowOpacity: 0.06, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } },
   detailMapSurface:      { height: 200, overflow: 'hidden', position: 'relative' },
   detailMapNoCoords:     { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', gap: 10 },
   detailMapNoCoordsText: { fontFamily: 'Inter_400Regular', fontSize: 13 },
-  detailMapSatBtn:       { position: 'absolute', top: 10, right: 10, flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1, elevation: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
-  detailMapSatLabel:     { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   detailMapLocRow:       { flexDirection: 'row', alignItems: 'flex-start', gap: 7, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1 },
   detailMapLocText:      { fontFamily: 'Inter_400Regular', fontSize: 11, flex: 1, lineHeight: 16 },
   detailMapActions:      { flexDirection: 'row', borderTopWidth: 1 },

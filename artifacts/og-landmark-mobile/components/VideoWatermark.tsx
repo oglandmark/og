@@ -30,7 +30,7 @@ export function VideoWatermark({
           },
         ]}
       >
-        <OGLandmarkLogo size={compact ? 22 : 32} />
+        <OGLandmarkLogo size={compact ? 22 : 32} inverse />
         <Text style={[styles.title, compact && styles.compactTitle, { color: colors.actionForeground }]}>OG Landmark</Text>
         <View style={[styles.glint, { backgroundColor: colors.actionGlassHighlight }]} />
       </View>

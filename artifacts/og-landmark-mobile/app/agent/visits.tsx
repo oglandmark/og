@@ -108,16 +108,16 @@ function VisitCard({
         <View style={[vc.actions, { borderTopColor: colors.border }]}>
           {visit.status === 'Requested' && (
             <Pressable onPress={() => onStatusChange(visit.id, 'Confirmed')}
-              style={[vc.actionBtn, { backgroundColor: '#1a6b3a18' }]}>
-              <Feather name="check" size={13} color="#1a6b3a" />
-              <Text style={[vc.actionBtnText, { color: '#1a6b3a' }]}>Confirm</Text>
+              style={[vc.actionBtn, { backgroundColor: '#183B6018' }]}>
+              <Feather name="check" size={13} color="#183B60" />
+              <Text style={[vc.actionBtnText, { color: '#183B60' }]}>Confirm</Text>
             </Pressable>
           )}
           {visit.status === 'Confirmed' && (
             <Pressable onPress={() => onStatusChange(visit.id, 'Completed')}
-              style={[vc.actionBtn, { backgroundColor: '#102a4318' }]}>
-              <Feather name="check-circle" size={13} color="#102a43" />
-              <Text style={[vc.actionBtnText, { color: '#102a43' }]}>Complete</Text>
+              style={[vc.actionBtn, { backgroundColor: '#0B1F3A18' }]}>
+              <Feather name="check-circle" size={13} color="#0B1F3A" />
+              <Text style={[vc.actionBtnText, { color: '#0B1F3A' }]}>Complete</Text>
             </Pressable>
           )}
           <Pressable onPress={() => onStatusChange(visit.id, 'Rescheduled')}
@@ -227,10 +227,10 @@ function AddVisitForm({
 const af = StyleSheet.create({
   wrap:       { borderWidth: 1.5, borderRadius: 18, padding: 16, marginBottom: 20 },
   title:      { fontFamily: 'Inter_700Bold', fontSize: 16, marginBottom: 14 },
-  cancelBtn:  { flex: 1, alignItems: 'center', borderWidth: 1, borderRadius: 12, paddingVertical: 13 },
+  cancelBtn:  { flex: 1, alignItems: 'center', borderWidth: 1, borderRadius: 12, paddingVertical: 11 },
   cancelText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  saveBtn:    { flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 13 },
-  saveText:   { fontFamily: 'Inter_700Bold', fontSize: 14, color: '#ffffff' },
+  saveBtn:    { flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 11 },
+  saveText:   { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
 });
 
 // ── Main screen ───────────────────────────────────────────────────────────────
@@ -401,6 +401,6 @@ const sc = StyleSheet.create({
   empty:         { borderWidth: 1, borderRadius: 18, padding: 36, alignItems: 'center', gap: 10, borderStyle: 'dashed' },
   emptyTitle:    { fontFamily: 'Inter_700Bold', fontSize: 16 },
   emptyDesc:     { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 19, maxWidth: 260 },
-  emptyBtn:      { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 12, marginTop: 4 },
-  emptyBtnText:  { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#ffffff' },
+  emptyBtn:      { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 11, marginTop: 4 },
+  emptyBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
 });

@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { getAdminUsers, updateUserRole, deleteAdminUser, ApiUser } from '@/lib/api';
 
-const NAVY = '#102a43';
+const NAVY = '#0B1F3A';
 const GOLD = '#C8A45A';
 
 const ROLE_COLORS: Record<string, string> = {
@@ -22,7 +22,7 @@ const ROLE_COLORS: Record<string, string> = {
   Developer: '#0e7490', Buyer: '#15803d',
 };
 
-const ROLES = ['Buyer', 'Seller', 'Agent', 'Admin'];
+const ROLES = ['Buyer', 'Seller', 'Agent', 'Developer', 'Admin'];
 
 export default function AdminUsers() {
   const colors = useColors();
@@ -32,13 +32,17 @@ export default function AdminUsers() {
   const [query,      setQuery]      = useState('');
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
 
   const load = useCallback(async () => {
     try {
+      setError('');
       const data = await getAdminUsers({ limit: 100 });
       setUsers(data);
       setFiltered(data);
-    } catch { /* silent */ }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not load users. Check the API connection and try again.');
+    }
     finally { setLoading(false); setRefreshing(false); }
   }, []);
 
@@ -157,6 +161,13 @@ export default function AdminUsers() {
 
       {loading ? (
         <ActivityIndicator size="large" color={GOLD} style={{ marginTop: 60 }} />
+      ) : error ? (
+        <View style={s.errorCard}>
+          <Text style={[s.errorText, { color: colors.foreground }]}>{error}</Text>
+          <Pressable onPress={() => { void load(); }} style={[s.retryButton, { backgroundColor: colors.action }]}>
+            <Text style={{ color: colors.actionForeground, fontFamily: 'Inter_600SemiBold', fontSize: 12 }}>Retry</Text>
+          </Pressable>
+        </View>
       ) : (
         <FlatList
           data={filtered}
@@ -193,4 +204,7 @@ const s = StyleSheet.create({
   actBtn:      { width: 34, height: 34, borderRadius: 9, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   empty:       { alignItems: 'center', paddingTop: 80, gap: 12 },
   emptyText:   { fontFamily: 'Inter_400Regular', fontSize: 14 },
+  errorCard:   { margin: 20, padding: 16, borderRadius: 12, alignItems: 'center', gap: 12 },
+  errorText:   { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center' },
+  retryButton: { borderRadius: 9, paddingHorizontal: 16, paddingVertical: 10 },
 });

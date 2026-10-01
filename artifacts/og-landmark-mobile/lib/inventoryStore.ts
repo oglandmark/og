@@ -106,9 +106,9 @@ export const FACINGS = ['North', 'South', 'East', 'West', 'Main Road', 'Park'];
 
 export function unitStatusColor(status: UnitStatus): { bg: string; text: string } {
   switch (status) {
-    case 'Available': return { bg: '#1a6b3a18', text: '#1a6b3a' };
+    case 'Available': return { bg: '#183B6018', text: '#183B60' };
     case 'Reserved':  return { bg: '#c8a45a18', text: '#c8a45a' };
-    case 'Booked':    return { bg: '#102a4318', text: '#102a43' };
+    case 'Booked':    return { bg: '#0B1F3A18', text: '#0B1F3A' };
     case 'Sold':      return { bg: '#0a8c6218', text: '#0a8c62' };
     case 'Blocked':   return { bg: '#88888818', text: '#888888' };
     default:          return { bg: '#88888818', text: '#888888' };

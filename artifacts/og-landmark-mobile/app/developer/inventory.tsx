@@ -157,8 +157,8 @@ function UnitRow({
             </View>
           )}
           {unit.isParkFacing && (
-            <View style={[row.badge, { backgroundColor: '#1a6b3a15' }]}>
-              <Text style={[row.badgeText, { color: '#1a6b3a' }]}>Park Facing</Text>
+            <View style={[row.badge, { backgroundColor: '#183B6015' }]}>
+              <Text style={[row.badgeText, { color: '#183B60' }]}>Park Facing</Text>
             </View>
           )}
           {unit.facing && (
@@ -356,9 +356,9 @@ export default function InventoryScreen() {
           <AnimatedReveal>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, marginBottom: 20 }}>
               <Chip label="Total Units"  value={stats.totalUnits}  color={colors.foreground}   bg={colors.secondary} />
-              <Chip label="Available"    value={stats.available}   color="#1a6b3a"             bg="#1a6b3a18" />
+              <Chip label="Available"    value={stats.available}   color="#183B60"             bg="#183B6018" />
               <Chip label="Reserved"     value={stats.reserved}    color="#c8a45a"             bg="#c8a45a18" />
-              <Chip label="Booked"       value={stats.booked}      color="#102a43"             bg="#102a4318" />
+              <Chip label="Booked"       value={stats.booked}      color="#0B1F3A"             bg="#0B1F3A18" />
               <Chip label="Sold"         value={stats.sold}        color="#0a8c62"             bg="#0a8c6218" />
               <Chip label="Blocked"      value={stats.blocked}     color={colors.mutedForeground} bg={colors.secondary} />
             </ScrollView>
@@ -370,7 +370,7 @@ export default function InventoryScreen() {
           <AnimatedReveal delay={60}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, marginBottom: 20 }}>
               {stats.availableValue > 0 && (
-                <Chip label="Available Value" value={`PKR ${formatPKR(stats.availableValue)}`} color="#1a6b3a" bg="#1a6b3a12" />
+                <Chip label="Available Value" value={`PKR ${formatPKR(stats.availableValue)}`} color="#183B60" bg="#183B6012" />
               )}
               {stats.reservedValue > 0 && (
                 <Chip label="Reserved Value" value={`PKR ${formatPKR(stats.reservedValue)}`} color="#c8a45a" bg="#c8a45a12" />
@@ -452,10 +452,10 @@ const modal = StyleSheet.create({
   chip:       { borderWidth: 1, borderRadius: 20, paddingHorizontal: 13, paddingVertical: 7 },
   chipText:   { fontFamily: 'Inter_500Medium', fontSize: 11 },
   btns:       { flexDirection: 'row', gap: 10, marginTop: 10 },
-  cancelBtn:  { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 12, paddingVertical: 13, borderWidth: 1 },
+  cancelBtn:  { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 12, paddingVertical: 8, minHeight: 40, borderWidth: 1 },
   cancelText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  saveBtn:    { flex: 1.5, alignItems: 'center', justifyContent: 'center', borderRadius: 12, paddingVertical: 13 },
-  saveText:   { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#fff' },
+  saveBtn:    { flex: 1.5, alignItems: 'center', justifyContent: 'center', borderRadius: 12, paddingVertical: 8, minHeight: 40 },
+  saveText:   { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff' },
 });
 
 // ── Block section styles ──────────────────────────────────────────────────────
@@ -466,7 +466,7 @@ const blk = StyleSheet.create({
   name:       { fontFamily: 'Inter_700Bold', fontSize: 14, marginBottom: 2 },
   meta:       { fontFamily: 'Inter_400Regular', fontSize: 11 },
   headerRight:{ flexDirection: 'row', alignItems: 'center', gap: 8 },
-  addBtn:     { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 9, paddingHorizontal: 10, paddingVertical: 6 },
+  addBtn:     { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 9, paddingHorizontal: 10, paddingVertical: 4, minHeight: 36 },
   addText:    { fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#fff' },
   menuBtn:    { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   emptyUnits: { alignItems: 'center', gap: 8, padding: 20, borderTopWidth: 1 },
@@ -498,12 +498,12 @@ const sc = StyleSheet.create({
   backBtn:     { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   eyebrow:     { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.5, marginBottom: 2 },
   title:       { fontFamily: 'Inter_700Bold', fontSize: 17 },
-  addBlockBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 11, paddingHorizontal: 12, paddingVertical: 9 },
-  addBlockText:{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#fff' },
+  addBlockBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 11, paddingHorizontal: 14, paddingVertical: 7, minHeight: 40 },
+  addBlockText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff' },
   emptyWrap:   { borderWidth: 1, borderRadius: 20, padding: 32, alignItems: 'center', gap: 12, borderStyle: 'dashed', marginTop: 20 },
   emptyIcon:   { width: 72, height: 72, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   emptyTitle:  { fontFamily: 'Inter_700Bold', fontSize: 18 },
   emptyDesc:   { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 20, maxWidth: 280 },
-  emptyBtn:    { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 13, paddingHorizontal: 20, paddingVertical: 12, marginTop: 4 },
-  emptyBtnText:{ fontFamily: 'Inter_700Bold', fontSize: 14, color: '#fff' },
+  emptyBtn:    { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 13, paddingHorizontal: 20, paddingVertical: 8, minHeight: 40, marginTop: 4 },
+  emptyBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff' },
 });

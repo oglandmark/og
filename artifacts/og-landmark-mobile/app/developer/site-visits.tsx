@@ -174,9 +174,9 @@ export default function SiteVisitsScreen() {
             <View style={[sv.actions, { marginTop: 12 }]}>
               {canConfirm && (
                 <Pressable onPress={() => { void handleAction(visit, 'confirm'); }}
-                  style={[sv.actionBtn, { backgroundColor: '#1a6b3a18' }]}>
-                  <Feather name="check" size={12} color="#1a6b3a" />
-                  <Text style={[sv.actionBtnText, { color: '#1a6b3a' }]}>{tr('visitActionConfirm')}</Text>
+                  style={[sv.actionBtn, { backgroundColor: '#183B6018' }]}>
+                  <Feather name="check" size={12} color="#183B60" />
+                  <Text style={[sv.actionBtnText, { color: '#183B60' }]}>{tr('visitActionConfirm')}</Text>
                 </Pressable>
               )}
               {canReschedule && (
@@ -376,8 +376,8 @@ const sv = StyleSheet.create({
   eyebrow:     { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.5, marginBottom: 2 },
   title:       { fontFamily: 'Inter_700Bold', fontSize: 22 },
   subtitle:    { fontFamily: 'Inter_400Regular', fontSize: 12 },
-  addBtn:      { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 },
-  addBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
+  addBtn:      { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 7, minHeight: 40 },
+  addBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   statsBanner: { borderRadius: 16, flexDirection: 'row', marginBottom: 4 },
   statItem:    { flex: 1, alignItems: 'center', paddingVertical: 14 },
   statValue:   { fontFamily: 'Inter_700Bold', fontSize: 22, color: '#ffffff', letterSpacing: -0.3 },
@@ -389,8 +389,8 @@ const sv = StyleSheet.create({
   fInput:      { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontFamily: 'Inter_400Regular', fontSize: 14 },
   chip:        { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
   chipText:    { fontFamily: 'Inter_500Medium', fontSize: 12 },
-  saveBtn:     { borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
-  saveBtnText: { fontFamily: 'Inter_700Bold', fontSize: 14, color: '#ffffff' },
+  saveBtn:     { borderRadius: 12, paddingVertical: 8, minHeight: 40, alignItems: 'center', justifyContent: 'center' },
+  saveBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
   tabsRow:     { paddingHorizontal: 20, paddingBottom: 4, gap: 8, flexDirection: 'row' },
   tab:         { borderRadius: 20, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 7 },
   tabText:     { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
@@ -410,7 +410,7 @@ const sv = StyleSheet.create({
   msgLabel:    { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1.2, marginBottom: 3 },
   msgText:     { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17 },
   actions:     { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
-  actionBtn:   { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
+  actionBtn:   { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, minHeight: 36 },
   actionBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   emptyWrap:   { borderWidth: 1, borderRadius: 18, padding: 32, alignItems: 'center', gap: 10, borderStyle: 'dashed' },
   emptyTitle:  { fontFamily: 'Inter_700Bold', fontSize: 16 },

@@ -333,7 +333,7 @@ export function PlotMeasurementCalculator({
         )}
       </View>
 
-      <Modal visible={saveModalOpen} transparent animationType="fade" onRequestClose={() => setSaveModalOpen(false)}>
+      <Modal visible={saveModalOpen} transparent animationType="none" onRequestClose={() => setSaveModalOpen(false)}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.foreground }]}>Save measurement</Text>
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
   sectionLabel: { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1, marginBottom: -5 },
   chipRow: { flexDirection: 'row', gap: 8 },
   chip: { minWidth: 37, paddingVertical: 9, borderRadius: 11, borderWidth: 1, alignItems: 'center' },
-  chipText: { fontFamily: 'Inter_700Bold', fontSize: 12 },
+  chipText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   selectorRow: { flexDirection: 'row', gap: 10 },
   segment: { flexDirection: 'row', borderRadius: 11, padding: 3 },
   segmentButton: { flex: 1, alignItems: 'center', borderRadius: 8, paddingVertical: 8 },
@@ -387,9 +387,9 @@ const styles = StyleSheet.create({
   errorRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 7 },
   errorText: { flex: 1, color: '#dc2626', fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 14 },
   actionRow: { flexDirection: 'row', gap: 8 },
-  primaryButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, paddingVertical: 12 },
-  secondaryButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 11, paddingVertical: 11, paddingHorizontal: 10 },
-  buttonText: { fontFamily: 'Inter_700Bold', fontSize: 11 },
+  primaryButton: { flex: 1, minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, paddingVertical: 6, paddingHorizontal: 12 },
+  secondaryButton: { minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 11, paddingVertical: 6, paddingHorizontal: 12 },
+  buttonText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
   resultCard: { borderWidth: 1.5, borderRadius: 16, padding: 12, gap: 10 },
   resultHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   resultTitle: { fontFamily: 'Inter_700Bold', fontSize: 10, letterSpacing: 1.5 },

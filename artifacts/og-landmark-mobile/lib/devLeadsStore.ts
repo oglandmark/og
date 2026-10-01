@@ -48,7 +48,7 @@ export type DevLead = {
 
 export const DEV_STAGE_CONFIG: Record<DevLeadStatus, { color: string; label: string }> = {
   new:         { color: '#059669', label: 'New' },
-  contacted:   { color: '#102a43', label: 'Contacted' },
+  contacted:   { color: '#0B1F3A', label: 'Contacted' },
   interested:  { color: '#c8a45a', label: 'Interested' },
   site_visit:  { color: '#7c3aed', label: 'Site Visit' },
   negotiation: { color: '#0891b2', label: 'Negotiation' },

@@ -14,3 +14,19 @@ export async function saveProfilePhoto(uri: string): Promise<void> {
 export async function removeProfilePhoto(): Promise<void> {
   await apiRequest('/api/account/profile-photo', { method: 'DELETE' });
 }
+
+export async function getCoverPhoto(): Promise<string | null> {
+  const profile = await apiRequest<{ url?: string | null }>('/api/account/cover-photo');
+  return profile.url ?? null;
+}
+
+export async function saveCoverPhoto(uri: string): Promise<void> {
+  await apiRequest('/api/account/cover-photo', {
+    method: 'PUT',
+    body: JSON.stringify({ url: uri }),
+  });
+}
+
+export async function removeCoverPhoto(): Promise<void> {
+  await apiRequest('/api/account/cover-photo', { method: 'DELETE' });
+}

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LocalizedText as Text } from '@/components/LocalizedText';
+import { useAuth } from '@/context/AuthContext';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { getNotificationUnreadCount } from '@/lib/api';
@@ -9,11 +10,16 @@ import { getNotificationUnreadCount } from '@/lib/api';
 export function NotificationBell({ compact = false }: { compact?: boolean }) {
   const colors = useColors();
   const router = useRouter();
+  const { isLoggedIn } = useAuth();
   const [unread, setUnread] = useState(0);
 
   const refresh = useCallback(() => {
+    if (!isLoggedIn) {
+      setUnread(0);
+      return;
+    }
     void getNotificationUnreadCount().then(setUnread).catch(() => undefined);
-  }, []);
+  }, [isLoggedIn]);
 
   useFocusEffect(useCallback(() => {
     refresh();
@@ -21,9 +27,10 @@ export function NotificationBell({ compact = false }: { compact?: boolean }) {
   }, [refresh]));
 
   useEffect(() => {
+    if (!isLoggedIn) return undefined;
     const timer = setInterval(refresh, 30_000);
     return () => clearInterval(timer);
-  }, [refresh]);
+  }, [isLoggedIn, refresh]);
 
   return (
     <Pressable

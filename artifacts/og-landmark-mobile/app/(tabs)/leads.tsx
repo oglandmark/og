@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { BrandMark } from '@/components/BrandMark';
 import { type Lead, type LeadStatus, getLeads, updateLeadStatus, updateLeadNotes } from '@/lib/leadsStore';
@@ -22,7 +23,7 @@ import {
 // ── Agent CRM config ──────────────────────────────────────────────────────────
 const statusConfig: Record<LeadStatus, { color: string; label: string }> = {
   new:        { color: '#059669', label: 'New' },
-  contacted:  { color: '#102a43', label: 'Contacted' },
+  contacted:  { color: '#0B1F3A', label: 'Contacted' },
   interested: { color: '#c8a45a', label: 'Interested' },
   viewing:    { color: '#7c3aed', label: 'Viewing' },
   closed:     { color: '#6b7280', label: 'Closed' },
@@ -46,6 +47,7 @@ function openWhatsApp(phone: string) {
 //  DEVELOPER CRM
 // ─────────────────────────────────────────────────────────────────────────────
 function DeveloperCRM() {
+  const tabBarScrollHandler = useTabBarScrollHandler();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -106,7 +108,12 @@ function DeveloperCRM() {
 
   return (
     <View style={[d.screen, { backgroundColor: colors.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: botPad + 96 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: botPad + 96 }}
+        onScroll={tabBarScrollHandler}
+        scrollEventThrottle={16}
+      >
 
         {/* ── Header ───────────────────────────────────── */}
         <AnimatedReveal>
@@ -358,6 +365,7 @@ export default function LeadsScreen() {
   const insets = useSafeAreaInsets();
   const { tr, isRTL } = useLanguage();
   const { role } = useAuth();
+  const tabBarScrollHandler = useTabBarScrollHandler();
 
   // ── Developer branch ─────────────────────────────────────────────────────
   if (role === 'developer') {
@@ -401,7 +409,12 @@ export default function LeadsScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: botPad + 96 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: botPad + 96 }}
+        onScroll={tabBarScrollHandler}
+        scrollEventThrottle={16}
+      >
         <AnimatedReveal>
           <View style={[styles.header, { paddingTop: topPad + 12, paddingHorizontal: 20, paddingBottom: 8 }]}>
             <BrandMark />
@@ -590,13 +603,13 @@ const d = StyleSheet.create({
   noteSaveBtn:  { borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8 },
   noteSaveText: { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#ffffff' },
   actions:      { flexDirection: 'row', gap: 8 },
-  actionBtn:    { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderRadius: 10, paddingVertical: 10 },
+  actionBtn:    { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderRadius: 10, paddingVertical: 8 },
   actionBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   stageLabel:   { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.2 },
   stageChip:    { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, borderWidth: 1.5, paddingHorizontal: 10, paddingVertical: 6 },
   stageChipDot: { width: 5, height: 5, borderRadius: 3 },
   stageChipText:{ fontFamily: 'Inter_600SemiBold', fontSize: 10 },
-  deleteBtn:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 10, borderWidth: 1, paddingVertical: 10 },
+  deleteBtn:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 10, borderWidth: 1, paddingVertical: 8 },
   deleteBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   fab:          { position: 'absolute', right: 20, width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
 });
@@ -648,7 +661,7 @@ const styles = StyleSheet.create({
   noteSaveBtn:  { borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8 },
   noteSaveText: { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#ffffff' },
   actions:      { flexDirection: 'row', gap: 8 },
-  actionBtn:    { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderRadius: 10, paddingVertical: 10 },
+  actionBtn:    { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderRadius: 10, paddingVertical: 8 },
   actionBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   updateLabel:  { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.2 },
   statusRow:    { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },

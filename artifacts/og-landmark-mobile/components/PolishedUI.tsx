@@ -49,7 +49,7 @@ export function Button({
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
       style={[
-        styles.button,
+        [styles.button, { borderRadius: colors.radii.md }],
         { backgroundColor: palette.backgroundColor, borderColor: palette.borderColor, opacity: disabled ? 0.55 : 1 },
         style,
       ]}
@@ -84,7 +84,7 @@ export function StatusNotice({
   const colors = useColors();
   const toneColor = tone === 'error' ? colors.destructive : tone === 'success' ? colors.action : colors.mutedForeground;
   return (
-    <View style={[styles.notice, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View style={[styles.notice, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radii.lg }]}>
       <View style={[styles.noticeIcon, { backgroundColor: `${toneColor}18` }]}>
         <Feather name={icon} size={17} color={toneColor} />
       </View>
@@ -116,7 +116,7 @@ export function EmptyState({
 }) {
   const colors = useColors();
   return (
-    <View style={[styles.empty, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View style={[styles.empty, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radii.lg }]}>
       <View style={[styles.emptyIcon, { backgroundColor: colors.selectionTint }]}>
         <Feather name={icon} size={24} color={colors.action} />
       </View>
@@ -129,11 +129,11 @@ export function EmptyState({
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 48,
+    minHeight: 40,
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 18,
-    paddingVertical: 12,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

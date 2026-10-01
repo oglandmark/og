@@ -5,12 +5,13 @@ import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import React, { useCallback, useState } from 'react';
 import {
-  Alert, Linking, Platform, Pressable,
+  ActivityIndicator, Alert, Linking, Platform, Pressable,
   ScrollView, Share, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import {
   ListingStatus, UserListing,
   calcListingStats, deleteUserListing, getMyListings, resubmitUserListing, updateListingStatus,
@@ -29,17 +30,18 @@ type FilterTab = 'All' | 'Active' | 'Pending' | 'Draft' | 'Paused' | 'Sold' | 'R
 const FILTER_TABS: FilterTab[] = ['All', 'Active', 'Pending', 'Draft', 'Paused', 'Sold', 'Rented'];
 
 const STATUS_BADGE: Record<ListingStatus, { bg: string; text: string }> = {
-  Active:  { bg: '#1a6b3a18', text: '#1a6b3a' },
+  Active:  { bg: '#183B6018', text: '#183B60' },
   Pending: { bg: '#c8a45a18', text: '#c8a45a' },
   Draft:   { bg: '#88888818', text: '#888888' },
   Paused:  { bg: '#7c3aed18', text: '#7c3aed' },
-  Sold:    { bg: '#102a4318', text: '#102a43' },
+  Sold:    { bg: '#0B1F3A18', text: '#0B1F3A' },
   Rented:  { bg: '#b94b4218', text: '#b94b42' },
 };
 
 // ─── main screen ──────────────────────────────────────────────────────────────
 
 export default function ListingsScreen() {
+  const tabBarScrollHandler = useTabBarScrollHandler();
   const colors   = useColors();
   const router   = useRouter();
   const insets   = useSafeAreaInsets();
@@ -48,13 +50,23 @@ export default function ListingsScreen() {
 
   const [activeTab, setActiveTab]     = useState<FilterTab>('All');
   const [myListings, setMyListings]   = useState<UserListing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const botPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
 
   const reload = useCallback(() => {
-    if (!isLoggedIn || !user) return;
-    void getMyListings(user.id).then(setMyListings);
+    if (!isLoggedIn || !user) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setLoadError('');
+    void getMyListings(user.id)
+      .then(setMyListings)
+      .catch((cause: unknown) => setLoadError(cause instanceof Error ? cause.message : 'Could not load your listings. Check the API connection and try again.'))
+      .finally(() => setLoading(false));
   }, [isLoggedIn, user]);
 
   useFocusEffect(reload);
@@ -68,8 +80,12 @@ export default function ListingsScreen() {
 
   const handleStatusChange = (id: string, status: ListingStatus, confirmMsg?: string) => {
     const doIt = async () => {
-      const updated = await updateListingStatus(id, status);
-      setMyListings(updated.filter((l) => l.postedBy === user?.id));
+      try {
+        const updated = await updateListingStatus(id, status);
+        setMyListings(updated.filter((l) => l.postedBy === user?.id));
+      } catch (error) {
+        Alert.alert('Could not update listing', error instanceof Error ? error.message : 'Please try again.');
+      }
     };
     if (confirmMsg) {
       Alert.alert('Confirm', confirmMsg, [
@@ -87,8 +103,12 @@ export default function ListingsScreen() {
       {
         text: 'Delete', style: 'destructive',
         onPress: async () => {
-          const updated = await deleteUserListing(id);
-          setMyListings(updated.filter((l) => l.postedBy === user?.id));
+          try {
+            const updated = await deleteUserListing(id);
+            setMyListings(updated.filter((l) => l.postedBy === user?.id));
+          } catch (error) {
+            Alert.alert('Could not delete listing', error instanceof Error ? error.message : 'Please try again.');
+          }
         },
       },
     ]);
@@ -133,6 +153,8 @@ export default function ListingsScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topPad + 12, paddingBottom: botPad + 96 }}
       showsVerticalScrollIndicator={false}
+      onScroll={tabBarScrollHandler}
+      scrollEventThrottle={16}
     >
       {/* Header */}
       <AnimatedReveal>
@@ -195,7 +217,20 @@ export default function ListingsScreen() {
 
       {/* Listings */}
       <View style={{ paddingHorizontal: 20, marginTop: 16, gap: 12 }}>
-        {filtered.length === 0 ? (
+        {loading ? (
+          <View style={[styles.emptyState, { borderColor: colors.border }]}>
+            <ActivityIndicator size="large" color={colors.action} />
+          </View>
+        ) : loadError ? (
+          <View style={[styles.emptyState, { borderColor: colors.border }]}>
+            <Feather name="alert-circle" size={36} color={colors.mutedForeground} />
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Could not load listings</Text>
+            <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>{loadError}</Text>
+            <Pressable onPress={reload} style={[styles.emptyBtn, { backgroundColor: colors.action }]}>
+              <Text style={[styles.emptyBtnText, { color: colors.actionForeground }]}>Try again</Text>
+            </Pressable>
+          </View>
+        ) : filtered.length === 0 ? (
           <AnimatedReveal delay={100}>
             <View style={[styles.emptyState, { borderColor: colors.border }]}>
               <Feather name="home" size={36} color={colors.mutedForeground} />
@@ -217,6 +252,13 @@ export default function ListingsScreen() {
                 onStatusChange={handleStatusChange}
                 onDelete={handleDelete}
                 onResubmit={handleResubmit}
+                onEdit={(item) => {
+                  if (!item.apiId) return;
+                  router.push({
+                    pathname: '/post/listing',
+                    params: { editId: String(item.apiId) },
+                  });
+                }}
               />
             </AnimatedReveal>
           ))
@@ -229,7 +271,7 @@ export default function ListingsScreen() {
 // ─── listing card ─────────────────────────────────────────────────────────────
 
 function ListingCard({
-  listing, colors, isRTL, onStatusChange, onDelete, onResubmit,
+  listing, colors, isRTL, onStatusChange, onDelete, onResubmit, onEdit,
 }: {
   listing: UserListing;
   index: number;
@@ -238,6 +280,7 @@ function ListingCard({
   onStatusChange: (id: string, status: ListingStatus, msg?: string) => void;
   onDelete: (id: string, title: string) => void;
   onResubmit: (id: string) => void;
+  onEdit: (listing: UserListing) => void;
 }) {
   const sc    = STATUS_BADGE[listing.listingStatus] ?? STATUS_BADGE.Pending;
   const addr  = listing.neighborhood ? `${listing.neighborhood}, ${listing.city}` : listing.city;
@@ -256,6 +299,9 @@ function ListingCard({
 
   const moreActions = () => {
     const opts: { text: string; onPress: () => void; style?: 'destructive' | 'cancel' }[] = [];
+    if (listing.apiId) {
+      opts.push({ text: 'Edit listing details', onPress: () => onEdit(listing) });
+    }
     if (listing.reviewStatus === 'Rejected' || listing.reviewStatus === 'Changes Requested') {
       opts.push({ text: 'Resubmit for Review', onPress: () => onResubmit(listing.id) });
     }
@@ -435,6 +481,6 @@ const styles = StyleSheet.create({
   emptyState:   { borderRadius: 20, borderWidth: 1, borderStyle: 'dashed', padding: 36, alignItems: 'center', gap: 10, marginTop: 20 },
   emptyTitle:   { fontFamily: 'Inter_700Bold', fontSize: 16 },
   emptyDesc:    { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center' },
-  emptyBtn:     { marginTop: 8, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12 },
-  emptyBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  emptyBtn:     { marginTop: 8, paddingHorizontal: 20, paddingVertical: 9, borderRadius: 12 },
+  emptyBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });

@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 // BlurView removed — crashes Android GPU
 import { useColors } from '@/hooks/useColors';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -24,7 +24,7 @@ import { BrandMark } from '@/components/BrandMark';
 import { okaraDistrict } from '@/lib/cities';
 import { useAuth } from '@/context/AuthContext';
 import { addUserListing } from '@/lib/listingsStore';
-import { uploadImage, uploadVideo } from '@/lib/api';
+import { uploadMultipleImages, uploadVideo } from '@/lib/api';
 import { LocationPicker } from '@/components/LocationPicker';
 import type { LocationData } from '@/lib/locationService';
 
@@ -83,7 +83,9 @@ export default function PostAdScreen() {
     return <NotLoggedInPrompt colors={colors} topInset={topInset} insets={insets} router={router} />;
   }
 
-  return <SelectionScreen colors={colors} topInset={topInset} insets={insets} router={router} />;
+  // Property posting now opens the full listing form directly. The form owns
+  // the Buy/Rent choice so users do not have to pass through a second menu.
+  return <Redirect href="/post/listing" />;
 }
 
 // ─── Selection Screen ───────────────────────────────────────────────────────────
@@ -102,7 +104,7 @@ const POST_OPTIONS = [
     icon: 'key' as const,
     title: 'Property for Rent',
     description: 'Advertise your property for rent and receive inquiries.',
-    accent: '#1a6b3a',
+    accent: '#183B60',
     route: (router: any) => router.push('/post/listing?purpose=rent'),
   },
   {
@@ -190,13 +192,29 @@ function NotLoggedInPrompt({ colors, topInset, insets, router }: any) {
         <Text style={[styles.loginCardBody, { color: colors.mutedForeground }]}>
           Log in or create a free account to list your property and reach thousands of verified buyers.
         </Text>
-        <AnimatedPressable
-          onPress={() => router.push({ pathname: '/(auth)/login', params: { from: 'post-ad' } })}
-          style={[styles.submit, { backgroundColor: colors.action }]}
-        >
-          <Text style={styles.submitText}>Log In / Sign Up</Text>
-          <Feather name="arrow-up-right" size={18} color={colors.actionForeground} />
-        </AnimatedPressable>
+        <View style={styles.authActionRow}>
+          <AnimatedPressable
+            onPress={() => router.push({ pathname: '/(auth)/login', params: { from: 'post-ad' } })}
+            style={[styles.authPrimaryButton, { backgroundColor: colors.action }]}
+            accessibilityRole="button"
+            accessibilityLabel="Log in to post an ad"
+          >
+            <Feather name="log-in" size={16} color={colors.actionForeground} />
+            <Text style={[styles.authPrimaryText, { color: colors.actionForeground }]}>Log In</Text>
+          </AnimatedPressable>
+          <Pressable
+            onPress={() => router.push('/(auth)/signup')}
+            style={({ pressed }) => [
+              styles.authSecondaryButton,
+              { borderColor: colors.action, backgroundColor: colors.card, opacity: pressed ? 0.72 : 1 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Sign up to post an ad"
+          >
+            <Feather name="user-plus" size={16} color={colors.action} />
+            <Text style={[styles.authSecondaryText, { color: colors.action }]}>Sign Up</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -365,23 +383,13 @@ function AgentForm({ colors, topInset, user, router }: any) {
     let uploadedImages: string[] = [];
     let uploadedVideoUrl: string | undefined;
     try {
-      const imageUploads = await Promise.all(
-        photos.map((uri, i) =>
-          uploadImage(uri, `prop_${Date.now()}_${i}.jpg`).catch(() => null)
-        )
-      );
-      uploadedImages = imageUploads.filter(Boolean).map((r) => r!.url);
-    } catch { /* ignore — listing saved without images */ }
-
-    if (video) {
-      try {
+      if (photos.length > 0) {
+        uploadedImages = await uploadMultipleImages(photos);
+      }
+      if (video) {
         const vRes = await uploadVideo(video.uri, video.filename ?? 'property-video.mp4');
         uploadedVideoUrl = vRes.url;
-      } catch { /* ignore — listing saved without video */ }
-    }
-    // ───────────────────────────────────────────────────────────────────────
-
-    try {
+      }
       await addUserListing({
         id: `agent_${Date.now()}`,
         postedBy: user.id,
@@ -438,8 +446,11 @@ function AgentForm({ colors, topInset, user, router }: any) {
         'Your property has been submitted for admin review. It will appear on OG Landmark once approved. You can track its status in My Listings.',
         [{ text: 'My Listings', onPress: () => router.push('/(tabs)/listings') }],
       );
-    } catch {
-      Alert.alert('Error', 'Could not save listing. Please try again.');
+    } catch (error) {
+      const message = error instanceof Error && error.message
+        ? error.message
+        : 'Could not save listing. Please try again.';
+      Alert.alert('Could not save listing', message);
     } finally {
       setSubmitting(false);
     }
@@ -458,7 +469,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
           <View style={styles.headerRow}>
             <BrandMark />
           </View>
-          <Text style={[styles.eyebrow, { color: isAgri ? '#1a6b3a' : isIndustrial ? INDUSTRIAL_COLOR : colors.primary, textAlign: rtl }]}>
+          <Text style={[styles.eyebrow, { color: isAgri ? '#183B60' : isIndustrial ? INDUSTRIAL_COLOR : colors.primary, textAlign: rtl }]}>
             {isAgri ? 'AGRICULTURAL LISTING' : isIndustrial ? 'INDUSTRIAL LISTING' : 'AGENT PORTAL'}
           </Text>
           <Text style={[styles.pageTitle, { color: colors.foreground, textAlign: rtl }]}>
@@ -494,12 +505,12 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 onPress={() => handleCategoryChange(c)}
                 style={[styles.pill, {
                   borderColor: category === c
-                    ? c === 'Agricultural' ? '#1a6b3a'
+                    ? c === 'Agricultural' ? '#183B60'
                     : c === 'Industrial' ? INDUSTRIAL_COLOR
                      : colors.selectionBorder
                     : colors.border,
                   backgroundColor: category === c
-                    ? c === 'Agricultural' ? '#1a6b3a'
+                    ? c === 'Agricultural' ? '#183B60'
                     : c === 'Industrial' ? INDUSTRIAL_COLOR
                      : colors.selectionBackground
                     : colors.glassCard,
@@ -534,9 +545,9 @@ function AgentForm({ colors, topInset, user, router }: any) {
         {isAgri ? (
           <>
             <AnimatedReveal delay={100}>
-              <View style={[styles.agriNotice, { backgroundColor: '#1a6b3a14', borderColor: '#1a6b3a44' }]}>
+              <View style={[styles.agriNotice, { backgroundColor: '#183B6014', borderColor: '#183B6044' }]}>
                 <Text style={styles.agriNoticeIcon}>🌾</Text>
-                <Text style={[styles.agriNoticeText, { color: '#1a6b3a', textAlign: rtl }]}>
+                <Text style={[styles.agriNoticeText, { color: '#183B60', textAlign: rtl }]}>
                   Specialized form for Okara District agricultural land. These details help farmers and investors find the right land.
                 </Text>
               </View>
@@ -561,8 +572,8 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 <View style={styles.unitChips}>
                   {AGRI_SIZE_UNITS.map((u) => (
                     <Pressable key={u} onPress={() => setAgriUnit(u)}
-                      style={[styles.unitChip, { borderColor: agriUnit === u ? '#1a6b3a' : colors.border, backgroundColor: agriUnit === u ? '#1a6b3a18' : 'transparent' }]}>
-                      <Text style={[styles.unitChipText, { color: agriUnit === u ? '#1a6b3a' : colors.mutedForeground }]}>{u}</Text>
+                      style={[styles.unitChip, { borderColor: agriUnit === u ? '#183B60' : colors.border, backgroundColor: agriUnit === u ? '#183B6018' : 'transparent' }]}>
+                      <Text style={[styles.unitChipText, { color: agriUnit === u ? '#183B60' : colors.mutedForeground }]}>{u}</Text>
                     </Pressable>
                   ))}
                 </View>
@@ -584,9 +595,9 @@ function AgentForm({ colors, topInset, user, router }: any) {
             <AnimatedReveal delay={140}>
               <SectionDivider label="WATER ACCESS" colors={colors} />
               <ToggleField label="Nehri (Canal) Water" subtitle="Government irrigation channel access"
-                icon="droplet" value={nehriWater} onChange={setNehriWater} colors={colors} accentColor="#1a6b3a" />
+                icon="droplet" value={nehriWater} onChange={setNehriWater} colors={colors} accentColor="#183B60" />
               <ToggleField label="Tube Well" subtitle="Electric or diesel pump installed"
-                icon="zap" value={tubeWell} onChange={setTubeWell} colors={colors} accentColor="#1a6b3a" />
+                icon="zap" value={tubeWell} onChange={setTubeWell} colors={colors} accentColor="#183B60" />
             </AnimatedReveal>
 
             {/* Soil Type */}
@@ -597,10 +608,10 @@ function AgentForm({ colors, topInset, user, router }: any) {
                   const sel = soilType === s.key;
                   return (
                     <Pressable key={s.key} onPress={() => setSoilType(s.key)}
-                      style={[styles.soilCard, { borderColor: sel ? '#1a6b3a' : colors.border, backgroundColor: sel ? '#1a6b3a18' : colors.card }]}>
-                      <Text style={[styles.soilName, { color: sel ? '#1a6b3a' : colors.foreground }]}>{s.key}</Text>
-                      <Text style={[styles.soilDesc, { color: sel ? '#1a6b3acc' : colors.mutedForeground }]}>{s.desc}</Text>
-                      {sel && <View style={styles.soilCheck}><Feather name="check" size={10} color="#1a6b3a" /></View>}
+                      style={[styles.soilCard, { borderColor: sel ? '#183B60' : colors.border, backgroundColor: sel ? '#183B6018' : colors.card }]}>
+                      <Text style={[styles.soilName, { color: sel ? '#183B60' : colors.foreground }]}>{s.key}</Text>
+                      <Text style={[styles.soilDesc, { color: sel ? '#183B60cc' : colors.mutedForeground }]}>{s.desc}</Text>
+                      {sel && <View style={styles.soilCheck}><Feather name="check" size={10} color="#183B60" /></View>}
                     </Pressable>
                   );
                 })}
@@ -615,7 +626,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                   const sel = mainCrop === c;
                   return (
                     <Pressable key={c} onPress={() => setMainCrop(c)}
-                      style={[styles.cropChip, { borderColor: sel ? '#1a6b3a' : colors.border, backgroundColor: sel ? '#1a6b3a' : 'transparent' }]}>
+                      style={[styles.cropChip, { borderColor: sel ? '#183B60' : colors.border, backgroundColor: sel ? '#183B60' : 'transparent' }]}>
                       <Text style={[styles.cropChipText, { color: sel ? '#ffffff' : colors.mutedForeground }]}>{c}</Text>
                     </Pressable>
                   );
@@ -631,8 +642,8 @@ function AgentForm({ colors, topInset, user, router }: any) {
               <View style={styles.tehsilRow}>
                 {okaraDistrict.tehsils.map((t) => (
                   <Pressable key={t} onPress={() => setTehsil(t)}
-                    style={[styles.tehsilChip, { borderColor: tehsil === t ? '#1a6b3a' : colors.border, backgroundColor: tehsil === t ? '#1a6b3a18' : 'transparent' }]}>
-                    <Text style={[styles.tehsilChipText, { color: tehsil === t ? '#1a6b3a' : colors.mutedForeground }]}>{t}</Text>
+                    style={[styles.tehsilChip, { borderColor: tehsil === t ? '#183B60' : colors.border, backgroundColor: tehsil === t ? '#183B6018' : 'transparent' }]}>
+                    <Text style={[styles.tehsilChipText, { color: tehsil === t ? '#183B60' : colors.mutedForeground }]}>{t}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -653,7 +664,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                     <Pressable key={v} onPress={() => { setVillage(v); setShowVillages(false); }}
                       style={[styles.dropdownItem, { borderBottomColor: colors.border }]}>
                       <Text style={[styles.dropdownItemText, { color: colors.foreground }]}>{v}</Text>
-                      {village === v && <Feather name="check" size={13} color="#1a6b3a" />}
+                      {village === v && <Feather name="check" size={13} color="#183B60" />}
                     </Pressable>
                   ))}
                 </View>
@@ -674,8 +685,9 @@ function AgentForm({ colors, topInset, user, router }: any) {
                   setSelectedLocation(null); setLocationConfirmed(false);
                 }}
                 colors={colors}
-                accentColor="#1a6b3a"
+                accentColor="#183B60"
                 requireConfirm
+                fullScreen
                 onConfirmationChange={setLocationConfirmed}
                 errorMessage={errors.location}
               />
@@ -713,7 +725,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 onPickVideo={pickVideo}
                 onRemoveVideo={() => setVideo(null)}
                 colors={colors}
-                accentColor="#1a6b3a"
+                accentColor="#183B60"
                 photoHint="Boundary, water channel, soil, access road"
               />
             </AnimatedReveal>
@@ -721,7 +733,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
             {/* Submit */}
             <AnimatedReveal delay={280}>
               <AnimatedPressable onPress={submit}
-                style={[styles.submit, { backgroundColor: '#1a6b3a', opacity: submitting ? 0.7 : 1 }]}>
+                style={[styles.submit, { backgroundColor: '#183B60', opacity: submitting ? 0.7 : 1 }]}>
                 <Text style={styles.submitText}>{submitting ? 'Posting…' : 'Post Agricultural Listing'}</Text>
                 <Feather name="arrow-up-right" size={18} color="#ffffff" />
               </AnimatedPressable>
@@ -793,7 +805,18 @@ function AgentForm({ colors, topInset, user, router }: any) {
               <Text style={[styles.label, { color: colors.foreground }]}>City</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
                 {CITIES.map((c) => (
-                  <Pressable key={c} onPress={() => { setCity(c); setNeighborhood(''); }}
+                  <Pressable key={c} onPress={() => {
+                    const cityChanged = c !== city;
+                    setCity(c);
+                    setNeighborhood('');
+                    if (cityChanged) {
+                      setLatitude(null);
+                      setLongitude(null);
+                      setSelectedLocation(null);
+                      setLocationConfirmed(false);
+                      setGpsBoundary('');
+                    }
+                  }}
                      style={[styles.pill, { borderColor: city === c ? colors.selectionBorder : colors.border, backgroundColor: city === c ? colors.selectionBackground : colors.glassCard }]}>
                      <Text style={[styles.pillText, { color: city === c ? colors.selectionForeground : colors.mutedForeground, fontWeight: city === c ? '600' : '400' }]}>{c}</Text>
                   </Pressable>
@@ -833,6 +856,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 colors={colors}
                 accentColor={INDUSTRIAL_COLOR}
                 requireConfirm
+                fullScreen
                 onConfirmationChange={setLocationConfirmed}
                 errorMessage={errors.location}
               />
@@ -928,7 +952,18 @@ function AgentForm({ colors, topInset, user, router }: any) {
               <Text style={[styles.label, { color: colors.foreground }]}>City</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
                 {CITIES.map((c) => (
-                  <Pressable key={c} onPress={() => { setCity(c); setNeighborhood(''); }}
+                  <Pressable key={c} onPress={() => {
+                    const cityChanged = c !== city;
+                    setCity(c);
+                    setNeighborhood('');
+                    if (cityChanged) {
+                      setLatitude(null);
+                      setLongitude(null);
+                      setSelectedLocation(null);
+                      setLocationConfirmed(false);
+                      setGpsBoundary('');
+                    }
+                  }}
                      style={[styles.pill, { borderColor: city === c ? colors.selectionBorder : colors.border, backgroundColor: city === c ? colors.selectionBackground : colors.glassCard }]}>
                      <Text style={[styles.pillText, { color: city === c ? colors.selectionForeground : colors.mutedForeground, fontWeight: city === c ? '600' : '400' }]}>{c}</Text>
                   </Pressable>
@@ -981,6 +1016,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 }}
                 colors={colors}
                 requireConfirm
+                fullScreen
                 onConfirmationChange={setLocationConfirmed}
                 errorMessage={errors.location}
               />
@@ -1161,7 +1197,7 @@ const mStyles = StyleSheet.create({
   sectionTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 12, marginBottom: 2 },
   sectionHint: { fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 14 },
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7 },
-  addBtnText: { fontFamily: 'Inter_700Bold', fontSize: 11 },
+  addBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   divider: { height: 1, marginVertical: 4 },
   // photo strip
   thumbStrip: { marginBottom: 8 },
@@ -1446,7 +1482,7 @@ const styles = StyleSheet.create({
   soilCard: { width: '47%', borderRadius: 13, borderWidth: 1.5, padding: 12, position: 'relative' },
   soilName: { fontFamily: 'Inter_700Bold', fontSize: 13, marginBottom: 3 },
   soilDesc: { fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 14 },
-  soilCheck: { position: 'absolute', top: 9, right: 9, width: 18, height: 18, borderRadius: 9, backgroundColor: '#1a6b3a22', alignItems: 'center', justifyContent: 'center' },
+  soilCheck: { position: 'absolute', top: 9, right: 9, width: 18, height: 18, borderRadius: 9, backgroundColor: '#183B6022', alignItems: 'center', justifyContent: 'center' },
   // crop chips
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
   cropChip: { borderRadius: 20, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 9 },
@@ -1477,12 +1513,12 @@ const styles = StyleSheet.create({
   uploadText: { fontFamily: 'Inter_400Regular', fontSize: 10 },
   // submit
   submit: {
-    height: 54, borderRadius: 15, alignItems: 'center', justifyContent: 'center',
+    height: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center',
     flexDirection: 'row', gap: 8, marginTop: 20,
-    shadowColor: '#1a6b3a', shadowOpacity: 0.2, shadowRadius: 14,
+    shadowColor: '#183B60', shadowOpacity: 0.2, shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },
-  submitText: { color: '#ffffff', fontFamily: 'Inter_700Bold', fontSize: 14 },
+  submitText: { color: '#ffffff', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   hint: { fontFamily: 'Inter_400Regular', fontSize: 11, textAlign: 'center', lineHeight: 17, marginTop: 10 },
   // error
   errorText: { fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 4, marginBottom: 6 },
@@ -1493,6 +1529,11 @@ const styles = StyleSheet.create({
   loginIconWrap: { width: 56, height: 56, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   loginCardTitle: { fontFamily: 'Inter_700Bold', fontSize: 17 },
   loginCardBody: { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 20, textAlign: 'center' },
+  authActionRow: { width: '100%', flexDirection: 'row', gap: 10, marginTop: 4 },
+  authPrimaryButton: { flex: 1, height: 44, borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  authPrimaryText: { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  authSecondaryButton: { flex: 1, height: 44, borderRadius: 13, borderWidth: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  authSecondaryText: { fontFamily: 'Inter_700Bold', fontSize: 13 },
   // selection screen
   postCard:          { flexDirection: 'row', alignItems: 'center', gap: 16, borderRadius: 18, borderWidth: 1, padding: 20, marginBottom: 14 },
   postIconWrap:      { width: 56, height: 56, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },

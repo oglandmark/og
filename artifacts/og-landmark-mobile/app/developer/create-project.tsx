@@ -288,9 +288,11 @@ function Step2({ data, set, tr, colors }: StepProps) {
       <LocationPicker
         latitude={data.latitude}
         longitude={data.longitude}
+        city={data.city}
         onChange={(lat, lng) => set({ latitude: lat, longitude: lng })}
         onClear={() => set({ latitude: undefined, longitude: undefined })}
         colors={colors}
+        fullScreen
       />
 
       <SectionDiv label="Contact & Online" colors={colors} />
@@ -364,9 +366,9 @@ function Step3({ data, set, tr, colors }: StepProps) {
             min={6} max={120} step={6}
             hint="Total duration of payment plan in months" onChange={(n) => set({ installmentMonths: n })} colors={colors} />
           {/* Summary badge */}
-          <View style={[pp.wrap, { backgroundColor: '#1a6b3a12', borderColor: '#1a6b3a30' }]}>
-            <Feather name="credit-card" size={13} color="#1a6b3a" />
-            <Text style={[pp.text, { color: '#1a6b3a' }]}>
+          <View style={[pp.wrap, { backgroundColor: '#183B6012', borderColor: '#183B6030' }]}>
+            <Feather name="credit-card" size={13} color="#183B60" />
+            <Text style={[pp.text, { color: '#183B60' }]}>
               {data.downPaymentPct}% down · {data.installmentMonths} months plan
             </Text>
           </View>
@@ -522,7 +524,7 @@ function Step6Media({ data, set, colors }: StepProps) {
                 <Feather name="edit-2" size={14} color="#ffffff" />
               </Pressable>
             </View>
-            <View style={[md.coverBadge, { backgroundColor: '#1a6b3acc' }]}>
+            <View style={[md.coverBadge, { backgroundColor: '#183B60cc' }]}>
               <Feather name="check" size={10} color="#ffffff" />
               <Text style={md.coverBadgeText}>Cover Photo Set</Text>
             </View>
@@ -656,8 +658,8 @@ function Step6Media({ data, set, colors }: StepProps) {
                 ) : null}
                 {value ? (
                   <Pressable onPress={() => Linking.openURL(value).catch(() => {})} hitSlop={8}
-                    style={[md.videoClearBtn, { backgroundColor: '#1a6b3a18' }]}>
-                    <Feather name="external-link" size={14} color="#1a6b3a" />
+                    style={[md.videoClearBtn, { backgroundColor: '#183B6018' }]}>
+                    <Feather name="external-link" size={14} color="#183B60" />
                   </Pressable>
                 ) : null}
               </View>
@@ -769,9 +771,9 @@ function Step6Review({ data, tr, colors }: StepProps) {
           )}
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
             {data.coverImageUri && (
-              <View style={[rv.amenityChip, { backgroundColor: '#1a6b3a15', borderColor: '#1a6b3a30' }]}>
-                <Feather name="image" size={10} color="#1a6b3a" />
-                <Text style={[rv.amenityText, { color: '#1a6b3a' }]}>Cover photo set</Text>
+              <View style={[rv.amenityChip, { backgroundColor: '#183B6015', borderColor: '#183B6030' }]}>
+                <Feather name="image" size={10} color="#183B60" />
+                <Text style={[rv.amenityText, { color: '#183B60' }]}>Cover photo set</Text>
               </View>
             )}
             {(data.photos?.length ?? 0) > 0 && (
@@ -1052,9 +1054,9 @@ const md = StyleSheet.create({
   coverPlaceholder: { width: '100%', height: 180, borderRadius: 14, borderWidth: 1.5, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 8 },
   placeholderTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   placeholderSub:   { fontFamily: 'Inter_400Regular', fontSize: 11 },
-  pickBtn:          { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 },
-  pickBtnText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#ffffff' },
-  addPhotoBtn:      { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7 },
+  pickBtn:          { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 7, minHeight: 36 },
+  pickBtnText:      { fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#ffffff' },
+  addPhotoBtn:      { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 5, minHeight: 36 },
   addPhotoBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   galleryEmpty:     { borderWidth: 1, borderStyle: 'dashed', borderRadius: 14, padding: 24, alignItems: 'center', gap: 8 },
   galleryEmptyText: { fontFamily: 'Inter_400Regular', fontSize: 12, textAlign: 'center', lineHeight: 18 },
@@ -1076,16 +1078,16 @@ const wz = StyleSheet.create({
   headerTitle:     { fontFamily: 'Inter_700Bold', fontSize: 15 },
   headerSub:       { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 1 },
   backBtn:         { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  draftBtn:        { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7 },
+  draftBtn:        { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5, minHeight: 36 },
   draftBtnText:    { fontFamily: 'Inter_500Medium', fontSize: 11 },
   stepWrap:        { borderBottomWidth: 1 },
   footer:          { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1 },
-  backFooterBtn:   { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, borderWidth: 1 },
+  backFooterBtn:   { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, minHeight: 40 },
   backFooterText:  { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  nextBtn:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 13 },
-  nextBtnText:     { fontFamily: 'Inter_700Bold', fontSize: 14, color: '#ffffff' },
-  draftFooterBtn:  { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 12, paddingVertical: 13, borderWidth: 1 },
+  nextBtn:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 8, minHeight: 40 },
+  nextBtnText:     { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
+  draftFooterBtn:  { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 12, paddingVertical: 8, borderWidth: 1, minHeight: 40 },
   draftFooterText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  submitBtn:       { flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 13 },
-  submitBtnText:   { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#ffffff' },
+  submitBtn:       { flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 8, minHeight: 40 },
+  submitBtnText:   { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
 });

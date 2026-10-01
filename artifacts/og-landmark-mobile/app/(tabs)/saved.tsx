@@ -10,12 +10,14 @@ import { properties } from '@/lib/properties';
 import { useSaved } from '@/context/SavedContext';
 import { useColors } from '@/hooks/useColors';
 import { GlassCard } from '@/components/GlassCard';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 
 export default function SavedScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useTabBarHeight();
   const { savedIds } = useSaved();
+  const onScroll = useTabBarScrollHandler();
   const savedProperties = properties.filter((property) => savedIds.includes(property.id));
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
@@ -24,6 +26,8 @@ export default function SavedScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: tabBarHeight, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
     >
       <AnimatedReveal>
         <Text style={[styles.eyebrow, { color: colors.primary }]}>YOUR SHORTLIST</Text>

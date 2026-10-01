@@ -229,6 +229,6 @@ const styles = StyleSheet.create({
   footer: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 22, paddingTop: 14, borderTopWidth: 1 },
   apiError: { borderRadius: 12, borderWidth: 1, padding: 10, marginBottom: 10 },
   apiErrorText: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18 },
-  registerBtn: { height: 54, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  registerBtnText: { fontFamily: 'Inter_700Bold', fontSize: 15 },
+  registerBtn: { height: 44, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  registerBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });

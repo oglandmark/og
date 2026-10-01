@@ -6,11 +6,11 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert, FlatList, Image, Modal, Platform, Pressable,
+  ActivityIndicator, Alert, FlatList, Image, InteractionManager, Modal, Platform, Pressable,
   ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
-import { Feather } from '@expo/vector-icons';
+import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
@@ -18,7 +18,7 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { PropertyCard } from '@/components/PropertyCard';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { properties, apiPropertyToProperty } from '@/lib/properties';
-import { getProperties, getPropertiesInBounds, getNearbyProperties } from '@/lib/api';
+import { getPropertiesPage } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
 import { GlassCard } from '@/components/GlassCard';
 import { projects as staticProjects } from '@/lib/projects';
@@ -27,6 +27,7 @@ import { saveSearch, getSavedSearches } from '@/lib/savedSearchesStore';
 import { addRecentSearch, getRecentSearches, clearRecentSearches, removeRecentSearch } from '@/lib/recentSearchesStore';
 import { getVisitHistory, type VisitRecord } from '@/lib/visitHistoryStore';
 import { useAuth } from '@/context/AuthContext';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { ExploreMapView, type MapBounds } from '@/components/ExploreMapView';
 import { getCurrentPosition, haversineDistance, formatDistance } from '@/lib/locationService';
 import {
@@ -366,6 +367,18 @@ function sortProperties(props: Property[], sortBy: SortOption): Property[] {
   });
 }
 
+function uniqueProperties(items: Property[]): Property[] {
+  const seen = new Set<string>();
+  return items.filter((property) => {
+    const key = property.id > 0
+      ? String(property.id)
+      : `${property.title}|${property.city}|${property.address}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 // ── Quick filter definitions ───────────────────────────────────────────────────
 
 type QuickFilter = { label: string; icon: string; section: string };
@@ -378,6 +391,19 @@ const QUICK_FILTERS: QuickFilter[] = [
   { label: 'Verified', icon: 'shield',        section: 'verified' },
 ];
 
+const EXPLORE_PAGE_SIZE = 12;
+
+function paginationItems(currentPage: number, totalPages: number): Array<number | 'ellipsis'> {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+  if (currentPage <= 3) return [1, 2, 3, 'ellipsis', totalPages];
+  if (currentPage >= totalPages - 2) {
+    return [1, 'ellipsis', totalPages - 2, totalPages - 1, totalPages];
+  }
+  return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages];
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // Main screen
 // ══════════════════════════════════════════════════════════════════════════════
@@ -389,6 +415,7 @@ export default function ExploreScreen() {
   const router     = useRouter();
   const navigation = useNavigation();
   const { isLoggedIn } = useAuth();
+  const tabBarScrollHandler = useTabBarScrollHandler();
 
   // Scroll-to-top when user taps the Explore tab icon while already on this screen
   const flatListRef = useRef<FlatList>(null);
@@ -448,6 +475,9 @@ export default function ExploreScreen() {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [openSection, setOpenSection]         = useState<string | null>(null);
   const [viewMode, setViewMode]               = useState<'list' | 'map'>('list');
+  const [mapScreenOpen, setMapScreenOpen]     = useState(false);
+  const [mapScreenSession, setMapScreenSession] = useState(0);
+  const [mapSearchFocused, setMapSearchFocused] = useState(false);
   const [searchFocused, setSearchFocused]     = useState(false);
   const [saveModalOpen, setSaveModalOpen]     = useState(false);
   const [saveName, setSaveName]               = useState('');
@@ -458,8 +488,9 @@ export default function ExploreScreen() {
   const [isProjectsMode, setIsProjectsMode]   = useState(
     params.category === 'Projects' || params.propertyType === 'Project',
   );
-  const [allProperties, setAllProperties]     = useState(properties);
+  const [allProperties, setAllProperties]     = useState(() => uniqueProperties(properties));
   const [nearMe, setNearMe]                   = useState<{ lat: number; lng: number; radiusKm: number } | null>(null);
+  const [mapAreaSearch, setMapAreaSearch]     = useState<{ lat: number; lng: number; radiusKm: number } | null>(null);
   const [nearMeLoading, setNearMeLoading]     = useState(false);
   const [searchedPlace, setSearchedPlace]     = useState<{ lat: number; lng: number; radiusKm: number; label: string } | null>(null);
   const [placeSuggestions, setPlaceSuggestions] = useState<AutocompleteSuggestion[]>([]);
@@ -467,41 +498,59 @@ export default function ExploreScreen() {
   const [mapBoundsFilter, setMapBoundsFilter] = useState<MapBounds | null>(null);
   const [geoLoading, setGeoLoading]             = useState(false);
   const [geoError, setGeoError]                 = useState('');
+  const [remoteOffset, setRemoteOffset]         = useState(0);
+  const [remoteHasMore, setRemoteHasMore]       = useState(false);
+  const [remoteLoadingMore, setRemoteLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage]           = useState(1);
   const searchRef = useRef<React.ElementRef<typeof TextInput>>(null);
 
   // ── Effects ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    getRecentSearches().then(setRecentSearches).catch(() => {});
-    getSavedSearches().then((ss) => setSavedSearchLabels(ss.slice(0, 4).map((s) => s.label))).catch(() => {});
-    getVisitHistory().then((h) => setRecentlyViewed(h.slice(0, 6))).catch(() => {});
-    getAllPublicProjects().then(setDevProjects).catch(() => {});
-    // Fetch live properties from backend; fall back to local mock on error
-    getProperties({ limit: 100 })
-      .then((ps) => { if (ps.length) setAllProperties(ps.map(apiPropertyToProperty)); })
-      .catch(() => undefined);
+    let cancelled = false;
+    const interactionTask = InteractionManager.runAfterInteractions(() => {
+      getRecentSearches().then((items) => { if (!cancelled) setRecentSearches(items); }).catch(() => {});
+      getSavedSearches()
+        .then((ss) => { if (!cancelled) setSavedSearchLabels(ss.slice(0, 4).map((s) => s.label)); })
+        .catch(() => {});
+      getVisitHistory()
+        .then((h) => { if (!cancelled) setRecentlyViewed(h.slice(0, 6)); })
+        .catch(() => {});
+      getAllPublicProjects().then((items) => { if (!cancelled) setDevProjects(items); }).catch(() => {});
+    });
+    return () => {
+      cancelled = true;
+      interactionTask.cancel();
+    };
   }, []);
 
   useEffect(() => {
-    const radiusLocation = nearMe ?? searchedPlace;
+    const radiusLocation = nearMe ?? searchedPlace ?? mapAreaSearch;
     if (!radiusLocation && !mapBoundsFilter) {
       let cancelled = false;
-      setGeoError('');
-      setGeoLoading(true);
-      getProperties({ limit: 100 })
-        .then((items) => {
-          if (!cancelled && items.length) setAllProperties(items.map(apiPropertyToProperty));
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setGeoError('Live properties could not be refreshed. Showing the properties already loaded on this device.');
-          }
-        })
-        .finally(() => {
-          if (!cancelled) setGeoLoading(false);
-        });
+      const interactionTask = InteractionManager.runAfterInteractions(() => {
+        setGeoError('');
+        setGeoLoading(true);
+        getPropertiesPage({ limit: 24, offset: 0 })
+          .then((page) => {
+            if (!cancelled) {
+              if (page.items.length) setAllProperties(uniqueProperties(page.items.map(apiPropertyToProperty)));
+              setRemoteOffset(page.items.length);
+              setRemoteHasMore(page.hasMore);
+            }
+          })
+          .catch(() => {
+            if (!cancelled) {
+              setGeoError('');
+            }
+          })
+          .finally(() => {
+            if (!cancelled) setGeoLoading(false);
+          });
+      });
       return () => {
         cancelled = true;
+        interactionTask.cancel();
       };
     }
 
@@ -510,35 +559,51 @@ export default function ExploreScreen() {
     setGeoError('');
 
     const request = radiusLocation
-      ? getNearbyProperties({
+      ? getPropertiesPage({
           lat: radiusLocation.lat,
           lng: radiusLocation.lng,
           radiusKm: radiusLocation.radiusKm,
-        }, { limit: 100 })
-      : getPropertiesInBounds({
+           limit: 24,
+           offset: 0,
+        })
+      : getPropertiesPage({
           minLat: mapBoundsFilter!.south,
           maxLat: mapBoundsFilter!.north,
           minLng: mapBoundsFilter!.west,
           maxLng: mapBoundsFilter!.east,
-        }, { limit: 100 });
+           limit: 24,
+           offset: 0,
+        });
 
-    request
-      .then((items) => {
-        if (!cancelled) setAllProperties(items.map(apiPropertyToProperty));
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setGeoError('Live map results could not be refreshed. Showing the properties already loaded on this device.');
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setGeoLoading(false);
-      });
+    const interactionTask = InteractionManager.runAfterInteractions(() => {
+      request
+        .then((page) => {
+          if (!cancelled) {
+            // Keep bundled properties available when the remote catalogue is
+            // empty or temporarily unavailable. The local radius/bounds
+            // filter still produces correct Near Me results from that cache.
+            if (page.items.length) {
+              setAllProperties(uniqueProperties(page.items.map(apiPropertyToProperty)));
+            }
+            setRemoteOffset(page.items.length);
+            setRemoteHasMore(page.hasMore);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setGeoError('');
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setGeoLoading(false);
+        });
+    });
 
     return () => {
       cancelled = true;
+      interactionTask.cancel();
     };
-  }, [nearMe, searchedPlace, mapBoundsFilter]);
+  }, [nearMe, searchedPlace, mapAreaSearch, mapBoundsFilter]);
 
   useEffect(() => {
     const text = query.trim();
@@ -570,7 +635,7 @@ export default function ExploreScreen() {
     let matched = allProperties.filter((p) => matchesProperty(p, filters, query));
 
     // GPS or searched-place radius filter
-    const radiusLocation = nearMe ?? searchedPlace;
+    const radiusLocation = nearMe ?? searchedPlace ?? mapAreaSearch;
     if (radiusLocation) {
       matched = matched
         .map((p) => {
@@ -585,7 +650,7 @@ export default function ExploreScreen() {
         .sort((a: any, b: any) => a._distKm - b._distKm) as typeof matched;
     }
 
-    // Map bounds filter (after "Search this area" tap)
+    // Optional map bounds filter retained for existing saved map state.
     if (mapBoundsFilter && !radiusLocation) {
       const { north, south, east, west } = mapBoundsFilter;
       matched = matched.filter((p) => {
@@ -596,7 +661,21 @@ export default function ExploreScreen() {
     }
 
     return radiusLocation ? matched : sortProperties(matched, filters.sortBy);
-  }, [allProperties, filters, query, nearMe, searchedPlace, mapBoundsFilter]);
+  }, [allProperties, filters, query, nearMe, searchedPlace, mapAreaSearch, mapBoundsFilter]);
+
+  const loadedPages = Math.ceil(filteredProperties.length / EXPLORE_PAGE_SIZE);
+  const totalPages = Math.max(1, loadedPages + (remoteHasMore ? 1 : 0));
+  const visibleProperties = useMemo(
+    () => filteredProperties.slice(
+      (currentPage - 1) * EXPLORE_PAGE_SIZE,
+      currentPage * EXPLORE_PAGE_SIZE,
+    ),
+    [filteredProperties, currentPage],
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, filters, nearMe, searchedPlace, mapAreaSearch, mapBoundsFilter, viewMode]);
 
   const draftResultCount = useMemo(
     () => allProperties.filter((p) => matchesProperty(p, draftFilters, query)).length,
@@ -605,7 +684,59 @@ export default function ExploreScreen() {
 
   const activeChips = useMemo(() => buildChips(filters, query), [filters, query]);
 
-  const hasActiveFilters = activeChips.length > 0;
+  const activeFilterCount = activeChips.length
+    + Number(Boolean(nearMe || searchedPlace || mapAreaSearch || mapBoundsFilter));
+  const hasActiveFilters = activeFilterCount > 0;
+
+  const loadMoreProperties = useCallback(async (): Promise<boolean> => {
+    if (remoteLoadingMore || !remoteHasMore || isProjectsMode || viewMode !== 'list') return false;
+    setRemoteLoadingMore(true);
+    const radiusLocation = nearMe ?? searchedPlace ?? mapAreaSearch;
+    const geoFilters = radiusLocation
+      ? { lat: radiusLocation.lat, lng: radiusLocation.lng, radiusKm: radiusLocation.radiusKm }
+      : mapBoundsFilter
+        ? {
+            minLat: mapBoundsFilter.south,
+            maxLat: mapBoundsFilter.north,
+            minLng: mapBoundsFilter.west,
+            maxLng: mapBoundsFilter.east,
+          }
+        : {};
+    try {
+      const page = await getPropertiesPage({ ...geoFilters, limit: 24, offset: remoteOffset });
+      setAllProperties((current) => uniqueProperties([
+        ...current,
+        ...page.items.map(apiPropertyToProperty),
+      ]));
+      setRemoteOffset((current) => current + page.items.length);
+      setRemoteHasMore(page.hasMore);
+      return page.items.length > 0;
+    } catch {
+      // The already loaded page remains usable; the next scroll can retry.
+      return false;
+    } finally {
+      setRemoteLoadingMore(false);
+    }
+  }, [
+    remoteLoadingMore, remoteHasMore, isProjectsMode, viewMode,
+    nearMe, searchedPlace, mapAreaSearch, mapBoundsFilter, remoteOffset,
+  ]);
+
+  const handlePageChange = useCallback(async (page: number) => {
+    if (page < 1 || page === currentPage || isProjectsMode || viewMode !== 'list') return;
+
+    const loadedPageCount = Math.ceil(filteredProperties.length / EXPLORE_PAGE_SIZE);
+    if (page > loadedPageCount && remoteHasMore) {
+      const loaded = await loadMoreProperties();
+      if (!loaded) return;
+    }
+
+    setCurrentPage(page);
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, [
+    currentPage, filteredProperties.length, isProjectsMode, viewMode,
+    remoteHasMore, loadMoreProperties,
+  ]);
 
   // Track which quick-filter sections have active state (for chip highlight)
   const activeFilterSections = useMemo(() => {
@@ -628,6 +759,11 @@ export default function ExploreScreen() {
   const isAgriDraft         = selectedTypes.some((t) => t === 'Agriculture Land') || selectedTypes.length === 0;
 
   // ── Handlers ───────────────────────────────────────────────────────────────
+
+  const openMapScreen = useCallback(() => {
+    setMapScreenSession((session) => session + 1);
+    setMapScreenOpen(true);
+  }, []);
 
   const handleSearchSubmit = useCallback(() => {
     if (query.trim()) {
@@ -672,35 +808,39 @@ export default function ExploreScreen() {
     setIsProjectsMode(false);
     setNearMe(null);
     setSearchedPlace(null);
+    setMapAreaSearch(null);
     setMapBoundsFilter(null);
   }, []);
 
   const handleNearMe = useCallback(async () => {
     if (nearMe) {
       setNearMe(null);
+      setMapAreaSearch(null);
+      setGeoError('');
+      setMapScreenOpen(false);
+      setViewMode('list');
       return;
     }
     setNearMeLoading(true);
+    setGeoError('');
+    setMapAreaSearch(null);
+    setViewMode('map');
+    openMapScreen();
     try {
       const pos = await getCurrentPosition();
-      if (!pos) { setNearMeLoading(false); return; }
+      if (!pos) {
+        setGeoError('We could not read your location. Keep Location Services on and try Near Me again.');
+        return;
+      }
       setNearMe({ lat: pos.latitude, lng: pos.longitude, radiusKm: 10 });
       setSearchedPlace(null);
       setMapBoundsFilter(null);
-      // Switch to map so user sees their location
-      setViewMode('map');
     } catch {
-      Alert.alert('Error', 'Could not get your location.');
+      setGeoError('We could not read your location. Keep Location Services on and try Near Me again.');
     } finally {
       setNearMeLoading(false);
     }
-  }, [nearMe]);
-
-  const handleSearchArea = useCallback((bounds: MapBounds) => {
-    setMapBoundsFilter(bounds);
-    setNearMe(null);
-    setSearchedPlace(null);
-  }, []);
+  }, [nearMe, openMapScreen]);
 
   const handlePlaceSuggestion = useCallback(async (suggestion: AutocompleteSuggestion) => {
     const details = await fetchPlaceDetails(suggestion.placeId);
@@ -724,10 +864,12 @@ export default function ExploreScreen() {
       label,
     });
     setNearMe(null);
+    setMapAreaSearch(null);
     setMapBoundsFilter(null);
     setViewMode('map');
+    openMapScreen();
     addRecentSearch(label).then(() => getRecentSearches().then(setRecentSearches)).catch(() => undefined);
-  }, []);
+  }, [openMapScreen]);
 
   const openFilterSheet = useCallback((section?: string) => {
     setDraftFilters({ ...filters });
@@ -740,6 +882,21 @@ export default function ExploreScreen() {
     setFilterSheetOpen(false);
   }, [draftFilters]);
 
+  const closeMapScreen = useCallback(() => {
+    setMapScreenOpen(false);
+    setMapSearchFocused(false);
+    setSearchFocused(false);
+    setViewMode('list');
+  }, []);
+
+  const applyMapAreaSearch = useCallback((area: { lat: number; lng: number; radiusKm: number }) => {
+    setMapAreaSearch(area);
+    setNearMe(null);
+    setSearchedPlace(null);
+    setMapBoundsFilter(null);
+    closeMapScreen();
+  }, [closeMapScreen]);
+
   const handleSaveSearch = useCallback(async () => {
     if (!isLoggedIn) {
       Alert.alert('Sign In Required', 'Please sign in to save searches.');
@@ -749,7 +906,7 @@ export default function ExploreScreen() {
     await saveSearch({ label, query, filters: { location: filters.cities.join(', '), minPrice: filters.minPrice, maxPrice: filters.maxPrice } });
     setSaveModalOpen(false);
     setSaveName('');
-    Alert.alert('Search Saved ✓', `"${label}" has been saved to your profile.`);
+    Alert.alert('Search Saved', `"${label}" has been saved to your profile.`);
   }, [saveName, query, filters, isLoggedIn]);
 
   function buildAutoLabel(): string {
@@ -771,26 +928,41 @@ export default function ExploreScreen() {
 
   return (
     <View style={[ex.screen, { backgroundColor: colors.background }]}>
-      {/* ── Sticky header ── */}
+      {/* ── Search and filter tools ── */}
       <View style={[ex.stickyHeader, { paddingTop: topInset + 10, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-
         {/* Buy / Rent toggle */}
         <View style={[ex.purposeRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {(['Buy', 'Rent'] as const).map((p) => (
             <Pressable
               key={p}
               onPress={() => setFilters((prev) => ({ ...prev, purpose: p }))}
-               style={[ex.purposeTab, filters.purpose === p && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }]}
+               style={({ pressed }) => [ex.purposeTab, filters.purpose === p && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }, { opacity: pressed ? 0.74 : 1 }]}
             >
                <Text style={[ex.purposeTabText, { color: filters.purpose === p ? colors.selectionForeground : colors.mutedForeground, fontWeight: filters.purpose === p ? '600' : '400' }]}>{p}</Text>
             </Pressable>
           ))}
         </View>
 
+        {geoLoading && (
+          <View style={[ex.geoStatus, { backgroundColor: colors.actionGlassSoft, borderColor: colors.actionGlow + '55' }]}>
+            <ActivityIndicator size="small" color={colors.action} />
+            <Text style={[ex.geoStatusText, { color: colors.action }]}>Updating live listings…</Text>
+          </View>
+        )}
+        {!!geoError && !geoLoading && (
+          <View style={[ex.geoStatus, { backgroundColor: colors.accent, borderColor: colors.primary + '66' }]}>
+            <Feather name="alert-circle" size={14} color={colors.accentForeground} />
+            <Text style={[ex.geoStatusText, { color: colors.accentForeground }]} numberOfLines={2}>{geoError}</Text>
+            <Pressable onPress={() => setGeoError('')} hitSlop={8} accessibilityRole="button" accessibilityLabel="Dismiss listing refresh message">
+              <Feather name="x" size={14} color={colors.accentForeground} />
+            </Pressable>
+          </View>
+        )}
+
         {/* Search row */}
         <View style={ex.searchRow}>
           <View style={[ex.searchBar, { backgroundColor: colors.glassCard, borderColor: searchFocused ? colors.action : colors.glassBorder }]}>
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.14)' }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceRaised + '18' }]} />
             <Feather name="search" size={17} color={colors.mutedForeground} style={ex.searchIcon} />
             <TextInput
               ref={searchRef}
@@ -805,28 +977,35 @@ export default function ExploreScreen() {
               style={[ex.searchInput, { color: colors.foreground }]}
             />
             {query.length > 0 && (
-              <Pressable onPress={() => { setQuery(''); setSearchedPlace(null); setPlaceSuggestions([]); }} hitSlop={8}>
+              <Pressable onPress={() => { setQuery(''); setSearchedPlace(null); setMapAreaSearch(null); setPlaceSuggestions([]); }} hitSlop={8}>
                 <Feather name="x-circle" size={16} color={colors.mutedForeground} />
               </Pressable>
             )}
           </View>
 
           {/* Filter button */}
-           <Pressable onPress={() => openFilterSheet()} style={[ex.filterBtn, { backgroundColor: hasActiveFilters ? colors.selectionBackground : colors.glassCard, borderColor: hasActiveFilters ? colors.selectionBorder : colors.glassBorder, borderWidth: hasActiveFilters ? 1.5 : 1 }]}>
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+           <Pressable onPress={() => openFilterSheet()} style={({ pressed }) => [ex.filterBtn, { backgroundColor: hasActiveFilters ? colors.selectionBackground : colors.glassCard, borderColor: hasActiveFilters ? colors.selectionBorder : colors.glassBorder, borderWidth: hasActiveFilters ? 1.5 : 1, opacity: pressed ? 0.76 : 1 }]}>
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceRaised + '18' }]} />
              <Feather name="sliders" size={17} color={hasActiveFilters ? colors.selectionForeground : colors.foreground} />
-            {hasActiveFilters && <View style={[ex.filterDot, { backgroundColor: colors.gold }]}><Text style={[ex.filterDotText, { color: '#1c2024' }]}>{activeChips.length}</Text></View>}
+            {hasActiveFilters && <View style={[ex.filterDot, { backgroundColor: colors.gold }]}><Text style={[ex.filterDotText, { color: '#1c2024' }]}>{activeFilterCount}</Text></View>}
           </Pressable>
 
-          {/* List / Map toggle */}
-          <View style={[ex.viewToggle, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
-            {(['list', 'map'] as const).map((m) => (
-               <Pressable key={m} onPress={() => setViewMode(m)} style={[ex.viewToggleBtn, viewMode === m && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }]}>
-                 <Feather name={m === 'list' ? 'list' : 'map'} size={15} color={viewMode === m ? colors.selectionForeground : colors.mutedForeground} />
-              </Pressable>
-            ))}
-          </View>
+           {/* Map action */}
+           <Pressable
+             onPress={() => {
+               setViewMode('map');
+               openMapScreen();
+             }}
+             style={({ pressed }) => [
+               ex.mapAction,
+               { backgroundColor: colors.glassCard, borderColor: colors.glassBorder, opacity: pressed ? 0.8 : 1 },
+             ]}
+             accessibilityRole="button"
+             accessibilityLabel="Open map view"
+           >
+             <Text style={[ex.mapActionText, { color: colors.foreground }]}>Map</Text>
+              <FontAwesome5 name="map-marked-alt" size={14} color="#0B1F3A" />
+           </Pressable>
         </View>
 
         {/* Pakistan location autocomplete */}
@@ -910,7 +1089,7 @@ export default function ExploreScreen() {
           >
              <Feather name="crosshair" size={12} color={nearMe ? colors.selectionForeground : colors.mutedForeground} />
              <Text style={[ex.quickChipText, { color: nearMe ? colors.selectionForeground : colors.foreground, fontWeight: nearMe ? '600' : '400' }]}>
-              {nearMeLoading ? 'Locating…' : nearMe ? 'Near Me ✓' : 'Near Me'}
+              {nearMeLoading ? 'Locating…' : 'Near Me'}
             </Text>
           </Pressable>
 
@@ -992,9 +1171,12 @@ export default function ExploreScreen() {
       {/* ── Scrollable body ── */}
       <FlatList
         ref={flatListRef}
-        data={isProjectsMode ? [] : (viewMode === 'list' ? filteredProperties : [])}
-        keyExtractor={(p) => String(p.id)}
+        data={isProjectsMode ? [] : (viewMode === 'list' ? visibleProperties : [])}
+        keyExtractor={(p, index) => `${p.id}-${index}`}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={viewMode !== 'map'}
+        onScroll={tabBarScrollHandler}
+        scrollEventThrottle={16}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarHeight, paddingTop: 14 }}
         ListHeaderComponent={
           <>
@@ -1008,13 +1190,13 @@ export default function ExploreScreen() {
                   {filteredProperties.length > 0 && (
                     <>
                       <Pressable
-                        onPress={() => Alert.alert('Search Alert Set ✓', 'We\'ll notify you when new matching properties are listed.')}
-                        style={[ex.saveBtn, { borderColor: colors.border }]}
+                        onPress={() => Alert.alert('Search Alert Set', 'We\'ll notify you when new matching properties are listed.')}
+                        style={({ pressed }) => [ex.saveBtn, { borderColor: colors.border, opacity: pressed ? 0.72 : 1 }]}
                       >
                         <Feather name="bell" size={13} color={colors.action} />
                         <Text style={[ex.saveBtnText, { color: colors.action }]}>Alert</Text>
                       </Pressable>
-                      <Pressable onPress={() => setSaveModalOpen(true)} style={[ex.saveBtn, { borderColor: colors.border }]}>
+                      <Pressable onPress={() => setSaveModalOpen(true)} style={({ pressed }) => [ex.saveBtn, { borderColor: colors.border, opacity: pressed ? 0.72 : 1 }]}>
                         <Feather name="bookmark" size={13} color={colors.action} />
                         <Text style={[ex.saveBtnText, { color: colors.action }]}>Save</Text>
                       </Pressable>
@@ -1031,7 +1213,7 @@ export default function ExploreScreen() {
             )}
 
             {/* Map view */}
-            {!isProjectsMode && viewMode === 'map' && (
+            {!isProjectsMode && viewMode === 'map' && !mapScreenOpen && (
               <ExploreMapView
                 properties={filteredProperties.map((p: any) => ({
                   ...p,
@@ -1041,7 +1223,6 @@ export default function ExploreScreen() {
                 count={filteredProperties.length}
                 colors={colors}
                 onSelect={(id) => router.push(`/property/${id}` as any)}
-                onSearchArea={handleSearchArea}
                 userLat={nearMe?.lat}
                 userLng={nearMe?.lng}
                 centerLat={searchedPlace?.lat}
@@ -1068,12 +1249,185 @@ export default function ExploreScreen() {
         renderItem={({ item: p }) => (
           <PropertyCard property={p} compact />
         )}
+        ListFooterComponent={
+          !isProjectsMode && viewMode === 'list' && filteredProperties.length > EXPLORE_PAGE_SIZE ? (
+            <ExplorePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              loading={remoteLoadingMore}
+              colors={colors}
+              onPageChange={handlePageChange}
+            />
+          ) : remoteLoadingMore ? (
+            <View style={{ paddingVertical: 18 }}>
+              <ActivityIndicator size="small" color={colors.action} />
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
           !isProjectsMode && viewMode === 'list' ? (
             <NoResultsView colors={colors} onAdjust={() => openFilterSheet()} onClear={resetAllFilters} />
           ) : null
         }
       />
+
+      {/* ── Full-screen map search ── */}
+      <Modal visible={mapScreenOpen} animationType="slide" onRequestClose={closeMapScreen}>
+        <View style={[ex.mapScreen, { backgroundColor: colors.background }]}>
+          <View style={[ex.mapScreenHeader, { paddingTop: topInset + 8, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+            <Pressable
+              onPress={closeMapScreen}
+              style={ex.mapScreenBack}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Back to filters"
+            >
+              <Feather name="chevron-left" size={24} color={colors.mutedForeground} />
+              <Text style={[ex.mapScreenBackText, { color: colors.mutedForeground }]}>Filters</Text>
+            </Pressable>
+            <Text style={[ex.mapScreenTitle, { color: colors.foreground }]}>
+              {nearMe || nearMeLoading ? 'Properties Near Me' : 'Map Search'}
+            </Text>
+            <View style={ex.mapScreenHeaderSide} />
+          </View>
+
+          <View style={ex.mapStage}>
+            <ExploreMapView
+               key={`${nearMe ? 'near-me-10km' : 'map-default'}-${mapScreenSession}`}
+              fullScreen
+              initialRadiusKm={mapAreaSearch?.radiusKm ?? (nearMe ? nearMe.radiusKm : undefined)}
+              properties={filteredProperties.map((p: any) => ({
+                ...p,
+                distance: p._distLabel,
+                image: typeof p.image === 'string' ? p.image : undefined,
+              }))}
+              count={filteredProperties.length}
+              colors={colors}
+              onSelect={(id) => {
+                closeMapScreen();
+                router.push(`/property/${id}` as any);
+              }}
+              userLat={nearMe?.lat}
+              userLng={nearMe?.lng}
+              centerLat={mapAreaSearch?.lat ?? searchedPlace?.lat}
+              centerLng={mapAreaSearch?.lng ?? searchedPlace?.lng}
+              onApplyArea={applyMapAreaSearch}
+            />
+
+             {nearMeLoading && !nearMe && (
+               <View style={[ex.locationMapStatus, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                 <ActivityIndicator size="small" color={colors.action} />
+                 <Text style={[ex.locationMapStatusTitle, { color: colors.foreground }]}>Finding your location</Text>
+                 <Text style={[ex.locationMapStatusText, { color: colors.mutedForeground }]}>
+                   Allow GPS access to show properties within 10 KM.
+                 </Text>
+               </View>
+             )}
+
+             {!nearMeLoading && !!geoError && !nearMe && (
+               <View style={[ex.locationMapStatus, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                 <Feather name="map-pin" size={18} color={colors.primary} />
+                 <Text style={[ex.locationMapStatusTitle, { color: colors.foreground }]}>Location unavailable</Text>
+                 <Text style={[ex.locationMapStatusText, { color: colors.mutedForeground }]}>{geoError}</Text>
+               </View>
+             )}
+
+            <View style={ex.mapSearchOverlay}>
+              <View style={[ex.mapSearchBar, {
+                backgroundColor: colors.mapGlass,
+                borderColor: mapSearchFocused ? colors.action : colors.mapGlassBorder,
+                borderWidth: mapSearchFocused ? 1.5 : 1,
+              }, Platform.OS === 'web' && {
+                backdropFilter: 'blur(14px)',
+                WebkitBackdropFilter: 'blur(14px)',
+              } as any]}>
+                <View style={[ex.mapSearchIconWrap, { backgroundColor: colors.selectionBackground }]}>
+                  <Feather name="search" size={16} color={colors.action} />
+                </View>
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  onFocus={() => {
+                    setMapSearchFocused(true);
+                    setSearchFocused(true);
+                  }}
+                  onBlur={() => setTimeout(() => setMapSearchFocused(false), 250)}
+                  onSubmitEditing={handleSearchSubmit}
+                  returnKeyType="search"
+                  placeholder="Search a city, area or society"
+                  placeholderTextColor={colors.mutedForeground}
+                  style={[ex.mapSearchInput, { color: colors.foreground }]}
+                />
+                {query.length > 0 && (
+                  <Pressable
+                    onPress={() => {
+                      setQuery('');
+                      setSearchedPlace(null);
+                      setMapAreaSearch(null);
+                      setPlaceSuggestions([]);
+                    }}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear place search"
+                  >
+                    <Feather name="x-circle" size={17} color={colors.mutedForeground} />
+                  </Pressable>
+                )}
+              </View>
+
+              {mapSearchFocused && query.trim().length >= 2 && (placeSuggestionsLoading || placeSuggestions.length > 0) && (
+                <View style={[ex.mapSuggestions, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={ex.mapSuggestionsHeader}>
+                    <Text style={[ex.mapSuggestionsLabel, { color: colors.mutedForeground }]}>
+                      SUGGESTED PLACES
+                    </Text>
+                    <Feather name="map-pin" size={13} color={colors.mutedForeground} />
+                  </View>
+                  {placeSuggestionsLoading ? (
+                    <View style={ex.mapSuggestionRow}>
+                      <View style={[ex.mapSuggestionIcon, { backgroundColor: colors.selectionBackground }]}>
+                        <ActivityIndicator size="small" color={colors.action} />
+                      </View>
+                      <Text style={[ex.mapSuggestionText, { color: colors.mutedForeground }]}>Finding locations…</Text>
+                    </View>
+                  ) : placeSuggestions.map((suggestion) => (
+                    <Pressable
+                      key={suggestion.placeId}
+                      style={ex.mapSuggestionRow}
+                      onPress={() => {
+                        setMapSearchFocused(false);
+                        handlePlaceSuggestion(suggestion);
+                      }}
+                    >
+                      <View style={[ex.mapSuggestionIcon, { backgroundColor: colors.selectionBackground }]}>
+                        <Feather name="map-pin" size={14} color={colors.action} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[ex.mapSuggestionText, { color: colors.foreground }]}>{suggestion.mainText}</Text>
+                        {!!suggestion.secondaryText && (
+                          <Text style={[ex.mapSuggestionSub, { color: colors.mutedForeground }]} numberOfLines={1}>
+                            {suggestion.secondaryText}
+                          </Text>
+                        )}
+                      </View>
+                      <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+
+          <View style={[ex.mapActions, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, 14) }]}>
+            <Pressable onPress={closeMapScreen} style={[ex.mapActionBack, { borderColor: colors.border }]} accessibilityRole="button">
+              <Text style={[ex.mapActionBackText, { color: colors.mutedForeground }]}>Back</Text>
+            </Pressable>
+            <Pressable onPress={closeMapScreen} style={[ex.mapActionDone, { backgroundColor: colors.action }]} accessibilityRole="button">
+              <Text style={[ex.mapActionDoneText, { color: colors.actionForeground }]}>Done</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       {/* ── Filter bottom sheet ── */}
       <FilterSheet
@@ -1094,7 +1448,7 @@ export default function ExploreScreen() {
       />
 
       {/* ── Save Search modal ── */}
-      <Modal visible={saveModalOpen} transparent animationType="fade" onRequestClose={() => setSaveModalOpen(false)}>
+      <Modal visible={saveModalOpen} transparent animationType="none" onRequestClose={() => setSaveModalOpen(false)}>
         <View style={ex.modalBackdrop}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setSaveModalOpen(false)} />
           <View style={[ex.saveModal, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -1150,7 +1504,7 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
   };
 
   return (
-    <Modal visible={open} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={open} animationType="none" transparent onRequestClose={onClose}>
       <View style={fs.root}>
         <Pressable style={fs.backdrop} onPress={onClose} />
         <View style={[fs.sheet, { backgroundColor: colors.background, borderColor: colors.border }]}>
@@ -1314,35 +1668,35 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
                 <View style={fs.checkGrid}>
                   {AGRI_WATER.map((w) => (
                     <CheckChip key={w} label={w} selected={draft.agriWater.includes(w)}
-                      onToggle={() => toggleArr('agriWater', w)} colors={colors} accentColor="#1a6b3a" />
+                      onToggle={() => toggleArr('agriWater', w)} colors={colors} accentColor="#183B60" />
                   ))}
                 </View>
                 <Text style={[fs.subLabel, { color: colors.mutedForeground, marginTop: 10 }]}>Electricity</Text>
                 <View style={fs.checkGrid}>
                   {AGRI_ELECTRICITY.map((e) => (
                     <CheckChip key={e} label={e} selected={draft.agriElectricity.includes(e)}
-                      onToggle={() => toggleArr('agriElectricity', e)} colors={colors} accentColor="#1a6b3a" />
+                      onToggle={() => toggleArr('agriElectricity', e)} colors={colors} accentColor="#183B60" />
                   ))}
                 </View>
                 <Text style={[fs.subLabel, { color: colors.mutedForeground, marginTop: 10 }]}>Road Access</Text>
                 <View style={fs.checkGrid}>
                   {AGRI_ROAD.map((r) => (
                     <CheckChip key={r} label={r} selected={draft.agriRoad.includes(r)}
-                      onToggle={() => toggleArr('agriRoad', r)} colors={colors} accentColor="#1a6b3a" />
+                      onToggle={() => toggleArr('agriRoad', r)} colors={colors} accentColor="#183B60" />
                   ))}
                 </View>
                 <Text style={[fs.subLabel, { color: colors.mutedForeground, marginTop: 10 }]}>Land Features</Text>
                 <View style={fs.checkGrid}>
                   {AGRI_LAND_FEATS.map((feat) => (
                     <CheckChip key={feat} label={feat} selected={draft.agriLandFeatures.includes(feat)}
-                      onToggle={() => toggleArr('agriLandFeatures', feat)} colors={colors} accentColor="#1a6b3a" />
+                      onToggle={() => toggleArr('agriLandFeatures', feat)} colors={colors} accentColor="#183B60" />
                   ))}
                 </View>
                 <Text style={[fs.subLabel, { color: colors.mutedForeground, marginTop: 10 }]}>Crop Type</Text>
                 <View style={fs.checkGrid}>
                   {AGRI_CROPS.map((c) => (
                     <CheckChip key={c} label={c} selected={draft.agriCrop.includes(c)}
-                      onToggle={() => toggleArr('agriCrop', c)} colors={colors} accentColor="#1a6b3a" />
+                      onToggle={() => toggleArr('agriCrop', c)} colors={colors} accentColor="#183B60" />
                   ))}
                 </View>
               </Section>
@@ -1493,7 +1847,7 @@ function ProjectsList({ staticProjects, devProjects, router, colors }: { staticP
   return (
     <>
       {staticProjects.map((proj) => (
-        <AnimatedReveal key={proj.id} distance={14}>
+        <AnimatedReveal key={`static-${proj.id}`} distance={14}>
           <Pressable onPress={() => router.push(`/project/${proj.id}` as any)} style={[pj.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Image source={proj.image} style={pj.image} resizeMode="cover" />
             <View style={pj.body}>
@@ -1513,7 +1867,7 @@ function ProjectsList({ staticProjects, devProjects, router, colors }: { staticP
         </AnimatedReveal>
       ))}
       {devProjects.map((dp) => (
-        <AnimatedReveal key={dp.id} distance={14}>
+        <AnimatedReveal key={`developer-${dp.id}`} distance={14}>
           <Pressable onPress={() => router.push(`/project/${dp.id}` as any)} style={[pj.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={[pj.imagePlaceholder, { backgroundColor: colors.secondary }]}>
               <Feather name="layers" size={20} color={colors.mutedForeground} />
@@ -1549,8 +1903,8 @@ function RecentlyViewedRow({ items, colors, router }: { items: VisitRecord[]; co
     <View style={{ marginBottom: 20 }}>
       <Text style={[rv.heading, { color: colors.foreground }]}>Recently Viewed</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={{ gap: 12, paddingRight: 4 }}>
-        {items.map((v) => (
-          <Pressable key={`${v.propertyId}-${v.viewedAt}`} onPress={() => router.push(`/property/${v.propertyId}` as any)}
+        {items.map((v, index) => (
+          <Pressable key={`${v.propertyId}-${v.viewedAt}-${index}`} onPress={() => router.push(`/property/${v.propertyId}` as any)}
             style={[rv.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[rv.type, { color: colors.primary }]}>{v.propertyType}</Text>
             <Text style={[rv.title, { color: colors.foreground }]} numberOfLines={2}>{v.propertyTitle}</Text>
@@ -1579,10 +1933,10 @@ function NoResultsView({ colors, message, onAdjust, onClear }: { colors: any; me
       </Text>
       <View style={nr.suggestions}>
         {[
-          '• Increase your budget range',
-          '• Select additional cities',
-          '• Remove some specific filters',
-          '• Try a broader property type',
+          'Increase your budget range',
+          'Select additional cities',
+          'Remove some specific filters',
+          'Try a broader property type',
         ].map((s) => (
           <Text key={s} style={[nr.suggestion, { color: colors.mutedForeground }]}>{s}</Text>
         ))}
@@ -1599,27 +1953,134 @@ function NoResultsView({ colors, message, onAdjust, onClear }: { colors: any; me
   );
 }
 
+function ExplorePagination({
+  currentPage,
+  totalPages,
+  loading,
+  colors,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  loading: boolean;
+  colors: any;
+  onPageChange: (page: number) => void | Promise<void>;
+}) {
+  const items = paginationItems(currentPage, totalPages);
+
+  return (
+    <View style={ex.pagination}>
+      <Pressable
+        accessibilityLabel="Previous properties page"
+        disabled={loading || currentPage === 1}
+        onPress={() => onPageChange(currentPage - 1)}
+        style={({ pressed }) => [
+          ex.paginationButton,
+          { backgroundColor: colors.glassCard, borderColor: colors.glassBorder },
+          (loading || currentPage === 1) && ex.paginationDisabled,
+          pressed && !loading && currentPage > 1 && ex.paginationPressed,
+        ]}
+      >
+        <Feather name="chevron-left" size={19} color={colors.action} />
+      </Pressable>
+
+      {items.map((item, index) => item === 'ellipsis' ? (
+        <View key={`ellipsis-${index}`} style={ex.paginationEllipsis}>
+          <Text style={[ex.paginationEllipsisText, { color: colors.mutedForeground }]}>…</Text>
+        </View>
+      ) : (
+        <Pressable
+          key={item}
+          accessibilityLabel={`Properties page ${item}`}
+          accessibilityState={{ selected: currentPage === item }}
+          disabled={loading}
+          onPress={() => onPageChange(item)}
+          style={({ pressed }) => [
+            ex.paginationButton,
+            {
+              backgroundColor: currentPage === item ? colors.action : colors.glassCard,
+              borderColor: currentPage === item ? colors.action : colors.glassBorder,
+            },
+            currentPage === item && ex.paginationActive,
+            pressed && !loading && ex.paginationPressed,
+          ]}
+        >
+          <Text style={[
+            ex.paginationText,
+            { color: currentPage === item ? colors.actionForeground : colors.foreground },
+          ]}>
+            {item}
+          </Text>
+        </Pressable>
+      ))}
+
+      <Pressable
+        accessibilityLabel="Next properties page"
+        disabled={loading || currentPage === totalPages}
+        onPress={() => onPageChange(currentPage + 1)}
+        style={({ pressed }) => [
+          ex.paginationButton,
+          { backgroundColor: colors.glassCard, borderColor: colors.glassBorder },
+          (loading || currentPage === totalPages) && ex.paginationDisabled,
+          pressed && !loading && currentPage < totalPages && ex.paginationPressed,
+        ]}
+      >
+        <Feather name="chevron-right" size={19} color={colors.action} />
+      </Pressable>
+    </View>
+  );
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // Styles
 // ══════════════════════════════════════════════════════════════════════════════
 
 const ex = StyleSheet.create({
   screen:          { flex: 1 },
-  stickyHeader:    { borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 20, paddingBottom: 8 },
+  stickyHeader:    { borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 20, paddingBottom: 10 },
+  mapScreen:       { flex: 1 },
+  mapScreenHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingBottom: 14, borderBottomWidth: StyleSheet.hairlineWidth },
+  mapScreenBack:   { width: 92, flexDirection: 'row', alignItems: 'center', gap: 1 },
+  mapScreenBackText: { fontFamily: 'Inter_400Regular', fontSize: 15 },
+  mapScreenTitle:   { fontFamily: 'Inter_700Bold', fontSize: 17 },
+  mapScreenHeaderSide: { width: 92 },
+  mapStage:        { flex: 1, position: 'relative' },
+  mapSearchOverlay: { position: 'absolute', top: 14, left: 60, right: 18, zIndex: 10 },
+  locationMapStatus: { position: 'absolute', top: '38%', left: 28, right: 28, alignItems: 'center', borderRadius: 18, borderWidth: 1, paddingHorizontal: 18, paddingVertical: 18, zIndex: 8, shadowColor: '#0B1F3A', shadowOpacity: 0.16, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
+  locationMapStatusTitle: { fontFamily: 'Inter_700Bold', fontSize: 14, marginTop: 8, textAlign: 'center' },
+  locationMapStatusText: { fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 16, marginTop: 5, textAlign: 'center' },
+  mapSearchBar:    { height: Platform.OS === 'web' ? 30 : 38, minHeight: Platform.OS === 'web' ? 30 : 38, borderRadius: Platform.OS === 'web' ? 10 : 12, borderWidth: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 9, gap: 7, shadowColor: '#0B1F3A', shadowOpacity: 0.16, shadowRadius: 9, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
+  mapSearchIconWrap: { width: Platform.OS === 'web' ? 20 : 28, height: Platform.OS === 'web' ? 20 : 28, borderRadius: Platform.OS === 'web' ? 7 : 9, alignItems: 'center', justifyContent: 'center' },
+  mapSearchInput:  { flex: 1, fontFamily: 'Inter_500Medium', fontSize: 13, paddingVertical: 0 },
+  mapSuggestions:  { marginTop: 8, borderRadius: 16, borderWidth: 1, overflow: 'hidden', shadowColor: '#0B1F3A', shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
+  mapSuggestionsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, paddingTop: 12, paddingBottom: 8 },
+  mapSuggestionsLabel: { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.2 },
+  mapSuggestionRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 15, paddingVertical: 11 },
+  mapSuggestionIcon: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  mapSuggestionText: { fontFamily: 'Inter_500Medium', fontSize: 13 },
+  mapSuggestionSub: { fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 2 },
+  mapActions:      { flexDirection: 'row', gap: 10, paddingHorizontal: 18, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth },
+  mapActionBack:   { flex: 1, height: 38, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  mapActionBackText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  mapActionDone:   { flex: 1, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', shadowColor: '#0B1F3A', shadowOpacity: 0.14, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 3 },
+  mapActionDoneText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  headerIntro:     { paddingTop: 2, paddingBottom: 15 },
+  headerEyebrow:   { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 2, marginBottom: 5 },
+  headerTitle:     { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 25, lineHeight: 30 },
   // Purpose toggle
   purposeRow:      { flexDirection: 'row', borderRadius: 16, borderWidth: 1, marginBottom: 12, overflow: 'hidden', alignSelf: 'stretch', padding: 3 },
   purposeTab:      { flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 13 },
   purposeTabText:  { fontFamily: 'Inter_700Bold', fontSize: 12, letterSpacing: 0.3 },
   // Search row
   searchRow:       { flexDirection: 'row', gap: 8, marginBottom: 10 },
-  searchBar:       { flex: 1, height: 46, borderRadius: 15, borderWidth: 1, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', paddingRight: 10 },
+  searchBar:       { flex: 1, height: 50, borderRadius: 17, borderWidth: 1, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', paddingRight: 10 },
   searchIcon:      { paddingHorizontal: 12, zIndex: 1 },
   searchInput:     { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, zIndex: 1, paddingVertical: 0 },
-  filterBtn:       { width: 46, height: 46, borderRadius: 15, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  filterBtn:       { width: 50, height: 50, borderRadius: 17, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   filterDot:       { position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   filterDotText:   { fontFamily: 'Inter_700Bold', fontSize: 8 },
-  viewToggle:      { flexDirection: 'row', borderRadius: 15, borderWidth: 1, overflow: 'hidden', alignItems: 'center' },
-  viewToggleBtn:   { width: 34, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 13 },
+  mapAction:       { width: 72, height: 50, borderRadius: 17, borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  mapActionText:   { fontFamily: 'Inter_600SemiBold', fontSize: 12, letterSpacing: 0.2 },
   // Recent searches
   recentDropdown:  { borderRadius: 14, borderWidth: 1, marginBottom: 6, overflow: 'hidden' },
   recentHeader:    { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 10 },
@@ -1641,29 +2102,38 @@ const ex = StyleSheet.create({
   clearAll:        { borderRadius: 18, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
   clearAllText:    { fontFamily: 'Inter_600SemiBold', fontSize: 10 },
   // Result bar
-  resultBar:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, minHeight: 34 },
-  resultCount:     { fontFamily: 'Inter_700Bold', fontSize: 13, letterSpacing: 0.1 },
-  resultBarRight:  { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  saveBtn:         { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 11, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
+  resultBar:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', rowGap: 8, marginBottom: 12, minHeight: 34 },
+  resultCount:     { flexShrink: 1, marginRight: 8, fontFamily: 'Inter_700Bold', fontSize: 13, letterSpacing: 0.1 },
+  resultBarRight:  { flex: 1, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 6, alignItems: 'center' },
+  saveBtn:         { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 11, borderWidth: 1, paddingHorizontal: 9, paddingVertical: 6 },
   saveBtnText:     { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   sortBtn:         { flexDirection: 'row', alignItems: 'center', gap: 4 },
   sortBtnText:     { fontFamily: 'Inter_400Regular', fontSize: 11 },
+  // Page navigation
+  pagination:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 8, paddingBottom: 22 },
+  paginationButton:{ width: 46, height: 46, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  paginationActive:{ shadowColor: '#0B1F3A', shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
+  paginationDisabled:{ opacity: 0.38 },
+  paginationPressed:{ transform: [{ scale: 0.96 }], opacity: 0.82 },
+  paginationText:  { fontFamily: 'Inter_700Bold', fontSize: 15 },
+  paginationEllipsis:{ width: 24, height: 46, alignItems: 'center', justifyContent: 'center' },
+  paginationEllipsisText:{ fontFamily: 'Inter_700Bold', fontSize: 15 },
   // Save modal
-  modalBackdrop:   { flex: 1, backgroundColor: '#102a4366', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28 },
+  modalBackdrop:   { flex: 1, backgroundColor: '#0B1F3A66', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28 },
   saveModal:       { width: '100%', borderRadius: 20, borderWidth: 1, padding: 24 },
   saveModalTitle:  { fontFamily: 'Inter_700Bold', fontSize: 18, marginBottom: 6 },
   saveModalSub:    { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, marginBottom: 18 },
   saveModalInput:  { height: 48, borderRadius: 13, borderWidth: 1, overflow: 'hidden', marginBottom: 18, flexDirection: 'row', alignItems: 'center' },
   saveModalInputText: { flex: 1, paddingHorizontal: 14, fontFamily: 'Inter_400Regular', fontSize: 13, zIndex: 1 },
   saveModalBtns:   { flexDirection: 'row', gap: 10 },
-  saveModalCancel: { flex: 1, height: 46, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  saveModalCancel: { flex: 1, height: 40, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   saveModalCancelText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  saveModalConfirm: { flex: 1, height: 46, borderRadius: 13, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
-  saveModalConfirmText: { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  saveModalConfirm: { flex: 1, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
+  saveModalConfirmText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });
 
 const fs = StyleSheet.create({
-  root:          { flex: 1, justifyContent: 'flex-end', backgroundColor: '#102a4366' },
+  root:          { flex: 1, justifyContent: 'flex-end', backgroundColor: '#0B1F3A66' },
   backdrop:      { ...StyleSheet.absoluteFill },
   sheet:         { maxHeight: '92%', borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 24 },
   handle:        { alignSelf: 'center', width: 42, height: 4, borderRadius: 2, backgroundColor: '#c8a45a', opacity: 0.7, marginBottom: 18 },
@@ -1710,8 +2180,8 @@ const fs = StyleSheet.create({
   sortChip:      { width: '48%', borderRadius: 13, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 7 },
   sortChipText:  { flex: 1, fontFamily: 'Inter_500Medium', fontSize: 10 },
   // Apply button
-  applyBtn:      { height: 52, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 },
-  applyBtnText:  { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  applyBtn:      { height: 44, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 },
+  applyBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });
 
 const map = StyleSheet.create({

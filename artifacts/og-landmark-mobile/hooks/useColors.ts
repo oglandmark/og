@@ -59,5 +59,13 @@ export function useColors() {
     scheme === 'dark' && 'dark' in colors
       ? (colors as Record<string, typeof colors.light>).dark
       : colors.light;
-  return { ...palette, ...remoteTheme, radius: colors.radius };
+  return {
+    ...palette,
+    ...remoteTheme,
+    radius: colors.radius,
+    radii: colors.radii,
+    spacing: colors.spacing,
+    typography: colors.typography,
+    controlHeight: colors.controlHeight,
+  };
 }

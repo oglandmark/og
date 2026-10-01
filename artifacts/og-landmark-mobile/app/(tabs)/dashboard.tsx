@@ -9,6 +9,7 @@ import { useColors } from '@/hooks/useColors';
 import { useMobileContent } from '@/hooks/useMobileContent';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { BrandMark } from '@/components/BrandMark';
 import { getMyListings, calcListingStats } from '@/lib/listingsStore';
@@ -24,8 +25,8 @@ import type { MobileContent } from '@/lib/api';
 
 // ── Lead status display map ───────────────────────────────────────────────────
 const LEAD_STATUS_MAP: Record<string, { label: string; color: string }> = {
-  new:        { label: 'New',       color: '#1a6b3a' },
-  contacted:  { label: 'Contacted', color: '#102a43' },
+  new:        { label: 'New',       color: '#183B60' },
+  contacted:  { label: 'Contacted', color: '#0B1F3A' },
   interested: { label: 'Interested',color: '#c8a45a' },
   viewing:    { label: 'Viewing',   color: '#7c3aed' },
   closed:     { label: 'Closed',   color: '#888888' },
@@ -46,6 +47,7 @@ function DeveloperDashboard({
   isRTL: boolean;
   portalCopy?: MobileContent['screens']['portals'];
 }) {
+  const tabBarScrollHandler = useTabBarScrollHandler();
   const rtl = isRTL ? 'right' as const : 'left' as const;
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const botPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
@@ -71,18 +73,18 @@ function DeveloperDashboard({
   const portal = portalCopy?.developer;
 
   const kpiCards = [
-    { key: 'totalProjects', label: portal?.kpiLabels?.totalProjects || tr('totalProjects'), value: String(stats.totalProjects), icon: 'layers' as const, color: '#102a43' },
-    { key: 'activeProjects', label: portal?.kpiLabels?.activeProjects || tr('activeProjects'), value: String(stats.activeProjects), icon: 'activity' as const, color: '#1a6b3a' },
+    { key: 'totalProjects', label: portal?.kpiLabels?.totalProjects || tr('totalProjects'), value: String(stats.totalProjects), icon: 'layers' as const, color: '#0B1F3A' },
+    { key: 'activeProjects', label: portal?.kpiLabels?.activeProjects || tr('activeProjects'), value: String(stats.activeProjects), icon: 'activity' as const, color: '#183B60' },
     { key: 'availableUnits', label: portal?.kpiLabels?.availableUnits || tr('availableUnits'), value: String(stats.availableUnits), icon: 'grid' as const, color: '#c8a45a' },
     { key: 'reservedUnits', label: portal?.kpiLabels?.reservedUnits || tr('reservedUnits'), value: String(stats.reservedUnits), icon: 'lock' as const, color: '#6b3a1a' },
-    { key: 'newLeads', label: portal?.kpiLabels?.newLeads || tr('devNewLeads'), value: String(devLeadStats.newCount), icon: 'users' as const, color: '#102a43' },
-    { key: 'siteVisits', label: portal?.kpiLabels?.siteVisits || tr('devSiteVisits'), value: String(visitCount), icon: 'calendar' as const, color: '#1a6b3a' },
+    { key: 'newLeads', label: portal?.kpiLabels?.newLeads || tr('devNewLeads'), value: String(devLeadStats.newCount), icon: 'users' as const, color: '#0B1F3A' },
+    { key: 'siteVisits', label: portal?.kpiLabels?.siteVisits || tr('devSiteVisits'), value: String(visitCount), icon: 'calendar' as const, color: '#183B60' },
   ].filter((card) => portal?.statVisibility?.[card.key] !== false);
 
   const financialCards = [
-    { key: 'totalListed', label: portal?.financialLabels?.totalListed || tr('totalListedValue'), value: stats.totalListedValue > 0 ? `PKR ${formatPKR(stats.totalListedValue)}` : '—', icon: 'trending-up' as const, color: '#102a43' },
+    { key: 'totalListed', label: portal?.financialLabels?.totalListed || tr('totalListedValue'), value: stats.totalListedValue > 0 ? `PKR ${formatPKR(stats.totalListedValue)}` : '—', icon: 'trending-up' as const, color: '#0B1F3A' },
     { key: 'reserved', label: portal?.financialLabels?.reserved || tr('reservedValue'), value: stats.reservedValue > 0 ? `PKR ${formatPKR(stats.reservedValue)}` : '—', icon: 'lock' as const, color: '#c8a45a' },
-    { key: 'sold', label: portal?.financialLabels?.sold || tr('soldValue'), value: stats.soldValue > 0 ? `PKR ${formatPKR(stats.soldValue)}` : '—', icon: 'check-circle' as const, color: '#1a6b3a' },
+    { key: 'sold', label: portal?.financialLabels?.sold || tr('soldValue'), value: stats.soldValue > 0 ? `PKR ${formatPKR(stats.soldValue)}` : '—', icon: 'check-circle' as const, color: '#183B60' },
   ];
 
   const quickActions = [
@@ -103,6 +105,8 @@ function DeveloperDashboard({
       style={[ds.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topPad + 12, paddingBottom: botPad + 100 }}
       showsVerticalScrollIndicator={false}
+      onScroll={tabBarScrollHandler}
+      scrollEventThrottle={16}
     >
       {/* ── Top bar ──────────────────────────────────────────────── */}
       <AnimatedReveal>
@@ -126,9 +130,9 @@ function DeveloperDashboard({
             </Text>
             <View style={ds.badgeRow}>
               {isVerified ? (
-                <View style={[ds.badge, { backgroundColor: '#1a6b3a18' }]}>
-                  <Feather name="shield" size={9} color="#1a6b3a" />
-                  <Text style={[ds.badgeText, { color: '#1a6b3a' }]}>{tr('verifiedBadge')}</Text>
+                <View style={[ds.badge, { backgroundColor: '#183B6018' }]}>
+                  <Feather name="shield" size={9} color="#183B60" />
+                  <Text style={[ds.badgeText, { color: '#183B60' }]}>{tr('verifiedBadge')}</Text>
                 </View>
               ) : isPending ? (
                 <View style={[ds.badge, { backgroundColor: '#c8a45a18' }]}>
@@ -179,7 +183,7 @@ function DeveloperDashboard({
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}>
             {[
             { label: `${portal?.inventoryLabels?.total || tr('unitsTotal')}: ${stats.totalInventory}`, color: colors.foreground, bg: colors.secondary },
-            { label: `${portal?.inventoryLabels?.available || tr('availableLabel')}: ${stats.availableUnits}`, color: '#1a6b3a', bg: '#1a6b3a18' },
+            { label: `${portal?.inventoryLabels?.available || tr('availableLabel')}: ${stats.availableUnits}`, color: '#183B60', bg: '#183B6018' },
             { label: `${portal?.inventoryLabels?.reserved || tr('reservedLabel')}: ${stats.reservedUnits}`, color: '#c8a45a', bg: '#c8a45a18' },
             { label: `${portal?.inventoryLabels?.sold || tr('soldLabel')}: ${stats.soldUnits}`, color: colors.mutedForeground, bg: colors.secondary },
           ].map((chip) => (
@@ -320,6 +324,7 @@ export default function DashboardScreen() {
   const insets  = useSafeAreaInsets();
   const { user, role, logout } = useAuth();
   const { tr, isRTL } = useLanguage();
+  const tabBarScrollHandler = useTabBarScrollHandler();
 
   const isAgent     = role === 'agent';
   const isDeveloper = role === 'developer';
@@ -388,10 +393,10 @@ export default function DashboardScreen() {
 
   // ── Agent / other dashboard ──────────────────────────────────────
   const agentStats = [
-    { key: 'activeListings', label: agentPortal?.statLabels?.activeListings || tr('activeListings'), value: String(activeListingsCount), icon: 'home' as const, color: '#102a43', route: '/(tabs)/listings' },
-    { key: 'totalViews', label: agentPortal?.statLabels?.totalViews || tr('totalViews'), value: String(totalViews), icon: 'eye' as const, color: '#1a6b3a', route: '/settings/analytics' },
+    { key: 'activeListings', label: agentPortal?.statLabels?.activeListings || tr('activeListings'), value: String(activeListingsCount), icon: 'home' as const, color: '#0B1F3A', route: '/(tabs)/listings' },
+    { key: 'totalViews', label: agentPortal?.statLabels?.totalViews || tr('totalViews'), value: String(totalViews), icon: 'eye' as const, color: '#183B60', route: '/settings/analytics' },
     { key: 'newLeads', label: agentPortal?.statLabels?.newLeads || tr('newLeads'), value: String(newLeadsCount), icon: 'users' as const, color: '#c8a45a', route: '/(tabs)/leads' },
-    { key: 'totalLeads', label: agentPortal?.statLabels?.totalLeads || agentPortal?.totalLeadsLabel || 'Total Leads', value: String(totalLeadsCount), icon: 'user-check' as const, color: '#1a6b3a', route: '/(tabs)/leads' },
+    { key: 'totalLeads', label: agentPortal?.statLabels?.totalLeads || agentPortal?.totalLeadsLabel || 'Total Leads', value: String(totalLeadsCount), icon: 'user-check' as const, color: '#183B60', route: '/(tabs)/leads' },
     { key: 'todayVisits', label: agentPortal?.statLabels?.todayVisits || agentPortal?.todayVisitsLabel || "Today's Visits", value: String(todayVisits), icon: 'calendar' as const, color: '#7c3aed', route: '/agent/visits' },
     { key: 'upcomingVisits', label: agentPortal?.statLabels?.upcomingVisits || agentPortal?.upcomingVisitsLabel || 'Upcoming Visits', value: String(upcomingVisits), icon: 'clock' as const, color: '#b94b42', route: '/agent/visits' },
   ].filter((card) => agentPortal?.statVisibility?.[card.key] !== false);
@@ -409,6 +414,8 @@ export default function DashboardScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topPad + 12, paddingBottom: botPad + 96 }}
       showsVerticalScrollIndicator={false}
+      onScroll={tabBarScrollHandler}
+      scrollEventThrottle={16}
     >
       <AnimatedReveal>
         <View style={[styles.header, { paddingHorizontal: 20 }]}>
@@ -584,8 +591,8 @@ const ds = StyleSheet.create({
   emptyCard:     { borderWidth: 1, borderRadius: 18, padding: 28, alignItems: 'center', gap: 8, borderStyle: 'dashed' },
   emptyTitle:    { fontFamily: 'Inter_700Bold', fontSize: 15, textAlign: 'center' },
   emptyDesc:     { fontFamily: 'Inter_400Regular', fontSize: 12, textAlign: 'center', lineHeight: 18 },
-  emptyBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, marginTop: 8 },
-  emptyBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#ffffff' },
+  emptyBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 9, marginTop: 8 },
+  emptyBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
   projectCard:   { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 16, padding: 14 },
   projectIconBox:{ width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   projectName:   { fontFamily: 'Inter_600SemiBold', fontSize: 13, marginBottom: 4 },

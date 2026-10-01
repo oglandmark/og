@@ -40,9 +40,9 @@ export type SiteVisit = {
 export function visitStatusColor(status: VisitStatus): { bg: string; text: string } {
   switch (status) {
     case 'Requested':    return { bg: '#c8a45a18', text: '#c8a45a' };
-    case 'Confirmed':    return { bg: '#1a6b3a18', text: '#1a6b3a' };
+    case 'Confirmed':    return { bg: '#183B6018', text: '#183B60' };
     case 'Rescheduled':  return { bg: '#0891b218', text: '#0891b2' };
-    case 'Completed':    return { bg: '#10293818', text: '#102a43' };
+    case 'Completed':    return { bg: '#10293818', text: '#0B1F3A' };
     case 'Cancelled':    return { bg: '#dc262618', text: '#dc2626' };
   }
 }

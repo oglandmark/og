@@ -122,14 +122,14 @@ export default function AnalyticsScreen() {
     }, 0);
 
   const topCards = [
-    { label: 'Total Leads',         value: String(total),         icon: 'users'       as const, color: '#102a43' },
-    { label: tr('conversionRate'),   value: `${convRate}%`,        icon: 'trending-up' as const, color: '#1a6b3a' },
+    { label: 'Total Leads',         value: String(total),         icon: 'users'       as const, color: '#0B1F3A' },
+    { label: tr('conversionRate'),   value: `${convRate}%`,        icon: 'trending-up' as const, color: '#183B60' },
     { label: tr('funnelVisits'),     value: String(siteVisitCount),icon: 'calendar'    as const, color: '#7c3aed' },
     { label: tr('wonDealsLabel'),    value: String(wonCount),      icon: 'check-circle'as const, color: '#059669' },
   ];
 
   const funnelRows = [
-    { label: tr('funnelLeads'),     count: total,          color: '#102a43' },
+    { label: tr('funnelLeads'),     count: total,          color: '#0B1F3A' },
     { label: tr('funnelContacted'), count: contactedCount, color: '#c8a45a' },
     { label: tr('funnelVisits'),    count: siteVisitCount, color: '#7c3aed' },
     { label: tr('funnelWon'),       count: wonCount,       color: '#059669' },
@@ -244,7 +244,7 @@ export default function AnalyticsScreen() {
                     { label: tr('wonDealsLabel'), value: stageCountMap.won,  icon: 'check-circle'as const, color: '#059669' },
                     { label: tr('lostDealsLabel'),value: stageCountMap.lost, icon: 'x-circle'   as const, color: '#dc2626' },
                     { label: 'Site Visits',    value: siteVisitCount,       icon: 'calendar'    as const, color: '#7c3aed' },
-                    { label: 'Projects',       value: projects.length,      icon: 'layers'      as const, color: '#102a43' },
+                    { label: 'Projects',       value: projects.length,      icon: 'layers'      as const, color: '#0B1F3A' },
                   ].map((row, i, arr) => (
                     <View
                       key={row.label}

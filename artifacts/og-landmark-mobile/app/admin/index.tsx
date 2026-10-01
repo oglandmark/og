@@ -3,10 +3,10 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Pressable, RefreshControl,
+  ActivityIndicator, Alert, Modal, Pressable, RefreshControl,
   ScrollView, StyleSheet, View,
 } from 'react-native';
-import { LocalizedText as Text } from '@/components/LocalizedText';
+import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,7 +18,7 @@ import {
   approveProperty, rejectProperty, deleteAdminProperty,
 } from '@/lib/api';
 
-const NAVY = '#102a43';
+const NAVY = '#0B1F3A';
 const GOLD = '#C8A45A';
 
 export default function AdminDashboard() {
@@ -30,6 +30,9 @@ export default function AdminDashboard() {
   const [pending,    setPending]    = useState<ApiProperty[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [rejectingProperty, setRejectingProperty] = useState<ApiProperty | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejecting, setRejecting] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -64,21 +67,31 @@ export default function AdminDashboard() {
     } catch { Alert.alert('Error', 'Could not approve property.'); }
   }
 
-  async function handleReject(id: number) {
-    Alert.prompt
-      ? Alert.prompt('Rejection Reason', 'Enter reason (optional)', async (reason) => {
-          try {
-            await rejectProperty(id, reason);
-            setPending(p => p.filter(x => x.id !== id));
-          } catch { Alert.alert('Error', 'Could not reject property.'); }
-        }, 'plain-text', '', 'default')
-      : Alert.alert('Reject Property', 'Reject this listing?', [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Reject', style: 'destructive', onPress: async () => {
-            try { await rejectProperty(id); setPending(p => p.filter(x => x.id !== id)); }
-            catch { Alert.alert('Error', 'Could not reject property.'); }
-          }},
-        ]);
+  function beginReject(property: ApiProperty) {
+    setRejectingProperty(property);
+    setRejectReason('');
+  }
+
+  async function submitReject() {
+    const property = rejectingProperty;
+    const reason = rejectReason.trim();
+    if (!property) return;
+    if (!reason) {
+      Alert.alert('Reason required', 'Please explain why this listing is being rejected.');
+      return;
+    }
+    setRejecting(true);
+    try {
+      await rejectProperty(property.id, reason);
+      setPending((items) => items.filter((item) => item.id !== property.id));
+      setStats((current) => current ? { ...current, pendingApprovals: Math.max(0, (current.pendingApprovals ?? 1) - 1) } : current);
+      setRejectingProperty(null);
+      setRejectReason('');
+    } catch (error) {
+      Alert.alert('Could not reject property', error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setRejecting(false);
+    }
   }
 
   const statCards = stats ? [
@@ -172,7 +185,7 @@ export default function AdminDashboard() {
                       </Pressable>
                       <Pressable
                         style={[s.approveBtn, { backgroundColor: '#dc2626' }]}
-                        onPress={() => handleReject(p.id)}
+                        onPress={() => beginReject(p)}
                       >
                         <Feather name="x" size={14} color="#fff" />
                       </Pressable>
@@ -190,6 +203,49 @@ export default function AdminDashboard() {
           </>
         )}
       </ScrollView>
+
+      <Modal
+        visible={!!rejectingProperty}
+        transparent
+        animationType="fade"
+        onRequestClose={() => { if (!rejecting) setRejectingProperty(null); }}
+      >
+        <View style={s.modalBackdrop}>
+          <View style={[s.rejectSheet, { backgroundColor: colors.background }]}>
+            <Text style={[s.modalTitle, { color: colors.foreground }]}>Reject Listing</Text>
+            <Text style={[s.modalSub, { color: colors.mutedForeground }]} numberOfLines={2}>
+              {rejectingProperty?.title}
+            </Text>
+            <TextInput
+              value={rejectReason}
+              onChangeText={setRejectReason}
+              placeholder="Explain what needs to be corrected…"
+              placeholderTextColor={colors.mutedForeground}
+              multiline
+              textAlignVertical="top"
+              style={[s.rejectInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card }]}
+              editable={!rejecting}
+            />
+            <View style={s.modalActions}>
+              <Pressable
+                onPress={() => setRejectingProperty(null)}
+                disabled={rejecting}
+                style={[s.modalCancel, { borderColor: colors.border, opacity: rejecting ? 0.5 : 1 }]}
+              >
+                <Text style={[s.modalCancelText, { color: colors.foreground }]}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={submitReject}
+                disabled={rejecting}
+                style={[s.modalReject, { opacity: rejecting ? 0.6 : 1 }]}
+              >
+                {rejecting ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="x" size={15} color="#fff" />}
+                <Text style={s.modalRejectText}>{rejecting ? 'Rejecting…' : 'Reject Listing'}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -216,4 +272,14 @@ const s = StyleSheet.create({
   approveBtn:   { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   viewAll:      { margin: 16, borderRadius: 12, borderWidth: 1, padding: 13, alignItems: 'center' },
   viewAllText:  { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(5,14,24,0.72)', justifyContent: 'center', padding: 20 },
+  rejectSheet: { borderRadius: 18, padding: 18 },
+  modalTitle: { fontFamily: 'Inter_700Bold', fontSize: 17 },
+  modalSub: { fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 4 },
+  rejectInput: { minHeight: 110, borderWidth: 1, borderRadius: 11, padding: 12, marginTop: 16, fontFamily: 'Inter_400Regular', fontSize: 14 },
+  modalActions: { flexDirection: 'row', gap: 10, marginTop: 14 },
+  modalCancel: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, paddingVertical: 8, minHeight: 36 },
+  modalCancelText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  modalReject: { flex: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, paddingVertical: 8, minHeight: 40, backgroundColor: '#dc2626' },
+  modalRejectText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff' },
 });

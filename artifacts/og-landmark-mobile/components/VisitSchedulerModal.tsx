@@ -153,7 +153,7 @@ export default function VisitSchedulerModal({
   if (!visible) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose} statusBarTranslucent>
       <View style={vs.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
 
@@ -163,8 +163,8 @@ export default function VisitSchedulerModal({
           {submitted ? (
             /* ── Success screen ─────────────────────────────────────────── */
             <ScrollView contentContainerStyle={vs.successWrap} showsVerticalScrollIndicator={false}>
-              <View style={[vs.successIcon, { backgroundColor: '#1a6b3a15' }]}>
-                <Feather name="check-circle" size={40} color="#1a6b3a" />
+              <View style={[vs.successIcon, { backgroundColor: '#183B6015' }]}>
+                <Feather name="check-circle" size={40} color="#183B60" />
               </View>
               <Text style={[vs.successTitle, { color: colors.foreground }]}>Visit Requested!</Text>
               <Text style={[vs.successSub, { color: colors.mutedForeground }]}>
@@ -344,7 +344,7 @@ export default function VisitSchedulerModal({
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const vs = StyleSheet.create({
-  overlay:        { flex: 1, justifyContent: 'flex-end', backgroundColor: '#0d1d2baa' },
+  overlay:        { flex: 1, justifyContent: 'flex-end', backgroundColor: '#071428aa' },
   sheet:          { borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 10, maxHeight: '92%' },
   handle:         { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 8 },
 
@@ -370,7 +370,7 @@ const vs = StyleSheet.create({
 
   // Time grid
   timeGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  timeSlot:       { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
+  timeSlot:       { minHeight: 36, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 6 },
   timeSlotText:   { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 
   // Stepper
@@ -380,8 +380,8 @@ const vs = StyleSheet.create({
   stepperLabel:   { fontFamily: 'Inter_400Regular', fontSize: 13 },
 
   // Submit
-  submitBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 16 },
-  submitBtnText:  { fontFamily: 'Inter_700Bold', fontSize: 15 },
+  submitBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, minHeight: 44, paddingVertical: 8, paddingHorizontal: 16 },
+  submitBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
 
   // Success screen
   successWrap:    { alignItems: 'center', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 20, gap: 12 },
@@ -394,6 +394,6 @@ const vs = StyleSheet.create({
   confirmVal:     { fontFamily: 'Inter_400Regular', fontSize: 13, flex: 1, lineHeight: 18 },
   confirmDivider: { height: 1, marginVertical: 4 },
   noteText:       { fontFamily: 'Inter_400Regular', fontSize: 11, textAlign: 'center', lineHeight: 16, paddingHorizontal: 10 },
-  doneBtn:        { borderRadius: 14, paddingHorizontal: 48, paddingVertical: 14, marginTop: 4 },
-  doneBtnText:    { fontFamily: 'Inter_700Bold', fontSize: 14 },
+  doneBtn:        { borderRadius: 14, minHeight: 40, paddingHorizontal: 48, paddingVertical: 7, marginTop: 4 },
+  doneBtnText:    { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
 });

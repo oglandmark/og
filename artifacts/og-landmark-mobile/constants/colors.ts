@@ -19,50 +19,61 @@ const colors = {
     tint: '#c8a45a',
 
     // Core surfaces
-    background: '#f8f6f1',
+    background: '#f8fafc',
     foreground: '#1c2024',
 
     // Cards / elevated surfaces
     card: '#ffffff',
     cardForeground: '#1c2024',
-    glassCard: '#fffffff0',
-    glassBorder: '#ffffffb8',
+    glassCard: '#fffffff2',
+    glassBorder: '#e4e9ef',
     glassOverlay: '#ffffff80',
+    mapGlass: 'rgba(255, 255, 255, 0.78)',
+    mapGlassBorder: 'rgba(255, 255, 255, 0.88)',
+    mapGlassPanel: 'rgba(255, 255, 255, 0.68)',
+    mapGlassPanelBorder: 'rgba(255, 255, 255, 0.94)',
 
     // Primary action color (buttons, links, active states)
-    primary: '#c8a45a',
+    primary: '#c7a263',
     primaryForeground: '#1c2024',
 
     // Official OG Landmark navy for interactive controls and CTAs
-    action: '#102a43',
-    actionDeep: '#081e34',
-    actionSoft: '#244d6b',
+    action: '#0B1F3A',
+    actionDeep: '#071428',
+    actionSoft: '#183B60',
     actionForeground: '#ffffff',
-    actionPressed: '#0b1f33',
+    actionPressed: '#082036',
     // Premium glass control tokens
-    gold: '#d9b96d',
+    gold: '#d8b36a',
     goldForeground: '#1c2024',
     goldGlass: '#d9b96db8',
-    goldGlassBorder: '#f5dfa0',
-    actionGlass: '#173d5ed9',
-    actionGlassStrong: '#081e34e8',
-    actionGlassSoft: '#6d9bb52e',
+    goldGlassBorder: '#e8c985',
+    actionGlass: '#0B1F3AD9',
+    actionGlassStrong: '#071428E8',
+    actionGlassSoft: '#6A8DAF2E',
     actionGlassBorder: '#ffffff55',
     actionGlassHighlight: '#ffffff24',
-    actionGlow: '#9bc6df',
+    actionGlow: '#86A7C5',
+
+    // Editorial surfaces used for quiet hierarchy and premium depth
+    surfaceRaised: '#ffffff',
+    surfaceTint: '#f1f4f7',
+    surfaceDeep: '#0B1F3A',
+    shadow: '#071428',
+    focusRing: '#b98d45',
 
     // Premium selected-state treatment for category/filter/tab/chip controls
     selectionBackground: '#fbfcfd',
     selectionTint: '#f3f7fa',
-    selectionBorder: '#102F49',
-    selectionForeground: '#102F49',
+    selectionBorder: '#0B1F3A',
+    selectionForeground: '#0B1F3A',
 
     // Secondary / less-emphasis interactive surfaces
-    secondary: '#ebe6da',
+    secondary: '#eef2f5',
     secondaryForeground: '#1c2024',
 
     // Muted / subdued elements (dividers, timestamps, placeholders)
-    muted: '#eeeae1',
+    muted: '#edf1f4',
     mutedForeground: '#72746f',
 
     // Accent highlights (badges, selected items, focus rings)
@@ -72,10 +83,14 @@ const colors = {
     // Destructive actions (delete, error states)
     destructive: '#b94b42',
     destructiveForeground: '#ffffff',
+    success: '#2d7a57',
+    successForeground: '#ffffff',
+    warning: '#b9822b',
+    warningForeground: '#ffffff',
 
     // Borders and input outlines
-    border: '#ded9cf',
-    input: '#ded9cf',
+    border: '#dfe5eb',
+    input: '#dfe5eb',
   },
 
   // Shared layout tokens. Keeping these beside the semantic palette prevents

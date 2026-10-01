@@ -245,9 +245,9 @@ export default function TeamScreen() {
                     {/* Actions */}
                     <View style={[tm.memberActions, { borderTopColor: colors.border }]}>
                       <Pressable onPress={() => { void handleToggle(m.id); }}
-                        style={[tm.memberActionBtn, { backgroundColor: m.active ? colors.secondary : '#1a6b3a18' }]}>
-                        <Feather name={m.active ? 'pause-circle' : 'play-circle'} size={13} color={m.active ? colors.mutedForeground : '#1a6b3a'} />
-                        <Text style={[tm.memberActionText, { color: m.active ? colors.mutedForeground : '#1a6b3a' }]}>
+                        style={[tm.memberActionBtn, { backgroundColor: m.active ? colors.secondary : '#183B6018' }]}>
+                        <Feather name={m.active ? 'pause-circle' : 'play-circle'} size={13} color={m.active ? colors.mutedForeground : '#183B60'} />
+                        <Text style={[tm.memberActionText, { color: m.active ? colors.mutedForeground : '#183B60' }]}>
                           {m.active ? tr('teamInactiveLabel') : tr('teamActiveLabel')}
                         </Text>
                       </Pressable>
@@ -275,8 +275,8 @@ const tm = StyleSheet.create({
   eyebrow:         { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.5, marginBottom: 2 },
   title:           { fontFamily: 'Inter_700Bold', fontSize: 22 },
   subtitle:        { fontFamily: 'Inter_400Regular', fontSize: 12 },
-  addBtn:          { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 },
-  addBtnText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
+  addBtn:          { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 7, minHeight: 40 },
+  addBtnText:      { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   banner:          { borderRadius: 16, flexDirection: 'row', marginBottom: 4 },
   bannerItem:      { flex: 1, alignItems: 'center', paddingVertical: 14 },
   bannerValue:     { fontFamily: 'Inter_700Bold', fontSize: 22, color: '#ffffff', letterSpacing: -0.3 },
@@ -289,14 +289,14 @@ const tm = StyleSheet.create({
   roleGrid:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingVertical: 4 },
   roleChip:        { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
   roleChipText:    { fontFamily: 'Inter_500Medium', fontSize: 11 },
-  saveBtn:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 13 },
-  saveBtnText:     { fontFamily: 'Inter_700Bold', fontSize: 14, color: '#ffffff' },
+  saveBtn:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 8, minHeight: 40 },
+  saveBtnText:     { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
   emptyWrap:       { borderWidth: 1, borderRadius: 18, padding: 36, alignItems: 'center', gap: 12, borderStyle: 'dashed' },
   emptyIcon:       { width: 76, height: 76, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   emptyTitle:      { fontFamily: 'Inter_700Bold', fontSize: 17 },
   emptyDesc:       { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 20, maxWidth: 260 },
-  emptyBtn:        { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 12, marginTop: 4 },
-  emptyBtnText:    { fontFamily: 'Inter_700Bold', fontSize: 14, color: '#ffffff' },
+  emptyBtn:        { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 8, minHeight: 40, marginTop: 4 },
+  emptyBtnText:    { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
   memberCard:      { borderRadius: 18, borderWidth: 1, overflow: 'hidden' },
   memberTop:       { flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 14 },
   avatar:          { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
@@ -312,6 +312,6 @@ const tm = StyleSheet.create({
   leadsCount:      { fontFamily: 'Inter_700Bold', fontSize: 18, letterSpacing: -0.5 },
   leadsLabel:      { fontFamily: 'Inter_400Regular', fontSize: 9 },
   memberActions:   { flexDirection: 'row', borderTopWidth: 1, gap: 0 },
-  memberActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 11 },
+  memberActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 7, minHeight: 36 },
   memberActionText:{ fontFamily: 'Inter_600SemiBold', fontSize: 11 },
 });

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Dimensions, Image, ImageBackground, ImageSourcePropType,
+  ActivityIndicator, Image, ImageBackground,
   Modal, PanResponder, Platform, Pressable, ScrollView, StatusBar,
   StyleSheet, View, useWindowDimensions,
 } from 'react-native';
@@ -13,10 +13,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 // BlurView removed — crashes Android GPU
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  cancelAnimation, Easing, ReduceMotion, useAnimatedStyle,
-  useSharedValue, withRepeat, withSpring, withTiming,
-} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { SkeletonShimmer } from '@/components/SkeletonShimmer';
@@ -26,6 +22,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { BrandMark } from '@/components/BrandMark';
 import { NotificationBell } from '@/components/NotificationBell';
 import { BrowseDiscoveryModule } from '@/components/BrowseDiscoveryModule';
+import HomeCategoryBannerCarousel, { type HomeCategoryBannerSlide } from '@/components/HomeCategoryBannerCarousel';
 import { PropertyDemoBadge } from '@/components/PropertyDemoBadge';
 import { VideoWatermark } from '@/components/VideoWatermark';
 import { getAgents, getBanners, getMobileSettings, getProperties, API_BASE, type BannerSlide as ApiBannerSlide, type MobileContent } from '@/lib/api';
@@ -35,9 +32,10 @@ import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { formatPrice, properties, propertyImages, Property } from '@/lib/properties';
 import { getUserListings, UserListing } from '@/lib/listingsStore';
 import { useAuth } from '@/context/AuthContext';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { getDevProjects, DeveloperProject } from '@/lib/developerStore';
 import { projects } from '@/lib/projects';
-import { apiAgentToSample, SampleAgent } from '@/lib/agentsData';
+import { apiAgentToSample, SAMPLE_AGENTS, SampleAgent } from '@/lib/agentsData';
 import { useSaved } from '@/context/SavedContext';
 import {
   CalcCorners as SharedCalcCorners,
@@ -48,8 +46,6 @@ import {
 } from '@/lib/plotCalculator';
 import { PlotMeasurementCalculator } from '@/components/PlotMeasurementCalculator';
 import { StatusNotice } from '@/components/PolishedUI';
-
-const { width: SCREEN_W } = Dimensions.get('window');
 
 type Transaction = 'Buy' | 'Rent';
 
@@ -85,31 +81,21 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
   const drawerRouter = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const [mounted, setMounted] = useState(false);
+  const mounted = open;
   const [selectedInfo, setSelectedInfo] = useState<DrawerInfo | null>(null);
-  const panelX = useSharedValue(-420);
-  const backdropOpacity = useSharedValue(0);
 
   useEffect(() => {
-    if (open) { setMounted(true); panelX.value = withTiming(0, { duration: 300 }); backdropOpacity.value = withTiming(1, { duration: 240 }); return; }
-    setSelectedInfo(null);
-    panelX.value = withTiming(-420, { duration: 220 });
-    backdropOpacity.value = withTiming(0, { duration: 180 });
-    const t = setTimeout(() => setMounted(false), 240);
-    return () => clearTimeout(t);
-  }, [open, backdropOpacity, panelX]);
-
-  const panelStyle   = useAnimatedStyle(() => ({ transform: [{ translateX: panelX.value }] }));
-  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropOpacity.value }));
+    if (!open) setSelectedInfo(null);
+  }, [open]);
 
   return (
     <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={s.drawerRoot}>
-        <Animated.View style={[StyleSheet.absoluteFill, s.drawerBackdrop, backdropStyle]}>
+        <View style={[StyleSheet.absoluteFill, s.drawerBackdrop]}>
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.25)' }]} />
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close menu" />
-        </Animated.View>
-        <Animated.View style={[s.drawerPanel, panelStyle, { width: Math.min(width * 0.86, 360), paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18, backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
+        </View>
+        <View style={[s.drawerPanel, { width: Math.min(width * 0.86, 360), paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18, backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
           <LinearGradient pointerEvents="none" colors={[colors.glassOverlay, 'transparent']} style={StyleSheet.absoluteFill} />
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.drawerScrollContent} keyboardShouldPersistTaps="handled">
@@ -191,7 +177,7 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
             <View style={s.drawerLangRow}>
               {(['en', 'ur'] as const).map((l) => (
                 <Pressable key={l} onPress={() => { void setLang(l); }} style={[s.drawerLangBtn, { borderColor: lang === l ? colors.action : colors.border, backgroundColor: lang === l ? colors.action : 'transparent' }]}>
-                  <Text style={[s.drawerLangBtnText, { color: lang === l ? colors.actionForeground : colors.mutedForeground }]}>{l === 'en' ? '🇬🇧 English' : '🇵🇰 اردو'}</Text>
+                <Text style={[s.drawerLangBtnText, { color: lang === l ? colors.actionForeground : colors.mutedForeground }]}>{l === 'en' ? 'English' : 'اردو'}</Text>
                 </Pressable>
               ))}
             </View>
@@ -210,337 +196,143 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
               </View>
             </View>
           )}
-        </Animated.View>
+        </View>
       </View>
     </Modal>
   );
 }
 
-// ─── Cinematic Banner ─────────────────────────────────────────────────────────
+// ─── Home category banners ────────────────────────────────────────────────────
+type HomeBannerCategory = HomeCategoryBannerSlide['category'];
 
-// Each slide is either an image slide or a video slide (up to 60 s, loops).
-// To add a video slide, set type:'video' and provide a videoUri (remote URL or
-// local require() cast to any). Image slides keep the original Ken Burns effect.
-type BannerSlideData = {
-  type?: 'image' | 'video';          // default = 'image'
-  image?: ImageSourcePropType;
-  videoUri?: string;                  // remote URL
-  localVideo?: number;                // local require() asset
-  eyebrow: string;
-  title: string;
-  subtitle: string;
-  cta: string;
-  route: '/explore';
-  ctaParams: Record<string, string>;
+const HOME_BANNER_COPY: Record<HomeBannerCategory, Omit<HomeCategoryBannerSlide, 'id' | 'image' | 'route' | 'ctaParams'>> = {
+  homes: {
+    category: 'homes',
+    eyebrow: 'Find your place',
+    title: 'Homes that feel like home',
+    subtitle: 'Explore verified homes across Pakistan.',
+    cta: 'Explore homes',
+  },
+  commercial: {
+    category: 'commercial',
+    eyebrow: 'Make your next move',
+    title: 'Commercial spaces with potential',
+    subtitle: 'Discover shops, offices and commercial properties.',
+    cta: 'Explore commercial',
+  },
+  agriculture: {
+    category: 'agriculture',
+    eyebrow: 'Room to grow',
+    title: 'Agricultural land for tomorrow',
+    subtitle: 'Find fertile land and investment opportunities.',
+    cta: 'Explore land',
+  },
+  plots: {
+    category: 'plots',
+    eyebrow: 'Build what’s next',
+    title: 'The right plot starts here',
+    subtitle: 'Explore plots in the locations you love.',
+    cta: 'Explore plots',
+  },
+  projects: {
+    category: 'projects',
+    eyebrow: 'A better way forward',
+    title: 'Discover exceptional projects',
+    subtitle: 'Explore thoughtfully selected developments.',
+    cta: 'Explore projects',
+  },
 };
 
-// ── Background music — low-volume ambient piano, loops while home screen is open
-
-// ── Local fallback slides (shown while API loads or if backend unreachable) ────
-// On web, Range requests for the MP4 asset cause 422 errors from the dev proxy,
-// so we use an image-only slide on web.
-// On web, Range requests for the MP4 asset cause 422 errors from the dev proxy,
-// so native gets the real video slide; web gets a still image fallback.
-const LOCAL_PROMO_VIDEO = Platform.OS !== 'web' ? require('@/assets/videos/banner-promo.mp4') : null;
-
-const VIDEO_SLIDE: BannerSlideData = {
-  type: 'video',
-  localVideo: LOCAL_PROMO_VIDEO as number,
-  image: require('@/assets/images/property-1.jpg'),
-  eyebrow: 'OKARA DISTRICT • PAKISTAN',
-  title: 'Find Your Dream Property',
-  subtitle: 'Premium homes, plots & commercial spaces across Okara & surroundings',
-  cta: 'Explore Now',
-  route: '/explore' as const,
-  ctaParams: {},
+const HOME_BANNER_IMAGES: Record<HomeBannerCategory, HomeCategoryBannerSlide['image']> = {
+  homes: require('@/assets/images/banner-categories/homes.jpg'),
+  commercial: require('@/assets/images/banner-categories/commercial.jpg'),
+  agriculture: require('@/assets/images/banner-categories/agriculture.jpg'),
+  plots: require('@/assets/images/banner-categories/plots.jpg'),
+  projects: require('@/assets/images/banner-categories/projects.jpg'),
 };
 
-const FALLBACK_SLIDES: BannerSlideData[] = Platform.OS !== 'web'
-  ? [VIDEO_SLIDE]
-  : [
-      {
-        type: 'image',
-        image: require('@/assets/images/property-1.jpg'),
-        eyebrow: 'OKARA DISTRICT • PAKISTAN',
-        title: 'Find Your Dream Property',
-        subtitle: 'Premium homes, plots & commercial spaces across Okara & surroundings',
-        cta: 'Explore Now',
-        route: '/explore' as const,
-        ctaParams: {},
-      },
-    ];
+const CATEGORY_PROPERTY_TYPE: Record<HomeBannerCategory, string> = {
+  homes: 'House',
+  commercial: 'Commercial',
+  agriculture: 'Agriculture Land',
+  plots: 'Plot',
+  projects: 'Project',
+};
 
-// Map API BannerSlide → BannerSlideData
-function mapApiBanner(s: ApiBannerSlide): BannerSlideData | null {
-  if (!s.active) return null;
+const CATEGORY_QUERY_LABEL: Record<HomeBannerCategory, string> = {
+  homes: 'Homes',
+  commercial: 'Commercial',
+  agriculture: 'Agriculture Land',
+  plots: 'Plots',
+  projects: 'Projects',
+};
 
-  const eyebrow  = (s as any).eyebrow  || 'OG LANDMARK';
-  const title    = (s as any).title    || 'Premium Properties\nin Okara District';
-  const subtitle = (s as any).subtitle || 'Homes, plots & commercial spaces';
-  const cta      = (s as any).cta      || 'Explore Now';
-  const route    = ((s as any).route   || '/explore') as '/explore';
-  const ctaP     = (s.ctaParams || {}) as Record<string, string>;
+const LOCAL_HOME_BANNER_SLIDES: HomeCategoryBannerSlide[] = (
+  Object.keys(HOME_BANNER_COPY) as HomeBannerCategory[]
+).map((category) => ({
+  id: category,
+  ...HOME_BANNER_COPY[category],
+  image: HOME_BANNER_IMAGES[category],
+  route: '/explore',
+  ctaParams: {
+    category: CATEGORY_QUERY_LABEL[category],
+    propertyType: CATEGORY_PROPERTY_TYPE[category],
+  },
+}));
 
-  // ── Video banner ──────────────────────────────────────────────────────────
-  if (s.type === 'video' && s.videoUrl) {
-    const videoUri = s.videoUrl.startsWith('http') ? s.videoUrl : `${API_BASE}${s.videoUrl}`;
-    return {
-      type: 'video',
-      videoUri,
-      image: require('@/assets/images/property-1.jpg'),
-      eyebrow, title, subtitle, cta, route, ctaParams: ctaP,
-    };
+function normalizeHomeBannerCategory(value?: string | null): HomeBannerCategory | null {
+  const normalized = value?.trim().toLowerCase().replace(/[\s_-]+/g, '');
+  switch (normalized) {
+    case 'home':
+    case 'homes':
+    case 'house':
+    case 'houses':
+      return 'homes';
+    case 'commercial':
+      return 'commercial';
+    case 'agriculture':
+    case 'agriculturalland':
+      return 'agriculture';
+    case 'plot':
+    case 'plots':
+      return 'plots';
+    case 'project':
+    case 'projects':
+      return 'projects';
+    default:
+      return null;
   }
-
-  // ── Image banner ──────────────────────────────────────────────────────────
-  if (s.type === 'image' && s.imageUrl) {
-    const resolvedImage = s.imageUrl.startsWith('http') ? s.imageUrl : `${API_BASE}${s.imageUrl}`;
-    return {
-      type: 'image',
-      image: { uri: resolvedImage },
-      eyebrow, title, subtitle, cta, route, ctaParams: ctaP,
-    };
-  }
-
-  return null;
 }
 
-const BANNER_H            = 165;
-const BANNER_AUTO_INTERVAL = 4200;
-const VIDEO_MAX_DURATION   = 60_000; // 60 s — auto-advance after this even if looping
+function mapApiBanner(slide: ApiBannerSlide): HomeCategoryBannerSlide | null {
+  if (!slide.active || slide.type !== 'image') return null;
 
-function CinematicBanner({ isScreenVisible, externalSlides, config }: {
-  isScreenVisible: boolean;
-  externalSlides?: BannerSlideData[];
-  config?: MobileContent['homepage'];
-}) {
-  const [slides, setSlides]       = useState<BannerSlideData[]>(FALLBACK_SLIDES);
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [isMuted, setIsMuted]     = useState(false);
-  const autoRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const category =
+    normalizeHomeBannerCategory(slide.category) ??
+    normalizeHomeBannerCategory(slide.ctaParams?.category) ??
+    normalizeHomeBannerCategory(slide.ctaParams?.propertyType);
+  if (!category) return null;
 
-  // When parent provides fresh API slides:
-  // — On native: always show local promo video first, then append API slides (incl. API videos).
-  // — On web: replace entirely (local video causes 422 from Replit proxy on web).
-  useEffect(() => {
-    if (externalSlides && externalSlides.length > 0) {
-      if (Platform.OS !== 'web' && LOCAL_PROMO_VIDEO) {
-        // Keep the homepage banner video-only on native. API image slides are
-        // intentionally excluded so no other banner content replaces the video.
-        setSlides([VIDEO_SLIDE, ...externalSlides.filter((slide) => slide.type === 'video')]);
-      } else {
-        setSlides(externalSlides);
-      }
-      setActiveIdx(0);
-    }
-  }, [externalSlides]);
+  const defaults = HOME_BANNER_COPY[category];
+  const image = slide.imageUrl
+    ? { uri: slide.imageUrl.startsWith('http') ? slide.imageUrl : `${API_BASE}${slide.imageUrl}` }
+    : HOME_BANNER_IMAGES[category];
 
-  useEffect(() => {
-    if (externalSlides && externalSlides.length === 0 && config?.fallback) {
-      const fallback = config.fallback;
-      const videoUrl = fallback.videoUrl
-        ? (fallback.videoUrl.startsWith('http') ? fallback.videoUrl : `${API_BASE}${fallback.videoUrl}`)
-        : '';
-      const imageUrl = fallback.imageUrl
-        ? (fallback.imageUrl.startsWith('http') ? fallback.imageUrl : `${API_BASE}${fallback.imageUrl}`)
-        : '';
-      if (Platform.OS !== 'web') {
-        if (videoUrl) {
-          setSlides([{
-            ...VIDEO_SLIDE,
-            type: 'video',
-            localVideo: undefined,
-            videoUri: videoUrl,
-          }]);
-        } else {
-          setSlides([VIDEO_SLIDE]);
-        }
-        setActiveIdx(0);
-        return;
-      }
-      if (videoUrl || imageUrl) {
-        setSlides([{
-          type: videoUrl ? 'video' : 'image',
-          videoUri: videoUrl || undefined,
-          image: imageUrl ? { uri: imageUrl } : require('@/assets/images/property-1.jpg'),
-          eyebrow: fallback.eyebrow || 'OG LANDMARK',
-          title: fallback.title || 'Find Your Dream Property',
-          subtitle: fallback.subtitle || 'Premium homes & commercial spaces',
-          cta: fallback.cta || 'Explore Now',
-          route: (fallback.route || '/explore') as '/explore',
-          ctaParams: {},
-        }]);
-        setActiveIdx(0);
-      }
-    }
-  }, [config, externalSlides]);
-
-  const activeSlide  = slides[activeIdx] ?? slides[0];
-  const isVideoSlide = activeSlide?.type === 'video';
-
-  const carouselInterval = Math.max(1500, Number(config?.carousel?.intervalMs) || BANNER_AUTO_INTERVAL);
-  const startTimer = useCallback(() => {
-    if (autoRef.current) clearInterval(autoRef.current);
-    if (isVideoSlide) return;
-    autoRef.current = setInterval(() => {
-      setActiveIdx(prev => (prev + 1) % slides.length);
-    }, carouselInterval);
-  }, [carouselInterval, isVideoSlide, slides.length]);
-
-  useEffect(() => {
-    startTimer();
-    return () => { if (autoRef.current) clearInterval(autoRef.current); };
-  }, [startTimer, activeIdx]);
-
-  // Video slides loop indefinitely — no auto-advance needed.
-  // (Safety-cap and handleVideoEnd removed; isLooping handles restart.)
-
-  const goTo = useCallback((idx: number) => {
-    setActiveIdx(idx);
-    Haptics.selectionAsync();
-  }, []);
-
-  const panHandlers = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy),
-      onPanResponderRelease: (_, g) => {
-        if (Math.abs(g.dx) < 30) return;
-        setActiveIdx(prev =>
-          g.dx < 0
-            ? (prev + 1) % slides.length
-            : (prev - 1 + slides.length) % slides.length,
-        );
-        Haptics.selectionAsync();
-      },
-    }),
-  ).current;
-
-  return (
-    <View style={bn.container}>
-      <View style={bn.slideStack} {...panHandlers.panHandlers}>
-        {slides.map((slide, i) =>
-          slide.type === 'video' ? (
-            <BannerVideoSlide
-              key={i}
-              slide={slide}
-              isActive={i === activeIdx}
-              isMuted={isMuted}
-              isScreenVisible={isScreenVisible}
-            />
-          ) : (
-            <BannerSlide key={i} slide={slide} isActive={i === activeIdx} />
-          ),
-        )}
-      </View>
-
-      {isVideoSlide && (
-        <Pressable onPress={() => setIsMuted(m => !m)} style={bn.muteBtn} hitSlop={10}>
-          <Feather name={isMuted ? 'volume-x' : 'volume-2'} size={14} color="#ffffff" />
-        </Pressable>
-      )}
-
-      {config?.carousel?.showDots !== false && <View style={bn.dots}>
-        {slides.map((_, i) => (
-          <Pressable key={i} onPress={() => goTo(i)} hitSlop={8}>
-            <Animated.View style={[bn.dot, i === activeIdx && bn.dotActive]} />
-          </Pressable>
-        ))}
-      </View>}
-    </View>
-  );
+  return {
+    id: slide.id,
+    category,
+    image,
+    eyebrow: slide.eyebrow || defaults.eyebrow,
+    title: slide.title || defaults.title,
+    subtitle: slide.subtitle || defaults.subtitle,
+    cta: slide.cta || defaults.cta,
+    route: slide.route || '/explore',
+    ctaParams: {
+      category: CATEGORY_QUERY_LABEL[category],
+      propertyType: CATEGORY_PROPERTY_TYPE[category],
+    },
+  };
 }
-
-// ── Image slide (original Ken Burns) ──────────────────────────────────────────
-function BannerSlide({ slide, isActive }: {
-  slide: BannerSlideData;
-  isActive: boolean;
-}) {
-  const opacity   = useSharedValue(isActive ? 1 : 0);
-  const kenScale  = useSharedValue(1);
-
-  useEffect(() => {
-    opacity.value   = withTiming(isActive ? 1 : 0, { duration: 900, easing: Easing.out(Easing.quad) });
-    if (isActive) {
-      kenScale.value = 1;
-      kenScale.value = withTiming(1.1, { duration: BANNER_AUTO_INTERVAL + 800, easing: Easing.linear });
-    }
-  }, [isActive]);
-
-  const slideStyle   = useAnimatedStyle(() => ({ opacity: opacity.value }));
-  const imgStyle     = useAnimatedStyle(() => ({ transform: [{ scale: kenScale.value }] }));
-  return (
-    <Animated.View style={[bn.slide, StyleSheet.absoluteFill, slideStyle]} pointerEvents={isActive ? 'auto' : 'none'}>
-      <Animated.Image source={slide.image} style={[bn.image, imgStyle]} resizeMode="cover" />
-    </Animated.View>
-  );
-}
-
-// ── Video slide — loops up to 60 s, with sound, mute toggle ───────────────────
-// isScreenVisible — false when user scrolls banner off screen or switches tab.
-function BannerVideoSlide({ slide, isActive, isMuted, isScreenVisible }: {
-  slide: BannerSlideData;
-  isActive: boolean;
-  isMuted: boolean;
-  isScreenVisible: boolean;
-}) {
-  const opacity   = useSharedValue(isActive ? 1 : 0);
-  const shouldPlay = isActive && isScreenVisible;
-  const source: VideoSource = slide.localVideo ?? (slide.videoUri ? { uri: slide.videoUri } : null);
-  const player = useVideoPlayer(source, (videoPlayer) => {
-    videoPlayer.loop = true;
-    videoPlayer.muted = isMuted;
-  });
-
-  useEffect(() => {
-    opacity.value   = withTiming(isActive ? 1 : 0, { duration: 900, easing: Easing.out(Easing.quad) });
-  }, [isActive]);
-
-  // Play when active; pause + rewind when becoming inactive so it starts fresh next cycle
-  useEffect(() => {
-    if (shouldPlay) {
-      player.play();
-    } else {
-      player.pause();
-      player.currentTime = 0;
-    }
-  }, [player, shouldPlay]);
-
-  useEffect(() => {
-    player.muted = isMuted;
-  }, [isMuted, player]);
-
-  const slideStyle   = useAnimatedStyle(() => ({ opacity: opacity.value }));
-
-  return (
-    <Animated.View style={[bn.slide, StyleSheet.absoluteFill, slideStyle]} pointerEvents={isActive ? 'auto' : 'none'}>
-      {/* Remote video only on native — web uses image fallback (avoids byte-range 422 errors) */}
-      {isActive && (slide.localVideo || slide.videoUri) && Platform.OS !== 'web' ? (
-        <VideoView
-          player={player}
-          style={bn.image}
-          contentFit="cover"
-          nativeControls={false}
-          surfaceType={Platform.OS === 'android' ? 'textureView' : undefined}
-        />
-      ) : isActive ? (
-        <Image source={slide.image ?? require('@/assets/images/property-1.jpg')} style={bn.image} resizeMode="cover" />
-      ) : null}
-    </Animated.View>
-  );
-}
-
-const bn = StyleSheet.create({
-  container:  { width: SCREEN_W, height: BANNER_H, overflow: 'hidden', marginTop: 4 },
-  slideStack: { width: SCREEN_W, height: BANNER_H, overflow: 'hidden' },
-  slide:      { width: SCREEN_W, height: BANNER_H },
-  image:      { width: SCREEN_W, height: BANNER_H },
-  accentLine: { position: 'absolute', top: 0, left: 20, right: 20, height: 1.5, backgroundColor: '#c8a45a99', borderRadius: 1 },
-  // Mute button — top-right corner, inside banner
-  muteBtn:    { position: 'absolute', top: 10, right: 12, zIndex: 20, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 16, padding: 7 },
-  dots:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 10 },
-  dot:        { width: 6, height: 6, borderRadius: 3, backgroundColor: '#c8a45a55' },
-  dotActive:  { width: 20, height: 6, borderRadius: 3, backgroundColor: '#c8a45a' },
-});
 
 // ─── Static placeholder images ────────────────────────────────────────────────
 
@@ -746,7 +538,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
             <Text style={fp.badgeText}>{property.type.toUpperCase()}</Text>
           </View>
           <PropertyDemoBadge visible={property.isDemo === true} compact />
-          <View style={[fp.badge, { backgroundColor: '#1a6b3acc', flexDirection: 'row', gap: 4, alignItems: 'center' }]}>
+          <View style={[fp.badge, { backgroundColor: '#183B60cc', flexDirection: 'row', gap: 4, alignItems: 'center' }]}>
             <Feather name="check-circle" size={9} color="#fff" />
             <Text style={fp.badgeText}>VERIFIED</Text>
           </View>
@@ -784,7 +576,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
               hitSlop={6}
             >
               <View style={fp.videoTourIcon}>
-                <Feather name="play" size={9} color="#102a43" />
+                <Feather name="play" size={9} color="#0B1F3A" />
               </View>
               <Text style={fp.videoTourText}>Video Tour</Text>
             </Pressable>
@@ -873,7 +665,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
 
 const fp = StyleSheet.create({
   // ── Card ──────────────────────────────────────────────────────────────────
-  card:         { width: 300, height: 320, borderRadius: 22, overflow: 'hidden', marginRight: 16, shadowColor: '#102a43', shadowOpacity: 0.18, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
+  card:         { width: 300, height: 320, borderRadius: 22, overflow: 'hidden', marginRight: 16, shadowColor: '#0B1F3A', shadowOpacity: 0.18, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
   image:        { ...StyleSheet.absoluteFill },
   galleryStatus:{ position: 'absolute', top: 56, right: 14, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#071521aa', borderWidth: 1, borderColor: '#ffffff33', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 5 },
   galleryDots:  { flexDirection: 'row', alignItems: 'center', gap: 3 },
@@ -898,7 +690,7 @@ const fp = StyleSheet.create({
   // Video Tour pill
   videoTourBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#c8a45a', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5 },
   videoTourIcon: { width: 16, height: 16, borderRadius: 8, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
-  videoTourText: { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#102a43', letterSpacing: 0.3 },
+  videoTourText: { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#0B1F3A', letterSpacing: 0.3 },
 
   viewBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#ffffff22', borderWidth: 1, borderColor: '#ffffff44', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 6 },
   viewBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#ffffff' },
@@ -919,128 +711,88 @@ const fp = StyleSheet.create({
   fsError:      { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
   fsErrorText:  { color: '#c8a45a', fontWeight: '700', fontSize: 15 },
   fsErrorBtn:   { marginTop: 8, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: '#c8a45a', borderRadius: 10 },
-  fsErrorBtnText:{ color: '#102a43', fontWeight: '700', fontSize: 13 },
+  fsErrorBtnText:{ color: '#0B1F3A', fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });
 
 // ─── Agent Card (premium) ─────────────────────────────────────────────────────
 
 function AgentCarousel({ agents, colors, onAgentPress }: { agents: SampleAgent[]; colors: Colors; onAgentPress: (id: string) => void }) {
-  const translation = useSharedValue(0);
-  const pausedRef = useRef(false);
-  const gestureStartRef = useRef(0);
   const visibleAgents = agents.length
-    ? Array.from({ length: Math.max(6, agents.length * 3) }, (_, index) => agents[index % agents.length])
+    ? agents
     : [];
-  const cardStep = 264;
-  const loopWidth = visibleAgents.length * cardStep;
-  const loopDuration = loopWidth * 42;
-  const animatedTrackStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translation.value }],
-  }));
+  const scrollRef = useRef<ScrollView>(null);
+  const offsetRef = useRef(0);
+  const loopWidthRef = useRef(0);
+  const pausedRef = useRef(false);
+  const marqueeAgents = visibleAgents.length > 1
+    ? [...visibleAgents, ...visibleAgents]
+    : visibleAgents;
 
   useEffect(() => {
-    translation.value = withRepeat(
-      withTiming(-loopWidth, {
-        duration: loopDuration,
-        easing: Easing.linear,
-        reduceMotion: ReduceMotion.Never,
-      }),
-      -1,
-      false,
-    );
+    if (visibleAgents.length < 2) return;
 
-    return () => cancelAnimation(translation);
-  }, [loopWidth]);
+    const timer = setInterval(() => {
+      if (pausedRef.current || !loopWidthRef.current) return;
 
-  const pause = () => {
-    pausedRef.current = true;
-    cancelAnimation(translation);
-  };
+      let nextOffset = offsetRef.current + 0.55;
+      if (nextOffset >= loopWidthRef.current) {
+        nextOffset -= loopWidthRef.current;
+      }
 
-  const resume = () => {
-    if (!pausedRef.current) return;
-    pausedRef.current = false;
-    const remainingDistance = Math.max(1, loopWidth + translation.value);
-    const remainingDuration = Math.max(900, remainingDistance * 42);
-    translation.value = withTiming(
-      -loopWidth,
-      {
-        duration: remainingDuration,
-        easing: Easing.linear,
-        reduceMotion: ReduceMotion.Never,
-      },
-      (finished) => {
-        if (finished) {
-          translation.value = withRepeat(
-            withTiming(-loopWidth, {
-              duration: loopDuration,
-              easing: Easing.linear,
-              reduceMotion: ReduceMotion.Never,
-            }),
-            -1,
-            false,
-          );
-        }
-      },
-    );
-  };
+      offsetRef.current = nextOffset;
+      scrollRef.current?.scrollTo({ x: nextOffset, animated: false });
+    }, 32);
 
-  const panResponder = useMemo(() => PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gesture) =>
-      Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
-    onPanResponderGrant: () => {
-      pausedRef.current = true;
-      cancelAnimation(translation);
-      gestureStartRef.current = translation.value;
-    },
-    onPanResponderMove: (_, gesture) => {
-      translation.value = Math.max(
-        -loopWidth,
-        Math.min(0, gestureStartRef.current + gesture.dx),
-      );
-    },
-    onPanResponderRelease: () => resume(),
-    onPanResponderTerminate: () => resume(),
-    onPanResponderTerminationRequest: () => false,
-  }), [loopDuration, loopWidth]);
+    return () => clearInterval(timer);
+  }, [visibleAgents.length]);
 
   return (
-    <View
+    <ScrollView
+      ref={scrollRef}
+      horizontal
+      nestedScrollEnabled
+      directionalLockEnabled
+      scrollEnabled={visibleAgents.length > 1}
+      decelerationRate="fast"
+      keyboardShouldPersistTaps="handled"
+      scrollEventThrottle={16}
+      onContentSizeChange={(width) => {
+        loopWidthRef.current = visibleAgents.length > 1 ? width / 2 : 0;
+      }}
+      onScroll={(event) => {
+        offsetRef.current = event.nativeEvent.contentOffset.x;
+      }}
+      onScrollBeginDrag={() => {
+        pausedRef.current = true;
+      }}
+      onMomentumScrollEnd={() => {
+        pausedRef.current = false;
+      }}
+      onScrollEndDrag={() => {
+        pausedRef.current = false;
+      }}
       style={s.agentCarouselViewport}
-      {...panResponder.panHandlers}
+      contentContainerStyle={[s.agentTrack, s.hRow]}
+      showsHorizontalScrollIndicator={false}
     >
-      <Animated.View
-        style={[
-          s.agentTrack,
-          s.hRow,
-          { width: loopWidth * 2 + 36 },
-          animatedTrackStyle,
-        ]}
-      >
-        {[...visibleAgents, ...visibleAgents].map((agent, index) => (
+      {marqueeAgents.map((agent, index) => (
           <AgentCard
             key={`${agent.id}-${index}`}
             agent={agent}
             colors={colors}
             onPress={() => onAgentPress(agent.id)}
           />
-        ))}
-      </Animated.View>
-    </View>
+      ))}
+    </ScrollView>
   );
 }
 
 function AgentCard({ agent, colors, onPress }: { agent: SampleAgent; colors: Colors; onPress: () => void }) {
-  const scale = useSharedValue(1);
-  const scaleStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-
   return (
     <Pressable
       onPress={onPress}
-      onPressIn={() => { scale.value = withSpring(0.97, { damping: 18, stiffness: 260 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 18, stiffness: 260 }); }}
     >
-      <Animated.View style={[ac.card, { backgroundColor: colors.card, borderColor: colors.border }, scaleStyle]}>
+      <View style={[ac.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={ac.photoWrap}>
           {agent.profileImage ? (
             <Image source={agent.profileImage} style={ac.photo} resizeMode="cover" />
@@ -1118,15 +870,15 @@ function AgentCard({ agent, colors, onPress }: { agent: SampleAgent; colors: Col
             </Pressable>
           </View>
         </View>
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }
 
 const ac = StyleSheet.create({
   card:         { width: 250, borderRadius: 22, borderWidth: 1, overflow: 'hidden', marginRight: 14,
-                  shadowColor: '#102a43', shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
-  photoWrap:    { height: 142, backgroundColor: '#102a43', overflow: 'hidden' },
+                  shadowColor: '#0B1F3A', shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
+  photoWrap:    { height: 142, backgroundColor: '#0B1F3A', overflow: 'hidden' },
   photo:        { width: '100%', height: '100%' },
   photoAccent:  { position: 'absolute', left: 0, bottom: 0, width: 4, height: 46, backgroundColor: '#c8a45a' },
   avatar:       { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -1155,8 +907,8 @@ const ac = StyleSheet.create({
   footerRow:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
   chip:         { flex: 1, borderRadius: 9, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 8 },
   chipText:     { fontFamily: 'Inter_600SemiBold', fontSize: 9, textAlign: 'center' },
-  cta:          { borderRadius: 10, paddingHorizontal: 11, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
-  ctaText:      { fontFamily: 'Inter_700Bold', fontSize: 10.5 },
+  cta:          { minHeight: 36, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
+  ctaText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 });
 
 // ─── Project Showcase Card ────────────────────────────────────────────────────
@@ -1166,23 +918,18 @@ function ProjectShowcaseCard({ project, colors, onPress }: { project: typeof pro
   const totalUnits = units * 18;
   const available = Math.floor(totalUnits * 0.62);
   const progress = 1 - (available / totalUnits);
-  const scale = useSharedValue(1);
-  const scaleStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-
   return (
     <Pressable
       onPress={onPress}
-      onPressIn={() => { scale.value = withSpring(0.974, { damping: 18, stiffness: 260 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 18, stiffness: 260 }); }}
     >
-      <Animated.View style={[pc.card, scaleStyle]}>
+      <View style={pc.card}>
         <Image source={project.image} style={pc.image} resizeMode="cover" />
         <LinearGradient colors={['#00000000', '#00000099']} style={pc.gradient} />
         <View style={pc.topRow}>
           <View style={[pc.typeBadge, { backgroundColor: '#c8a45acc' }]}>
             <Text style={pc.typeBadgeText}>{project.category}</Text>
           </View>
-          <View style={[pc.verifiedBadge, { backgroundColor: '#1a6b3acc' }]}>
+          <View style={[pc.verifiedBadge, { backgroundColor: '#183B60cc' }]}>
             <Feather name="check-circle" size={9} color="#ffffff" />
             <Text style={pc.verifiedText}>VERIFIED</Text>
           </View>
@@ -1205,7 +952,7 @@ function ProjectShowcaseCard({ project, colors, onPress }: { project: typeof pro
           <View style={pc.viewBtn}><Text style={pc.viewBtnText}>View</Text><Feather name="arrow-up-right" size={11} color="#ffffff" /></View>
         </View>
       </View>
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }
@@ -1281,16 +1028,12 @@ const dpc = StyleSheet.create({
 function RecommendedCard({ property, colors, onPress }: { property: Property; colors: Colors; onPress: () => void }) {
   const { isSaved, toggleSaved } = useSaved();
   const saved = isSaved(property.id);
-  const scale = useSharedValue(1);
-  const scaleStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
     <Pressable
       onPress={onPress}
-      onPressIn={() => { scale.value = withSpring(0.975, { damping: 18, stiffness: 260 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 18, stiffness: 260 }); }}
     >
-      <Animated.View style={[rc.card, { backgroundColor: colors.card, borderColor: colors.border }, scaleStyle]}>
+      <View style={[rc.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Image source={property.image} style={rc.image} resizeMode="cover" />
         <LinearGradient colors={['#00000000', '#000000aa']} style={rc.imageGradient} />
 
@@ -1319,13 +1062,13 @@ function RecommendedCard({ property, colors, onPress }: { property: Property; co
             <Text style={[rc.area, { color: colors.mutedForeground }]}>{property.area} {property.areaUnit}</Text>
           </View>
         </View>
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }
 
 const rc = StyleSheet.create({
-  card:         { width: 220, borderRadius: 18, overflow: 'hidden', marginRight: 14, borderWidth: 1, shadowColor: '#102a43', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  card:         { width: 220, borderRadius: 18, overflow: 'hidden', marginRight: 14, borderWidth: 1, shadowColor: '#0B1F3A', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   image:        { width: '100%', height: 140 },
   imageGradient:{ position: 'absolute', top: 0, left: 0, right: 0, height: 140 },
   saveBtn:      { position: 'absolute', top: 10, right: 10, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
@@ -1345,16 +1088,12 @@ const rc = StyleSheet.create({
 function AgriCommCard({ property, colors, isAgri, onPress }: {
   property: Property; colors: Colors; isAgri: boolean; onPress: () => void;
 }) {
-  const accentColor = isAgri ? '#1a6b3a' : '#102a43';
-  const scale = useSharedValue(1);
-  const scaleStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const accentColor = isAgri ? '#183B60' : '#0B1F3A';
   return (
     <Pressable
       onPress={onPress}
-      onPressIn={() => { scale.value = withSpring(0.968, { damping: 18, stiffness: 260 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 18, stiffness: 260 }); }}
     >
-      <Animated.View style={[acp.card, { backgroundColor: colors.card, borderColor: colors.border }, scaleStyle]}>
+      <View style={[acp.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Image source={property.image} style={acp.image} resizeMode="cover" />
         <LinearGradient colors={['#00000000', '#000000cc']} style={acp.gradient} />
         <View style={[acp.typeBadge, { backgroundColor: accentColor + 'cc' }]}>
@@ -1369,7 +1108,7 @@ function AgriCommCard({ property, colors, isAgri, onPress }: {
             <Text style={acp.meta}>{property.city}</Text>
           </View>
         </View>
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }
@@ -1395,28 +1134,9 @@ function LocationSheet({ visible, selected, onSelect, onClose, colors, insets, m
   onClose: () => void; colors: Colors; insets: ReturnType<typeof useSafeAreaInsets>;
   mapProperties: Property[];
 }) {
-  const translateY = useSharedValue(400);
-  const opacity    = useSharedValue(0);
-  const [mounted, setMounted] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
 
-  useEffect(() => {
-    if (visible) {
-      setMounted(true);
-      translateY.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) });
-      opacity.value    = withTiming(1, { duration: 180, easing: Easing.out(Easing.cubic) });
-    } else {
-      translateY.value = withTiming(400, { duration: 210, easing: Easing.in(Easing.cubic) });
-      opacity.value    = withTiming(0, { duration: 160, easing: Easing.in(Easing.cubic) });
-      const t = setTimeout(() => setMounted(false), 220);
-      return () => clearTimeout(t);
-    }
-  }, [visible, translateY, opacity]);
-
-  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
-  const bgStyle    = useAnimatedStyle(() => ({ opacity: opacity.value }));
-
-  if (!mounted) return null;
+  if (!visible) return null;
 
   const handlePropertySelect = (id: number) => {
     const prop = mapProperties.find((p) => p.id === id);
@@ -1424,12 +1144,12 @@ function LocationSheet({ visible, selected, onSelect, onClose, colors, insets, m
   };
 
   return (
-    <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#0d1d2bbb' }, bgStyle]}>
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#071428bb' }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        </Animated.View>
-        <Animated.View style={[ls.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20, borderColor: colors.border }, sheetStyle]}>
+        </View>
+        <View style={[ls.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20, borderColor: colors.border }]}>
           <View style={[ls.handle, { backgroundColor: colors.border }]} />
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={ls.scrollContent} keyboardShouldPersistTaps="handled">
             <Text style={[ls.heading, { color: colors.foreground }]}>Select Location</Text>
@@ -1466,14 +1186,14 @@ function LocationSheet({ visible, selected, onSelect, onClose, colors, insets, m
               </View>
             )}
           </ScrollView>
-        </Animated.View>
+        </View>
       </View>
     </Modal>
   );
 }
 
 const ls = StyleSheet.create({
-  sheet:    { maxHeight: '92%', borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1, paddingTop: 12, paddingHorizontal: 20, shadowColor: '#102a43', shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: -6 }, elevation: 12 },
+  sheet:    { maxHeight: '92%', borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1, paddingTop: 12, paddingHorizontal: 20, shadowColor: '#0B1F3A', shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: -6 }, elevation: 12 },
   scrollContent: { paddingBottom: 4 },
   handle:   { width: 36, height: 3, borderRadius: 2, alignSelf: 'center', marginBottom: 18 },
   heading:  { fontFamily: 'Inter_700Bold', fontSize: 20, marginBottom: 4 },
@@ -1507,20 +1227,13 @@ function PlotCalculator({ colors }: { colors: Colors }) {
   const [inputs,  setInputs]  = useState<Record<string, string>>({});
   const [result,  setResult]  = useState<SharedCalcResult | null>(null);
   const [error,   setError]   = useState('');
-  const expandAnim = useSharedValue(0);
-
   const toggleOpen = () => {
     const next = !open;
     setOpen(next);
-    expandAnim.value = withSpring(next ? 1 : 0, { damping: 22, stiffness: 180 });
     if (!next) { setResult(null); setError(''); }
   };
 
-  const panelStyle = useAnimatedStyle(() => ({
-    opacity:   expandAnim.value,
-    maxHeight: expandAnim.value * 1100,
-    overflow:  'hidden',
-  }));
+  const panelStyle = { overflow: 'hidden' as const };
 
   // Auto-calculate whenever any input, corner count, or unit changes
   useEffect(() => {
@@ -1555,7 +1268,7 @@ function PlotCalculator({ colors }: { colors: Colors }) {
       </Pressable>
 
       {/* Expandable body */}
-      <Animated.View style={panelStyle}>
+      <View style={panelStyle}>
         <View style={[cc.body, { borderTopColor: colors.border }]}>
 
           {/* Corner + Unit selectors */}
@@ -1662,7 +1375,7 @@ function PlotCalculator({ colors }: { colors: Colors }) {
             </View>
           )}
         </View>
-      </Animated.View>
+      </View>
     </View>
   );
 }
@@ -1709,6 +1422,7 @@ export default function HomeScreen() {
   const navigation = useNavigation();
   const insets     = useSafeAreaInsets();
   const tabBarHeight = useTabBarHeight();
+  const tabBarScrollHandler = useTabBarScrollHandler();
   const { role, user } = useAuth();
   const { toggleSaved } = useSaved();
 
@@ -1740,26 +1454,16 @@ export default function HomeScreen() {
     action: homeContent?.theme?.action || baseColors.action,
   };
 
-  // ── Animated toggle pill ──────────────────────────────────────────────────
-  const togglePillX   = useSharedValue(0);
+  // ── Static toggle pill ────────────────────────────────────────────────────
   const [switcherW,   setSwitcherW]   = useState(0);
-  const pillAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: togglePillX.value * (switcherW / 2) }],
-  }));
 
-  // ── Header button micro-animations ────────────────────────────────────────
-  const menuScale    = useSharedValue(1);
-  const profileScale = useSharedValue(1);
-  const menuScaleStyle    = useAnimatedStyle(() => ({ transform: [{ scale: menuScale.value }] }));
-  const profileScaleStyle = useAnimatedStyle(() => ({ transform: [{ scale: profileScale.value }] }));
-
-  // ── Video scroll-visibility tracking ──────────────────────────────────────
+  // ── Home banner visibility tracking ───────────────────────────────────────
   const [tabFocused,     setTabFocused]     = useState(true);
   const [bannerVisible,  setBannerVisible]  = useState(true);
   const bannerBottomRef  = useRef(400);        // updated by onLayout; generous default
   const lastVisibleRef   = useRef(true);
 
-  const isVideoScreenVisible = bannerVisible && tabFocused;
+  const isHomeBannerVisible = bannerVisible && tabFocused;
 
   const handleMainScroll = useCallback((e: { nativeEvent: { contentOffset: { y: number } } }) => {
     const scrollY   = e.nativeEvent.contentOffset.y;
@@ -1772,15 +1476,17 @@ export default function HomeScreen() {
 
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
-  // ── Tab focus → video auto-resume / auto-pause ────────────────────────────
+  // ── Tab focus → pause banner auto-advance while Home is inactive ──────────
   useFocusEffect(useCallback(() => {
     setTabFocused(true);
     return () => setTabFocused(false);
   }, []));
 
 
-  // ── Fetch banner slides on every focus so newly-uploaded banners appear ──────
-  const [apiBannerSlides, setApiBannerSlides] = useState<BannerSlideData[]>([]);
+  // ── Fetch banner slides on focus; local categories are only the offline fallback.
+  const [homeBannerSlides, setHomeBannerSlides] = useState<HomeCategoryBannerSlide[]>(
+    LOCAL_HOME_BANNER_SLIDES,
+  );
   const [propertyError, setPropertyError] = useState('');
   useFocusEffect(useCallback(() => {
     getMobileSettings()
@@ -1789,12 +1495,21 @@ export default function HomeScreen() {
   }, []));
 
   useFocusEffect(useCallback(() => {
+    let active = true;
     getBanners()
       .then((raw) => {
-        const mapped = raw.map(mapApiBanner).filter(Boolean) as BannerSlideData[];
-        if (mapped.length) setApiBannerSlides(mapped);
+        if (!active) return;
+        const mapped = raw.map(mapApiBanner).filter(
+          (slide): slide is HomeCategoryBannerSlide => slide !== null,
+        );
+        setHomeBannerSlides(mapped.length > 0 ? mapped : LOCAL_HOME_BANNER_SLIDES);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (active) setHomeBannerSlides(LOCAL_HOME_BANNER_SLIDES);
+      });
+    return () => {
+      active = false;
+    };
   }, []));
 
   useFocusEffect(useCallback(() => {
@@ -1835,10 +1550,17 @@ export default function HomeScreen() {
   const featuredProps    = allProps.filter((p) => p.featured);
   const agriProps        = allProps.filter((p) => p.type === 'Agriculture Land').slice(0, 6);
   const commercialProps  = allProps.filter((p) => p.type === 'Commercial').slice(0, 6);
-  const latestProps      = [...userListings, ...allProps.slice().sort((a, b) => b.id - a.id)].slice(0, 6);
+  const latestCandidates = [...userListings, ...allProps.slice().sort((a, b) => b.id - a.id)];
+  const seenLatestIds = new Set<number>();
+  const latestProps = latestCandidates.filter((property) => {
+    if (seenLatestIds.has(property.id)) return false;
+    seenLatestIds.add(property.id);
+    return true;
+  }).slice(0, 6);
   const recommendedProps = allProps
     .filter((p) => transaction === 'Rent' ? p.status === 'For Rent' : p.status === 'For Sale')
     .slice(0, 8);
+  const visibleAgents = managedAgents.length > 0 ? managedAgents : SAMPLE_AGENTS;
 
   const ctaContent = role === 'agent'
     ? { eyebrow: 'AGENT PORTAL', title: 'Manage your\nlistings', desc: 'Add new properties or track your existing listings.', btn1: 'Add Property', btn1Route: '/(tabs)/post-ad', btn2: 'My Listings', btn2Route: '/(tabs)/listings' }
@@ -1852,7 +1574,10 @@ export default function HomeScreen() {
       style={[s.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingBottom: tabBarHeight }}
       showsVerticalScrollIndicator={false}
-      onScroll={handleMainScroll}
+      onScroll={(event) => {
+        handleMainScroll(event);
+        tabBarScrollHandler(event);
+      }}
       scrollEventThrottle={16}
     >
 
@@ -1861,27 +1586,31 @@ export default function HomeScreen() {
         <View style={s.topBar}>
           <Pressable
             onPress={() => setDrawerOpen(true)}
-            onPressIn={() => { menuScale.value = withSpring(0.88, { damping: 16, stiffness: 300 }); }}
-            onPressOut={() => { menuScale.value = withSpring(1, { damping: 16, stiffness: 300 }); }}
             accessibilityRole="button" accessibilityLabel="Open navigation menu" testID="open-navigation-menu"
           >
-            <Animated.View style={[s.headerIcon, menuScaleStyle]}>
-              <Feather name="menu" size={21} color="#102a43" />
-            </Animated.View>
+            <View style={[s.headerIcon, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="menu" size={21} color={colors.action} />
+            </View>
           </Pressable>
           <BrandMark />
-          {user ? <NotificationBell compact /> : <View style={{ width: 36 }} />}
+          <NotificationBell compact />
         </View>
 
-        {/* Buy / Rent toggle — animated sliding pill */}
+        {/* Buy / Rent toggle */}
         <View
-          style={[s.switcher, { backgroundColor: colors.secondary }]}
+          style={[s.switcher, { backgroundColor: colors.surfaceTint, borderColor: colors.border }]}
           onLayout={(e) => setSwitcherW(e.nativeEvent.layout.width)}
         >
-          {/* Sliding pill */}
           {switcherW > 0 && (
-            <Animated.View
-              style={[s.switchPill, { width: switcherW / 2 - 4, backgroundColor: colors.action }, pillAnimStyle]}
+            <View
+              style={[
+                s.switchPill,
+                {
+                  width: switcherW / 2 - 4,
+                  left: transaction === 'Rent' ? switcherW / 2 + 2 : 2,
+                  backgroundColor: colors.action,
+                },
+              ]}
               pointerEvents="none"
             />
           )}
@@ -1891,9 +1620,8 @@ export default function HomeScreen() {
               onPress={() => {
                 setTransaction(item);
                 setQuery('');
-                togglePillX.value = withSpring(item === 'Buy' ? 0 : 1, { damping: 22, stiffness: 340 });
               }}
-              style={s.switchItem}
+              style={({ pressed }) => [s.switchItem, { opacity: pressed ? 0.72 : 1 }]}
             >
               <Text style={[s.switchText, { color: transaction === item ? colors.actionForeground : colors.mutedForeground }]}>{item}</Text>
             </Pressable>
@@ -1901,31 +1629,46 @@ export default function HomeScreen() {
         </View>
 
         {/* Smart Search */}
-        <Pressable style={[s.searchRow, { shadowColor: colors.foreground, shadowOpacity: 0.07, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 3 }]} onPress={() => router.push({ pathname: '/explore', params: { type: transaction, search: query } })}>
-          <View style={[s.searchIconWrap, { backgroundColor: colors.action + '18' }]}>
-            <Feather name="search" size={16} color={colors.action} />
-          </View>
+        <View style={[s.searchRow, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, shadowColor: colors.shadow }]}>
+          <Pressable
+            onPress={() => router.push({ pathname: '/explore', params: { type: transaction, search: query } })}
+            accessibilityRole="button"
+            accessibilityLabel={`Search ${transaction === 'Buy' ? 'properties to buy' : 'properties to rent'}`}
+          >
+            <View style={[s.searchIconWrap, { backgroundColor: colors.action + '18' }]}>
+              <Feather name="search" size={16} color={colors.action} />
+            </View>
+          </Pressable>
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder={`Search ${transaction === 'Buy' ? 'homes, plots or projects' : 'rentals in Okara District'}`}
+            placeholder={`Search ${transaction === 'Buy' ? 'properties' : 'rentals in Okara District'}`}
             placeholderTextColor={colors.mutedForeground}
             style={[s.searchInput, { color: colors.foreground }]}
+            returnKeyType="search"
+            onSubmitEditing={() => router.push({ pathname: '/explore', params: { type: transaction, search: query } })}
           />
-          <Pressable onPress={() => setLocationOpen(true)} style={[s.locationChip, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+          <Pressable
+            onPress={() => setLocationOpen(true)}
+            style={[s.locationChip, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+            accessibilityRole="button"
+            accessibilityLabel={`Change location, currently ${selectedLocation}`}
+          >
             <Feather name="map-pin" size={11} color={colors.action} />
             <Text style={[s.locationChipText, { color: colors.action }]} numberOfLines={1}>{selectedLocation}</Text>
             <Feather name="chevron-down" size={11} color={colors.action} />
           </Pressable>
-        </Pressable>
+        </View>
       </View>
 
-      {/* ─── CINEMATIC BANNER ───────────────────────────────────────────── */}
+      {/* ─── HOME CATEGORY BANNERS ──────────────────────────────────────── */}
       <View onLayout={(e) => {
-        // Track banner's bottom edge so we know when it has scrolled off screen
         bannerBottomRef.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height;
       }}>
-        <CinematicBanner isScreenVisible={isVideoScreenVisible} externalSlides={apiBannerSlides} config={homeContent} />
+        <HomeCategoryBannerCarousel
+          slides={homeBannerSlides}
+          isVisible={isHomeBannerVisible}
+        />
       </View>
 
       {/* ─── FIND YOUR PROPERTY (Browse / Discovery) ────────────────────── */}
@@ -2015,7 +1758,7 @@ export default function HomeScreen() {
       </AnimatedReveal>
 
       {/* ─── PREMIUM PROJECTS ────────────────────────────────────────────── */}
-      <AnimatedReveal delay={200}>
+      {(devProjects.length > 0 || projects.length > 0) && <AnimatedReveal delay={200}>
         <SectionHeader eyebrow={homeSections.projectsEyebrow || 'PREMIUM PROJECTS'} title={homeSections.projectsTitle || 'Exceptional developments'} onViewAll={() => router.push({ pathname: '/explore', params: { propertyType: 'House,Apartment' } })} colors={colors} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={s.hRow}>
           {devProjects.map((p) => (
@@ -2025,7 +1768,7 @@ export default function HomeScreen() {
             <ProjectShowcaseCard key={p.id} project={p} colors={colors} onPress={() => router.push(`/project/${p.id}`)} />
           ))}
         </ScrollView>
-      </AnimatedReveal>
+      </AnimatedReveal>}
 
       {/* ─── AGRICULTURAL & COMMERCIAL OPPORTUNITIES ────────────────────── */}
       {(agriProps.length > 0 || commercialProps.length > 0) && (
@@ -2034,14 +1777,14 @@ export default function HomeScreen() {
           <View style={[s.acHeader, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {/* Agricultural */}
             <Pressable onPress={() => router.push({ pathname: '/explore', params: { propertyType: 'Agriculture Land' } })} style={[s.acTab, { borderRightColor: colors.border }]}>
-              <View style={[s.acTabIcon, { backgroundColor: '#1a6b3a18' }]}>
-                <Feather name="sun" size={16} color="#1a6b3a" />
+              <View style={[s.acTabIcon, { backgroundColor: '#183B6018' }]}>
+                <Feather name="sun" size={16} color="#183B60" />
               </View>
               <View>
-                <Text style={[s.acTabEyebrow, { color: '#1a6b3a' }]}>AGRICULTURE</Text>
+                <Text style={[s.acTabEyebrow, { color: '#183B60' }]}>AGRICULTURE</Text>
                 <Text style={[s.acTabTitle, { color: colors.foreground }]}>Farm & Land</Text>
               </View>
-              <Feather name="arrow-up-right" size={14} color="#1a6b3a" style={{ marginLeft: 'auto' }} />
+              <Feather name="arrow-up-right" size={14} color="#183B60" style={{ marginLeft: 'auto' }} />
             </Pressable>
             {/* Commercial */}
             <Pressable onPress={() => router.push({ pathname: '/explore', params: { propertyType: 'Commercial' } })} style={s.acTab}>
@@ -2083,7 +1826,7 @@ export default function HomeScreen() {
         </View>
         {/* Agent cards — 18-card slow marquee */}
         <AgentCarousel
-          agents={managedAgents}
+          agents={visibleAgents}
           colors={colors}
           onAgentPress={(agentId) => router.push(`/agent/${agentId}` as any)}
         />
@@ -2185,14 +1928,14 @@ const s = StyleSheet.create({
   screen: { flex: 1 },
 
   // Header
-  header:           { paddingHorizontal: 18, paddingBottom: 18 },
+  header:           { paddingHorizontal: 18, paddingBottom: 20 },
   topBar:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
-  headerIcon:       { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0, elevation: 0 },
-  switcher:         { flexDirection: 'row', borderRadius: 30, alignSelf: 'flex-start', padding: 4, marginBottom: 14 },
-  switchPill:       { position: 'absolute', top: 4, left: 4, bottom: 4, borderRadius: 26 },
-  switchItem:       { paddingHorizontal: 24, paddingVertical: 11, borderRadius: 26, zIndex: 1 },
+  headerIcon:       { width: 42, height: 42, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0, elevation: 0 },
+  switcher:         { flexDirection: 'row', borderRadius: 30, alignSelf: 'flex-start', padding: 3, marginBottom: 15, borderWidth: 1 },
+  switchPill:       { position: 'absolute', top: 3, left: 3, bottom: 3, borderRadius: 26 },
+  switchItem:       { paddingHorizontal: 24, paddingVertical: 7, borderRadius: 26, zIndex: 1 },
   switchText:       { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
-  searchRow:        { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ffffff', borderRadius: 30, paddingLeft: 10, paddingRight: 10, height: 54, gap: 9 },
+  searchRow:        { flexDirection: 'row', alignItems: 'center', borderRadius: 22, borderWidth: 1, paddingLeft: 10, paddingRight: 10, height: 50, gap: 9, shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 3 },
   searchIconWrap:   { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   searchInput:      { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13 },
   locationChip:     { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 7, maxWidth: 128 },
@@ -2202,8 +1945,8 @@ const s = StyleSheet.create({
   sectionHeader:    { paddingHorizontal: 18, paddingTop: 36, paddingBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   sectionEyebrow:   { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.8, marginBottom: 6 },
   sectionTitle:     { fontFamily: 'Inter_700Bold', fontSize: 22 },
-  viewAllBtn:       { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 12, paddingHorizontal: 11, paddingVertical: 8 },
-  viewAllText:      { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
+  viewAllBtn:       { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 4 },
+  viewAllText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   hRow:             { paddingHorizontal: 18, paddingBottom: 4 },
   agentCarouselViewport: { width: '100%', overflow: 'hidden' },
   agentTrack:       { flexDirection: 'row' },
@@ -2244,8 +1987,8 @@ const s = StyleSheet.create({
   trustPoint:       { flexDirection: 'row', alignItems: 'center', gap: 8, width: '47%' },
   trustIconWrap:    { width: 28, height: 28, borderRadius: 9, backgroundColor: '#c8a45a22', alignItems: 'center', justifyContent: 'center' },
   trustLabel:       { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#ffffffcc', flex: 1 },
-  heroButton:       { alignSelf: 'flex-start', paddingHorizontal: 18, paddingVertical: 12, borderRadius: 13, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#c8a45a' },
-  heroButtonText:   { color: '#ffffff', fontFamily: 'Inter_700Bold', fontSize: 13 },
+  heroButton:       { alignSelf: 'flex-start', minHeight: 40, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 13, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#c8a45a' },
+  heroButtonText:   { color: '#ffffff', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 
   // Smart CTA
   ctaCard:          { marginHorizontal: 18, marginTop: 36, borderRadius: 24, borderWidth: 1, padding: 24 },
@@ -2254,15 +1997,15 @@ const s = StyleSheet.create({
   ctaTitle:         { fontFamily: 'Inter_700Bold', fontSize: 26, lineHeight: 31, marginBottom: 10 },
   ctaDesc:          { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21, marginBottom: 22 },
   ctaBtns:          { flexDirection: 'row', gap: 12 },
-  ctaBtn1:          { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 15 },
-  ctaBtn1Text:      { fontFamily: 'Inter_700Bold', fontSize: 13 },
-  ctaBtn2:          { flex: 1, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 14, paddingVertical: 15 },
-  ctaBtn2Text:      { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  ctaBtn1:          { flex: 1, minHeight: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 6 },
+  ctaBtn1Text:      { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  ctaBtn2:          { flex: 1, minHeight: 36, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 14, paddingVertical: 6 },
+  ctaBtn2Text:      { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 
   // Drawer styles (unchanged)
   drawerRoot:         { flex: 1, flexDirection: 'row' },
-  drawerBackdrop:     { backgroundColor: '#0d1d2b99' },
-  drawerPanel:        { height: '100%', overflow: 'hidden', borderRightWidth: 1, shadowColor: '#081522', shadowOpacity: 0.3, shadowRadius: 24, shadowOffset: { width: 8, height: 0 }, elevation: 16 },
+  drawerBackdrop:     { backgroundColor: '#07142899' },
+  drawerPanel:        { height: '100%', overflow: 'hidden', borderRightWidth: 1, shadowColor: '#03251d', shadowOpacity: 0.3, shadowRadius: 24, shadowOffset: { width: 8, height: 0 }, elevation: 16 },
   drawerScrollContent:{ paddingTop: 0, paddingBottom: 18, flexGrow: 1 },
   drawerHeader:       { paddingHorizontal: 18, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   drawerClose:        { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
@@ -2286,13 +2029,13 @@ const s = StyleSheet.create({
   drawerFooter:       { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 4 },
   drawerFooterText:   { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 5 },
   infoOverlay:        { ...StyleSheet.absoluteFill, justifyContent: 'center', padding: 18 },
-  infoCard:           { borderWidth: 1, borderRadius: 22, padding: 18, overflow: 'hidden', shadowColor: '#081522', shadowOpacity: 0.28, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 12 },
+  infoCard:           { borderWidth: 1, borderRadius: 22, padding: 18, overflow: 'hidden', shadowColor: '#03251d', shadowOpacity: 0.28, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 12 },
   infoCardTop:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   infoCardIcon:       { width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   infoEyebrow:        { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.4, marginTop: 22, marginBottom: 6 },
   infoTitle:          { fontFamily: 'Inter_700Bold', fontSize: 22, lineHeight: 27 },
   infoBody:           { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 20, marginTop: 11 },
-  infoButton:         { height: 44, borderRadius: 13, marginTop: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  infoButton:         { height: 40, borderRadius: 13, marginTop: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   infoButtonText:     { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 });
 
@@ -2303,8 +2046,8 @@ const CITY_CENTRE: Record<string, { lat: number; lng: number }> = {
   'Depalpur':          { lat: 30.6647, lng: 73.9742 },
   'Renala Khurd':      { lat: 30.8794, lng: 73.5975 },
   'Hujra Shah Muqeem': { lat: 30.7389, lng: 73.8237 },
-  'Basirpur':          { lat: 31.0419, lng: 73.8369 },
-  'Haveli Lakha':      { lat: 30.5419, lng: 73.6861 },
+  'Basirpur':          { lat: 30.5802, lng: 73.8317 },
+  'Haveli Lakha':      { lat: 30.4508, lng: 73.6936 },
 };
 
 function userListingToProperty(l: UserListing, index: number): Property {

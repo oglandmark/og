@@ -11,6 +11,7 @@ export type SampleAgent = {
   initials: string;
   profileImage?: ImageSourcePropType;
   photo?: string;
+  coverPhoto?: string;
   agency: string;
   verified: boolean;
   rating: number;
@@ -42,6 +43,7 @@ export type ManagedAgentRecord = {
   about?: string;
   photo?: string | null;
   profilePhoto?: string | null;
+  coverPhoto?: string | null;
 };
 
 export function apiAgentToSample(agent: ManagedAgentRecord): SampleAgent {
@@ -55,6 +57,7 @@ export function apiAgentToSample(agent: ManagedAgentRecord): SampleAgent {
     initials: initials.toUpperCase(),
     profileImage: photo ? { uri: photo } : undefined,
     photo,
+    coverPhoto: agent.coverPhoto || undefined,
     agency: agent.agency || 'OG Landmark Agent',
     verified: agent.verified !== false,
     rating: Number(agent.rating || 0),
@@ -62,7 +65,7 @@ export function apiAgentToSample(agent: ManagedAgentRecord): SampleAgent {
     years: Number(agent.years || 0),
     listings: Number(agent.listings || 0),
     areas: Array.isArray(agent.areas) ? agent.areas : [],
-    color: agent.color || '#102a43',
+    color: agent.color || '#0B1F3A',
     phone: agent.phone || '',
     specialties: Array.isArray(agent.specialties) ? agent.specialties : [],
     about: agent.about || '',
@@ -83,7 +86,7 @@ export const SAMPLE_AGENTS: SampleAgent[] = [
     years: 12,
     listings: 48,
     areas: ['Okara City', 'Depalpur'],
-    color: '#1a6b3a',
+    color: '#183B60',
     phone: '03012345678',
     specialties: ['Residential', 'Agricultural Land', 'Plots'],
     about:
@@ -102,7 +105,7 @@ export const SAMPLE_AGENTS: SampleAgent[] = [
     years: 8,
     listings: 32,
     areas: ['Renala Khurd', 'Okara City'],
-    color: '#102a43',
+    color: '#0B1F3A',
     phone: '03042569000',
     specialties: ['Commercial', 'Residential', 'Rentals'],
     about:

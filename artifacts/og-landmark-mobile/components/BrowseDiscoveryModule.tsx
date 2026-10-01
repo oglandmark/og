@@ -417,17 +417,15 @@ function DiscCard({
       onPress={onPress}
       style={({ pressed }) => [dc.pressable, { opacity: pressed ? 0.82 : 1 }]}
     >
-      <GlassCard
-        intensity={30}
-        style={[dc.card, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}
-        contentStyle={dc.content}
-      >
-        <View style={dc.body}>
-          <Text style={[dc.label, { color: colors.foreground }]} numberOfLines={2}>{label}</Text>
-          <Text style={[dc.sub, { color: colors.mutedForeground }]}>Curated search</Text>
+      <View style={[dc.card, { backgroundColor: 'transparent' }]}>
+        <View style={dc.content}>
+          <View style={dc.body}>
+            <Text style={[dc.label, { color: colors.foreground }]} numberOfLines={2}>{label}</Text>
+            <Text style={[dc.sub, { color: colors.mutedForeground }]}>Curated search</Text>
+          </View>
+          <Feather name="chevron-right" size={15} color={colors.action} />
         </View>
-        <Feather name="chevron-right" size={15} color={colors.action} />
-      </GlassCard>
+      </View>
     </Pressable>
   );
 }
@@ -520,7 +518,7 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
 
       {/* ── Header ── */}
       <View style={mod.header}>
-        <View>
+        <View style={mod.headerCopy}>
           <Text style={[mod.eyebrow, { color: colors.primary }]}>{content?.eyebrow || 'EXPLORE THE MARKET'}</Text>
           <Text style={[mod.title, { color: colors.foreground }]}>{content?.title || 'Find Your Property'}</Text>
           <Text style={[mod.subtitle, { color: colors.mutedForeground }]}>
@@ -534,10 +532,13 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
               ? { propertyType: catDef.propertyType, category: 'Projects' }
               : { propertyType: catDef.propertyType },
           })}
-          style={[mod.viewAll, { borderColor: colors.border }]}
+          accessibilityRole="button"
+          accessibilityLabel="View all properties"
+          hitSlop={8}
+          style={[mod.viewAll, { backgroundColor: colors.action + '12', borderColor: colors.action + '38' }]}
         >
-          <Text style={[mod.viewAllText, { color: colors.foreground }]}>View All</Text>
-          <Feather name="arrow-right" size={13} color={colors.foreground} />
+          <Text style={[mod.viewAllText, { color: colors.action }]}>View All</Text>
+          <Feather name="arrow-right" size={12} color={colors.action} />
         </Pressable>
       </View>
 
@@ -709,19 +710,22 @@ const mod = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingHorizontal: 18,
     marginBottom: 16,
+    columnGap: 8,
   },
+  headerCopy: { flex: 1, minWidth: 0 },
   eyebrow: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2, marginBottom: 4 },
-  title:   { fontSize: 22, fontWeight: '700', letterSpacing: -0.3, marginBottom: 2 },
-  subtitle:{ fontSize: 12 },
+  title:   { fontSize: 20, fontWeight: '700', letterSpacing: -0.3, marginBottom: 2, flexShrink: 1 },
+  subtitle:{ fontSize: 11.5, lineHeight: 15, flexShrink: 1 },
   viewAll: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 12, paddingVertical: 7,
-    borderRadius: 20, borderWidth: 1, marginTop: 4,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
+    minHeight: 32, flexShrink: 0,
+    paddingHorizontal: 8, paddingVertical: 5,
+    borderRadius: 16, borderWidth: 1,
   },
-  viewAllText: { fontSize: 12.5, fontWeight: '500' },
+  viewAllText: { fontSize: 11, fontWeight: '600' },
   catRow: { paddingHorizontal: 14, gap: 8, paddingBottom: 14 },
   catChip: {
     alignItems: 'center', gap: 7,

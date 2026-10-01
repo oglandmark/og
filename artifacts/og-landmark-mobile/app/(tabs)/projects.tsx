@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import {
   DeveloperProject, ProjectStatus, getDevProjects, deleteDevProject,
@@ -108,9 +109,9 @@ function ProjectCard({
       <View style={card.statsRow}>
         {[
           { label: tr('unitsTotal'),    value: project.totalUnits,     color: colors.foreground },
-          { label: tr('availableLabel'),value: project.availableUnits, color: '#1a6b3a' },
+          { label: tr('availableLabel'),value: project.availableUnits, color: '#183B60' },
           { label: tr('reservedLabel'), value: project.reservedUnits,  color: '#c8a45a' },
-          { label: tr('soldLabel'),     value: project.soldUnits,      color: '#102a43' },
+          { label: tr('soldLabel'),     value: project.soldUnits,      color: '#0B1F3A' },
         ].map((stat) => (
           <View key={stat.label} style={card.stat}>
             <Text style={[card.statValue, { color: stat.color }]}>{stat.value}</Text>
@@ -145,6 +146,7 @@ function ProjectCard({
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function ProjectsScreen() {
+  const tabBarScrollHandler = useTabBarScrollHandler();
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -183,6 +185,8 @@ export default function ProjectsScreen() {
       <ScrollView
         contentContainerStyle={{ paddingTop: topPad + 16, paddingBottom: botPad + 110 }}
         showsVerticalScrollIndicator={false}
+        onScroll={tabBarScrollHandler}
+        scrollEventThrottle={16}
       >
         {/* ── Header ────────────────────────────────────── */}
         <AnimatedReveal>
@@ -300,7 +304,7 @@ const s = StyleSheet.create({
   emptyIcon:    { width: 80, height: 80, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   emptyTitle:   { fontFamily: 'Inter_700Bold', fontSize: 18, textAlign: 'center' },
   emptyDesc:    { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 20, maxWidth: 280 },
-  emptyBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingHorizontal: 20, paddingVertical: 13, marginTop: 8 },
-  emptyBtnText: { fontFamily: 'Inter_700Bold', fontSize: 14, color: '#ffffff' },
+  emptyBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingHorizontal: 20, paddingVertical: 9, marginTop: 8 },
+  emptyBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
   fab:          { position: 'absolute', right: 20, width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
 });

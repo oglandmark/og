@@ -139,19 +139,19 @@ export default function AnalyticsScreen() {
   const conversionRate = leads.length > 0 ? Math.round((closedLeads / leads.length) * 100) : 0;
 
   const kpis = [
-    { label: 'Active Listings',  value: lstats.active,  icon: 'home'       as const, color: '#102a43', change: 0 },
-    { label: 'Total Leads',      value: leads.length,   icon: 'users'      as const, color: '#1a6b3a', change: 0 },
+    { label: 'Active Listings',  value: lstats.active,  icon: 'home'       as const, color: '#0B1F3A', change: 0 },
+    { label: 'Total Leads',      value: leads.length,   icon: 'users'      as const, color: '#183B60', change: 0 },
     { label: 'New Leads',        value: newLeads,       icon: 'user-plus'  as const, color: '#c8a45a', change: 0 },
     { label: 'Deals Closed',     value: wonDeals,       icon: 'check-circle'as const,color: '#7c3aed', change: 0 },
-    { label: 'Total Views',      value: totalViews,     icon: 'eye'        as const, color: '#1a6b3a', change: 0 },
+    { label: 'Total Views',      value: totalViews,     icon: 'eye'        as const, color: '#183B60', change: 0 },
     { label: 'Saves',            value: totalSaves,     icon: 'bookmark'   as const, color: '#c8a45a', change: 0 },
     { label: 'Visits Done',      value: visits,         icon: 'calendar'   as const, color: '#7c3aed', change: 0 },
     { label: 'Conversion %',     value: conversionRate, icon: 'trending-up'as const, color: '#059669', change: 0 },
   ];
 
   const funnelRows = [
-    { label: 'Listings',  value: lstats.total,                                   color: '#102a43' },
-    { label: 'Views',     value: totalViews,                                      color: '#1a6b3a' },
+    { label: 'Listings',  value: lstats.total,                                   color: '#0B1F3A' },
+    { label: 'Views',     value: totalViews,                                      color: '#183B60' },
     { label: 'Leads',     value: leads.length,                                   color: '#c8a45a' },
     { label: 'Interested',value: leads.filter((l) => l.status === 'interested').length, color: '#7c3aed' },
     { label: 'Closed',    value: closedLeads,                                    color: '#059669' },
@@ -227,7 +227,7 @@ export default function AnalyticsScreen() {
           <View style={[st.chartCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[st.chartTitle, { color: colors.foreground }]}>Listings Posted</Text>
             <Text style={[st.chartSub, { color: colors.mutedForeground }]}>Last {PERIOD_LABELS[period]}</Text>
-            <BarChart data={chartListings} color="#102a43" />
+            <BarChart data={chartListings} color="#0B1F3A" />
           </View>
         </AnimatedReveal>
       )}
@@ -278,7 +278,7 @@ export default function AnalyticsScreen() {
                       <Text style={[st.miniStatText, { color: colors.foreground }]}>{l.views ?? 0}</Text>
                     </View>
                     <View style={st.miniStat}>
-                      <Feather name="users" size={10} color="#1a6b3a" />
+                      <Feather name="users" size={10} color="#183B60" />
                       <Text style={[st.miniStatText, { color: colors.foreground }]}>{l.leadsCount ?? 0}</Text>
                     </View>
                   </View>
@@ -307,8 +307,8 @@ export default function AnalyticsScreen() {
         <Text style={[st.sectionLabel, { color: colors.mutedForeground }]}>LEAD STATUS BREAKDOWN</Text>
         <View style={[st.listingsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {[
-            { label: 'New',        count: leads.filter((l) => l.status === 'new').length,        color: '#1a6b3a' },
-            { label: 'Contacted',  count: leads.filter((l) => l.status === 'contacted').length,  color: '#102a43' },
+            { label: 'New',        count: leads.filter((l) => l.status === 'new').length,        color: '#183B60' },
+            { label: 'Contacted',  count: leads.filter((l) => l.status === 'contacted').length,  color: '#0B1F3A' },
             { label: 'Interested', count: leads.filter((l) => l.status === 'interested').length, color: '#c8a45a' },
             { label: 'Viewing',    count: leads.filter((l) => l.status === 'viewing').length,    color: '#7c3aed' },
             { label: 'Closed',     count: closedLeads,                                           color: '#059669' },

@@ -12,7 +12,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
-import { apiAgentToSample, SampleAgent } from '@/lib/agentsData';
+import { apiAgentToSample, SAMPLE_AGENTS, SampleAgent } from '@/lib/agentsData';
 import { getAgents } from '@/lib/api';
 import { addInquiry } from '@/lib/inquiriesStore';
 import { getMyListings, UserListing } from '@/lib/listingsStore';
@@ -63,15 +63,15 @@ function ContactModal({
 
   if (!visible) return null;
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose} statusBarTranslucent>
       <View style={cm.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         <View style={[cm.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}>
           <View style={[cm.handle, { backgroundColor: colors.border }]} />
           {sent ? (
             <View style={cm.successWrap}>
-              <View style={[cm.successIcon, { backgroundColor: '#1a6b3a18' }]}>
-                <Feather name="check-circle" size={36} color="#1a6b3a" />
+              <View style={[cm.successIcon, { backgroundColor: '#183B6018' }]}>
+                <Feather name="check-circle" size={36} color="#183B60" />
               </View>
               <Text style={[cm.successTitle, { color: colors.foreground }]}>Inquiry Sent!</Text>
               <Text style={[cm.successDesc, { color: colors.mutedForeground }]}>
@@ -126,7 +126,7 @@ function ContactModal({
 }
 
 const cm = StyleSheet.create({
-  overlay:    { flex: 1, justifyContent: 'flex-end', backgroundColor: '#0d1d2baa' },
+  overlay:    { flex: 1, justifyContent: 'flex-end', backgroundColor: '#071428aa' },
   sheet:      { borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingTop: 10, paddingHorizontal: 18 },
   handle:     { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 18 },
   header:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
@@ -137,16 +137,16 @@ const cm = StyleSheet.create({
   typeChipText:{ fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   input:      { borderWidth: 1, borderRadius: 14, padding: 13, fontFamily: 'Inter_400Regular', fontSize: 13, minHeight: 100, textAlignVertical: 'top', marginBottom: 16 },
   actions:    { flexDirection: 'row', gap: 10, marginBottom: 4 },
-  altBtn:     { flex: 0.7, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 14, paddingVertical: 14 },
+  altBtn:     { flex: 0.7, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderRadius: 14, paddingVertical: 9 },
   altBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
-  sendBtn:    { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 14 },
-  sendBtnText:{ fontFamily: 'Inter_700Bold', fontSize: 13 },
+  sendBtn:    { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 9 },
+  sendBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   successWrap:  { alignItems: 'center', paddingVertical: 28, gap: 12, paddingHorizontal: 8 },
   successIcon:  { width: 72, height: 72, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   successTitle: { fontFamily: 'Inter_700Bold', fontSize: 22 },
   successDesc:  { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 20 },
-  doneBtn:      { borderRadius: 14, paddingHorizontal: 40, paddingVertical: 14, marginTop: 8 },
-  doneBtnText:  { fontFamily: 'Inter_700Bold', fontSize: 14 },
+  doneBtn:      { borderRadius: 14, paddingHorizontal: 40, paddingVertical: 9, marginTop: 8 },
+  doneBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });
 
 // ── Agent profile type (unified for sample + real agents) ────────────────────
@@ -156,6 +156,7 @@ type AgentProfile = {
   displayName: string;
   initials: string;
   profileImage?: SampleAgent['profileImage'];
+  coverPhoto?: string;
   agency: string;
   verified: boolean;
   years: number;
@@ -168,8 +169,8 @@ type AgentProfile = {
   isSample: boolean;
 };
 
-function toProfile(a: SampleAgent): AgentProfile {
-  return { ...a, displayName: a.displayName, isSample: false };
+function toProfile(a: SampleAgent, isSample = false): AgentProfile {
+  return { ...a, displayName: a.displayName, isSample };
 }
 
 // ── Main screen ───────────────────────────────────────────────────────────────
@@ -180,6 +181,7 @@ export default function AgentProfileScreen() {
   const insets  = useSafeAreaInsets();
   const { user } = useAuth();
   const { id }  = useLocalSearchParams<{ id: string }>();
+  const sampleAgent = SAMPLE_AGENTS.find((item) => String(item.id) === String(id));
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
   const [contactOpen,   setContactOpen]   = useState(false);
@@ -207,17 +209,20 @@ export default function AgentProfileScreen() {
   // agent's private profile route as before.
   const agent: AgentProfile | null = managedAgent
     ? toProfile(managedAgent)
+    : sampleAgent
+    ? toProfile(sampleAgent, true)
     : user?.role === 'agent'
     ? {
         id: user.id,
         displayName: user.name ?? 'Agent',
         initials: (user.name ?? 'A').split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase(),
+         coverPhoto: user.coverPhoto ?? undefined,
         agency: user.agencyName ?? 'Agency',
         verified: user.verificationStatus === 'verified',
         years: Number(user.yearsExperience ?? 0),
         listings: 0,
         areas: user.areasServed ?? [],
-        color: '#102a43',
+        color: '#0B1F3A',
         phone: user.phone ?? '',
         specialties: user.specializations ?? [],
         about: '',
@@ -266,6 +271,10 @@ export default function AgentProfileScreen() {
 
       {/* ── HEADER ────────────────────────────────────────────────────── */}
       <View style={[styles.header, { backgroundColor: colors.action }]}>
+        {agent.coverPhoto ? (
+          <Image source={{ uri: agent.coverPhoto }} style={styles.coverImage} resizeMode="cover" />
+        ) : null}
+        <View style={styles.coverOverlay} />
         {/* back */}
         <Pressable onPress={() => router.back()} style={[styles.backCircle, { top: topInset + 10 }]}>
           <Feather name="arrow-left" size={20} color="#ffffff" />
@@ -312,10 +321,10 @@ export default function AgentProfileScreen() {
       {/* ── ACTION BUTTONS ─────────────────────────────────────────────── */}
       <View style={[styles.actionsRow, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         {[
-          { icon: 'phone',    label: 'Call',     color: '#1a6b3a', onPress: () => Linking.openURL(`tel:${agent.phone}`) },
+          { icon: 'phone',    label: 'Call',     color: '#183B60', onPress: () => Linking.openURL(`tel:${agent.phone}`) },
           { icon: 'message-circle', label: 'WhatsApp', color: '#25d366', onPress: () => Linking.openURL(`https://wa.me/92${agent.phone.replace(/^0/, '')}`) },
           { icon: 'calendar', label: 'Schedule', color: '#c8a45a', onPress: () => setVisitOpen(true) },
-          { icon: 'send',     label: 'Enquire',  color: '#102a43', onPress: () => setContactOpen(true) },
+          { icon: 'send',     label: 'Enquire',  color: '#0B1F3A', onPress: () => setContactOpen(true) },
         ].map((a) => (
           <Pressable key={a.label} onPress={a.onPress} style={({ pressed }) => [styles.actionBtn, { opacity: pressed ? 0.8 : 1 }]}>
             <View style={[styles.actionIcon, { backgroundColor: a.color + '18', borderColor: a.color + '44' }]}>
@@ -335,7 +344,7 @@ export default function AgentProfileScreen() {
           { value: '< 1hr', label: 'Response\nTime' },
         ].map((s, i, arr) => (
           <View key={s.label} style={[styles.statItem, i < arr.length - 1 ? { borderRightWidth: 1, borderRightColor: colors.border } : {}]}>
-            <Text style={[styles.statVal, { color: i === 3 ? '#1a6b3a' : colors.foreground }]}>{s.value}</Text>
+            <Text style={[styles.statVal, { color: i === 3 ? '#183B60' : colors.foreground }]}>{s.value}</Text>
             <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{s.label}</Text>
           </View>
         ))}
@@ -383,14 +392,14 @@ export default function AgentProfileScreen() {
 
       {/* ── VERIFICATION INFO ─────────────────────────────────────────── */}
       {agent.verified && (
-        <View style={[styles.verCard, { backgroundColor: '#1a6b3a08', borderColor: '#1a6b3a20' }]}>
+        <View style={[styles.verCard, { backgroundColor: '#183B6008', borderColor: '#183B6020' }]}>
           <View style={styles.verHeader}>
-            <Feather name="shield" size={16} color="#1a6b3a" />
-            <Text style={[styles.verTitle, { color: '#1a6b3a' }]}>Why is this agent verified?</Text>
+            <Feather name="shield" size={16} color="#183B60" />
+            <Text style={[styles.verTitle, { color: '#183B60' }]}>Why is this agent verified?</Text>
           </View>
           {['Identity verified', 'Contact information verified', 'Agency information reviewed', 'Professional credentials reviewed', 'Listings quality checked'].map((c) => (
             <View key={c} style={styles.verItem}>
-              <Feather name="check-circle" size={12} color="#1a6b3a" />
+              <Feather name="check-circle" size={12} color="#183B60" />
               <Text style={[styles.verItemText, { color: colors.foreground }]}>{c}</Text>
             </View>
           ))}
@@ -508,13 +517,15 @@ const styles = StyleSheet.create({
   backBtnText:    { fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#ffffff' },
   // Header
   header:         { paddingHorizontal: 18, paddingBottom: 28, paddingTop: 50, alignItems: 'center' },
+  coverImage:     { ...StyleSheet.absoluteFill },
+  coverOverlay:   { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(8,24,40,0.54)' },
   backCircle:     { position: 'absolute', left: 18, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
   shareCircle:    { position: 'absolute', right: 18, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
   avatarWrap:     { position: 'relative', marginBottom: 12, marginTop: 8 },
   avatar:         { width: 88, height: 88, borderRadius: 28, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: 'rgba(255,255,255,0.3)' },
   avatarImage:    { width: '100%', height: '100%', borderRadius: 25 },
   avatarInitials: { fontFamily: 'Inter_700Bold', fontSize: 32, color: '#ffffff' },
-  verifiedDot:    { position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: '#1a6b3a', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#ffffff' },
+  verifiedDot:    { position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: '#183B60', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#ffffff' },
   agentName:      { fontFamily: 'Inter_700Bold', fontSize: 22, color: '#ffffff', textAlign: 'center', letterSpacing: -0.3 },
   agentAgency:    { fontFamily: 'Inter_400Regular', fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
   verifiedBadge:  { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 10, backgroundColor: 'rgba(200,164,90,0.2)', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
@@ -572,8 +583,8 @@ const styles = StyleSheet.create({
   reviewSampleText:{ fontFamily: 'Inter_400Regular', fontSize: 10, flex: 1 },
   // Footer
   footerCTA:      { flexDirection: 'row', gap: 12, paddingHorizontal: 18, paddingTop: 18 },
-  callBtn:        { flex: 0.7, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 14, paddingVertical: 14 },
+  callBtn:        { flex: 0.7, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 14, paddingVertical: 9 },
   callBtnText:    { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  enquireBtn:     { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 14 },
-  enquireBtnText: { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  enquireBtn:     { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 14, paddingVertical: 9 },
+  enquireBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });

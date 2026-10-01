@@ -620,8 +620,8 @@ const s = StyleSheet.create({
   apiError:      { borderRadius: 12, borderWidth: 1, padding: 10, marginBottom: 10 },
   apiErrorText:  { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18 },
   footerRow:     { flexDirection: 'row', gap: 10 },
-  backFooterBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 13, paddingHorizontal: 16, paddingVertical: 14, borderWidth: 1 },
+  backFooterBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 13, paddingHorizontal: 16, paddingVertical: 11, borderWidth: 1 },
   backFooterText:{ fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  nextBtn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, paddingHorizontal: 28, paddingVertical: 14 },
-  nextBtnText:   { fontFamily: 'Inter_700Bold', fontSize: 14, color: '#fff' },
+  nextBtn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, paddingHorizontal: 28, paddingVertical: 11 },
+  nextBtnText:   { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff' },
 });

@@ -18,6 +18,7 @@ import {
 } from '@/lib/plotCalculator';
 import { getMobileSettings } from '@/lib/api';
 import { PlotMeasurementCalculator } from '@/components/PlotMeasurementCalculator';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 
 // ── Unit conversion data ──────────────────────────────────────────────────────
 const CONV_UNITS = [
@@ -195,6 +196,7 @@ export default function CalculatorScreen() {
   const router       = useRouter();
   const insets       = useSafeAreaInsets();
   const tabBarHeight = useTabBarHeight();
+  const onScroll = useTabBarScrollHandler();
   const topPad       = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const [content, setContent] = useState<any>(null);
   useEffect(() => {
@@ -206,6 +208,8 @@ export default function CalculatorScreen() {
       style={[lc.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topPad + 16, paddingBottom: tabBarHeight + 16 }}
       showsVerticalScrollIndicator={false}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
     >
       {/* ── Header ────────────────────────────────────────────────────── */}
       <View style={lc.header}>

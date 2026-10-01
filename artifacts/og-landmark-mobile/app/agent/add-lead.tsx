@@ -20,16 +20,16 @@ import {
 } from '@/lib/leadsStore';
 
 const STATUSES: { key: LeadStatus; label: string; color: string }[] = [
-  { key: 'new',        label: 'New',       color: '#102a43' },
+  { key: 'new',        label: 'New',       color: '#0B1F3A' },
   { key: 'contacted',  label: 'Contacted', color: '#c8a45a' },
-  { key: 'interested', label: 'Interested',color: '#1a6b3a' },
+  { key: 'interested', label: 'Interested',color: '#183B60' },
   { key: 'viewing',    label: 'Viewing',   color: '#7c3aed' },
 ];
 
 const PRIORITIES: { key: LeadPriority; label: string; color: string }[] = [
   { key: 'high',   label: '🔴 High',   color: '#b94b42' },
   { key: 'medium', label: '🟡 Medium', color: '#c8a45a' },
-  { key: 'low',    label: '🟢 Low',    color: '#1a6b3a' },
+  { key: 'low',    label: '🟢 Low',    color: '#183B60' },
 ];
 
 function FieldLabel({ label, required }: { label: string; required?: boolean }) {
@@ -259,6 +259,6 @@ const al = StyleSheet.create({
   textarea:    { height: 80, textAlignVertical: 'top', paddingTop: 12 },
   chip:        { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
   chipText:    { fontFamily: 'Inter_500Medium', fontSize: 11 },
-  saveBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 16 },
-  saveBtnText: { fontFamily: 'Inter_700Bold', fontSize: 15, color: '#ffffff' },
+  saveBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 11 },
+  saveBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
 });

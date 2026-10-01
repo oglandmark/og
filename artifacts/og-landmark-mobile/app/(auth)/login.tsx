@@ -19,7 +19,7 @@ import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { useFacebookAuth } from '@/lib/facebookAuth';
 import { Button } from '@/components/PolishedUI';
 
-const ACTION = '#102a43';
+const ACTION = '#0B1F3A';
 const GOLD   = '#c8a45a';
 const MUTED  = '#8a8f98';
 const BORDER = '#e4e6ea';
@@ -238,15 +238,15 @@ const styles = StyleSheet.create({
   remText:       { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#1c2024' },
   forgotText:    { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: GOLD },
 
-  loginBtn:      { height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
-  loginBtnText:  { fontFamily: 'Inter_700Bold', fontSize: 15, color: '#fff', letterSpacing: 0.3 },
+  loginBtn:      { height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
+  loginBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff', letterSpacing: 0.3 },
 
   dividerRow:    { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
   dividerLine:   { flex: 1, height: 1, backgroundColor: BORDER },
   dividerText:   { fontFamily: 'Inter_400Regular', fontSize: 12, color: MUTED },
 
   socialRow:     { flexDirection: 'row', gap: 10, marginBottom: 30 },
-  socialBtn:     { flex: 1, height: 48, borderRadius: 10, borderWidth: 1, borderColor: BORDER,
+  socialBtn:     { flex: 1, height: 44, borderRadius: 10, borderWidth: 1, borderColor: BORDER,
                    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
                    backgroundColor: '#fff' },
   socialText:    { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#1c2024' },

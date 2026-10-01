@@ -106,9 +106,9 @@ export default function BuyerRequestScreen() {
         <Text style={[st.successBody, { color: colors.mutedForeground }]}>
           Verified agents and sellers will reach out with matching properties via your preferred contact method.
         </Text>
-        <View style={[st.statusBadge, { backgroundColor: '#1a6b3a14', borderColor: '#1a6b3a33' }]}>
-          <Feather name="radio" size={12} color="#1a6b3a" />
-          <Text style={[st.statusText, { color: '#1a6b3a' }]}>ACTIVE REQUEST</Text>
+        <View style={[st.statusBadge, { backgroundColor: '#183B6014', borderColor: '#183B6033' }]}>
+          <Feather name="radio" size={12} color="#183B60" />
+          <Text style={[st.statusText, { color: '#183B60' }]}>ACTIVE REQUEST</Text>
         </View>
         <AnimatedPressable onPress={() => router.push('/(tabs)/listings')} style={[st.successBtn, { backgroundColor: colors.action, marginTop: 24 }]}>
           <Text style={[st.successBtnText, { color: colors.actionForeground }]}>View My Requests</Text>
@@ -368,8 +368,8 @@ const st = StyleSheet.create({
   textAreaWrap:  { borderRadius: 14, borderWidth: 1, overflow: 'hidden', marginBottom: 4 },
   textArea:      { fontFamily: 'Inter_400Regular', fontSize: 14, padding: 14, zIndex: 1, minHeight: 120 },
   charCount:     { fontFamily: 'Inter_400Regular', fontSize: 10, textAlign: 'right', paddingRight: 12, paddingBottom: 8, zIndex: 1 },
-  submit:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 16, marginTop: 8 },
-  submitText:    { fontFamily: 'Inter_700Bold', fontSize: 15 },
+  submit:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 11, marginTop: 8 },
+  submitText:    { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   hint:          { fontFamily: 'Inter_400Regular', fontSize: 12, textAlign: 'center', marginTop: 10 },
   errorText:     { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#e53e3e', marginTop: 2, marginBottom: 8 },
   // Success
@@ -378,7 +378,7 @@ const st = StyleSheet.create({
   successBody:   { fontFamily: 'Inter_400Regular', fontSize: 14, textAlign: 'center', lineHeight: 21, marginBottom: 16 },
   statusBadge:   { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8 },
   statusText:    { fontFamily: 'Inter_700Bold', fontSize: 11, letterSpacing: 0.8 },
-  successBtn:    { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 16, paddingVertical: 15, paddingHorizontal: 28 },
-  successBtnText:{ fontFamily: 'Inter_700Bold', fontSize: 15 },
+  successBtn:    { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 16, paddingVertical: 10, paddingHorizontal: 28 },
+  successBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   successLink:   { fontFamily: 'Inter_600SemiBold', fontSize: 14, textDecorationLine: 'underline' },
 });

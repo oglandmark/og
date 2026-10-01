@@ -208,7 +208,7 @@ export default function DocumentsScreen() {
                     <Image source={{ uri: docUri }} style={dc.preview} resizeMode="cover" />
                     <View style={{ flex: 1, marginLeft: 10 }}>
                       <Text style={[dc.previewName, { color: colors.foreground }]} numberOfLines={2}>{docFileName}</Text>
-                      <Text style={[dc.previewOk, { color: '#1a6b3a' }]}>✓ File selected</Text>
+                      <Text style={[dc.previewOk, { color: '#183B60' }]}>✓ File selected</Text>
                     </View>
                     <Pressable onPress={() => { setDocUri(''); setDocFileName(''); }} hitSlop={8}>
                       <Feather name="x" size={16} color={colors.mutedForeground} />
@@ -308,8 +308,8 @@ const dc = StyleSheet.create({
   eyebrow:      { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.5, marginBottom: 2 },
   title:        { fontFamily: 'Inter_700Bold', fontSize: 22 },
   subtitle:     { fontFamily: 'Inter_400Regular', fontSize: 12 },
-  addBtn:       { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 },
-  addBtnText:   { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
+  addBtn:       { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 7, minHeight: 40 },
+  addBtnText:   { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   formCard:     { borderWidth: 1.5, borderRadius: 18, padding: 16, gap: 14 },
   formTitle:    { fontFamily: 'Inter_700Bold', fontSize: 16, marginBottom: 4 },
   fWrap:        { gap: 6 },
@@ -317,20 +317,20 @@ const dc = StyleSheet.create({
   fInput:       { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontFamily: 'Inter_400Regular', fontSize: 14 },
   chip:         { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
   chipText:     { fontFamily: 'Inter_500Medium', fontSize: 11 },
-  pickBtn:      { flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 14, justifyContent: 'center' },
-  pickBtnText:  { fontFamily: 'Inter_500Medium', fontSize: 12 },
+  pickBtn:      { flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderRadius: 12, paddingVertical: 7, minHeight: 40, paddingHorizontal: 14, justifyContent: 'center' },
+  pickBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   previewWrap:  { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 12, padding: 10, marginTop: 8 },
   preview:      { width: 56, height: 56, borderRadius: 10 },
   previewName:  { fontFamily: 'Inter_500Medium', fontSize: 12, marginBottom: 4, lineHeight: 16 },
   previewOk:    { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
-  saveBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 13 },
-  saveBtnText:  { fontFamily: 'Inter_700Bold', fontSize: 14, color: '#ffffff' },
+  saveBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 8, minHeight: 40 },
+  saveBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
   emptyWrap:    { borderWidth: 1, borderRadius: 18, padding: 36, alignItems: 'center', gap: 12, borderStyle: 'dashed' },
   emptyIcon:    { width: 76, height: 76, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   emptyTitle:   { fontFamily: 'Inter_700Bold', fontSize: 17 },
   emptyDesc:    { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 20, maxWidth: 260 },
-  emptyBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 12, marginTop: 4 },
-  emptyBtnText: { fontFamily: 'Inter_700Bold', fontSize: 14, color: '#ffffff' },
+  emptyBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 8, minHeight: 40, marginTop: 4 },
+  emptyBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
   typeHeader:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
   typeIcon:     { width: 26, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   typeLabel:    { fontFamily: 'Inter_700Bold', fontSize: 12, flex: 1 },

@@ -3,10 +3,10 @@
  * Single-page flow: Type → Location → Basic → Type-Specific → Features → Media → Docs → Preview
  * 20 property types with per-type dynamic fields.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {
-  Alert, Image, Platform,
+  ActivityIndicator, Alert, Image, Platform,
   Pressable, ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -15,9 +15,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
-import { addUserListing } from '@/lib/listingsStore';
+import {
+  addUserListing,
+  getUserListingByApiId,
+  updateUserListing,
+  type UserListing,
+} from '@/lib/listingsStore';
 import { uploadMultipleImages, uploadVideo } from '@/lib/api';
-import { LocationPicker } from '@/components/LocationPicker';
+import { LocationPicker, PinnedMapCard } from '@/components/LocationPicker';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
@@ -319,6 +324,80 @@ const defaultForm = (): Form => ({
   showWhatsApp: true, allowCalls: true,
 });
 
+const FORM_STRING_FIELDS: Array<keyof Form> = [
+  'propertyType', 'purpose', 'city', 'locality', 'society', 'block', 'street',
+  'landmark', 'fullAddress', 'streetAddress', 'placeId', 'district', 'tehsil',
+  'province', 'postalCode', 'country', 'locationSource', 'title', 'price',
+  'area', 'areaUnit', 'bedrooms', 'bathrooms', 'floors', 'coveredArea',
+  'furnishing', 'constructionYear', 'parking', 'facing', 'roadFront',
+  'plotDimensions', 'floorNumber', 'totalFloors', 'maintenanceCharges',
+  'possessionStatus', 'roomType', 'minimumStay', 'availableFrom', 'familyPref',
+  'waterSource', 'farmArea', 'roadWidth', 'devStatus', 'landType',
+  'tubeWellType', 'soilType', 'landLevel', 'currentCrop', 'trees',
+  'nearbyCanalRiver', 'farmType', 'orchardType', 'numberOfTrees',
+  'productionStatus', 'shopDimensions', 'cabins', 'numShops', 'numOffices',
+  'numApartments', 'occupancyStatus', 'rentalIncome', 'warehouseHeight',
+  'electricityLoad', 'factoryType', 'industrialZone', 'ceilingHeight',
+  'displayArea', 'nocStatus', 'projectName', 'developer', 'totalUnits',
+  'startingPrice', 'paymentPlan', 'downPayment', 'installmentPlan',
+  'possessionDate', 'plotSizes', 'description', 'keyHighlights',
+  'ownershipStatus',
+];
+
+function isLocalMediaUri(uri: string): boolean {
+  return /^(file|content|ph|assets-library|blob|data):/i.test(uri);
+}
+
+function formFromListing(listing: UserListing): Form {
+  const base = defaultForm();
+  const details = listing.propertyDetails && typeof listing.propertyDetails === 'object'
+    ? listing.propertyDetails
+    : {};
+  const hydrated = {
+    ...base,
+    ...details,
+    propertyType: details.propertyType ?? listing.type,
+    purpose: details.purpose
+      ?? (listing.status.replace(/^For\s+/i, '') || 'Sale'),
+    city: details.city ?? listing.city,
+    locality: details.locality ?? listing.locality ?? listing.location?.locality ?? '',
+    fullAddress: details.fullAddress ?? listing.fullAddress ?? listing.location?.address ?? '',
+    streetAddress: details.streetAddress ?? listing.location?.streetAddress ?? '',
+    placeId: details.placeId ?? listing.placeId ?? listing.location?.placeId ?? '',
+    district: details.district ?? listing.district ?? listing.location?.district ?? '',
+    tehsil: details.tehsil ?? listing.tehsil ?? listing.location?.tehsil ?? '',
+    province: details.province ?? listing.location?.province ?? '',
+    postalCode: details.postalCode ?? listing.location?.postalCode ?? '',
+    country: details.country ?? listing.location?.country ?? '',
+    locationAccuracy: details.locationAccuracy ?? listing.locationAccuracy ?? listing.location?.accuracy ?? null,
+    locationSource: details.locationSource ?? listing.locationSource ?? listing.location?.source ?? '',
+    title: listing.title,
+    price: details.price != null ? String(details.price) : String(listing.price ?? ''),
+    area: details.area != null ? String(details.area) : String(listing.area ?? ''),
+    areaUnit: details.areaUnit ?? listing.areaUnit ?? base.areaUnit,
+    bedrooms: details.bedrooms != null ? String(details.bedrooms) : String(listing.bedrooms ?? ''),
+    bathrooms: details.bathrooms != null ? String(details.bathrooms) : String(listing.bathrooms ?? ''),
+    description: typeof details.description === 'string' ? details.description : listing.description,
+    features: Array.isArray(details.features) ? details.features : (listing.features ?? []),
+    documents: Array.isArray(details.documents) ? details.documents : (listing.documents ?? []),
+    photos: listing.images ?? [],
+    coverPhotoIndex: 0,
+    video: listing.videoUrl ? { uri: listing.videoUrl, filename: 'Existing video' } : null,
+  } as Form;
+
+  const mutable = hydrated as unknown as Record<string, unknown>;
+  FORM_STRING_FIELDS.forEach((key) => {
+    const value = mutable[key];
+    if (value !== null && value !== undefined && typeof value !== 'string' && typeof value !== 'boolean') {
+      mutable[key] = String(value);
+    }
+  });
+  mutable.features = Array.isArray(mutable.features) ? mutable.features.filter((item): item is string => typeof item === 'string') : [];
+  mutable.documents = Array.isArray(mutable.documents) ? mutable.documents.filter((item): item is string => typeof item === 'string') : [];
+  mutable.photos = Array.isArray(mutable.photos) ? mutable.photos.filter((item): item is string => typeof item === 'string') : [];
+  return hydrated;
+}
+
 function categoryOf(type: string): PropCategory {
   return PROPERTY_TYPES.find((t) => t.key === type)?.category ?? 'residential';
 }
@@ -334,7 +413,8 @@ export default function ListingWizard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const params = useLocalSearchParams<{ purpose?: string }>();
+  const params = useLocalSearchParams<{ purpose?: string; editId?: string }>();
+  const editId = String(params.editId ?? '');
 
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
@@ -347,6 +427,43 @@ export default function ListingWizard() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [locationConfirmed, setLocationConfirmed] = useState(false);
+  const [editLoading, setEditLoading] = useState(Boolean(editId));
+  const [editingListing, setEditingListing] = useState<UserListing | null>(null);
+
+  useEffect(() => {
+    if (!editId) return;
+    const apiId = Number(editId);
+    if (!Number.isInteger(apiId)) {
+      Alert.alert('Could not edit listing', 'This listing link is invalid.');
+      router.back();
+      return;
+    }
+    let mounted = true;
+    setEditLoading(true);
+    void getUserListingByApiId(apiId)
+      .then((listing) => {
+        if (!mounted) return;
+        if (!listing) {
+          Alert.alert('Could not edit listing', 'This listing is no longer available in your account.');
+          router.back();
+          return;
+        }
+        setEditingListing(listing);
+        setForm(formFromListing(listing));
+        setLocationConfirmed(listing.latitude != null && listing.longitude != null);
+      })
+      .catch((error: unknown) => {
+        if (!mounted) return;
+        Alert.alert('Could not load listing', error instanceof Error ? error.message : 'Please try again.');
+        router.back();
+      })
+      .finally(() => {
+        if (mounted) setEditLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [editId, router]);
 
   const category = categoryOf(form.propertyType);
   const update = (patch: Partial<Form>) => setForm((f) => ({ ...f, ...patch }));
@@ -413,33 +530,60 @@ export default function ListingWizard() {
     setSubmitting(true);
     try {
       const priceNum = Number(form.price.replace(/[^0-9]/g, ''));
-      let uploadedImages: string[] = [];
-      if (form.photos.length > 0) {
-        try { uploadedImages = await uploadMultipleImages(form.photos); }
-        catch { throw new Error('Photos could not be uploaded. Please check your connection and try again.'); }
+      const localPhotoIndexes = form.photos
+        .map((uri, index) => (isLocalMediaUri(uri) ? index : -1))
+        .filter((index) => index >= 0);
+      let uploadedImages = [...form.photos];
+      if (localPhotoIndexes.length > 0) {
+        const localUris = localPhotoIndexes.map((index) => form.photos[index]);
+        let uploadedLocal: string[];
+        try {
+          uploadedLocal = await uploadMultipleImages(localUris);
+        } catch {
+          throw new Error('Photos could not be uploaded. Please check your connection and try again.');
+        }
+        uploadedImages = [...form.photos];
+        localPhotoIndexes.forEach((index, localIndex) => {
+          uploadedImages[index] = uploadedLocal[localIndex];
+        });
       }
-      let uploadedVideoUrl: string | undefined;
+      // The public catalogue uses images[0] as the cover. Preserve the photo
+      // selected in Review & Publish instead of silently reverting to the
+      // picker order.
+      if (uploadedImages.length > 1 && form.coverPhotoIndex > 0) {
+        const cover = uploadedImages[form.coverPhotoIndex];
+        if (cover) {
+          uploadedImages = [cover, ...uploadedImages.filter((_, index) => index !== form.coverPhotoIndex)];
+        }
+      }
+      let uploadedVideoUrl: string | null = form.video?.uri ?? null;
       if (form.video?.uri) {
-        try { uploadedVideoUrl = (await uploadVideo(form.video.uri, form.video.filename ?? 'video.mp4')).url; }
-        catch { throw new Error('Video could not be uploaded. Please try again or remove the video.'); }
+        if (isLocalMediaUri(form.video.uri)) {
+          try { uploadedVideoUrl = (await uploadVideo(form.video.uri, form.video.filename ?? 'video.mp4')).url; }
+          catch { throw new Error('Video could not be uploaded. Please try again or remove the video.'); }
+        }
       }
       const location = [form.locality, form.society, form.city].filter(Boolean).join(', ');
       const propertyDetails = Object.fromEntries(
         Object.entries(form).filter(([key]) => key !== 'photos' && key !== 'video'),
       );
+      propertyDetails.coverPhotoIndex = 0;
       const district = form.district || (form.city.toLowerCase() === 'depalpur'
         ? 'Okara'
         : form.city);
       const tehsil = form.tehsil || form.city;
-      await addUserListing({
+      const listing: UserListing = {
         id: `listing_${Date.now()}`,
-        postedBy: user?.id ?? 'unknown',
+        apiId: editingListing?.apiId,
+        postedBy: editingListing?.postedBy ?? user?.id ?? 'unknown',
         agentName: user?.name ?? '',
         role: 'agent',
         title: form.title || `${form.propertyType} ${form.purpose === 'Rent' ? 'for Rent' : form.purpose === 'Lease' ? 'for Lease' : 'for Sale'} in ${form.city}`,
         type: form.propertyType,
         category,
-        status: form.purpose === 'Rent' ? 'For Rent' : 'For Sale',
+        status: form.purpose === 'Rent'
+          ? 'For Rent'
+          : form.purpose === 'Lease' ? 'For Lease' : 'For Sale',
         price: priceNum,
         area: Number(form.area) || 0,
         areaUnit: form.areaUnit,
@@ -451,7 +595,7 @@ export default function ListingWizard() {
         listingStatus: 'Pending',
         views: 0, saves: 0, leadsCount: 0,
         images: uploadedImages,
-        videoUrl: uploadedVideoUrl,
+        videoUrl: uploadedVideoUrl ?? undefined,
         features: form.features,
         documents: form.documents,
         district,
@@ -490,7 +634,12 @@ export default function ListingWizard() {
         ].filter(Boolean).join('\n\n'),
         // Agri specifics
         ...(category === 'agricultural' && { nehriWater: form.nehriWater, tubeWell: form.tubeWell, soilType: form.soilType, mainCrop: form.currentCrop }),
-      });
+      };
+      if (editingListing) {
+        await updateUserListing({ ...editingListing, ...listing });
+      } else {
+        await addUserListing(listing);
+      }
       setSubmitted(true);
     } catch (error) {
       const message = error instanceof Error && error.message
@@ -504,15 +653,28 @@ export default function ListingWizard() {
 
   // ── Success Screen ─────────────────────────────────────────────────────────
 
+  if (editLoading) {
+    return (
+      <View style={[s.screen, { backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', gap: 12 }]}>
+        <ActivityIndicator size="large" color={colors.action} />
+        <Text style={[s.successBody, { color: colors.mutedForeground }]}>Loading your listing…</Text>
+      </View>
+    );
+  }
+
   if (submitted) {
     return (
       <View style={[s.screen, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
-        <View style={[s.successIcon, { backgroundColor: '#1a6b3a14', borderColor: '#1a6b3a33' }]}>
-          <Feather name="check-circle" size={42} color="#1a6b3a" />
+        <View style={[s.successIcon, { backgroundColor: '#183B6014', borderColor: '#183B6033' }]}>
+          <Feather name="check-circle" size={42} color="#183B60" />
         </View>
-        <Text style={[s.successTitle, { color: colors.foreground }]}>Property Submitted!</Text>
+        <Text style={[s.successTitle, { color: colors.foreground }]}>
+          {editingListing ? 'Listing Updated!' : 'Property Submitted!'}
+        </Text>
         <Text style={[s.successBody, { color: colors.mutedForeground }]}>
-          Our team will review your listing before it goes live. You'll be notified once it's approved.
+          {editingListing
+            ? 'Your changes were saved and the listing is back in the review queue.'
+            : "Our team will review your listing before it goes live. You'll be notified once it's approved."}
         </Text>
         <View style={[s.reviewBadge, { backgroundColor: colors.accent, borderColor: colors.border }]}>
           <Feather name="clock" size={13} color={colors.accentForeground} />
@@ -537,8 +699,9 @@ export default function ListingWizard() {
           <Feather name="arrow-left" size={16} color={colors.foreground} />
         </Pressable>
         <View style={{ flex: 1, minWidth: 0, paddingHorizontal: 4 }}>
-          <Text style={[s.headerStep, { color: colors.mutedForeground }]}>CREATE PROPERTY LISTING</Text>
-          <Text style={[s.headerTitle, { color: colors.foreground }]}>Complete all details in one form</Text>
+          <Text style={[s.headerStep, { color: colors.action }]}>{editingListing ? 'EDIT LISTING' : 'POST PROPERTY'}</Text>
+          <Text style={[s.headerTitle, { color: colors.foreground }]}>{editingListing ? 'Update your listing' : 'Post an Ad'}</Text>
+          <Text style={[s.headerSub, { color: colors.mutedForeground }]}>{editingListing ? 'Address the review feedback before resubmitting' : 'Create a listing buyers can trust'}</Text>
           <View style={[s.progressTrack, { backgroundColor: colors.border }]}>
             <View style={[s.progressFill, { width: '100%', backgroundColor: colors.action }]} />
           </View>
@@ -557,6 +720,8 @@ export default function ListingWizard() {
         showsVerticalScrollIndicator={false}
         bottomOffset={28}
       >
+        <ListingProgress form={form} locationConfirmed={locationConfirmed} colors={colors} />
+
         {Object.keys(errors).length > 0 && (
           <View style={[s.validationBanner, { backgroundColor: '#e53e3e12', borderColor: '#e53e3e55' }]}>
             <Feather name="alert-circle" size={16} color="#e53e3e" />
@@ -565,6 +730,8 @@ export default function ListingWizard() {
             </Text>
           </View>
         )}
+
+        <TransactionToggle form={form} update={update} colors={colors} />
 
         <View style={[s.formSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <StepType form={form} update={update} colors={colors} />
@@ -610,7 +777,7 @@ export default function ListingWizard() {
             style={[s.submitBtn, { backgroundColor: colors.action, opacity: submitting ? 0.65 : 1 }]}
           >
             <Text style={[s.submitBtnText, { color: colors.actionForeground }]}>
-              {submitting ? 'Submitting…' : 'Submit Property for Review'}
+              {submitting ? 'Saving…' : editingListing ? 'Save & Resubmit for Review' : 'Submit Property for Review'}
             </Text>
             <Feather name="arrow-up-right" size={17} color={colors.actionForeground} />
           </AnimatedPressable>
@@ -625,10 +792,91 @@ export default function ListingWizard() {
 
 // ── SECTION 1: Property Type ───────────────────────────────────────────────────
 
+function TransactionToggle({ form, update, colors }: { form: Form; update: (p: Partial<Form>) => void; colors: any }) {
+  const setPurpose = (purpose: 'Sale' | 'Rent') => {
+    if (purpose === 'Rent' && !purposesFor(form.propertyType).includes('Rent')) {
+      update({ propertyType: 'House', purpose });
+      return;
+    }
+    update({ purpose });
+  };
+
+  return (
+    <View style={[s.transactionToggle, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Text style={[s.transactionToggleLabel, { color: colors.mutedForeground }]}>LISTING PURPOSE</Text>
+      <View style={[s.transactionToggleTrack, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+        {([
+          { value: 'Sale' as const, label: 'Sale', icon: 'home' as const },
+          { value: 'Rent' as const, label: 'Rent', icon: 'key' as const },
+        ]).map((option) => {
+          const active = form.purpose === option.value;
+          return (
+            <Pressable
+              key={option.value}
+              onPress={() => setPurpose(option.value)}
+              style={[
+                s.transactionToggleOption,
+                {
+                  backgroundColor: 'transparent',
+                  borderColor: active ? colors.action : colors.border,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={`List property for ${option.label}`}
+            >
+              <Feather name={option.icon} size={16} color={active ? colors.action : colors.mutedForeground} />
+              <Text style={[s.transactionToggleText, { color: active ? colors.action : colors.foreground }]}>
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function ListingProgress({ form, locationConfirmed, colors }: { form: Form; locationConfirmed: boolean; colors: any }) {
+  const stages = [
+    { label: 'Property', icon: 'home' as const, done: Boolean(form.propertyType) },
+    { label: 'Location', icon: 'map-pin' as const, done: Boolean(form.city && form.latitude != null && form.longitude != null && locationConfirmed) },
+    { label: 'Details', icon: 'edit-3' as const, done: Boolean(form.price && form.area) },
+    { label: 'Media', icon: 'camera' as const, done: form.photos.length > 0 },
+  ];
+  const completed = stages.filter((stage) => stage.done).length;
+
+  return (
+    <View style={[s.progressCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={s.progressCardHeader}>
+        <View>
+          <Text style={[s.progressCardEyebrow, { color: colors.mutedForeground }]}>LISTING PROGRESS</Text>
+          <Text style={[s.progressCardTitle, { color: colors.foreground }]}>Build a stronger listing</Text>
+        </View>
+        <View style={[s.progressCount, { backgroundColor: colors.action + '16' }]}>
+          <Text style={[s.progressCountText, { color: colors.action }]}>{completed}/4 ready</Text>
+        </View>
+      </View>
+      <View style={s.progressSteps}>
+        {stages.map((stage, index) => (
+          <React.Fragment key={stage.label}>
+            <View style={s.progressStep}>
+              <View style={[s.progressStepIcon, { backgroundColor: stage.done ? colors.action : colors.secondary, borderColor: stage.done ? colors.action : colors.border }]}>
+                <Feather name={stage.done ? 'check' : stage.icon} size={12} color={stage.done ? colors.actionForeground : colors.mutedForeground} />
+              </View>
+              <Text style={[s.progressStepLabel, { color: stage.done ? colors.foreground : colors.mutedForeground }]}>{stage.label}</Text>
+            </View>
+            {index < stages.length - 1 && <View style={[s.progressConnector, { backgroundColor: stages[index + 1].done ? colors.action : colors.border }]} />}
+          </React.Fragment>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Form>) => void; colors: any }) {
   const [activeGroup, setActiveGroup] = useState<PropCategory>(categoryOf(form.propertyType));
   const typesInGroup = PROPERTY_TYPES.filter((t) => t.category === activeGroup);
-  const availablePurposes = purposesFor(form.propertyType);
 
   const handleTypeSelect = (key: string) => {
     const purposes = purposesFor(key);
@@ -639,7 +887,8 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 1</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>What are you listing?</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Choose your property</Text>
+      <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Start with the property type so we can tailor the rest of your listing.</Text>
 
       {/* Category tabs */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 16 }}>
@@ -669,22 +918,6 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
         })}
       </View>
 
-      {/* Purpose selector */}
-      <Text style={[s.label, { color: colors.foreground, marginTop: 20 }]}>Purpose</Text>
-      <View style={s.purposeRow}>
-        {availablePurposes.map((p) => (
-          <Pressable key={p} onPress={() => update({ purpose: p })}
-            style={[s.purposeBtn, {
-               backgroundColor: form.purpose === p ? colors.selectionBackground : colors.secondary,
-               borderColor: form.purpose === p ? colors.selectionBorder : colors.border,
-               borderWidth: form.purpose === p ? 1.5 : 1,
-              flex: 1,
-            }]}>
-             <Text style={[s.purposeBtnText, { color: form.purpose === p ? colors.selectionForeground : colors.foreground, fontWeight: form.purpose === p ? '600' : '400' }]}>{p}</Text>
-          </Pressable>
-        ))}
-      </View>
-
       {/* Info hint */}
       <View style={[s.hintBox, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
         <Feather name="info" size={12} color={colors.mutedForeground} />
@@ -699,64 +932,45 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
 // ── SECTION 2: Location ─────────────────────────────────────────────────────────
 
 function StepLocation({ form, update, colors, errors, onConfirmationChange }: any) {
-  const neighborhoods = okaraDistrict.areas[form.city] ?? [];
+  const [mapOpen, setMapOpen] = useState(false);
+
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 2</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>Location</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Where is it located?</Text>
+      <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Pin the exact property location so interested buyers can find it easily.</Text>
 
       <Label colors={colors}>City *</Label>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
         {CITIES.map((c) => (
-          <Pressable key={c} onPress={() => update({
-            city: c,
-            locality: '',
-            // A pin from another city would be misleading. Recenter the map
-            // on the newly selected city and let the user choose a new pin.
-            latitude: null,
-            longitude: null,
-            fullAddress: '',
-             streetAddress: '',
-            placeId: '',
-             district: '',
-             tehsil: '',
-             province: '',
-             postalCode: '',
-             country: '',
-            locationAccuracy: null,
-            locationSource: '',
-          })}
+          <Pressable key={c} onPress={() => {
+            update({
+              city: c,
+              locality: '',
+              // A pin from another city would be misleading. Recenter the map
+              // on the newly selected city and let the user choose a new pin.
+              latitude: null,
+              longitude: null,
+              fullAddress: '',
+              streetAddress: '',
+              placeId: '',
+              district: '',
+              tehsil: '',
+              province: '',
+              postalCode: '',
+              country: '',
+              locationAccuracy: null,
+              locationSource: '',
+            });
+            onConfirmationChange?.(false);
+            setMapOpen(true);
+          }}
              style={[s.chip, { backgroundColor: form.city === c ? colors.selectionBackground : colors.secondary, borderColor: form.city === c ? colors.selectionBorder : colors.border, borderWidth: form.city === c ? 1.5 : 1 }]}>
              <Text style={[s.chipText, { color: form.city === c ? colors.selectionForeground : colors.foreground, fontWeight: form.city === c ? '600' : '400' }]}>{c}</Text>
           </Pressable>
         ))}
       </ScrollView>
       {errors.city ? <Text style={s.errorText}>{errors.city}</Text> : null}
-
-      {neighborhoods.length > 0 && (
-        <>
-          <Label colors={colors}>Area / Locality</Label>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 14 }}>
-            {neighborhoods.map((n: string) => (
-              <Pressable key={n} onPress={() => update({ locality: n })}
-                 style={[s.chip, { backgroundColor: form.locality === n ? colors.selectionBackground : colors.secondary, borderColor: form.locality === n ? colors.selectionBorder : colors.border, borderWidth: form.locality === n ? 1.5 : 1 }]}>
-                 <Text style={[s.chipText, { color: form.locality === n ? colors.selectionForeground : colors.foreground, fontWeight: form.locality === n ? '600' : '400' }]}>{n}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </>
-      )}
-
-      <WizField label="Society / Scheme" placeholder="e.g. Canal View Society" value={form.society} onChangeText={(v: string) => update({ society: v })} colors={colors} optional />
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        <View style={{ flex: 1 }}>
-          <WizField label="Block" placeholder="e.g. Block A" value={form.block} onChangeText={(v: string) => update({ block: v })} colors={colors} optional />
-        </View>
-        <View style={{ flex: 1 }}>
-          <WizField label="Street / House #" placeholder="e.g. Street 4" value={form.street} onChangeText={(v: string) => update({ street: v })} colors={colors} optional />
-        </View>
-      </View>
-      <WizField label="Nearby Landmark" placeholder="e.g. Near Government Hospital" value={form.landmark} onChangeText={(v: string) => update({ landmark: v })} colors={colors} optional />
 
       <LocationPicker
         latitude={form.latitude} longitude={form.longitude}
@@ -798,7 +1012,32 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
         requireConfirm
         onConfirmationChange={onConfirmationChange}
         errorMessage={errors.location}
+         fullScreen
+         visible={mapOpen}
+         onOpen={() => setMapOpen(true)}
+         onClose={() => setMapOpen(false)}
+         onDone={() => {
+           setMapOpen(false);
+           onConfirmationChange?.(true);
+         }}
       />
+      {typeof form.latitude === 'number' && typeof form.longitude === 'number' && (
+        <View style={s.pinnedMapSection}>
+          <View style={s.pinnedMapHeading}>
+            <Feather name="map" size={14} color={colors.action} />
+            <Text style={[s.pinnedMapHeadingText, { color: colors.foreground }]}>Map pinned location</Text>
+          </View>
+          <PinnedMapCard
+            latitude={form.latitude}
+            longitude={form.longitude}
+            address={form.fullAddress}
+            city={form.city}
+            locality={form.locality}
+            district={form.district}
+            colors={colors}
+          />
+        </View>
+      )}
       {(form.fullAddress || form.district || form.tehsil) && (
         <View style={[s.locationSummary, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           <View style={s.locationSummaryHeader}>
@@ -839,7 +1078,8 @@ function StepBasic({ form, update, colors, errors }: any) {
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 3</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>Basic Details</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Pricing & basics</Text>
+      <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Add the essentials buyers look for first.</Text>
 
       <WizField label="Listing Title" optional
         placeholder={`e.g. ${form.propertyType} ${isRent ? 'for Rent' : 'for Sale'} in ${form.city}`}
@@ -882,8 +1122,8 @@ function StepSpecific({ form, update, colors, category }: any) {
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 4</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>Property Details</Text>
-      <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Specific fields for {type}. Optional unless marked *.</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Property details</Text>
+      <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Tell buyers what makes this {type} a good fit. Optional unless marked *.</Text>
 
       {/* ── House / Villa ─────────────────────────────────────── */}
       {(type === 'House' || type === 'Villa') && (
@@ -1438,7 +1678,7 @@ function StepFeatures({ form, update, colors, category }: any) {
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 5</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>Features & Amenities</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Features & amenities</Text>
       <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Select all that apply. These appear as highlighted tags on your listing.</Text>
       <View style={s.featureGrid}>
         {available.map((f: string) => {
@@ -1463,7 +1703,7 @@ function StepMedia({ form, update, colors, errors, pickPhotos, pickVideo }: any)
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 6</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>Photos & Media</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Photos & media</Text>
       <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Properties with 5+ photos get 3× more enquiries. Add up to 30 photos.</Text>
 
       <View style={[s.mediaBox, { borderColor: errors.photos ? '#e53e3e' : colors.border, backgroundColor: colors.card }]}>
@@ -1546,7 +1786,7 @@ function StepDocs({ form, update, colors, errors, user, category }: any) {
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 7</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>Description & Docs</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Description & documents</Text>
 
       {/* Description */}
       <Label colors={colors}>Property Description *</Label>
@@ -1606,9 +1846,9 @@ function StepDocs({ form, update, colors, errors, user, category }: any) {
         <ToggleRow label="Allow phone calls" value={form.allowCalls} onChange={(v: boolean) => update({ allowCalls: v })} colors={colors} />
       </View>
 
-      <View style={[s.hintBox, { backgroundColor: '#1a6b3a0e', borderColor: '#1a6b3a33', marginTop: 14 }]}>
-        <Feather name="shield" size={12} color="#1a6b3a" />
-        <Text style={[s.hintText, { color: '#1a6b3a' }]}>
+      <View style={[s.hintBox, { backgroundColor: '#183B600e', borderColor: '#183B6033', marginTop: 14 }]}>
+        <Feather name="shield" size={12} color="#183B60" />
+        <Text style={[s.hintText, { color: '#183B60' }]}>
           Your listing will be reviewed by the OG Landmark team before it goes live.
         </Text>
       </View>
@@ -1624,16 +1864,53 @@ function StepPreview({ form, colors, category }: any) {
     : `PKR ${Number(form.price.replace(/[^0-9]/g, '') || '0').toLocaleString()}`;
   const location = [form.locality, form.society, form.city].filter(Boolean).join(', ');
   const typeInfo = PROPERTY_TYPES.find((t) => t.key === form.propertyType);
+  const previewDetails = Object.entries(form)
+    .filter(([key, value]) => (
+      ![
+        'photos', 'video', 'coverPhotoIndex', 'features', 'documents',
+        'description', 'keyHighlights', 'showWhatsApp', 'allowCalls',
+        'latitude', 'longitude', 'locationAccuracy', 'locationSource',
+        'placeId', 'country', 'province',
+      ].includes(key)
+      && value !== '' && value !== null && value !== false
+      && !(Array.isArray(value) && value.length === 0)
+    ))
+    .map(([key, value]) => ({
+      label: PREVIEW_LABELS[key] ?? key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()),
+      value: value === true ? 'Yes' : String(value),
+    }));
 
   return (
     <AnimatedReveal>
       <Text style={[s.stepEyebrow, { color: colors.action }]}>SECTION 8</Text>
-      <Text style={[s.stepTitle, { color: colors.foreground }]}>Preview & Publish</Text>
+      <Text style={[s.stepTitle, { color: colors.foreground }]}>Review & publish</Text>
       <Text style={[s.stepSub, { color: colors.mutedForeground }]}>Review your listing before submitting it for approval.</Text>
 
       <View style={[s.previewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         {form.photos.length > 0 ? (
-          <Image source={{ uri: form.photos[form.coverPhotoIndex] ?? form.photos[0] }} style={s.previewImage} resizeMode="cover" />
+          <>
+            <View style={s.previewHeroWrap}>
+              <Image source={{ uri: form.photos[form.coverPhotoIndex] ?? form.photos[0] }} style={s.previewImage} resizeMode="cover" />
+              <View style={[s.previewPhotoCount, { backgroundColor: '#0b2038cc' }]}>
+                <Feather name="image" size={11} color="#ffffff" />
+                <Text style={s.previewPhotoCountText}>{form.photos.length} photo{form.photos.length === 1 ? '' : 's'}</Text>
+              </View>
+            </View>
+            {form.photos.length > 1 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.previewGallery} style={{ backgroundColor: colors.secondary }}>
+                {form.photos.map((uri: string, i: number) => (
+                  <View key={`${uri}-${i}`} style={[s.previewThumbWrap, i === form.coverPhotoIndex && { borderColor: colors.action, borderWidth: 2 }]}>
+                    <Image source={{ uri }} style={s.previewThumb} resizeMode="cover" />
+                    {i === form.coverPhotoIndex && (
+                      <View style={[s.previewCoverMark, { backgroundColor: colors.action }]}>
+                        <Feather name="star" size={8} color={colors.actionForeground} />
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </>
         ) : (
           <View style={[s.previewImagePlaceholder, { backgroundColor: colors.secondary }]}>
             <Text style={{ fontSize: 32 }}>{typeInfo?.emoji ?? '🏠'}</Text>
@@ -1642,7 +1919,7 @@ function StepPreview({ form, colors, category }: any) {
         )}
         <View style={s.previewBody}>
           <View style={s.previewRow}>
-            <View style={[s.statusBadge, { backgroundColor: form.purpose === 'Rent' ? '#1a6b3a' : colors.action }]}>
+            <View style={[s.statusBadge, { backgroundColor: form.purpose === 'Rent' ? '#183B60' : colors.action }]}>
               <Text style={s.statusBadgeText}>FOR {form.purpose.toUpperCase()}</Text>
             </View>
             <View style={[s.statusBadge, { backgroundColor: colors.secondary, borderColor: colors.border, borderWidth: 1 }]}>
@@ -1682,15 +1959,102 @@ function StepPreview({ form, colors, category }: any) {
           {form.description ? (
             <Text style={[s.previewDesc, { color: colors.mutedForeground }]} numberOfLines={3}>{form.description}</Text>
           ) : null}
-          <View style={[s.previewReview, { backgroundColor: '#1a6b3a0e', borderColor: '#1a6b3a33' }]}>
-            <Feather name="clock" size={12} color="#1a6b3a" />
-            <Text style={[s.previewReviewText, { color: '#1a6b3a' }]}>Pending review · Not yet public · {form.photos.length} photo(s) · {form.documents.length} doc(s)</Text>
+          {previewDetails.length > 0 && (
+            <View style={[s.previewDetails, { borderTopColor: colors.border }]}>
+              <View style={s.previewDetailsHeader}>
+                <Feather name="list" size={13} color={colors.action} />
+                <Text style={[s.previewDetailsTitle, { color: colors.foreground }]}>All listing details</Text>
+              </View>
+              <View style={s.previewDetailsGrid}>
+                {previewDetails.map((detail) => (
+                  <View key={detail.label} style={[s.previewDetailItem, { backgroundColor: colors.secondary }]}>
+                    <Text style={[s.previewDetailLabel, { color: colors.mutedForeground }]}>{detail.label}</Text>
+                    <Text style={[s.previewDetailValue, { color: colors.foreground }]} numberOfLines={2}>{detail.value}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+          <View style={[s.previewReview, { backgroundColor: '#183B600e', borderColor: '#183B6033' }]}>
+            <Feather name="clock" size={12} color="#183B60" />
+            <Text style={[s.previewReviewText, { color: '#183B60' }]}>Pending review · Not yet public · {form.photos.length} photo(s) · {form.documents.length} doc(s)</Text>
           </View>
         </View>
       </View>
     </AnimatedReveal>
   );
 }
+
+const PREVIEW_LABELS: Record<string, string> = {
+  propertyType: 'Property type',
+  purpose: 'Purpose',
+  city: 'City',
+  locality: 'Area',
+  society: 'Society',
+  block: 'Block',
+  street: 'Street',
+  landmark: 'Landmark',
+  fullAddress: 'Pinned address',
+  streetAddress: 'Street address',
+  district: 'District',
+  tehsil: 'Tehsil',
+  postalCode: 'Postal code',
+  title: 'Listing title',
+  price: 'Price',
+  isNegotiable: 'Price negotiable',
+  area: 'Area',
+  areaUnit: 'Area unit',
+  bedrooms: 'Bedrooms',
+  bathrooms: 'Bathrooms',
+  floors: 'Floors',
+  coveredArea: 'Covered area',
+  furnishing: 'Furnishing',
+  constructionYear: 'Construction year',
+  parking: 'Parking',
+  facing: 'Facing',
+  isCorner: 'Corner',
+  isMainRoad: 'Main road',
+  isParkFacing: 'Park facing',
+  roadFront: 'Road front',
+  plotDimensions: 'Plot dimensions',
+  possessionStatus: 'Possession status',
+  floorNumber: 'Floor number',
+  totalFloors: 'Total floors',
+  maintenanceCharges: 'Maintenance charges',
+  roadWidth: 'Road width',
+  devStatus: 'Development status',
+  landType: 'Land type',
+  currentCrop: 'Current crop',
+  trees: 'Trees / plants',
+  nearbyCanalRiver: 'Nearby canal / river',
+  farmType: 'Farm type',
+  orchardType: 'Orchard type',
+  numberOfTrees: 'Number of trees',
+  productionStatus: 'Production status',
+  shopDimensions: 'Shop dimensions',
+  cabins: 'Rooms / cabins',
+  numShops: 'Number of shops',
+  numOffices: 'Number of offices',
+  numApartments: 'Number of apartments',
+  occupancyStatus: 'Occupancy status',
+  rentalIncome: 'Rental income',
+  warehouseHeight: 'Warehouse height',
+  electricityLoad: 'Electricity load',
+  factoryType: 'Factory type',
+  industrialZone: 'Industrial zone',
+  ceilingHeight: 'Ceiling height',
+  displayArea: 'Display area',
+  nocStatus: 'NOC status',
+  projectName: 'Project / society',
+  developer: 'Developer',
+  totalUnits: 'Total units',
+  startingPrice: 'Starting price',
+  paymentPlan: 'Payment plan',
+  downPayment: 'Down payment',
+  installmentPlan: 'Installment plan',
+  possessionDate: 'Possession date',
+  plotSizes: 'Plot sizes',
+};
 
 // ── Shared UI atoms ────────────────────────────────────────────────────────────
 
@@ -1793,40 +2157,57 @@ function BoolGrid({ items, form, update, colors, tristate }: { items: { key: str
 const s = StyleSheet.create({
   screen:               { flex: 1 },
   // Header
-  header:               { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 12 },
-  backBtn:              { width: 34, height: 34, borderRadius: 11, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  headerStep:           { fontFamily: 'Inter_700Bold', fontSize: 10, letterSpacing: 1.2, marginBottom: 3 },
-  headerTitle:          { fontFamily: 'Inter_700Bold', fontSize: 15, marginBottom: 6 },
-  progressTrack:        { height: 3, borderRadius: 2, overflow: 'hidden' },
-  progressFill:         { height: 3, borderRadius: 2 },
-  purposeBadge:         { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, marginTop: 1 },
+  header:               { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 15 },
+  backBtn:              { width: 38, height: 38, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  headerStep:           { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.5, marginBottom: 3 },
+  headerTitle:          { fontFamily: 'Inter_700Bold', fontSize: 21, lineHeight: 25, marginBottom: 2 },
+  headerSub:            { fontFamily: 'Inter_400Regular', fontSize: 10, marginBottom: 9 },
+  progressTrack:        { height: 4, borderRadius: 4, overflow: 'hidden' },
+  progressFill:         { height: 4, borderRadius: 4 },
+  purposeBadge:         { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', borderWidth: 1, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, marginTop: 1 },
   purposeBadgeText:     { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 0.4 },
   // Single-page sections
-  formSection:          { borderWidth: 1, borderRadius: 20, padding: 16, marginBottom: 14, overflow: 'hidden' },
-  validationBanner:      { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 14 },
+  progressCard:         { borderWidth: 1, borderRadius: 20, padding: 15, marginBottom: 12 },
+  progressCardHeader:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 },
+  progressCardEyebrow:  { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.2, marginBottom: 4 },
+  progressCardTitle:    { fontFamily: 'Inter_700Bold', fontSize: 16 },
+  progressCount:        { borderRadius: 10, paddingHorizontal: 9, paddingVertical: 6 },
+  progressCountText:    { fontFamily: 'Inter_700Bold', fontSize: 10 },
+  progressSteps:        { flexDirection: 'row', alignItems: 'flex-start' },
+  progressStep:         { alignItems: 'center', gap: 6, minWidth: 54 },
+  progressStepIcon:     { width: 28, height: 28, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  progressStepLabel:    { fontFamily: 'Inter_600SemiBold', fontSize: 9 },
+  progressConnector:    { height: 2, flex: 1, marginTop: 13, marginHorizontal: 4, borderRadius: 2 },
+  formSection:          { borderWidth: 1, borderRadius: 22, padding: 18, marginBottom: 12, overflow: 'hidden' },
+  validationBanner:     { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 16, padding: 13, marginBottom: 12 },
   validationText:        { fontFamily: 'Inter_500Medium', fontSize: 12, lineHeight: 17, flex: 1 },
-  stepEyebrow:          { fontFamily: 'Inter_700Bold', fontSize: 10, letterSpacing: 1.4, marginBottom: 4 },
-  stepTitle:            { fontFamily: 'Inter_700Bold', fontSize: 22, marginBottom: 6 },
-  stepSub:              { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, marginBottom: 14 },
-  label:                { fontFamily: 'Inter_600SemiBold', fontSize: 13, marginBottom: 8, marginTop: 2 },
+  transactionToggle:    { borderWidth: 1, borderRadius: 20, padding: 14, marginBottom: 12 },
+  transactionToggleLabel:{ fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.2, marginBottom: 9 },
+  transactionToggleTrack:{ flexDirection: 'row', gap: 6, borderWidth: 1, borderRadius: 14, padding: 4 },
+  transactionToggleOption:{ flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 11 },
+  transactionToggleText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  stepEyebrow:          { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.5, marginBottom: 5 },
+  stepTitle:            { fontFamily: 'Inter_700Bold', fontSize: 23, lineHeight: 28, marginBottom: 6 },
+  stepSub:              { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, marginBottom: 16 },
+  label:                { fontFamily: 'Inter_600SemiBold', fontSize: 12, marginBottom: 8, marginTop: 2 },
   // Type selection
-  groupTab:             { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 20, paddingHorizontal: 13, paddingVertical: 8 },
+  groupTab:             { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 20, paddingHorizontal: 13, paddingVertical: 9 },
   groupTabText:         { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   typeGrid:             { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  typeCard:             { width: '30.5%', borderRadius: 14, borderWidth: 1, padding: 14, alignItems: 'center', gap: 7 },
+  typeCard:             { width: '30.5%', minHeight: 92, borderRadius: 16, borderWidth: 1, padding: 13, alignItems: 'center', justifyContent: 'center', gap: 7 },
   typeLabel:            { fontFamily: 'Inter_600SemiBold', fontSize: 10, textAlign: 'center', lineHeight: 13 },
   // Purpose
   purposeRow:           { flexDirection: 'row', gap: 10, marginBottom: 18 },
-  purposeBtn:           { borderWidth: 1, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
-  purposeBtnText:       { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  purposeBtn:           { borderWidth: 1, borderRadius: 12, paddingVertical: 9, alignItems: 'center' },
+  purposeBtnText:       { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   // Inputs
-  inputWrap:            { borderRadius: 13, borderWidth: 1, overflow: 'hidden', marginBottom: 2 },
-  input:                { fontFamily: 'Inter_400Regular', fontSize: 14, paddingHorizontal: 14, paddingVertical: 12 },
+  inputWrap:            { borderRadius: 15, borderWidth: 1, overflow: 'hidden', marginBottom: 2 },
+  input:                { fontFamily: 'Inter_400Regular', fontSize: 14, paddingHorizontal: 15, paddingVertical: 13 },
   unitSeg:              { flexDirection: 'row', borderRadius: 10, borderWidth: 1, overflow: 'hidden', borderColor: 'transparent', flexWrap: 'wrap' },
   unitBtn:              { flex: 1, alignItems: 'center', paddingVertical: 9, paddingHorizontal: 2 },
   unitText:             { fontFamily: 'Inter_600SemiBold', fontSize: 10 },
   // Chips
-  chip:                 { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 9 },
+  chip:                 { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10 },
   chipText:             { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   // Feature grid
   featureGrid:          { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -1866,7 +2247,14 @@ const s = StyleSheet.create({
   contactValue:         { fontFamily: 'Inter_600SemiBold', fontSize: 13, flex: 1 },
   // Preview
   previewCard:          { borderRadius: 20, borderWidth: 1, overflow: 'hidden', marginBottom: 16 },
+  previewHeroWrap:      { position: 'relative' },
   previewImage:         { width: '100%', height: 200 },
+  previewPhotoCount:    { position: 'absolute', right: 12, bottom: 12, flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 9, paddingHorizontal: 9, paddingVertical: 6 },
+  previewPhotoCountText:{ fontFamily: 'Inter_600SemiBold', fontSize: 10, color: '#ffffff' },
+  previewGallery:       { gap: 8, padding: 10 },
+  previewThumbWrap:     { width: 66, height: 52, borderRadius: 9, overflow: 'hidden', borderWidth: 2, borderColor: 'transparent', position: 'relative' },
+  previewThumb:         { width: '100%', height: '100%' },
+  previewCoverMark:     { position: 'absolute', left: 3, bottom: 3, width: 16, height: 16, borderRadius: 5, alignItems: 'center', justifyContent: 'center' },
   previewImagePlaceholder: { width: '100%', height: 160, alignItems: 'center', justifyContent: 'center' },
   previewBody:          { padding: 16, gap: 8 },
   previewRow:           { flexDirection: 'row', gap: 8 },
@@ -1877,6 +2265,13 @@ const s = StyleSheet.create({
   previewTag:           { borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
   previewTagText:       { fontFamily: 'Inter_500Medium', fontSize: 10 },
   previewDesc:          { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 18 },
+  previewDetails:       { borderTopWidth: 1, paddingTop: 14, marginTop: 4 },
+  previewDetailsHeader: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 10 },
+  previewDetailsTitle:  { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  previewDetailsGrid:   { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  previewDetailItem:    { width: '47.5%', borderRadius: 10, padding: 9, gap: 3 },
+  previewDetailLabel:   { fontFamily: 'Inter_500Medium', fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.4 },
+  previewDetailValue:   { fontFamily: 'Inter_600SemiBold', fontSize: 11, lineHeight: 15 },
   previewReview:        { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, borderWidth: 1, padding: 10, marginTop: 4 },
   previewReviewText:    { fontFamily: 'Inter_500Medium', fontSize: 11, flex: 1 },
   statusBadge:          { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
@@ -1886,8 +2281,8 @@ const s = StyleSheet.create({
   submitIcon:           { width: 46, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   submitTitle:          { fontFamily: 'Inter_700Bold', fontSize: 18, marginBottom: 6 },
   submitHint:           { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, textAlign: 'center', marginBottom: 16 },
-  submitBtn:            { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 14, paddingVertical: 15, paddingHorizontal: 18 },
-  submitBtnText:        { fontFamily: 'Inter_700Bold', fontSize: 14 },
+  submitBtn:            { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 18 },
+  submitBtnText:        { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   submitFootnote:        { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 10 },
   // Hint
   hintBox:              { flexDirection: 'row', gap: 8, alignItems: 'flex-start', borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 6 },
@@ -1901,14 +2296,17 @@ const s = StyleSheet.create({
   locationSummaryLabel: { fontFamily: 'Inter_500Medium', fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5 },
   locationSummaryValue: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   locationSummaryHint:  { fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 14 },
+  pinnedMapSection:     { marginTop: 2 },
+  pinnedMapHeading:     { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 8 },
+  pinnedMapHeadingText: { fontFamily: 'Inter_700Bold', fontSize: 12 },
   // Success
   successIcon:          { width: 80, height: 80, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 1, marginBottom: 20 },
   successTitle:         { fontFamily: 'Inter_700Bold', fontSize: 26, textAlign: 'center', marginBottom: 10 },
   successBody:          { fontFamily: 'Inter_400Regular', fontSize: 15, textAlign: 'center', lineHeight: 22, marginBottom: 16 },
   reviewBadge:          { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8 },
   reviewText:           { fontFamily: 'Inter_700Bold', fontSize: 11, letterSpacing: 0.8 },
-  successBtn:           { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 28 },
-  successBtnText:       { fontFamily: 'Inter_700Bold', fontSize: 15 },
+  successBtn:           { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 16, paddingVertical: 11, paddingHorizontal: 28 },
+  successBtnText:       { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   successLink:          { fontFamily: 'Inter_600SemiBold', fontSize: 14, textDecorationLine: 'underline' },
   // Misc
   errorText:            { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#e53e3e', marginTop: 2, marginBottom: 6 },

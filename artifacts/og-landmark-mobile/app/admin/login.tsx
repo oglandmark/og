@@ -63,7 +63,7 @@ export default function AdminLoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[s.root, { backgroundColor: '#0B1F3A' }]}
+      style={[s.root, { backgroundColor: '#052e26' }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
@@ -128,8 +128,8 @@ export default function AdminLoginScreen() {
                 disabled={loading}
               >
                 {loading
-                  ? <ActivityIndicator color="#0B1F3A" />
-                  : <><Text style={s.btnText}>Send OTP</Text><Feather name="arrow-right" size={18} color="#0B1F3A" /></>
+                  ? <ActivityIndicator color="#052e26" />
+                  : <><Text style={s.btnText}>Send OTP</Text><Feather name="arrow-right" size={18} color="#052e26" /></>
                 }
               </Pressable>
             </>
@@ -162,8 +162,8 @@ export default function AdminLoginScreen() {
                 disabled={loading}
               >
                 {loading
-                  ? <ActivityIndicator color="#0B1F3A" />
-                  : <><Text style={s.btnText}>Verify &amp; Sign In</Text><Feather name="check" size={18} color="#0B1F3A" /></>
+                  ? <ActivityIndicator color="#052e26" />
+                  : <><Text style={s.btnText}>Verify &amp; Sign In</Text><Feather name="check" size={18} color="#052e26" /></>
                 }
               </Pressable>
 
@@ -199,7 +199,7 @@ const s = StyleSheet.create({
   eyeBtn:   { position: 'absolute', right: 14, top: 14 },
   otpInput: { textAlign: 'center', fontSize: 22, letterSpacing: 14 },
   otpNote:  { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#8a9ab5', textAlign: 'center', marginBottom: 16, lineHeight: 16 },
-  btn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 15, marginTop: 4 },
-  btnText:  { fontFamily: 'Inter_700Bold', fontSize: 15, color: '#0B1F3A' },
+  btn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 8, marginTop: 4, minHeight: 44 },
+  btnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#052e26' },
   resend:   { alignItems: 'center', marginTop: 14 },
 });

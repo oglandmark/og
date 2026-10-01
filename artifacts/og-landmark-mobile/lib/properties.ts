@@ -1,4 +1,5 @@
 import type { ImageSourcePropType } from 'react-native';
+import { API_BASE } from '@/lib/api';
 
 export type Property = {
   id: number;
@@ -406,11 +407,10 @@ const bundledDemoProperties: Property[] = [
     address: 'Chak 5/4-L, Okara Tehsil, Okara District',
     description:
       'Productive 30-acre agricultural land in Okara Tehsil — currently under cotton and wheat rotation. Nehri water (LBDC seasonal) plus electric tube well (10HP). Loam-silty soil with excellent fertility. Farmhouse (pakka) with electricity on site. Boundary marked with concrete pillars. Ideal for large-scale farming or agri-investment.',
-    image: require('@/assets/images/property-3.jpg'),
+    image: require('@/assets/images/agriculture/agri-field-1.jpg'),
     gallery: [
-      require('@/assets/images/property-1.jpg'),
-      require('@/assets/images/property-5.jpg'),
-      require('@/assets/images/property-6.jpg'),
+      require('@/assets/images/agriculture/agri-field-3.jpg'),
+      require('@/assets/images/agriculture/agri-field-4.jpg'),
     ],
     featured: true,
     agent: 'Tariq Mehmood',
@@ -460,11 +460,10 @@ const bundledDemoProperties: Property[] = [
     address: 'Chak 34/4-R, Depalpur Tehsil, Okara District',
     description:
       'Prime cotton-growing land in the heart of Okara District. Loam soil with excellent water retention. Nehri water channel runs along the western boundary with full seasonal flow. Tube well (12HP electric) installed. Road-accessible from Depalpur–Sahiwal highway.',
-    image: require('@/assets/images/property-3.jpg'),
+    image: require('@/assets/images/agriculture/agri-field-4.jpg'),
     gallery: [
-      require('@/assets/images/property-1.jpg'),
-      require('@/assets/images/property-4.jpg'),
-      require('@/assets/images/property-5.jpg'),
+      require('@/assets/images/agriculture/agri-field-1.jpg'),
+      require('@/assets/images/agriculture/agri-field-3.jpg'),
     ],
     featured: true,
     agent: 'Tariq Mehmood',
@@ -512,10 +511,10 @@ const bundledDemoProperties: Property[] = [
     address: 'Chak 8/4-R, Renala Khurd Tehsil, Okara District',
     description:
       'Fertile sugarcane land adjacent to Renala Khurd Sugar Mills — commanding premium rates for cane supply contracts. Clay-loam soil ideal for sugarcane. Nehri water access confirmed from Upper Bari Doab Canal. No tube well but water pressure excellent. Mango trees along boundaries. Easy transfer on possession.',
-    image: require('@/assets/images/property-5.jpg'),
+    image: require('@/assets/images/agriculture/agri-field-4.jpg'),
     gallery: [
-      require('@/assets/images/property-2.jpg'),
-      require('@/assets/images/property-6.jpg'),
+      require('@/assets/images/agriculture/agri-field-1.jpg'),
+      require('@/assets/images/agriculture/agri-field-3.jpg'),
     ],
     featured: true,
     agent: 'Muhammad Asif',
@@ -563,11 +562,10 @@ const bundledDemoProperties: Property[] = [
     address: 'Chak 13/4-R, Okara Tehsil, Okara District',
     description:
       'Dual-crop rotation land (wheat in rabi, rice in kharif) with silty loam soil. Nehri water from Lower Bari Doab Canal available in both seasons. Tube well (8HP diesel) for supplemental irrigation. Small farmhouse (kutcha) on site. Conveniently located 8km from Okara city centre.',
-    image: require('@/assets/images/property-4.jpg'),
+    image: require('@/assets/images/agriculture/agri-field-3.jpg'),
     gallery: [
-      require('@/assets/images/property-1.jpg'),
-      require('@/assets/images/property-3.jpg'),
-      require('@/assets/images/property-6.jpg'),
+      require('@/assets/images/agriculture/agri-field-1.jpg'),
+      require('@/assets/images/agriculture/agri-field-4.jpg'),
     ],
     featured: false,
     agent: 'Tariq Mehmood',
@@ -615,10 +613,10 @@ const bundledDemoProperties: Property[] = [
     address: 'Moray Wala, Hujra Shah Muqeem, Okara District',
     description:
       'Sandy-loam land suitable for mixed farming — currently under maize and cotton. No nehri access but deep tube well (16HP) provides year-round irrigation. Lower land price ideal for first-time agricultural investors or young farmers. Boundary marked with pillars.',
-    image: require('@/assets/images/property-6.jpg'),
+    image: require('@/assets/images/agriculture/agri-field-1.jpg'),
     gallery: [
-      require('@/assets/images/property-2.jpg'),
-      require('@/assets/images/property-5.jpg'),
+      require('@/assets/images/agriculture/agri-field-4.jpg'),
+      require('@/assets/images/agriculture/agri-field-3.jpg'),
     ],
     featured: false,
     agent: 'Zahid Hussain',
@@ -666,10 +664,10 @@ const bundledDemoProperties: Property[] = [
     address: 'Chak 45/4-R, Depalpur Tehsil, Okara District',
     description:
       'Affordable entry-level agricultural plot ideal for small farmers. Nehri water fully available. Rich loam soil currently producing cotton. Suitable for cotton, wheat rotation. Good neighbours and peaceful farming community. Price negotiable for serious buyers.',
-    image: require('@/assets/images/property-1.jpg'),
+    image: require('@/assets/images/agriculture/agri-field-4.jpg'),
     gallery: [
-      require('@/assets/images/property-3.jpg'),
-      require('@/assets/images/property-4.jpg'),
+      require('@/assets/images/agriculture/agri-field-3.jpg'),
+      require('@/assets/images/agriculture/agri-field-1.jpg'),
     ],
     featured: false,
     agent: 'Muhammad Asif',
@@ -787,12 +785,20 @@ const ALL_IMAGES: ImageSourcePropType[] = [
   require('@/assets/images/property-6.jpg'),
 ];
 
+const AGRICULTURE_IMAGES: ImageSourcePropType[] = [
+  require('@/assets/images/agriculture/agri-field-1.jpg'),
+  require('@/assets/images/agriculture/agri-field-3.jpg'),
+  require('@/assets/images/agriculture/agri-field-4.jpg'),
+];
+
 /** Returns exactly 15 images: property's own first, padded with other assets if needed. */
 export function propertyImages(property: Property): ImageSourcePropType[] {
   const own = [property.image, ...property.gallery];
-  const pool = ALL_IMAGES.filter(
+  const imagePool = /agri|farm/i.test(property.type) ? AGRICULTURE_IMAGES : ALL_IMAGES;
+  const uniquePool = imagePool.filter(
     (img) => !own.some((o) => JSON.stringify(o) === JSON.stringify(img)),
   );
+  const pool = uniquePool.length > 0 ? uniquePool : imagePool;
   const result = [...own];
   let i = 0;
   while (result.length < 15) {
@@ -838,13 +844,10 @@ export function formatAreaDisplay(area: number, areaUnit: string): { value: stri
 }
 
 // ─── Resolve backend image URL (relative or absolute) ────────────────────────
-const API_BASE_URL: string =
-  (process.env.EXPO_PUBLIC_API_URL as string | undefined) || 'https://oglandmark.com';
-
 function resolveImageUrl(url: string): string {
   if (!url) return '';
   if (url.startsWith('http')) return url;
-  return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
 }
 
 // ─── Placeholder images (cycled when backend property has no images) ───────────
@@ -856,6 +859,8 @@ const PLACEHOLDERS: ImageSourcePropType[] = [
   require('@/assets/images/property-5.jpg'),
   require('@/assets/images/property-6.jpg'),
 ];
+
+const AGRICULTURE_PLACEHOLDER = AGRICULTURE_IMAGES;
 
 /**
  * Convert an ApiProperty (from the backend) to the Property shape used
@@ -887,7 +892,8 @@ export function apiPropertyToProperty(ap: {
 }): Property {
   const safeId   = typeof ap.id === 'number' && isFinite(ap.id) ? ap.id : 0;
   const imgs     = Array.isArray(ap.images) ? ap.images.filter(Boolean) : [];
-  const placeholder = PLACEHOLDERS[safeId % PLACEHOLDERS.length] ?? PLACEHOLDERS[0]!;
+  const placeholderPool = /agri|farm/i.test(ap.type ?? '') ? AGRICULTURE_PLACEHOLDER : PLACEHOLDERS;
+  const placeholder = placeholderPool[safeId % placeholderPool.length] ?? placeholderPool[0]!;
   const image: ImageSourcePropType = imgs[0] ? { uri: resolveImageUrl(imgs[0]) } : placeholder;
   const gallery: ImageSourcePropType[] = imgs.slice(1).map(
     (u) => ({ uri: resolveImageUrl(u) } as ImageSourcePropType),

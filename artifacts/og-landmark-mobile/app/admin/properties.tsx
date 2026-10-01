@@ -7,7 +7,7 @@ import {
   ActivityIndicator, Alert, FlatList, Image, Linking, Modal, Platform, Pressable,
   RefreshControl, ScrollView, StyleSheet, View,
 } from 'react-native';
-import { LocalizedText as Text } from '@/components/LocalizedText';
+import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,9 +18,10 @@ import {
   getAdminProperties, ApiProperty,
   approveProperty, rejectProperty,
   toggleFeatureProperty, deleteAdminProperty, updateProperty,
+  getAdminPropertyReview, AdminPropertyReview,
 } from '@/lib/api';
 
-const NAVY = '#102a43';
+const NAVY = '#0B1F3A';
 const GOLD = '#C8A45A';
 
 const STATUS_TABS = ['Pending', 'Active', 'Rejected', 'All'] as const;
@@ -67,6 +68,14 @@ export default function AdminProperties() {
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [editingProperty, setEditingProperty] = useState<ApiProperty | null>(null);
+  const [loadError, setLoadError] = useState('');
+  const [rejectingProperty, setRejectingProperty] = useState<ApiProperty | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejecting, setRejecting] = useState(false);
+  const [reviewingProperty, setReviewingProperty] = useState<ApiProperty | null>(null);
+  const [reviewData, setReviewData] = useState<AdminPropertyReview | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState('');
   const [editLatitude, setEditLatitude] = useState<number | null>(null);
   const [editLongitude, setEditLongitude] = useState<number | null>(null);
   const [editLocation, setEditLocation] = useState<LocationData | null>(null);
@@ -74,11 +83,14 @@ export default function AdminProperties() {
   const [savingLocation, setSavingLocation] = useState(false);
 
   const load = useCallback(async () => {
+    setLoadError('');
     try {
       const status = tab === 'All' ? undefined : tab;
       const data = await getAdminProperties({ status, limit: 50 });
       setProperties(data);
-    } catch { /* silent */ }
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Could not load properties.');
+    }
     finally { setLoading(false); setRefreshing(false); }
   }, [tab]);
 
@@ -91,14 +103,44 @@ export default function AdminProperties() {
     } catch { Alert.alert('Error', 'Could not approve.'); }
   }
 
-  async function doReject(id: number) {
-    Alert.alert('Reject Property', 'Reject this listing?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Reject', style: 'destructive', onPress: async () => {
-          try { await rejectProperty(id); setProperties(p => p.filter(x => x.id !== id)); }
-          catch { Alert.alert('Error', 'Could not reject.'); }
-        }},
-    ]);
+  function beginReject(prop: ApiProperty) {
+    setRejectingProperty(prop);
+    setRejectReason('');
+  }
+
+  async function submitReject() {
+    const property = rejectingProperty;
+    const reason = rejectReason.trim();
+    if (!property) return;
+    if (!reason) {
+      Alert.alert('Reason required', 'Please explain why this listing is being rejected.');
+      return;
+    }
+    setRejecting(true);
+    try {
+      await rejectProperty(property.id, reason);
+      setProperties((items) => items.filter((item) => item.id !== property.id));
+      setRejectingProperty(null);
+      setRejectReason('');
+    } catch (error) {
+      Alert.alert('Could not reject', error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setRejecting(false);
+    }
+  }
+
+  async function openReview(prop: ApiProperty) {
+    setReviewingProperty(prop);
+    setReviewData(null);
+    setReviewError('');
+    setReviewLoading(true);
+    try {
+      setReviewData(await getAdminPropertyReview(prop.id));
+    } catch (error) {
+      setReviewError(error instanceof Error ? error.message : 'Could not load the complete review.');
+    } finally {
+      setReviewLoading(false);
+    }
   }
 
   async function doFeature(prop: ApiProperty) {
@@ -244,13 +286,17 @@ export default function AdminProperties() {
 
       {/* Action buttons */}
       <View style={s.actions}>
+        <Pressable style={[s.actBtn, { backgroundColor: NAVY }]} onPress={() => void openReview(item)}>
+          <Feather name="eye" size={13} color="#fff" />
+          <Text style={s.actText}>Review</Text>
+        </Pressable>
         {(item.approvalStatus === 'Pending' || !item.approvalStatus) && (
           <>
             <Pressable style={[s.actBtn, { backgroundColor: '#15803d' }]} onPress={() => doApprove(item)}>
               <Feather name="check" size={13} color="#fff" />
               <Text style={s.actText}>Approve</Text>
             </Pressable>
-            <Pressable style={[s.actBtn, { backgroundColor: '#dc2626' }]} onPress={() => doReject(item.id)}>
+            <Pressable style={[s.actBtn, { backgroundColor: '#dc2626' }]} onPress={() => beginReject(item)}>
               <Feather name="x" size={13} color="#fff" />
               <Text style={s.actText}>Reject</Text>
             </Pressable>
@@ -296,6 +342,14 @@ export default function AdminProperties() {
 
       {loading ? (
         <ActivityIndicator size="large" color={GOLD} style={{ marginTop: 60 }} />
+      ) : loadError ? (
+        <View style={s.empty}>
+          <Feather name="wifi-off" size={40} color="#dc2626" />
+          <Text style={[s.emptyText, { color: colors.foreground }]}>{loadError}</Text>
+          <Pressable style={[s.actBtn, { backgroundColor: GOLD }]} onPress={() => { setLoading(true); load(); }}>
+            <Text style={[s.actText, { color: NAVY }]}>Retry</Text>
+          </Pressable>
+        </View>
       ) : (
         <FlatList
           data={properties}
@@ -312,7 +366,7 @@ export default function AdminProperties() {
         />
       )}
 
-      <Modal visible={!!editingProperty} transparent animationType="slide" onRequestClose={() => closeLocationEdit()}>
+      <Modal visible={!!editingProperty} transparent animationType="none" onRequestClose={() => closeLocationEdit()}>
         <View style={s.modalBackdrop}>
           <View style={[s.modalSheet, { backgroundColor: colors.background, paddingBottom: Platform.OS === 'ios' ? 28 : 18 }]}>
             <View style={[s.modalHeader, { borderBottomColor: colors.border }]}>
@@ -335,6 +389,7 @@ export default function AdminProperties() {
                 latitude={editLatitude}
                 longitude={editLongitude}
                 address={editLocation?.fullAddress || editingProperty?.address}
+                city={editingProperty?.city}
                 onChange={(lat, lng) => {
                   setEditLatitude(lat);
                   setEditLongitude(lng);
@@ -349,6 +404,7 @@ export default function AdminProperties() {
                 colors={colors}
                 accentColor={GOLD}
                 requireConfirm
+                fullScreen
                 onConfirmationChange={setEditConfirmed}
                 errorMessage={editLatitude == null || editLongitude == null ? 'Set an exact property pin' : undefined}
               />
@@ -362,10 +418,120 @@ export default function AdminProperties() {
                 disabled={savingLocation || !editConfirmed}
                 style={[s.modalSave, { backgroundColor: GOLD, opacity: savingLocation || !editConfirmed ? 0.55 : 1 }]}
               >
-                {savingLocation ? <ActivityIndicator size="small" color="#102a43" /> : <Feather name="check" size={15} color="#102a43" />}
+                {savingLocation ? <ActivityIndicator size="small" color="#0B1F3A" /> : <Feather name="check" size={15} color="#0B1F3A" />}
                 <Text style={s.modalSaveText}>{savingLocation ? 'Saving…' : 'Save Location'}</Text>
               </Pressable>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={!!rejectingProperty}
+        transparent
+        animationType="fade"
+        onRequestClose={() => { if (!rejecting) setRejectingProperty(null); }}
+      >
+        <View style={s.modalBackdrop}>
+          <View style={[s.rejectSheet, { backgroundColor: colors.background }]}>
+            <Text style={[s.modalTitle, { color: colors.foreground }]}>Reject Listing</Text>
+            <Text style={[s.modalSub, { color: colors.mutedForeground }]}>
+              {rejectingProperty?.title}
+            </Text>
+            <TextInput
+              value={rejectReason}
+              onChangeText={setRejectReason}
+              placeholder="Explain what needs to be corrected…"
+              placeholderTextColor={colors.mutedForeground}
+              multiline
+              textAlignVertical="top"
+              style={[s.rejectInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card }]}
+              editable={!rejecting}
+            />
+            <View style={s.modalFooter}>
+              <Pressable
+                onPress={() => setRejectingProperty(null)}
+                disabled={rejecting}
+                style={[s.modalCancel, { borderColor: colors.border, opacity: rejecting ? 0.5 : 1 }]}
+              >
+                <Text style={[s.modalCancelText, { color: colors.foreground }]}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={submitReject}
+                disabled={rejecting}
+                style={[s.modalSave, { backgroundColor: '#dc2626', opacity: rejecting ? 0.6 : 1 }]}
+              >
+                {rejecting ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="x" size={15} color="#fff" />}
+                <Text style={[s.modalSaveText, { color: '#fff' }]}>{rejecting ? 'Rejecting…' : 'Reject Listing'}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={!!reviewingProperty}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setReviewingProperty(null)}
+      >
+        <View style={s.modalBackdrop}>
+          <View style={[s.reviewSheet, { backgroundColor: colors.background }]}>
+            <View style={[s.modalHeader, { borderBottomColor: colors.border }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.modalTitle, { color: colors.foreground }]}>Listing Review</Text>
+                <Text style={[s.modalSub, { color: colors.mutedForeground }]} numberOfLines={1}>
+                  {reviewingProperty?.title}
+                </Text>
+              </View>
+              <Pressable onPress={() => setReviewingProperty(null)} hitSlop={10}>
+                <Feather name="x" size={20} color={colors.mutedForeground} />
+              </Pressable>
+            </View>
+            {reviewLoading ? (
+              <ActivityIndicator size="large" color={GOLD} style={{ marginVertical: 60 }} />
+            ) : reviewError ? (
+              <View style={s.empty}>
+                <Feather name="wifi-off" size={34} color="#dc2626" />
+                <Text style={[s.emptyText, { color: colors.foreground }]}>{reviewError}</Text>
+              </View>
+            ) : reviewData ? (
+              <ScrollView contentContainerStyle={s.reviewBody} showsVerticalScrollIndicator={false}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.reviewImages}>
+                  {(reviewData.property.images ?? []).map((uri, index) => (
+                    <Image key={`${uri}-${index}`} source={{ uri }} style={s.reviewImage} resizeMode="cover" />
+                  ))}
+                </ScrollView>
+                <View style={s.reviewGrid}>
+                  {[
+                    ['Status', reviewData.property.approvalStatus ?? 'Pending'],
+                    ['Type', reviewData.property.type],
+                    ['Purpose', reviewData.property.status],
+                    ['Price', `PKR ${Number(reviewData.property.price || 0).toLocaleString()}`],
+                    ['Area', `${reviewData.property.area ?? 0} ${reviewData.property.areaUnit ?? ''}`],
+                    ['Location', [reviewData.property.address, reviewData.property.city].filter(Boolean).join(', ')],
+                  ].map(([label, value]) => (
+                    <View key={label} style={s.reviewRow}>
+                      <Text style={[s.reviewLabel, { color: colors.mutedForeground }]}>{label}</Text>
+                      <Text style={[s.reviewValue, { color: colors.foreground }]}>{value || 'Not provided'}</Text>
+                    </View>
+                  ))}
+                </View>
+                <Text style={[s.reviewSectionTitle, { color: colors.foreground }]}>Description</Text>
+                <Text style={[s.reviewDescription, { color: colors.mutedForeground }]}>
+                  {reviewData.property.description || 'No description provided.'}
+                </Text>
+                <Text style={[s.reviewSectionTitle, { color: colors.foreground }]}>Seller</Text>
+                <Text style={[s.reviewDescription, { color: colors.mutedForeground }]}>
+                  {reviewData.seller
+                    ? [reviewData.seller.name, reviewData.seller.email, reviewData.seller.phone].filter(Boolean).join(' · ')
+                    : 'Seller information unavailable.'}
+                </Text>
+                <Text style={[s.reviewAudit, { color: colors.mutedForeground }]}>
+                  {reviewData.audit?.length ?? 0} review events recorded
+                </Text>
+              </ScrollView>
+            ) : null}
           </View>
         </View>
       </Modal>
@@ -395,10 +561,10 @@ const s = StyleSheet.create({
   locText:     { fontFamily: 'Inter_400Regular', fontSize: 12 },
   locCoords:   { fontFamily: 'Inter_400Regular', fontSize: 11 },
   locActions:  { flexDirection: 'row', gap: 8, marginTop: 6 },
-  locBtn:      { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 7 },
+  locBtn:      { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5, minHeight: 36 },
   locBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   actions:     { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  actBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
+  actBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, minHeight: 36 },
   actText:     { fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#fff' },
   empty:       { alignItems: 'center', paddingTop: 80, gap: 12 },
   emptyText:   { fontFamily: 'Inter_400Regular', fontSize: 14 },
@@ -409,8 +575,21 @@ const s = StyleSheet.create({
   modalSub: { fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 2 },
   modalBody: { padding: 18, paddingBottom: 30 },
   modalFooter: { flexDirection: 'row', gap: 10, paddingHorizontal: 18, paddingTop: 12, borderTopWidth: 1 },
-  modalCancel: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, paddingVertical: 12 },
+  modalCancel: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, paddingVertical: 8, minHeight: 36 },
   modalCancelText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  modalSave: { flex: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, paddingVertical: 12 },
-  modalSaveText: { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#102a43' },
+  modalSave: { flex: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, paddingVertical: 8, minHeight: 40 },
+  modalSaveText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#0B1F3A' },
+  rejectSheet: { margin: 20, borderRadius: 18, padding: 18 },
+  rejectInput: { minHeight: 110, borderWidth: 1, borderRadius: 11, padding: 12, marginTop: 16, fontFamily: 'Inter_400Regular', fontSize: 14 },
+  reviewSheet: { maxHeight: '92%', borderTopLeftRadius: 22, borderTopRightRadius: 22, overflow: 'hidden' },
+  reviewBody: { padding: 18, paddingBottom: 28 },
+  reviewImages: { gap: 8, paddingBottom: 16 },
+  reviewImage: { width: 138, height: 96, borderRadius: 10, backgroundColor: '#dfe5eb' },
+  reviewGrid: { gap: 1, marginBottom: 18 },
+  reviewRow: { flexDirection: 'row', gap: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#0B1F3A12' },
+  reviewLabel: { width: 76, fontFamily: 'Inter_600SemiBold', fontSize: 11 },
+  reviewValue: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12 },
+  reviewSectionTitle: { fontFamily: 'Inter_700Bold', fontSize: 14, marginTop: 8, marginBottom: 6 },
+  reviewDescription: { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 20 },
+  reviewAudit: { fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 18 },
 });

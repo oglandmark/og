@@ -25,10 +25,10 @@ export function newMemberId(): string {
 
 export function roleColor(role: TeamRole): { bg: string; text: string } {
   switch (role) {
-    case 'Admin':    return { bg: '#102a4318', text: '#102a43' };
+    case 'Admin':    return { bg: '#0B1F3A18', text: '#0B1F3A' };
     case 'Manager':  return { bg: '#7c3aed18', text: '#7c3aed' };
     case 'Agent':    return { bg: '#c8a45a18', text: '#c8a45a' };
-    case 'Sales Rep':return { bg: '#1a6b3a18', text: '#1a6b3a' };
+    case 'Sales Rep':return { bg: '#183B6018', text: '#183B60' };
   }
 }
 

@@ -97,9 +97,9 @@ function PlanCard({
           <Text style={[pc.chipLabel, { color: colors.mutedForeground }]}>Booking</Text>
           <Text style={[pc.chipValue, { color: colors.action }]}>PKR {fmtPKR(plan.bookingAmount)}</Text>
         </View>
-        <View style={[pc.chip, { backgroundColor: '#1a6b3a12' }]}>
+        <View style={[pc.chip, { backgroundColor: '#183B6012' }]}>
           <Text style={[pc.chipLabel, { color: colors.mutedForeground }]}>Monthly</Text>
-          <Text style={[pc.chipValue, { color: '#1a6b3a' }]}>PKR {fmtPKR(plan.monthlyInstallment)}</Text>
+          <Text style={[pc.chipValue, { color: '#183B60' }]}>PKR {fmtPKR(plan.monthlyInstallment)}</Text>
         </View>
         <View style={[pc.chip, { backgroundColor: colors.secondary }]}>
           <Text style={[pc.chipLabel, { color: colors.mutedForeground }]}>× {plan.installmentCount}</Text>
@@ -125,7 +125,7 @@ function PlanCard({
           </View>
           <View style={[pc.breakRow, { borderBottomColor: colors.border }]}>
             <Text style={[pc.breakLabel, { color: colors.mutedForeground }]}>{tr('planCalcInstTotal')}</Text>
-            <Text style={[pc.breakValue, { color: '#1a6b3a' }]}>PKR {fmtPKR(summary.totalInstallments)}</Text>
+            <Text style={[pc.breakValue, { color: '#183B60' }]}>PKR {fmtPKR(summary.totalInstallments)}</Text>
           </View>
           <View style={pc.breakRow}>
             <Text style={[pc.breakLabel, { color: colors.mutedForeground, fontFamily: 'Inter_700Bold' }]}>{tr('planTotalPrice')}</Text>
@@ -362,7 +362,7 @@ const pc = StyleSheet.create({
   breakRow:   { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1 },
   breakLabel: { fontFamily: 'Inter_400Regular', fontSize: 12 },
   breakValue: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
-  deleteBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 10, borderWidth: 1, paddingVertical: 10, marginTop: 4 },
+  deleteBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 10, borderWidth: 1, paddingVertical: 8, minHeight: 36, marginTop: 4 },
   deleteBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 });
 
@@ -374,8 +374,8 @@ const pp = StyleSheet.create({
   eyebrow:     { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.5, marginBottom: 2 },
   title:       { fontFamily: 'Inter_700Bold', fontSize: 22 },
   subtitle:    { fontFamily: 'Inter_400Regular', fontSize: 12 },
-  addBtn:      { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 },
-  addBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
+  addBtn:      { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 7, minHeight: 40 },
+  addBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   formCard:    { borderWidth: 1.5, borderRadius: 18, padding: 18, gap: 14 },
   formTitle:   { fontFamily: 'Inter_700Bold', fontSize: 17, marginBottom: 4 },
   fWrap:       { gap: 6 },
@@ -388,12 +388,12 @@ const pp = StyleSheet.create({
   calcRow:     { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
   calcLabel:   { fontFamily: 'Inter_400Regular', fontSize: 12 },
   calcValue:   { fontFamily: 'Inter_700Bold', fontSize: 13 },
-  saveBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 14 },
-  saveBtnText: { fontFamily: 'Inter_700Bold', fontSize: 14, color: '#ffffff' },
+  saveBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 8, minHeight: 40 },
+  saveBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
   emptyWrap:   { borderWidth: 1, borderRadius: 18, padding: 36, alignItems: 'center', gap: 12, borderStyle: 'dashed' },
   emptyIcon:   { width: 76, height: 76, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   emptyTitle:  { fontFamily: 'Inter_700Bold', fontSize: 17, textAlign: 'center' },
   emptyDesc:   { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 20, maxWidth: 260 },
-  emptyBtn:    { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 12, marginTop: 8 },
-  emptyBtnText:{ fontFamily: 'Inter_700Bold', fontSize: 14, color: '#ffffff' },
+  emptyBtn:    { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 8, minHeight: 40, marginTop: 8 },
+  emptyBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
 });

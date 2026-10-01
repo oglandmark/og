@@ -170,6 +170,6 @@ const styles = StyleSheet.create({
   radioCircle: { width: 28, height: 28, borderRadius: 14, borderWidth: 2 },
   infoBox: { flexDirection: 'row', gap: 10, borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 24, alignItems: 'flex-start' },
   infoText: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, flex: 1 },
-  doneBtn: { height: 52, borderRadius: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  doneBtnText: { fontFamily: 'Inter_700Bold', fontSize: 14 },
+  doneBtn: { height: 44, borderRadius: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  doneBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });

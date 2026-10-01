@@ -2,7 +2,7 @@
  * LocationPicker  — Professional property location picker
  *   • Google Places Autocomplete (Pakistan-scoped)
  *   • GPS with accuracy display + low-accuracy warning
- *   • Tap / drag on Google Maps to pin
+ *   • Tap / drag on the Mapbox map to pin
  *   • Manual coordinate entry
  *   • "Confirm Location" step before finalising
  *
@@ -15,6 +15,7 @@ import {
   FlatList,
   Keyboard,
   Linking,
+  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -23,6 +24,7 @@ import {
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import type { useColors } from '@/hooks/useColors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { InteractiveMap, StaticMap } from '@/components/MapViewComponent';
 import {
   fetchAutocompleteSuggestions,
@@ -46,24 +48,37 @@ import { createGpsLocationData, lowAccuracyMessage } from '@/lib/locationFlow';
 
 type Colors = ReturnType<typeof useColors>;
 
-const OKARA_REGION = {
+interface MapRegion {
+  latitude: number;
+  longitude: number;
+  latitudeDelta: number;
+  longitudeDelta: number;
+  zoom?: number;
+  userGesture?: boolean;
+}
+
+const OKARA_REGION: MapRegion = {
   latitude: 30.8077, longitude: 73.4561,
-  latitudeDelta: 0.08, longitudeDelta: 0.08,
+  latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13,
 };
 
 // City centers are used only as a starting viewport. The user can still
 // search, use GPS, tap the map, or drag the pin to the exact property.
-const CITY_REGIONS: Record<string, typeof OKARA_REGION> = {
-  Okara: { latitude: 30.8077, longitude: 73.4561, latitudeDelta: 0.08, longitudeDelta: 0.08 },
-  Depalpur: { latitude: 30.6698, longitude: 73.6554, latitudeDelta: 0.08, longitudeDelta: 0.08 },
-  'Renala Khurd': { latitude: 30.8895, longitude: 73.5986, latitudeDelta: 0.08, longitudeDelta: 0.08 },
-  'Hujra Shah Muqeem': { latitude: 30.7417, longitude: 73.8238, latitudeDelta: 0.08, longitudeDelta: 0.08 },
-  Basirpur: { latitude: 30.6688, longitude: 73.8386, latitudeDelta: 0.08, longitudeDelta: 0.08 },
-  'Haveli Lakha': { latitude: 30.7208, longitude: 73.7537, latitudeDelta: 0.08, longitudeDelta: 0.08 },
+const CITY_REGIONS: Record<string, MapRegion> = {
+  Okara: { latitude: 30.8077, longitude: 73.4561, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
+  Depalpur: { latitude: 30.6698, longitude: 73.6554, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
+  'Renala Khurd': { latitude: 30.8895, longitude: 73.5986, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
+  'Hujra Shah Muqeem': { latitude: 30.7417, longitude: 73.8238, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
+  Basirpur: { latitude: 30.5802, longitude: 73.8317, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
+  'Haveli Lakha': { latitude: 30.4508, longitude: 73.6936, latitudeDelta: 0.08, longitudeDelta: 0.08, zoom: 13 },
 };
 
 function getCityRegion(city?: string) {
-  return CITY_REGIONS[city ?? ''] ?? OKARA_REGION;
+  const selectedCity = city?.trim();
+  if (!selectedCity) return OKARA_REGION;
+  return CITY_REGIONS[selectedCity]
+    ?? Object.entries(CITY_REGIONS).find(([name]) => name.toLowerCase() === selectedCity.toLowerCase())?.[1]
+    ?? OKARA_REGION;
 }
 
 function fmtCoord(n: number, isLat: boolean) {
@@ -157,10 +172,10 @@ export function PinnedMapCard({
           {showDirections && (
             <Pressable
               onPress={handleDirections}
-              style={({ pressed }) => [pmc.actionBtn, { backgroundColor: '#1a6b3a15', opacity: pressed ? 0.7 : 1 }]}
+              style={({ pressed }) => [pmc.actionBtn, { backgroundColor: '#183B6015', opacity: pressed ? 0.7 : 1 }]}
             >
-              <Feather name="navigation" size={13} color="#1a6b3a" />
-              <Text style={[pmc.actionBtnText, { color: '#1a6b3a' }]}>Get Directions</Text>
+              <Feather name="navigation" size={13} color="#183B60" />
+              <Text style={[pmc.actionBtnText, { color: '#183B60' }]}>Get Directions</Text>
             </Pressable>
           )}
         </View>
@@ -178,7 +193,7 @@ const pmc = StyleSheet.create({
   infoArea:   { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   infoAddr:   { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 2, lineHeight: 14 },
   actionRow:  { flexDirection: 'row', borderTopWidth: 1, padding: 10, gap: 8 },
-  actionBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, flex: 1, justifyContent: 'center' },
+  actionBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 36, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10, flex: 1, justifyContent: 'center' },
   actionBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
 });
 
@@ -198,6 +213,11 @@ interface LocationPickerProps {
   requireConfirm?: boolean;
   onConfirmationChange?: (confirmed: boolean) => void;
   errorMessage?: string;
+  fullScreen?: boolean;
+  visible?: boolean;
+  onOpen?: () => void;
+  onClose?: () => void;
+  onDone?: () => void;
 }
 
 export function LocationPicker({
@@ -205,10 +225,36 @@ export function LocationPicker({
   onChange, onLocationChange, onClear,
   colors, accentColor, requireConfirm = false,
   onConfirmationChange, errorMessage,
+  fullScreen = false, visible, onOpen, onClose, onDone,
 }: LocationPickerProps) {
   const accent  = accentColor ?? (colors as any).action ?? colors.primary;
-  const hasPin  = typeof latitude === 'number' && typeof longitude === 'number'
-               && isFinite(latitude) && isFinite(longitude);
+  const insets = useSafeAreaInsets();
+  const selectedCityKey = city?.trim().toLowerCase() ?? '';
+  const [internalMapVisible, setInternalMapVisible] = useState(false);
+  const mapVisible = visible ?? internalMapVisible;
+  const openMap = () => {
+    onOpen?.();
+    if (visible === undefined) setInternalMapVisible(true);
+  };
+  const closeMap = () => {
+    onClose?.();
+    if (visible === undefined) setInternalMapVisible(false);
+  };
+  const hasCommittedPin = typeof latitude === 'number' && typeof longitude === 'number'
+                        && isFinite(latitude) && isFinite(longitude);
+  const [draftLocation, setDraftLocation] = useState<LocationData | null>(() => (
+    fullScreen && hasCommittedPin
+      ? {
+          latitude: latitude!,
+          longitude: longitude!,
+          fullAddress: address ?? '',
+          locationSource: 'manual',
+        }
+      : null
+  ));
+  const hasPin = fullScreen ? Boolean(draftLocation) : hasCommittedPin;
+  const mapLatitude = fullScreen && draftLocation ? draftLocation.latitude : latitude;
+  const mapLongitude = fullScreen && draftLocation ? draftLocation.longitude : longitude;
 
   const [query,           setQuery]           = useState(address ?? '');
   const [suggestions,     setSuggestions]     = useState<AutocompleteSuggestion[]>([]);
@@ -224,6 +270,7 @@ export function LocationPicker({
   const [accuracyMetres, setAccuracyMetres] = useState<number | null>(null);
   const [localityLoading, setLocalityLoading] = useState(false);
   const localityRequestRef = useRef(0);
+  const mapPinGeocodeRequestRef = useRef(0);
 
   const [showManual, setShowManual] = useState(false);
   const [latInput,   setLatInput]   = useState(latitude  != null ? String(latitude)  : '');
@@ -238,17 +285,61 @@ export function LocationPicker({
     onConfirmationChange?.(confirmed);
   }, [confirmed, onConfirmationChange]);
 
-  const [region, setRegion] = useState(
+  // Full-screen picking is a draft transaction. Re-open with the committed
+  // parent value, or with no pin after the city has been changed.
+  useEffect(() => {
+    if (!fullScreen || !mapVisible) return;
+    if (!hasCommittedPin) {
+      setDraftLocation(null);
+      return;
+    }
+    setDraftLocation((current) => (
+      current
+      && current.latitude === latitude
+      && current.longitude === longitude
+        ? current
+        : {
+            latitude: latitude!,
+            longitude: longitude!,
+            fullAddress: address ?? '',
+            locationSource: 'manual',
+          }
+    ));
+  }, [fullScreen, mapVisible, hasCommittedPin, latitude, longitude, address]);
+
+  useEffect(() => {
+    if (!fullScreen || mapVisible) return;
+    setDraftLocation(hasCommittedPin
+      ? {
+          latitude: latitude!,
+          longitude: longitude!,
+          fullAddress: address ?? '',
+          locationSource: 'manual',
+        }
+      : null);
+  }, [fullScreen, mapVisible, hasCommittedPin, latitude, longitude, address]);
+
+  const [region, setRegion] = useState<MapRegion>(
     hasPin
-      ? { latitude: latitude!, longitude: longitude!, latitudeDelta: 0.02, longitudeDelta: 0.02 }
+      ? { latitude: mapLatitude!, longitude: mapLongitude!, latitudeDelta: 0.02, longitudeDelta: 0.02 }
       : getCityRegion(city),
   );
+  const [regionCityKey, setRegionCityKey] = useState(selectedCityKey);
+  const displayedMapRegion = fullScreen && !hasPin && regionCityKey !== selectedCityKey
+    ? getCityRegion(city)
+    : region;
 
   useEffect(() => {
     if (hasPin) {
-      setRegion({ latitude: latitude!, longitude: longitude!, latitudeDelta: 0.02, longitudeDelta: 0.02 });
+      setRegion((current) => ({
+        ...current,
+        latitude: mapLatitude!,
+        longitude: mapLongitude!,
+        latitudeDelta: current.latitudeDelta || 0.02,
+        longitudeDelta: current.longitudeDelta || 0.02,
+      }));
     }
-  }, [hasPin, latitude, longitude]);
+  }, [hasPin, mapLatitude, mapLongitude]);
 
   // When the listing city or area changes before an exact pin is selected,
   // move the map to the selected place instead of leaving the old city center.
@@ -259,6 +350,7 @@ export function LocationPicker({
 
     const requestId = ++localityRequestRef.current;
     let cancelled = false;
+    setRegionCityKey(selectedCityKey);
     setRegion(getCityRegion(city));
     setLocalityLoading(Boolean(locality?.trim()));
 
@@ -285,15 +377,19 @@ export function LocationPicker({
     });
 
     return () => { cancelled = true; };
-  }, [city, locality, hasPin]);
+  }, [city, locality, hasPin, selectedCityKey]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   const applyLocation = useCallback((loc: LocationData) => {
     const lat = loc.latitude;
     const lng = loc.longitude;
-    onChange(lat, lng, loc.fullAddress);
-    if (onLocationChange) onLocationChange(loc);
+    if (fullScreen) {
+      setDraftLocation(loc);
+    } else {
+      onChange(lat, lng, loc.fullAddress);
+      if (onLocationChange) onLocationChange(loc);
+    }
     setPinnedAddr(loc.fullAddress);
     setLocationData(loc);
     setLatInput(String(lat));
@@ -304,8 +400,8 @@ export function LocationPicker({
     setShowSuggestions(false);
     setLocationError('');
     if (loc.fullAddress) setQuery(loc.fullAddress);
-    setRegion({ latitude: lat, longitude: lng, latitudeDelta: 0.02, longitudeDelta: 0.02 });
-  }, [onChange, onLocationChange, requireConfirm]);
+    setRegion({ latitude: lat, longitude: lng, latitudeDelta: 0.02, longitudeDelta: 0.02, zoom: 14 });
+  }, [fullScreen, onChange, onLocationChange, requireConfirm]);
 
   // ── Autocomplete ──────────────────────────────────────────────────────────
 
@@ -388,26 +484,38 @@ export function LocationPicker({
 
   // ── Map tap / drag ────────────────────────────────────────────────────────
 
-  const handleMapPress = useCallback(
-    async (e: { nativeEvent?: { coordinate?: { latitude: number; longitude: number } } }) => {
-      const coord = e?.nativeEvent?.coordinate;
-      if (!coord) return;
-      const lat = parseFloat(coord.latitude.toFixed(7));
-      const lng = parseFloat(coord.longitude.toFixed(7));
+  const handleDragEnd = useCallback(
+    async (lat: number, lng: number) => {
+      const roundedLat = parseFloat(lat.toFixed(7));
+      const roundedLng = parseFloat(lng.toFixed(7));
+      const fallback = {
+        latitude: roundedLat,
+        longitude: roundedLng,
+        fullAddress: `Pinned location · ${roundedLat.toFixed(5)}, ${roundedLng.toFixed(5)}`,
+        locationSource: 'map_tap' as const,
+      };
+
+      applyLocation(fallback);
       setAddressLoading(true);
       try {
-        const rev = await reverseGeocode(lat, lng);
-        applyLocation({
-          latitude: lat, longitude: lng,
-          fullAddress: rev?.fullAddress ?? `Pinned location · ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-           streetAddress: rev?.streetAddress,
-          city: rev?.city, locality: rev?.locality, district: rev?.district,
-           tehsil: rev?.tehsil,
-          province: rev?.province, country: rev?.country, postalCode: rev?.postalCode,
-          placeId: rev?.placeId, locationSource: 'map_tap',
-        });
+        const rev = await reverseGeocode(roundedLat, roundedLng);
+        if (rev) {
+          applyLocation({
+            ...fallback,
+            fullAddress: rev.fullAddress ?? fallback.fullAddress,
+            streetAddress: rev.streetAddress,
+            city: rev.city,
+            locality: rev.locality,
+            district: rev.district,
+            tehsil: rev.tehsil,
+            province: rev.province,
+            country: rev.country,
+            postalCode: rev.postalCode,
+            placeId: rev.placeId,
+          });
+        }
       } catch {
-        setLocationError('We could not find the address for this pin. Check the pin and try again.');
+        // Keep the coordinate-only pin when address lookup is unavailable.
       } finally {
         setAddressLoading(false);
       }
@@ -415,28 +523,55 @@ export function LocationPicker({
     [applyLocation],
   );
 
-  const handleDragEnd = useCallback(
-    async (lat: number, lng: number) => {
-      setAddressLoading(true);
-      try {
-        const rev = await reverseGeocode(lat, lng);
-        applyLocation({
-          latitude: lat, longitude: lng,
-          fullAddress: rev?.fullAddress ?? `Pinned location · ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-           streetAddress: rev?.streetAddress,
-          city: rev?.city, locality: rev?.locality, district: rev?.district,
-           tehsil: rev?.tehsil,
-          province: rev?.province, country: rev?.country, postalCode: rev?.postalCode,
-          placeId: rev?.placeId, locationSource: 'map_tap',
-        });
-      } catch {
-        setLocationError('We could not update this address. Please try moving the pin again.');
-      } finally {
-        setAddressLoading(false);
-      }
-    },
-    [applyLocation],
-  );
+  const handleMapRegionChange = useCallback((nextRegion: MapRegion) => {
+    const centerMoved = Math.abs(nextRegion.latitude - region.latitude) > 0.0000001
+      || Math.abs(nextRegion.longitude - region.longitude) > 0.0000001;
+    setRegion(nextRegion);
+    if (!fullScreen || !nextRegion.userGesture || !centerMoved) return;
+
+    const requestId = ++mapPinGeocodeRequestRef.current;
+    const fallback: LocationData = {
+      latitude: nextRegion.latitude,
+      longitude: nextRegion.longitude,
+      fullAddress: `Pinned location · ${nextRegion.latitude.toFixed(5)}, ${nextRegion.longitude.toFixed(5)}`,
+      locationSource: 'map_tap',
+    };
+    setDraftLocation(fallback);
+    setPinnedAddr(fallback.fullAddress);
+    setLocationData(fallback);
+    setLatInput(String(nextRegion.latitude));
+    setLngInput(String(nextRegion.longitude));
+    setAddressLoading(true);
+    setLocationError('');
+    if (requireConfirm) setConfirmed(false);
+
+    void reverseGeocode(nextRegion.latitude, nextRegion.longitude)
+      .then((resolved) => {
+        if (!resolved || mapPinGeocodeRequestRef.current !== requestId) return;
+        const location: LocationData = {
+          ...fallback,
+          fullAddress: resolved.fullAddress ?? fallback.fullAddress,
+          streetAddress: resolved.streetAddress,
+          city: resolved.city,
+          locality: resolved.locality,
+          district: resolved.district,
+          tehsil: resolved.tehsil,
+          province: resolved.province,
+          country: resolved.country,
+          postalCode: resolved.postalCode,
+          placeId: resolved.placeId,
+        };
+        setDraftLocation(location);
+        setPinnedAddr(location.fullAddress);
+        setLocationData(location);
+      })
+      .catch(() => {
+        // The exact map center remains usable if address lookup is unavailable.
+      })
+      .finally(() => {
+        if (mapPinGeocodeRequestRef.current === requestId) setAddressLoading(false);
+      });
+  }, [fullScreen, region, requireConfirm]);
 
   // ── Manual entry ──────────────────────────────────────────────────────────
 
@@ -466,6 +601,162 @@ export function LocationPicker({
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
+
+  const selectedLocationLabel = pinnedAddr || (city ? `Choose a point in ${city}` : 'Choose the exact property point');
+
+  if (fullScreen) {
+    return (
+      <>
+        <Pressable
+          testID="open-fullscreen-location-map"
+          onPress={openMap}
+          style={({ pressed }) => [
+            lp.fullScreenTrigger,
+            { backgroundColor: colors.secondary, borderColor: hasPin ? accent : colors.border, opacity: pressed ? 0.82 : 1 },
+          ]}
+        >
+          <View style={[lp.fullScreenTriggerIcon, { backgroundColor: accent + '18' }]}>
+            <Feather name={hasPin ? 'check-circle' : 'map-pin'} size={18} color={hasPin ? '#16a34a' : accent} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[lp.fullScreenTriggerTitle, { color: colors.foreground }]}>
+              {hasPin ? 'Property location pinned' : 'Set exact property location'}
+            </Text>
+            <Text style={[lp.fullScreenTriggerSub, { color: colors.mutedForeground }]} numberOfLines={2}>
+              {hasPin ? selectedLocationLabel : `Select a point on the ${city || 'property'} map`}
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+        </Pressable>
+
+        <Modal
+          visible={mapVisible}
+          animationType="none"
+          presentationStyle="fullScreen"
+          statusBarTranslucent
+          onRequestClose={closeMap}
+        >
+          <View style={[lp.fullScreen, { backgroundColor: colors.background }]}>
+            <View style={[lp.fullHeader, { backgroundColor: colors.background, borderBottomColor: colors.border, paddingTop: insets.top + 8 }]}>
+              <Pressable
+                testID="close-fullscreen-location-map"
+                onPress={closeMap}
+                hitSlop={10}
+                style={[lp.fullHeaderButton, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+              >
+                <Feather name="arrow-left" size={18} color={colors.foreground} />
+              </Pressable>
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Text style={[lp.fullHeaderTitle, { color: colors.foreground }]}>Mark Location on Map</Text>
+              </View>
+              <View style={{ width: 38 }} />
+            </View>
+
+            <View style={lp.fullMap}>
+              <InteractiveMap
+                key={selectedCityKey || 'default'}
+                region={displayedMapRegion}
+                onRegionChange={handleMapRegionChange}
+                onPress={undefined}
+                pinLat={hasPin ? mapLatitude! : undefined}
+                pinLng={hasPin ? mapLongitude! : undefined}
+                onDragEnd={handleDragEnd}
+                showMyLocation={false}
+                centerPin
+                zoomControlsBottomRight
+                satellite={false}
+              />
+              <View pointerEvents="none" style={lp.brandCenterPin}>
+                <View style={lp.brandPinBody}>
+                  <View style={lp.brandPinDot} />
+                </View>
+              </View>
+
+              <View style={[lp.selectedCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[lp.selectedCardEyebrow, { color: colors.mutedForeground }]}>Selected Location</Text>
+                  <Text style={[lp.selectedCardTitle, { color: colors.foreground }]} numberOfLines={1}>
+                    {hasPin ? selectedLocationLabel : city || 'Choose a location'}
+                  </Text>
+                  {!hasPin && (
+                    <Text style={[lp.selectedCardSub, { color: colors.mutedForeground }]} numberOfLines={1}>
+                      Move the map under the pin to choose the exact point
+                    </Text>
+                  )}
+                  {addressLoading && (
+                    <View style={lp.addressLoadingRow}>
+                      <ActivityIndicator size="small" color={accent} />
+                      <Text style={[lp.selectedCardSub, { color: accent }]}>Updating address…</Text>
+                    </View>
+                  )}
+                </View>
+                <Pressable
+                  onPress={() => {
+                    if (!fullScreen) onClear();
+                    setDraftLocation(null);
+                    setRegion(getCityRegion(city));
+                    setRegionCityKey(selectedCityKey);
+                    setPinnedAddr('');
+                    setLocationData({});
+                    setConfirmed(false);
+                  }}
+                  hitSlop={8}
+                  style={lp.changeLocationButton}
+                >
+                  <Feather name="map-pin" size={14} color="#183B60" />
+                  <Text style={lp.changeLocationText}>Change</Text>
+                </Pressable>
+                {hasPin && !addressLoading && (
+                  <Text style={[lp.selectedCardCoordinates, { color: colors.mutedForeground }]} numberOfLines={1}>
+                    {fmtCoord(mapLatitude!, true)} · {fmtCoord(mapLongitude!, false)}
+                  </Text>
+                )}
+              </View>
+
+              <View pointerEvents="none" style={lp.fullMapHint}>
+                <View style={lp.fullMapHintPill}>
+                  <Feather name="move" size={12} color="#ffffff" />
+                  <Text style={lp.fullMapHintText}>Move the map to adjust the pin</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={[lp.fullFooter, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: insets.bottom + 12 }]}>
+              <Pressable onPress={closeMap} hitSlop={10} style={lp.skipButton}>
+                <Text style={[lp.skipButtonText, { color: colors.mutedForeground }]}>Skip</Text>
+              </Pressable>
+              <Pressable
+                testID="done-fullscreen-location-map"
+                onPress={() => {
+                  const locationToSave: LocationData = draftLocation ?? {
+                    latitude: region.latitude,
+                    longitude: region.longitude,
+                    fullAddress: pinnedAddr || `Pinned location · ${region.latitude.toFixed(5)}, ${region.longitude.toFixed(5)}`,
+                    locationSource: 'manual',
+                  };
+                  setDraftLocation(locationToSave);
+                  setPinnedAddr(locationToSave.fullAddress);
+                  setLocationData(locationToSave);
+                  onChange(locationToSave.latitude, locationToSave.longitude, locationToSave.fullAddress);
+                  onLocationChange?.(locationToSave);
+                  setConfirmed(true);
+                  if (onDone) onDone();
+                  else closeMap();
+                }}
+                style={({ pressed }) => [
+                  lp.doneButton,
+                  { backgroundColor: accent, opacity: pressed ? 0.82 : 1 },
+                ]}
+              >
+                <Feather name="check" size={16} color="#ffffff" />
+                <Text style={lp.doneButtonText}>Done</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+      </>
+    );
+  }
 
   return (
     <View style={lp.root}>
@@ -576,14 +867,15 @@ export function LocationPicker({
         <InteractiveMap
           // Keep the camera controlled by the resolved city/locality region
           // until the user selects an exact pin.
-          key={`${city ?? 'default'}-${hasPin ? `${latitude}-${longitude}` : 'location'}`}
-          region={region}
+          key={`${selectedCityKey || 'default'}-${hasPin ? `${latitude}-${longitude}` : 'location'}`}
+          region={displayedMapRegion}
           onRegionChange={setRegion}
-          onPress={handleMapPress}
-          pinLat={hasPin ? latitude! : undefined}
-          pinLng={hasPin ? longitude! : undefined}
+           onPress={undefined}
+           pinLat={hasPin ? mapLatitude! : undefined}
+           pinLng={hasPin ? mapLongitude! : undefined}
           onDragEnd={handleDragEnd}
           showMyLocation={false}
+          satellite={false}
         />
         {localityLoading && !hasPin && (
           <View pointerEvents="none" style={lp.localityLoading}>
@@ -597,7 +889,7 @@ export function LocationPicker({
           <View pointerEvents="none" style={lp.tapHint}>
             <View style={lp.tapHintPill}>
               <Feather name="map-pin" size={12} color="#ffffff" />
-              <Text style={lp.tapHintText}>Tap map to drop a pin</Text>
+               <Text style={lp.tapHintText}>Drag the pin to set the exact location</Text>
             </View>
           </View>
         )}
@@ -695,7 +987,7 @@ export function LocationPicker({
       {showManual && (
         <View style={[lp.manualBox, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           <Text style={[lp.manualLabel, { color: colors.mutedForeground }]}>
-            Enter coordinates manually — open Google Maps, long-press any location to copy them.
+            Enter coordinates manually — open a map app, long-press any location to copy them.
           </Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <View style={{ flex: 1 }}>
@@ -736,6 +1028,79 @@ const lp = StyleSheet.create({
   sub:      { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 1 },
   clearBtn: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
 
+  fullScreenTrigger: {
+    flexDirection: 'row', alignItems: 'center', gap: 11,
+    borderWidth: 1, borderRadius: 15, padding: 13,
+  },
+  fullScreenTriggerIcon: {
+    width: 38, height: 38, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  fullScreenTriggerTitle: { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  fullScreenTriggerSub: { fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 16, marginTop: 2 },
+
+  fullScreen: { flex: 1 },
+  fullHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 12,
+  },
+  fullHeaderButton: {
+    width: 38, height: 38, borderRadius: 12, borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  fullHeaderTitle: { fontFamily: 'Inter_700Bold', fontSize: 16 },
+  fullHeaderSub: { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 2 },
+  fullMap: { flex: 1, position: 'relative' },
+  brandCenterPin: {
+    position: 'absolute', top: '50%', left: '50%', width: 28, height: 28,
+    zIndex: 5, elevation: 5,
+    transform: [{ translateX: -14 }, { translateY: -34 }],
+  },
+  brandPinBody: {
+    width: 28, height: 28, backgroundColor: '#183B60', borderWidth: 3,
+    borderColor: '#ffffff', borderTopLeftRadius: 14, borderTopRightRadius: 14,
+    borderBottomRightRadius: 14, borderBottomLeftRadius: 2,
+    transform: [{ rotate: '-45deg' }],
+    shadowColor: '#0B1F3A', shadowOpacity: 0.35, shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  brandPinDot: {
+    position: 'absolute', left: 7, top: 7, width: 8, height: 8,
+    borderRadius: 4, backgroundColor: '#ffffff',
+  },
+  selectedCard: {
+    position: 'absolute', top: 18, left: 16, right: 16,
+    borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 }, elevation: 4,
+  },
+  selectedCardEyebrow: { fontFamily: 'Inter_400Regular', fontSize: 12, marginBottom: 3 },
+  selectedCardTitle: { fontFamily: 'Inter_500Medium', fontSize: 16 },
+  selectedCardSub: { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 4 },
+  addressLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  changeLocationButton: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6 },
+  changeLocationText: { fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#183B60' },
+  selectedCardCoordinates: { position: 'absolute', left: 14, bottom: 5, fontFamily: 'Inter_400Regular', fontSize: 8 },
+  fullMapHint: { position: 'absolute', left: 0, right: 0, bottom: 16, alignItems: 'center' },
+  fullMapHintPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: 'rgba(16,42,67,0.78)', borderRadius: 20,
+    paddingHorizontal: 13, paddingVertical: 8,
+  },
+  fullMapHintText: { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#ffffff' },
+  fullFooter: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 12,
+  },
+  skipButton: { paddingHorizontal: 12, paddingVertical: 10 },
+  skipButtonText: { fontFamily: 'Inter_500Medium', fontSize: 14 },
+  doneButton: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 7, borderRadius: 12, minHeight: 40, paddingVertical: 7, paddingHorizontal: 14,
+  },
+  doneButtonText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20, color: '#ffffff' },
+
   searchWrap:  { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 13, height: 46, gap: 8 },
   searchInput: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13, height: '100%', paddingHorizontal: 8 },
 
@@ -769,12 +1134,12 @@ const lp = StyleSheet.create({
   badgeArea:  { fontFamily: 'Inter_400Regular', fontSize: 9, marginTop: 1, color: '#8a9fb8' },
 
   btnRow:    { flexDirection: 'row', gap: 10 },
-  btn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 14 },
+  btn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, minHeight: 40, paddingVertical: 6, paddingHorizontal: 14 },
   btnOutline:{ borderWidth: 1 },
-  btnText:   { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#ffffff' },
+  btnText:   { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20, color: '#ffffff' },
 
-  confirmLocationBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, paddingVertical: 13 },
-  confirmLocationText: { fontFamily: 'Inter_700Bold', fontSize: 13, color: '#ffffff' },
+  confirmLocationBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, minHeight: 40, paddingVertical: 7, paddingHorizontal: 14 },
+  confirmLocationText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20, color: '#ffffff' },
   confirmedBadge:      { flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderRadius: 11, paddingHorizontal: 13, paddingVertical: 9 },
   confirmedText:       { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 
@@ -784,7 +1149,7 @@ const lp = StyleSheet.create({
   input:       { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontFamily: 'Inter_400Regular', fontSize: 13 },
   manualErr:   { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#dc2626' },
   validationError: { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#dc2626' },
-  confirmBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, paddingVertical: 11 },
+  confirmBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, minHeight: 40, paddingVertical: 6, paddingHorizontal: 14 },
   confirmHint: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, marginTop: 4, marginBottom: 12 },
   locationError: { flexDirection: 'row', alignItems: 'flex-start', gap: 7, borderWidth: 1, borderRadius: 11, padding: 10, marginTop: 9 },
   locationErrorText: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17 },

@@ -7,6 +7,9 @@ import { useColors } from '@/hooks/useColors';
 import { useLanguage } from '@/context/LanguageContext';
 import { BrandMark } from '@/components/BrandMark';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
+import { useAuth } from '@/context/AuthContext';
+import { getConversations, getMessages, sendMessage as sendMessageAPI, type ApiConversation, type ApiMessage } from '@/lib/api';
 
 type Message = { id: number; text: string; fromMe: boolean; time: string };
 type Conversation = {
@@ -19,41 +22,53 @@ type Conversation = {
   messages: Message[];
 };
 
-const conversations: Conversation[] = [
-  {
-    id: 1, name: 'Muhammad Imran', phone: '+923011234567', preview: 'Is the 5 Marla house still available?', time: '10:32 AM', unread: 2,
-    messages: [
-      { id: 1, text: 'Assalam o Alaikum, I saw your listing for 5 Marla House.', fromMe: false, time: '10:28 AM' },
-      { id: 2, text: 'Is the 5 Marla house still available?', fromMe: false, time: '10:30 AM' },
-      { id: 3, text: 'Walaikum Assalam! Yes it is available. Are you interested?', fromMe: true, time: '10:32 AM' },
-    ],
-  },
-  {
-    id: 2, name: 'Asif Raza', phone: '+923021234567', preview: 'Can we negotiate the price?', time: 'Yesterday', unread: 0,
-    messages: [
-      { id: 1, text: 'I am interested in the 8 Kanal agricultural land.', fromMe: false, time: 'Yesterday, 3:10 PM' },
-      { id: 2, text: 'Sure, please tell me more about your requirements.', fromMe: true, time: 'Yesterday, 3:15 PM' },
-      { id: 3, text: 'Can we negotiate the price?', fromMe: false, time: 'Yesterday, 3:22 PM' },
-    ],
-  },
-  {
-    id: 3, name: 'Zahid Hussain', phone: '+923031234567', preview: 'Ok thank you, I will call tomorrow.', time: 'Mon', unread: 0,
-    messages: [
-      { id: 1, text: 'Wanted to ask about the Renala Khurd shop.', fromMe: false, time: 'Mon, 11:00 AM' },
-      { id: 2, text: 'Ok thank you, I will call tomorrow.', fromMe: false, time: 'Mon, 11:05 AM' },
-    ],
-  },
-];
+function displayTime(value?: string): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function toConversation(apiConv: ApiConversation, userId: number): Conversation {
+  const otherId = apiConv.participants.find((id) => id !== userId) ?? apiConv.participants[0];
+  return {
+    id: apiConv.id,
+    name: apiConv.otherUserName || (otherId ? `User #${otherId}` : 'Conversation'),
+    phone: apiConv.otherUserPhone || '',
+    preview: apiConv.lastMessage || 'No messages yet',
+    time: displayTime(apiConv.lastMessageAt || apiConv.createdAt),
+    unread: 0,
+    messages: [],
+  };
+}
+
+function toMessage(message: ApiMessage, userId: number): Message {
+  return {
+    id: message.id,
+    text: message.text,
+    fromMe: message.senderId === userId,
+    time: displayTime(message.createdAt),
+  };
+}
 
 export default function MessagesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { tr, isRTL } = useLanguage();
+  const { user } = useAuth();
+  const userId = Number(user?.id);
   const [activeConv, setActiveConv] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [messagesError, setMessagesError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
   const [inputText, setInputText] = useState('');
   const [keyboardShowing, setKeyboardShowing] = useState(false);
   const listRef = useRef<FlatList>(null);
+  const onScroll = useTabBarScrollHandler();
 
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const botPad = insets.bottom + (Platform.OS === 'web' ? 96 : 0);
@@ -82,31 +97,60 @@ export default function MessagesScreen() {
   // FlatList content only needs a small gap at the bottom — it scrolls independently above inputRow.
   const listPadBottom = 16;
 
-  const openConversation = (conv: Conversation) => {
+  const loadConversations = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getConversations();
+      setConversations(result.map((conversation) => toConversation(conversation, userId)));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unable to load conversations.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (Number.isFinite(userId) && userId > 0) void loadConversations();
+  }, [userId]);
+
+  const openConversation = async (conv: Conversation) => {
     setActiveConv(conv);
-    setMessages([...conv.messages]);
+    setMessages([]);
+    setMessagesError(null);
+    setMessagesLoading(true);
+    try {
+      const result = await getMessages(conv.id);
+      setMessages(result.map((message) => toMessage(message, userId)));
+    } catch (err: unknown) {
+      setMessagesError(err instanceof Error ? err.message : 'Unable to load messages.');
+    } finally {
+      setMessagesLoading(false);
+    }
   };
 
   const handleNewConversation = () => {
-    Alert.alert(
-      'New Conversation',
-      'Select a contact to start chatting:',
-      [
-        ...conversations.map((c) => ({
-          text: c.name,
-          onPress: () => openConversation(c),
-        })),
-        { text: 'Cancel', style: 'cancel' as const },
-      ],
-    );
+    Alert.alert('New Conversation', 'Chats appear after a buyer or seller contacts you.');
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!inputText.trim()) return;
-    const msg: Message = { id: Date.now(), text: inputText.trim(), fromMe: true, time: 'Now' };
-    setMessages((prev) => [...prev, msg]);
-    setInputText('');
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    if (!activeConv || !Number.isFinite(userId)) return;
+    const text = inputText.trim();
+    setSending(true);
+    try {
+      const sent = await sendMessageAPI(activeConv.id, { senderId: userId, text });
+      setMessages((prev) => [...prev, toMessage(sent, userId)]);
+      setInputText('');
+      setConversations((prev) => prev.map((conv) => conv.id === activeConv.id
+        ? { ...conv, preview: sent.text, time: displayTime(sent.createdAt) }
+        : conv));
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    } catch (err: unknown) {
+      Alert.alert('Message not sent', err instanceof Error ? err.message : 'Unable to send this message.');
+    } finally {
+      setSending(false);
+    }
   };
 
   if (activeConv) {
@@ -125,7 +169,9 @@ export default function MessagesScreen() {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.chatName, { color: colors.foreground, textAlign: rtl }]}>{activeConv.name}</Text>
-            <Text style={[styles.chatStatus, { color: '#059669' }]}>{tr('onlineStatus')}</Text>
+            <Text style={[styles.chatStatus, { color: colors.mutedForeground }]} numberOfLines={1}>
+              {activeConv.preview === 'No messages yet' ? 'Conversation' : activeConv.preview}
+            </Text>
           </View>
           <Pressable
             style={[styles.headerAction, { backgroundColor: colors.secondary }]}
@@ -149,6 +195,26 @@ export default function MessagesScreen() {
           keyExtractor={(m) => String(m.id)}
           contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: listPadBottom }}
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+           onScroll={onScroll}
+           scrollEventThrottle={16}
+          ListEmptyComponent={
+            messagesLoading ? (
+              <View style={styles.inlineState}>
+                <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>Loading messages…</Text>
+              </View>
+            ) : messagesError ? (
+              <View style={styles.inlineState}>
+                <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>{messagesError}</Text>
+                <Pressable onPress={() => void openConversation(activeConv)} style={[styles.retryButton, { backgroundColor: colors.action }]}>
+                  <Text style={[styles.retryText, { color: colors.actionForeground }]}>Try again</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <View style={styles.inlineState}>
+                <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>No messages in this conversation yet.</Text>
+              </View>
+            )
+          }
           renderItem={({ item: m }) => (
             <View style={[styles.msgRow, m.fromMe ? styles.msgRowMe : styles.msgRowThem]}>
               {!m.fromMe && (
@@ -169,8 +235,8 @@ export default function MessagesScreen() {
             placeholderTextColor={colors.mutedForeground}
             textAlign={rtl}
             style={[styles.msgInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
-            onSubmitEditing={sendMessage} returnKeyType="send" />
-          <Pressable onPress={sendMessage} style={[styles.sendBtn, { backgroundColor: colors.action, opacity: inputText.trim() ? 1 : 0.5 }]}>
+             onSubmitEditing={() => void sendMessage()} returnKeyType="send" editable={!sending} />
+           <Pressable onPress={() => void sendMessage()} disabled={sending} style={[styles.sendBtn, { backgroundColor: colors.action, opacity: inputText.trim() && !sending ? 1 : 0.5 }]}>
             <Feather name={isRTL ? 'arrow-left' : 'send'} size={17} color={colors.actionForeground} />
           </Pressable>
         </View>
@@ -180,7 +246,12 @@ export default function MessagesScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: botPad + 96 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: botPad + 96 }}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
         <AnimatedReveal>
           <View style={[styles.listHeader, { paddingTop: topPad + 12, paddingHorizontal: 20, paddingBottom: 8 }]}>
             <BrandMark />
@@ -197,7 +268,20 @@ export default function MessagesScreen() {
           </View>
         </AnimatedReveal>
 
-        {conversations.map((conv, i) => (
+        {loading ? (
+          <View style={styles.emptyState}>
+            <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>Loading conversations…</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.emptyState}>
+            <Feather name="alert-circle" size={48} color={colors.border} />
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Unable to load conversations</Text>
+            <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>{error}</Text>
+            <Pressable onPress={() => void loadConversations()} style={[styles.retryButton, { backgroundColor: colors.action }]}>
+              <Text style={[styles.retryText, { color: colors.actionForeground }]}>Try again</Text>
+            </Pressable>
+          </View>
+        ) : conversations.map((conv, i) => (
           <AnimatedReveal key={conv.id} delay={80 + i * 55}>
             <Pressable onPress={() => openConversation(conv)}
               style={({ pressed }) => [styles.convItem, { borderBottomColor: colors.border, opacity: pressed ? 0.78 : 1 }]}>
@@ -222,7 +306,7 @@ export default function MessagesScreen() {
           </AnimatedReveal>
         ))}
 
-        {conversations.length === 0 && (
+        {!loading && !error && conversations.length === 0 && (
           <View style={styles.emptyState}>
             <Feather name="message-circle" size={48} color={colors.border} />
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{tr('noMessages')}</Text>
@@ -251,8 +335,11 @@ const styles = StyleSheet.create({
   unreadBadge: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginLeft: 8 },
   unreadText: { fontFamily: 'Inter_700Bold', fontSize: 10 },
   emptyState: { alignItems: 'center', justifyContent: 'center', padding: 60, gap: 12 },
+  inlineState: { alignItems: 'center', justifyContent: 'center', padding: 40, gap: 12 },
   emptyTitle: { fontFamily: 'Inter_700Bold', fontSize: 18 },
   emptyDesc: { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 20 },
+  retryButton: { borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10 },
+  retryText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   chatHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, borderBottomWidth: 1 },
   backBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
   chatAvatar: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },

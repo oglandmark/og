@@ -187,11 +187,11 @@ export function migrateProject(p: Partial<DeveloperProject> & { id: string; deve
 
 export function statusColor(status: ProjectStatus): { bg: string; text: string } {
   switch (status) {
-    case 'Live':             return { bg: '#1a6b3a18', text: '#1a6b3a' };
-    case 'Approved':         return { bg: '#1a6b3a12', text: '#1a6b3a' };
+    case 'Live':             return { bg: '#183B6018', text: '#183B60' };
+    case 'Approved':         return { bg: '#183B6012', text: '#183B60' };
     case 'Draft':            return { bg: '#c8a45a18', text: '#c8a45a' };
-    case 'Pending Review':   return { bg: '#102a4318', text: '#102a43' };
-    case 'Under Development':return { bg: '#1a6b3a12', text: '#1a6b3a' };
+    case 'Pending Review':   return { bg: '#0B1F3A18', text: '#0B1F3A' };
+    case 'Under Development':return { bg: '#183B6012', text: '#183B60' };
     case 'Coming Soon':      return { bg: '#6b3a1a18', text: '#6b3a1a' };
     case 'Completed':        return { bg: '#0a8c6218', text: '#0a8c62' };
     case 'Paused':           return { bg: '#b94b4218', text: '#b94b42' };
@@ -260,7 +260,7 @@ export function newProjectId(): string {
 
 /** Find a single project by ID across all developers — for buyer-facing screens. */
 export async function getDevProjectById(id: string): Promise<DeveloperProject | null> {
-  return migrateProject(await apiRequest<DeveloperProject>(`/api/developer/projects/${encodeURIComponent(id)}`));
+  return migrateProject(await apiRequest<DeveloperProject>(`/api/projects/${encodeURIComponent(id)}`, {}, false));
 }
 
 /** Return all approved/live projects for buyer-facing browsing (not scoped to a developer). */

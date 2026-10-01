@@ -142,17 +142,17 @@ export default function FindAgentScreen() {
           style={({ pressed }) => [
             st.verifiedToggle,
             {
-              backgroundColor: verifiedOnly ? '#1a6b3a12' : colors.glassCard,
-              borderColor: verifiedOnly ? '#1a6b3a55' : colors.glassBorder,
+              backgroundColor: verifiedOnly ? '#183B6012' : colors.glassCard,
+              borderColor: verifiedOnly ? '#183B6055' : colors.glassBorder,
               opacity: pressed ? 0.85 : 1,
             },
           ]}
         >
-          <View style={[st.verifiedDot, { backgroundColor: verifiedOnly ? '#1a6b3a' : colors.mutedForeground }]}>
+          <View style={[st.verifiedDot, { backgroundColor: verifiedOnly ? '#183B60' : colors.mutedForeground }]}>
             {verifiedOnly && <Feather name="check" size={9} color="#ffffff" />}
           </View>
-          <Feather name="check-circle" size={14} color={verifiedOnly ? '#1a6b3a' : colors.mutedForeground} />
-          <Text style={[st.verifiedToggleText, { color: verifiedOnly ? '#1a6b3a' : colors.mutedForeground }]}>
+          <Feather name="check-circle" size={14} color={verifiedOnly ? '#183B60' : colors.mutedForeground} />
+          <Text style={[st.verifiedToggleText, { color: verifiedOnly ? '#183B60' : colors.mutedForeground }]}>
             Verified agents only
           </Text>
         </Pressable>
@@ -313,9 +313,9 @@ function AgentListCard({
               {agent.displayName}
             </Text>
             {agent.verified && (
-              <View style={[lc.verifiedBadge, { backgroundColor: '#1a6b3a12', borderColor: '#1a6b3a33' }]}>
-                <Feather name="check-circle" size={9} color="#1a6b3a" />
-                <Text style={[lc.verifiedText, { color: '#1a6b3a' }]}>VERIFIED</Text>
+              <View style={[lc.verifiedBadge, { backgroundColor: '#183B6012', borderColor: '#183B6033' }]}>
+                <Feather name="check-circle" size={9} color="#183B60" />
+                <Text style={[lc.verifiedText, { color: '#183B60' }]}>VERIFIED</Text>
               </View>
             )}
           </View>
@@ -367,11 +367,11 @@ function AgentListCard({
       <View style={[lc.ctaRow, { borderColor: colors.border }]}>
         <Pressable
           onPress={(e) => { e.stopPropagation(); Linking.openURL(`tel:${agent.phone}`); }}
-          style={[lc.callBtn, { backgroundColor: '#1a6b3a12', borderColor: '#1a6b3a33' }]}
+          style={[lc.callBtn, { backgroundColor: '#183B6012', borderColor: '#183B6033' }]}
           hitSlop={6}
         >
-          <Feather name="phone" size={13} color="#1a6b3a" />
-          <Text style={[lc.callBtnText, { color: '#1a6b3a' }]}>Call</Text>
+          <Feather name="phone" size={13} color="#183B60" />
+          <Text style={[lc.callBtnText, { color: '#183B60' }]}>Call</Text>
         </Pressable>
         <Pressable
           onPress={(e) => { e.stopPropagation(); Linking.openURL(`https://wa.me/92${agent.phone.replace(/^0/, '')}`); }}
@@ -422,8 +422,8 @@ const st = StyleSheet.create({
   emptyIcon:          { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   emptyTitle:         { fontFamily: 'Inter_700Bold', fontSize: 17 },
   emptyText:          { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 19 },
-  emptyBtn:           { borderRadius: 13, paddingHorizontal: 20, paddingVertical: 12, marginTop: 4 },
-  emptyBtnText:       { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  emptyBtn:           { borderRadius: 13, paddingHorizontal: 20, paddingVertical: 11, marginTop: 4 },
+  emptyBtnText:       { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });
 
 const lc = StyleSheet.create({
@@ -449,7 +449,7 @@ const lc = StyleSheet.create({
   areasText:    { fontFamily: 'Inter_400Regular', fontSize: 12, flex: 1 },
   about:        { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18 },
   ctaRow:       { flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: 1, paddingTop: 14 },
-  callBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 },
+  callBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7 },
   callBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   profileCta:   { flexDirection: 'row', alignItems: 'center', gap: 5 },
   profileCtaText:{ fontFamily: 'Inter_600SemiBold', fontSize: 13 },

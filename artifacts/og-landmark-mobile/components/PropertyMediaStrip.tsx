@@ -26,9 +26,6 @@ const THUMB_SIZE  = 52;   // square thumbnail size
 const THUMB_RADIUS = 8;
 const STRIP_H     = THUMB_SIZE + 18; // strip total height (padding included)
 const MAX_THUMBS  = 5;    // max image thumbnails to show
-// Keep a playable local tour available even when an API property has no
-// uploaded video or its remote URL is temporarily unreachable.
-const DEFAULT_PROPERTY_VIDEO = require('@/assets/videos/property-tour-2.mp4') as number;
 
 function PropertyFullscreenVideo({
   source, muted, onPlayerReady, onBufferingChange, onPlayingChange, onError, onFinished,
@@ -77,10 +74,12 @@ export function PropertyMediaStrip({
   property,
   activeIndex,
   onSelect,
+  compact = false,
 }: {
   property: Property;
   activeIndex: number;
   onSelect: (index: number) => void;
+  compact?: boolean;
 }) {
   const colors = useColors();
   const [videoVisible,  setVideoVisible]  = useState(false);
@@ -103,7 +102,7 @@ export function PropertyMediaStrip({
       ? property.videoAsset
       : property.videoUrl
       ? { uri: property.videoUrl }
-      : DEFAULT_PROPERTY_VIDEO;
+      : null;
   const hasVideo = videoSource !== null;
   const canScrollLeft = stripOffset > 4;
   const canScrollRight = stripOffset < stripContentWidth - stripWidth - 4;
@@ -155,14 +154,14 @@ export function PropertyMediaStrip({
   return (
     <>
       {/* ── Thumbnail Strip ─────────────────────────────────────────── */}
-      <View style={[s.strip, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View style={[s.strip, compact && s.compactStrip, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <ScrollView
           ref={stripRef}
           horizontal
           nestedScrollEnabled
           directionalLockEnabled
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={s.row}
+          contentContainerStyle={[s.row, compact && s.compactRow]}
           scrollEventThrottle={16}
           onLayout={(event) => setStripWidth(event.nativeEvent.layout.width)}
           onContentSizeChange={(width) => setStripContentWidth(width)}
@@ -174,7 +173,7 @@ export function PropertyMediaStrip({
               <Pressable
                 key={i}
                 onPress={() => onSelect(i)}
-                style={[s.thumb, selected && s.thumbSelected]}
+                style={[s.thumb, compact && s.compactThumb, selected && s.thumbSelected]}
                 accessibilityLabel={`Property image ${i + 1}`}
               >
                 <Image source={src} style={s.thumbImg} resizeMode="cover" />
@@ -187,7 +186,7 @@ export function PropertyMediaStrip({
           {/* Video tile */}
           <Pressable
             onPress={hasVideo ? openVideo : undefined}
-            style={[s.videoTile, !hasVideo && s.videoTileDim]}
+            style={[s.videoTile, compact && s.compactVideoTile, !hasVideo && s.videoTileDim]}
             accessibilityLabel="Play property video tour"
           >
             {/* Blurred background from first image */}
@@ -214,7 +213,7 @@ export function PropertyMediaStrip({
               event.stopPropagation();
               moveStrip(-1);
             }}
-            style={[s.stripArrow, s.stripArrowLeft]}
+                style={[s.stripArrow, compact && s.compactStripArrow, s.stripArrowLeft]}
             hitSlop={4}
             accessibilityRole="button"
             accessibilityLabel="Scroll property images left"
@@ -228,7 +227,7 @@ export function PropertyMediaStrip({
               event.stopPropagation();
               moveStrip(1);
             }}
-            style={[s.stripArrow, s.stripArrowRight]}
+                style={[s.stripArrow, compact && s.compactStripArrow, s.stripArrowRight]}
             hitSlop={4}
             accessibilityRole="button"
             accessibilityLabel="Scroll property images right"
@@ -241,7 +240,7 @@ export function PropertyMediaStrip({
       {/* ── Fullscreen Video Player ──────────────────────────────────── */}
       <Modal
         visible={videoVisible}
-        animationType="fade"
+        animationType="none"
         statusBarTranslucent
         supportedOrientations={['portrait', 'landscape']}
         onRequestClose={closeVideo}
@@ -327,6 +326,113 @@ export function PropertyMediaStrip({
   );
 }
 
+export function PropertyVideoModal({
+  property,
+  videoSource,
+  visible,
+  onClose,
+}: {
+  property: Property;
+  videoSource: VideoSource;
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const [isBuffering, setIsBuffering] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoPlayerRef = useRef<VideoPlayer | null>(null);
+
+  const closeVideo = () => {
+    videoPlayerRef.current?.pause();
+    if (videoPlayerRef.current) videoPlayerRef.current.currentTime = 0;
+    setIsPlaying(false);
+    onClose();
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="none"
+      statusBarTranslucent
+      supportedOrientations={['portrait', 'landscape']}
+      onRequestClose={closeVideo}
+    >
+      <StatusBar hidden />
+      <View style={fs.container}>
+        <Pressable style={fs.closeBtn} onPress={closeVideo} hitSlop={14}>
+          <View style={fs.closeBtnInner}>
+            <Feather name="x" size={20} color="#fff" />
+          </View>
+        </Pressable>
+
+        {hasError ? (
+          <View style={fs.errorBox}>
+            <Feather name="alert-circle" size={36} color="#c8a45a" />
+            <Text style={fs.errorText}>Video load nahi ho saka</Text>
+            <Pressable onPress={closeVideo} style={fs.errorClose}>
+              <Text style={fs.errorCloseText}>Close</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <>
+            <Pressable style={fs.videoWrap} onPress={() => {
+              if (isPlaying) videoPlayerRef.current?.pause();
+              else videoPlayerRef.current?.play();
+              setIsPlaying((current) => !current);
+            }}>
+              <PropertyFullscreenVideo
+                source={videoSource}
+                muted={isMuted}
+                onPlayerReady={(player) => { videoPlayerRef.current = player; }}
+                onBufferingChange={setIsBuffering}
+                onPlayingChange={setIsPlaying}
+                onError={() => setHasError(true)}
+                onFinished={closeVideo}
+              />
+              <VideoWatermark />
+            </Pressable>
+
+            {isBuffering && (
+              <View style={fs.bufferOverlay} pointerEvents="none">
+                <ActivityIndicator size="large" color="#c8a45a" />
+              </View>
+            )}
+
+            {!isPlaying && !isBuffering && (
+              <View style={fs.pauseIcon} pointerEvents="none">
+                <Feather name="play" size={38} color="#fff" />
+              </View>
+            )}
+
+            <View style={fs.controlBar}>
+              <TouchableOpacity
+                onPress={() => {
+                  const next = !isMuted;
+                  setIsMuted(next);
+                  if (videoPlayerRef.current) videoPlayerRef.current.muted = next;
+                }}
+                style={fs.muteBtn}
+                activeOpacity={0.8}
+                accessibilityLabel={isMuted ? 'Unmute video' : 'Mute video'}
+              >
+                <Feather name={isMuted ? 'volume-x' : 'volume-2'} size={18} color={isMuted ? '#888' : '#c8a45a'} />
+                <Text style={[fs.muteBtnLabel, { color: isMuted ? '#888' : '#c8a45a' }]}>
+                  {isMuted ? 'Unmute' : 'Sound On'}
+                </Text>
+              </TouchableOpacity>
+              <View style={fs.titleWrap}>
+                <Feather name="video" size={12} color="#c8a45a" />
+                <Text style={fs.titleText} numberOfLines={1}>{property.title}</Text>
+              </View>
+            </View>
+          </>
+        )}
+      </View>
+    </Modal>
+  );
+}
+
 // ─── Strip styles ───────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
   strip: {
@@ -336,6 +442,7 @@ const s = StyleSheet.create({
     borderBottomColor: 'rgba(200,164,90,0.15)',
     position: 'relative',
   },
+  compactStrip: { height: 58 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -343,6 +450,7 @@ const s = StyleSheet.create({
     paddingVertical: 10,
     gap: 8,
   },
+  compactRow: { paddingHorizontal: 10, paddingVertical: 7, gap: 6 },
   stripArrow: {
     position: 'absolute',
     top: 22,
@@ -358,6 +466,7 @@ const s = StyleSheet.create({
   },
   stripArrowLeft: { left: 4 },
   stripArrowRight: { right: 4 },
+  compactStripArrow: { top: 15, width: 24, height: 24, borderRadius: 12 },
 
   /* Image thumbnails */
   thumb: {
@@ -371,6 +480,7 @@ const s = StyleSheet.create({
   thumbSelected: {
     borderColor: '#c8a45a',
   },
+  compactThumb: { width: 42, height: 42, borderRadius: 7 },
   thumbImg: {
     width: '100%',
     height: '100%',
@@ -393,6 +503,7 @@ const s = StyleSheet.create({
     backgroundColor: '#0e2236',
     gap: 4,
   },
+  compactVideoTile: { width: 42, height: 42, borderRadius: 7 },
   videoTileDim: {
     opacity: 0.5,
   },
@@ -470,10 +581,11 @@ const fs = StyleSheet.create({
     backgroundColor: 'rgba(200,164,90,0.12)',
     borderWidth: 1.5, borderColor: 'rgba(200,164,90,0.4)',
     borderRadius: 20,
-    paddingHorizontal: 14, paddingVertical: 8,
+    minHeight: 36,
+    paddingHorizontal: 14, paddingVertical: 4,
   },
   muteBtnLabel: {
-    fontSize: 12, fontWeight: '700', letterSpacing: 0.3,
+    fontFamily: 'Inter_600SemiBold', fontSize: 12, letterSpacing: 0.3,
   },
 
   /* Title area */
@@ -489,6 +601,6 @@ const fs = StyleSheet.create({
   /* Error state */
   errorBox:       { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
   errorText:      { color: '#c8a45a', fontWeight: '700', fontSize: 15 },
-  errorClose:     { marginTop: 8, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: '#c8a45a', borderRadius: 10 },
-  errorCloseText: { color: '#102a43', fontWeight: '700', fontSize: 13 },
+  errorClose:     { marginTop: 8, minHeight: 36, paddingHorizontal: 24, paddingVertical: 6, backgroundColor: '#c8a45a', borderRadius: 10 },
+  errorCloseText: { color: '#0B1F3A', fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });

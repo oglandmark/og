@@ -672,6 +672,7 @@ export async function getAnnouncement(id: number): Promise<AdminAnnouncement> {
 export type BannerSlide = {
   id: number;
   type: 'image' | 'video';
+  category?: string | null;
   imageUrl?: string;
   videoUrl?: string;
   eyebrow: string;

@@ -18,7 +18,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { okaraDistrict } from '@/lib/cities';
 import { getMobileSettings } from '@/lib/api';
 
-const ACTION  = '#102a43';
+const ACTION  = '#0B1F3A';
 const GOLD    = '#c8a45a';
 const MUTED   = '#8a8f98';
 const BORDER  = '#e4e6ea';
@@ -395,8 +395,8 @@ const styles = StyleSheet.create({
   apiErrorText:   { fontFamily: 'Inter_400Regular', fontSize: 12, color: DEST, flex: 1 },
 
   /* Register button */
-  registerBtn:    { height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
-  registerBtnText:{ fontFamily: 'Inter_700Bold', fontSize: 15, color: '#fff', letterSpacing: 0.3 },
+  registerBtn:    { height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
+  registerBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff', letterSpacing: 0.3 },
 
   /* Footer */
   footerRow:      { flexDirection: 'row', justifyContent: 'center', marginBottom: 14 },

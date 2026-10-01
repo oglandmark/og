@@ -374,6 +374,6 @@ const w = StyleSheet.create({
   statusPill: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
   statusText: { fontFamily: 'Inter_700Bold', fontSize: 10 },
   footer:     { paddingHorizontal: 20, paddingTop: 14, borderTopWidth: 1 },
-  saveBtn:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 15 },
-  saveBtnText:{ fontFamily: 'Inter_700Bold', fontSize: 15, color: '#fff' },
+  saveBtn:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 8, minHeight: 40 },
+  saveBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff' },
 });

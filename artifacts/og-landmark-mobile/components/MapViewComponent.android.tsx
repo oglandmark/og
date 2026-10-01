@@ -1,3 +1,2 @@
-// Android shares the native Google Maps implementation with iOS, preserving
-// camera behavior and interaction semantics across native platforms.
+// Android shares the Mapbox-backed WebView implementation with iOS.
 export { StaticMap, InteractiveMap } from './MapViewComponent.native';

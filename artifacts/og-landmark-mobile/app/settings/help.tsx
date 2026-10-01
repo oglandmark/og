@@ -71,7 +71,7 @@ export default function HelpScreen() {
       icon: 'phone' as const,
       label: 'Call Support',
       sub: '+92 304 256 9000 · Mon–Sat, 9am–6pm',
-      color: '#102a43',
+      color: '#0B1F3A',
       bg: colors.secondary,
       onPress: () => Linking.openURL('tel:+923042569000'),
     },

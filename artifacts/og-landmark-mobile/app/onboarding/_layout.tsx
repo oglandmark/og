@@ -3,7 +3,7 @@ import React from 'react';
 
 export default function OnboardingLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+    <Stack screenOptions={{ headerShown: false, animation: 'none' }}>
       <Stack.Screen name="select-role" />
       <Stack.Screen name="register-buyer" />
       <Stack.Screen name="register-agent" />

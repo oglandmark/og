@@ -12,7 +12,7 @@ import {
   type AdminAnnouncement,
 } from '@/lib/api';
 
-const NAVY = '#102a43';
+const NAVY = '#0B1F3A';
 const GOLD = '#C8A45A';
 
 export default function AdminNotifications() {
@@ -20,6 +20,7 @@ export default function AdminNotifications() {
   const { top } = useSafeAreaInsets();
   const [items, setItems] = useState<AdminAnnouncement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
@@ -31,7 +32,12 @@ export default function AdminNotifications() {
   const [expiry, setExpiry] = useState('');
 
   const load = useCallback(() => {
-    void getAdminAnnouncements().then(setItems).catch(() => setItems([])).finally(() => setLoading(false));
+    setLoading(true);
+    setLoadError('');
+    void getAdminAnnouncements()
+      .then(setItems)
+      .catch((cause: unknown) => setLoadError(cause instanceof Error ? cause.message : 'Could not load announcements. Check the API connection and try again.'))
+      .finally(() => setLoading(false));
   }, []);
   useEffect(load, [load]);
 
@@ -120,7 +126,14 @@ export default function AdminNotifications() {
         </View>
 
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Campaign history</Text>
-        {loading ? <ActivityIndicator color={colors.action} /> : items.length === 0 ? (
+        {loading ? <ActivityIndicator color={colors.action} /> : loadError ? (
+          <View style={[styles.loadError, { borderColor: colors.border, backgroundColor: colors.card }]}>
+            <Text style={[styles.empty, { color: colors.foreground }]}>{loadError}</Text>
+            <Pressable onPress={load} style={[styles.retryButton, { backgroundColor: colors.action }]}>
+              <Text style={[styles.primaryText, { color: colors.actionForeground }]}>Retry</Text>
+            </Pressable>
+          </View>
+        ) : items.length === 0 ? (
           <Text style={[styles.empty, { color: colors.mutedForeground }]}>No announcements created yet.</Text>
         ) : items.map(item => (
           <View key={item.id} style={[styles.history, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -156,11 +169,13 @@ const styles = StyleSheet.create({
   previewTitle: { fontFamily: 'Inter_700Bold', fontSize: 14, marginTop: 7 },
   previewBody: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, marginTop: 4 },
   actions: { flexDirection: 'row', gap: 8 },
-  secondaryButton: { flex: 1, borderWidth: 1, borderRadius: 11, paddingVertical: 12, alignItems: 'center' },
+  secondaryButton: { flex: 1, borderWidth: 1, borderRadius: 11, paddingVertical: 8, minHeight: 40, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
-  primaryButton: { flex: 1, borderRadius: 11, paddingVertical: 12, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 7 },
-  primaryText: { fontFamily: 'Inter_700Bold', fontSize: 12, color: '#fff' },
+  primaryButton: { flex: 1, borderRadius: 11, paddingVertical: 8, minHeight: 40, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 7 },
+  primaryText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff' },
   empty: { fontFamily: 'Inter_400Regular', fontSize: 12, paddingVertical: 18 },
+  loadError: { borderWidth: 1, borderRadius: 13, padding: 13, marginBottom: 8 },
+  retryButton: { alignSelf: 'flex-start', borderRadius: 9, paddingHorizontal: 14, paddingVertical: 9 },
   history: { borderRadius: 13, borderWidth: 1, padding: 13, flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 12 },
   historyTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   historyMeta: { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 4 },

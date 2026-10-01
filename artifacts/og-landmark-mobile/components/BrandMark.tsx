@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
+import { useColors } from '@/hooks/useColors';
 
 export function BrandMark({
   inverse = false,
@@ -12,13 +13,14 @@ export function BrandMark({
   size?: 'default' | 'hero';
   showName?: boolean;
 }) {
+  const colors = useColors();
   return (
     <View style={[styles.container, size === 'hero' && styles.heroContainer]}>
-      <OGLandmarkLogo size={size === 'hero' ? (!showName ? 116 : 68) : 46} />
+      <OGLandmarkLogo size={size === 'hero' ? (!showName ? 116 : 68) : 46} inverse={inverse} />
       {showName && (
         <View>
-          <Text style={[styles.title, size === 'hero' && styles.heroTitle, inverse && styles.inverseText]}>OG Landmark</Text>
-          <Text style={[styles.subtitle, size === 'hero' && styles.heroSubtitle, inverse && styles.inverseSub]}>REAL ESTATE</Text>
+          <Text style={[styles.title, { color: inverse ? colors.background : colors.action }, size === 'hero' && styles.heroTitle]}>OG Landmark</Text>
+          <Text style={[styles.subtitle, { color: inverse ? colors.gold : colors.primary }, size === 'hero' && styles.heroSubtitle]}>REAL ESTATE</Text>
         </View>
       )}
     </View>
@@ -32,6 +34,4 @@ const styles = StyleSheet.create({
   heroContainer: { justifyContent: 'center', gap: 13 },
   heroTitle: { fontSize: 20, letterSpacing: 0.5 },
   heroSubtitle: { fontSize: 9, letterSpacing: 3.1, marginTop: 4 },
-  inverseText: { color: '#f8f6f1' },
-  inverseSub: { color: '#d9b96d' },
 });

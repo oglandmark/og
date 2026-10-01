@@ -98,7 +98,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
       {__DEV__ ? (
         <Modal
           visible={isModalVisible}
-          animationType="slide"
+          animationType="none"
           transparent={true}
           onRequestClose={() => setIsModalVisible(false)}
         >
@@ -206,7 +206,8 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   button: {
-    paddingVertical: 16,
+    minHeight: 44,
+    paddingVertical: 11,
     borderRadius: 8,
     paddingHorizontal: 24,
     minWidth: 200,
@@ -220,9 +221,10 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   buttonText: {
-    fontWeight: '600',
+    fontFamily: 'Inter_600SemiBold',
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: 14,
+    lineHeight: 20,
   },
   modalOverlay: {
     flex: 1,

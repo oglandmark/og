@@ -9,7 +9,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useFocusEffect, useRouter } from 'expo-router';
 // BlurView removed — crashes Android GPU
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { BrandMark } from '@/components/BrandMark';
 import { NotificationBell } from '@/components/NotificationBell';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -28,6 +27,7 @@ import { getSiteVisitsByBuyer, visitStatusColor as siteVisitStatusColor } from '
 import { getAgentVisitsByBuyer, visitStatusColor as agentVisitStatusColor } from '@/lib/agentVisitsStore';
 import { deleteMyAccount } from '@/lib/api';
 import { clearLocalAccountData } from '@/lib/accountCleanup';
+import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import {
   getNotificationPermissionState,
   registerPushTokenForUser,
@@ -55,35 +55,15 @@ function SlideSheet({
   children: React.ReactNode; colors: ReturnType<typeof useColors>;
   insets: ReturnType<typeof useSafeAreaInsets>;
 }) {
-  const translateY = useSharedValue(600);
-  const opacity    = useSharedValue(0);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    if (visible) {
-      setMounted(true);
-      translateY.value = withSpring(0, { damping: 24, stiffness: 240 });
-      opacity.value    = withTiming(1, { duration: 200 });
-    } else {
-      translateY.value = withTiming(600, { duration: 220 });
-      opacity.value    = withTiming(0, { duration: 180 });
-      const t = setTimeout(() => setMounted(false), 240);
-      return () => clearTimeout(t);
-    }
-  }, [visible, translateY, opacity]);
-
-  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
-  const bgStyle    = useAnimatedStyle(() => ({ opacity: opacity.value }));
-
-  if (!mounted) return null;
+  if (!visible) return null;
   return (
-    <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={sh.root}>
-        <Animated.View style={[StyleSheet.absoluteFill, sh.backdrop, bgStyle]}>
+        <View style={[StyleSheet.absoluteFill, sh.backdrop]}>
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.25)' }]} />
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        </Animated.View>
-        <Animated.View style={[sh.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16, borderColor: colors.border }, sheetStyle]}>
+        </View>
+        <View style={[sh.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16, borderColor: colors.border }]}>
           <View style={[sh.handle, { backgroundColor: colors.border }]} />
           <View style={sh.sheetHeader}>
             <View>
@@ -95,7 +75,7 @@ function SlideSheet({
             </Pressable>
           </View>
           {children}
-        </Animated.View>
+        </View>
       </View>
     </Modal>
   );
@@ -103,7 +83,7 @@ function SlideSheet({
 
 const sh = StyleSheet.create({
   root:        { flex: 1, justifyContent: 'flex-end' },
-  backdrop:    { backgroundColor: '#0d1d2baa' },
+  backdrop:    { backgroundColor: '#071428aa' },
   sheet:       { borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1, maxHeight: '88%' },
   handle:      { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 10, marginBottom: 0 },
   sheetHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 18, paddingBottom: 12 },
@@ -116,7 +96,7 @@ const sh = StyleSheet.create({
 
 function StatusBadge({ status }: { status: Inquiry['status'] }) {
   const map: Record<Inquiry['status'], { label: string; bg: string; fg: string }> = {
-    sent:    { label: 'Inquiry Sent',    bg: '#1a6b3a15', fg: '#1a6b3a' },
+    sent:    { label: 'Inquiry Sent',    bg: '#183B6015', fg: '#183B60' },
     replied: { label: 'Agent Replied',   bg: '#1a43b315', fg: '#1a43b3' },
     closed:  { label: 'Closed',          bg: '#64748b15', fg: '#64748b' },
   };
@@ -489,7 +469,7 @@ type MyVisitEntry = {
 
 function visitStatusCfg(status: string): { label: string; bg: string; fg: string; icon: keyof typeof Feather.glyphMap } {
   switch (status) {
-    case 'Confirmed':   return { label: 'Confirmed',   bg: '#1a6b3a15', fg: '#1a6b3a', icon: 'check-circle' };
+    case 'Confirmed':   return { label: 'Confirmed',   bg: '#183B6015', fg: '#183B60', icon: 'check-circle' };
     case 'Rescheduled': return { label: 'Rescheduled', bg: '#0891b215', fg: '#0891b2', icon: 'refresh-cw' };
     case 'Completed':   return { label: 'Completed',   bg: '#10293815', fg: '#102938', icon: 'check' };
     case 'Cancelled':   return { label: 'Cancelled',   bg: '#dc262615', fg: '#dc2626', icon: 'x-circle' };
@@ -859,8 +839,8 @@ function ProfileCompletionCard({
           {steps.map((s) => (
             <View key={s.label} style={pc.step}>
               <Feather name={s.done ? 'check-circle' : 'circle'} size={13}
-                color={s.done ? '#1a6b3a' : colors.mutedForeground} />
-              <Text style={[pc.stepText, { color: s.done ? '#1a6b3a' : colors.mutedForeground,
+                color={s.done ? '#183B60' : colors.mutedForeground} />
+              <Text style={[pc.stepText, { color: s.done ? '#183B60' : colors.mutedForeground,
                 textDecorationLine: s.done ? 'line-through' : 'none' }]}>
                 {s.label}
               </Text>
@@ -898,6 +878,7 @@ function GuestScreen({
   colors: ReturnType<typeof useColors>; router: ReturnType<typeof useRouter>;
   topInset: number; tabBarHeight: number;
 }) {
+  const onScroll = useTabBarScrollHandler();
   const LOCKED_ITEMS: { icon: keyof typeof Feather.glyphMap; label: string; sub: string }[] = [
     { icon: 'heart',          label: 'Saved Properties',  sub: 'Your shortlisted properties' },
     { icon: 'search',         label: 'Saved Searches',    sub: 'Quick-access search filters' },
@@ -912,6 +893,8 @@ function GuestScreen({
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: tabBarHeight, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
     >
       {/* Header */}
       <AnimatedReveal>
@@ -997,6 +980,7 @@ export default function ProfileScreen() {
   const { user, role, isLoggedIn, logout } = useAuth();
   const { tr }  = useLanguage();
   const { savedIds } = useSaved();
+  const onScroll = useTabBarScrollHandler();
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [profileContent, setProfileContent] = useState<any>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermissionState | null>(null);
@@ -1271,6 +1255,8 @@ export default function ProfileScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: tabBarHeight, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
     >
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <AnimatedReveal>
@@ -1304,8 +1290,8 @@ export default function ProfileScreen() {
             <Text style={styles.pcName} numberOfLines={1}>{displayName}</Text>
             <View style={styles.pcMeta}>
               <View style={[styles.rolePill, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
-                <Feather name={role ? roleIcons[role] : 'user'} size={9} color="#ffffff" />
-                <Text style={styles.rolePillText}>{role ? roleLabels(tr)[role] : 'User'}</Text>
+                <Feather name={role ? (roleIcons[role] ?? 'user') : 'user'} size={9} color="#ffffff" />
+                <Text style={styles.rolePillText}>{role ? (roleLabels(tr)[role] ?? 'User') : 'User'}</Text>
               </View>
               {isVerified && (
                 <View style={[styles.rolePill, { backgroundColor: '#05966930' }]}>
@@ -1366,7 +1352,7 @@ export default function ProfileScreen() {
                 value={String(myVisits.length)}
                 caption={myVisits.filter((v) => v.status === 'Confirmed').length > 0
                   ? `${myVisits.filter((v) => v.status === 'Confirmed').length} CONFIRMED` : undefined}
-                onPress={() => setVisitsOpen(true)} colors={colors} accentColor="#1a6b3a" />
+                onPress={() => setVisitsOpen(true)} colors={colors} accentColor="#183B60" />
               <ActivityTile icon="bookmark" label="Searches"
                 value={String(savedSearches.length)} caption="SAVED"
                 onPress={() => setSearchesOpen(true)} colors={colors} accentColor="#c8a45a" />
@@ -1420,7 +1406,7 @@ export default function ProfileScreen() {
                 onPress={() => router.push('/(tabs)/listings' as any)} colors={colors} iconColor={colors.action} />
               <RowLink icon="users" label="Leads"
                 sublabel={`${agentLeadsCount} lead${agentLeadsCount !== 1 ? 's' : ''}`}
-                onPress={() => router.push('/(tabs)/leads' as any)} colors={colors} iconColor="#1a6b3a" />
+                onPress={() => router.push('/(tabs)/leads' as any)} colors={colors} iconColor="#183B60" />
               <RowLink icon="message-circle" label="Inquiries"
                 sublabel={`${inquiries.length} inquiry${inquiries.length !== 1 ? 'ies' : 'y'}`}
                 onPress={() => setInquiriesOpen(true)} colors={colors} iconColor="#c8a45a" />
@@ -1457,7 +1443,7 @@ export default function ProfileScreen() {
                 onPress={() => router.push('/(tabs)/projects' as any)} colors={colors} iconColor={colors.action} />
               <RowLink icon="users" label="Leads & Enquiries"
                 sublabel={`${agentLeadsCount} lead${agentLeadsCount !== 1 ? 's' : ''}`}
-                onPress={() => router.push('/(tabs)/leads' as any)} colors={colors} iconColor="#1a6b3a" />
+                onPress={() => router.push('/(tabs)/leads' as any)} colors={colors} iconColor="#183B60" />
               <RowLink icon="bar-chart-2" label="Project Analytics"
                 sublabel="Views, inquiries, performance"
                 onPress={() => router.push('/settings/analytics' as any)} colors={colors} iconColor="#c8a45a" />
@@ -1560,9 +1546,9 @@ const gst = StyleSheet.create({
   welcomeGreeting:{ fontFamily: 'Inter_400Regular', fontSize: 13, color: 'rgba(255,255,255,0.7)' },
   welcomeName:   { fontFamily: 'Inter_700Bold', fontSize: 28, color: '#ffffff', letterSpacing: -0.5 },
   welcomeSub:    { fontFamily: 'Inter_400Regular', fontSize: 13, color: 'rgba(255,255,255,0.65)', textAlign: 'center', lineHeight: 19, paddingHorizontal: 10, marginTop: 4 },
-  loginBtn:      { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#c8a45a', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 14, marginTop: 14, width: '100%', justifyContent: 'center' },
-  loginBtnText:  { fontFamily: 'Inter_700Bold', fontSize: 15, color: '#102a43' },
-  registerBtn:   { backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 13, width: '100%', alignItems: 'center' },
+  loginBtn:      { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#c8a45a', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 9, marginTop: 14, width: '100%', justifyContent: 'center' },
+  loginBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#0B1F3A' },
+  registerBtn:   { backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 9, width: '100%', alignItems: 'center' },
   registerBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
   lockPill:      { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 },
   lockText:      { fontFamily: 'Inter_600SemiBold', fontSize: 10 },
@@ -1578,7 +1564,7 @@ const styles = StyleSheet.create({
   profileCard:   { borderRadius: 22, padding: 18, flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginBottom: 10 },
   avatar:        { width: 60, height: 60, borderRadius: 20, backgroundColor: '#c8a45a', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarPhoto:   { width: 60, height: 60, borderRadius: 20 },
-  avatarText:    { fontFamily: 'Inter_700Bold', fontSize: 20, color: '#102a43' },
+  avatarText:    { fontFamily: 'Inter_700Bold', fontSize: 20, color: '#0B1F3A' },
   profileCopy:   { flex: 1 },
   pcGreeting:    { fontFamily: 'Inter_400Regular', fontSize: 11, color: 'rgba(255,255,255,0.6)', marginBottom: 2 },
   pcName:        { fontFamily: 'Inter_700Bold', fontSize: 19, color: '#ffffff', letterSpacing: -0.3, marginBottom: 6 },

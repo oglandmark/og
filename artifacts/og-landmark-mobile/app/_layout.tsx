@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ActivityIndicator, AppState, Platform, View } from 'react-native';
+import { ActivityIndicator, AppState, InteractionManager, Platform, View } from 'react-native';
 import { setAudioModeAsync } from 'expo-audio';
 import type { NotificationResponse } from 'expo-notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -12,6 +12,8 @@ import { PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold } from '@expo-go
 import { useFonts, type FontSource } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { LocalizedText as Text } from '@/components/LocalizedText';
+import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { SavedProvider } from '@/context/SavedContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
@@ -41,11 +43,6 @@ function RootLayoutNav() {
   const handledNotificationResponses = React.useRef(new Set<string>());
 
   useEffect(() => {
-    void configurePushNotifications().catch((error: unknown) => {
-      console.warn('[push] Could not configure push notifications.', error);
-    });
-
-    if (Platform.OS === 'web') return;
     let mounted = true;
     let unsubscribe: () => void = () => {};
     const handleNotificationResponse = (response: NotificationResponse) => {
@@ -79,17 +76,25 @@ function RootLayoutNav() {
       }
     };
 
-    subscribeToNotificationResponses(handleNotificationResponse)
-      .then((cleanup) => {
-        if (mounted) unsubscribe = cleanup;
-        else cleanup();
-      })
-      .catch((error: unknown) => {
-        console.warn('[push] Could not subscribe to notification responses.', error);
+    const interactionTask = InteractionManager.runAfterInteractions(() => {
+      void configurePushNotifications().catch((error: unknown) => {
+        console.warn('[push] Could not configure push notifications.', error);
       });
+
+      if (Platform.OS === 'web') return;
+      subscribeToNotificationResponses(handleNotificationResponse)
+        .then((cleanup) => {
+          if (mounted) unsubscribe = cleanup;
+          else cleanup();
+        })
+        .catch((error: unknown) => {
+          console.warn('[push] Could not subscribe to notification responses.', error);
+        });
+    });
 
     return () => {
       mounted = false;
+      interactionTask.cancel();
       unsubscribe();
     };
   }, [router]);
@@ -113,7 +118,9 @@ function RootLayoutNav() {
       }
     };
 
-    void syncPushTokenIfAllowed();
+    const interactionTask = InteractionManager.runAfterInteractions(() => {
+      void syncPushTokenIfAllowed();
+    });
 
     const appStateSubscription = AppState.addEventListener('change', (nextState) => {
       if (nextState !== 'active') return;
@@ -122,6 +129,7 @@ function RootLayoutNav() {
 
     return () => {
       mounted = false;
+      interactionTask.cancel();
       appStateSubscription.remove();
     };
   }, [user?.id]);
@@ -175,38 +183,80 @@ function RootLayoutNav() {
   }, [hasCompletedOnboarding, isLoggedIn, isLoading, onboardingLoading, segments, router]);
 
   if (isLoading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#102a43', alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color="#c8a45a" size="large" />
-      </View>
-    );
+    return <StartupSplash colors={colors} />;
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.action, direction: isRTL ? 'rtl' : 'ltr' }}>
-      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+      <Stack screenOptions={{ headerShown: false, animation: 'none' }}>
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="tools" options={{ headerShown: false }} />
         <Stack.Screen name="admin" options={{ headerShown: false }} />
-        <Stack.Screen name="property/[id]" options={{ presentation: 'card', animation: 'slide_from_right' }} />
-        <Stack.Screen name="project/[id]" options={{ presentation: 'card', animation: 'slide_from_right' }} />
-        <Stack.Screen name="(auth)" options={{ presentation: 'card', animation: 'slide_from_right' }} />
+        <Stack.Screen name="property/[id]" options={{ presentation: 'card', animation: 'none' }} />
+        <Stack.Screen name="project/[id]" options={{ presentation: 'card', animation: 'none' }} />
+        <Stack.Screen name="(auth)" options={{ presentation: 'card', animation: 'none' }} />
       </Stack>
       {!navigationReady && (
-        <View
-          pointerEvents="auto"
-          style={[{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            zIndex: 200,
-            elevation: 200,
-          }, { backgroundColor: colors.action }]}
-        />
+        <StartupSplash colors={colors} overlay />
       )}
+    </View>
+  );
+}
+
+const rootStyles = {
+  loading: {
+    flex: 1,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingHorizontal: 32,
+  },
+  loadingStatus: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 9,
+    marginTop: 28,
+    opacity: 0.82,
+  },
+  loadingStatusText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 12,
+  },
+  startupOverlay: {
+    position: 'absolute' as const,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 200,
+    elevation: 200,
+  },
+};
+
+function StartupSplash({
+  colors,
+  overlay = false,
+}: {
+  colors: ReturnType<typeof useColors>;
+  overlay?: boolean;
+}) {
+  return (
+    <View
+      accessible
+      accessibilityLabel="Loading OG Landmark"
+      style={[
+        rootStyles.loading,
+        { backgroundColor: '#ffffff' },
+        overlay && rootStyles.startupOverlay,
+      ]}
+    >
+      <OGLandmarkLogo size={156} />
+      <View style={rootStyles.loadingStatus}>
+        <ActivityIndicator color={colors.action} size="small" />
+        <Text style={[rootStyles.loadingStatusText, { color: colors.actionDeep }]}>
+          Preparing your experience
+        </Text>
+      </View>
     </View>
   );
 }
@@ -236,7 +286,7 @@ export default function RootLayout() {
   useEffect(() => {
     const timeout = setTimeout(
       () => setFontGateTimedOut(true),
-      Platform.OS === 'web' ? 1800 : 6000,
+       Platform.OS === 'web' ? 1800 : 2500,
     );
     return () => clearTimeout(timeout);
   }, []);
@@ -245,11 +295,14 @@ export default function RootLayout() {
   // even when iOS silent switch is off or no explicit user interaction yet.
   useEffect(() => {
     if (Platform.OS === 'web') return;
-    setAudioModeAsync({
-      playsInSilentMode: true, // ignore iOS silent/mute switch
-      allowsRecording: false,
-      shouldPlayInBackground: false,
-    }).catch(() => undefined);
+    const interactionTask = InteractionManager.runAfterInteractions(() => {
+      setAudioModeAsync({
+        playsInSilentMode: true, // ignore iOS silent/mute switch
+        allowsRecording: false,
+        shouldPlayInBackground: false,
+      }).catch(() => undefined);
+    });
+    return () => interactionTask.cancel();
   }, []);
   // The browser preview can render with platform fallback fonts while the
   // bundled font manifest is unavailable in offline mode. Native keeps the

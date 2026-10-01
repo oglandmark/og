@@ -1,24 +1,11 @@
 /**
- * AnimatedReveal — lightweight entrance animation used across all screens.
+ * AnimatedReveal — compatibility wrapper for existing screens.
  *
- * Performance notes:
- *  - All animation runs on the UI thread via Reanimated worklets.
- *  - 280ms duration: fast enough to feel snappy, slow enough to feel premium.
- *  - Respects reduced-motion (collapses to instant snap when true).
- *  - Starts visible so a missed navigation-focus callback can never hide content.
- *  - On tab return (progress ≥ 0.95) snaps to 1 — no re-animation.
+ * Motion is intentionally disabled app-wide so navigation and long forms
+ * render immediately on lower-end Android devices.
  */
-import React, { useCallback } from 'react';
-import { StyleProp, ViewStyle } from 'react-native';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  useReducedMotion,
-  withDelay,
-  withTiming,
-} from 'react-native-reanimated';
-import { useFocusEffect } from 'expo-router';
+import React from 'react';
+import { StyleProp, Text as NativeText, View, ViewStyle } from 'react-native';
 
 type AnimatedRevealProps = {
   children: React.ReactNode;
@@ -33,43 +20,12 @@ export function AnimatedReveal({
   distance = 8,
   style,
 }: AnimatedRevealProps) {
-  // Navigation focus events are not guaranteed to reach nested children on
-  // every Android lifecycle path. Start visible as a safety fallback; the
-  // focus effect still preserves the existing reveal behavior when available.
-  const progress = useSharedValue(1);
-  const reducedMotion = useReducedMotion();
-
-  useFocusEffect(
-    useCallback(() => {
-      if (progress.value >= 0.95) {
-        // Already animated — snap to remove any sub-pixel drift, no re-animation.
-        progress.value = 1;
-        return;
-      }
-
-      if (reducedMotion) {
-        // Accessibility: skip animation for users who prefer reduced motion.
-        progress.value = 1;
-        return;
-      }
-
-      progress.value = withDelay(
-        delay,
-        withTiming(1, {
-          duration: 280,
-          easing: Easing.out(Easing.cubic),
-        }),
-      );
-    }, [delay, progress, reducedMotion]),
-  );
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: progress.value,
-    transform: [
-      { translateY: (1 - progress.value) * distance },
-      { scale: 0.98 + progress.value * 0.02 },
-    ],
-  }));
-
-  return <Animated.View style={[animatedStyle, style]}>{children}</Animated.View>;
+  void delay;
+  void distance;
+  const safeChildren = React.Children.map(children, (child, index) => (
+    typeof child === 'string' && child.trim().length > 0
+      ? <NativeText key={`animated-text-${index}`}>{child}</NativeText>
+      : child
+  ));
+  return <View style={style}>{safeChildren}</View>;
 }

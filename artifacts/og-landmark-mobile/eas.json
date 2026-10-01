@@ -4,11 +4,12 @@
   },
   "build": {
     "preview": {
+      "node": "20.19.4",
       "distribution": "internal",
       "android": {
+        "image": "ubuntu-22.04-jdk-17-ndk-r21e",
         "buildType": "apk"
-      },
-      "node": "20.19.4"
+      }
     },
     "production": {
       "node": "20.19.4",

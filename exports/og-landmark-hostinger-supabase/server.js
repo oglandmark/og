@@ -315,18 +315,33 @@ const laravelApiUrl = String(process.env.LARAVEL_API_URL || '').trim().replace(/
 // proxy is opt-in so removing LARAVEL_API_URL is an immediate rollback to the
 // legacy API.
 if (laravelApiUrl) {
+  app.use('/api', (req, res, next) => {
+    if (req.method === 'POST' && req.originalUrl.split('?')[0] === '/api/auth/register') {
+      return express.json({ limit: '10mb' })(req, res, next);
+    }
+    return next();
+  });
   app.use('/api', async (req, res) => {
+    const isRegistrationRequest = req.method === 'POST'
+      && req.originalUrl.split('?')[0] === '/api/auth/register';
+    if (isRegistrationRequest) {
+      const phone = String(req.body?.phone ?? '').trim();
+      if (!phone) return res.status(400).json({ error: 'Mobile number is required to register.', code: 'MOBILE_REQUIRED' });
+      if (!isValidPhone(phone)) return res.status(400).json({ error: 'Please enter a valid mobile number.', code: 'INVALID_MOBILE' });
+    }
     const target = `${laravelApiUrl}${req.originalUrl}`;
     try {
       const headers = { ...req.headers };
       delete headers.host;
       delete headers.connection;
+      if (isRegistrationRequest) delete headers['content-length'];
       const hasBody = !['GET', 'HEAD'].includes(req.method);
+      const requestBody = hasBody ? (isRegistrationRequest ? JSON.stringify(req.body) : req) : undefined;
       const upstream = await fetch(target, {
         method: req.method,
         headers,
-        body: hasBody ? req : undefined,
-        duplex: hasBody ? 'half' : undefined,
+        body: requestBody,
+        duplex: hasBody && !isRegistrationRequest ? 'half' : undefined,
         redirect: 'manual',
       });
       res.status(upstream.status);
@@ -433,7 +448,9 @@ function isValidUsername(value) {
 }
 
 function isValidPhone(value) {
-  const digits = normalizePhone(value);
+  const raw = String(value || '').trim();
+  if (!raw || !/^[+0-9().\s-]+$/.test(raw)) return false;
+  const digits = normalizePhone(raw);
   return digits.length >= 10 && digits.length <= 15;
 }
 
@@ -3061,11 +3078,12 @@ app.get('/api/debug/db', async (req, res) => {
 
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { firstName, lastName, phone, password, role } = req.body;
+    const { firstName, lastName, password, role } = req.body;
+    const phone = String(req.body.phone ?? '').trim();
     const email = normalizeEmail(req.body.email);
     const requestedUsername = normalizeUsername(req.body.username);
-    if (!firstName || !password || (!email && !requestedUsername && !phone)) {
-      return res.status(400).json({ error: 'Name, password and an email, username or mobile number are required' });
+    if (!firstName || !password || !phone) {
+      return res.status(400).json({ error: 'Name, mobile number and password are required.' });
     }
     if (email && !isValidEmail(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
     if (requestedUsername && !isValidUsername(requestedUsername)) {
@@ -3204,11 +3222,18 @@ app.post('/api/auth/google', async (req, res) => {
 
     if (!user) {
       // Auto-register new Google users as Buyer
+      const phone = String(req.body.phone ?? '').trim();
+      if (!phone) return res.status(400).json({ error: 'Mobile number is required to register.', code: 'MOBILE_REQUIRED' });
+      if (!isValidPhone(phone)) return res.status(400).json({ error: 'Please enter a valid mobile number.', code: 'INVALID_MOBILE' });
+      const phoneKey = normalizePhone(phone);
+      if (data.users.some(candidate => normalizePhone(candidate.phone) === phoneKey)) {
+        return res.status(409).json({ error: 'This mobile number is already registered.', code: 'MOBILE_ALREADY_REGISTERED' });
+      }
       user = {
         id: nextId(data),
         name: name || email.split('@')[0],
         email,
-        phone: '',
+        phone,
         role: 'Buyer',
         status: 'Active',
         password: hashPassword(crypto.randomBytes(32).toString('hex')),
@@ -3296,9 +3321,16 @@ async function socialAuthHandler(req, res) {
     }
     if (!user) {
       const socialEmail = normalizedEmail || `${provider}-${providerId}@accounts.oglandmark.invalid`;
+      const phone = String(req.body.phone ?? '').trim();
+      if (!phone) return res.status(400).json({ error: 'Mobile number is required to register.', code: 'MOBILE_REQUIRED' });
+      if (!isValidPhone(phone)) return res.status(400).json({ error: 'Please enter a valid mobile number.', code: 'INVALID_MOBILE' });
+      const phoneKey = normalizePhone(phone);
+      if (data.users.some(candidate => normalizePhone(candidate.phone) === phoneKey)) {
+        return res.status(409).json({ error: 'This mobile number is already registered.', code: 'MOBILE_ALREADY_REGISTERED' });
+      }
       user = {
         id: nextId(data), name: profile.name || String(profile.email).split('@')[0],
-        email: socialEmail, phone: '', role: 'Buyer', status: 'Active',
+        email: socialEmail, phone, role: 'Buyer', status: 'Active',
         password: hashPassword(crypto.randomBytes(32).toString('hex')),
         authProvider: provider, [providerField]: providerId,
         ...(profile.avatarUrl ? { avatarUrl: profile.avatarUrl } : {}),

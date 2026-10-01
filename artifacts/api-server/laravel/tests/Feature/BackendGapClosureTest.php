@@ -56,6 +56,7 @@ class BackendGapClosureTest extends TestCase
             'email' => 'seller@example.com',
             'password' => 'TestPassword123',
             'name' => 'New Seller',
+            'phone' => '03001234567',
             'role' => 'seller',
         ])
             ->assertCreated()
@@ -65,10 +66,31 @@ class BackendGapClosureTest extends TestCase
             'email' => 'developer@example.com',
             'password' => 'TestPassword123',
             'name' => 'New Developer',
+            'phone' => '03007654321',
             'role' => 'developer',
         ])
             ->assertCreated()
             ->assertJsonPath('user.role', 'Developer');
+    }
+
+    public function test_registration_requires_a_valid_mobile_number(): void
+    {
+        $this->seedData(['users' => [], 'properties' => []]);
+
+        $this->postJson('/api/auth/register', [
+            'email' => 'no-phone@example.com',
+            'password' => 'TestPassword123',
+            'name' => 'No Phone',
+            'role' => 'buyer',
+        ])->assertUnprocessable()->assertJsonValidationErrors('phone');
+
+        $this->postJson('/api/auth/register', [
+            'email' => 'invalid-phone@example.com',
+            'password' => 'TestPassword123',
+            'name' => 'Invalid Phone',
+            'phone' => 'not-a-mobile',
+            'role' => 'buyer',
+        ])->assertUnprocessable()->assertJsonValidationErrors('phone');
     }
 
     public function test_saved_searches_are_persisted_and_scoped_to_the_signed_in_user(): void

@@ -212,6 +212,17 @@ class ApiController extends Controller
             $input = $request->all();
             $validator = Validator::make($input, [
                 'email' => ['required', 'email', 'max:320'],
+                'phone' => [
+                    'required',
+                    'string',
+                    'regex:/^[+0-9().\s-]+$/',
+                    function ($attribute, $value, $fail) {
+                        $digits = preg_replace('/\D/', '', (string) $value) ?? '';
+                        if (strlen($digits) < 10 || strlen($digits) > 15) {
+                            $fail('Please enter a valid mobile number.');
+                        }
+                    },
+                ],
                 'password' => ['required', 'min:8'],
                 'role' => ['nullable', 'in:buyer,agent,seller,developer,Buyer,Agent,Seller,Developer'],
             ]);
@@ -236,7 +247,7 @@ class ApiController extends Controller
                 'name' => $name !== '' ? $name : 'OG Landmark User',
                 'email' => $email,
                 'username' => $input['username'] ?? null,
-                'phone' => $input['phone'] ?? null,
+                'phone' => trim((string) $input['phone']),
                 'city' => $input['city'] ?? null,
                 'role' => $role,
                 'status' => 'Active',

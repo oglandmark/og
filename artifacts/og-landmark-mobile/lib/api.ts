@@ -273,17 +273,18 @@ export async function logoutAPI(): Promise<void> {
 export async function loginWithSocial(
   provider: 'google' | 'facebook',
   accessToken: string,
+  phone?: string,
 ): Promise<LoginResponse> {
   const res = await apiFetch<LoginResponse>('/api/auth/social', {
     method: 'POST',
-    body: JSON.stringify({ provider, accessToken }),
+    body: JSON.stringify({ provider, accessToken, phone }),
   }, false, AUTH_FETCH_TIMEOUT_MS);
   if (res.token) await setToken(res.token);
   return res;
 }
 
 export async function registerWithAPI(payload: {
-  name: string; username?: string; email?: string; password: string; phone?: string; role: string;
+  name: string; username?: string; email?: string; password: string; phone: string; role: string;
   confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
 }): Promise<LoginResponse> {
   // Server expects firstName / lastName separately
@@ -298,7 +299,7 @@ export async function registerWithAPI(payload: {
       lastName,
       username:       payload.username,
       email:         payload.email || undefined,
-      phone:         payload.phone || undefined,
+      phone:         payload.phone.trim(),
       password:      payload.password,
       confirmPassword: payload.confirmPassword ?? payload.password,
       role:          payload.role.toLowerCase(),

@@ -32,3 +32,9 @@ New Hostinger installs may seed an empty `app_data(id=1)` row, but that seed mus
 **Why:** The canonical document contains the application's listings and account state, so a normal seed must never replace an existing production document.
 
 **How to apply:** Use migrations plus the non-destructive seed for a new database, or import a verified source snapshot separately before switching traffic.
+
+Registration requirements must be enforced across every account-creation path, not only the password-registration endpoint. Provider login and Google ID-token handlers can auto-provision accounts; apply required-profile checks only after existing identities have been matched, so returning social users can still log in. Keep the active Node fallback and standalone Hostinger server copies aligned with Laravel.
+
+**Why:** A register-only phone check is bypassed when a social callback creates a new account directly, especially when a deployment uses the Node fallback instead of Laravel.
+
+**How to apply:** Require mobile for password registration and every provider-driven new-account branch, pass the number from the signup flow, and return a clear mobile-required error for new social users without it. Do not require a returning social user to re-enter their number.

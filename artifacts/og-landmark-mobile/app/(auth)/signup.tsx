@@ -49,34 +49,48 @@ export default function SignUpScreen() {
   const identifierValue = identifier.trim();
   const isMobileIdentifier = identifierValue.length > 0
     && /^[+\d\s().-]+$/.test(identifierValue);
+  const signupPhone = isMobileIdentifier ? identifierValue : mobileNumber.trim();
+  const signupPhoneDigits = signupPhone.replace(/\D/g, '');
+  const isValidSignupPhone = signupPhoneDigits.length >= 10 && signupPhoneDigits.length <= 15;
 
   const handleFacebookSignup = useCallback(async (accessToken: string) => {
-    const result = await loginSocial('facebook', accessToken);
+    if (!signupPhone) {
+      const message = tr('signupMobileRequired');
+      setError(message);
+      return { success: false, error: message };
+    }
+    if (!isValidSignupPhone) {
+      const message = tr('signupMobileError');
+      setError(message);
+      return { success: false, error: message };
+    }
+    const result = await loginSocial('facebook', accessToken, signupPhone);
     if (result.success) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace('/(tabs)');
     }
     return result;
-  }, [loginSocial]);
+  }, [isValidSignupPhone, loginSocial, signupPhone, tr]);
   const facebook = useFacebookAuth(handleFacebookSignup);
+  const startFacebookSignup = () => {
+    if (!signupPhone) { setError(tr('signupMobileRequired')); return; }
+    if (!isValidSignupPhone) { setError(tr('signupMobileError')); return; }
+    setError('');
+    void facebook.signIn();
+  };
 
   async function handleRegister() {
     if (!name.trim())                                          { setError('Full name is required.');                              return; }
     const value = identifier.trim();
     if (!value)                                                 { setError(tr('signupIdentifierRequired'));                      return; }
-    if (isMobileIdentifier && value.replace(/\D/g,'').length < 10) {
-      setError(tr('signupMobileError')); return;
-    }
     if (!isMobileIdentifier && value.includes('@') && !value.includes('.')) {
       setError(tr('signupEmailError')); return;
     }
     if (!isMobileIdentifier && !value.includes('@') && !/^[A-Za-z][A-Za-z0-9._-]{2,29}$/.test(value)) {
       setError(tr('signupUsernameError')); return;
     }
-    const secondaryPhone = mobileNumber.trim();
-    if (!isMobileIdentifier && secondaryPhone && secondaryPhone.replace(/\D/g, '').length < 10) {
-      setError(tr('signupMobileError')); return;
-    }
+    if (!signupPhone) { setError(tr('signupMobileRequired')); return; }
+    if (!isValidSignupPhone) { setError(tr('signupMobileError')); return; }
     if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
       setError('Password must be at least 8 characters and include a letter and number.');
       return;
@@ -90,7 +104,7 @@ export default function SignUpScreen() {
       name:    name.trim(),
       email:   !isMobileIdentifier && value.includes('@') ? value.toLowerCase() : undefined,
       username: !isMobileIdentifier && !value.includes('@') ? value.toLowerCase() : undefined,
-      phone:   isMobileIdentifier ? value : secondaryPhone || undefined,
+      phone:   signupPhone,
       password,
       confirmPassword,
       role:    'buyer',
@@ -180,10 +194,12 @@ export default function SignUpScreen() {
             />
           </View>
 
-          {/* Optional secondary mobile number. A mobile identifier already fills this value. */}
+          {/* A mobile identifier already supplies this required number. */}
           {!isMobileIdentifier && (
             <View style={styles.fieldWrap}>
-              <Text style={[styles.label, { textAlign: rtl }]}>{tr('signupMobileLabel')}</Text>
+              <Text style={[styles.label, { textAlign: rtl }]}>
+                {tr('signupMobileLabel')} <Text style={{ color: '#d14343' }}>*</Text>
+              </Text>
               <TextInput
                 value={mobileNumber}
                 onChangeText={(v) => { setMobileNumber(v); setError(''); }}
@@ -256,7 +272,7 @@ export default function SignUpScreen() {
           {/* Supported social sign-up only. */}
           <View style={styles.socialRow}>
             <Pressable
-              onPress={() => { void facebook.signIn(); }}
+              onPress={startFacebookSignup}
               disabled={loading || facebook.loading}
               style={({ pressed }) => [styles.socialBtn, { opacity: pressed || facebook.loading ? 0.5 : 1 }]}
             >

@@ -59,11 +59,11 @@ type AuthContextValue = {
   isAdmin: boolean;
   login: (user: User) => Promise<void>;
   loginAPI: (identifier: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  loginSocial: (provider: 'google' | 'facebook', accessToken: string) => Promise<{ success: boolean; error?: string }>;
+  loginSocial: (provider: 'google' | 'facebook', accessToken: string, phone?: string) => Promise<{ success: boolean; error?: string }>;
   loginAdmin: (email: string, password: string) => Promise<{ success: boolean; error?: string; otpRequired?: boolean }>;
   verifyAdminOtp: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
   registerAPI: (payload: {
-    name: string; username?: string; email?: string; password: string; phone?: string; role: Role;
+    name: string; username?: string; email?: string; password: string; phone: string; role: Role;
     confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
   }) => Promise<{ success: boolean; error?: string; pendingApproval?: boolean; pendingMessage?: string }>;
   logout: () => Promise<void>;
@@ -240,9 +240,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginSocial = useCallback(async (
     provider: 'google' | 'facebook',
     accessToken: string,
+    phone?: string,
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await loginWithSocial(provider, accessToken);
+      const res = await loginWithSocial(provider, accessToken, phone);
       if (!res.user) return { success: false, error: 'Social login failed' };
       const mapped = { ...mapApiUser(res.user), verificationStatus: 'verified' as const };
       await login(mapped);
@@ -254,7 +255,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [login]);
 
   const registerAPI = useCallback(async (payload: {
-    name: string; username?: string; email?: string; password: string; phone?: string; role: Role;
+    name: string; username?: string; email?: string; password: string; phone: string; role: Role;
     confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
   }): Promise<{ success: boolean; error?: string; pendingApproval?: boolean; pendingMessage?: string }> => {
     try {

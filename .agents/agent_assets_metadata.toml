@@ -84,3 +84,17 @@ mtime_ms = 1790698354828
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/95379b85-160e-4a41-8506-133bdf3dba2e/7b94e8ff-2889-4458-9706-bf9e00e1497c"
 storage_version_token = "1790747115598310"
 content_type = "image/png"
+
+[[outputs]]
+id = "0drnOKOsEa0H4ypOdYFbw"
+uri = "file://deliverables/OG%20Landmark%2001-10-26.zip"
+type = "unspecified"
+title = "OG Landmark 01-10-26"
+description = "Latest OG Landmark mobile app source, assets, workspace API client, and setup guide. Credentials and APK are not included."
+logical_id = "eaa5f583-5229-4edf-b1f2-01f5e4ca6e1e"
+content_hash = "sha256:4cd6abae1cd9e67ff0dd2c3c2e1881e9fe92c50716b3d820650780d51a341b85"
+size = 28177125
+mtime_ms = 1790858335730
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/eaa5f583-5229-4edf-b1f2-01f5e4ca6e1e/aa4e1964-b6a4-4286-a059-a95b9ba753d7"
+storage_version_token = "1790858350193270"
+content_type = "application/octet-stream"

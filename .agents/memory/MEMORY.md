@@ -17,7 +17,7 @@
 - [Native splash provider order](native-splash-provider-order.md) — native-only startup overlays must render inside every context provider they consume; web previews may hide this class of crash.
 - [Expo startup hydration](expo-startup-hydration.md) — cached auth plus a bounded startup watchdog prevents slow session checks from trapping Expo Go on the splash screen.
 - [Android video compositing](android-video-compositing.md) — stacked Expo video surfaces can blank sibling content; use texture views and mount only the active banner video.
-- [GitHub connector write fallback](github-connector-write-fallback.md) — selected source-file writes may hit Cloudflare 403; publish through credential-injected Git data APIs.
+- [GitHub connector write fallback](github-connector-write-fallback.md) — use Git data API on write blocks; stage large Base64 batches to disk and verify hashes.
 - [Android reveal lifecycle](android-reveal-lifecycle.md) — nested tab focus callbacks can miss; animated content must start visible to avoid blank Home sections.
 - [Location picker camera sync](location-picker-camera.md) — city/locality changes must drive the native map camera, while GPS recovery must persist the selected pin.
 - [Location flow testing](location-flow-testing.md) — keep native GPS recovery behind a provider seam so permission and fallback branches run in Node tests.

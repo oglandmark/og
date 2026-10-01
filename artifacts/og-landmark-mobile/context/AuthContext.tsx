@@ -47,6 +47,8 @@ export type User = {
   joinedAt: string;
   authProvider?: string;
   avatarUrl?: string;
+  profilePhoto?: string | null;
+  coverPhoto?: string | null;
 };
 
 type AuthContextValue = {
@@ -57,11 +59,11 @@ type AuthContextValue = {
   isAdmin: boolean;
   login: (user: User) => Promise<void>;
   loginAPI: (identifier: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  loginSocial: (provider: 'google' | 'facebook', accessToken: string) => Promise<{ success: boolean; error?: string }>;
+  loginSocial: (provider: 'google' | 'facebook', accessToken: string, phone?: string) => Promise<{ success: boolean; error?: string }>;
   loginAdmin: (email: string, password: string) => Promise<{ success: boolean; error?: string; otpRequired?: boolean }>;
   verifyAdminOtp: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
   registerAPI: (payload: {
-    name: string; username?: string; email?: string; password: string; phone?: string; role: Role;
+    name: string; username?: string; email?: string; password: string; phone: string; role: Role;
     confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
   }) => Promise<{ success: boolean; error?: string; pendingApproval?: boolean; pendingMessage?: string }>;
   logout: () => Promise<void>;
@@ -92,6 +94,8 @@ function mapApiUser(apiU: {
   joinedDate?: string;
   authProvider?: string;
   avatarUrl?: string;
+  profilePhoto?: string | null;
+  coverPhoto?: string | null;
 }): User {
   return {
     id: String(apiU.id),
@@ -107,6 +111,8 @@ function mapApiUser(apiU: {
     joinedAt: apiU.joinedDate || new Date().toISOString(),
     authProvider: apiU.authProvider,
     avatarUrl: apiU.avatarUrl,
+    profilePhoto: apiU.profilePhoto,
+    coverPhoto: apiU.coverPhoto,
   };
 }
 
@@ -116,16 +122,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    // Never keep the entire app behind the startup splash while a stale
+    // session check waits on a slow or unreachable API. A cached identity is
+    // safe to render while the server check finishes; protected requests still
+    // enforce the token on the API side.
+    const startupWatchdog = setTimeout(() => {
+      if (mounted) setIsLoading(false);
+    }, 2500);
+
     (async () => {
       const [raw, token] = await Promise.all([
         AsyncStorage.getItem(STORAGE_KEY).catch(() => null),
         getToken(),
       ]);
+
+      if (mounted && raw) {
+        try {
+          setUser(JSON.parse(raw) as User);
+        } catch {
+          setUser(null);
+        }
+      }
+
+      // Cached identity is enough to render the shell. Validate the token in
+      // the background so a slow API cannot keep the native splash/spinner up.
+      if (mounted) setIsLoading(false);
+
       if (!token) {
         await AsyncStorage.removeItem(STORAGE_KEY).catch(() => undefined);
         if (mounted) {
           setUser(null);
-          setIsLoading(false);
         }
         return;
       }
@@ -146,8 +172,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else if (mounted && raw) {
           try { setUser(JSON.parse(raw) as User); } catch { setUser(null); }
         }
-      } finally {
-        if (mounted) setIsLoading(false);
       }
     })().catch(() => {
       if (mounted) {
@@ -155,7 +179,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       }
     });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+      clearTimeout(startupWatchdog);
+    };
   }, []);
 
   const login = useCallback(async (newUser: User) => {
@@ -213,9 +240,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginSocial = useCallback(async (
     provider: 'google' | 'facebook',
     accessToken: string,
+    phone?: string,
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await loginWithSocial(provider, accessToken);
+      const res = await loginWithSocial(provider, accessToken, phone);
       if (!res.user) return { success: false, error: 'Social login failed' };
       const mapped = { ...mapApiUser(res.user), verificationStatus: 'verified' as const };
       await login(mapped);
@@ -227,7 +255,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [login]);
 
   const registerAPI = useCallback(async (payload: {
-    name: string; username?: string; email?: string; password: string; phone?: string; role: Role;
+    name: string; username?: string; email?: string; password: string; phone: string; role: Role;
     confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
   }): Promise<{ success: boolean; error?: string; pendingApproval?: boolean; pendingMessage?: string }> => {
     try {

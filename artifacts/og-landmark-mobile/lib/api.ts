@@ -2,24 +2,30 @@
  * OG Landmark — Centralized API Client
  * -------------------------------------
  * Dev URL  : set EXPO_PUBLIC_API_URL in .env.local
- * Prod URL : https://oglandmark.com
+ * Prod URL : https://api.oglandmark.com
  *
  * All requests include the auth token stored in AsyncStorage.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 // ─── Base URL ──────────────────────────────────────────────────────────────────
 // Override via EXPO_PUBLIC_API_URL in .env.local (no trailing /api)
-// e.g.  EXPO_PUBLIC_API_URL=https://oglandmark.com
-// The mobile app's API must use the live OG Landmark backend by default.
-// EXPO_PUBLIC_DOMAIN is the Expo preview host, not the product API host, so
-// it must never silently redirect authentication requests to a temporary
-// Replit domain.
+// e.g.  EXPO_PUBLIC_API_URL=https://api.oglandmark.com
 const configuredApiUrl = String(process.env.EXPO_PUBLIC_API_URL || '').trim().replace(/\/+$/, '');
+// Replit's browser preview cannot call the production API directly because
+// api.oglandmark.com only allows product-site origins. In the web preview,
+// route /api requests through the Replit website server's Laravel proxy; native
+// apps and production builds continue to use the canonical API directly.
+const replitWebPreviewApiBase =
+  Platform.OS === 'web' && process.env.EXPO_PUBLIC_REPL_ID && process.env.EXPO_PUBLIC_DOMAIN
+    ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
+    : '';
 export const API_BASE: string =
   configuredApiUrl ||
-  'https://oglandmark.com';
+  replitWebPreviewApiBase ||
+  'https://api.oglandmark.com';
 
 const TOKEN_KEY = '@og-landmark/api-token';
 
@@ -229,6 +235,8 @@ export type ApiUser = {
   facebookId?: string;
   googleId?: string;
   avatarUrl?: string;
+  profilePhoto?: string | null;
+  coverPhoto?: string | null;
 };
 
 // Server returns { user, token } on success (no `success` field)
@@ -265,17 +273,18 @@ export async function logoutAPI(): Promise<void> {
 export async function loginWithSocial(
   provider: 'google' | 'facebook',
   accessToken: string,
+  phone?: string,
 ): Promise<LoginResponse> {
   const res = await apiFetch<LoginResponse>('/api/auth/social', {
     method: 'POST',
-    body: JSON.stringify({ provider, accessToken }),
+    body: JSON.stringify({ provider, accessToken, phone }),
   }, false, AUTH_FETCH_TIMEOUT_MS);
   if (res.token) await setToken(res.token);
   return res;
 }
 
 export async function registerWithAPI(payload: {
-  name: string; username?: string; email?: string; password: string; phone?: string; role: string;
+  name: string; username?: string; email?: string; password: string; phone: string; role: string;
   confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
 }): Promise<LoginResponse> {
   // Server expects firstName / lastName separately
@@ -290,7 +299,7 @@ export async function registerWithAPI(payload: {
       lastName,
       username:       payload.username,
       email:         payload.email || undefined,
-      phone:         payload.phone || undefined,
+      phone:         payload.phone.trim(),
       password:      payload.password,
       confirmPassword: payload.confirmPassword ?? payload.password,
       role:          payload.role.toLowerCase(),
@@ -323,6 +332,7 @@ export async function confirmPasswordReset(email: string, code: string, newPassw
 
 export async function updateUser(userId: string, payload: Partial<{
   name: string; phone: string; email: string; agencyName: string; companyName: string; city: string;
+  profilePhoto: string | null; coverPhoto: string | null;
 }>): Promise<ApiUser> {
   return apiFetch<ApiUser>(`/api/users/${userId}`, {
     method: 'PUT',
@@ -369,7 +379,8 @@ export type ApiProperty = {
   address: string;
   description: string;
   images: string[];
-  videoUrl?: string;
+  coverImage?: string | null;
+  videoUrl?: string | null;
   amenities?: string[];
   featured?: boolean;
   views?: number;
@@ -443,11 +454,40 @@ export type PropertiesFilter = {
   lat?: number; lng?: number; radiusKm?: number;
 };
 
+export type PropertyPage = {
+  items: ApiProperty[];
+  total: number;
+  offset: number;
+  limit: number;
+  hasMore: boolean;
+};
+
 export async function getProperties(filters: PropertiesFilter = {}): Promise<ApiProperty[]> {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([k, v]) => { if (v !== undefined) params.set(k, String(v)); });
   const qs = params.toString();
   return apiFetch<ApiProperty[]>(`/api/properties${qs ? `?${qs}` : ''}`, {}, false);
+}
+
+/** Fetch one bounded page without loading the whole catalogue into memory. */
+export async function getPropertiesPage(filters: PropertiesFilter = {}): Promise<PropertyPage> {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([k, v]) => { if (v !== undefined) params.set(k, String(v)); });
+  params.set('response', 'page');
+  const qs = params.toString();
+  const response = await apiFetch<PropertyPage | ApiProperty[]>(`/api/properties?${qs}`, {}, false);
+  if (Array.isArray(response)) {
+    const offset = Number(filters.offset ?? 0);
+    const limit = Number(filters.limit ?? response.length);
+    return {
+      items: response,
+      total: offset + response.length,
+      offset,
+      limit,
+      hasMore: false,
+    };
+  }
+  return response;
 }
 
 /**
@@ -747,39 +787,45 @@ export async function uploadVideo(uri: string, filename = 'video.mp4'): Promise<
   return apiUpload<{ url: string }>('/api/upload/video', form);
 }
 
-export async function uploadMultipleImages(uris: string[]): Promise<string[]> {
-  // Keep batches at the previous server limit as well. This lets an already
-  // deployed backend accept new app builds while the backend is being updated
-  // to the 30-photo listing limit.
-  const batchSize = 10;
-  const uploaded: string[] = [];
-  for (let start = 0; start < uris.length; start += batchSize) {
-    const form = new FormData();
-    const batch = uris.slice(start, start + batchSize);
-    batch.forEach((uri, index) => {
-      form.append(
-        'images',
-        imageUploadFile(uri, `photo_${start + index}.jpg`) as unknown as Blob,
-      );
-    });
-    try {
-      const res = await apiUpload<{ urls: string[] }>('/api/upload', form);
-      uploaded.push(...(res.urls ?? []));
-    } catch (error) {
-      // Some already-deployed Hostinger instances still expose the older
-      // single-file route or have a smaller multi-file limit. Retry only for
-      // a server-side multipart compatibility response; network/auth failures
-      // are surfaced immediately instead of creating duplicate uploads.
-      const compatibilityFailure =
-        error instanceof ApiRequestError &&
-        [400, 404, 413, 415, 422].includes(error.status);
-      if (!compatibilityFailure) throw error;
+function isUploadCompatibilityError(error: unknown): error is ApiRequestError {
+  return error instanceof ApiRequestError
+    && [400, 404, 413, 415, 422, 500, 502, 503].includes(error.status);
+}
 
-      for (let index = 0; index < batch.length; index += 1) {
-        const result = await uploadImage(batch[index], `photo_${start + index}.jpg`);
-        uploaded.push(result.url);
-      }
-    }
+async function uploadImageToLegacyCollectionRoute(
+  uri: string,
+  filename: string,
+): Promise<{ url: string }> {
+  const form = new FormData();
+  form.append('images', imageUploadFile(uri, filename) as unknown as Blob);
+  const response = await apiUpload<{ urls?: string[]; url?: string }>('/api/upload', form);
+  const url = response.urls?.[0] || response.url;
+  if (!url) throw new Error('The server did not return an uploaded photo URL.');
+  return { url };
+}
+
+async function uploadListingImage(uri: string, filename: string): Promise<{ url: string }> {
+  try {
+    return await uploadImage(uri, filename);
+  } catch (error: unknown) {
+    // Older Hostinger deployments do not expose /api/upload/single, while
+    // some Android multipart requests are rejected by that route. Retry the
+    // same photo through the older collection endpoint as a one-file request.
+    if (!isUploadCompatibilityError(error)) throw error;
+    return uploadImageToLegacyCollectionRoute(uri, filename);
+  }
+}
+
+export async function uploadMultipleImages(uris: string[]): Promise<string[]> {
+  // Upload photos individually on mobile. A single multipart request containing
+  // many Android content:// files is rejected by some deployed proxies/Multer
+  // versions even though each file is valid. The server still receives the
+  // same authenticated upload requests, but each request stays small and can
+  // fall back to the legacy collection route.
+  const uploaded: string[] = [];
+  for (let index = 0; index < uris.length; index += 1) {
+    const result = await uploadListingImage(uris[index], `photo_${index}.jpg`);
+    uploaded.push(result.url);
   }
   return uploaded;
 }
@@ -787,6 +833,14 @@ export async function uploadMultipleImages(uris: string[]): Promise<string[]> {
 export async function uploadProfilePhoto(uri: string): Promise<{ url: string }> {
   const uploaded = await uploadImage(uri, `profile_${Date.now()}.jpg`);
   return apiFetch<{ url: string }>('/api/account/profile-photo', {
+    method: 'PUT',
+    body: JSON.stringify(uploaded),
+  });
+}
+
+export async function uploadCoverPhoto(uri: string): Promise<{ url: string }> {
+  const uploaded = await uploadImage(uri, `cover_${Date.now()}.jpg`);
+  return apiFetch<{ url: string }>('/api/account/cover-photo', {
     method: 'PUT',
     body: JSON.stringify(uploaded),
   });
@@ -807,7 +861,8 @@ export type CreatePropertyPayload = {
   address?: string;
   description?: string;
   images?: string[];
-  videoUrl?: string;
+  coverImage?: string | null;
+  videoUrl?: string | null;
   amenities?: string[];
   lat?: number;
   lng?: number;
@@ -859,7 +914,7 @@ export async function deleteProperty(id: number): Promise<void> {
 
 // Returns the logged-in user's own properties — ALL approval statuses (Pending/Active/Rejected)
 export async function getMyProperties(): Promise<ApiProperty[]> {
-  return apiFetch<ApiProperty[]>('/api/my-properties').catch(() => []);
+  return apiFetch<ApiProperty[]>('/api/my-properties');
 }
 
 // ─── Offers ───────────────────────────────────────────────────────────────────
@@ -878,7 +933,7 @@ export type ApiOffer = {
 
 export async function getOffers(propertyId?: number): Promise<ApiOffer[]> {
   const qs = propertyId ? `?propertyId=${propertyId}` : '';
-  return apiFetch<ApiOffer[]>(`/api/offers${qs}`).catch(() => []);
+  return apiFetch<ApiOffer[]>(`/api/offers${qs}`);
 }
 
 export async function createOffer(
@@ -910,6 +965,8 @@ export type ApiConversation = {
   lastMessage?: string;
   lastMessageAt?: string;
   createdAt?: string;
+  otherUserName?: string;
+  otherUserPhone?: string;
 };
 
 export type ApiMessage = {
@@ -922,7 +979,7 @@ export type ApiMessage = {
 };
 
 export async function getConversations(): Promise<ApiConversation[]> {
-  return apiFetch<ApiConversation[]>('/api/conversations').catch(() => []);
+  return apiFetch<ApiConversation[]>('/api/conversations');
 }
 
 export async function createConversation(payload: {
@@ -936,7 +993,7 @@ export async function createConversation(payload: {
 }
 
 export async function getMessages(conversationId: number): Promise<ApiMessage[]> {
-  return apiFetch<ApiMessage[]>(`/api/conversations/${conversationId}/messages`).catch(() => []);
+  return apiFetch<ApiMessage[]>(`/api/conversations/${conversationId}/messages`);
 }
 
 export async function sendMessage(
@@ -978,7 +1035,7 @@ export async function getBlogPosts(
     `/api/blog${qs.toString() ? `?${qs}` : ''}`,
     {},
     false,
-  ).catch(() => []);
+  );
 }
 
 export async function getBlogPost(id: number): Promise<ApiBlogPost> {
@@ -1009,6 +1066,7 @@ export type ApiAgent = {
   about?: string;
   photo?: string;
   profilePhoto?: string;
+  coverPhoto?: string;
   createdAt?: string;
 };
 
@@ -1032,6 +1090,7 @@ export async function getAgents(
     ...agent,
     profilePhoto: resolveAgentPhoto(agent.profilePhoto || agent.photo),
     photo: resolveAgentPhoto(agent.photo || agent.profilePhoto),
+    coverPhoto: resolveAgentPhoto(agent.coverPhoto),
   }));
 }
 
@@ -1061,7 +1120,7 @@ export async function getAdminProperties(
   if (params.status) qs.set('status', params.status);
   return apiFetch<ApiProperty[]>(
     `/api/admin/properties${qs.toString() ? `?${qs}` : ''}`,
-  ).catch(() => []);
+  );
 }
 
 export async function verifyAdminProperty(id: number): Promise<void> {
@@ -1084,7 +1143,7 @@ export async function getAdminUsers(
   if (params.role) qs.set('role', params.role);
   return apiFetch<ApiUser[]>(
     `/api/admin/users${qs.toString() ? `?${qs}` : ''}`,
-  ).catch(() => []);
+  );
 }
 
 export async function updateUserRole(userId: number, role: string): Promise<void> {
@@ -1158,7 +1217,7 @@ export type AdminReport = {
 };
 export async function getAdminReports(status?: string): Promise<AdminReport[]> {
   const qs = status ? `?status=${status}` : '';
-  return apiFetch<AdminReport[]>(`/api/admin/reports${qs}`).catch(() => []);
+  return apiFetch<AdminReport[]>(`/api/admin/reports${qs}`);
 }
 export async function updateAdminReport(id: number, status: string, adminNote?: string): Promise<void> {
   await apiFetch(`/api/admin/reports/${id}`, {

@@ -112,3 +112,17 @@ mtime_ms = 1790926505701
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/3fda3128-191f-456c-9b9e-a4a484cf677b/4d37b62a-f1a7-4a77-befd-888f21da83da"
 storage_version_token = "1790926527732552"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "nUfXpfRixF_E1Z_w3qFBi"
+uri = "file://exports/oglandmark-live-site-update.zip"
+type = "unspecified"
+title = "OG Landmark — Privacy & Logo Update ZIP"
+description = "Attached live-site ke existing public_html paths ke liye 1.6 MB update ZIP. Is mein 2 October 2026 wali current privacy policy, privacy/account-deletion routing aur mobile app se match karte logo files hain. Existing site mein merge/extract karein; backend, api/.env aur uploads is ZIP mein nahi hain."
+logical_id = "76868686-ffb5-4097-9311-7d148983d461"
+content_hash = "sha256:acdcc1ec6a1406b1015f1d284b96efa981a35bfe439bf46b0e1b6fe34414182b"
+size = 1654160
+mtime_ms = 1790927862580
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/76868686-ffb5-4097-9311-7d148983d461/c5b1917c-83dc-4aef-abf4-0e94fb6f4412"
+storage_version_token = "1790927914335850"
+content_type = "application/octet-stream"

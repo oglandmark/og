@@ -168,3 +168,17 @@ mtime_ms = 1790938804815
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/87f0cb2c-f222-45e2-8ad5-57206de45398/082abb1f-90f8-417d-b5d7-6980c894b823"
 storage_version_token = "1790939025965806"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "c1c3awZy1Gzod-IJfgpcp"
+uri = "file://exports/og-landmark-2.0.22-22-96dca796.aab"
+type = "unspecified"
+title = "Google Play Console AAB — OG Landmark v2.0.22 (code 22)"
+description = "Production Android App Bundle (.aab). VersionCode 22; archive integrity verified. Not submitted to Google Play."
+logical_id = "495f0b76-278d-482d-a907-eeb22b2704f1"
+content_hash = "sha256:2882ce32eaf9ec14783b1390f8d9585e7412f5c84f4f01f8bbd8ebd513260ceb"
+size = 95755201
+mtime_ms = 1790941377421
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/495f0b76-278d-482d-a907-eeb22b2704f1/72c0d03d-bb49-47d9-b078-3525f96b1b86"
+storage_version_token = "1790941407024896"
+content_type = "application/octet-stream"

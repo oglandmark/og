@@ -637,4 +637,62 @@ class BackendGapClosureTest extends TestCase
         $this->assertFileDoesNotExist($unreferencedFile);
         $this->assertFileExists($referencedFile);
     }
+
+    public function test_admin_mobile_api_can_review_reports_and_update_home_banners(): void
+    {
+        $this->seedData([
+            'users' => [
+                $this->user(1, 'admin@example.test', 'Admin'),
+                $this->user(2, 'reporter@example.test', 'Buyer'),
+            ],
+            'properties' => [],
+            'reports' => [[
+                'id' => 31,
+                'propertyId' => 901,
+                'reporterId' => 2,
+                'reporterName' => 'Buyer Test',
+                'reason' => 'Incorrect listing details',
+                'description' => 'The listing address does not match the photos.',
+                'status' => 'Pending',
+                'reportedAt' => now()->toISOString(),
+            ]],
+            'mobileBanners' => [],
+        ]);
+        $token = $this->token('admin@example.test');
+
+        $this->withToken($token)
+            ->getJson('/api/admin/reports?status=Pending')
+            ->assertOk()
+            ->assertJsonPath('0.id', 31);
+
+        $this->withToken($token)
+            ->patchJson('/api/admin/reports/31', [
+                'status' => 'Resolved',
+                'adminNote' => 'Reviewed against the listing.',
+            ])
+            ->assertOk();
+
+        $this->assertSame('Resolved', JsonStore::read()['reports'][0]['status']);
+
+        $this->withToken($token)
+            ->getJson('/api/mobile/banners/all')
+            ->assertOk()
+            ->assertJsonCount(5);
+
+        $this->withToken($token)
+            ->postJson('/api/mobile/banners', [
+                'type' => 'image',
+                'category' => 'homes',
+                'title' => 'Updated home banner',
+                'subtitle' => 'Updated from the mobile admin panel.',
+                'imageUrl' => '/images/mobile-banners/homes.jpg',
+            ])
+            ->assertOk()
+            ->assertJsonPath('banner.title', 'Updated home banner');
+
+        $this->withToken($token)
+            ->getJson('/api/mobile/banners/all')
+            ->assertOk()
+            ->assertJsonPath('0.title', 'Updated home banner');
+    }
 }

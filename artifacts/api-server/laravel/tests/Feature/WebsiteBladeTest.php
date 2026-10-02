@@ -57,6 +57,34 @@ class WebsiteBladeTest extends TestCase
         $this->assertFileExists(public_path('images/mobile-banners/homes.jpg'));
     }
 
+    public function test_buyer_can_register_sign_in_and_open_the_portal_without_a_404(): void
+    {
+        $this->seedData(['users' => [], 'properties' => []]);
+        $email = 'buyer-flow@example.test';
+        $password = 'StrongPassword123';
+
+        $this->from('/register?role=buyer')->post('/register', [
+            'name' => 'Preview Buyer',
+            'email' => $email,
+            'phone' => '03001234567',
+            'password' => $password,
+            'password_confirmation' => $password,
+            'role' => 'buyer',
+            'city' => 'Lahore',
+        ])->assertRedirect('/portal/buyer/dashboard');
+
+        $this->get('/portal/buyer/dashboard')->assertOk();
+        $this->post('/logout')->assertRedirect('/');
+
+        $this->from('/login?role=buyer')->post('/login', [
+            'role' => 'buyer',
+            'identifier' => $email,
+            'password' => $password,
+        ])->assertRedirect('/portal/buyer/dashboard');
+
+        $this->get('/portal/buyer/dashboard')->assertOk();
+    }
+
     public function test_contact_form_keeps_the_lead_when_smtp_is_not_ready(): void
     {
         $this->seedData(['users' => [], 'properties' => [], 'websiteLeads' => []]);

@@ -106,6 +106,8 @@ export default function AdminDashboard() {
   const navItems = [
     { label: 'Properties',  icon: 'home'     as const, route: '/admin/properties' as const },
     { label: 'Users',       icon: 'users'    as const, route: '/admin/users'      as const },
+    { label: 'Reports',     icon: 'alert-circle' as const, route: '/admin/reports' as const },
+    { label: 'Banners',     icon: 'image' as const, route: '/admin/banners' as const },
     { label: 'Notifications', icon: 'bell'   as const, route: '/admin/notifications' as const },
     { label: 'Settings',    icon: 'settings' as const, route: '/admin/settings'   as const },
   ];
@@ -262,8 +264,8 @@ const s = StyleSheet.create({
   statValue:    { fontFamily: 'Inter_700Bold', fontSize: 24, marginBottom: 2 },
   statLabel:    { fontFamily: 'Inter_400Regular', fontSize: 11 },
   sectionTitle: { fontFamily: 'Inter_700Bold', fontSize: 15, paddingHorizontal: 16, marginBottom: 10, marginTop: 6 },
-  navRow:       { flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 16 },
-  navCard:      { flex: 1, borderRadius: 14, padding: 16, alignItems: 'center', gap: 8 },
+  navRow:       { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 16, marginBottom: 16 },
+  navCard:      { flexBasis: '47%', flexGrow: 1, minWidth: 145, borderRadius: 14, padding: 16, alignItems: 'center', gap: 8 },
   navLabel:     { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#ffffff' },
   pendingCard:  { marginHorizontal: 16, marginBottom: 8, borderRadius: 12, borderWidth: 1, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10 },
   pendingTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },

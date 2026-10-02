@@ -71,6 +71,54 @@ class ApiCompatibilityTest extends TestCase
         ]);
     }
 
+    public function test_forgot_password_sends_a_reset_email_through_the_configured_transport(): void
+    {
+        JsonStore::reset();
+        DB::table('app_data')->insert([
+            'id' => 1,
+            'data' => json_encode([
+                'users' => [[
+                    'id' => 8,
+                    'email' => 'reset-test@example.test',
+                    'name' => 'Reset Test',
+                    'password' => 'pbkdf2:unused:unused',
+                ]],
+            ]),
+        ]);
+        JsonStore::reset();
+        config([
+            'mail.default' => 'array',
+            'mail.mailers.array' => ['transport' => 'array'],
+            'mail.mailers.smtp.username' => 'test-smtp-user',
+            'mail.mailers.smtp.password' => 'test-smtp-password',
+        ]);
+
+        $this->postJson('/api/auth/forgot-password', ['email' => 'reset-test@example.test'])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('smtpOff', false);
+
+        $sent = app('mail.manager')->mailer()->getSymfonyTransport()->messages();
+        $this->assertCount(1, $sent);
+        $message = $sent->first()->getOriginalMessage();
+        $this->assertSame('OG Landmark — Password Reset Code', $message->getSubject());
+        $this->assertSame('reset-test@example.test', $message->getTo()[0]->getAddress());
+        $body = (string) $message->getTextBody();
+        $this->assertStringContainsString('reset code', strtolower($body));
+        $this->assertSame(1, preg_match('/\b(\d{6})\b/', $body, $matches));
+
+        $this->postJson('/api/auth/reset-password', [
+            'email' => 'reset-test@example.test',
+            'code' => $matches[1],
+            'newPassword' => 'UpdatedPassword123',
+        ])->assertOk()->assertJsonPath('success', true);
+
+        $this->postJson('/api/auth/login', [
+            'identifier' => 'reset-test@example.test',
+            'password' => 'UpdatedPassword123',
+        ])->assertOk()->assertJsonPath('user.email', 'reset-test@example.test');
+    }
+
     public function test_imported_document_serves_listing_and_authenticated_user_routes(): void
     {
         JsonStore::reset();

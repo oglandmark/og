@@ -140,3 +140,17 @@ mtime_ms = 1790932836477
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/51849b2f-ab4f-455f-a2e4-147562118208/3ff4c747-bdb5-4282-a1b4-345116a4021e"
 storage_version_token = "1790932900043087"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "XNhHfGc1dHtVt5cEZDn-x"
+uri = "file://exports/OG%20Web%20v1.zip"
+type = "unspecified"
+title = "OG Web v1.zip"
+description = "Verified Hostinger website update ZIP with the five-category homepage banner carousel and existing policy-page fixes."
+logical_id = "686430e3-6cc2-4124-9f01-9a6cf23a91ba"
+content_hash = "sha256:91ab1db1adf75724dea27146cd0b5fab4aa11fe74a73e3e00216ccef5a0fce95"
+size = 2596359
+mtime_ms = 1790934615334
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/686430e3-6cc2-4124-9f01-9a6cf23a91ba/98ed1b78-5598-465a-ad39-51d27db4ebde"
+storage_version_token = "1790934624277492"
+content_type = "application/octet-stream"

@@ -54,15 +54,19 @@
           return true;
         }
         if(guardSell()||guardPublicPages()) return;
-        // Wrap pushState / replaceState so React Router navigation is also caught
+        // Route policy links to their standalone HTML pages during SPA navigation too.
         ['pushState','replaceState'].forEach(fn=>{
           const orig=history[fn].bind(history);
           history[fn]=function(s,t,u){
             orig(s,t,u);
-            if(u==='/sell'||String(u||'').startsWith('/sell/')) window.location.replace('/seller');
+            if(guardSell()) return;
+            guardPublicPages();
           };
         });
-        window.addEventListener('popstate',guardSell);
+        window.addEventListener('popstate',function(){
+          if(guardSell()) return;
+          guardPublicPages();
+        });
       })();
 
       // ── Remove hardcoded demo popups (Price Drop Alert / New Property Listed) ──

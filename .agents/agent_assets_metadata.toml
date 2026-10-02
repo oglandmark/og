@@ -98,3 +98,17 @@ mtime_ms = 1790858335730
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/eaa5f583-5229-4edf-b1f2-01f5e4ca6e1e/aa4e1964-b6a4-4286-a059-a95b9ba753d7"
 storage_version_token = "1790858350193270"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "zVM5rJtjdaGJo-JZl72Fm"
+uri = "file://exports/og-landmark-hostinger-frontend.zip"
+type = "unspecified"
+title = "OG Landmark — Hostinger Frontend ZIP"
+description = "Frontend-only ZIP (8.3 MB) with the updated mobile-app logo, website assets, policy pages, and portals. Extract into the existing Hostinger Node app root to merge/replace public/. Backend, server.js, .env, and uploaded media are excluded; keep the existing /api proxy and LARAVEL_API_URL settings."
+logical_id = "3fda3128-191f-456c-9b9e-a4a484cf677b"
+content_hash = "sha256:da41de355e0347ed3dfed36ccfee6d99b184e14534e4cf0cdd4370c41401eeb8"
+size = 8600681
+mtime_ms = 1790926505701
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/3fda3128-191f-456c-9b9e-a4a484cf677b/4d37b62a-f1a7-4a77-befd-888f21da83da"
+storage_version_token = "1790926527732552"
+content_type = "application/octet-stream"

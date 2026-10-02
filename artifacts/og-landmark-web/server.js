@@ -309,6 +309,58 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const authRateBuckets = new Map();
 const laravelApiUrl = String(process.env.LARAVEL_API_URL || '').trim().replace(/\/+$/, '');
+const laravelWebUrl = String(process.env.LARAVEL_WEB_URL || '').trim().replace(/\/+$/, '');
+
+// Preview Laravel-rendered website pages without changing the existing /api
+// upstream. Clearing LARAVEL_WEB_URL restores the original Node/React routes.
+if (laravelWebUrl) {
+  const webBase = new URL(laravelWebUrl);
+  app.use(async (req, res, next) => {
+    if (req.path === '/api' || req.path.startsWith('/api/')) return next();
+
+    const browserHost = req.headers['x-forwarded-host'] || req.headers.host || '';
+    const forwardedProto = req.headers['x-forwarded-proto']
+      || (/^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(browserHost) ? 'http' : 'https');
+    const target = `${laravelWebUrl}${req.originalUrl}`;
+
+    try {
+      const headers = { ...req.headers };
+      delete headers.host;
+      delete headers.connection;
+      headers['x-forwarded-host'] = browserHost;
+      headers['x-forwarded-proto'] = forwardedProto;
+      headers['x-forwarded-port'] = req.headers['x-forwarded-port'] || (forwardedProto === 'https' ? '443' : '80');
+      headers['x-forwarded-for'] = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+
+      const hasBody = !['GET', 'HEAD'].includes(req.method);
+      const upstream = await fetch(target, {
+        method: req.method,
+        headers,
+        body: hasBody ? req : undefined,
+        duplex: hasBody ? 'half' : undefined,
+        redirect: 'manual',
+      });
+
+      res.status(upstream.status);
+      upstream.headers.forEach((value, key) => {
+        if (!['connection', 'content-encoding', 'content-length', 'transfer-encoding', 'set-cookie'].includes(key)) {
+          res.setHeader(key, value);
+        }
+      });
+      const cookies = upstream.headers.getSetCookie?.() || [];
+      if (cookies.length) res.setHeader('set-cookie', cookies);
+
+      if (upstream.body) {
+        Readable.fromWeb(upstream.body).pipe(res);
+      } else {
+        res.end();
+      }
+    } catch (error) {
+      console.error(`Laravel website preview proxy failed: ${error.message}`);
+      res.status(502).send('Laravel website preview is unavailable.');
+    }
+  });
+}
 
 // Keep the public website on this Node process while allowing its existing
 // /api/* origin to be switched to Laravel with one environment change. The
@@ -6313,6 +6365,9 @@ app.get('*', (req, res) => {
 // until initDb succeeds, and the exact failure is visible in the app log.
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`OG Landmark listening on ${PORT}`);
+  if (laravelWebUrl) {
+    console.log('Laravel website preview proxy enabled; /api remains on its configured upstream.');
+  }
   if (laravelApiUrl) {
     console.log('Laravel API proxy enabled; skipping legacy Node database, mail, and scheduler startup.');
     return;

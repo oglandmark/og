@@ -1,0 +1,9 @@
+@extends('layouts.landmark')
+@section('title','Property journal — OG Landmark')
+@section('content')
+<section class="page-hero"><div class="wrap"><div class="breadcrumb">Home / Journal</div><h1>Notes for your<br>next move.</h1><p>Market perspectives, practical guides and local insight to help you make a considered decision.</p></div></section>
+<section class="section"><div class="wrap">
+ @if(isset($articles) && count($articles))<div class="article-grid">@foreach($articles as $article)@php($cover=$article->coverImage ?? null)<article class="article-card"><a class="article-image" href="{{ route('blog.show',$article->id) }}">@if($cover)<img src="{{ str_starts_with($cover,'http') || str_starts_with($cover,'/') ? $cover : asset('storage/'.$cover) }}" alt="{{ $article->title ?? 'Journal article' }}" loading="lazy">@else<img src="{{ asset('images/mobile-banners/homes.jpg') }}" alt="" loading="lazy">@endif</a><div class="article-copy"><time>{{ isset($article->createdAt) ? \Illuminate\Support\Carbon::parse($article->createdAt)->format('F j, Y') : 'OG Landmark Journal' }}</time><h3><a href="{{ route('blog.show',$article->id) }}">{{ $article->title ?? 'A note from the property market' }}</a></h3><p>{{ $article->excerpt ?? '' }}</p><a class="text-link" href="{{ route('blog.show',$article->id) }}">Read article</a></div></article>@endforeach</div>@if(method_exists($articles,'links'))<div style="margin-top:30px">{{ $articles->links() }}</div>@endif
+ @else@include('partials.empty',['title'=>'Our journal is taking shape','message'=>'There are no published articles yet. Check back for local perspectives and practical property advice.'])@endif
+</div></section>
+@endsection

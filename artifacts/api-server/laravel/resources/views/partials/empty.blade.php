@@ -1,0 +1,1 @@
+<div class="empty-state"><span class="eyebrow">A fresh start</span><h3>{{ $title ?? 'Nothing to show just yet' }}</h3><p>{{ $message ?? 'There are no published records in this section at the moment. Check back soon or try another search.' }}</p>@if(!empty($actionUrl))<a class="btn btn-gold" href="{{ $actionUrl }}">{{ $actionLabel ?? 'Explore properties' }}</a>@endif</div>

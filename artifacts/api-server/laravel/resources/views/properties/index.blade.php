@@ -1,0 +1,19 @@
+@extends('layouts.landmark')
+@section('title','Property search — OG Landmark')
+@section('content')
+<section class="page-hero"><div class="wrap"><div class="breadcrumb">Home / Properties</div><h1>Find your next place.</h1><p>Search homes, land and commercial property across Pakistan. Use the filters to bring the right possibilities into focus.</p></div></section>
+<section class="section"><div class="wrap listing-layout">
+ <form class="filter-box" method="GET" action="{{ route('properties.index') }}"><span class="eyebrow">Refine your search</span><h3>Property filters</h3>
+  <div class="field"><label for="f-search">Keyword</label><input id="f-search" name="search" value="{{ request('search') }}" placeholder="Neighbourhood, address"></div>
+  <div class="field"><label for="f-city">City</label><select id="f-city" name="city"><option value="">All cities</option>@foreach(($cities ?? data_get($filters ?? [],'cities',[])) as $city)<option value="{{ is_object($city)?($city->name ?? $city->value ?? ''):(is_array($city)?($city['name'] ?? reset($city)):$city) }}" @selected(request('city')==(is_object($city)?($city->name ?? $city->value ?? ''):(is_array($city)?($city['name'] ?? reset($city)):$city)))>{{ is_object($city)?($city->name ?? $city->value ?? ''):(is_array($city)?($city['name'] ?? reset($city)):$city) }}</option>@endforeach</select></div>
+  <div class="field"><label for="f-purpose">Purpose</label><select id="f-purpose" name="purpose"><option value="">Buy or rent</option><option value="For Sale" @selected(request('purpose')==='For Sale')>For sale</option><option value="For Rent" @selected(request('purpose')==='For Rent')>For rent</option></select></div>
+  <div class="field"><label for="f-type">Property type</label><select id="f-type" name="type"><option value="">All types</option>@foreach(data_get($filters ?? [],'types',['House','Apartment','Plot','Commercial']) as $type)<option value="{{ is_object($type)?($type->name ?? $type->value ?? ''):$type }}" @selected(request('type')==(is_object($type)?($type->name ?? $type->value ?? ''):$type))>{{ is_object($type)?($type->name ?? $type->value ?? ''):$type }}</option>@endforeach</select></div>
+  <div class="form-grid"><div class="field"><label for="f-min">Min price</label><input id="f-min" type="number" name="minPrice" value="{{ request('minPrice') }}" placeholder="Any"></div><div class="field"><label for="f-max">Max price</label><input id="f-max" type="number" name="maxPrice" value="{{ request('maxPrice') }}" placeholder="Any"></div></div>
+  <div class="field" style="margin-top:16px"><label for="f-beds">Bedrooms</label><select id="f-beds" name="minBeds"><option value="">Any</option>@foreach([1,2,3,4,5] as $bed)<option value="{{ $bed }}" @selected(request('minBeds')==$bed)>{{ $bed }}+</option>@endforeach</select></div><button class="btn btn-gold" type="submit" style="width:100%;margin-top:6px">Apply filters</button>
+ </form>
+ <div class="listing-results"><div class="listing-toolbar"><span>{{ isset($properties) && method_exists($properties,'total') ? number_format($properties->total()).' properties found' : (isset($properties) ? count($properties).' properties found' : 'Property search') }}</span><a href="{{ route('properties.map',request()->query()) }}">View map ↗</a></div>
+ @if(isset($properties) && count($properties))<div class="property-grid">@foreach($properties as $property)@include('partials.property-card',['property'=>$property])@endforeach</div>@if(method_exists($properties,'links'))<div style="margin-top:28px">{{ $properties->links() }}</div>@endif
+ @else@include('partials.empty',['title'=>'No properties match yet','message'=>'Try broadening your filters or searching another city. New listings are added as they become available.','actionUrl'=>route('properties.index'),'actionLabel'=>'Clear search'])@endif
+ </div>
+</div></section>
+@endsection

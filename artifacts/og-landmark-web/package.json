@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node server.js",
     "start": "node server.js",
+    "build": "node scripts/build-static.js",
     "migrate": "node scripts/migrate-mysql.js",
     "import-data": "node scripts/import-data.js",
     "migrate:postgres": "node scripts/migrate-postgres.js",

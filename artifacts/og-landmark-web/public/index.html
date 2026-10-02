@@ -12,7 +12,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="OG Landmark — Real Estate Platform" />
     <meta name="twitter:description" content="OG Landmark — Real Estate Platform — built on Replit. Update this description to reflect the app." />
-    <link rel="icon" type="image/png" href="/og-landmark-brand-square.png" />
+    <link rel="icon" type="image/png" href="/og-landmark-brand-square-20261002-v2.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -72,12 +72,17 @@
       // The compiled homepage bundle still points at its previous logo filename.
       // Swap that image to the current mobile-app brand icon after every SPA render.
       (function(){
-        const previousLogo = '/assets/IMG_0329_1784919532811-CnY08-QX.PNG';
-        const currentLogo = '/og-landmark-brand-square.png';
+        const previousLogos = [
+          '/assets/IMG_0329_1784919532811-CnY08-QX.PNG',
+          '/og-logo.png',
+          '/images/og-logo.png',
+          '/og-landmark-brand-square.png'
+        ];
+        const currentLogo = '/og-landmark-brand-square-20261002-v2.png';
         const replaceLogo = () => {
           document.querySelectorAll('img').forEach(image => {
             const src = image.getAttribute('src') || '';
-            if (src.includes(previousLogo)) image.setAttribute('src', currentLogo);
+            if (previousLogos.some(previousLogo => src.includes(previousLogo))) image.setAttribute('src', currentLogo);
           });
         };
         replaceLogo();
@@ -87,6 +92,30 @@
           attributes: true,
           attributeFilter: ['src']
         });
+      })();
+
+      // The built homepage contains a placeholder href for this footer link.
+      (function(){
+        const isPrivacyLink = link =>
+          (link.textContent || '').replace(/\s+/g,' ').trim().toLowerCase() === 'privacy policy';
+        const repairPrivacyLinks = () => {
+          document.querySelectorAll('a[href="#"]').forEach(link => {
+            if (isPrivacyLink(link)) link.setAttribute('href','/privacy-policy');
+          });
+        };
+        repairPrivacyLinks();
+        new MutationObserver(repairPrivacyLinks).observe(document.documentElement,{
+          childList:true,subtree:true,attributes:true,attributeFilter:['href']
+        });
+        document.addEventListener('click',event => {
+          const target = event.target instanceof Element ? event.target : null;
+          const link = target && target.closest('a');
+          if (!link || !isPrivacyLink(link)) return;
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          window.location.assign('/privacy-policy');
+        },true);
       })();
 
       // ── Remove hardcoded demo popups (Price Drop Alert / New Property Listed) ──

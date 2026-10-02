@@ -12,7 +12,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="OG Landmark — Real Estate Platform" />
     <meta name="twitter:description" content="OG Landmark — Real Estate Platform — built on Replit. Update this description to reflect the app." />
-    <link rel="icon" type="image/png" href="/og-logo.png" />
+    <link rel="icon" type="image/png" href="/og-landmark-brand-square.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -66,6 +66,26 @@
         window.addEventListener('popstate',function(){
           if(guardSell()) return;
           guardPublicPages();
+        });
+      })();
+
+      // The compiled homepage bundle still points at its previous logo filename.
+      // Swap that image to the current mobile-app brand icon after every SPA render.
+      (function(){
+        const previousLogo = '/assets/IMG_0329_1784919532811-CnY08-QX.PNG';
+        const currentLogo = '/og-landmark-brand-square.png';
+        const replaceLogo = () => {
+          document.querySelectorAll('img').forEach(image => {
+            const src = image.getAttribute('src') || '';
+            if (src.includes(previousLogo)) image.setAttribute('src', currentLogo);
+          });
+        };
+        replaceLogo();
+        new MutationObserver(replaceLogo).observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['src']
         });
       })();
 

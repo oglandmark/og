@@ -308,7 +308,10 @@ async function sendOtpEmail(toEmail, otp) {
 const app = express();
 const PORT = process.env.PORT || 3000;
 const authRateBuckets = new Map();
-const laravelApiUrl = String(process.env.LARAVEL_API_URL || '').trim().replace(/\/+$/, '');
+const replitPreview = Boolean(process.env.REPLIT_DEV_DOMAIN);
+const previewApiUrl = String(process.env.LARAVEL_API_PREVIEW_URL || '').trim().replace(/\/+$/, '');
+const configuredApiUrl = String(process.env.LARAVEL_API_URL || '').trim().replace(/\/+$/, '');
+const laravelApiUrl = replitPreview && previewApiUrl ? previewApiUrl : configuredApiUrl;
 const laravelWebUrl = String(process.env.LARAVEL_WEB_URL || '').trim().replace(/\/+$/, '');
 
 // Preview Laravel-rendered website pages without changing the existing /api
@@ -6369,7 +6372,9 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.log('Laravel website preview proxy enabled; /api remains on its configured upstream.');
   }
   if (laravelApiUrl) {
-    console.log('Laravel API proxy enabled; skipping legacy Node database, mail, and scheduler startup.');
+    console.log(
+      `Laravel API proxy enabled (${replitPreview && previewApiUrl ? 'local Replit preview API' : 'configured upstream'}); skipping legacy Node database, mail, and scheduler startup.`
+    );
     return;
   }
   setInterval(processScheduledAnnouncements, 30_000);

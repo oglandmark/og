@@ -46,6 +46,8 @@ class WebsiteBladeTest extends TestCase
         $this->get('/properties')->assertOk()->assertSee('Property filters');
         $this->get('/login?role=admin')->assertOk()->assertSee('Administrator email');
         $this->get('/register')->assertOk()->assertSee('Mobile number');
+        $this->get('/auth?role=buyer')->assertRedirect('/register?role=buyer');
+        $this->get('/register?role=buyer')->assertOk()->assertSee('value="buyer" selected', false);
         $this->get('/privacy-policy')->assertOk();
         $this->get('/terms')->assertOk();
         $this->get('/account-deletion')->assertOk();

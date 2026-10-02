@@ -140,3 +140,17 @@ mtime_ms = 1790954725159
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/5518fdea-1a2c-4932-a3da-0db8245311b3/5ef647f4-c6de-4d9c-a010-2e55824e3d44"
 storage_version_token = "1790954764544677"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "LFetlg5IdF8ejXRfyPYcw"
+uri = "file://exports/OG%20Web%20v11.zip"
+type = "unspecified"
+title = "OG Web v11.zip"
+description = "Latest Laravel Blade website package with a root-level Hostinger entry point and rewrite rules to prevent the previous nested-folder 403. Includes merged buyer portal updates; excludes private .env, local database, logs, caches, and uploaded media."
+logical_id = "4a7bfe1e-1003-4e45-b76f-a23dacceefc5"
+content_hash = "sha256:3da0ac0f1ed1b2e1beeb011165a43c62f8c3c7121379fde7920cc60f204981e5"
+size = 41330838
+mtime_ms = 1790955814713
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/4a7bfe1e-1003-4e45-b76f-a23dacceefc5/1aa9be7f-a073-4cfb-945e-d406e0ebe28a"
+storage_version_token = "1790955839510294"
+content_type = "application/octet-stream"

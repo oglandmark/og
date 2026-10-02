@@ -5,6 +5,7 @@ use App\Http\Controllers\PortalActionController;
 use App\Http\Controllers\WebsiteAuthController;
 use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\WebsiteLeadController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Services\MediaStorage;
 
@@ -47,6 +48,13 @@ foreach ([
 Route::get('/login', [WebsiteAuthController::class, 'login'])->name('auth.login');
 Route::post('/login', [WebsiteAuthController::class, 'authenticate'])->middleware('throttle:6,1')->name('auth.login.submit');
 Route::get('/register', [WebsiteAuthController::class, 'register'])->name('auth.register');
+Route::get('/auth', function (Request $request) {
+    $mode = strtolower((string) $request->query('mode', $request->query('tab', 'register')));
+    $route = in_array($mode, ['login', 'signin', 'sign-in'], true) ? 'auth.login' : 'auth.register';
+    $role = strtolower((string) $request->query('role', 'buyer'));
+
+    return redirect()->route($route, ['role' => $role]);
+})->name('auth.compat');
 Route::post('/register', [WebsiteAuthController::class, 'storeRegistration'])->middleware('throttle:4,1')->name('auth.register.submit');
 Route::post('/logout', [WebsiteAuthController::class, 'logout'])->name('auth.logout');
 

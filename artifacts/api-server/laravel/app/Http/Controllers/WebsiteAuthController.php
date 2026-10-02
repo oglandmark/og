@@ -22,9 +22,14 @@ class WebsiteAuthController extends Controller
         ]);
     }
 
-    public function register(): View
+    public function register(Request $request): View
     {
-        return view('auth.register');
+        $role = strtolower((string) $request->query('role', 'buyer'));
+        if (!in_array($role, ['buyer', 'seller', 'agent'], true)) {
+            $role = 'buyer';
+        }
+
+        return view('auth.register', ['intendedRole' => $role]);
     }
 
     public function authenticate(Request $request): RedirectResponse

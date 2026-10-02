@@ -114,15 +114,15 @@ storage_version_token = "1790926527732552"
 content_type = "application/octet-stream"
 
 [[outputs]]
-id = "nUfXpfRixF_E1Z_w3qFBi"
-uri = "file://exports/oglandmark-live-site-update.zip"
+id = "1YX5e2KyPvbg2SsXbX6Zq"
+uri = "file://exports/oglandmark-live-site-update-v2.zip"
 type = "unspecified"
-title = "OG Landmark — Privacy & Logo Update ZIP"
-description = "Attached live-site ke existing public_html paths ke liye 1.6 MB update ZIP. Is mein 2 October 2026 wali current privacy policy, privacy/account-deletion routing aur mobile app se match karte logo files hain. Existing site mein merge/extract karein; backend, api/.env aur uploads is ZIP mein nahi hain."
-logical_id = "76868686-ffb5-4097-9311-7d148983d461"
-content_hash = "sha256:acdcc1ec6a1406b1015f1d284b96efa981a35bfe439bf46b0e1b6fe34414182b"
-size = 1654160
-mtime_ms = 1790927862580
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/76868686-ffb5-4097-9311-7d148983d461/c5b1917c-83dc-4aef-abf4-0e94fb6f4412"
-storage_version_token = "1790927914335850"
+title = "OG Landmark Hostinger website patch v2"
+description = "Hostinger public_html ke liye overlay ZIP: privacy footer link, direct privacy/account-deletion routes, updated policy pages, aur cache-busted logo. API/.env files shamil nahi hain."
+logical_id = "555d6a9f-d589-4edf-ba2d-f7fef7fd1696"
+content_hash = "sha256:c504d3916a2fdc8cc4bb00f89f8449de5dc1574c778a1b670df5cfd71b0c7383"
+size = 407029
+mtime_ms = 1790929171428
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/555d6a9f-d589-4edf-ba2d-f7fef7fd1696/37d38916-7e2a-4edb-bccf-a1aa8b3ea790"
+storage_version_token = "1790929230890910"
 content_type = "application/octet-stream"

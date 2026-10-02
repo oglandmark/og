@@ -1,0 +1,18 @@
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Send Google Play legal links to the standalone pages, not the SPA.
+  RewriteRule ^privacy-policy/?$ pages/privacy.html [L,NC]
+  RewriteRule ^privacy/?$ pages/privacy.html [L,NC]
+  RewriteRule ^account-deletion/?$ pages/account-deletion.html [L,NC]
+
+  # Prefer existing files and directories
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # React SPA fallback
+  RewriteRule ^ index.html [L]
+</IfModule>

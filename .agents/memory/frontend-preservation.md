@@ -3,8 +3,8 @@ name: OG Landmark frontend preservation
 description: Defines which supplied compiled website files may change during future backend or admin work.
 ---
 
-Keep the supplied public website pages and compiled assets visually and byte-for-byte unchanged. Functional extensions belong in the admin dashboard only and must reuse its existing visual language.
+For website work, treat the user's newly supplied ZIP as the source of truth. Change only the logo and Privacy Policy page; keep every other page, asset, layout, and visual exactly as supplied. Implement APIs in Laravel, not in the frontend.
 
-**Why:** The user explicitly requires the supplied website frontend to remain exactly as delivered while still giving administrators complete control over mobile-backed data.
+**Why:** The user explicitly requires all website design outside the logo and Privacy Policy page to remain unchanged, with API behavior kept in Laravel.
 
-**How to apply:** Before future website changes, compare public-site asset hashes against the supplied package. Do not rebuild or reformat compiled assets; limit necessary frontend edits to admin management functionality.
+**How to apply:** Inspect the new ZIP first and use it as the only frontend baseline. Record its asset hashes, make changes only to the logo and Privacy Policy page, and keep API changes in Laravel. Do not carry forward unrelated design edits from the existing website.

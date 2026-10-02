@@ -1,8 +1,7 @@
 /**
  * OG Landmark — Centralized API Client
  * -------------------------------------
- * Dev URL  : set EXPO_PUBLIC_API_URL in .env.local
- * Prod URL : https://api.oglandmark.com
+ * All environments: https://www.oglandmark.com
  *
  * All requests include the auth token stored in AsyncStorage.
  */
@@ -12,15 +11,9 @@ import { Platform } from 'react-native';
 import { resolveApiBase } from './apiBase';
 
 // ─── Base URL ──────────────────────────────────────────────────────────────────
-// Replit development previews (web and Expo Go/native) use the website's
-// same-origin Laravel proxy. Production builds still use the configured API
-// URL or the canonical API hostname.
-export const API_BASE = resolveApiBase({
-  configuredApiUrl: process.env.EXPO_PUBLIC_API_URL,
-  replitId: process.env.EXPO_PUBLIC_REPL_ID,
-  replitDomain: process.env.EXPO_PUBLIC_DOMAIN,
-  isDevelopment: __DEV__,
-});
+// Use the live website backend directly in development and production.
+// Mobile API requests do not go through a Replit API proxy or server.
+export const API_BASE = resolveApiBase();
 
 const TOKEN_KEY = '@og-landmark/api-token';
 

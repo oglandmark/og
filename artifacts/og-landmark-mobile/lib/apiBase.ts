@@ -1,22 +1,5 @@
-const PRODUCTION_API_BASE = 'https://api.oglandmark.com';
+const LIVE_API_BASE = 'https://www.oglandmark.com';
 
-export type ApiBaseEnvironment = {
-  configuredApiUrl?: string;
-  replitId?: string;
-  replitDomain?: string;
-  isDevelopment?: boolean;
-};
-
-export function resolveApiBase({
-  configuredApiUrl = '',
-  replitId = '',
-  replitDomain = '',
-  isDevelopment = false,
-}: ApiBaseEnvironment): string {
-  const configured = configuredApiUrl.trim().replace(/\/+$/, '');
-  const replitPreview = isDevelopment && replitId && replitDomain
-    ? `https://${replitDomain.trim().replace(/^https?:\/\//, '').replace(/\/+$/, '')}`
-    : '';
-
-  return replitPreview || configured || PRODUCTION_API_BASE;
+export function resolveApiBase(): string {
+  return LIVE_API_BASE;
 }

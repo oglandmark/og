@@ -40,7 +40,20 @@
             window.location.replace('/seller'); return true;
           }
         }
-        if(guardSell()) return;
+        function guardPublicPages(){
+          const routes=[
+            {suffix:'/privacy-policy',file:'/pages/privacy-policy.html'},
+            {suffix:'/privacy',file:'/pages/privacy-policy.html'},
+            {suffix:'/account-deletion',file:'/pages/account-deletion.html'}
+          ];
+          const pathname=window.location.pathname.replace(/\/+$/,'');
+          const route=routes.find(item=>pathname.endsWith(item.suffix));
+          if(!route) return false;
+          const base=pathname.slice(0,-route.suffix.length).replace(/\/$/,'');
+          window.location.replace(base+route.file+window.location.hash);
+          return true;
+        }
+        if(guardSell()||guardPublicPages()) return;
         // Wrap pushState / replaceState so React Router navigation is also caught
         ['pushState','replaceState'].forEach(fn=>{
           const orig=history[fn].bind(history);

@@ -3,14 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Services\JsonStore;
+use App\Services\SavedPropertyStore;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator as Paginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class WebsiteController extends Controller
 {
-    public function home()
+    public function home(Request $request)
     {
         $data = JsonStore::read();
         $properties = $this->publicProperties($data['properties'] ?? []);
@@ -22,12 +24,14 @@ class WebsiteController extends Controller
             'agents' => $agents->take(4)->map($this->agentForView(...)),
             'articles' => $articles->take(3)->map($this->articleForView(...)),
             'cities' => $properties->pluck('city')->filter()->unique()->sort()->values(),
+            ...$this->buyerViewState($request, $data),
         ]);
     }
 
     public function properties(Request $request)
     {
-        $properties = $this->publicProperties(JsonStore::read()['properties'] ?? []);
+        $data = JsonStore::read();
+        $properties = $this->publicProperties($data['properties'] ?? []);
         $search = strtolower(trim((string) $request->input('search', $request->input('keyword', ''))));
 
         $properties = $properties->filter(function (array $property) use ($request, $search): bool {
@@ -65,36 +69,44 @@ class WebsiteController extends Controller
         return view('properties.index', [
             'properties' => $paginated,
             'filters' => $request->query(),
-            'cities' => $this->publicProperties(JsonStore::read()['properties'] ?? [])->pluck('city')->filter()->unique()->sort()->values(),
+            'cities' => $this->publicProperties($data['properties'] ?? [])->pluck('city')->filter()->unique()->sort()->values(),
+            ...$this->buyerViewState($request, $data),
         ]);
     }
 
     public function propertiesMap(Request $request)
     {
-        $properties = $this->publicProperties(JsonStore::read()['properties'] ?? [])
+        $data = JsonStore::read();
+        $properties = $this->publicProperties($data['properties'] ?? [])
             ->map($this->propertyForView(...))
             ->values();
 
         return view('properties.map', [
             'properties' => $properties,
             'filters' => $request->query(),
+            ...$this->buyerViewState($request, $data),
         ]);
     }
 
-    public function propertyDetail(string $id)
+    public function propertyDetail(Request $request, string $id)
     {
-        $property = $this->publicProperties(JsonStore::read()['properties'] ?? [])
+        $data = JsonStore::read();
+        $property = $this->publicProperties($data['properties'] ?? [])
             ->first(fn (array $item) => (string) ($item['id'] ?? '') === $id || Str::slug((string) ($item['title'] ?? '')) === $id);
 
         abort_unless($property, 404);
 
         $property = $this->propertyForView($property);
-        $related = $this->publicProperties(JsonStore::read()['properties'] ?? [])
+        $related = $this->publicProperties($data['properties'] ?? [])
             ->filter(fn (array $item) => (string) ($item['id'] ?? '') !== (string) ($property->id ?? ''))
             ->take(3)
             ->map($this->propertyForView(...));
 
-        return view('properties.show', compact('property', 'related'));
+        return view('properties.show', [
+            'property' => $property,
+            'related' => $related,
+            ...$this->buyerViewState($request, $data),
+        ]);
     }
 
     public function agents()
@@ -223,6 +235,42 @@ class WebsiteController extends Controller
         $property['bathrooms'] = $property['bathrooms'] ?? $property['baths'] ?? null;
 
         return (object) $property;
+    }
+
+    private function buyerViewState(Request $request, array $data): array
+    {
+        $user = $this->sessionUser($request);
+        $isBuyer = $user !== null && strtolower((string) ($user['role'] ?? '')) === 'buyer';
+
+        return [
+            'buyerSignedIn' => $isBuyer,
+            'savedPropertyIds' => $isBuyer
+                ? SavedPropertyStore::idsForUser($data, (string) ($user['id'] ?? ''))
+                : [],
+        ];
+    }
+
+    private function sessionUser(Request $request): ?array
+    {
+        $token = (string) $request->session()->get('api_token', '');
+        if ($token === '') {
+            return null;
+        }
+
+        try {
+            $session = DB::table('auth_sessions')
+                ->where('token_hash', hash('sha256', $token))
+                ->where('expires_at', '>', now())
+                ->first();
+            if (!$session) {
+                return null;
+            }
+
+            return collect(JsonStore::read()['users'] ?? [])
+                ->first(fn ($candidate) => is_array($candidate) && (string) ($candidate['id'] ?? '') === (string) $session->user_id);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     private function agentForView(array $agent): object

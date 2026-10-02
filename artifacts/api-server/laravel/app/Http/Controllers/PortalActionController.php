@@ -10,6 +10,47 @@ use Illuminate\Support\Facades\DB;
 
 class PortalActionController extends Controller
 {
+    public function saveProperty(Request $request, string $id): RedirectResponse
+    {
+        return $this->setSavedProperty($request, $id, true);
+    }
+
+    public function removeSavedProperty(Request $request, string $id): RedirectResponse
+    {
+        return $this->setSavedProperty($request, $id, false);
+    }
+
+    public function storeInquiry(Request $request, string $id): RedirectResponse
+    {
+        $user = $this->sessionUser($request);
+        if (!$user) {
+            return redirect()->route('auth.login', ['role' => 'buyer'])->with('auth_message', 'Please sign in to send and track your enquiry.');
+        }
+        abort_unless(strtolower((string) ($user['role'] ?? '')) === 'buyer', 403);
+
+        $validated = $request->validate([
+            'message' => ['required', 'string', 'min:5', 'max:5000'],
+        ]);
+        $property = $this->publicProperty($id);
+        if (!$property) {
+            return back()->withInput()->withErrors(['property' => 'This listing is no longer available for enquiries.']);
+        }
+
+        $result = $this->api($request, 'inquiries', 'POST', [
+            'propertyId' => $property['id'],
+            'clientName' => (string) ($user['name'] ?? ''),
+            'clientEmail' => (string) ($user['email'] ?? ''),
+            'message' => trim($validated['message']),
+        ]);
+        if ($result['status'] < 200 || $result['status'] >= 300) {
+            return back()->withInput()->withErrors([
+                'inquiry' => $result['data']['error'] ?? 'Your enquiry could not be sent. Please try again.',
+            ]);
+        }
+
+        return redirect()->route('properties.show', $id)
+            ->with('success', 'Your enquiry has been sent and saved to My inquiries.');
+    }
     public function storeProperty(Request $request): RedirectResponse
     {
         $user = $this->sessionUser($request);
@@ -133,5 +174,55 @@ class PortalActionController extends Controller
         }
 
         return ['status' => $response->getStatusCode(), 'data' => $response->getData(true) ?? []];
+    }
+    private function setSavedProperty(Request $request, string $id, bool $shouldBeSaved): RedirectResponse
+    {
+        $user = $this->sessionUser($request);
+        if (!$user) {
+            return redirect()->route('auth.login', ['role' => 'buyer'])->with('auth_message', 'Please sign in to save homes.');
+        }
+        abort_unless(strtolower((string) ($user['role'] ?? '')) === 'buyer', 403);
+
+        if (!ctype_digit($id) || (int) $id < 1 || !$this->publicProperty($id)) {
+            return back()->withErrors(['property' => 'This listing is no longer available to save.']);
+        }
+
+        $userId = (string) $user['id'];
+        $listPath = 'saved/' . rawurlencode($userId);
+        $result = $this->api($request, $listPath, 'GET', []);
+        if ($result['status'] < 200 || $result['status'] >= 300 || !is_array($result['data'])) {
+            return back()->withErrors(['saved' => 'Your saved homes could not be loaded. Please try again.']);
+        }
+
+        $savedIds = collect($result['data'])
+            ->map(fn ($savedId) => (string) $savedId)
+            ->all();
+        $isSaved = in_array($id, $savedIds, true);
+
+        if ($isSaved !== $shouldBeSaved) {
+            $result = $this->api(
+                $request,
+                $listPath . '/' . rawurlencode($id),
+                'POST',
+                [],
+            );
+            if ($result['status'] < 200 || $result['status'] >= 300 || (bool) ($result['data']['saved'] ?? false) !== $shouldBeSaved) {
+                return back()->withErrors(['saved' => 'Your saved homes could not be updated. Please try again.']);
+            }
+        }
+
+        return back()->with('success', $shouldBeSaved ? 'Home saved to your shortlist.' : 'Home removed from your saved homes.');
+    }
+
+    private function publicProperty(string $id): ?array
+    {
+        return collect(JsonStore::read()['properties'] ?? [])->first(function ($property) use ($id): bool {
+            if (!is_array($property) || (string) ($property['id'] ?? '') !== $id) {
+                return false;
+            }
+
+            return in_array(strtolower((string) ($property['approvalStatus'] ?? 'active')), ['active', 'approved'], true)
+                && in_array(strtolower((string) ($property['listingStatus'] ?? 'active')), ['active', 'approved'], true);
+        });
     }
 }

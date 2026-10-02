@@ -19,6 +19,18 @@ Route::get('/contact', [WebsiteController::class, 'contact'])->name('contact');
 Route::post('/contact', [WebsiteLeadController::class, 'contact'])->middleware('throttle:5,1')->name('contact.store');
 Route::post('/newsletter', [WebsiteLeadController::class, 'newsletter'])->middleware('throttle:5,1')->name('newsletter.store');
 Route::post('/property-inquiry', [WebsiteLeadController::class, 'contact'])->middleware('throttle:5,1')->name('property.inquiry.store');
+Route::post('/properties/{id}/saved', [PortalActionController::class, 'saveProperty'])
+    ->where('id', '[^/]+')
+    ->middleware('throttle:20,1')
+    ->name('property.saved.store');
+Route::delete('/properties/{id}/saved', [PortalActionController::class, 'removeSavedProperty'])
+    ->where('id', '[^/]+')
+    ->middleware('throttle:20,1')
+    ->name('property.saved.destroy');
+Route::post('/properties/{id}/inquiries', [PortalActionController::class, 'storeInquiry'])
+    ->where('id', '[^/]+')
+    ->middleware('throttle:5,1')
+    ->name('buyer.inquiry.store');
 Route::get('/blog', [WebsiteController::class, 'blog'])->name('blog.index');
 Route::get('/blog/{id}', [WebsiteController::class, 'blogDetail'])->where('id', '[^/]+')->name('blog.show');
 

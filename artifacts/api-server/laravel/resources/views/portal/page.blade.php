@@ -27,10 +27,31 @@
  </aside>
  <main class="portal-main"><header class="portal-top"><div style="display:flex;align-items:center;gap:12px"><button class="portal-toggle" aria-label="Open portal navigation">≡</button><h1>{{ $pageTitle }}</h1></div><span class="eyebrow">{{ $roleName }} space</span></header>
  <div class="portal-content">
+   @if($portalRole==='buyer' && session('success'))<div class="flash-success" role="status">{{ session('success') }}</div>@endif
+   @if($portalRole==='buyer' && $errors->any())<div class="form-errors" role="alert">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif
   <section class="portal-welcome"><span class="eyebrow" style="color:var(--gold2)">OG Landmark · {{ $roleName }} portal</span><h2>{{ $pageName==='dashboard' ? 'Welcome, '.$userName : $pageTitle }}</h2><p style="margin:0;color:#c2ccd7;font-size:13px">{{ $pageName==='dashboard' ? 'Your property journey, gathered in one place.' : 'Your account information and updates.' }}</p></section>
   @if(count($stats))<div class="stat-grid">@foreach($stats as $label=>$value)@php($statLabel=is_array($value)?($value['label']??$label):(is_object($value)?($value->label??$label):$label))@php($statValue=is_array($value)?($value['value']??'—'):(is_object($value)?($value->value??'—'):$value))<div class="stat-card"><small>{{ $statLabel }}</small><strong>{{ is_scalar($statValue) ? $statValue : '—' }}</strong></div>@endforeach</div>@endif
    <section class="portal-box"><h3>{{ $pageName==='dashboard' ? 'Recent activity' : $pageTitle }}</h3>
-    @if($portalRole==='seller' && $pageName==='add-property')
+    @if($portalRole==='buyer' && $pageName==='saved-homes' && count($rows))
+      <div class="portal-table-wrap"><table class="portal-table"><thead><tr><th>Property</th><th>Location</th><th>Price</th><th>Saved</th><th>Action</th></tr></thead><tbody>
+       @foreach($rows as $row)<tr>
+        <td>@if(!empty($row->id))<a href="{{ route('properties.show',$row->id) }}">{{ $row->title ?? 'View property' }}</a>@else{{ $row->title ?? 'Property unavailable' }}@endif</td>
+        <td>{{ $row->address ?? $row->city ?? '—' }}</td>
+        <td>{{ is_numeric($row->price ?? null) ? 'PKR '.number_format((float)$row->price) : ($row->price ?? 'Price on request') }}</td>
+        <td>{{ !empty($row->savedAt) ? $row->savedAt : '—' }}</td>
+        <td>@php($savedId=$row->id ?? $row->propertyId ?? null)@if($savedId)<form method="POST" action="{{ route('property.saved.destroy',$savedId) }}">@csrf @method('DELETE')<button type="submit">Remove</button></form>@else—@endif</td>
+       </tr>@endforeach
+      </tbody></table></div>
+    @elseif($portalRole==='buyer' && $pageName==='inquiries' && count($rows))
+      <div class="portal-table-wrap"><table class="portal-table"><thead><tr><th>Property</th><th>Your message</th><th>Submitted</th><th>Status</th></tr></thead><tbody>
+       @foreach($rows as $row)<tr>
+        <td>@if(!empty($row->propertyId))<a href="{{ route('properties.show',$row->propertyId) }}">{{ $row->propertyTitle ?? 'View property' }}</a>@else{{ $row->propertyTitle ?? 'General enquiry' }}@endif</td>
+        <td>{{ $row->message ?? $row->text ?? '—' }}</td>
+        <td>{{ !empty($row->createdAt) ? $row->createdAt : '—' }}</td>
+        <td>{{ $row->status ?? 'Received' }}</td>
+       </tr>@endforeach
+      </tbody></table></div>
+     @elseif($portalRole==='seller' && $pageName==='add-property')
      @if($errors->any())<div class="form-errors" role="alert">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif
      <form method="POST" action="{{ route('portal.property.store') }}" class="portal-property-form">@csrf
       <div class="form-grid">

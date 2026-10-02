@@ -13,9 +13,17 @@
  <div class="detail-section"><h2>Property overview</h2><div class="detail-stats"><div><strong>{{ $property->bedrooms ?? '—' }}</strong><small>Bedrooms</small></div><div><strong>{{ $property->bathrooms ?? '—' }}</strong><small>Bathrooms</small></div><div><strong>{{ $property->area ?? '—' }}</strong><small>Area</small></div></div><p>{{ $property->description ?? 'Contact our team for further information about this property, its features and location.' }}</p></div>
  <div class="detail-section"><h2>Location</h2><p>{{ $property->address ?? $property->city ?? 'Location details available on request.' }}</p><a class="text-link" href="{{ route('properties.map',['city'=>$property->city ?? '']) }}">Explore the area on map</a></div>
  </div>
- <aside class="detail-panel"><span class="eyebrow">{{ $property->status ?? 'Available' }}</span><div class="detail-price">@if(is_numeric($property->price ?? null))PKR {{ number_format((float)$property->price) }}@else{{ $property->price ?? 'Price on request' }}@endif</div><h3>Make an enquiry</h3><p style="font-size:12px;color:var(--muted)">Ask a question or arrange a conversation about this listing.</p>
-  @if(session('success'))<div class="flash-success">{{ session('success') }}</div>@endif
-  @if($errors->any())<div class="form-errors">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif
-   <form method="POST" action="{{ route('property.inquiry.store') }}">@csrf<input type="hidden" name="propertyId" value="{{ $property->id }}"><div class="field" style="margin-bottom:12px"><label for="inq-name">Your name</label><input id="inq-name" name="name" value="{{ old('name',session('portal_user.name')) }}" required></div><div class="field" style="margin-bottom:12px"><label for="inq-email">Email</label><input id="inq-email" type="email" name="email" value="{{ old('email',session('portal_user.email')) }}" required></div><div class="field" style="margin-bottom:14px"><label for="inq-message">Message</label><textarea id="inq-message" name="message" rows="4" required>{{ old('message') }}</textarea></div><div style="position:absolute;left:-10000px" aria-hidden="true"><label for="inquiry-website">Leave this field empty</label><input id="inquiry-website" name="website" tabindex="-1" autocomplete="off"></div><button class="btn btn-gold" style="width:100%" type="submit">Send enquiry</button></form>
+ <aside class="detail-panel"><span class="eyebrow">{{ $property->status ?? 'Available' }}</span><div class="detail-price">@if(is_numeric($property->price ?? null))PKR {{ number_format((float)$property->price) }}@else{{ $property->price ?? 'Price on request' }}@endif
+   @include('partials.property-save-form',['property'=>$property])
+  </div><h3>Make an enquiry</h3><p style="font-size:12px;color:var(--muted)">Your enquiry will be saved to My inquiries so you can find it again.</p>
+   @if($buyerSignedIn ?? false)
+    <form method="POST" action="{{ route('buyer.inquiry.store', $property->id) }}">@csrf
+     <div class="field" style="margin-bottom:14px"><label for="inq-message">Message</label><textarea id="inq-message" name="message" rows="4" maxlength="5000" required>{{ old('message') }}</textarea></div>
+     <button class="btn btn-gold" style="width:100%" type="submit">Send enquiry</button>
+    </form>
+   @else
+    <p style="font-size:12px;color:var(--muted)">Sign in with a buyer account to send and track an enquiry.</p>
+    <a class="btn btn-gold" style="width:100%;text-align:center" href="{{ route('auth.login',['role'=>'buyer']) }}">Sign in as buyer</a>
+   @endif
  </aside></div></section>
 @endsection

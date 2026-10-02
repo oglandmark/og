@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\JsonStore;
+use App\Services\SavedPropertyStore;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -73,13 +74,13 @@ class PortalController extends Controller
         $offers = collect($data['offers'] ?? [])->filter(fn ($item) => is_array($item));
         $appointments = collect($data['appointments'] ?? [])->filter(fn ($item) => is_array($item));
         $websiteLeads = collect($data['websiteLeads'] ?? [])->filter(fn ($item) => is_array($item));
-        $saved = collect($data['savedProperties'] ?? [])->filter(fn ($item) => is_array($item));
+        $savedHomes = collect(SavedPropertyStore::recordsForUser($data, $userId));
 
         $ownedProperties = $properties->filter(fn (array $item) => $this->matchesUser($item, $userId, ['sellerId', 'userId', 'ownerId']));
         $userInquiries = $inquiries->filter(fn (array $item) => $this->matchesUser($item, $userId, ['buyerId', 'userId', 'sellerId', 'agentId']));
+        $buyerInquiries = $inquiries->filter(fn (array $item) => $this->isBuyerInquiryFor($item, $userId));
         $userOffers = $offers->filter(fn (array $item) => $this->matchesUser($item, $userId, ['buyerId', 'userId', 'sellerId', 'agentId']));
         $userAppointments = $appointments->filter(fn (array $item) => $this->matchesUser($item, $userId, ['buyerId', 'userId', 'sellerId', 'agentId']));
-        $savedHomes = $saved->filter(fn (array $item) => $this->matchesUser($item, $userId, ['userId', 'buyerId']));
         $agentLeads = collect($data['agentLeads'] ?? [])->filter(
             fn ($item) => is_array($item) && $this->matchesUser($item, $userId, ['agentId', 'userId', 'assignedTo']),
         );
@@ -87,6 +88,7 @@ class PortalController extends Controller
         $rows = $this->rowsForPage($role, $page, $data, [
             'properties' => $ownedProperties,
             'inquiries' => $userInquiries,
+            'buyerInquiries' => $buyerInquiries,
             'offers' => $userOffers,
             'appointments' => $userAppointments,
             'saved' => $savedHomes,
@@ -97,7 +99,7 @@ class PortalController extends Controller
         $stats = match ($role) {
             'buyer' => [
                 ['label' => 'Saved homes', 'value' => $savedHomes->count()],
-                ['label' => 'Inquiries', 'value' => $userInquiries->count()],
+                ['label' => 'Inquiries', 'value' => $buyerInquiries->count()],
                 ['label' => 'Offers', 'value' => $userOffers->count()],
                 ['label' => 'Upcoming visits', 'value' => $userAppointments->count()],
             ],
@@ -181,7 +183,7 @@ class PortalController extends Controller
                 'inquiries' => $sets['inquiries'],
                 'offers' => $sets['offers'],
                 'visits' => $sets['appointments'],
-                default => $sets['inquiries']->take(8),
+                default => $sets['buyerInquiries']->take(8),
             };
         }
 
@@ -224,6 +226,15 @@ class PortalController extends Controller
         }
 
         return false;
+    }
+
+    private function isBuyerInquiryFor(array $item, string $userId): bool
+    {
+        if (isset($item['buyerId'])) {
+            return (string) $item['buyerId'] === $userId;
+        }
+
+        return isset($item['userId']) && (string) $item['userId'] === $userId;
     }
 
     private function pageTitle(string $role, string $page): string

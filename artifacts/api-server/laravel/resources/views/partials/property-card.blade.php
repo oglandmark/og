@@ -21,5 +21,6 @@
    @if(!empty($property->bathrooms))<span><b>{{ $property->bathrooms }}</b> baths</span>@endif
    @if(!empty($property->area))<span><b>{{ $property->area }}</b> area</span>@endif
   </div>
+   @include('partials.property-save-form',['property'=>$property])
  </div>
 </article>

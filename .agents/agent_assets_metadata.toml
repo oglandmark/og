@@ -126,3 +126,17 @@ mtime_ms = 1790941377421
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/495f0b76-278d-482d-a907-eeb22b2704f1/72c0d03d-bb49-47d9-b078-3525f96b1b86"
 storage_version_token = "1790941407024896"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "d8wAjMbo8n1hNL11LLdQx"
+uri = "file://exports/OG%20Web%20v10.zip"
+type = "unspecified"
+title = "OG Web v10.zip"
+description = "Current Laravel Blade website package with PHP dependencies and public assets. The archive excludes .env secrets, local database data, logs, and uploaded media."
+logical_id = "5518fdea-1a2c-4932-a3da-0db8245311b3"
+content_hash = "sha256:b328adc959c1cb6b04122197ea80951f7d56ee948451f479fc4928bb2e6c1cf0"
+size = 39337776
+mtime_ms = 1790954725159
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/5518fdea-1a2c-4932-a3da-0db8245311b3/5ef647f4-c6de-4d9c-a010-2e55824e3d44"
+storage_version_token = "1790954764544677"
+content_type = "application/octet-stream"

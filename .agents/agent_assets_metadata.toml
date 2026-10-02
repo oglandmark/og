@@ -2,62 +2,6 @@ uploads = []
 generated = []
 
 [[outputs]]
-id = "UVvwiR9al3xUnJNQLL_Of"
-uri = "file://artifacts/api-server/laravel/database/hostinger-schema-only.sql"
-type = "unspecified"
-title = "OG Landmark Hostinger schema SQL"
-description = "Schema-only SQL for phpMyAdmin. It uses CREATE TABLE IF NOT EXISTS and does not insert or replace app data."
-logical_id = "cbb25b35-0b63-4ded-b4cb-66db56e84621"
-content_hash = "sha256:f856dda2a39c4c43ffe34a52f881b8865a9978134db24a9654046aa196d1e03d"
-size = 4487
-mtime_ms = 1790245405122
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/cbb25b35-0b63-4ded-b4cb-66db56e84621/b88ce8ab-8cfb-4cf2-ad2f-ddd34605bd6e"
-storage_version_token = "1790245542193462"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "zUUoidWOmqgoPSxdLGFxK"
-uri = "file://exports/OG-Landmark-Website-Frontend-Source.zip"
-type = "unspecified"
-title = "OG Landmark Website Frontend Source"
-description = "ZIP of the current served website frontend: HTML pages, portal views, CSS/JS assets, and images. Excludes backend, data, and secrets."
-logical_id = "cb8d9867-debf-4373-ab78-86176ecb9390"
-content_hash = "sha256:bd9773618803d962180df97f5c41fffbf2b4632a726649f6c3d54e18de7bf3b1"
-size = 10901063
-mtime_ms = 1790274837229
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/cb8d9867-debf-4373-ab78-86176ecb9390/841b757e-ec56-420e-9e8e-146ebec8ac93"
-storage_version_token = "1790274854411458"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "4LbkDIxdXf2kDUXG-vSHn"
-uri = "file://exports/OG-Landmark-Complete-App-Source.zip"
-type = "unspecified"
-title = "OG Landmark — Complete App Source"
-description = "Complete mobile, website, Laravel/API, and shared-workspace source archive. Active secrets, dependencies, build caches, and local runtime database data are excluded."
-logical_id = "92370edd-57dd-4b19-9ea9-c61aa05fa82a"
-content_hash = "sha256:b3a6402a779ff627b6ffef28bd411223b58424177240d0269cf48adc9ecd7313"
-size = 37416275
-mtime_ms = 1790276432556
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/92370edd-57dd-4b19-9ea9-c61aa05fa82a/ca124391-edc5-43f8-916b-73ec94b8cf74"
-storage_version_token = "1790276443650059"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "yjZQB3R4kj6dXE9H-ZSPc"
-uri = "file://exports/OG%20Landmark%20mobile%2025-09-26.zip"
-type = "unspecified"
-title = "OG Landmark mobile 25-09-26"
-description = "Mobile-only Expo source/build project ZIP. Website and API server source are excluded."
-logical_id = "50182d62-606e-4b8e-865c-310cd9c03d38"
-content_hash = "sha256:6d9c347439c5e000b6fdef48cf54ba4b7461d4ced936b11bedd63de78d69a768"
-size = 26116052
-mtime_ms = 1790280544096
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/50182d62-606e-4b8e-865c-310cd9c03d38/26558e1c-c3ee-48dd-a3c1-8bcbf23e5436"
-storage_version_token = "1790280556011039"
-content_type = "application/octet-stream"
-
-[[outputs]]
 id = "b9-rU18sBG9GDOOeq2z1j"
 uri = "file://artifacts/og-landmark-mobile/assets/images/og-landmark-brand-splash.png"
 type = "image"
@@ -145,14 +89,14 @@ content_type = "application/octet-stream"
 id = "XNhHfGc1dHtVt5cEZDn-x"
 uri = "file://exports/OG%20Web%20v1.zip"
 type = "unspecified"
-title = "OG Web v1.zip"
-description = "Verified Hostinger website update ZIP with the five-category homepage banner carousel and existing policy-page fixes."
+title = "OG Web v1 ZIP"
+description = "Download the latest OG Landmark website ZIP from the exports folder."
 logical_id = "686430e3-6cc2-4124-9f01-9a6cf23a91ba"
 content_hash = "sha256:91ab1db1adf75724dea27146cd0b5fab4aa11fe74a73e3e00216ccef5a0fce95"
 size = 2596359
 mtime_ms = 1790934615334
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/686430e3-6cc2-4124-9f01-9a6cf23a91ba/98ed1b78-5598-465a-ad39-51d27db4ebde"
-storage_version_token = "1790934624277492"
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/686430e3-6cc2-4124-9f01-9a6cf23a91ba/7357ff55-4be9-4439-b084-75c373c2eebb"
+storage_version_token = "1790954202393687"
 content_type = "application/octet-stream"
 
 [[outputs]]

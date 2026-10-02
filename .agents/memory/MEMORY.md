@@ -33,6 +33,6 @@
 - [MySQL migration safety](mysql-migration-safety.md) — production cutover requires a verified live snapshot, protected empty-target import, and source/target parity checks.
 - [MySQL projection parity](mysql-projection-parity.md) — mirrored search projections must keep schema, migration, runtime bindings, and export copies aligned; validate batch placeholder counts before deploy.
 - [Mobile empty-response fallbacks](nearby-results-fallback.md) — preserve local banner slides and cached listings when successful empty API responses would blank the Home screen.
-- [Laravel backend cutover](laravel-backend-cutover.md) — preserve the API contract; use the workspace proxy for Expo web CORS and avoid stale lengths after decompression.
+- [Laravel backend cutover](laravel-backend-cutover.md) — preserve the API contract and verify browser-facing proxy paths separately from the local API listener.
 - [Laravel config cache smoke checks](laravel-config-cache.md) — clear stale DB config before local overrides; health alone may not prove JsonStore reads the target.
 - [Normalized core storage](normalized-core-storage.md) — keep app accounts in `app_users`, preserve full payloads, and dual-write `app_data` for rollback.

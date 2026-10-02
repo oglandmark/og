@@ -126,3 +126,17 @@ mtime_ms = 1790929171428
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/555d6a9f-d589-4edf-ba2d-f7fef7fd1696/37d38916-7e2a-4edb-bccf-a1aa8b3ea790"
 storage_version_token = "1790929230890910"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "M-u9eQuNqJf5Bf2p-KLuA"
+uri = "file://exports/oglandmark-live-site-update-v3.zip"
+type = "unspecified"
+title = "OG Landmark Hostinger update patch (v3)"
+description = "Hostinger overlay ZIP with the responsive five-category homepage carousel, the matching mobile banner images, and the prior policy-page fixes in both root and public layouts."
+logical_id = "51849b2f-ab4f-455f-a2e4-147562118208"
+content_hash = "sha256:91ab1db1adf75724dea27146cd0b5fab4aa11fe74a73e3e00216ccef5a0fce95"
+size = 2596359
+mtime_ms = 1790932836477
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/51849b2f-ab4f-455f-a2e4-147562118208/3ff4c747-bdb5-4282-a1b4-345116a4021e"
+storage_version_token = "1790932900043087"
+content_type = "application/octet-stream"

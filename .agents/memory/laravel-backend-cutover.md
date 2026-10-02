@@ -27,6 +27,12 @@ For the Replit Expo browser preview, route web-only API traffic through the work
 
 **How to apply:** Enable the development proxy only after API health confirms database, media, and SMTP readiness; keep all operations on the same canonical upstream and test browser preflight plus complete JSON parsing.
 
+An endpoint responding on the local Laravel service does not prove that the website's same-origin `/api/*` proxy or the public API domain exposes it; each can route to a different upstream and still return 404.
+
+**Why:** In this workspace, the mobile banners endpoint returned data from the local Laravel listener but 404 through the website preview and canonical API, so the web client had to keep using the bundled mobile fallback.
+
+**How to apply:** Before claiming that a new endpoint drives live web content, test it through the exact browser-facing proxy path and the public API domain as well as the local service. Preserve the client's existing explicit fallback while routing is unresolved.
+
 New Hostinger installs may seed an empty `app_data(id=1)` row, but that seed must be insert-only; importing existing canonical listings and users remains a separate, explicitly verified operation.
 
 **Why:** The canonical document contains the application's listings and account state, so a normal seed must never replace an existing production document.

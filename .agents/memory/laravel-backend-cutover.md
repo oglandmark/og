@@ -19,13 +19,13 @@ An HTTP 200 from `/api/healthz` is not enough to approve a cutover: compare its 
 
 **Why:** A reachable Hostinger route can report a disconnected database, serve an older health response shape, and allow the public website through CORS while rejecting the separate Expo preview origin.
 
-**How to apply:** Before changing `EXPO_PUBLIC_API_URL`, verify database, media, and SMTP readiness, confirm deployed response parity, and ensure the mobile web origin receives `Access-Control-Allow-Origin`.
+**How to apply:** Before production write-flow tests, verify database, media, and SMTP readiness, confirm deployed response parity, and ensure the mobile web origin receives `Access-Control-Allow-Origin`. If health is degraded, limit checks to reads and report the blocker.
 
-For the Replit Expo browser preview, route web-only API traffic through the workspace website's opt-in `/api` proxy while native clients keep the canonical API URL. The proxy should answer CORS preflight locally, retain its own CORS headers, and not forward upstream `content-length` or `content-encoding` after Node fetch decompresses the body.
+The mobile app must call `https://www.oglandmark.com` directly in development and production; do not route mobile API requests through a Replit preview proxy or Replit API server.
 
-**Why:** The production API allowlist excludes the temporary Expo preview origin, and forwarding the compressed response length after decompression truncates JSON responses, which can break screen loading.
+**Why:** The user explicitly requested the live website backend instead of Replit's backend.
 
-**How to apply:** Enable the development proxy only after API health confirms database, media, and SMTP readiness; keep all operations on the same canonical upstream and test browser preflight plus complete JSON parsing.
+**How to apply:** Keep the mobile API base fixed to the website domain. Check live health and CORS, and do not run production writes while readiness is degraded.
 
 An endpoint responding on the local Laravel service does not prove that the website's same-origin `/api/*` proxy or the public API domain exposes it; each can route to a different upstream and still return 404.
 

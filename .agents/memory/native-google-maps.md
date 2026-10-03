@@ -9,6 +9,12 @@ Android APK map surfaces use the Google Maps SDK through `react-native-maps`; it
 
 **How to apply:** For Android, use `GoogleMapCanvas` with street/satellite map types and marker/region callbacks; fail the build if the configured EAS environment lacks the key. Keep iOS and Expo Go on the shared Mapbox WebView path until the Mapbox token is provisioned in their EAS environment.
 
+For this project, do not start an EAS APK build unless the user explicitly requests it.
+
+**Why:** The user asked on 2026-10-03 not to build another APK until they say so.
+
+**How to apply:** Make and verify source-level map changes only; do not trigger an EAS build or store submission without an explicit request.
+
 For the Expo Go fallback, keep the WebView document stable and push marker, center, and radius updates through `injectJavaScript`; rebuilding the HTML source on every parent render makes returning from a property detail feel like a fresh map load.
 
 **Why:** Explore data and filter state can rerender while the user navigates, and a remote Leaflet document otherwise re-downloads its scripts and tiles unnecessarily.

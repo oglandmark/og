@@ -34,6 +34,7 @@ interface Props {
   onRegionChange?: (region: MapRegionChange) => void;
   onSelect?: (id: string | number) => void;
   showMyLocation?: boolean;
+  nativeLoaderEnabled?: boolean;
   zoomControlsBottomRight?: boolean;
   modeControlTop?: number;
   modeControlLeft?: number;
@@ -77,6 +78,7 @@ export function GoogleMapCanvas({
   onRegionChange,
   onSelect,
   showMyLocation = false,
+  nativeLoaderEnabled = true,
   zoomControlsBottomRight = false,
   modeControlTop = 100,
   modeControlLeft = 12,
@@ -210,7 +212,12 @@ export function GoogleMapCanvas({
         rotateEnabled={interactive}
         toolbarEnabled={false}
         moveOnMarkerPress={false}
-        loadingEnabled
+        loadingEnabled={nativeLoaderEnabled}
+        onMapReady={() => {
+          // Re-apply the latest region after the Android map view is attached.
+          // This avoids losing the initial camera update during Modal transitions.
+          mapRef.current?.animateToRegion(regionRef.current, 0);
+        }}
         onPress={interactive ? handleMapPress : undefined}
         onRegionChangeComplete={(region, details) => {
           reportRegion(region, details?.isGesture ?? true);

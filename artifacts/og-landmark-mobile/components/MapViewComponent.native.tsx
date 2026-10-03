@@ -6,10 +6,15 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import Constants from 'expo-constants';
 import { Feather } from '@expo/vector-icons';
 import { ExpoGoMapFallback } from '@/components/ExpoGoMapFallback';
 import { GoogleMapCanvas } from '@/components/GoogleMapCanvas';
 import { getCurrentPosition } from '@/lib/locationService';
+
+const isAndroidExpoGo =
+  Platform.OS === 'android' && Constants.executionEnvironment === 'storeClient';
+const useGoogleMaps = Platform.OS === 'android' && !isAndroidExpoGo;
 
 interface StaticMapProps {
   latitude?: number;
@@ -48,7 +53,7 @@ export function StaticMap({
     return <View style={styles.placeholder} />;
   }
 
-  if (Platform.OS === 'android') {
+  if (useGoogleMaps) {
     return (
       <GoogleMapCanvas
         center={{ latitude, longitude }}
@@ -134,7 +139,7 @@ export function InteractiveMap({
 
   return (
     <View style={styles.container}>
-      {Platform.OS === 'android' ? (
+      {useGoogleMaps ? (
         <GoogleMapCanvas
           center={center}
           zoom={region?.zoom ?? 14}

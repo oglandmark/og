@@ -69,7 +69,7 @@ test('web radius updates resize the existing circle without rebuilding the viewp
   );
 });
 
-test('Android native map uses Google Maps while the other native map paths retain Mapbox', () => {
+test('Android standalone maps use Google Maps while Expo Go retains the Mapbox fallback', () => {
   const androidMap = readComponent('MapViewComponent.android.tsx');
   const androidExplore = readComponent('ExploreMapView.android.tsx');
   const nativeMap = readComponent('MapViewComponent.native.tsx');
@@ -85,10 +85,15 @@ test('Android native map uses Google Maps while the other native map paths retai
   assert.match(androidExplore, /ExploreMapView\.native/);
   assert.match(nativeMap, /Platform\.OS === 'android'/);
   assert.match(nativeExplore, /Platform\.OS === 'android'/);
+  assert.match(nativeMap, /executionEnvironment === 'storeClient'/);
+  assert.match(nativeExplore, /executionEnvironment === 'storeClient'/);
   assert.match(nativeMap, /GoogleMapCanvas/);
   assert.match(nativeExplore, /GoogleMapCanvas/);
+  assert.match(nativeExplore, /nativeLoaderEnabled=\{!fullScreen\}/);
   assert.match(nativeMap, /satellite=\{satellite\}/);
   assert.match(googleMap, /provider=\{PROVIDER_GOOGLE\}/);
+  assert.match(googleMap, /loadingEnabled=\{nativeLoaderEnabled\}/);
+  assert.match(googleMap, /onMapReady=\{\(\) =>/);
   assert.match(googleMap, /mapType=\{mapMode === 'satellite' \? 'satellite' : 'standard'\}/);
   assert.match(googleMap, /radius=\{radiusKm \* 1000\}/);
   assert.match(keyPlugin, /EXPO_PUBLIC_GOOGLE_MAPS_API_KEY/);

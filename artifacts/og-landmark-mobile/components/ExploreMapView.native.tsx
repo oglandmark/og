@@ -6,6 +6,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
+import Constants from 'expo-constants';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { GoogleMapCanvas } from '@/components/GoogleMapCanvas';
@@ -56,6 +57,9 @@ interface Props {
 }
 
 const OKARA_DISTRICT_CENTER = { latitude: 30.8105, longitude: 73.4597 };
+const isAndroidExpoGo =
+  Platform.OS === 'android' && Constants.executionEnvironment === 'storeClient';
+const useGoogleMaps = Platform.OS === 'android' && !isAndroidExpoGo;
 
 function formatPrice(price?: string | number): string {
   const n = typeof price === 'string'
@@ -132,10 +136,11 @@ export function ExploreMapView({
 
   return (
     <View style={[styles.container, fullScreen && styles.fullScreenContainer]}>
-      {Platform.OS === 'android' ? (
+      {useGoogleMaps ? (
         <GoogleMapCanvas
           center={areaCenter}
           zoom={committedZoom}
+          nativeLoaderEnabled={!fullScreen}
           points={points}
           radiusKm={areaRadiusKm}
           interactive

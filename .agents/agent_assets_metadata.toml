@@ -2,20 +2,6 @@ uploads = []
 generated = []
 
 [[outputs]]
-id = "zVM5rJtjdaGJo-JZl72Fm"
-uri = "file://exports/og-landmark-hostinger-frontend.zip"
-type = "unspecified"
-title = "OG Landmark — Hostinger Frontend ZIP"
-description = "Frontend-only ZIP (8.3 MB) with the updated mobile-app logo, website assets, policy pages, and portals. Extract into the existing Hostinger Node app root to merge/replace public/. Backend, server.js, .env, and uploaded media are excluded; keep the existing /api proxy and LARAVEL_API_URL settings."
-logical_id = "3fda3128-191f-456c-9b9e-a4a484cf677b"
-content_hash = "sha256:da41de355e0347ed3dfed36ccfee6d99b184e14534e4cf0cdd4370c41401eeb8"
-size = 8600681
-mtime_ms = 1790926505701
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/3fda3128-191f-456c-9b9e-a4a484cf677b/4d37b62a-f1a7-4a77-befd-888f21da83da"
-storage_version_token = "1790926527732552"
-content_type = "application/octet-stream"
-
-[[outputs]]
 id = "1YX5e2KyPvbg2SsXbX6Zq"
 uri = "file://exports/oglandmark-live-site-update-v2.zip"
 type = "unspecified"
@@ -153,4 +139,18 @@ size = 19583726
 mtime_ms = 1791050827881
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/98ffbc8d-f3b2-4a07-914b-046f779ccf37/f5559661-08e3-43ee-88b1-fc6fda603025"
 storage_version_token = "1791050866693691"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "IEB8vbnjh7jx7WQz4o2Oy"
+uri = "file://deliverables/OG-Landmark-2.0.24-code24.aab"
+type = "unspecified"
+title = "OG Landmark Android AAB — 2.0.24 (24)"
+description = "Verified production Android App Bundle from source commit 147f34059aa5c9879bf55806969ef0a340efa2f2. Not submitted to Google Play."
+logical_id = "de0df2c2-2422-4c91-935f-a837f2485e76"
+content_hash = "sha256:4705dd8ec803494de225b01b81dec6c50a9b17a0a5641e59315c9867715c9b1e"
+size = 95412766
+mtime_ms = 1791055036437
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/de0df2c2-2422-4c91-935f-a837f2485e76/714905a4-a0f4-4b74-9aea-5f1d5dc863c1"
+storage_version_token = "1791055082697755"
 content_type = "application/octet-stream"

@@ -8,3 +8,9 @@ Use the shared semantic tokens and reusable controls for new mobile UI, while pr
 **Why:** The user asked to replace the mobile app's deep-green brand with navy, remove the separate “OG Landmark” subtitle from the launch screen, and use the pillar mark instead of the old house mark across the app. The Expo Go loading view's label is the configured project name, not the in-app splash; changing it also changes the installed app's display name. The app is also rendered on web through React Native Web, where nested pressables become nested HTML buttons and produce hydration/runtime errors. Central tokens keep the visual language consistent across the many legacy screens.
 
 **How to apply:** Extend `PolishedUI` and the semantic color/layout tokens before adding one-off controls. Use the approved pillar mark and its white inverse on dark surfaces. For cards, make the body the detail target and leave media/action controls as sibling press targets. Respect reduced-motion settings in shared animations.
+
+Native status-bar icons do not support an arbitrary brand tint on iOS or Android; use the OS dark-content mode on a light status-bar area, and preserve intentional hiding in immersive full-screen media.
+
+**Why:** The user requested navy system icons, but native status-bar APIs expose dark/light treatments rather than an exact custom icon color. Dark icons need a light area behind them to remain legible.
+
+**How to apply:** Set the shared Expo status bar to dark content and Android's native status-bar style to `dark-content`. Do not draw substitute battery, signal, or time icons.

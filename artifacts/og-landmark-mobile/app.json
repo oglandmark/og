@@ -27,6 +27,10 @@
         "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#FFFFFF"
+    },
     "web": {
       "favicon": "./assets/images/og-landmark-logo-square.png"
     },

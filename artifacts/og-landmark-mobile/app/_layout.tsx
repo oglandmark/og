@@ -12,6 +12,7 @@ import { PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold } from '@expo-go
 import { useFonts, type FontSource } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { SavedProvider } from '@/context/SavedContext';
@@ -316,26 +317,31 @@ export default function RootLayout() {
   // The browser preview can render with platform fallback fonts while the
   // bundled font manifest is unavailable in offline mode. Native keeps the
   // gate so the branded splash does not reveal unstyled text.
-  if (Platform.OS !== 'web' && !fontsLoaded && !fontError && !fontGateTimedOut) return null;
+  if (Platform.OS !== 'web' && !fontsLoaded && !fontError && !fontGateTimedOut) {
+    return <StatusBar style="dark" />;
+  }
   return (
-    <SafeAreaProvider>
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <OnboardingProvider>
-            <LanguageProvider>
-              <AuthProvider>
-                <SavedProvider>
-                  <GestureHandlerRootView style={{ flex: 1 }}>
-                     <KeyboardProvider>
-                       <DirectionalApp />
-                     </KeyboardProvider>
-                  </GestureHandlerRootView>
-                </SavedProvider>
-              </AuthProvider>
-            </LanguageProvider>
-          </OnboardingProvider>
-        </QueryClientProvider>
-      </ErrorBoundary>
-    </SafeAreaProvider>
+    <>
+      <StatusBar style="dark" />
+      <SafeAreaProvider>
+        <ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <OnboardingProvider>
+              <LanguageProvider>
+                <AuthProvider>
+                  <SavedProvider>
+                    <GestureHandlerRootView style={{ flex: 1 }}>
+                       <KeyboardProvider>
+                         <DirectionalApp />
+                       </KeyboardProvider>
+                    </GestureHandlerRootView>
+                  </SavedProvider>
+                </AuthProvider>
+              </LanguageProvider>
+            </OnboardingProvider>
+          </QueryClientProvider>
+        </ErrorBoundary>
+      </SafeAreaProvider>
+    </>
   );
 }

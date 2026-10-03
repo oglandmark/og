@@ -22,10 +22,20 @@ export function AnimatedReveal({
 }: AnimatedRevealProps) {
   void delay;
   void distance;
-  const safeChildren = React.Children.map(children, (child, index) => (
-    typeof child === 'string' && child.trim().length > 0
-      ? <NativeText key={`animated-text-${index}`}>{child}</NativeText>
-      : child
-  ));
+  const safeChildren = React.Children.map(children, (child, index) => {
+    if (typeof child === 'string') {
+      // JSX formatting between siblings becomes whitespace-only text nodes.
+      // A native View cannot render those directly, so drop them.
+      if (!child.trim()) return null;
+      return <NativeText key={`animated-text-${index}`}>{child}</NativeText>;
+    }
+
+    // Numbers are also text nodes in React Native and need a Text parent.
+    if (typeof child === 'number') {
+      return <NativeText key={`animated-number-${index}`}>{child}</NativeText>;
+    }
+
+    return child;
+  });
   return <View style={style}>{safeChildren}</View>;
 }

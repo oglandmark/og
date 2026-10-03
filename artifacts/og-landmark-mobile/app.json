@@ -2,7 +2,7 @@
   "expo": {
     "name": "OG Landmark",
     "slug": "og-landmark-uin4dnqfp8-zl28mrpom",
-    "version": "2.0.23",
+    "version": "2.0.24",
     "orientation": "portrait",
     "icon": "./assets/images/og-landmark-brand-square.png",
     "scheme": "og-land-mobile",
@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.oglandmark.app",
-      "versionCode": 23,
+      "versionCode": 24,
       "softwareKeyboardLayoutMode": "resize",
       "icon": "./assets/images/og-landmark-brand-square.png",
       "adaptiveIcon": {
@@ -66,7 +66,8 @@
       ],
       "expo-video",
       "expo-audio",
-      "expo-asset"
+      "expo-asset",
+      "./plugins/withGoogleMapsApiKey"
     ],
     "experiments": {
       "typedRoutes": true,

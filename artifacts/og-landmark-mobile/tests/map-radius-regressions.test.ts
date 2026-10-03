@@ -69,17 +69,32 @@ test('web radius updates resize the existing circle without rebuilding the viewp
   );
 });
 
-test('Android map overrides reuse the shared Mapbox WebView implementation', () => {
+test('Android native map uses Google Maps while the other native map paths retain Mapbox', () => {
   const androidMap = readComponent('MapViewComponent.android.tsx');
   const androidExplore = readComponent('ExploreMapView.android.tsx');
   const nativeMap = readComponent('MapViewComponent.native.tsx');
   const nativeExplore = readComponent('ExploreMapView.native.tsx');
+  const googleMap = readComponent('GoogleMapCanvas.tsx');
+  const eas = JSON.parse(readFileSync(resolve(mobileRoot, 'eas.json'), 'utf8'));
+  const keyPlugin = readFileSync(
+    resolve(mobileRoot, 'plugins/withGoogleMapsApiKey.js'),
+    'utf8',
+  );
 
   assert.match(androidMap, /MapViewComponent\.native/);
   assert.match(androidExplore, /ExploreMapView\.native/);
-  assert.match(nativeMap, /ExpoGoMapFallback/);
-  assert.match(nativeExplore, /ExpoGoMapFallback/);
+  assert.match(nativeMap, /Platform\.OS === 'android'/);
+  assert.match(nativeExplore, /Platform\.OS === 'android'/);
+  assert.match(nativeMap, /GoogleMapCanvas/);
+  assert.match(nativeExplore, /GoogleMapCanvas/);
   assert.match(nativeMap, /satellite=\{satellite\}/);
+  assert.match(googleMap, /provider=\{PROVIDER_GOOGLE\}/);
+  assert.match(googleMap, /mapType=\{mapMode === 'satellite' \? 'satellite' : 'standard'\}/);
+  assert.match(googleMap, /radius=\{radiusKm \* 1000\}/);
+  assert.match(keyPlugin, /EXPO_PUBLIC_GOOGLE_MAPS_API_KEY/);
+  assert.match(keyPlugin, /com\.google\.android\.geo\.API_KEY/);
+  assert.equal(eas.build.preview.environment, 'production');
+  assert.equal(eas.build.preview.distribution, 'internal');
   assert.match(readComponent('ExpoGoMapFallback.tsx'), /EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN/);
 });
 
@@ -217,7 +232,7 @@ test('listing location picker follows the selected city with a fixed center pin 
   assert.match(postAd, /if \(cityChanged\) \{[\s\S]*setLatitude\(null\);[\s\S]*setLongitude\(null\);[\s\S]*setSelectedLocation\(null\);[\s\S]*setLocationConfirmed\(false\);/);
 });
 
-test('native Mapbox maps keep the area center synced after map movement', () => {
+test('native maps keep the area center synced after map movement', () => {
   const native = readComponent('ExploreMapView.native.tsx');
   assert.match(native, /setAreaCenter\(\{ latitude: region\.latitude, longitude: region\.longitude \}\)/);
 });

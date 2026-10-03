@@ -1,14 +1,14 @@
 /**
- * ExploreMapView — native Mapbox tile map rendered through the shared WebView.
+ * ExploreMapView — Android Google Maps SDK, with the shared Mapbox WebView on iOS.
  *
- * Keeping the native and Expo Go paths on the same Mapbox-backed renderer
- * avoids provider differences between preview and production builds while
- * preserving pan, pinch zoom, property pins, area search, and radius controls.
+ * Both paths retain pan, pins, area search, and radius controls; Android uses
+ * the Google key injected by its EAS build environment.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { LocalizedText as Text } from '@/components/LocalizedText';
+import { GoogleMapCanvas } from '@/components/GoogleMapCanvas';
 import { MapAreaRange, MAP_AREA_BLUE } from '@/components/MapAreaRange';
 import {
   countPointsWithinRadius,
@@ -132,23 +132,42 @@ export function ExploreMapView({
 
   return (
     <View style={[styles.container, fullScreen && styles.fullScreenContainer]}>
-      <ExpoGoMapFallback
-        latitude={areaCenter.latitude}
-        longitude={areaCenter.longitude}
-        zoom={committedZoom}
-        points={points}
-        radiusKm={areaRadiusKm}
-        interactive
-        modeControlTop={fullScreen ? 60 : 100}
-        modeControlLeft={fullScreen ? 60 : 12}
-        modeControlRight={fullScreen ? 18 : undefined}
-        modeControlHorizontal={Boolean(fullScreen)}
-        modeControlButtonHeight={38}
-        onRegionChange={handleRegionChange}
-        onSelect={(id) => {
-          if (id !== '__user__') onSelect(id);
-        }}
-      />
+      {Platform.OS === 'android' ? (
+        <GoogleMapCanvas
+          center={areaCenter}
+          zoom={committedZoom}
+          points={points}
+          radiusKm={areaRadiusKm}
+          interactive
+          modeControlTop={fullScreen ? 60 : 100}
+          modeControlLeft={fullScreen ? 60 : 12}
+          modeControlRight={fullScreen ? 18 : undefined}
+          modeControlHorizontal={Boolean(fullScreen)}
+          modeControlButtonHeight={38}
+          onRegionChange={handleRegionChange}
+          onSelect={(id) => {
+            if (id !== '__user__') onSelect(id);
+          }}
+        />
+      ) : (
+        <ExpoGoMapFallback
+          latitude={areaCenter.latitude}
+          longitude={areaCenter.longitude}
+          zoom={committedZoom}
+          points={points}
+          radiusKm={areaRadiusKm}
+          interactive
+          modeControlTop={fullScreen ? 60 : 100}
+          modeControlLeft={fullScreen ? 60 : 12}
+          modeControlRight={fullScreen ? 18 : undefined}
+          modeControlHorizontal={Boolean(fullScreen)}
+          modeControlButtonHeight={38}
+          onRegionChange={handleRegionChange}
+          onSelect={(id) => {
+            if (id !== '__user__') onSelect(id);
+          }}
+        />
+      )}
 
       {!fullScreen && (
         <View

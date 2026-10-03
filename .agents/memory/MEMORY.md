@@ -10,6 +10,7 @@
 - [Neon auth schema](neon-auth-schema.md) — app_data alone is insufficient; auth tables must exist before production auth flows are exercised.
 - [Expo GitHub build dispatch](expo-github-build-dispatch.md) — after repository linking, EAS dispatch can still return transient 503s; verify no queued build before retrying.
 - [EAS environment project matching](eas-environment-project-id.md) — production variables must be added to the exact EAS project ID used by the build.
+- [EAS build log redaction](eas-build-log-redaction.md) — startup logs can print project environment-variable values; avoid raw log output and redact before review.
 - [Plot calculator geometry](plot-calculator-geometry.md) — irregular plots need diagonals for exact triangulation; side-only results must be labelled estimates or declined.
 - [EAS cloud monorepo builds](eas-cloud-monorepo-build.md) — direct CLI uploads bypass GitHub, but remote pnpm can fail on esbuild build-script policy in this workspace.
 - [EAS pnpm 8 lockfile compatibility](eas-pnpm8-lockfile.md) — EAS uses pnpm 8.9.2 here; catalog refs and pnpm 9/10 lockfiles are not build-compatible.
@@ -22,7 +23,7 @@
 - [Android reveal lifecycle](android-reveal-lifecycle.md) — nested tab focus callbacks can miss; animated content must start visible to avoid blank Home sections.
 - [Location picker camera sync](location-picker-camera.md) — city/locality changes must drive the native map camera, while GPS recovery must persist the selected pin.
 - [Location flow testing](location-flow-testing.md) — keep native GPS recovery behind a provider seam so permission and fallback branches run in Node tests.
-- [Native Google Maps provider](native-google-maps.md) — Android and iOS map overrides must share react-native-maps; native builds require the injected restricted Maps key.
+- [Android Google Maps provider](native-google-maps.md) — Android uses the EAS-injected Google Maps SDK key; iOS and Expo Go retain the shared Mapbox WebView path.
 - [Web map iframe mode switching](web-map-mode-switching.md) — update loaded same-origin map frames through their setter; use channel-scoped messages only before load.
 - [Expo web image preview](expo-web-image-preview.md) — use an explicit expo-image layer for reliable full-bleed local media in the proxied Expo web preview.
 - [Notification delivery pipeline](notification-system.md) — all broadcasts and lifecycle events must use per-user records, recipient-scoped dedupe keys, and the same push/preferences pipeline.

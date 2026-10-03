@@ -1,13 +1,14 @@
 /**
- * MapViewComponent — native Mapbox tile maps rendered through WebView.
+ * MapViewComponent — Android uses Google Maps; iOS uses the shared Mapbox WebView.
  *
- * This keeps property detail and location-picking maps on the same provider
- * as Explore, including Expo Go preview and EAS native builds.
+ * Android's EAS preview builds receive the restricted Maps SDK key at build
+ * time, while the iOS and Expo Go paths keep the shared WebView renderer.
  */
 import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { ExpoGoMapFallback } from '@/components/ExpoGoMapFallback';
+import { GoogleMapCanvas } from '@/components/GoogleMapCanvas';
 import { getCurrentPosition } from '@/lib/locationService';
 
 interface StaticMapProps {
@@ -45,6 +46,18 @@ export function StaticMap({
 }: StaticMapProps) {
   if (latitude == null || longitude == null || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
     return <View style={styles.placeholder} />;
+  }
+
+  if (Platform.OS === 'android') {
+    return (
+      <GoogleMapCanvas
+        center={{ latitude, longitude }}
+        zoom={15}
+        interactive={interactive}
+        satellite={satellite}
+        points={[{ id: 'property', latitude, longitude }]}
+      />
+    );
   }
 
   return (
@@ -121,22 +134,45 @@ export function InteractiveMap({
 
   return (
     <View style={styles.container}>
-      <ExpoGoMapFallback
-        latitude={center.latitude}
-        longitude={center.longitude}
-        zoom={region?.zoom ?? 14}
-        interactive
-        satellite={satellite}
-        zoomControlsBottomRight={zoomControlsBottomRight}
-        points={centerPin ? [] : [{ latitude: pin.latitude, longitude: pin.longitude }]}
-        onPress={handlePress}
-        onDragEnd={handleDragEnd}
-        onRegionChange={(nextRegion) => {
-          setCenter({ latitude: nextRegion.latitude, longitude: nextRegion.longitude });
-          onRegionChange?.(nextRegion);
-        }}
-      />
-      {showMyLocation && (
+      {Platform.OS === 'android' ? (
+        <GoogleMapCanvas
+          center={center}
+          zoom={region?.zoom ?? 14}
+          interactive
+          satellite={satellite}
+          zoomControlsBottomRight={zoomControlsBottomRight}
+          pin={centerPin ? null : pin}
+          pinDraggable={!centerPin}
+          centerPin={centerPin}
+          showMyLocation={showMyLocation}
+          onPinChange={(latitude, longitude) => {
+            setPin({ latitude, longitude });
+          }}
+          onPress={handlePress}
+          onDragEnd={handleDragEnd}
+          onRegionChange={(nextRegion) => {
+            setCenter({ latitude: nextRegion.latitude, longitude: nextRegion.longitude });
+            onRegionChange?.(nextRegion);
+          }}
+        />
+      ) : (
+        <ExpoGoMapFallback
+          latitude={center.latitude}
+          longitude={center.longitude}
+          zoom={region?.zoom ?? 14}
+          interactive
+          satellite={satellite}
+          zoomControlsBottomRight={zoomControlsBottomRight}
+          points={centerPin ? [] : [{ latitude: pin.latitude, longitude: pin.longitude }]}
+          onPress={handlePress}
+          onDragEnd={handleDragEnd}
+          onRegionChange={(nextRegion) => {
+            setCenter({ latitude: nextRegion.latitude, longitude: nextRegion.longitude });
+            onRegionChange?.(nextRegion);
+          }}
+        />
+      )}
+      {showMyLocation && Platform.OS !== 'android' && (
         <Pressable
           style={[styles.myLocBtn, locating && styles.myLocBtnDisabled]}
           onPress={goToMyLocation}

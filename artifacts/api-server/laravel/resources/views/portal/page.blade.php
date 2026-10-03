@@ -11,7 +11,7 @@
 @endphp
  <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ $pageTitle }} — OG Landmark {{ $roleName }} portal</title><link rel="stylesheet" href="{{ asset('css/landmark.css') }}"><link rel="stylesheet" href="{{ asset('css/portal.css') }}"></head><body>
 <div class="portal">
- <aside class="portal-side"><a class="brand" href="{{ route('home') }}"><span class="brand-mark"><img src="{{ asset('og-landmark-pillar-mark.png') }}" alt=""></span><span class="brand-copy">OG LANDMARK<small>{{ $roleName }} PORTAL</small></span></a>
+ <aside class="portal-side"><a class="brand" href="{{ route('home') }}"><span class="brand-mark"><img src="{{ asset('og-landmark-logo-white.png') }}" alt=""></span><span class="brand-copy">OG LANDMARK<small>{{ $roleName }} PORTAL</small></span></a>
   <div class="portal-user"><span class="avatar">{{ strtoupper(substr($userName,0,1)) }}</span><span><strong>{{ $userName }}</strong><small>{{ $userEmail ?: $roleName.' account' }}</small></span></div>
   <nav class="portal-nav" aria-label="{{ $roleName }} portal navigation">
    @foreach($navItems as $key=>$item)

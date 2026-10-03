@@ -416,13 +416,7 @@ export default function ListingWizard() {
   const params = useLocalSearchParams<{ purpose?: string; editId?: string }>();
   const editId = String(params.editId ?? '');
 
-  const goBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-    router.replace(editId ? '/(tabs)/listings' : '/(tabs)/post-ad');
-  };
+  const goBack = () => router.replace('/(tabs)/listings');
 
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 

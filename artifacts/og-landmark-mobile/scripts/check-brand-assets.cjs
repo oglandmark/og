@@ -241,7 +241,10 @@ if (!primaryLogo) {
   fail("Could not identify the primary logo used by the in-app startup splash.");
 }
 const startupLogo = path.resolve(projectRoot, "assets/images", primaryLogo[1]);
-if (splashImage !== startupLogo) {
-  fail("Native splash image must match the logo used by the in-app startup splash.");
+if (!fs.existsSync(startupLogo)) {
+  fail(`In-app startup logo does not exist: ${primaryLogo[1]}`);
 }
-console.log("✓ Native and in-app startup splashes use the same brand mark.");
+if (splashImage === startupLogo) {
+  fail("Native splash needs a separate image so the product name can appear below the mark.");
+}
+console.log("✓ Native splash uses its own branded wordmark composition.");

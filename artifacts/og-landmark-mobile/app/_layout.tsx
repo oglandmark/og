@@ -218,6 +218,12 @@ const rootStyles = {
     marginTop: 28,
     opacity: 0.82,
   },
+  startupBrand: {
+    fontFamily: 'PlayfairDisplay_600SemiBold',
+    fontSize: 20,
+    letterSpacing: 0.4,
+    marginTop: 10,
+  },
   loadingStatusText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 12,
@@ -251,6 +257,9 @@ function StartupSplash({
       ]}
     >
       <OGLandmarkLogo size={156} />
+      <Text style={[rootStyles.startupBrand, { color: colors.actionDeep }]}>
+        OG Landmark
+      </Text>
       <View style={rootStyles.loadingStatus}>
         <ActivityIndicator color={colors.action} size="small" />
         <Text style={[rootStyles.loadingStatusText, { color: colors.actionDeep }]}>

@@ -4,6 +4,7 @@
  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
  <title>@yield('title', 'OG Landmark — Find your place in Pakistan')</title>
  <meta name="description" content="@yield('description', 'A clearer way to find, sell and invest in property across Pakistan.')">
+ <link rel="icon" type="image/png" href="{{ asset('og-landmark-pillar-mark.png') }}">
  <link rel="stylesheet" href="{{ asset('css/landmark.css') }}">
 </head>
 <body>

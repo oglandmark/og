@@ -245,6 +245,6 @@ if (!fs.existsSync(startupLogo)) {
   fail(`In-app startup logo does not exist: ${primaryLogo[1]}`);
 }
 if (splashImage === startupLogo) {
-  fail("Native splash needs a separate image so the product name can appear below the mark.");
+  fail("Native splash must use a dedicated image separate from the in-app logo.");
 }
-console.log("✓ Native splash uses its own branded wordmark composition.");
+console.log("✓ Native splash uses a dedicated image separate from the in-app logo.");

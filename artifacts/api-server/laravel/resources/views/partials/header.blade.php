@@ -1,7 +1,7 @@
 <header class="site-header">
  <div class="wrap header-row">
   <a class="brand" href="{{ route('home') }}" aria-label="OG Landmark home">
-   <span class="brand-mark"><img src="{{ asset('images/brand-logo.png') }}" alt=""></span><span class="brand-copy">OG LANDMARK<small>PROPERTY, WITH PERSPECTIVE</small></span>
+    <span class="brand-mark"><img src="{{ asset('og-landmark-pillar-mark.png') }}" alt=""></span><span class="brand-copy">OG LANDMARK<small>PROPERTY, WITH PERSPECTIVE</small></span>
   </a>
   <button class="nav-toggle" aria-label="Open navigation" aria-expanded="false">≡</button>
   <nav class="main-nav" aria-label="Main navigation">

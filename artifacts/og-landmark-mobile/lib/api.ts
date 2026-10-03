@@ -1,31 +1,19 @@
 /**
  * OG Landmark — Centralized API Client
  * -------------------------------------
- * Dev URL  : set EXPO_PUBLIC_API_URL in .env.local
- * Prod URL : https://api.oglandmark.com
+ * All environments: https://www.oglandmark.com
  *
  * All requests include the auth token stored in AsyncStorage.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import { resolveApiBase } from './apiBase';
 
 // ─── Base URL ──────────────────────────────────────────────────────────────────
-// Override via EXPO_PUBLIC_API_URL in .env.local (no trailing /api)
-// e.g.  EXPO_PUBLIC_API_URL=https://api.oglandmark.com
-const configuredApiUrl = String(process.env.EXPO_PUBLIC_API_URL || '').trim().replace(/\/+$/, '');
-// Replit's browser preview cannot call the production API directly because
-// api.oglandmark.com only allows product-site origins. In the web preview,
-// route /api requests through the Replit website server's Laravel proxy; native
-// apps and production builds continue to use the canonical API directly.
-const replitWebPreviewApiBase =
-  Platform.OS === 'web' && process.env.EXPO_PUBLIC_REPL_ID && process.env.EXPO_PUBLIC_DOMAIN
-    ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-    : '';
-export const API_BASE: string =
-  configuredApiUrl ||
-  replitWebPreviewApiBase ||
-  'https://api.oglandmark.com';
+// Use the live website backend directly in development and production.
+// Mobile API requests do not go through a Replit API proxy or server.
+export const API_BASE = resolveApiBase();
 
 const TOKEN_KEY = '@og-landmark/api-token';
 
@@ -689,6 +677,10 @@ export async function getBanners(): Promise<BannerSlide[]> {
   return apiFetch<BannerSlide[]>('/api/mobile/banners', {}, false);
 }
 
+export async function getAdminBanners(): Promise<BannerSlide[]> {
+  return apiFetch<BannerSlide[]>('/api/mobile/banners/all');
+}
+
 // ─── Mobile settings ───────────────────────────────────────────────────────────
 export type MobilePortalConfig = {
   title: string;
@@ -1249,11 +1241,18 @@ export async function sendBroadcastPush(
 
 // ── Admin banner management ────────────────────────────────────────────────────
 export async function createBanner(payload: {
-  title: string; subtitle?: string; imageUrl: string; actionUrl?: string;
-}): Promise<void> {
-  await apiFetch('/api/mobile/banners', {
+  category: 'homes' | 'commercial' | 'agriculture' | 'plots' | 'projects';
+  title: string;
+  subtitle?: string;
+  eyebrow?: string;
+  cta?: string;
+  route?: string;
+  ctaParams?: Record<string, string>;
+  imageUrl: string;
+}): Promise<{ success: boolean; banner?: BannerSlide }> {
+  return apiFetch('/api/mobile/banners', {
     method: 'POST',
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ type: 'image', ...payload }),
   });
 }
 export async function deleteBanner(id: number): Promise<void> {

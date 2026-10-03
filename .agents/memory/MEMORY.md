@@ -23,7 +23,7 @@
 - [Android reveal lifecycle](android-reveal-lifecycle.md) — nested tab focus callbacks can miss; animated content must start visible to avoid blank Home sections.
 - [Location picker camera sync](location-picker-camera.md) — city/locality changes must drive the native map camera, while GPS recovery must persist the selected pin.
 - [Location flow testing](location-flow-testing.md) — keep native GPS recovery behind a provider seam so permission and fallback branches run in Node tests.
-- [Android Google Maps provider](native-google-maps.md) — Android uses the EAS-injected Google Maps SDK key; iOS and Expo Go retain the shared Mapbox WebView path.
+- [Mobile Mapbox provider](mobile-mapbox-provider.md) — native map screens use Mapbox; the selected EAS build environment must provide its public token.
 - [Web map iframe mode switching](web-map-mode-switching.md) — update loaded same-origin map frames through their setter; use channel-scoped messages only before load.
 - [Expo web image preview](expo-web-image-preview.md) — use an explicit expo-image layer for reliable full-bleed local media in the proxied Expo web preview.
 - [Notification delivery pipeline](notification-system.md) — all broadcasts and lifecycle events must use per-user records, recipient-scoped dedupe keys, and the same push/preferences pipeline.

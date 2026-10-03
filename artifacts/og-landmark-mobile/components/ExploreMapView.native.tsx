@@ -1,15 +1,8 @@
-/**
- * ExploreMapView — Android Google Maps SDK, with the shared Mapbox WebView on iOS.
- *
- * Both paths retain pan, pins, area search, and radius controls; Android uses
- * the Google key injected by its EAS build environment.
- */
+/** ExploreMapView — native platforms use the shared Mapbox WebView renderer. */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
-import Constants from 'expo-constants';
+import { StyleSheet, View } from 'react-native';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { LocalizedText as Text } from '@/components/LocalizedText';
-import { GoogleMapCanvas } from '@/components/GoogleMapCanvas';
 import { MapAreaRange, MAP_AREA_BLUE } from '@/components/MapAreaRange';
 import {
   countPointsWithinRadius,
@@ -57,9 +50,6 @@ interface Props {
 }
 
 const OKARA_DISTRICT_CENTER = { latitude: 30.8105, longitude: 73.4597 };
-const isAndroidExpoGo =
-  Platform.OS === 'android' && Constants.executionEnvironment === 'storeClient';
-const useGoogleMaps = Platform.OS === 'android' && !isAndroidExpoGo;
 
 function formatPrice(price?: string | number): string {
   const n = typeof price === 'string'
@@ -136,43 +126,23 @@ export function ExploreMapView({
 
   return (
     <View style={[styles.container, fullScreen && styles.fullScreenContainer]}>
-      {useGoogleMaps ? (
-        <GoogleMapCanvas
-          center={areaCenter}
-          zoom={committedZoom}
-          nativeLoaderEnabled={!fullScreen}
-          points={points}
-          radiusKm={areaRadiusKm}
-          interactive
-          modeControlTop={fullScreen ? 60 : 100}
-          modeControlLeft={fullScreen ? 60 : 12}
-          modeControlRight={fullScreen ? 18 : undefined}
-          modeControlHorizontal={Boolean(fullScreen)}
-          modeControlButtonHeight={38}
-          onRegionChange={handleRegionChange}
-          onSelect={(id) => {
-            if (id !== '__user__') onSelect(id);
-          }}
-        />
-      ) : (
-        <ExpoGoMapFallback
-          latitude={areaCenter.latitude}
-          longitude={areaCenter.longitude}
-          zoom={committedZoom}
-          points={points}
-          radiusKm={areaRadiusKm}
-          interactive
-          modeControlTop={fullScreen ? 60 : 100}
-          modeControlLeft={fullScreen ? 60 : 12}
-          modeControlRight={fullScreen ? 18 : undefined}
-          modeControlHorizontal={Boolean(fullScreen)}
-          modeControlButtonHeight={38}
-          onRegionChange={handleRegionChange}
-          onSelect={(id) => {
-            if (id !== '__user__') onSelect(id);
-          }}
-        />
-      )}
+      <ExpoGoMapFallback
+        latitude={areaCenter.latitude}
+        longitude={areaCenter.longitude}
+        zoom={committedZoom}
+        points={points}
+        radiusKm={areaRadiusKm}
+        interactive
+        modeControlTop={fullScreen ? 60 : 100}
+        modeControlLeft={fullScreen ? 60 : 12}
+        modeControlRight={fullScreen ? 18 : undefined}
+        modeControlHorizontal={Boolean(fullScreen)}
+        modeControlButtonHeight={38}
+        onRegionChange={handleRegionChange}
+        onSelect={(id) => {
+          if (id !== '__user__') onSelect(id);
+        }}
+      />
 
       {!fullScreen && (
         <View

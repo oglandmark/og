@@ -66,8 +66,7 @@
       ],
       "expo-video",
       "expo-audio",
-      "expo-asset",
-      "./plugins/withGoogleMapsApiKey"
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

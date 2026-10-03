@@ -140,3 +140,17 @@ mtime_ms = 1791042719378
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/afa64803-97bd-4f49-8389-37202283ac87/6db292e3-942f-4e2d-b2ca-01689481c727"
 storage_version_token = "1791042744174639"
 content_type = "image/png"
+
+[[outputs]]
+id = "5CJ8hNj2wPLCWepqDsI9z"
+uri = "file://deliverables/OG%20Landmark%2003-10-26.zip"
+type = "unspecified"
+title = "OG Landmark 03-10-26"
+description = "Complete mobile Expo source ZIP with app code, assets, workspace config, and required API-client package. No APK or credentials included."
+logical_id = "98ffbc8d-f3b2-4a07-914b-046f779ccf37"
+content_hash = "sha256:68abeac45c69368351d42fb763bb24678fa244856f619e16e3333817602dd87f"
+size = 19583726
+mtime_ms = 1791050827881
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/98ffbc8d-f3b2-4a07-914b-046f779ccf37/f5559661-08e3-43ee-88b1-fc6fda603025"
+storage_version_token = "1791050866693691"
+content_type = "application/octet-stream"

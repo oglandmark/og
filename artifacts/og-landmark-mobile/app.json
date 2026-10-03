@@ -4,7 +4,7 @@
     "slug": "og-landmark-uin4dnqfp8-zl28mrpom",
     "version": "2.0.24",
     "orientation": "portrait",
-    "icon": "./assets/images/og-landmark-brand-square.png",
+    "icon": "./assets/images/og-landmark-logo-square.png",
     "scheme": "og-land-mobile",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -15,7 +15,7 @@
       "package": "com.oglandmark.app",
       "versionCode": 24,
       "softwareKeyboardLayoutMode": "resize",
-      "icon": "./assets/images/og-landmark-brand-square.png",
+      "icon": "./assets/images/og-landmark-logo-square.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/og-landmark-brand-adaptive.png",
         "backgroundColor": "#FFFFFF"
@@ -28,7 +28,7 @@
       ]
     },
     "web": {
-      "favicon": "./assets/images/og-landmark-brand-square.png"
+      "favicon": "./assets/images/og-landmark-logo-square.png"
     },
     "assetBundlePatterns": [
       "assets/images/*",
@@ -45,12 +45,12 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#FFFFFF",
-          "image": "./assets/images/og-landmark-brand-splash.png",
+          "image": "./assets/images/og-landmark-splash-safe.png",
           "imageWidth": 300,
           "resizeMode": "contain",
           "dark": {
             "backgroundColor": "#FFFFFF",
-            "image": "./assets/images/og-landmark-brand-splash.png"
+            "image": "./assets/images/og-landmark-splash-safe.png"
           }
         }
       ],
@@ -66,8 +66,7 @@
       ],
       "expo-video",
       "expo-audio",
-      "expo-asset",
-      "./plugins/withGoogleMapsApiKey"
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

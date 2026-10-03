@@ -12,7 +12,7 @@ import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import {
-  getProfilePhoto, saveProfilePhoto, removeProfilePhoto,
+  getProfilePhoto, removeProfilePhoto,
   getCoverPhoto, saveCoverPhoto, removeCoverPhoto,
 } from '@/lib/profilePhotoStore';
 import { updateUser, uploadProfilePhoto, uploadCoverPhoto } from '@/lib/api';
@@ -157,10 +157,11 @@ export default function AccountSettingsScreen() {
           // profile photo update when the upload fails.
           const uploaded = await uploadProfilePhoto(uri);
           setPhotoUri(uploaded.url);
-          await saveProfilePhoto(uploaded.url);
+          if (user) await login({ ...user, profilePhoto: uploaded.url });
         }
       }
     } catch (err: unknown) {
+      if (!isCover) setPhotoUri(photoUri);
       Alert.alert('Error', err instanceof Error ? err.message : 'Could not update profile photo. Please try again.');
     } finally {
       if (isCover) setCoverLoading(false);
@@ -172,6 +173,7 @@ export default function AccountSettingsScreen() {
     try {
       await removeProfilePhoto();
       setPhotoUri(null);
+      if (user) await login({ ...user, profilePhoto: null });
     } catch (err: unknown) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Could not remove profile photo.');
     }

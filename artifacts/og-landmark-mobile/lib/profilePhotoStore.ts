@@ -1,8 +1,8 @@
-import { apiRequest } from '@/lib/api';
+import { apiRequest, resolveMediaUrl } from '@/lib/api';
 
 export async function getProfilePhoto(): Promise<string | null> {
   const profile = await apiRequest<{ url?: string | null }>('/api/account/profile-photo');
-  return profile.url ?? null;
+  return resolveMediaUrl(profile.url) ?? null;
 }
 
 export async function saveProfilePhoto(uri: string): Promise<void> {

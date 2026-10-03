@@ -11,6 +11,7 @@ import {
   loginWithSocial,
   logoutAPI,
   registerWithAPI,
+  resolveMediaUrl,
   setToken,
 } from '@/lib/api';
 import { clearLocalAccountData } from '@/lib/accountCleanup';
@@ -113,7 +114,7 @@ function mapApiUser(apiU: {
     joinedAt: apiU.joinedDate || new Date().toISOString(),
     authProvider: apiU.authProvider,
     avatarUrl: apiU.avatarUrl,
-    profilePhoto: apiU.profilePhoto,
+    profilePhoto: resolveMediaUrl(apiU.profilePhoto) ?? null,
     coverPhoto: apiU.coverPhoto,
     agentCoverUploadEnabled: apiU.agentCoverUploadEnabled === true,
   };

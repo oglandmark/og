@@ -15,6 +15,18 @@ import { resolveApiBase } from './apiBase';
 // Mobile API requests do not go through a Replit API proxy or server.
 export const API_BASE = resolveApiBase();
 
+export function resolveMediaUrl(value?: string | null): string | undefined {
+  if (!value) return undefined;
+  const canonicalFirstPartyUrl = value.replace(
+    /^https?:\/\/(?:www\.)?oglandmark\.com(?=\/|$)/i,
+    API_BASE,
+  );
+  if (canonicalFirstPartyUrl !== value) return canonicalFirstPartyUrl;
+  if (/^[a-z][a-z\d+.-]*:/i.test(value)) return value;
+  if (value.startsWith('//')) return `https:${value}`;
+  return `${API_BASE}${value.startsWith('/') ? value : `/${value}`}`;
+}
+
 const TOKEN_KEY = '@og-landmark/api-token';
 
 // ─── Token helpers ─────────────────────────────────────────────────────────────
@@ -826,10 +838,13 @@ export async function uploadMultipleImages(uris: string[]): Promise<string[]> {
 
 export async function uploadProfilePhoto(uri: string): Promise<{ url: string }> {
   const uploaded = await uploadImage(uri, `profile_${Date.now()}.jpg`);
-  return apiFetch<{ url: string }>('/api/account/profile-photo', {
+  const saved = await apiFetch<{ url: string }>('/api/account/profile-photo', {
     method: 'PUT',
     body: JSON.stringify(uploaded),
   });
+  const url = resolveMediaUrl(saved.url);
+  if (!url) throw new Error('The server did not return a saved profile photo URL.');
+  return { ...saved, url };
 }
 
 export async function uploadCoverPhoto(uri: string): Promise<{ url: string }> {
@@ -1065,8 +1080,7 @@ export type ApiAgent = {
 };
 
 function resolveAgentPhoto(value?: string | null): string | undefined {
-  if (!value) return undefined;
-  return /^https?:\/\//i.test(value) ? value : `${API_BASE}${value.startsWith('/') ? value : `/${value}`}`;
+  return resolveMediaUrl(value);
 }
 
 export async function getAgents(

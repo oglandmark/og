@@ -126,3 +126,17 @@ mtime_ms = 1791002580713
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/4f2d86ed-6c11-4511-9b78-954b6ade76ed/f183ded4-a393-469a-a365-7fa66f24abb6"
 storage_version_token = "1791002596285797"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "SUdzHdduU-1qH2RLktmsA"
+uri = "file://exports/current-splash-preview.png"
+type = "image"
+title = "Current splash screen preview"
+description = "Preview rendered from the updated splash configuration. It shows the new OG brand mark on white; the APK currently installed on your phone still has the old splash until a new APK is built and installed."
+logical_id = "afa64803-97bd-4f49-8389-37202283ac87"
+content_hash = "sha256:2bc694aae6181c48479d4cef9b6f64fa772e3ec89d731fd370c17855933b28e2"
+size = 42098
+mtime_ms = 1791042287562
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/afa64803-97bd-4f49-8389-37202283ac87/e5260c66-a7fb-425f-b0d6-d3acc0aecf46"
+storage_version_token = "1791042308481063"
+content_type = "image/png"

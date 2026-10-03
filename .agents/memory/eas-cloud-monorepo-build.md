@@ -7,6 +7,12 @@ Direct `eas-cli build` uploads the workspace to EAS without requiring a GitHub c
 
 Expo MCP builds read the GitHub repository linked to the Expo project, which can differ from Replit's local Git remote. Do not assume `gitRef: main` contains the current workspace; compare the build's `gitCommitHash` with the intended source and sync only required files through the Git Data API when they differ.
 
+Do not assume the linked repository's main branch is newer than the latest successful EAS build.
+
+**Why:** A successful APK snapshot can include newer app configuration and mobile fixes than main, as well as a builder-compatible lockfile absent from the local workspace.
+
+**How to apply:** Compare main, the latest successful build commit, and the intended local mobile changes before choosing a rebuild base. For a targeted rebuild, preserve the verified dependency snapshot and apply only the intended changes on a dedicated build branch.
+
 For every Google Play Android AAB, increment both `expo.version` and `android.versionCode` before building; do not reuse a code already used in Play Console.
 
 **Why:** The Replit workspace and EAS's pnpm 11 builder do not initially apply the same build-script approval behavior, and a missing Babel preset only appears after the dependency phase succeeds. Preview profiles can also default to Node 18 and JDK 11 even when production pins newer runtimes; Metro's `toReversed` use needs Node 20, and Gradle needs Java 17. A successful dispatch can still target a stale linked GitHub repository. Play Console rejected a new bundle that reused versionCode 21 even though the user had asked for a version upgrade.

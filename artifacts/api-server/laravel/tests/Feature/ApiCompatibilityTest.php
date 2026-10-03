@@ -282,4 +282,83 @@ class ApiCompatibilityTest extends TestCase
         JsonStore::reset();
         $this->assertSame($document['properties'], JsonStore::read()['properties']);
     }
+
+    public function test_agent_cover_photo_requires_admin_enabled_agent_access(): void
+    {
+        JsonStore::reset();
+        $password = 'CoverAccessTest123';
+        $makeUser = static function (int $id, string $email, string $role) use ($password): array {
+            $salt = "cover-fixture-{$id}";
+            $hash = hash_pbkdf2('sha512', $password, $salt, 100000, 128, false);
+
+            return [
+                'id' => $id,
+                'name' => ucfirst(strtok($email, '@')),
+                'email' => $email,
+                'role' => $role,
+                'status' => 'Active',
+                'password' => "pbkdf2:{$salt}:{$hash}",
+            ];
+        };
+
+        DB::table('app_data')->insert([
+            'id' => 1,
+            'data' => json_encode([
+                'users' => [
+                    $makeUser(10, 'agent@example.test', 'Agent'),
+                    $makeUser(11, 'buyer@example.test', 'Buyer'),
+                    $makeUser(12, 'admin@example.test', 'Admin'),
+                ],
+            ]),
+        ]);
+        JsonStore::reset();
+
+        $agentToken = $this->postJson('/api/auth/login', [
+            'identifier' => 'agent@example.test',
+            'password' => $password,
+        ])->assertOk()->json('token');
+        $buyerToken = $this->postJson('/api/auth/login', [
+            'identifier' => 'buyer@example.test',
+            'password' => $password,
+        ])->assertOk()->json('token');
+        $adminToken = $this->postJson('/api/auth/login', [
+            'identifier' => 'admin@example.test',
+            'password' => $password,
+        ])->assertOk()->json('token');
+
+        $this->withToken($agentToken)
+            ->getJson('/api/account/cover-photo')
+            ->assertForbidden();
+        $this->withToken($agentToken)
+            ->putJson('/api/account/cover-photo', ['url' => '/images/agent-cover.jpg'])
+            ->assertForbidden();
+
+        $this->withToken($adminToken)
+            ->patchJson('/api/admin/users/10/agent-cover-access', ['enabled' => true])
+            ->assertOk()
+            ->assertJsonPath('agentCoverUploadEnabled', true);
+        $this->withToken($adminToken)
+            ->patchJson('/api/admin/users/11/agent-cover-access', ['enabled' => true])
+            ->assertUnprocessable();
+
+        $this->withToken($agentToken)
+            ->putJson('/api/account/cover-photo', ['url' => '/images/agent-cover.jpg'])
+            ->assertOk()
+            ->assertJsonPath('url', '/images/agent-cover.jpg');
+
+        $this->withToken($buyerToken)
+            ->putJson('/api/users/11', ['coverPhoto' => '/images/bypass.jpg'])
+            ->assertForbidden();
+        $this->withToken($buyerToken)
+            ->putJson('/api/account', ['coverPhoto' => '/images/bypass.jpg'])
+            ->assertForbidden();
+
+        $this->withToken($adminToken)
+            ->patchJson('/api/admin/users/10/role', ['role' => 'buyer'])
+            ->assertOk()
+            ->assertJsonPath('agentCoverUploadEnabled', false);
+        $this->withToken($agentToken)
+            ->deleteJson('/api/account/cover-photo')
+            ->assertForbidden();
+    }
 }

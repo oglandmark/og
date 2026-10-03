@@ -608,6 +608,20 @@ class ApiController extends Controller
             $limit = max(1, min(500, (int) $request->input('limit', 500)));
             return $this->json($users->take($limit)->map(fn ($user) => $this->safeUser($user))->values());
         }
+        if ($resource === 'users' && $id !== null && ($parts[2] ?? '') === 'agent-cover-access' && $method === 'PATCH') {
+            $index = $this->indexById($data['users'] ?? [], $id);
+            if ($index === null) return $this->json(['error' => 'User not found'], 404);
+            if (strtolower((string) ($data['users'][$index]['role'] ?? '')) !== 'agent') {
+                return $this->json(['error' => 'Agent cover access can only be set for Agent accounts.'], 422);
+            }
+            $validator = Validator::make($request->all(), ['enabled' => ['required', 'boolean']]);
+            if ($validator->fails()) {
+                return $this->json(['error' => 'A valid enabled value is required.', 'errors' => $validator->errors()], 422);
+            }
+            $data['users'][$index]['agentCoverUploadEnabled'] = $request->boolean('enabled');
+            JsonStore::write($data);
+            return $this->json($this->safeUser($data['users'][$index]));
+        }
         if ($resource === 'users' && $id !== null && $method === 'PATCH' && ($parts[2] ?? '') === 'role') {
             $index = $this->indexById($data['users'] ?? [], $id);
             if ($index === null) return $this->json(['error' => 'User not found'], 404);
@@ -621,7 +635,11 @@ class ApiController extends Controller
                     return $this->json(['error' => 'The signed-in or final admin account cannot be demoted.'], 409);
                 }
             }
+            $previousRole = strtolower((string) ($data['users'][$index]['role'] ?? ''));
             $data['users'][$index]['role'] = $roles[$requestedRole];
+            if ($requestedRole !== 'agent' || $previousRole !== 'agent') {
+                $data['users'][$index]['agentCoverUploadEnabled'] = false;
+            }
             JsonStore::write($data);
             return $this->json($this->safeUser($data['users'][$index]));
         }
@@ -800,6 +818,9 @@ class ApiController extends Controller
         $index = $this->indexById($data['users'] ?? [], $id);
         if ($index === null) return $this->json(['error' => 'User not found'], 404);
         if ($method === 'PUT') {
+            if ($request->has('coverPhoto') && !$this->canManageAgentCover($data['users'][$index])) {
+                return $this->json(['error' => 'Only admin-enabled Agent accounts can manage a cover photo.'], 403);
+            }
             $allowed = ['name', 'phone', 'email', 'agencyName', 'companyName', 'city', 'profilePhoto', 'coverPhoto'];
             foreach ($allowed as $key) if ($request->has($key)) $data['users'][$index][$key] = $request->input($key);
             JsonStore::write($data); return $this->json($this->safeUser($data['users'][$index]));
@@ -819,6 +840,9 @@ class ApiController extends Controller
         if ($index === null) return $this->json(['error' => 'Account not found'], 404);
         $photo = $parts[0] ?? null;
         if ($photo && in_array($photo, ['profile-photo', 'cover-photo'], true)) {
+            if ($photo === 'cover-photo' && !$this->canManageAgentCover($data['users'][$index])) {
+                return $this->json(['error' => 'Only admin-enabled Agent accounts can manage a cover photo.'], 403);
+            }
             $key = $photo === 'profile-photo' ? 'profilePhoto' : 'coverPhoto';
             if ($method === 'GET') return $this->json(['url' => $data['users'][$index][$key] ?? null]);
             if ($method === 'DELETE') { $data['users'][$index][$key] = null; JsonStore::write($data); return response()->noContent(); }
@@ -827,6 +851,9 @@ class ApiController extends Controller
         if ($method === 'GET') return $this->json($this->safeUser($data['users'][$index]));
         if ($method === 'DELETE') { array_splice($data['users'], $index, 1); JsonStore::write($data); $this->destroySession($request); return response()->noContent(); }
         if ($method === 'PUT') {
+            if ($request->has('coverPhoto') && !$this->canManageAgentCover($data['users'][$index])) {
+                return $this->json(['error' => 'Only admin-enabled Agent accounts can manage a cover photo.'], 403);
+            }
             foreach (['name', 'phone', 'city', 'agencyName', 'companyName', 'profilePhoto', 'coverPhoto'] as $key) if ($request->has($key)) $data['users'][$index][$key] = $request->input($key);
             JsonStore::write($data); return $this->json($this->safeUser($data['users'][$index]));
         }
@@ -1662,6 +1689,11 @@ class ApiController extends Controller
     private function safeUser(array $user): array { unset($user['password']); return $user; }
     private function findUserByEmail(string $email): ?array { return collect(JsonStore::read()['users'] ?? [])->first(fn ($u) => strtolower((string) ($u['email'] ?? '')) === strtolower(trim($email))); }
     private function isAdmin(?array $user): bool { return $user !== null && strtolower((string) ($user['role'] ?? '')) === 'admin'; }
+    private function canManageAgentCover(array $user): bool
+    {
+        return strtolower((string) ($user['role'] ?? '')) === 'agent'
+            && filter_var($user['agentCoverUploadEnabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+    }
     private function findById(array $items, $id): ?array { return collect($items)->first(fn ($item) => (string) ($item['id'] ?? '') === (string) $id); }
     private function indexById(array $items, $id): ?int { foreach ($items as $index => $item) if ((string) ($item['id'] ?? '') === (string) $id) return $index; return null; }
     private function hashLegacyPassword(string $password): string { $salt = bin2hex(random_bytes(16)); return 'pbkdf2:' . $salt . ':' . hash_pbkdf2('sha512', $password, $salt, 100000, 128, false); }

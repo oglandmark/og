@@ -33,6 +33,8 @@ export default function AccountSettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, login } = useAuth();
+  const canManageAgentCover =
+    user?.role === 'agent' && user.agentCoverUploadEnabled === true;
 
   const [form, setForm] = useState({
     name:       user?.name ?? '',
@@ -56,14 +58,18 @@ export default function AccountSettingsScreen() {
     let active = true;
     if (!user?.id) {
       setPhotoUri(null);
+      setCoverUri(null);
       return () => { active = false; };
     }
 
-    void Promise.all([getProfilePhoto(), getCoverPhoto()])
+    const coverPhotoRequest = canManageAgentCover
+      ? getCoverPhoto()
+      : Promise.resolve(null);
+    void Promise.all([getProfilePhoto(), coverPhotoRequest])
       .then(([profileUri, coverPhotoUri]) => {
         if (active) {
           setPhotoUri(profileUri);
-          setCoverUri(coverPhotoUri);
+          setCoverUri(canManageAgentCover ? coverPhotoUri : null);
         }
       })
       .catch(() => {
@@ -74,7 +80,7 @@ export default function AccountSettingsScreen() {
       });
 
     return () => { active = false; };
-  }, [user?.id]);
+  }, [user?.id, canManageAgentCover]);
 
   const initials = form.name
     ? form.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
@@ -99,6 +105,7 @@ export default function AccountSettingsScreen() {
   };
 
   const handleCoverPress = () => {
+    if (!canManageAgentCover) return;
     Alert.alert('Agent Cover Photo', 'Choose an option:', [
       { text: '📷  Take Photo', onPress: () => void pickImage('camera', 'cover') },
       { text: '🖼  Choose from Gallery', onPress: () => void pickImage('gallery', 'cover') },
@@ -111,6 +118,7 @@ export default function AccountSettingsScreen() {
 
   const pickImage = async (source: 'camera' | 'gallery', kind: 'profile' | 'cover' = 'profile') => {
     const isCover = kind === 'cover';
+    if (isCover && !canManageAgentCover) return;
     if (isCover ? coverLoading : photoLoading) return;
     if (isCover) setCoverLoading(true);
     else setPhotoLoading(true);
@@ -170,6 +178,7 @@ export default function AccountSettingsScreen() {
   };
 
   const removeCover = async () => {
+    if (!canManageAgentCover) return;
     try {
       await removeCoverPhoto();
       setCoverUri(null);
@@ -268,34 +277,36 @@ export default function AccountSettingsScreen() {
           </View>
         </AnimatedReveal>
 
-        {/* Agent cover photo */}
-        <AnimatedReveal delay={35}>
-          <Pressable
-            onPress={handleCoverPress}
-            disabled={coverLoading}
-            style={[styles.coverCard, { backgroundColor: colors.secondary, borderColor: colors.border }]}
-          >
-            {coverUri ? (
-              <Image source={{ uri: coverUri }} style={styles.coverImage} resizeMode="cover" />
-            ) : (
-              <View style={[styles.coverPlaceholder, { backgroundColor: colors.action + '18' }]}>
-                <Feather name="image" size={26} color={colors.action} />
+        {/* Only admin-enabled Agent IDs can manage an agent cover photo. */}
+        {canManageAgentCover ? (
+          <AnimatedReveal delay={35}>
+            <Pressable
+              onPress={handleCoverPress}
+              disabled={coverLoading}
+              style={[styles.coverCard, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+            >
+              {coverUri ? (
+                <Image source={{ uri: coverUri }} style={styles.coverImage} resizeMode="cover" />
+              ) : (
+                <View style={[styles.coverPlaceholder, { backgroundColor: colors.action + '18' }]}>
+                  <Feather name="image" size={26} color={colors.action} />
+                </View>
+              )}
+              <View style={styles.coverShade} />
+              <View style={styles.coverContent}>
+                <View style={styles.coverCopy}>
+                  <Text style={styles.coverTitle}>Agent Cover Photo</Text>
+                  <Text style={styles.coverSub}>
+                    {coverLoading ? 'Uploading…' : coverUri ? 'Shown on your public agent profile' : 'Add a banner for your public profile'}
+                  </Text>
+                </View>
+                <View style={[styles.coverAction, { backgroundColor: colors.action }]}>
+                  <Feather name={coverLoading ? 'loader' : coverUri ? 'edit-2' : 'camera'} size={14} color={colors.actionForeground} />
+                </View>
               </View>
-            )}
-            <View style={styles.coverShade} />
-            <View style={styles.coverContent}>
-              <View style={styles.coverCopy}>
-                <Text style={styles.coverTitle}>Agent Cover Photo</Text>
-                <Text style={styles.coverSub}>
-                  {coverLoading ? 'Uploading…' : coverUri ? 'Shown on your public agent profile' : 'Add a banner for your public profile'}
-                </Text>
-              </View>
-              <View style={[styles.coverAction, { backgroundColor: colors.action }]}>
-                <Feather name={coverLoading ? 'loader' : coverUri ? 'edit-2' : 'camera'} size={14} color={colors.actionForeground} />
-              </View>
-            </View>
-          </Pressable>
-        </AnimatedReveal>
+            </Pressable>
+          </AnimatedReveal>
+        ) : null}
 
         {/* Fields */}
         <AnimatedReveal delay={100}>

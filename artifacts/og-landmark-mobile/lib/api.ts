@@ -225,6 +225,7 @@ export type ApiUser = {
   avatarUrl?: string;
   profilePhoto?: string | null;
   coverPhoto?: string | null;
+  agentCoverUploadEnabled?: boolean;
 };
 
 // Server returns { user, token } on success (no `success` field)
@@ -1139,10 +1140,17 @@ export async function getAdminUsers(
   );
 }
 
-export async function updateUserRole(userId: number, role: string): Promise<void> {
-  await apiFetch(`/api/admin/users/${userId}/role`, {
+export async function updateUserRole(userId: number, role: string): Promise<ApiUser> {
+  return apiFetch<ApiUser>(`/api/admin/users/${userId}/role`, {
     method: 'PATCH',
     body: JSON.stringify({ role }),
+  });
+}
+
+export async function setAgentCoverUploadAccess(userId: number, enabled: boolean): Promise<ApiUser> {
+  return apiFetch<ApiUser>(`/api/admin/users/${userId}/agent-cover-access`, {
+    method: 'PATCH',
+    body: JSON.stringify({ enabled }),
   });
 }
 

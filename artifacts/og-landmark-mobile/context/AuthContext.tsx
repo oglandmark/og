@@ -49,6 +49,7 @@ export type User = {
   avatarUrl?: string;
   profilePhoto?: string | null;
   coverPhoto?: string | null;
+  agentCoverUploadEnabled?: boolean;
 };
 
 type AuthContextValue = {
@@ -96,6 +97,7 @@ function mapApiUser(apiU: {
   avatarUrl?: string;
   profilePhoto?: string | null;
   coverPhoto?: string | null;
+  agentCoverUploadEnabled?: boolean;
 }): User {
   return {
     id: String(apiU.id),
@@ -113,6 +115,7 @@ function mapApiUser(apiU: {
     avatarUrl: apiU.avatarUrl,
     profilePhoto: apiU.profilePhoto,
     coverPhoto: apiU.coverPhoto,
+    agentCoverUploadEnabled: apiU.agentCoverUploadEnabled === true,
   };
 }
 

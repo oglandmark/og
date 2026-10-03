@@ -2,7 +2,7 @@
   "expo": {
     "name": "OG Landmark",
     "slug": "og-landmark-uin4dnqfp8-zl28mrpom",
-    "version": "2.0.22",
+    "version": "2.0.23",
     "orientation": "portrait",
     "icon": "./assets/images/og-landmark-brand-square.png",
     "scheme": "og-land-mobile",
@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.oglandmark.app",
-      "versionCode": 22,
+      "versionCode": 23,
       "softwareKeyboardLayoutMode": "resize",
       "icon": "./assets/images/og-landmark-brand-square.png",
       "adaptiveIcon": {

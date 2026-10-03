@@ -9,11 +9,11 @@ Native map screens in OG Landmark use the shared Mapbox WebView renderer. Do not
 
 **How to apply:** Keep Android and iOS native map screens on `ExpoGoMapFallback`; before any future Android build, verify the selected EAS environment contains the Mapbox token without printing or exposing its value.
 
-For this project, do not start an EAS APK build unless the user explicitly requests it.
+For this project, make only the requested change. Do not start an EAS APK build unless the user explicitly requests that specific build; approval for an earlier APK is not ongoing permission.
 
-**Why:** The user asked not to build another APK until they say so.
+**Why:** The user reiterated on 2026-10-03 that source updates must not trigger an APK build.
 
-**How to apply:** Make and verify source-level map changes only; do not trigger an EAS build or store submission without an explicit request.
+**How to apply:** Keep requested fixes source-only until the user asks for a new APK. Never submit a build to an app store unless separately asked.
 
 Keep the WebView map document stable and push marker, center, and radius updates through `injectJavaScript`; rebuilding the HTML source on every parent render makes returning from a property detail feel like a fresh map load.
 

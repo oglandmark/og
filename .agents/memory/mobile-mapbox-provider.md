@@ -20,3 +20,9 @@ Keep the WebView map document stable and push marker, center, and radius updates
 **Why:** Explore data and filter state can rerender while the user navigates, and a remote Leaflet document otherwise re-downloads its scripts and tiles unnecessarily.
 
 **How to apply:** Initialize the map HTML once per mounted fallback, cache the WebView, keep the native WebView touch stream enabled while locking HTML overflow, use the explicit pinch bridge/zoom controls, and update the radius circle center from map movement events.
+
+The user confirmed on 2026-10-03 that the updated Android APK's map is now working correctly.
+
+**Why:** This is direct user confirmation of the delivered map fix.
+
+**How to apply:** Treat this as confirmation for the delivered APK only; verify any later map build separately.

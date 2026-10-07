@@ -45,7 +45,8 @@
           const routes=[
             {suffix:'/privacy-policy',file:'/pages/privacy-policy.html'},
             {suffix:'/privacy',file:'/pages/privacy-policy.html'},
-            {suffix:'/account-deletion',file:'/pages/account-deletion.html'}
+            {suffix:'/account-deletion',file:'/pages/account-deletion.html'},
+            {suffix:'/data-deletion',file:'/pages/data-deletion.html'}
           ];
           const pathname=window.location.pathname.replace(/\/+$/,'');
           const route=routes.find(item=>pathname.endsWith(item.suffix));

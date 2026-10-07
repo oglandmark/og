@@ -314,6 +314,14 @@ const configuredApiUrl = String(process.env.LARAVEL_API_URL || '').trim().replac
 const laravelApiUrl = replitPreview && previewApiUrl ? previewApiUrl : configuredApiUrl;
 const laravelWebUrl = String(process.env.LARAVEL_WEB_URL || '').trim().replace(/\/+$/, '');
 
+// Public legal URLs stay available from the local static pages even when the
+// optional Laravel website preview proxy is unavailable.
+const legalPagesDir = path.join(__dirname, 'public/pages');
+app.get('/privacy-policy', (req, res) => res.sendFile(path.join(legalPagesDir, 'privacy-policy.html')));
+app.get('/privacy', (req, res) => res.sendFile(path.join(legalPagesDir, 'privacy-policy.html')));
+app.get('/account-deletion', (req, res) => res.sendFile(path.join(legalPagesDir, 'account-deletion.html')));
+app.get('/data-deletion', (req, res) => res.sendFile(path.join(legalPagesDir, 'data-deletion.html')));
+
 // Preview Laravel-rendered website pages without changing the existing /api
 // upstream. Clearing LARAVEL_WEB_URL restores the original Node/React routes.
 if (laravelWebUrl) {
@@ -5655,9 +5663,6 @@ app.get('/api/mobile/developer-analytics', requireAuth, async (req, res) => {
 // ─── STATIC PAGES (About / Terms / Privacy) ──────────────────────────────────
 app.get('/about',          (req, res) => res.sendFile(path.join(__dirname, 'public/pages/about.html')));
 app.get('/terms',          (req, res) => res.sendFile(path.join(__dirname, 'public/pages/terms.html')));
-app.get('/privacy-policy', (req, res) => res.sendFile(path.join(__dirname, 'public/pages/privacy-policy.html')));
-app.get('/privacy',        (req, res) => res.sendFile(path.join(__dirname, 'public/pages/privacy-policy.html')));
-app.get('/account-deletion', (req, res) => res.sendFile(path.join(__dirname, 'public/pages/account-deletion.html')));
 
 // ─── PORTAL LOGIN PAGES (before SPA catch-all) ───────────────────────────────
 const publicDir = path.join(__dirname, 'public');

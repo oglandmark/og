@@ -53,6 +53,10 @@ function AccountDeletionRoute() {
   return <StaticPageRedirect fileName="account-deletion.html" label="account deletion" />;
 }
 
+function DataDeletionRoute() {
+  return <StaticPageRedirect fileName="data-deletion.html" label="data deletion" />;
+}
+
 function Router() {
   return (
     // Keep a shared shell (sidebar, navbar) outside the boundary so it
@@ -63,6 +67,7 @@ function Router() {
         <Route path="/privacy-policy" component={PrivacyPolicyRoute} />
         <Route path="/privacy" component={PrivacyPolicyRoute} />
         <Route path="/account-deletion" component={AccountDeletionRoute} />
+        <Route path="/data-deletion" component={DataDeletionRoute} />
         <Route component={NotFound} />
       </Switch>
     </RoutedErrorBoundary>

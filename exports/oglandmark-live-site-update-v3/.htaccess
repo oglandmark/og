@@ -1,0 +1,18 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Google Play privacy and deletion URLs.
+  RewriteRule ^privacy-policy/?$ pages/privacy-policy.html [L,NC]
+  RewriteRule ^privacy/?$ pages/privacy-policy.html [L,NC]
+  RewriteRule ^account-deletion/?$ pages/account-deletion.html [L,NC]
+  RewriteRule ^data-deletion/?$ pages/data-deletion.html [L,NC]
+
+  # Preserve existing static files and directories.
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Preserve client-side site routes.
+  RewriteRule ^ index.html [L]
+</IfModule>

@@ -1,0 +1,18 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Google Play privacy and data-deletion URLs must load without the SPA.
+  RewriteRule ^privacy-policy/?$ pages/privacy-policy.html [L,NC]
+  RewriteRule ^privacy/?$ pages/privacy-policy.html [L,NC]
+  RewriteRule ^account-deletion/?$ pages/account-deletion.html [L,NC]
+  RewriteRule ^data-deletion/?$ pages/data-deletion.html [L,NC]
+
+  # Prefer existing files and directories.
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Fall back to the homepage for remaining client-side routes.
+  RewriteRule ^ index.html [L]
+</IfModule>

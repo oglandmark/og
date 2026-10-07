@@ -5662,6 +5662,22 @@ if (fs.existsSync(mediaStorageDir)) {
     },
   }));
 }
+let officialPhoneBundleCache = null;
+app.get('/assets/index-CXxrK7KP.js', (_req, res, next) => {
+  try {
+    if (officialPhoneBundleCache === null) {
+      officialPhoneBundleCache = fs.readFileSync(path.join(publicDir, 'assets', 'index-CXxrK7KP.js'), 'utf8')
+        .replaceAll('0304 2569000', '03011484303')
+        .replaceAll('03042569000', '03011484303')
+        .replaceAll('923042569000', '923011484303');
+    }
+    res.setHeader('Cache-Control', 'no-store');
+    res.type('application/javascript').send(officialPhoneBundleCache);
+  } catch (error) {
+    next(error);
+  }
+});
+
 if (fs.existsSync(publicDir)) {
   // HTML files — always no-cache so updates are instant
   app.use(express.static(publicDir, {

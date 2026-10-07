@@ -17,4 +17,13 @@ fs.cpSync(publicDir, outputDir, {
   preserveTimestamps: true,
 });
 
+const websiteBundle = path.join(outputDir, 'assets', 'index-CXxrK7KP.js');
+if (fs.existsSync(websiteBundle)) {
+  const patchedBundle = fs.readFileSync(websiteBundle, 'utf8')
+    .replaceAll('0304 2569000', '03011484303')
+    .replaceAll('03042569000', '03011484303')
+    .replaceAll('923042569000', '923011484303');
+  fs.writeFileSync(websiteBundle, patchedBundle);
+}
+
 console.log(`Copied the static website to ${outputDir}`);

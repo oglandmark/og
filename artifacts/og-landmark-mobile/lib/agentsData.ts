@@ -90,7 +90,7 @@ export const SAMPLE_AGENTS: SampleAgent[] = [
     phone: '03012345678',
     specialties: ['Residential', 'Agricultural Land', 'Plots'],
     about:
-      'With over 12 years of experience in Okara District real estate, Ahmed Property Consultants specialises in residential plots, houses, and agricultural land across Okara and Depalpur. Trusted by hundreds of satisfied buyers and sellers with transparent, professional service.',
+      'Residential plots, houses, and agricultural land in Okara City and Depalpur.',
   },
   {
     id: 'sa2',
@@ -109,7 +109,7 @@ export const SAMPLE_AGENTS: SampleAgent[] = [
     phone: '03042569000',
     specialties: ['Commercial', 'Residential', 'Rentals'],
     about:
-      'Malik Properties has been serving clients in Renala Khurd and Okara since 2016. Specialising in residential and commercial properties with a strong focus on client satisfaction and straightforward dealings.',
+      'Commercial and residential properties, including rentals, in Renala Khurd and Okara City.',
   },
   {
     id: 'sa3',
@@ -128,7 +128,7 @@ export const SAMPLE_AGENTS: SampleAgent[] = [
     phone: '03331234567',
     specialties: ['Agricultural Land', 'Plots', 'Commercial', 'Investment'],
     about:
-      'Chaudhry Property Group is one of the most experienced real estate firms in the Depalpur area. With 15+ years of serving buyers, sellers, and investors, the group is expert in agricultural land deals, residential plots, and large-scale commercial transactions.',
+      'Agricultural land, plots, and commercial properties in Depalpur and Hujra Shah Muqeem.',
   },
   {
     id: 'sa4',
@@ -146,7 +146,7 @@ export const SAMPLE_AGENTS: SampleAgent[] = [
     phone: '03156789012',
     specialties: ['Residential', 'Rentals', 'Plots'],
     about:
-      'Baig Property Advisors is a young and energetic firm based in Okara City, known for fast, honest dealing in residential rentals and plot sales. With 5 years in the market, the team has built a reputation for clear communication and follow-through.',
+      'Residential rentals and plots in Okara City and Renala Khurd.',
   },
   {
     id: 'sa5',
@@ -164,6 +164,6 @@ export const SAMPLE_AGENTS: SampleAgent[] = [
     phone: '03219876543',
     specialties: ['Commercial', 'Industrial', 'Investment'],
     about:
-      'Raza Enterprises specialises in commercial shops, offices, warehouses, and industrial plots across Okara District. With 9 years of experience in the commercial sector, the firm is the go-to for investors and business owners seeking premium commercial space.',
+      'Commercial shops, offices, warehouses, and industrial plots across Okara District.',
   },
 ];

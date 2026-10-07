@@ -12,7 +12,13 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
-import { getAdminUsers, updateUserRole, deleteAdminUser, ApiUser } from '@/lib/api';
+import {
+  getAdminUsers,
+  updateUserRole,
+  setAgentCoverUploadAccess,
+  deleteAdminUser,
+  ApiUser,
+} from '@/lib/api';
 
 const NAVY = '#0B1F3A';
 const GOLD = '#C8A45A';
@@ -58,6 +64,11 @@ export default function AdminUsers() {
     ));
   }, [query, users]);
 
+  function replaceUser(updated: ApiUser) {
+    setUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
+    setFiltered(prev => prev.map(u => u.id === updated.id ? updated : u));
+  }
+
   function handleChangeRole(user: ApiUser) {
     Alert.alert(
       'Change Role',
@@ -67,15 +78,37 @@ export default function AdminUsers() {
           text: r,
           onPress: async () => {
             try {
-              await updateUserRole(user.id, r);
-              const updated = { ...user, role: r };
-              setUsers(prev => prev.map(u => u.id === user.id ? updated : u));
-              setFiltered(prev => prev.map(u => u.id === user.id ? updated : u));
+              replaceUser(await updateUserRole(user.id, r));
             } catch { Alert.alert('Error', 'Could not update role.'); }
           },
         })),
         { text: 'Cancel', style: 'cancel' },
       ]
+    );
+  }
+
+  function handleAgentCoverAccess(user: ApiUser) {
+    const enabled = user.agentCoverUploadEnabled !== true;
+    Alert.alert(
+      enabled ? 'Enable Agent cover uploads?' : 'Disable Agent cover uploads?',
+      `${enabled ? 'Allow' : 'Stop'} ${user.name} from adding or removing an Agent cover photo?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: enabled ? 'Enable' : 'Disable',
+          style: enabled ? 'default' : 'destructive',
+          onPress: async () => {
+            try {
+              replaceUser(await setAgentCoverUploadAccess(user.id, enabled));
+            } catch (cause) {
+              Alert.alert(
+                'Error',
+                cause instanceof Error ? cause.message : 'Could not update Agent cover access.',
+              );
+            }
+          },
+        },
+      ],
     );
   }
 
@@ -111,6 +144,34 @@ export default function AdminUsers() {
           <View style={[s.roleBadge, { backgroundColor: roleColor + '18' }]}>
             <Text style={[s.roleText, { color: roleColor }]}>{item.role}</Text>
           </View>
+          {item.role.toLowerCase() === 'agent' ? (
+            <Pressable
+              accessibilityRole="switch"
+              accessibilityState={{ checked: item.agentCoverUploadEnabled === true }}
+              onPress={() => handleAgentCoverAccess(item)}
+              style={[
+                s.coverAccessButton,
+                {
+                  backgroundColor: item.agentCoverUploadEnabled === true ? colors.action + '18' : colors.secondary,
+                  borderColor: item.agentCoverUploadEnabled === true ? colors.action + '55' : colors.border,
+                },
+              ]}
+            >
+              <Feather
+                name={item.agentCoverUploadEnabled === true ? 'check-circle' : 'image'}
+                size={12}
+                color={item.agentCoverUploadEnabled === true ? colors.action : colors.mutedForeground}
+              />
+              <Text
+                style={[
+                  s.coverAccessText,
+                  { color: item.agentCoverUploadEnabled === true ? colors.action : colors.mutedForeground },
+                ]}
+              >
+                {item.agentCoverUploadEnabled === true ? 'Cover uploads enabled' : 'Enable cover uploads'}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
         <View style={s.actions}>
           <Pressable
@@ -200,6 +261,8 @@ const s = StyleSheet.create({
   email:       { fontFamily: 'Inter_400Regular', fontSize: 12, marginTop: 1 },
   roleBadge:   { borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3, alignSelf: 'flex-start', marginTop: 5 },
   roleText:    { fontFamily: 'Inter_700Bold', fontSize: 10 },
+  coverAccessButton: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 5, borderWidth: 1, borderRadius: 7, paddingHorizontal: 7, paddingVertical: 5, marginTop: 7 },
+  coverAccessText: { fontFamily: 'Inter_600SemiBold', fontSize: 10 },
   actions:     { flexDirection: 'row', gap: 6 },
   actBtn:      { width: 34, height: 34, borderRadius: 9, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   empty:       { alignItems: 'center', paddingTop: 80, gap: 12 },

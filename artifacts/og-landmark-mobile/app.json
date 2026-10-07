@@ -2,9 +2,9 @@
   "expo": {
     "name": "OG Landmark",
     "slug": "og-landmark-uin4dnqfp8-zl28mrpom",
-    "version": "2.0.21",
+    "version": "2.0.30",
     "orientation": "portrait",
-    "icon": "./assets/images/og-landmark-brand-square.png",
+    "icon": "./assets/images/og-landmark-logo-square.png",
     "scheme": "og-land-mobile",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -13,9 +13,9 @@
     },
     "android": {
       "package": "com.oglandmark.app",
-      "versionCode": 21,
+      "versionCode": 30,
       "softwareKeyboardLayoutMode": "resize",
-      "icon": "./assets/images/og-landmark-brand-square.png",
+      "icon": "./assets/images/og-landmark-logo-square.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/og-landmark-brand-adaptive.png",
         "backgroundColor": "#FFFFFF"
@@ -27,8 +27,12 @@
         "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#FFFFFF"
+    },
     "web": {
-      "favicon": "./assets/images/og-landmark-brand-square.png"
+      "favicon": "./assets/images/og-landmark-logo-square.png"
     },
     "assetBundlePatterns": [
       "assets/images/*",
@@ -45,12 +49,12 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#FFFFFF",
-          "image": "./assets/images/og-landmark-brand-splash.png",
-          "imageWidth": 300,
+          "image": "./assets/images/og-landmark-splash-branded.png",
+          "imageWidth": 156,
           "resizeMode": "contain",
           "dark": {
             "backgroundColor": "#FFFFFF",
-            "image": "./assets/images/og-landmark-brand-splash.png"
+            "image": "./assets/images/og-landmark-splash-branded.png"
           }
         }
       ],

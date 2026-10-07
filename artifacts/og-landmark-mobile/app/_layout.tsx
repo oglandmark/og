@@ -12,6 +12,7 @@ import { PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold } from '@expo-go
 import { useFonts, type FontSource } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { SavedProvider } from '@/context/SavedContext';
@@ -218,6 +219,12 @@ const rootStyles = {
     marginTop: 28,
     opacity: 0.82,
   },
+  startupBrand: {
+    fontFamily: 'PlayfairDisplay_600SemiBold',
+    fontSize: 20,
+    letterSpacing: 0.4,
+    marginTop: 10,
+  },
   loadingStatusText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 12,
@@ -251,6 +258,9 @@ function StartupSplash({
       ]}
     >
       <OGLandmarkLogo size={156} />
+      <Text style={[rootStyles.startupBrand, { color: colors.actionDeep }]}>
+        OG Landmark
+      </Text>
       <View style={rootStyles.loadingStatus}>
         <ActivityIndicator color={colors.action} size="small" />
         <Text style={[rootStyles.loadingStatusText, { color: colors.actionDeep }]}>
@@ -307,26 +317,31 @@ export default function RootLayout() {
   // The browser preview can render with platform fallback fonts while the
   // bundled font manifest is unavailable in offline mode. Native keeps the
   // gate so the branded splash does not reveal unstyled text.
-  if (Platform.OS !== 'web' && !fontsLoaded && !fontError && !fontGateTimedOut) return null;
+  if (Platform.OS !== 'web' && !fontsLoaded && !fontError && !fontGateTimedOut) {
+    return <StatusBar style="dark" />;
+  }
   return (
-    <SafeAreaProvider>
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <OnboardingProvider>
-            <LanguageProvider>
-              <AuthProvider>
-                <SavedProvider>
-                  <GestureHandlerRootView style={{ flex: 1 }}>
-                     <KeyboardProvider>
-                       <DirectionalApp />
-                     </KeyboardProvider>
-                  </GestureHandlerRootView>
-                </SavedProvider>
-              </AuthProvider>
-            </LanguageProvider>
-          </OnboardingProvider>
-        </QueryClientProvider>
-      </ErrorBoundary>
-    </SafeAreaProvider>
+    <>
+      <StatusBar style="dark" />
+      <SafeAreaProvider>
+        <ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <OnboardingProvider>
+              <LanguageProvider>
+                <AuthProvider>
+                  <SavedProvider>
+                    <GestureHandlerRootView style={{ flex: 1 }}>
+                       <KeyboardProvider>
+                         <DirectionalApp />
+                       </KeyboardProvider>
+                    </GestureHandlerRootView>
+                  </SavedProvider>
+                </AuthProvider>
+              </LanguageProvider>
+            </OnboardingProvider>
+          </QueryClientProvider>
+        </ErrorBoundary>
+      </SafeAreaProvider>
+    </>
   );
 }

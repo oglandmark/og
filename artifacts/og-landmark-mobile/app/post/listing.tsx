@@ -416,6 +416,8 @@ export default function ListingWizard() {
   const params = useLocalSearchParams<{ purpose?: string; editId?: string }>();
   const editId = String(params.editId ?? '');
 
+  const goBack = () => router.replace('/(tabs)/listings');
+
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
   const [form, setForm] = useState<Form>(() => {
@@ -435,7 +437,7 @@ export default function ListingWizard() {
     const apiId = Number(editId);
     if (!Number.isInteger(apiId)) {
       Alert.alert('Could not edit listing', 'This listing link is invalid.');
-      router.back();
+      goBack();
       return;
     }
     let mounted = true;
@@ -445,7 +447,7 @@ export default function ListingWizard() {
         if (!mounted) return;
         if (!listing) {
           Alert.alert('Could not edit listing', 'This listing is no longer available in your account.');
-          router.back();
+          goBack();
           return;
         }
         setEditingListing(listing);
@@ -455,7 +457,7 @@ export default function ListingWizard() {
       .catch((error: unknown) => {
         if (!mounted) return;
         Alert.alert('Could not load listing', error instanceof Error ? error.message : 'Please try again.');
-        router.back();
+        goBack();
       })
       .finally(() => {
         if (mounted) setEditLoading(false);
@@ -695,7 +697,7 @@ export default function ListingWizard() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* ── Fixed header ─────────────────────────────────────────────────── */}
       <View style={[s.header, { backgroundColor: colors.background, paddingTop: topInset + 8, borderBottomColor: colors.border }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+        <Pressable onPress={goBack} hitSlop={12} style={[s.backBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           <Feather name="arrow-left" size={16} color={colors.foreground} />
         </Pressable>
         <View style={{ flex: 1, minWidth: 0, paddingHorizontal: 4 }}>

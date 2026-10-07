@@ -1,10 +1,4 @@
-/**
- * ExploreMapView — native Mapbox tile map rendered through the shared WebView.
- *
- * Keeping the native and Expo Go paths on the same Mapbox-backed renderer
- * avoids provider differences between preview and production builds while
- * preserving pan, pinch zoom, property pins, area search, and radius controls.
- */
+/** ExploreMapView — native platforms use the shared Mapbox WebView renderer. */
 import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';

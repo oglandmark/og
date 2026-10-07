@@ -222,7 +222,29 @@ const splashPlugin = config.plugins?.find(
   (plugin) => Array.isArray(plugin) && plugin[0] === "expo-splash-screen"
 );
 const splashOptions = Array.isArray(splashPlugin) ? splashPlugin[1] : undefined;
-resolveAsset("Splash image", splashOptions?.image);
+const splashImage = resolveAsset("Splash image", splashOptions?.image);
 if (splashOptions?.dark?.image) {
-  resolveAsset("Dark splash image", splashOptions.dark.image);
+  const darkSplashImage = resolveAsset("Dark splash image", splashOptions.dark.image);
+  if (darkSplashImage !== splashImage) {
+    fail("Light and dark splash images must use the same brand mark.");
+  }
 }
+
+const logoComponent = fs.readFileSync(
+  path.resolve(projectRoot, "components/OGLandmarkLogo.tsx"),
+  "utf8"
+);
+const primaryLogo = logoComponent.match(
+  /const logoAsset\s*=\s*require\(['"]@\/assets\/images\/([^'"]+)['"]\)/
+);
+if (!primaryLogo) {
+  fail("Could not identify the primary logo used by the in-app startup splash.");
+}
+const startupLogo = path.resolve(projectRoot, "assets/images", primaryLogo[1]);
+if (!fs.existsSync(startupLogo)) {
+  fail(`In-app startup logo does not exist: ${primaryLogo[1]}`);
+}
+if (splashImage === startupLogo) {
+  fail("Native splash must use a dedicated image separate from the in-app logo.");
+}
+console.log("✓ Native splash uses a dedicated image separate from the in-app logo.");

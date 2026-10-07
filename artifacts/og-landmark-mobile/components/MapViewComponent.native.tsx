@@ -1,9 +1,4 @@
-/**
- * MapViewComponent — native Mapbox tile maps rendered through WebView.
- *
- * This keeps property detail and location-picking maps on the same provider
- * as Explore, including Expo Go preview and EAS native builds.
- */
+/** MapViewComponent — native platforms use the shared Mapbox WebView renderer. */
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';

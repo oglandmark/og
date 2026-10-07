@@ -1,0 +1,98 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: admin
+    description: Administrator operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /admin/users/{id}/agent-cover-access:
+    patch:
+      operationId: setAgentCoverUploadAccess
+      tags: [admin]
+      summary: Set Agent cover upload access
+      description: Enables or disables cover-photo management for an Agent account. Requires an authenticated administrator.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentCoverAccessUpdate"
+      responses:
+        "200":
+          description: Updated Agent account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentCoverAccessUser"
+        "403":
+          description: Administrator authentication required
+        "404":
+          description: User not found
+        "422":
+          description: Invalid request or target is not an Agent
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    AgentCoverAccessUpdate:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+      required:
+        - enabled
+    AgentCoverAccessUser:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        role:
+          type: string
+        agentCoverUploadEnabled:
+          type: boolean
+      required:
+        - id
+        - name
+        - role
+        - agentCoverUploadEnabled
+

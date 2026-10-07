@@ -11,6 +11,7 @@ import {
   loginWithSocial,
   logoutAPI,
   registerWithAPI,
+  resolveMediaUrl,
   setToken,
 } from '@/lib/api';
 import { clearLocalAccountData } from '@/lib/accountCleanup';
@@ -49,6 +50,7 @@ export type User = {
   avatarUrl?: string;
   profilePhoto?: string | null;
   coverPhoto?: string | null;
+  agentCoverUploadEnabled?: boolean;
 };
 
 type AuthContextValue = {
@@ -96,6 +98,7 @@ function mapApiUser(apiU: {
   avatarUrl?: string;
   profilePhoto?: string | null;
   coverPhoto?: string | null;
+  agentCoverUploadEnabled?: boolean;
 }): User {
   return {
     id: String(apiU.id),
@@ -111,8 +114,9 @@ function mapApiUser(apiU: {
     joinedAt: apiU.joinedDate || new Date().toISOString(),
     authProvider: apiU.authProvider,
     avatarUrl: apiU.avatarUrl,
-    profilePhoto: apiU.profilePhoto,
+    profilePhoto: resolveMediaUrl(apiU.profilePhoto) ?? null,
     coverPhoto: apiU.coverPhoto,
+    agentCoverUploadEnabled: apiU.agentCoverUploadEnabled === true,
   };
 }
 

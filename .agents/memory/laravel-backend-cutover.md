@@ -33,6 +33,12 @@ In this Laravel runtime, `response()->json(null)` serializes as `{}` rather than
 
 **How to apply:** For absent optional CMS payloads, return a falsy JSON value or 204 when the client checks payload truthiness; verify the actual serialized response.
 
+The local Laravel preview may use SQLite even though `/api/healthz` reports `databaseProvider: mysql`; that field is not proof of the active connection driver.
+
+**Why:** The checked preview used a non-empty local SQLite file while the health response retained the production MySQL contract label.
+
+**How to apply:** Before any database import or target decision, inspect the active Laravel connection driver and database name directly, then check table counts; never infer the target from health metadata.
+
 The mobile app must call `https://www.oglandmark.com` directly in development and production; do not route mobile API requests through a Replit preview proxy or Replit API server.
 
 **Why:** The user explicitly requested the live website backend instead of Replit's backend.

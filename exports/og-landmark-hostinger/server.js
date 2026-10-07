@@ -5422,6 +5422,8 @@ app.get('/about',          (req, res) => res.sendFile(path.join(__dirname, 'publ
 app.get('/terms',          (req, res) => res.sendFile(path.join(__dirname, 'public/pages/terms.html')));
 app.get('/privacy-policy', (req, res) => res.sendFile(path.join(__dirname, 'public/pages/privacy.html')));
 app.get('/privacy',        (req, res) => res.sendFile(path.join(__dirname, 'public/pages/privacy.html')));
+app.get('/account-deletion', (req, res) => res.sendFile(path.join(__dirname, 'public/pages/account-deletion.html')));
+app.get('/data-deletion', (req, res) => res.sendFile(path.join(__dirname, 'public/pages/data-deletion.html')));
 
 // ─── PORTAL LOGIN PAGES (before SPA catch-all) ───────────────────────────────
 const publicDir = path.join(__dirname, 'public');

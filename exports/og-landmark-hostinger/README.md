@@ -18,6 +18,8 @@ SMTP values are required for email verification and password reset delivery. In 
 
 After restarting, `/api/health` reports `"smtp": "configured"` when both SMTP username and password are present. The application log will report `SMTP status: connected` or the exact connection failure without printing the password.
 
+The public legal pages are available without signing in at `/privacy-policy`, `/account-deletion`, and `/data-deletion`. After uploading a new package and restarting the Node.js app, verify each URL in a private browser window before saving them in Google Play Console.
+
 The package intentionally does not include a generated lockfile: Replit lockfiles can contain workspace-only package-firewall URLs that are not reachable from Hostinger. `.npmrc` pins installation to the public npm registry.
 
 The MySQL connection string contains database credentials and must remain server-side: never put it in browser code, `public/`, Git, or chat.

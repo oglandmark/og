@@ -168,3 +168,31 @@ mtime_ms = 1791399277370
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/4ad21491-3c30-4d16-8543-1bbe68bbb649/d6107b2e-f567-4cc8-a37a-7d2aa9ae52ca"
 storage_version_token = "1791399405424717"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "yxAtHcH8jLYfGTi0SpkJT"
+uri = "file://exports/og-landmark-deletion-deploy-zips/OG-Landmark-Legal-Pages-Update-2026-10-08.zip"
+type = "unspecified"
+title = "OG Landmark — Hostinger legal pages update ZIP"
+description = "Focused upload package: combined account and specific-data deletion page, legacy /data-deletion redirect, and route rules. Use this if only updating public_html legal pages."
+logical_id = "2fd796c4-d93b-492f-8376-cdf5ad63f1d9"
+content_hash = "sha256:9bdfc2d8b5d42e74fb11dc1e63ebcd18c7c1da62c0f4f379584305c4c94b1898"
+size = 18519
+mtime_ms = 1791400983081
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/2fd796c4-d93b-492f-8376-cdf5ad63f1d9/a01a15f7-7f67-4ec1-ab6b-3d421a87a3aa"
+storage_version_token = "1791401086425717"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "XpAxjPghx7r1Mk1qtCCPv"
+uri = "file://exports/og-landmark-full-updated-zips/OG-Landmark-Frontend-Full-Updated-2026-10-08.zip"
+type = "unspecified"
+title = "OG Landmark — full frontend ZIP (2026-10-08)"
+description = "Updated full frontend source/build package, including the combined deletion page and updated nested build.zip. Replaces the entire static frontend if needed."
+logical_id = "379cf30e-17dc-4f3a-adae-8d6327151a02"
+content_hash = "sha256:dcba401bac2748a22e7f05f985e1f77f839ee3966d44ed07ef8547923485cf2a"
+size = 44606400
+mtime_ms = 1791400985421
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/379cf30e-17dc-4f3a-adae-8d6327151a02/7724ef0f-033a-4238-964d-8fd1b1ff3a80"
+storage_version_token = "1791401088088749"
+content_type = "application/octet-stream"

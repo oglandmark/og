@@ -2,7 +2,7 @@
 - [Public legal-page SPA routing](public-legal-page-routing.md) — standalone policy links need handling for direct loads and SPA history navigation.
 - [Account and data deletion](account-data-deletion.md) — keep the 14-day verified-request promise distinct from Google Play rules and preserve unrelated users' records.
 - [Expo Go native modules](expo-go-media.md) — use supported media packages and guard remote push code so Android Expo Go can start.
-- [Hostinger package portability](hostinger-package-portability.md) — omit Replit lockfiles and force the public npm registry in external deployment ZIPs.
+- [Hostinger package portability](hostinger-package-portability.md) — omit Replit lockfiles, use the public npm registry, and validate regenerated ZIP contents against current source.
 - [Hostinger startup timeout](hostinger-startup-timeout.md) — bind the Node port before MySQL initialization so external health checks do not time out.
 - [Hostinger media recovery](hostinger-media-recovery.md) — back up app_data media references and files together, then verify live photo/video delivery after restore.
 - [Hostinger SMTP delivery](hostinger-smtp-delivery.md) — use a real mailbox and verify SMTP from the API workflow, not only the CLI.

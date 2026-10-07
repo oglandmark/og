@@ -140,6 +140,148 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonPath('role', 'Buyer');
     }
 
+    public function test_mobile_signup_listing_admin_review_and_publication_work_end_to_end(): void
+    {
+        $this->useTemporaryMediaStorage();
+        $this->seedData([
+            'users' => [$this->user(1, 'mobile-flow-admin@example.test', 'Admin')],
+            'properties' => [],
+            'nextId' => 2,
+        ]);
+        config([
+            'mail.default' => 'array',
+            'mail.mailers.array' => ['transport' => 'array'],
+            'mail.mailers.smtp.username' => 'mobile-flow-test-smtp-user',
+            'mail.mailers.smtp.password' => 'mobile-flow-test-smtp-password',
+        ]);
+
+        // Match the mobile client's signup payload and ensure registration
+        // returns a session that can immediately submit a property.
+        $registration = $this->postJson('/api/auth/register', [
+            'firstName' => 'Mobile',
+            'lastName' => 'Listing QA',
+            'username' => 'mobile-listing-qa',
+            'email' => 'mobile-listing-qa@example.test',
+            'phone' => '03001234567',
+            'password' => 'TestPassword123',
+            'confirmPassword' => 'TestPassword123',
+            'role' => 'buyer',
+            'city' => 'Okara',
+        ])->assertCreated()
+            ->assertJsonPath('user.role', 'Buyer');
+
+        $buyerId = $registration->json('user.id');
+        $buyerToken = (string) $registration->json('token');
+        $this->assertNotSame('', $buyerToken);
+        $this->withToken($buyerToken)
+            ->getJson('/api/auth/me')
+            ->assertOk()
+            ->assertJsonPath('id', $buyerId)
+            ->assertJsonPath('role', 'Buyer');
+
+        // Exercise the same authenticated, single-photo upload used by mobile.
+        $upload = $this->post('/api/upload/single', [
+            'image' => UploadedFile::fake()->image('mobile-qa-house.jpg')->size(40),
+        ], ['Authorization' => "Bearer {$buyerToken}"])->assertOk();
+        $imageUrl = (string) $upload->json('url');
+        $this->assertNotSame('', $imageUrl);
+        $uploadedPath = parse_url($imageUrl, PHP_URL_PATH);
+        $this->assertFileExists(
+            $this->mediaStorageDirectory . DIRECTORY_SEPARATOR . basename((string) $uploadedPath),
+        );
+
+        $property = $this->postJson('/api/properties', [
+            'title' => 'QA-only mobile house listing',
+            'type' => 'House',
+            'status' => 'For Sale',
+            'submissionState' => 'submitted',
+            'price' => 18000000,
+            'area' => 5,
+            'areaUnit' => 'Marla',
+            'bedrooms' => 3,
+            'bathrooms' => 2,
+            'city' => 'Okara',
+            'address' => 'QA-only test address',
+            'description' => 'Temporary development workflow test listing; not for sale.',
+            'lat' => 30.8086,
+            'lng' => 73.4537,
+            'images' => [$imageUrl],
+            'coverImage' => $imageUrl,
+            'location' => [
+                'latitude' => 30.8086,
+                'longitude' => 73.4537,
+                'city' => 'Okara',
+                'district' => 'Okara',
+                'locality' => 'QA Test Area',
+                'address' => 'QA-only test address',
+                'source' => 'manual',
+            ],
+        ], ['Authorization' => "Bearer {$buyerToken}"])
+            ->assertCreated()
+            ->assertJsonPath('sellerId', $buyerId)
+            ->assertJsonPath('approvalStatus', 'Pending')
+            ->assertJsonPath('listingStatus', 'Pending')
+            ->assertJsonPath('images.0', $imageUrl);
+        $propertyId = $property->json('id');
+
+        // Sign in through the same OTP-gated admin flow used by the app.
+        $this->postJson('/api/auth/admin-verify', [
+            'email' => 'mobile-flow-admin@example.test',
+            'password' => 'TestPassword123',
+        ])->assertOk()->assertJsonPath('success', true);
+
+        $sent = app('mail.manager')->mailer()->getSymfonyTransport()->messages();
+        $this->assertCount(1, $sent);
+        $message = $sent->first()->getOriginalMessage();
+        $this->assertSame('mobile-flow-admin@example.test', $message->getTo()[0]->getAddress());
+        $this->assertSame(
+            1,
+            preg_match('/\b(\d{6})\b/', (string) $message->getTextBody(), $matches),
+        );
+
+        $adminLogin = $this->postJson('/api/auth/admin-otp', [
+            'email' => 'mobile-flow-admin@example.test',
+            'otp' => $matches[1],
+        ])->assertOk()
+            ->assertJsonPath('user.role', 'Admin');
+        $adminToken = (string) $adminLogin->json('token');
+
+        $this->withToken($adminToken)
+            ->getJson('/api/admin/properties?status=Pending')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.id', $propertyId);
+        $this->withToken($adminToken)
+            ->getJson("/api/admin/properties/{$propertyId}/review")
+            ->assertOk()
+            ->assertJsonPath('property.id', $propertyId)
+            ->assertJsonPath('seller.id', $buyerId)
+            ->assertJsonPath('seller.role', 'Buyer')
+            ->assertJsonCount(0, 'audit');
+        $this->withoutHeader('Authorization')
+            ->getJson("/api/properties/{$propertyId}")
+            ->assertNotFound();
+
+        $this->patchJson(
+            "/api/properties/{$propertyId}/approve",
+            [],
+            ['Authorization' => "Bearer {$adminToken}"],
+        )->assertOk()
+            ->assertJsonPath('approvalStatus', 'Active')
+            ->assertJsonPath('listingStatus', 'Active');
+
+        $this->getJson("/api/properties/{$propertyId}")
+            ->assertOk()
+            ->assertJsonPath('approvalStatus', 'Active')
+            ->assertJsonPath('listingStatus', 'Active');
+        $this->withToken($adminToken)
+            ->getJson("/api/admin/properties/{$propertyId}/review")
+            ->assertOk()
+            ->assertJsonCount(1, 'audit')
+            ->assertJsonPath('audit.0.action', 'approve')
+            ->assertJsonPath('audit.0.toStatus', 'Active');
+    }
+
     public function test_registration_requires_a_valid_mobile_number(): void
     {
         $this->seedData(['users' => [], 'properties' => []]);

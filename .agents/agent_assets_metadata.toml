@@ -126,3 +126,45 @@ mtime_ms = 1791398436022
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/2b1c0de7-d5bf-4f6c-b45f-0e72919ecacb/ba5b558e-bb87-4dfa-b3f6-22de1f408354"
 storage_version_token = "1791398474708933"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "NhMZW6-44eXE8jNHJnYlp"
+uri = "file://exports/og-landmark-full-updated-zips/OG-Landmark-Frontend-Full-Updated-2026-10-07.zip"
+type = "unspecified"
+title = "OG Landmark — Full Frontend ZIP"
+description = "44.6 MB full source and build based on your supplied frontend package, with the three legal pages and route rules updated. Local node_modules and npm lockfiles are omitted; the included nested build.zip is updated too."
+logical_id = "7b0903b3-2133-44e6-ab7b-618ef41fbed3"
+content_hash = "sha256:9cf8833a920d6cd679f0815b9e1506e354a52deed96bb63736eb68ec18d3772d"
+size = 44610576
+mtime_ms = 1791399250990
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/7b0903b3-2133-44e6-ab7b-618ef41fbed3/6c3923d7-34af-428b-840e-d61fd546aae2"
+storage_version_token = "1791399402569633"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "K8xEhp5cK6XqW5aZkfHvH"
+uri = "file://exports/og-landmark-full-updated-zips/OG-Landmark-Backend-Full-Updated-2026-10-07.zip"
+type = "unspecified"
+title = "OG Landmark — Full Laravel Backend ZIP"
+description = "38.0 MB full package from the current Laravel source, including normalized MySQL storage and account/data deletion support. Excludes local environment secrets, live data, media, sessions, and logs."
+logical_id = "3d4f0221-92dc-45c5-ad7c-526a554fa039"
+content_hash = "sha256:021ebc17473d0d63f8ecf00ded99e104f18bca388f26b4da4bc30564a22655a2"
+size = 37972895
+mtime_ms = 1791399277318
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/3d4f0221-92dc-45c5-ad7c-526a554fa039/096b0216-b435-4628-bef2-8ef4eeff2c43"
+storage_version_token = "1791399404156287"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "wjBP6WHlDsaUuTyJaLMRS"
+uri = "file://exports/og-landmark-full-updated-zips/OG-Landmark-Database-Schema-Only-2026-10-07.zip"
+type = "unspecified"
+title = "OG Landmark — Database Schema ZIP (DDL Only)"
+description = "2.2 KB schema-only package with 17 CREATE TABLE definitions and no application or production data. This is not a database backup and is not needed for the deletion code update."
+logical_id = "4ad21491-3c30-4d16-8543-1bbe68bbb649"
+content_hash = "sha256:17c052875fd1ab0edfc38a263381b35ac40a257fdb4ed2a8c712a3994f1ec200"
+size = 2238
+mtime_ms = 1791399277370
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/4ad21491-3c30-4d16-8543-1bbe68bbb649/d6107b2e-f567-4cc8-a37a-7d2aa9ae52ca"
+storage_version_token = "1791399405424717"
+content_type = "application/octet-stream"

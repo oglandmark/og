@@ -193,7 +193,7 @@ function InquiriesModal({
 
                   {/* Actions */}
                   <View style={im.actionRow}>
-                    <Pressable onPress={() => Linking.openURL('tel:03042569000')}
+                    <Pressable onPress={() => Linking.openURL('tel:+923011484303')}
                       style={[im.actionBtn, { backgroundColor: colors.action }]}>
                       <Feather name="phone" size={13} color={colors.actionForeground} />
                       <Text style={[im.actionBtnText, { color: colors.actionForeground }]}>Call Agent</Text>

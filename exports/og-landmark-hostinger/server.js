@@ -5990,14 +5990,14 @@ app.get('/properties/:id', async (req, res) => {
       <div class="action-card">
         <h4>💰 Make an Offer</h4>
         <p>Submit a direct offer to the seller. Your offer will be tracked in your buyer dashboard.</p>
-        <a href="https://wa.me/923042569000?text=${waMsg}" target="_blank" class="btn-action btn-action-dark">🤝 Make an Offer</a>
+        <a href="https://wa.me/923011484303?text=${waMsg}" target="_blank" class="btn-action btn-action-dark">🤝 Make an Offer</a>
       </div>
 
       <!-- Schedule Visit -->
       <div class="action-card">
         <h4>📅 Schedule a Visit</h4>
         <p>Want to see it in person or via video call? Book a tour with our agent.</p>
-        <a href="https://wa.me/923042569000?text=${encodeURIComponent('I want to schedule a visit for: ' + prop.title)}" target="_blank" class="btn-action btn-action-gold">📅 Book a Tour</a>
+        <a href="https://wa.me/923011484303?text=${encodeURIComponent('I want to schedule a visit for: ' + prop.title)}" target="_blank" class="btn-action btn-action-gold">📅 Book a Tour</a>
       </div>
 
       <!-- Agent Card -->

@@ -441,7 +441,7 @@ function AppointmentModal({
                 {'\n'}has been submitted. The agent will confirm shortly.
               </Text>
               <View style={iq.successBtns}>
-                <Pressable onPress={() => Linking.openURL(`tel:${property.agentPhone ?? '03042569000'}`)}
+                <Pressable onPress={() => Linking.openURL(`tel:${property.agentPhone ?? '+923011484303'}`)}
                   style={[iq.successBtn, { backgroundColor: colors.secondary, borderColor: colors.border, borderWidth: 1 }]}>
                   <Feather name="phone" size={15} color={colors.foreground} />
                   <Text style={[iq.successBtnText, { color: colors.foreground }]}>Call Agent</Text>
@@ -662,7 +662,7 @@ function PropertyDetailScreen() {
     }).catch(() => undefined);
   }, [isLoggedIn, property.id, property.title, property.type, property.city, property.price, property.status]);
 
-  const agentPhone = property.agentPhone ?? '03042569000';
+  const agentPhone = property.agentPhone ?? '03011484303';
   const waUrl = `https://wa.me/92${agentPhone.replace(/\D/g, '').replace(/^0/, '')}`;
   const smsUrl = `sms:${agentPhone}`;
   const bottomBarH = insets.bottom + 70;
@@ -1022,7 +1022,7 @@ function PropertyDetailScreen() {
             <Pressable onPress={() => Linking.openURL(waUrl)} style={[styles.callButton, { backgroundColor: '#25D366' }]}>
               <WhatsAppLogo size={20} />
             </Pressable>
-            <Pressable onPress={() => Linking.openURL(`tel:${property.agentPhone ?? '03042569000'}`)} style={[styles.callButton, { backgroundColor: colors.action }]}>
+            <Pressable onPress={() => Linking.openURL(`tel:${property.agentPhone ?? '+923011484303'}`)} style={[styles.callButton, { backgroundColor: colors.action }]}>
               <Feather name="phone" size={17} color={colors.actionForeground} />
             </Pressable>
           </View>

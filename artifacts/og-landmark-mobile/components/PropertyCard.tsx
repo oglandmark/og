@@ -242,7 +242,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
 
       <View style={[ctaStyles.row, compact && ctaStyles.compactRow, { borderTopColor: colors.border, backgroundColor: colors.surfaceRaised }]}>
         <Pressable
-          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`sms:${property.agentPhone ?? '03042569000'}`); }}
+          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`sms:${property.agentPhone ?? '03011484303'}`); }}
           style={({ pressed }) => [ctaStyles.smsBtn, compact && ctaStyles.compactButton, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.75 : 1 }]}
           hitSlop={6}
           accessibilityRole="button"
@@ -253,7 +253,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
         </Pressable>
 
         <Pressable
-          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`tel:${property.agentPhone ?? '03042569000'}`); }}
+          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`tel:${property.agentPhone ?? '+923011484303'}`); }}
           style={({ pressed }) => [ctaStyles.callBtn, compact && ctaStyles.compactButton, { backgroundColor: colors.action, opacity: pressed ? 0.82 : 1 }]}
           hitSlop={6}
           accessibilityRole="button"
@@ -264,7 +264,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
         </Pressable>
 
         <Pressable
-          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`https://wa.me/92${(property.agentPhone ?? '03042569000').replace(/\D/g, '').replace(/^0/, '')}`); }}
+          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`https://wa.me/92${(property.agentPhone ?? '03011484303').replace(/\D/g, '').replace(/^0/, '')}`); }}
           style={({ pressed }) => [ctaStyles.waBtn, { opacity: pressed ? 0.75 : 1 }]}
           hitSlop={6}
           accessibilityRole="button"

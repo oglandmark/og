@@ -84,3 +84,45 @@ mtime_ms = 1791055036437
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/de0df2c2-2422-4c91-935f-a837f2485e76/714905a4-a0f4-4b74-9aea-5f1d5dc863c1"
 storage_version_token = "1791055082697755"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "ORPrTSKZZuOzVS9Gg1m1M"
+uri = "file://exports/og-landmark-deletion-deploy-zips/OG-Landmark-Frontend-Deletion-Pages.zip"
+type = "unspecified"
+title = "OG Landmark — Frontend update ZIP"
+description = "Static legal-page overlay: account/data deletion pages and rewrite rules. Does not replace the full website."
+logical_id = "6f72d585-74d5-4178-aa69-7bf1982bc4af"
+content_hash = "sha256:4c4da1b8a3b20e6eea8812a7f46c16678b3cf528a0150b10d0efa6747edabf3a"
+size = 20735
+mtime_ms = 1791398435934
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/6f72d585-74d5-4178-aa69-7bf1982bc4af/1fc50a22-8dea-46f7-9bd5-f072a6bea1a6"
+storage_version_token = "1791398472178401"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "fcaEPOOafPz8jlineFVFC"
+uri = "file://exports/og-landmark-deletion-deploy-zips/OG-Landmark-Laravel-Backend-Deletion-Update.zip"
+type = "unspecified"
+title = "OG Landmark — Laravel backend update ZIP"
+description = "Overlay files for the active Laravel API. No .env, database, or uploaded media included."
+logical_id = "ffb38a7b-ca0b-42bf-a8a4-106c189878f3"
+content_hash = "sha256:6b9b107724814f42c2d092f2f7e52a3495a85d02aaadfa2ff530df64549c10dd"
+size = 29514
+mtime_ms = 1791398436018
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/ffb38a7b-ca0b-42bf-a8a4-106c189878f3/4776dcd4-124d-49e2-8273-056f116b068e"
+storage_version_token = "1791398473460488"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "MzoIYwwjIHne31Wgp_Og3"
+uri = "file://exports/og-landmark-deletion-deploy-zips/OG-Landmark-MySQL-Schema-Only.zip"
+type = "unspecified"
+title = "OG Landmark — MySQL schema-only ZIP"
+description = "DDL-only schema reference; contains no production records. No new DB migration is required for account deletion."
+logical_id = "2b1c0de7-d5bf-4f6c-b45f-0e72919ecacb"
+content_hash = "sha256:9999e55352dc5cc4439765ed67f93d9402bef813cdc79036c722a52b7b42b34a"
+size = 2319
+mtime_ms = 1791398436022
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/2b1c0de7-d5bf-4f6c-b45f-0e72919ecacb/ba5b558e-bb87-4dfa-b3f6-22de1f408354"
+storage_version_token = "1791398474708933"
+content_type = "application/octet-stream"

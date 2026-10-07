@@ -97,7 +97,7 @@
         }
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-CXxrK7KP.js?v=official-contact-update"></script>
+    <script type="module" crossorigin src="/assets/index-CXxrK7KP.js?v=buyer-dashboard-auth-sync"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-cXzZ8FaN.css">
     <style>
       /* Hide Developer and Agent options from registration dropdown */
@@ -527,10 +527,27 @@
           }, 100);
         }
         var _origSet = localStorage.setItem.bind(localStorage);
+        function syncPersistedAuth() {
+          try {
+            var persisted = JSON.parse(localStorage.getItem('og-landmark-store') || 'null');
+            var state = persisted && persisted.state;
+            if (!state || !state.token || !state.currentUser) return false;
+            _origSet('og_token', state.token);
+            _origSet('og_user', JSON.stringify(state.currentUser));
+            return true;
+          } catch (e) {
+            return false;
+          }
+        }
         localStorage.setItem = function (key, value) {
           _origSet(key, value);
           if (key === 'og_token' || key === 'og_user') scheduleAuthRedirect();
         };
+        var path = (window.location.pathname || '').replace(/\/+$/, '') || '/';
+        if (path === '/user') {
+          syncPersistedAuth();
+          scheduleAuthRedirect();
+        }
       })();
     </script>
 

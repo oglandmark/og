@@ -15,6 +15,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const multer = require('multer');
+const patchDashboardAuth = require('./scripts/patch-dashboard-auth');
 const {
   provider: databaseProvider,
   configured: databaseConfigured,
@@ -5755,17 +5756,18 @@ if (fs.existsSync(mediaStorageDir)) {
     },
   }));
 }
-let officialPhoneBundleCache = null;
+let patchedWebsiteBundleCache = null;
 app.get('/assets/index-CXxrK7KP.js', (_req, res, next) => {
   try {
-    if (officialPhoneBundleCache === null) {
-      officialPhoneBundleCache = fs.readFileSync(path.join(publicDir, 'assets', 'index-CXxrK7KP.js'), 'utf8')
+    if (patchedWebsiteBundleCache === null) {
+      const phonePatchedBundle = fs.readFileSync(path.join(publicDir, 'assets', 'index-CXxrK7KP.js'), 'utf8')
         .replaceAll('0304 2569000', '03011484303')
         .replaceAll('03042569000', '03011484303')
         .replaceAll('923042569000', '923011484303');
+      patchedWebsiteBundleCache = patchDashboardAuth(phonePatchedBundle);
     }
     res.setHeader('Cache-Control', 'no-store');
-    res.type('application/javascript').send(officialPhoneBundleCache);
+    res.type('application/javascript').send(patchedWebsiteBundleCache);
   } catch (error) {
     next(error);
   }

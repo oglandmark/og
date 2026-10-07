@@ -11,7 +11,8 @@
     "migrate:postgres": "node scripts/migrate-postgres.js",
     "migrate:data:postgres": "node scripts/migrate-mysql-to-postgres.js",
     "import:postgres": "node scripts/import-data-postgres.js",
-    "test:db-adapter": "node --test database/connection.test.js scripts/json-parity.test.js"
+    "test:db-adapter": "node --test database/connection.test.js scripts/json-parity.test.js",
+    "test:dashboard-auth": "node --test scripts/patch-dashboard-auth.test.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

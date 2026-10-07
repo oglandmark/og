@@ -116,6 +116,30 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonPath('user.role', 'Developer');
     }
 
+    public function test_buyer_registration_returns_a_session_usable_by_dashboard_requests(): void
+    {
+        $this->seedData(['users' => [], 'properties' => [], 'savedProperties' => []]);
+
+        $registration = $this->postJson('/api/auth/register', [
+            'email' => 'buyer-dashboard@example.test',
+            'password' => 'TestPassword123',
+            'name' => 'Dashboard Buyer',
+            'phone' => '03001234567',
+            'role' => 'buyer',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('user.role', 'Buyer');
+
+        $token = (string) $registration->json('token');
+        $this->assertNotSame('', $token);
+
+        $this->withToken($token)
+            ->getJson('/api/auth/me')
+            ->assertOk()
+            ->assertJsonPath('email', 'buyer-dashboard@example.test')
+            ->assertJsonPath('role', 'Buyer');
+    }
+
     public function test_registration_requires_a_valid_mobile_number(): void
     {
         $this->seedData(['users' => [], 'properties' => []]);

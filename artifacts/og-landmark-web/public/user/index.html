@@ -23,7 +23,18 @@
         var destination = '/auth';
         try {
           var token = localStorage.getItem('og_token');
-          var user = JSON.parse(localStorage.getItem('og_user') || 'null');
+          var user = null;
+          try { user = JSON.parse(localStorage.getItem('og_user') || 'null'); } catch (error) {}
+          if (!token || !user) {
+            var persisted = JSON.parse(localStorage.getItem('og-landmark-store') || 'null');
+            var state = persisted && persisted.state;
+            if (state && state.token && state.currentUser) {
+              token = state.token;
+              user = state.currentUser;
+              localStorage.setItem('og_token', token);
+              localStorage.setItem('og_user', JSON.stringify(user));
+            }
+          }
           var role = String((user && user.role) || '').trim().toLowerCase();
           if (token && user && destinationByRole[role]) {
             destination = destinationByRole[role];

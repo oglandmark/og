@@ -1,5 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const patchDashboardAuth = require('./patch-dashboard-auth');
 
 const artifactDir = path.resolve(__dirname, '..');
 const publicDir = path.join(artifactDir, 'public');
@@ -19,10 +20,11 @@ fs.cpSync(publicDir, outputDir, {
 
 const websiteBundle = path.join(outputDir, 'assets', 'index-CXxrK7KP.js');
 if (fs.existsSync(websiteBundle)) {
-  const patchedBundle = fs.readFileSync(websiteBundle, 'utf8')
+  const phonePatchedBundle = fs.readFileSync(websiteBundle, 'utf8')
     .replaceAll('0304 2569000', '03011484303')
     .replaceAll('03042569000', '03011484303')
     .replaceAll('923042569000', '923011484303');
+  const patchedBundle = patchDashboardAuth(phonePatchedBundle);
   fs.writeFileSync(websiteBundle, patchedBundle);
 }
 

@@ -388,8 +388,13 @@
         if (!token || !uStr) return;
         let user; try { user = JSON.parse(uStr); } catch(e){ return; }
         const role = user.role || 'Buyer';
-        const dashMap = { Admin:'/admin/', Agent:'/user/', Seller:'/user/', Buyer:'/user/' };
-        const dashUrl = dashMap[role] || '/user/';
+        const dashMap = {
+          admin:'/admin/',
+          agent:'/portal/agent-dashboard.html',
+          seller:'/portal/seller-dashboard.html',
+          buyer:'/portal/buyer-dashboard.html'
+        };
+        const dashUrl = dashMap[String(role).toLowerCase()] || '/auth';
         const initials = (user.name||role).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
         const roleColor = { Admin:'#dc2626', Agent:'#7c3aed', Seller:'#16a34a', Buyer:'#2563eb' }[role] || '#C8A45A';
 
@@ -490,7 +495,7 @@
       })();
     </script>
 
-    <!-- ── Post-login/register redirect → React /admin or /user portals ── -->
+    <!-- ── Post-login/register redirect to the existing role dashboards ── -->
     <script>
       (function () {
         var pending = null;
@@ -504,13 +509,19 @@
               if (!token || !uStr) return;
               var user = JSON.parse(uStr);
               var role = String(user.role || '').toLowerCase();
-              var dest = role === 'admin' ? '/admin/' : '/user/';
+              var dashboardByRole = {
+                admin: '/admin/',
+                agent: '/portal/agent-dashboard.html',
+                seller: '/portal/seller-dashboard.html',
+                buyer: '/portal/buyer-dashboard.html'
+              };
+              var dest = dashboardByRole[role] || '/auth';
               if (role === 'admin') {
                 try { localStorage.setItem('adminAuth', 'true'); } catch (e) {}
               }
-              // Avoid redirect loops when already on the target portal
+              // Avoid redirect loops when already on the target dashboard.
               var path = window.location.pathname || '';
-              if (path.indexOf('/admin') === 0 || path.indexOf('/user') === 0) return;
+              if (path === dest || path === dest.replace(/\/$/, '')) return;
               window.location.href = dest;
             } catch (e) {}
           }, 100);

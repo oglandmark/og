@@ -5677,10 +5677,19 @@ app.get('/portal/seller', (req, res) => { noCache(res); res.sendFile(path.join(p
 app.get('/portal/buyer',  (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/buyer.html')); });
 app.get('/portal/agent',  (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/agent.html')); });
 
-// ─── CUSTOM DASHBOARDS (override SPA routes) ─────────────────────────────────
-const redirectToUserPortal = (_req, res) => res.redirect(302, '/user/');
-app.get('/seller',   redirectToUserPortal);
-app.get('/seller/*', redirectToUserPortal);
+// ─── ROLE-SPECIFIC DASHBOARDS ─────────────────────────────────────────────────
+const dashboardUrlByRole = {
+  buyer: '/portal/buyer-dashboard.html',
+  seller: '/portal/seller-dashboard.html',
+  agent: '/portal/agent-dashboard.html',
+};
+const redirectToDashboard = (role) => (req, res) => {
+  noCache(res);
+  const addProperty = role === 'seller' && req.path.includes('/add-property');
+  res.redirect(302, `${dashboardUrlByRole[role]}${addProperty ? '#add' : ''}`);
+};
+app.get('/seller',   redirectToDashboard('seller'));
+app.get('/seller/*', redirectToDashboard('seller'));
 
 // ─── PREVIEW SHORTCUT (auto-login as test seller → Add Property) ─────────────
 app.get('/preview', async (req, res) => {
@@ -5720,10 +5729,10 @@ app.get('/user/*', (req, res) => {
   noCache(res);
   res.sendFile(path.join(publicDir, 'user/index.html'));
 });
-app.get('/agent', redirectToUserPortal);
-app.get('/agent/*', redirectToUserPortal);
-app.get('/buyer', redirectToUserPortal);
-app.get('/buyer/*', redirectToUserPortal);
+app.get('/agent', redirectToDashboard('agent'));
+app.get('/agent/*', redirectToDashboard('agent'));
+app.get('/buyer', redirectToDashboard('buyer'));
+app.get('/buyer/*', redirectToDashboard('buyer'));
 app.get('/admin-dashboard', (_req, res) => res.redirect(302, '/admin/'));
 const buyerDashboard = (req, res) => {
   noCache(res);

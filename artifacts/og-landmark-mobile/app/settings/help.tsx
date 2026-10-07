@@ -78,10 +78,10 @@ export default function HelpScreen() {
     {
       icon: 'mail' as const,
       label: 'Email Support',
-      sub: 'support@oglandmark.pk · Reply within 24hrs',
+      sub: 'support@oglandmark.com · Reply within 24hrs',
       color: '#c8a45a',
       bg: '#c8a45a18',
-      onPress: () => Linking.openURL('mailto:support@oglandmark.pk?subject=Support%20Request&body=Hi%20OG%20Landmark%2C%0A%0A'),
+      onPress: () => Linking.openURL('mailto:support@oglandmark.com?subject=Support%20Request&body=Hi%20OG%20Landmark%2C%0A%0A'),
     },
   ];
 

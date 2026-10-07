@@ -324,8 +324,7 @@ const laravelWebUrl = String(process.env.LARAVEL_WEB_URL || '').trim().replace(/
 const legalPagesDir = path.join(__dirname, 'public/pages');
 app.get('/privacy-policy', (req, res) => res.sendFile(path.join(legalPagesDir, 'privacy-policy.html')));
 app.get('/privacy', (req, res) => res.sendFile(path.join(legalPagesDir, 'privacy-policy.html')));
-app.get('/account-deletion', (req, res) => res.sendFile(path.join(legalPagesDir, 'account-deletion.html')));
-app.get('/data-deletion', (req, res) => res.sendFile(path.join(legalPagesDir, 'data-deletion.html')));
+app.get(['/account-deletion', '/data-deletion'], (req, res) => res.sendFile(path.join(legalPagesDir, 'account-deletion.html')));
 
 // Preview Laravel-rendered website pages without changing the existing /api
 // upstream. Clearing LARAVEL_WEB_URL restores the original Node/React routes.

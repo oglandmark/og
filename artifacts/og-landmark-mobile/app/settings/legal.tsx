@@ -177,7 +177,7 @@ function LegalDocument({
 
           <SectionCard icon="share-2" eyebrow="03" title="When information is shared" colors={colors}>
             <Paragraph colors={colors}>
-              We share only what is needed to operate the requested service. For example, an enquiry may include your name and contact details with the relevant seller, agent, or developer. We may also use trusted providers for hosting, email delivery, notifications, and security.
+              We share only what is needed to operate the requested service. For example, an enquiry may include your name and contact details with the relevant seller, agent, or developer. We may also use third-party service providers for hosting, email delivery, notifications, and security.
             </Paragraph>
             <Paragraph colors={colors}>
               We do not sell personal information for advertising. We may disclose information when required by law, to protect users, or as part of a genuine business transfer.
@@ -244,7 +244,7 @@ function AboutContent({ colors }: { colors: ReturnType<typeof useColors> }) {
 
       <SectionCard icon="compass" eyebrow="OUR PERSPECTIVE" title="A more considered property platform" colors={colors}>
         <Paragraph colors={colors}>
-          OG Landmark brings buyers, property owners, agents, and developers together through one trusted digital experience. We focus on clear information, practical tools, and responsive communication so people can make better-informed property decisions.
+          OG Landmark brings buyers, property owners, agents, and developers together on one digital platform. It provides property listings, communication tools, and options for arranging visits.
         </Paragraph>
         <Paragraph colors={colors}>
           Our roots are in Okara District and the wider Punjab region, with a platform built to support homes, land, commercial spaces, and development projects.

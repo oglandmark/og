@@ -39,3 +39,4 @@
 - [Laravel backend cutover](laravel-backend-cutover.md) — preserve the API contract and verify browser-facing proxy paths separately from the local API listener.
 - [Laravel config cache smoke checks](laravel-config-cache.md) — clear stale DB config before local overrides; health alone may not prove JsonStore reads the target.
 - [Normalized core storage](normalized-core-storage.md) — keep app accounts in `app_users`, preserve full payloads, and dual-write `app_data` for rollback.
+- [Play Store metadata claims](play-store-metadata.md) — keep OG Landmark store copy factual; Google rejected the “trusted” short and full description claims.

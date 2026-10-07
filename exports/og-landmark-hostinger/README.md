@@ -20,6 +20,8 @@ After restarting, `/api/health` reports `"smtp": "configured"` when both SMTP us
 
 The public legal pages are available without signing in at `/privacy-policy`, `/account-deletion`, and `/data-deletion`. After uploading a new package and restarting the Node.js app, verify each URL in a private browser window before saving them in Google Play Console.
 
+If the domain is served from Hostinger's static `public_html` directory instead of this Node.js app, upload the matching `public/privacy-policy/`, `public/account-deletion/`, and `public/data-deletion/` folders (each contains an `index.html`) into `public_html`. Then verify the three HTTPS URLs in a private browser window.
+
 The package intentionally does not include a generated lockfile: Replit lockfiles can contain workspace-only package-firewall URLs that are not reachable from Hostinger. `.npmrc` pins installation to the public npm registry.
 
 The MySQL connection string contains database credentials and must remain server-side: never put it in browser code, `public/`, Git, or chat.

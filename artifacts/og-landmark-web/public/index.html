@@ -16,6 +16,87 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Live API: rewrites /api/* to Laravel (api.oglandmark.com). Override: ?api= or localStorage og_api_base -->
+    <script src="/og-api-base.js"></script>
+    <script>
+      (function () {
+        const routes = [
+          { suffix: '/privacy-policy', file: '/pages/privacy-policy.html' },
+          { suffix: '/privacy', file: '/pages/privacy-policy.html' },
+          { suffix: '/account-deletion', file: '/pages/account-deletion.html' },
+          { suffix: '/data-deletion', file: '/pages/data-deletion.html' }
+        ];
+        function redirectPolicyRoute() {
+          const pathname = window.location.pathname.replace(/\/+$/, '');
+          const route = routes.find(item => pathname.endsWith(item.suffix));
+          if (!route) return false;
+          const base = pathname.slice(0, -route.suffix.length).replace(/\/$/, '');
+          window.location.replace(base + route.file + window.location.hash);
+          return true;
+        }
+        if (redirectPolicyRoute()) return;
+        ['pushState', 'replaceState'].forEach(name => {
+          const original = history[name].bind(history);
+          history[name] = function (state, title, url) {
+            original(state, title, url);
+            redirectPolicyRoute();
+          };
+        });
+        window.addEventListener('popstate', redirectPolicyRoute);
+        document.addEventListener('click', event => {
+          const target = event.target instanceof Element ? event.target : null;
+          const link = target && target.closest('a');
+          if (!link || link.getAttribute('href') !== '#') return;
+          const label = (link.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+          const destination = label === 'privacy policy'
+            ? '/privacy-policy'
+            : label === 'terms of service' ? '/terms' : null;
+          if (!destination) return;
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          window.location.assign(destination);
+        }, true);
+      })();
+      (function () {
+        const previousLogos = [
+          '/assets/IMG_0329_1784919532811-CnY08-QX.PNG',
+          '/og-logo.png',
+          '/images/og-logo.png'
+        ];
+        const replaceLogo = () => {
+          document.querySelectorAll('img').forEach(image => {
+            const src = image.getAttribute('src') || '';
+            if (previousLogos.some(previous => src.includes(previous))) {
+              image.setAttribute('src', '/og-landmark-logo.png');
+            }
+          });
+        };
+        replaceLogo();
+        new MutationObserver(replaceLogo).observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['src']
+        });
+      })();
+    </script>
+    <!-- Clear demo persist + overlay properties from MySQL via /api/properties -->
+    <script src="/og-force-db.js"></script>
+    <!-- Default UI language: English (og_lang=ur opts into Urdu/RTL before React hydrates) -->
+    <script>
+      (function () {
+        try {
+          var lang = localStorage.getItem('og_lang');
+          if (lang !== 'ur') lang = 'en';
+          document.documentElement.setAttribute('lang', lang === 'ur' ? 'ur' : 'en');
+          document.documentElement.setAttribute('dir', lang === 'ur' ? 'rtl' : 'ltr');
+        } catch (e) {
+          document.documentElement.setAttribute('lang', 'en');
+          document.documentElement.setAttribute('dir', 'ltr');
+        }
+      })();
+    </script>
     <script type="module" crossorigin src="/assets/index-CXxrK7KP.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-cXzZ8FaN.css">
     <style>
@@ -29,7 +110,6 @@
         display: none !important;
       }
     </style>
-    <link rel="stylesheet" href="/home-category-banners-20261002-v1.css" />
   </head>
   <body>
     <div id="root"></div>
@@ -41,84 +121,16 @@
             window.location.replace('/seller'); return true;
           }
         }
-        function guardPublicPages(){
-          const routes=[
-            {suffix:'/privacy-policy',file:'/pages/privacy-policy.html'},
-            {suffix:'/privacy',file:'/pages/privacy-policy.html'},
-            {suffix:'/account-deletion',file:'/pages/account-deletion.html'},
-            {suffix:'/data-deletion',file:'/pages/data-deletion.html'}
-          ];
-          const pathname=window.location.pathname.replace(/\/+$/,'');
-          const route=routes.find(item=>pathname.endsWith(item.suffix));
-          if(!route) return false;
-          const base=pathname.slice(0,-route.suffix.length).replace(/\/$/,'');
-          window.location.replace(base+route.file+window.location.hash);
-          return true;
-        }
-        if(guardSell()||guardPublicPages()) return;
-        // Route policy links to their standalone HTML pages during SPA navigation too.
+        if(guardSell()) return;
+        // Wrap pushState / replaceState so React Router navigation is also caught
         ['pushState','replaceState'].forEach(fn=>{
           const orig=history[fn].bind(history);
           history[fn]=function(s,t,u){
             orig(s,t,u);
-            if(guardSell()) return;
-            guardPublicPages();
+            if(u==='/sell'||String(u||'').startsWith('/sell/')) window.location.replace('/seller');
           };
         });
-        window.addEventListener('popstate',function(){
-          if(guardSell()) return;
-          guardPublicPages();
-        });
-      })();
-
-      // The compiled homepage bundle still points at its previous logo filename.
-      // Swap that image to the current mobile-app brand icon after every SPA render.
-      (function(){
-        const previousLogos = [
-          '/assets/IMG_0329_1784919532811-CnY08-QX.PNG',
-          '/og-logo.png',
-          '/images/og-logo.png',
-          '/og-landmark-brand-square.png',
-          '/og-landmark-brand-square-20261002-v2.png'
-        ];
-        const currentLogo = '/og-landmark-logo.png';
-        const replaceLogo = () => {
-          document.querySelectorAll('img').forEach(image => {
-            const src = image.getAttribute('src') || '';
-            if (previousLogos.some(previousLogo => src.includes(previousLogo))) image.setAttribute('src', currentLogo);
-          });
-        };
-        replaceLogo();
-        new MutationObserver(replaceLogo).observe(document.documentElement, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-          attributeFilter: ['src']
-        });
-      })();
-
-      // The built homepage contains a placeholder href for this footer link.
-      (function(){
-        const isPrivacyLink = link =>
-          (link.textContent || '').replace(/\s+/g,' ').trim().toLowerCase() === 'privacy policy';
-        const repairPrivacyLinks = () => {
-          document.querySelectorAll('a[href="#"]').forEach(link => {
-            if (isPrivacyLink(link)) link.setAttribute('href','/privacy-policy');
-          });
-        };
-        repairPrivacyLinks();
-        new MutationObserver(repairPrivacyLinks).observe(document.documentElement,{
-          childList:true,subtree:true,attributes:true,attributeFilter:['href']
-        });
-        document.addEventListener('click',event => {
-          const target = event.target instanceof Element ? event.target : null;
-          const link = target && target.closest('a');
-          if (!link || !isPrivacyLink(link)) return;
-          event.preventDefault();
-          event.stopPropagation();
-          event.stopImmediatePropagation();
-          window.location.assign('/privacy-policy');
-        },true);
+        window.addEventListener('popstate',guardSell);
       })();
 
       // ── Remove hardcoded demo popups (Price Drop Alert / New Property Listed) ──
@@ -376,8 +388,8 @@
         if (!token || !uStr) return;
         let user; try { user = JSON.parse(uStr); } catch(e){ return; }
         const role = user.role || 'Buyer';
-        const dashMap = { Admin:'/admin', Agent:'/agent', Seller:'/seller', Buyer:'/buyer' };
-        const dashUrl = dashMap[role] || '/user';
+        const dashMap = { Admin:'/admin/', Agent:'/user/', Seller:'/user/', Buyer:'/user/' };
+        const dashUrl = dashMap[role] || '/user/';
         const initials = (user.name||role).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
         const roleColor = { Admin:'#dc2626', Agent:'#7c3aed', Seller:'#16a34a', Buyer:'#2563eb' }[role] || '#C8A45A';
 
@@ -478,28 +490,35 @@
       })();
     </script>
 
-    <!-- ── Post-login redirect: intercept localStorage so React login/register
-         sends Seller → /seller, Buyer → /user, Agent → /agent, Admin → /admin ── -->
+    <!-- ── Post-login/register redirect → React /admin or /user portals ── -->
     <script>
       (function () {
-        const _origSet = localStorage.setItem.bind(localStorage);
+        var pending = null;
+        function scheduleAuthRedirect() {
+          if (pending) return;
+          pending = setTimeout(function () {
+            pending = null;
+            try {
+              var token = localStorage.getItem('og_token');
+              var uStr = localStorage.getItem('og_user');
+              if (!token || !uStr) return;
+              var user = JSON.parse(uStr);
+              var role = String(user.role || '').toLowerCase();
+              var dest = role === 'admin' ? '/admin/' : '/user/';
+              if (role === 'admin') {
+                try { localStorage.setItem('adminAuth', 'true'); } catch (e) {}
+              }
+              // Avoid redirect loops when already on the target portal
+              var path = window.location.pathname || '';
+              if (path.indexOf('/admin') === 0 || path.indexOf('/user') === 0) return;
+              window.location.href = dest;
+            } catch (e) {}
+          }, 100);
+        }
+        var _origSet = localStorage.setItem.bind(localStorage);
         localStorage.setItem = function (key, value) {
           _origSet(key, value);
-          // When token is written, read the user object and redirect
-          if (key === 'og_token') {
-            try {
-              const uStr = localStorage.getItem('og_user');
-              if (!uStr) return;
-              const user = JSON.parse(uStr);
-              const role = (user.role || '').toLowerCase();
-              const map = { seller: '/seller/add-property', admin: '/admin', agent: '/agent', buyer: '/user' };
-              const dest = map[role];
-              if (dest) {
-                // small delay so React can finish its own state update before we navigate
-                setTimeout(() => { window.location.href = dest; }, 80);
-              }
-            } catch (e) {}
-          }
+          if (key === 'og_token' || key === 'og_user') scheduleAuthRedirect();
         };
       })();
     </script>
@@ -657,7 +676,7 @@
       }
 
       // Fetch all active properties once, then trigger injection
-      fetch('/api/properties').then(function(r){return r.ok?r.json():null;}).then(function(d){
+      fetch((window.__OG_API_BASE__||'/api')+'/properties').then(function(r){return r.ok?r.json():null;}).then(function(d){
         if(d&&Array.isArray(d)){
           _allProps=d;
           _priorityProps=d.filter(function(p){return p.priority===true;});
@@ -874,8 +893,8 @@
 
       // Fetch agents + hidden list in parallel, then inject
       Promise.all([
-        fetch('/api/agents?approvalStatus=Approved').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
-        fetch('/api/settings/hidden-react-agents').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+        fetch((window.__OG_API_BASE__||'/api')+'/agents?approvalStatus=Approved').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+        fetch((window.__OG_API_BASE__||'/api')+'/settings/hidden-react-agents').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
       ]).then(function(results){
         var agentsData=results[0], hiddenData=results[1];
         if(Array.isArray(agentsData)) _agents=agentsData.filter(function(a){return a.status==='Active';});
@@ -902,7 +921,91 @@
         clearTimeout(_t); _t=setTimeout(function(){ injectAgents(); patchExistingCards(); removeHiddenReactAgents(); },700);
       });
     })();
+
+      // ── Site Content CMS injector (hero / SEO / contact from Laravel) ──
+      (function(){
+        var _cms=null;
+        var _applied=false;
+        function textMatch(el, needle){
+          return (el.textContent||'').toLowerCase().indexOf(String(needle||'').toLowerCase())!==-1;
+        }
+        function applyCms(c){
+          if(!c) return;
+          if(c.seo&&c.seo.title) document.title=c.seo.title;
+          if(c.seo&&c.seo.description){
+            var meta=document.querySelector('meta[name="description"]');
+            if(meta) meta.setAttribute('content',c.seo.description);
+            var og=document.querySelector('meta[property="og:description"]');
+            if(og) og.setAttribute('content',c.seo.description);
+            var ogt=document.querySelector('meta[property="og:title"]');
+            if(ogt&&c.seo.title) ogt.setAttribute('content',c.seo.title);
+          }
+          // Prefer marked nodes; otherwise patch largest headline-like h1/h2 on homepage
+          var path=window.location.pathname||'/';
+          if(path!=='/'&&path!=='') return;
+          var hero=document.querySelector('[data-cms="hero-title"],#cms-hero-title');
+          if(hero&&c.heroTitle){ hero.textContent=c.heroTitle; }
+          else if(c.heroTitle){
+            var h1=document.querySelector('h1');
+            if(h1&&!h1.getAttribute('data-cms-locked')){
+              h1.textContent=c.heroTitle;
+              h1.setAttribute('data-cms-applied','1');
+            }
+          }
+          var sub=document.querySelector('[data-cms="hero-subtitle"],#cms-hero-subtitle');
+          if(sub&&c.heroSubtitle){ sub.textContent=c.heroSubtitle; }
+          else if(c.heroSubtitle){
+            var h1el=document.querySelector('h1[data-cms-applied],h1');
+            if(h1el){
+              var p=h1el.parentElement&&h1el.parentElement.querySelector('p');
+              if(p&&!p.getAttribute('data-cms-locked')){ p.textContent=c.heroSubtitle; p.setAttribute('data-cms-applied','1'); }
+            }
+          }
+          var feat=document.querySelector('[data-cms="featured-title"]');
+          if(feat&&c.featuredSectionTitle) feat.textContent=c.featuredSectionTitle;
+          var about=document.querySelector('[data-cms="about-teaser"]');
+          if(about&&c.aboutTeaser) about.textContent=c.aboutTeaser;
+          function patchCta(sel, cta){
+            if(!cta||!cta.label) return;
+            var el=document.querySelector(sel);
+            if(el){ el.textContent=cta.label; if(cta.href){ if(el.tagName==='A') el.setAttribute('href',cta.href); else if(el.closest&&el.closest('a')) el.closest('a').setAttribute('href',cta.href); } }
+          }
+          patchCta('[data-cms="primary-cta"]', c.primaryCta);
+          patchCta('[data-cms="secondary-cta"]', c.secondaryCta);
+          if(c.contact){
+            document.querySelectorAll('[data-cms="contact-phone"]').forEach(function(el){ if(c.contact.phone) el.textContent=c.contact.phone; });
+            document.querySelectorAll('[data-cms="contact-email"]').forEach(function(el){ if(c.contact.email) el.textContent=c.contact.email; });
+            document.querySelectorAll('[data-cms="contact-address"]').forEach(function(el){ if(c.contact.address) el.textContent=c.contact.address; });
+          }
+          // Lightweight floating badge so admins can confirm CMS is live (homepage only)
+          if(!_applied){
+            _applied=true;
+            var badge=document.createElement('div');
+            badge.id='og-cms-live';
+            badge.setAttribute('aria-hidden','true');
+            badge.style.cssText='position:fixed;bottom:12px;left:12px;z-index:40;font:11px/1.3 Inter,system-ui,sans-serif;color:#64748b;background:rgba(255,255,255,.9);border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;pointer-events:none;opacity:0;transition:opacity .4s';
+            badge.textContent='Content synced';
+            document.body.appendChild(badge);
+            requestAnimationFrame(function(){ badge.style.opacity='1'; setTimeout(function(){ badge.style.opacity='0'; setTimeout(function(){ badge.remove(); },400); },2200); });
+          }
+        }
+        function load(){
+          fetch((window.__OG_API_BASE__||'/api')+'/site-content').then(function(r){return r.ok?r.json():null;}).then(function(c){
+            if(!c) return;
+            _cms=c;
+            setTimeout(function(){ applyCms(_cms); },600);
+          }).catch(function(){});
+        }
+        load();
+        var t=null;
+        var mo=new MutationObserver(function(){
+          if(!_cms) return;
+          clearTimeout(t);
+          t=setTimeout(function(){ applyCms(_cms); },700);
+        });
+        mo.observe(document.documentElement,{childList:true,subtree:true});
+        window.addEventListener('popstate',function(){ if(_cms) setTimeout(function(){ applyCms(_cms); },500); });
+      })();
     </script>
-    <script defer src="/home-category-banners-20261002-v1.js"></script>
   </body>
 </html>

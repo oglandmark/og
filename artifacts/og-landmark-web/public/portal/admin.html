@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OG Landmark — Admin Login</title>
-  <link rel="icon" href="/og-landmark-logo-square.png" />
+  <link rel="icon" href="/og-logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -59,12 +59,13 @@
     @keyframes spin{to{transform:rotate(360deg)}}
     @media(max-width:768px){.brand{display:none}.form-side{width:100%;padding:32px 24px}}
   </style>
+  <script src="/og-api-base.js"></script>
 </head>
 <body>
 <div class="split">
   <div class="brand">
     <div class="brand-content">
-      <img src="/og-landmark-logo-white.png" class="brand-logo" alt="OG Landmark" />
+      <img src="/og-logo.png" class="brand-logo" alt="OG Landmark" />
       <div class="brand-title">OG Landmark</div>
       <div class="brand-sub">Premium Real Estate</div>
       <div class="brand-tagline">Pakistan's premier property platform — connecting buyers, sellers & agents.</div>
@@ -253,6 +254,15 @@ async function doLogin() {
     const d = await r.json();
     if (!r.ok) { setLoading('login-btn', false, 'Continue'); return showErr('login-err', d.error || 'Login failed.'); }
 
+    // Prefer immediate token from admin-verify (OTP not required in this deploy)
+    if (d.token && d.user) {
+      localStorage.setItem('adminAuth', 'true');
+      localStorage.setItem('og_token', d.token);
+      localStorage.setItem('og_user', JSON.stringify(d.user));
+      window.location.href = '/portal/admin-dashboard.html';
+      return;
+    }
+
     pendingEmail = email;
     showPanel('panel-otp');
     document.getElementById('otp-info-box').innerHTML = `<strong>📧 OTP Sent</strong>Code sent to <strong>${email}</strong>. Check your inbox (or server logs if SMTP is not configured). Valid for 5 minutes.`;
@@ -291,7 +301,7 @@ async function doOtp() {
     localStorage.setItem('adminAuth', 'true');
     localStorage.setItem('og_token', d.token);
     localStorage.setItem('og_user', JSON.stringify(d.user));
-    window.location.href = '/admin';
+    window.location.href = '/portal/admin-dashboard.html';
   } catch(e) {
     showErr('otp-err', 'Connection error. Please try again.');
     setLoading('otp-btn', false, 'Verify & Login');

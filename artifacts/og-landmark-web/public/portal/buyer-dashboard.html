@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>OG Landmark — Buyer Dashboard</title>
-  <link rel="icon" href="/og-landmark-logo-square.png"/>
+  <link rel="icon" href="/og-logo.png"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -200,13 +200,14 @@
       .content{padding:14px}
     }
   </style>
+  <script src="/og-api-base.js"></script>
 </head>
 <body>
 
 <!-- ═══ SIDEBAR ═══ -->
 <aside class="sidebar">
   <div class="sb-brand">
-    <img src="/og-landmark-logo-white.png" alt="OG Landmark"/>
+    <img src="/og-logo.png" alt="OG Landmark"/>
     <div><div class="sb-brand-title">OG Landmark</div><div class="sb-brand-sub">Buyer Portal</div></div>
   </div>
   <div class="sb-user">
@@ -580,10 +581,10 @@ let _confirmCb = null;
 function init(){
   token = localStorage.getItem('og_token') || '';
   const u = localStorage.getItem('og_user');
-  if(!token || !u){ window.location.href = '/portal/buyer'; return; }
-  try { currentUser = JSON.parse(u); } catch(e){ window.location.href='/portal/buyer'; return; }
+  if(!token || !u){ window.location.href = '/portal/buyer.html'; return; }
+  try { currentUser = JSON.parse(u); } catch(e){ window.location.href='/portal/buyer.html'; return; }
   if(!currentUser || !['Buyer','Admin'].includes(currentUser.role)){
-    window.location.href = '/portal/buyer'; return;
+    window.location.href = '/portal/buyer.html'; return;
   }
   const av = (currentUser.name || 'B')[0].toUpperCase();
   document.getElementById('sb-avatar').textContent = av;
@@ -607,7 +608,7 @@ function init(){
 function logout(){
   localStorage.removeItem('og_token');
   localStorage.removeItem('og_user');
-  window.location.href = '/portal/buyer';
+  window.location.href = '/portal/buyer.html';
 }
 
 // ═══ API HELPER ═══
@@ -645,7 +646,7 @@ async function loadAll(){
     myApts   = Array.isArray(aptData)   ? aptData   : [];
     myOffs   = Array.isArray(offData)   ? offData   : [];
     savedIds = Array.isArray(savedData) ? savedData.map(Number) : [];
-    myNotifs = Array.isArray(notifData) ? notifData : [];
+    myNotifs = Array.isArray(notifData) ? notifData : (Array.isArray(notifData?.items) ? notifData.items : []);
 
     renderAll();
   } catch(e){

@@ -15,11 +15,23 @@ The public Node website can remain the asset host while an opt-in `LARAVEL_API_U
 
 **How to apply:** Verify the Laravel API origin first, set the proxy only after MySQL/SMTP/media smoke checks pass, and do not silently fail over individual requests because split writes would make rollback unsafe.
 
+The Replit website preview should serve the uploaded React build and proxy only `/api/*` to local Laravel; keep the Laravel HTML proxy disabled.
+
+**Why:** The Laravel-rendered homepage displaced the uploaded frontend and changed the design the user asked to preserve.
+
+**How to apply:** Keep webpage and API proxy controls separate. Use the existing static website routes with the local Laravel API, and enable the Laravel HTML proxy only when explicitly requested.
+
 An HTTP 200 from `/api/healthz` is not enough to approve a cutover: compare its readiness fields with the current health contract, then test an OPTIONS preflight from the actual Expo web origin.
 
 **Why:** A reachable Hostinger route can report a disconnected database, serve an older health response shape, and allow the public website through CORS while rejecting the separate Expo preview origin.
 
 **How to apply:** Before production write-flow tests, verify database, media, and SMTP readiness, confirm deployed response parity, and ensure the mobile web origin receives `Access-Control-Allow-Origin`. If health is degraded, limit checks to reads and report the blocker.
+
+In this Laravel runtime, `response()->json(null)` serializes as `{}` rather than JSON `null`; clients may treat that empty object as present content.
+
+**Why:** The website's optional CMS loader treats any truthy payload as synced and displayed a false “Content synced” badge for an empty response.
+
+**How to apply:** For absent optional CMS payloads, return a falsy JSON value or 204 when the client checks payload truthiness; verify the actual serialized response.
 
 The mobile app must call `https://www.oglandmark.com` directly in development and production; do not route mobile API requests through a Replit preview proxy or Replit API server.
 

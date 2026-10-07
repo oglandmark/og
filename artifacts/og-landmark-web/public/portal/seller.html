@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OG Landmark — Seller Portal</title>
-  <link rel="icon" href="/og-landmark-logo-square.png" />
+  <link rel="icon" href="/og-logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -58,12 +58,13 @@
     .portal-links a:hover{text-decoration:underline}
     @media(max-width:768px){.brand{display:none}.form-side{width:100%;padding:32px 24px}}
   </style>
+  <script src="/og-api-base.js"></script>
 </head>
 <body>
 <div class="split">
   <div class="brand">
     <div class="brand-content">
-      <img src="/og-landmark-logo-white.png" class="brand-logo" alt="OG Landmark" />
+      <img src="/og-logo.png" class="brand-logo" alt="OG Landmark" />
       <div class="brand-title">OG Landmark</div>
       <div class="brand-sub">Premium Real Estate</div>
       <div class="brand-tagline">List your properties and connect with qualified buyers across Pakistan.</div>
@@ -95,10 +96,48 @@
       <div class="err-msg" id="login-err"></div>
       <button class="btn" id="login-btn" onclick="doLogin()">Sign In</button>
       <div class="divider"><span>or</span></div>
+      <button class="link-btn" onclick="showPanel('panel-register')">Create a Seller Account</button>
+      <div class="divider"><span>or</span></div>
       <button class="link-btn" onclick="showPanel('panel-reset')">Forgot Password?</button>
       <div class="portal-links">
-        Other portals: <a href="/portal/buyer">Buyer</a>
+        Other portals: <a href="/portal/buyer.html">Buyer</a>
       </div>
+    </div>
+
+    <!-- Panel: Register -->
+    <div class="panel" id="panel-register">
+      <button class="back-btn" onclick="showPanel('panel-login')">← Back to Login</button>
+      <div class="role-badge"><span class="role-dot"></span>Seller Portal</div>
+      <div class="form-title">Create Seller Account</div>
+      <div class="form-subtitle">Register to list and manage your properties</div>
+      <div class="field">
+        <label>First Name</label>
+        <input type="text" id="reg-fname" placeholder="First name" autocomplete="given-name" />
+      </div>
+      <div class="field">
+        <label>Last Name</label>
+        <input type="text" id="reg-lname" placeholder="Last name" autocomplete="family-name" />
+      </div>
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="reg-email" placeholder="your@email.com" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label>Phone</label>
+        <input type="tel" id="reg-phone" placeholder="03xx-xxxxxxx" autocomplete="tel" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="reg-pass" placeholder="Min. 8 characters" autocomplete="new-password" />
+      </div>
+      <div class="field">
+        <label>Confirm Password</label>
+        <input type="password" id="reg-pass2" placeholder="Repeat password" autocomplete="new-password" />
+      </div>
+      <div class="captcha-wrap" id="captcha-register"></div>
+      <div class="err-msg" id="reg-err"></div>
+      <button class="btn" id="reg-btn" onclick="doRegister()">Create Account</button>
+      <button class="btn btn-outline" onclick="showPanel('panel-login')">Already have an account?</button>
     </div>
 
     <!-- Panel 2: Password Reset Request -->
@@ -154,6 +193,7 @@
 let siteKey = null;
 let captchaLoginId = null;
 let captchaResetId = null;
+let captchaRegisterId = null;
 let pendingEmail = '';
 
 async function init() {
@@ -175,6 +215,8 @@ window.renderCaptchas = function() {
   if (siteKey) {
     captchaLoginId = grecaptcha.render('captcha-login', { sitekey: siteKey });
     captchaResetId = grecaptcha.render('captcha-reset', { sitekey: siteKey });
+    const regEl = document.getElementById('captcha-register');
+    if (regEl) captchaRegisterId = grecaptcha.render('captcha-register', { sitekey: siteKey });
   }
 };
 
@@ -247,10 +289,52 @@ async function doLogin() {
 
     localStorage.setItem('og_token', d.token);
     localStorage.setItem('og_user', JSON.stringify(d.user));
-    window.location.href = d.user.role === 'Agent' ? '/agent' : '/seller/add-property';
+    window.location.href = d.user.role === 'Agent'
+      ? '/portal/agent-dashboard.html'
+      : '/portal/seller-dashboard.html';
   } catch(e) {
     showErr('login-err', 'Connection error. Please try again.');
     setLoading('login-btn', false, 'Sign In');
+  }
+}
+
+async function doRegister() {
+  clearErrors();
+  const firstName = document.getElementById('reg-fname').value.trim();
+  const lastName  = document.getElementById('reg-lname').value.trim();
+  const email     = document.getElementById('reg-email').value.trim();
+  const phone     = document.getElementById('reg-phone').value.trim();
+  const pass      = document.getElementById('reg-pass').value;
+  const pass2     = document.getElementById('reg-pass2').value;
+  if (!firstName)      return showErr('reg-err', 'Please enter your first name.');
+  if (!email)          return showErr('reg-err', 'Please enter your email address.');
+  if (!phone)          return showErr('reg-err', 'Please enter your phone number.');
+  if (pass.length < 8) return showErr('reg-err', 'Password must be at least 8 characters.');
+  if (pass !== pass2)  return showErr('reg-err', 'Passwords do not match.');
+  setLoading('reg-btn', true, 'Create Account');
+  try {
+    const ok = await verifyCaptcha(captchaRegisterId);
+    if (!ok) { setLoading('reg-btn', false, 'Create Account'); return showErr('reg-err', 'Please complete the CAPTCHA.'); }
+
+    const r = await fetch('/api/auth/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ firstName, lastName, email, phone, password: pass, role: 'seller' })
+    });
+    const d = await r.json();
+    if (!r.ok) {
+      setLoading('reg-btn', false, 'Create Account');
+      return showErr('reg-err', d.error || 'Registration failed. Please try again.');
+    }
+    if (!d.token || d.user?.role !== 'Seller') {
+      setLoading('reg-btn', false, 'Create Account');
+      return showErr('reg-err', d.error || 'Account created — please log in.');
+    }
+    localStorage.setItem('og_user', JSON.stringify(d.user));
+    localStorage.setItem('og_token', d.token);
+    window.location.href = '/portal/seller-dashboard.html';
+  } catch(e) {
+    showErr('reg-err', 'Connection error. Please try again.');
+    setLoading('reg-btn', false, 'Create Account');
   }
 }
 
@@ -304,6 +388,7 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
   const active = document.querySelector('.panel.active').id;
   if (active === 'panel-login')          doLogin();
+  else if (active === 'panel-register')  doRegister();
   else if (active === 'panel-reset')     doResetRequest();
   else if (active === 'panel-reset-confirm') doResetConfirm();
 });

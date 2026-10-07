@@ -346,13 +346,14 @@ tr:hover td{background:#fafaf8}
 }
 .hidden{display:none!important}
 </style>
+  <script src="/og-api-base.js"></script>
 </head>
 <body>
 
 <!-- ═══════════════ SIDEBAR ═══════════════ -->
 <aside id="sidebar">
   <div class="sb-logo">
-    <img src="/og-landmark-logo-white.png" alt="OG Landmark"/>
+    <img src="/images/og-logo.png" alt="OG Landmark"/>
     <div><span>OG Landmark</span><small>Seller Portal</small></div>
   </div>
   <nav>
@@ -1253,9 +1254,9 @@ const PLOT_TYPES = ['Residential Plot','Commercial Plot'];
 function init(){
   token = localStorage.getItem('og_token')||'';
   const u = localStorage.getItem('og_user');
-  if(!token||!u){ window.location.href='/portal/seller'; return; }
+  if(!token||!u){ window.location.href='/portal/seller.html'; return; }
   currentUser = JSON.parse(u);
-  if(!['Seller','Agent','Admin'].includes(currentUser.role)){ window.location.href='/portal/seller'; return; }
+  if(!['Seller','Agent','Admin'].includes(currentUser.role)){ window.location.href='/portal/seller.html'; return; }
   const av = (currentUser.name||'S')[0].toUpperCase();
   document.getElementById('sb-uname').textContent = currentUser.name||'Seller';
   document.getElementById('sb-uemail').textContent = currentUser.email||'';
@@ -1272,7 +1273,7 @@ function init(){
     setTimeout(()=>{ showPage('add-property'); gotoStep(1); }, 300);
   }
 }
-function logout(){ localStorage.removeItem('og_token'); localStorage.removeItem('og_user'); window.location.href='/portal/seller'; }
+function logout(){ localStorage.removeItem('og_token'); localStorage.removeItem('og_user'); window.location.href='/portal/seller.html'; }
 
 async function api(method,path,body){
   const opts={method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}};

@@ -90,6 +90,14 @@ class ApiController extends Controller
             return $this->blog($request, array_slice($segments, 1), $method);
         }
 
+        if (($segments[0] ?? '') === 'site-content' && count($segments) === 1) {
+            return $this->siteContent($method);
+        }
+
+        if (($segments[0] ?? '') === 'settings' && ($segments[1] ?? '') === 'hidden-react-agents') {
+            return $this->hiddenReactAgents($request, $method);
+        }
+
         if (($segments[0] ?? '') === 'mobile-agents' || ($segments[0] ?? '') === 'agents') {
             return $this->agents($request, $segments, $method);
         }
@@ -138,6 +146,43 @@ class ApiController extends Controller
             'mediaBaseUrl' => $this->mediaBaseUrl(),
             'mediaStorage' => $media,
         ], $ready ? 200 : 503);
+    }
+
+    private function siteContent(string $method)
+    {
+        if ($method !== 'GET') return $this->json(['error' => 'Method not allowed'], 405);
+
+        $content = JsonStore::read()['siteContent'] ?? null;
+        return $this->json(is_array($content) && $content !== [] ? $content : false);
+    }
+
+    private function hiddenReactAgents(Request $request, string $method)
+    {
+        $data = JsonStore::read();
+        $hiddenAgents = collect(is_array($data['hiddenReactAgents'] ?? null) ? $data['hiddenReactAgents'] : [])
+            ->filter(fn ($name) => is_string($name) && trim($name) !== '')
+            ->values();
+
+        if ($method === 'GET') return $this->json($hiddenAgents);
+
+        if ($method !== 'POST') return $this->json(['error' => 'Method not allowed'], 405);
+
+        $user = $this->currentUser($request, true);
+        if (!$this->isAdmin($user)) return $this->json(['error' => 'Admin access required.'], 403);
+
+        $name = trim((string) $request->input('name', ''));
+        if ($name === '') return $this->json(['error' => 'name required'], 400);
+
+        if ($request->boolean('hidden')) {
+            if (!$hiddenAgents->contains($name)) $hiddenAgents->push($name);
+        } else {
+            $hiddenAgents = $hiddenAgents->reject(fn ($item) => $item === $name)->values();
+        }
+
+        $data['hiddenReactAgents'] = $hiddenAgents->all();
+        JsonStore::write($data);
+
+        return $this->json(['success' => true, 'hiddenReactAgents' => $data['hiddenReactAgents']]);
     }
 
     private function normalizedCoreStorageStatus(): string

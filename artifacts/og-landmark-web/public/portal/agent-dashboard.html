@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Agent Dashboard – OG Landmark</title>
-<link rel="icon" href="/og-landmark-logo-square.png"/>
+<link rel="icon" href="/og-logo.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -168,12 +168,13 @@ tr:hover td{background:#fafbfc}
 #toast.info{background:var(--blue)}
 @media(max-width:900px){#sidebar{display:none}#main{margin-left:0}}
 </style>
+  <script src="/og-api-base.js"></script>
 </head>
 <body>
 
 <aside id="sidebar">
   <div class="sb-logo">
-    <img src="/og-landmark-logo-white.png" alt="OG Landmark" onerror="this.style.display='none'"/>
+    <img src="/og-logo.png" alt="OG Landmark" onerror="this.style.display='none'"/>
     <div><div class="sb-logo-title">OG Landmark</div><div class="sb-logo-sub">Agent Portal</div></div>
   </div>
   <div class="sb-user">
@@ -481,11 +482,11 @@ let _confirmCb   = null;
 function init(){
   token = localStorage.getItem('og_token') || '';
   const u = localStorage.getItem('og_user');
-  if(!token || !u){ window.location.href = '/portal/agent'; return; }
-  try { currentUser = JSON.parse(u); } catch(e){ window.location.href='/portal/agent'; return; }
+  if(!token || !u){ window.location.href = '/portal/agent.html'; return; }
+  try { currentUser = JSON.parse(u); } catch(e){ window.location.href='/portal/agent.html'; return; }
   if(!['Agent','Admin'].includes(currentUser.role)){
     showToast('Access restricted to agents','error');
-    setTimeout(()=>{ window.location.href='/portal/agent'; }, 2000);
+    setTimeout(()=>{ window.location.href='/portal/agent.html'; }, 2000);
     return;
   }
   setUserUI();
@@ -528,7 +529,7 @@ function setUserUI(){
 function logout(){
   localStorage.removeItem('og_token');
   localStorage.removeItem('og_user');
-  window.location.href = '/portal/agent';
+  window.location.href = '/portal/agent.html';
 }
 
 // ═══ API ═══

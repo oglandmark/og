@@ -207,18 +207,23 @@ tr:hover td{background:#f8fafc}
 .pr-media-delete{position:absolute;top:6px;right:6px;border:0;border-radius:999px;background:rgba(127,29,29,.9);color:#fff;width:25px;height:25px;cursor:pointer;font-size:12px;font-weight:700}
 .pr-media-empty{font-size:12px;color:var(--muted);padding:8px 0}
 </style>
+  <script src="/og-api-base.js"></script>
 </head>
 <body>
 
 <aside id="sidebar">
   <div class="sb-logo">
-    <img src="/og-landmark-logo-white.png" alt="OG Landmark" style="width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(200,164,90,.4))"/>
+    <img src="/images/og-logo.png" alt="OG Landmark" style="width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(200,164,90,.4))"/>
     <div><span>OG Landmark</span><small>Admin Panel</small></div>
   </div>
   <nav>
     <a onclick="showPage('dashboard')" id="nav-dashboard" class="active">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
       Dashboard
+    </a>
+    <a onclick="showPage('site-content')" id="nav-site-content">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      Site Content
     </a>
     <a onclick="showPage('approvals')" id="nav-approvals">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
@@ -368,7 +373,7 @@ tr:hover td{background:#f8fafc}
 
   <!-- ALL PROPERTIES -->
   <div class="page" id="page-properties">
-    <div class="sec-head"><h3>All Properties</h3></div>
+    <div class="sec-head"><h3>All Properties</h3><button class="btn btn-red" onclick="openCreatePropertyModal()"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>Create Property</button></div>
     <div class="search-bar">
       <input id="all-prop-search" oninput="renderPropertiesPage()" placeholder="Search..."/>
       <select id="all-prop-type" onchange="renderPropertiesPage()">
@@ -822,6 +827,44 @@ tr:hover td{background:#f8fafc}
     </div>
   </div>
 
+  <!-- SITE CONTENT CMS -->
+  <div class="page" id="page-site-content">
+    <div class="sec-head">
+      <h3>Site Content</h3>
+      <button class="btn btn-red" onclick="saveSiteContent()">Save Changes</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Controls public homepage copy, CTAs, contact details, and SEO. Changes appear on the website after refresh.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:16px">Hero</h4>
+        <div class="form-group"><label>Title</label><input id="cms-hero-title" type="text"/></div>
+        <div class="form-group"><label>Subtitle</label><textarea id="cms-hero-subtitle" rows="3"></textarea></div>
+        <div class="form-group"><label>Featured section title</label><input id="cms-featured-title" type="text"/></div>
+        <div class="form-group"><label>About teaser</label><textarea id="cms-about" rows="3"></textarea></div>
+      </div>
+      <div style="background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:16px">Call to action</h4>
+        <div class="form-group"><label>Primary CTA label</label><input id="cms-cta1-label" type="text"/></div>
+        <div class="form-group"><label>Primary CTA link</label><input id="cms-cta1-href" type="text" placeholder="/properties"/></div>
+        <div class="form-group"><label>Secondary CTA label</label><input id="cms-cta2-label" type="text"/></div>
+        <div class="form-group"><label>Secondary CTA link</label><input id="cms-cta2-href" type="text" placeholder="/seller"/></div>
+      </div>
+      <div style="background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:16px">Contact</h4>
+        <div class="form-group"><label>Phone</label><input id="cms-phone" type="text"/></div>
+        <div class="form-group"><label>Email</label><input id="cms-email" type="email"/></div>
+        <div class="form-group"><label>WhatsApp</label><input id="cms-whatsapp" type="text"/></div>
+        <div class="form-group"><label>Address</label><textarea id="cms-address" rows="2"></textarea></div>
+      </div>
+      <div style="background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:16px">SEO</h4>
+        <div class="form-group"><label>Page title</label><input id="cms-seo-title" type="text"/></div>
+        <div class="form-group"><label>Meta description</label><textarea id="cms-seo-desc" rows="3"></textarea></div>
+        <p id="cms-updated-at" style="font-size:12px;color:var(--muted);margin-top:8px"></p>
+      </div>
+    </div>
+  </div>
+
   <!-- SETTINGS -->
   <div class="page" id="page-settings">
     <div class="sec-head"><h3>System Settings</h3></div>
@@ -1048,6 +1091,46 @@ tr:hover td{background:#f8fafc}
   </div>
 </div>
 
+<!-- CREATE PROPERTY MODAL -->
+<div class="modal-overlay" id="create-property-modal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-head"><h3>Create Property</h3><button class="modal-close" onclick="closeCreatePropertyModal()">&times;</button></div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group" style="grid-column:1/-1"><label>Title *</label><input id="np-title" type="text" required/></div>
+        <div class="form-group"><label>Type *</label>
+          <select id="np-type"><option>House</option><option>Villa</option><option>Apartment</option><option>Plot</option><option>Commercial</option><option>Agriculture Land</option><option>Farm House</option></select>
+        </div>
+        <div class="form-group"><label>Purpose</label>
+          <select id="np-purpose"><option>Sale</option><option>Rent</option></select>
+        </div>
+        <div class="form-group"><label>City *</label><input id="np-city" type="text" placeholder="Islamabad"/></div>
+        <div class="form-group"><label>Society / Area</label><input id="np-society" type="text"/></div>
+        <div class="form-group"><label>Price (PKR) *</label><input id="np-price" type="number" min="0"/></div>
+        <div class="form-group"><label>Area (sqft)</label><input id="np-area" type="number" min="0"/></div>
+        <div class="form-group"><label>Bedrooms</label><input id="np-beds" type="number" min="0"/></div>
+        <div class="form-group"><label>Bathrooms</label><input id="np-baths" type="number" min="0"/></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Description</label><textarea id="np-desc" rows="4"></textarea></div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Images</label>
+          <input type="file" id="np-images" accept=".jpg,.jpeg,.png,.webp" multiple onchange="uploadNewPropertyImages(this)"/>
+          <div id="np-image-status" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
+          <div id="np-image-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>
+        </div>
+        <div class="form-group" style="flex-direction:row;align-items:center;gap:10px">
+          <input type="checkbox" id="np-publish" checked style="width:16px;height:16px;accent-color:var(--red)"/>
+          <label for="np-publish" style="font-size:13px;font-weight:600">Publish as Active</label>
+        </div>
+        <div class="form-group" style="flex-direction:row;align-items:center;gap:10px">
+          <input type="checkbox" id="np-featured" style="width:16px;height:16px;accent-color:var(--red)"/>
+          <label for="np-featured" style="font-size:13px;font-weight:600">Featured</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-outline" onclick="closeCreatePropertyModal()">Cancel</button><button class="btn btn-red" onclick="saveNewProperty()">Create Property</button></div>
+  </div>
+</div>
+
 <!-- ADD USER MODAL -->
 <div class="modal-overlay" id="add-user-modal">
   <div class="modal">
@@ -1099,25 +1182,25 @@ tr:hover td{background:#f8fafc}
   <!-- APP BANNERS PAGE -->
   <div class="page" id="page-banners">
     <div class="sec-head">
-      <h3>Mobile App Banners</h3>
-      <button class="btn btn-outline btn-sm" onclick="loadBanners()">Refresh</button>
+      <h3>&#127916; Mobile App Banners</h3>
+      <button class="btn btn-outline btn-sm" onclick="loadBanners()">&#8635; Refresh</button>
     </div>
     <div class="card" style="margin-bottom:20px">
       <div class="card-body">
-        <h4 style="margin-bottom:6px;font-size:15px;font-weight:600">Manage home-screen media</h4>
-        <p style="font-size:12px;color:#64748b;margin-bottom:16px">Each category has one image slot. Uploading a new image replaces that category’s current image. Video is managed separately.</p>
+        <h4 style="margin-bottom:6px;font-size:15px;font-weight:600">&#11014; Upload Banners (up to 5)</h4>
+        <p style="font-size:12px;color:#64748b;margin-bottom:16px">Har slot mein image ya video select karen (max 300 MB). Jo slot fill ho upload ho jayega.</p>
         <div id="bn-slots" style="display:flex;flex-direction:column;gap:12px">
           <!-- slots generated by initBannerSlots() -->
         </div>
         <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-blue" onclick="uploadAllBanners()" id="bn-upload-all-btn">Upload selected media</button>
+          <button class="btn btn-blue" onclick="uploadAllBanners()" id="bn-upload-all-btn">&#11014; Upload Selected</button>
           <span id="bn-upload-status" style="font-size:13px;color:#64748b"></span>
         </div>
       </div>
     </div>
     <div class="card">
       <div class="card-body">
-        <h4 style="margin-bottom:14px;font-size:15px;font-weight:600">Published banner records</h4>
+        <h4 style="margin-bottom:14px;font-size:15px;font-weight:600">Current Banners</h4>
         <div id="banners-list"><div style="color:#94a3b8;padding:20px;text-align:center">Loading...</div></div>
       </div>
     </div>
@@ -1899,9 +1982,9 @@ function init(){
   token=localStorage.getItem('og_token')||'';
   const adminAuth=localStorage.getItem('adminAuth');
   const u=localStorage.getItem('og_user');
-  if(!token||!adminAuth||!u){ window.location.href='/portal/admin'; return; }
+  if(!token||!adminAuth||!u){ window.location.href='/portal/admin.html'; return; }
   currentUser=JSON.parse(u);
-  if(currentUser.role!=='Admin'){ window.location.href='/portal/admin'; return; }
+  if(currentUser.role!=='Admin'){ window.location.href='/portal/admin.html'; return; }
   const av=(currentUser.name||'A')[0].toUpperCase();
   document.getElementById('sb-avatar').textContent=av;
   document.getElementById('top-avatar').textContent=av;
@@ -1914,7 +1997,7 @@ function init(){
   refreshDashboard(false);
 }
 
-function logout(){ localStorage.removeItem('og_token'); localStorage.removeItem('og_user'); localStorage.removeItem('adminAuth'); window.location.href='/portal/admin'; }
+function logout(){ localStorage.removeItem('og_token'); localStorage.removeItem('og_user'); localStorage.removeItem('adminAuth'); window.location.href='/portal/admin.html'; }
 
 async function api(method,path,body){
   const opts={method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}};
@@ -3379,6 +3462,115 @@ async function saveUser(){
     closeAddUserModal(); await loadAll();
   } catch(e){ showToast(e.message,'error'); }
 }
+
+// ── SITE CONTENT CMS ──
+async function loadSiteContent(){
+  try{
+    const c=await api('GET','/api/site-content');
+    document.getElementById('cms-hero-title').value=c.heroTitle||'';
+    document.getElementById('cms-hero-subtitle').value=c.heroSubtitle||'';
+    document.getElementById('cms-featured-title').value=c.featuredSectionTitle||'';
+    document.getElementById('cms-about').value=c.aboutTeaser||'';
+    document.getElementById('cms-cta1-label').value=(c.primaryCta&&c.primaryCta.label)||'';
+    document.getElementById('cms-cta1-href').value=(c.primaryCta&&c.primaryCta.href)||'';
+    document.getElementById('cms-cta2-label').value=(c.secondaryCta&&c.secondaryCta.label)||'';
+    document.getElementById('cms-cta2-href').value=(c.secondaryCta&&c.secondaryCta.href)||'';
+    document.getElementById('cms-phone').value=(c.contact&&c.contact.phone)||'';
+    document.getElementById('cms-email').value=(c.contact&&c.contact.email)||'';
+    document.getElementById('cms-whatsapp').value=(c.contact&&c.contact.whatsapp)||'';
+    document.getElementById('cms-address').value=(c.contact&&c.contact.address)||'';
+    document.getElementById('cms-seo-title').value=(c.seo&&c.seo.title)||'';
+    document.getElementById('cms-seo-desc').value=(c.seo&&c.seo.description)||'';
+    document.getElementById('cms-updated-at').textContent=c.updatedAt?('Last updated: '+fmtDate(c.updatedAt)):'Not saved yet';
+  }catch(e){ showToast(e.message||'Failed to load site content','error'); }
+}
+async function saveSiteContent(){
+  const body={
+    heroTitle:document.getElementById('cms-hero-title').value.trim(),
+    heroSubtitle:document.getElementById('cms-hero-subtitle').value.trim(),
+    featuredSectionTitle:document.getElementById('cms-featured-title').value.trim(),
+    aboutTeaser:document.getElementById('cms-about').value.trim(),
+    primaryCta:{label:document.getElementById('cms-cta1-label').value.trim(),href:document.getElementById('cms-cta1-href').value.trim()},
+    secondaryCta:{label:document.getElementById('cms-cta2-label').value.trim(),href:document.getElementById('cms-cta2-href').value.trim()},
+    contact:{
+      phone:document.getElementById('cms-phone').value.trim(),
+      email:document.getElementById('cms-email').value.trim(),
+      whatsapp:document.getElementById('cms-whatsapp').value.trim(),
+      address:document.getElementById('cms-address').value.trim()
+    },
+    seo:{
+      title:document.getElementById('cms-seo-title').value.trim(),
+      description:document.getElementById('cms-seo-desc').value.trim()
+    }
+  };
+  try{
+    const saved=await api('PUT','/api/site-content',body);
+    document.getElementById('cms-updated-at').textContent=saved.updatedAt?('Last updated: '+fmtDate(saved.updatedAt)):'Saved';
+    showToast('Site content saved','success');
+  }catch(e){ showToast(e.message||'Save failed','error'); }
+}
+
+// ── CREATE PROPERTY ──
+var _npImages=[];
+function openCreatePropertyModal(){
+  _npImages=[];
+  ['np-title','np-city','np-society','np-price','np-area','np-beds','np-baths','np-desc'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('np-type').value='House';
+  document.getElementById('np-purpose').value='Sale';
+  document.getElementById('np-publish').checked=true;
+  document.getElementById('np-featured').checked=false;
+  document.getElementById('np-image-preview').innerHTML='';
+  document.getElementById('np-image-status').textContent='';
+  document.getElementById('create-property-modal').classList.add('open');
+}
+function closeCreatePropertyModal(){ document.getElementById('create-property-modal').classList.remove('open'); }
+async function uploadNewPropertyImages(input){
+  const files=Array.from(input.files||[]);
+  if(!files.length) return;
+  document.getElementById('np-image-status').textContent='Uploading...';
+  for(const file of files){
+    try{
+      const fd=new FormData(); fd.append('image',file);
+      const r=await fetch('/api/upload/single',{method:'POST',headers:{'Authorization':'Bearer '+token},body:fd});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(j.error||r.statusText);
+      const url=j.url||j.path||j.image||j.filename;
+      if(url){ _npImages.push(url); }
+    }catch(e){ showToast(e.message||'Upload failed','error'); }
+  }
+  document.getElementById('np-image-preview').innerHTML=_npImages.map(u=>`<img src="${u}" style="width:64px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--border)"/>`).join('');
+  document.getElementById('np-image-status').textContent=_npImages.length+' image(s) ready';
+  input.value='';
+}
+async function saveNewProperty(){
+  const title=document.getElementById('np-title').value.trim();
+  const city=document.getElementById('np-city').value.trim();
+  const price=Number(document.getElementById('np-price').value||0);
+  if(!title||!city||!price){ showToast('Title, city and price are required','error'); return; }
+  const body={
+    title,
+    type:document.getElementById('np-type').value,
+    purpose:document.getElementById('np-purpose').value,
+    city,
+    society:document.getElementById('np-society').value.trim(),
+    price,
+    area:Number(document.getElementById('np-area').value||0)||null,
+    bedrooms:Number(document.getElementById('np-beds').value||0)||null,
+    bathrooms:Number(document.getElementById('np-baths').value||0)||null,
+    description:document.getElementById('np-desc').value.trim(),
+    images:_npImages.slice(),
+    publish:document.getElementById('np-publish').checked,
+    featured:document.getElementById('np-featured').checked,
+    approvalStatus:document.getElementById('np-publish').checked?'Active':'Pending'
+  };
+  try{
+    await api('POST','/api/properties',body);
+    closeCreatePropertyModal();
+    await loadAll();
+    showToast('Property created','success');
+    showPage('properties');
+  }catch(e){ showToast(e.message||'Create failed','error'); }
+}
 async function toggleUserStatus(id){
   const u=allUsers.find(x=>x.id===id); if(!u) return;
   const newStatus=u.status==='Active'?'Suspended':'Active';
@@ -3439,8 +3631,9 @@ function showPage(name){
   document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
   document.getElementById('page-'+name)?.classList.add('active');
   document.getElementById('nav-'+name)?.classList.add('active');
-  const titles={dashboard:'Admin Dashboard',approvals:'Property Approvals',properties:'All Properties',agents:'Agent Management',users:'Users',inquiries:'All Inquiries',blog:'Blog Posts',settings:'Settings','city-agents':'City Agents','buyer-requests':'Buyer Requests','developer-projects':'Developer Projects',verifications:'Verification Requests',conversations:'Conversations',notifications:'Notifications','prop-review':'Property Review',mobile:'Mobile App Control',banners:'App Banners'};
+  const titles={dashboard:'Admin Dashboard','site-content':'Site Content',approvals:'Property Approvals',properties:'All Properties',agents:'Agent Management',users:'Users',inquiries:'All Inquiries',blog:'Blog Posts',settings:'Settings','city-agents':'City Agents','buyer-requests':'Buyer Requests','developer-projects':'Developer Projects',verifications:'Verification Requests',conversations:'Conversations',notifications:'Notifications','prop-review':'Property Review',mobile:'Mobile App Control',banners:'App Banners'};
   document.getElementById('page-title').textContent=titles[name]||'Dashboard';
+  if(name==='site-content') loadSiteContent();
   if(name==='users') refreshUsers();
   if(name==='buyer-requests') loadBuyerRequests();
   if(name==='developer-projects') loadDeveloperProjects();
@@ -3637,183 +3830,83 @@ function _resolveReport(id, status) {
 }
 
 
+init();
+
 // ─── APP BANNERS ──────────────────────────────────────────────────────────────
-const BN_CATEGORIES = [
-  { value: 'homes', label: 'Homes' },
-  { value: 'commercial', label: 'Commercial property' },
-  { value: 'agriculture', label: 'Agricultural land' },
-  { value: 'plots', label: 'Plots' },
-  { value: 'projects', label: 'Projects & investment' },
-];
-const BN_CTA_PARAMS = {
-  homes: { category: 'Homes', propertyType: 'House' },
-  commercial: { category: 'Commercial', propertyType: 'Commercial' },
-  agriculture: { category: 'Agriculture Land', propertyType: 'Agriculture Land' },
-  plots: { category: 'Plots', propertyType: 'Plot' },
-  projects: { category: 'Projects', propertyType: 'Project' },
-};
-let bannerRecords = [];
-
-function bnEscape(value) {
-  return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  })[ch]);
-}
-
-function bnCategoryLabel(value) {
-  const category = BN_CATEGORIES.find(item => item.value === value);
-  return category ? category.label : (value || 'Uncategorized');
-}
-
-function bnCategoryOptions(selected) {
-  return BN_CATEGORIES.map(item =>
-    `<option value="${item.value}" ${item.value === selected ? 'selected' : ''}>${item.label}</option>`
-  ).join('');
-}
-
-function bnMediaPreview(record) {
-  if (!record) return '<div style="height:74px;display:flex;align-items:center;justify-content:center;border:1px dashed #cbd5e1;border-radius:8px;color:#94a3b8;font-size:12px">No current media</div>';
-  const url = bnEscape(record.type === 'video' ? record.videoUrl : record.imageUrl);
-  if (!url) return '<div style="height:74px;display:flex;align-items:center;justify-content:center;border:1px dashed #cbd5e1;border-radius:8px;color:#94a3b8;font-size:12px">No preview available</div>';
-  return record.type === 'video'
-    ? `<video src="${url}" style="width:132px;height:74px;object-fit:cover;border-radius:8px;background:#e2e8f0" muted controls preload="metadata"></video>`
-    : `<img src="${url}" alt="${bnEscape(bnCategoryLabel(record.category))} banner preview" style="width:132px;height:74px;object-fit:cover;border-radius:8px;background:#e2e8f0" onerror="this.style.display='none'"/>`;
-}
-
-function bnUploadFields(prefix, defaults = {}) {
-  const d = defaults || {};
-  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-top:10px">
-    <input id="${prefix}-eyebrow" class="form-control" placeholder="Eyebrow" value="${bnEscape(d.eyebrow)}" aria-label="Banner eyebrow"/>
-    <input id="${prefix}-title" class="form-control" placeholder="Main title" value="${bnEscape(d.title)}" aria-label="Banner title"/>
-    <input id="${prefix}-subtitle" class="form-control" placeholder="Subtitle" value="${bnEscape(d.subtitle)}" aria-label="Banner subtitle"/>
-    <input id="${prefix}-cta" class="form-control" placeholder="CTA label" value="${bnEscape(d.cta || 'Explore Now')}" aria-label="Call to action label"/>
-    <input id="${prefix}-route" class="form-control" placeholder="CTA route" value="${bnEscape(d.route || '/explore')}" aria-label="Call to action route"/>
-    <input id="${prefix}-order" class="form-control" type="number" min="0" step="1" placeholder="Display order" value="${Number.isFinite(Number(d.order)) ? Number(d.order) : 0}" aria-label="Display order"/>
-  </div>`;
-}
-
 async function loadBanners() {
   const el = document.getElementById('banners-list');
   if (!el) return;
   el.innerHTML = '<div style="color:#94a3b8;padding:20px;text-align:center">Loading...</div>';
   try {
-    const response = await api('GET', '/api/mobile/banners/all');
-    bannerRecords = Array.isArray(response) ? response : [];
-    if (!document.getElementById('bn-slots')?.children.length) initBannerSlots();
-    renderBannerSlots();
-    if (!bannerRecords.length) {
-      el.innerHTML = '<div style="color:#64748b;padding:22px;text-align:center;border:1px dashed #cbd5e1;border-radius:10px">No banner media has been added yet. Choose a category image or add an optional video above.</div>';
+    const banners = await api('GET', '/api/mobile/banners/all');
+    if (!banners || !banners.length) {
+      el.innerHTML = '<div style="color:#94a3b8;padding:20px;text-align:center">No banners yet. Upload one above.</div>';
       return;
     }
-    el.innerHTML = bannerRecords.map(b => {
+    el.innerHTML = banners.map(b => {
+      const thumb = b.videoUrl
+        ? `<video src="${b.videoUrl}" style="width:110px;height:70px;object-fit:cover;border-radius:8px;background:#000;flex-shrink:0" muted preload="metadata"></video>`
+        : `<img src="${b.imageUrl||''}" style="width:110px;height:70px;object-fit:cover;border-radius:8px;background:#f1f5f9;flex-shrink:0" onerror="this.style.background='#e2e8f0'"/>`;
       const isActive = b.active !== false;
-      const id = Number(b.id);
-      const media = bnMediaPreview(b);
-      const title = `${b.type === 'video' ? 'Video' : 'Image'} banner`;
-      return `<article style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;padding:14px;border:1px solid #dbe3ec;border-radius:10px;margin-bottom:11px;background:#fbfcfd" data-testid="banner-record-${id}">
-        <div>
-          ${media}
-          <div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#475569;margin-top:8px">${bnEscape(title)}</div>
-          <div style="font-size:12px;color:#64748b;margin-top:3px">${bnEscape(bnCategoryLabel(b.category))} · ${isActive ? '<span style="color:#15803d">Active</span>' : '<span style="color:#64748b">Inactive</span>'}</div>
+      return `<div style="display:flex;align-items:center;gap:14px;padding:12px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;background:#fafafa">
+        ${thumb}
+         <div style="min-width:0">
+          <div style="font-weight:600;font-size:14px">${b.type==='video'?' Video Banner':' Image Banner'}</div>
+          <div style="font-size:12px;color:#64748b;margin-top:3px">${isActive?'<span style="color:#22c55e">● Active</span>':'<span style="color:#94a3b8">● Inactive</span>'}</div>
+           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+             <input id="bn-eyebrow-${b.id}" class="form-control" placeholder="Eyebrow" value="${b.eyebrow||''}"/>
+             <input id="bn-title-${b.id}" class="form-control" placeholder="Main title" value="${b.title||''}"/>
+             <input id="bn-subtitle-${b.id}" class="form-control" placeholder="Subtitle" value="${b.subtitle||''}"/>
+             <input id="bn-cta-${b.id}" class="form-control" placeholder="CTA button" value="${b.cta||'Explore Now'}"/>
+             <input id="bn-route-${b.id}" class="form-control" placeholder="CTA route" value="${b.route||'/explore'}"/>
+             <input id="bn-order-${b.id}" class="form-control" type="number" min="0" placeholder="Order" value="${Number(b.order)||0}"/>
+           </div>
         </div>
-        <div style="min-width:0">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-            <div style="font-size:13px;color:#475569">${bnEscape(title)} <span style="color:#94a3b8">/</span> Order ${Number(b.order) || 0}</div>
-            <div style="display:flex;gap:7px;flex-wrap:wrap">
-              <button onclick="saveBanner(${id})" class="btn btn-sm btn-blue" style="font-size:12px" data-testid="save-banner-${id}">Save changes</button>
-              <button onclick="toggleBanner(${id},${isActive})" class="btn btn-sm ${isActive ? 'btn-outline' : 'btn-blue'}" style="font-size:12px" data-testid="toggle-banner-${id}">${isActive ? 'Disable' : 'Enable'}</button>
-              <button onclick="deleteBanner(${id})" class="btn btn-sm" style="background:#fee2e2;color:#b91c1c;border:none;font-size:12px" data-testid="delete-banner-${id}">Delete</button>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-top:10px">
-            <select id="bn-category-${id}" class="form-control" aria-label="Banner category">${bnCategoryOptions(b.category)}</select>
-            <input id="bn-eyebrow-${id}" class="form-control" placeholder="Eyebrow" value="${bnEscape(b.eyebrow)}" aria-label="Banner eyebrow"/>
-            <input id="bn-title-${id}" class="form-control" placeholder="Main title" value="${bnEscape(b.title)}" aria-label="Banner title"/>
-            <input id="bn-subtitle-${id}" class="form-control" placeholder="Subtitle" value="${bnEscape(b.subtitle)}" aria-label="Banner subtitle"/>
-            <input id="bn-cta-${id}" class="form-control" placeholder="CTA label" value="${bnEscape(b.cta || 'Explore Now')}" aria-label="Call to action label"/>
-            <input id="bn-route-${id}" class="form-control" placeholder="CTA route" value="${bnEscape(b.route || '/explore')}" aria-label="Call to action route"/>
-            <input id="bn-order-${id}" class="form-control" type="number" min="0" step="1" placeholder="Display order" value="${Number(b.order) || 0}" aria-label="Display order"/>
-          </div>
+         <div style="display:flex;gap:8px;flex-shrink:0;align-items:flex-start">
+           <button onclick="saveBanner(${b.id})" class="btn btn-sm btn-blue" style="font-size:12px">Save</button>
+          <button onclick="toggleBanner(${b.id},${isActive})" class="btn btn-sm ${isActive?'btn-outline':'btn-blue'}" style="font-size:12px">${isActive?'Disable':'Enable'}</button>
+          <button onclick="deleteBanner(${b.id})" class="btn btn-sm" style="background:#fee2e2;color:#dc2626;border:none;font-size:12px">Delete</button>
         </div>
-      </article>`;
+      </div>`;
     }).join('');
   } catch(e) {
-    if (!document.getElementById('bn-slots')?.children.length) initBannerSlots();
-    el.innerHTML = `<div style="color:#b91c1c;padding:16px;border:1px solid #fecaca;background:#fff7f7;border-radius:9px" role="alert">Could not load banners: ${bnEscape(e.message)} <button class="btn btn-outline btn-sm" onclick="loadBanners()" style="margin-left:8px">Retry</button></div>`;
+    el.innerHTML = '<div style="color:#ef4444;padding:20px;text-align:center">Error: '+e.message+'</div>';
   }
 }
 
-// ── Category image slots and the separate optional video upload ────────────────
+// ── Banner slots (5 slots) ────────────────────────────────────────────────────
+const BN_SLOT_COUNT = 5;
 function initBannerSlots() {
   const container = document.getElementById('bn-slots');
   if (!container) return;
-  container.innerHTML = BN_CATEGORIES.map(category => `
-    <section style="padding:13px;border:1px solid #dbe3ec;border-radius:10px;background:#f8fafc" data-testid="upload-slot-${category.value}">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-        <div>
-          <div style="font-size:14px;font-weight:700;color:#1e293b">${category.label}</div>
-          <div style="font-size:12px;color:#64748b;margin-top:3px">Category image · one managed image</div>
-        </div>
-        <div id="bn-current-${category.value}" style="display:flex;align-items:center;gap:9px"></div>
-      </div>
-      <input type="file" id="bn-file-${category.value}" class="form-control" accept="image/*" style="width:100%;margin-top:10px;font-size:13px" aria-label="Choose ${category.label} banner image" onchange="bnSelectedFile('${category.value}')"/>
-      ${bnUploadFields('bn-upload-' + category.value, bannerRecords.find(record => record.type === 'image' && record.category === category.value))}
-      <div id="bn-slot-status-${category.value}" style="font-size:12px;margin-top:7px" role="status"></div>
-    </section>`).join('') + `
-    <section style="padding:13px;border:1px solid #dbe3ec;border-radius:10px;background:#f8fafc" data-testid="upload-slot-video">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-        <div>
-          <div style="font-size:14px;font-weight:700;color:#1e293b">Optional video</div>
-          <div style="font-size:12px;color:#64748b;margin-top:3px">A separate managed video record</div>
-        </div>
-        <div id="bn-current-video" style="display:flex;align-items:center;gap:9px"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:minmax(150px,220px) minmax(200px,1fr);gap:9px;margin-top:10px">
-        <select id="bn-video-category" class="form-control" aria-label="Video category">${bnCategoryOptions('homes')}</select>
-        <input type="file" id="bn-file-video" class="form-control" accept="video/*" style="font-size:13px" aria-label="Choose optional banner video" onchange="bnSelectedFile('video')"/>
-      </div>
-      ${bnUploadFields('bn-upload-video')}
-      <div id="bn-slot-status-video" style="font-size:12px;margin-top:7px" role="status"></div>
-    </section>`;
-  renderBannerSlots();
-}
-
-function renderBannerSlots() {
-  BN_CATEGORIES.forEach(category => {
-    const current = document.getElementById('bn-current-' + category.value);
-    if (!current) return;
-    const record = bannerRecords.find(item => item.type === 'image' && item.category === category.value);
-    current.innerHTML = `${bnMediaPreview(record)}<span style="font-size:11px;color:#64748b">${record ? 'Current image' : 'No current image'}</span>`;
-  });
-  const videoEl = document.getElementById('bn-current-video');
-  if (videoEl) {
-    const record = bannerRecords.find(item => item.type === 'video');
-    videoEl.innerHTML = `${bnMediaPreview(record)}<span style="font-size:11px;color:#64748b">${record ? bnEscape(bnCategoryLabel(record.category)) + ' video' : 'No current video'}</span>`;
+  container.innerHTML = '';
+  for (let i = 0; i < BN_SLOT_COUNT; i++) {
+    container.innerHTML += `
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc">
+        <span style="font-size:12px;font-weight:600;color:#64748b;min-width:54px">Slot ${i+1}</span>
+        <select id="bn-type-${i}" class="form-control" style="min-width:120px;font-size:13px"
+          onchange="document.getElementById('bn-file-${i}').accept=this.value==='video'?'video/*':'image/*'">
+          <option value="video">&#127916; Video</option>
+          <option value="image">&#128444; Image</option>
+        </select>
+        <input type="file" id="bn-file-${i}" class="form-control" accept="video/*" style="flex:1;min-width:200px;font-size:13px"/>
+        <span id="bn-slot-status-${i}" style="font-size:12px;color:#64748b"></span>
+      </div>`;
   }
 }
 
-function bnSelectedFile(slot) {
-  const input = document.getElementById('bn-file-' + slot);
-  const status = document.getElementById('bn-slot-status-' + slot);
-  if (!input || !status) return;
-  status.style.color = '#64748b';
-  status.textContent = input.files && input.files[0] ? `Selected: ${input.files[0].name}` : '';
-}
-
 async function saveBanner(id) {
-  const category = document.getElementById('bn-category-' + id).value;
   try {
     await api('PUT', '/api/mobile/banners/' + id, {
-      category,
       eyebrow: document.getElementById('bn-eyebrow-' + id).value.trim(),
       title: document.getElementById('bn-title-' + id).value.trim(),
       subtitle: document.getElementById('bn-subtitle-' + id).value.trim(),
       cta: document.getElementById('bn-cta-' + id).value.trim(),
       route: document.getElementById('bn-route-' + id).value.trim() || '/explore',
-      order: Math.max(0, Number(document.getElementById('bn-order-' + id).value) || 0),
+      order: Number(document.getElementById('bn-order-' + id).value) || 0,
     });
-    showToast('Banner changes saved.', 'success');
-    await loadBanners();
+    showToast('Banner content and order saved!', 'success');
+    loadBanners();
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
@@ -3822,96 +3915,73 @@ async function uploadAllBanners() {
   const btn = document.getElementById('bn-upload-all-btn');
   const token = localStorage.getItem('og_token');
   let uploaded = 0, failed = 0;
-  const uploads = BN_CATEGORIES.map(category => ({
-    key: category.value, type: 'image', category: category.value,
-    file: document.getElementById('bn-file-' + category.value)?.files?.[0]
-  }));
-  uploads.push({
-    key: 'video', type: 'video',
-    category: document.getElementById('bn-video-category')?.value || 'homes',
-    file: document.getElementById('bn-file-video')?.files?.[0]
-  });
-  const selected = uploads.filter(item => item.file);
-  if (!selected.length) {
-    status.textContent = 'Choose at least one file to upload.';
-    status.style.color = '#b45309';
-    return;
-  }
   btn.disabled = true;
-  status.textContent = 'Uploading selected media…'; status.style.color = '#2563a5';
-  for (const item of selected) {
-    const slotStatus = document.getElementById('bn-slot-status-' + item.key);
-    const prefix = 'bn-upload-' + item.key;
-    slotStatus.textContent = 'Uploading…';
-    slotStatus.style.color = '#2563a5';
+  status.textContent = 'Uploading...'; status.style.color='#3b82f6';
+
+  for (let i = 0; i < BN_SLOT_COUNT; i++) {
+    const fileInput = document.getElementById(`bn-file-${i}`);
+    const typeSelect = document.getElementById(`bn-type-${i}`);
+    const slotStatus = document.getElementById(`bn-slot-status-${i}`);
+    const file = fileInput && fileInput.files[0];
+    if (!file) continue; // skip empty slots
+
+    slotStatus.textContent = '⏳'; slotStatus.style.color='#3b82f6';
     const fd = new FormData();
-    fd.append('media', item.file);
-    fd.append('type', item.type);
-    fd.append('category', item.category);
-    fd.append('eyebrow', document.getElementById(prefix + '-eyebrow').value.trim());
-    fd.append('title', document.getElementById(prefix + '-title').value.trim());
-    fd.append('subtitle', document.getElementById(prefix + '-subtitle').value.trim());
-    fd.append('cta', document.getElementById(prefix + '-cta').value.trim());
-    fd.append('route', document.getElementById(prefix + '-route').value.trim() || '/explore');
-    fd.append('ctaParams', JSON.stringify(item.type === 'image' ? BN_CTA_PARAMS[item.category] : {}));
-    fd.append('order', String(Math.max(0, Number(document.getElementById(prefix + '-order').value) || 0)));
+    fd.append('media', file);
+    fd.append('type', typeSelect ? typeSelect.value : 'image');
+    fd.append('active', 'true');
     try {
       const r = await fetch('/api/mobile/banners', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token },
         body: fd
       });
-      const responseText = await r.text();
-      let d = {};
-      try { d = responseText ? JSON.parse(responseText) : {}; } catch (_) { d = { message: responseText.trim() }; }
+      const d = await r.json();
       if (r.ok) {
-        slotStatus.textContent = 'Upload complete.';
-        slotStatus.style.color = '#15803d';
-        const input = document.getElementById('bn-file-' + item.key);
-        if (input) input.value = '';
+        slotStatus.textContent = ''; slotStatus.style.color='#22c55e';
+        fileInput.value = '';
         uploaded++;
       } else {
-        let message = d.error || d.message || d.detail;
-        if (message && typeof message !== 'string') message = JSON.stringify(message);
-        message = message || `Server returned ${r.status} ${r.statusText}`;
-        slotStatus.textContent = `Upload failed: ${message}`;
-        slotStatus.style.color = '#b91c1c';
+        slotStatus.textContent = ' '+(d.error||'Failed'); slotStatus.style.color='#ef4444';
         failed++;
       }
     } catch(e) {
-      slotStatus.textContent = `Upload failed: ${e.message || 'Network error'}`;
-      slotStatus.style.color = '#b91c1c';
+      slotStatus.textContent = ' Error'; slotStatus.style.color='#ef4444';
       failed++;
     }
   }
 
   btn.disabled = false;
-  status.textContent = failed ? `${uploaded} uploaded, ${failed} failed. See each slot for the server response.` : `${uploaded} upload${uploaded === 1 ? '' : 's'} complete.`;
-  status.style.color = failed ? '#b91c1c' : '#15803d';
-  if (uploaded > 0) await loadBanners();
+  if (uploaded === 0 && failed === 0) {
+    status.textContent = ' Koi file select nahi ki'; status.style.color='#f59e0b';
+  } else if (failed === 0) {
+    status.textContent = ` ${uploaded} banner(s) uploaded!`; status.style.color='#22c55e';
+    loadBanners();
+  } else {
+    status.textContent = `${uploaded} uploaded, ${failed} failed`; status.style.color='#ef4444';
+    if (uploaded > 0) loadBanners();
+  }
 }
 
-// Legacy single-upload kept for backwards compatibility.
+// Legacy single-upload kept for backwards compat (not shown in UI)
 async function uploadBanner() { await uploadAllBanners(); }
 
 async function toggleBanner(id, currentlyActive) {
   try {
     await api('PATCH', '/api/mobile/banners/'+id+'/toggle');
-    showToast(currentlyActive ? 'Banner disabled.' : 'Banner enabled.', 'success');
-    await loadBanners();
+    showToast(currentlyActive ? 'Banner disabled' : 'Banner enabled');
+    loadBanners();
   } catch(e) { showToast('Error: '+e.message, 'error'); }
 }
 
 async function deleteBanner(id) {
-  if (!confirm('Delete this banner record and remove its media if it is no longer used?')) return;
+  if (!confirm('Delete this banner?')) return;
   try {
     await api('DELETE', '/api/mobile/banners/'+id);
-    showToast('Banner deleted.', 'success');
-    await loadBanners();
+    showToast('Banner deleted');
+    loadBanners();
   } catch(e) { showToast('Error: '+e.message, 'error'); }
 }
-
-init();
 
 </script>
 </body>

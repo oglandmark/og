@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>OG Landmark — Agent Portal</title>
-<link rel="icon" href="/og-landmark-logo-square.png"/>
+  <link rel="icon" href="/og-logo.png"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -58,11 +58,12 @@
     .right{overflow-y:auto}
     @media(max-width:800px){.left{display:none}.right{width:100%;padding:40px 24px}}
   </style>
+  <script src="/og-api-base.js"></script>
 </head>
 <body>
 <div class="left">
   <div class="left-content">
-    <img src="/og-landmark-logo-white.png" class="brand-logo" alt="OG Landmark" onerror="this.style.display='none'"/>
+    <img src="/og-logo.png" class="brand-logo" alt="OG Landmark" onerror="this.style.display='none'"/>
     <div class="brand-name">OG Landmark</div>
     <div class="brand-sub">Agent Portal</div>
     <div class="brand-desc">Your complete workspace for managing properties, leads, and client relationships.</div>
@@ -91,7 +92,7 @@
     <button class="link-btn" onclick="showPanel('forgot')">Forgot Password?</button>
     <div class="divider">or</div>
     <button class="btn-outline" onclick="showPanel('register')">New Agent? Register Here →</button>
-    <div class="other-portals">Other portals: <a href="/portal/buyer">Buyer</a> <a href="/portal/seller">Seller</a></div>
+    <div class="other-portals">Other portals: <a href="/portal/buyer.html">Buyer</a> <a href="/portal/seller.html">Seller</a></div>
   </div>
 
   <!-- REGISTER PANEL -->
@@ -208,7 +209,7 @@ async function doLogin(){
     if(!['Agent','Admin'].includes(d.user?.role)) return showErr('login-err','This portal is for agents only. Please use the correct portal.');
     localStorage.setItem('og_token',d.token);
     localStorage.setItem('og_user',JSON.stringify(d.user));
-    window.location.href='/agent';
+    window.location.href='/portal/agent-dashboard.html';
   } catch(e){ showErr('login-err','Network error. Please try again.'); }
   btn.disabled=false; btn.textContent='Sign In';
 }

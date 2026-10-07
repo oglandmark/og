@@ -5678,8 +5678,9 @@ app.get('/portal/buyer',  (req, res) => { noCache(res); res.sendFile(path.join(p
 app.get('/portal/agent',  (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/agent.html')); });
 
 // ─── CUSTOM DASHBOARDS (override SPA routes) ─────────────────────────────────
-app.get('/seller',   (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/seller-dashboard.html')); });
-app.get('/seller/*', (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/seller-dashboard.html')); });
+const redirectToUserPortal = (_req, res) => res.redirect(302, '/user/');
+app.get('/seller',   redirectToUserPortal);
+app.get('/seller/*', redirectToUserPortal);
 
 // ─── PREVIEW SHORTCUT (auto-login as test seller → Add Property) ─────────────
 app.get('/preview', async (req, res) => {
@@ -5699,20 +5700,36 @@ window.location.replace('/seller/add-property');
 </script></head><body></body></html>`);
   } catch(e) { res.redirect('/portal/seller'); }
 });
-app.get('/agent',    (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/agent-dashboard.html')); });
-app.get('/agent/*',  (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/agent-dashboard.html')); });
-app.get('/admin',    (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/admin-dashboard.html')); });
-app.get('/admin/*',  (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/admin-dashboard.html')); });
+app.use('/admin', express.static(path.join(publicDir, 'admin'), { index: 'index.html' }));
+app.use('/user', express.static(path.join(publicDir, 'user'), { index: 'index.html' }));
+app.get('/admin', (req, res) => {
+  noCache(res);
+  res.sendFile(path.join(publicDir, 'admin/index.html'));
+});
+app.get('/admin/*', (req, res) => {
+  if (req.path.includes('/assets/')) return res.status(404).end();
+  noCache(res);
+  res.sendFile(path.join(publicDir, 'admin/index.html'));
+});
+app.get('/user', (req, res) => {
+  noCache(res);
+  res.sendFile(path.join(publicDir, 'user/index.html'));
+});
+app.get('/user/*', (req, res) => {
+  if (req.path.includes('/assets/')) return res.status(404).end();
+  noCache(res);
+  res.sendFile(path.join(publicDir, 'user/index.html'));
+});
+app.get('/agent', redirectToUserPortal);
+app.get('/agent/*', redirectToUserPortal);
+app.get('/buyer', redirectToUserPortal);
+app.get('/buyer/*', redirectToUserPortal);
+app.get('/admin-dashboard', (_req, res) => res.redirect(302, '/admin/'));
 const buyerDashboard = (req, res) => {
   noCache(res);
   res.sendFile(path.join(publicDir, 'portal/buyer-dashboard.html'));
 };
-// Keep every buyer dashboard entry point on the same professional dashboard.
-// /user remains supported for existing login links and saved bookmarks.
-app.get('/user',                    buyerDashboard);
-app.get('/user/*',                  buyerDashboard);
-app.get('/buyer',                   buyerDashboard);
-app.get('/buyer/*',                 buyerDashboard);
+// Keep legacy static portal dashboard URLs available alongside the React portals.
 app.get('/portal/buyer-dashboard',  buyerDashboard);
 app.get('/portal/buyer-dashboard/*', buyerDashboard);
 

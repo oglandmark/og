@@ -1,18 +1,55 @@
+# OG Landmark static site (Apache / Hostinger)
+# Serves real files under assets/, portal/, pages/, images/, admin/, user/.
+# SPA deep links fall through to the correct index.html.
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
 
-  # Google Play privacy and data-deletion URLs must load without the SPA.
-  RewriteRule ^privacy-policy/?$ pages/privacy-policy.html [L,NC]
-  RewriteRule ^privacy/?$ pages/privacy-policy.html [L,NC]
-  RewriteRule ^account-deletion/?$ pages/account-deletion.html [L,NC]
-  RewriteRule ^data-deletion/?$ pages/data-deletion.html [L,NC]
-
-  # Prefer existing files and directories.
+  # Prefer existing files and directories
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  # Fall back to the homepage for remaining client-side routes.
+  # React admin SPA
+  RewriteRule ^admin(?:/(.*))?$ admin/index.html [L]
+
+  # React user SPA
+  RewriteRule ^user(?:/(.*))?$ user/index.html [L]
+
+  # Portal login pages (extensionless) — legacy static fallback
+  RewriteRule ^portal/buyer/?$ portal/buyer.html [L]
+  RewriteRule ^portal/seller/?$ portal/seller.html [L]
+  RewriteRule ^portal/agent/?$ portal/agent.html [L]
+  RewriteRule ^portal/admin/?$ portal/admin.html [L]
+
+  # Portal dashboards (extensionless) — legacy static fallback
+  RewriteRule ^portal/buyer-dashboard/?$ portal/buyer-dashboard.html [L]
+  RewriteRule ^portal/seller-dashboard/?$ portal/seller-dashboard.html [L]
+  RewriteRule ^portal/agent-dashboard/?$ portal/agent-dashboard.html [L]
+  RewriteRule ^portal/admin-dashboard/?$ portal/admin-dashboard.html [L]
+
+  # Optional: /sell → seller listing flow
+  RewriteRule ^sell/?$ /seller [R=302,L]
+  RewriteRule ^sell/(.*)$ /seller [R=302,L]
+
+  # Legacy SPA routes → React portals
+  RewriteRule ^buyer/?$ /user/ [R=302,L]
+  RewriteRule ^seller/?$ /user/ [R=302,L]
+  RewriteRule ^agent/?$ /user/ [R=302,L]
+  RewriteRule ^admin-dashboard/?$ /admin/ [R=302,L]
+
+  # React SPA fallback (marketing site)
   RewriteRule ^ index.html [L]
+</IfModule>
+
+# HTML: no long-term cache so cutovers are immediate
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html)$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate"
+    Header set Pragma "no-cache"
+  </FilesMatch>
+  <FilesMatch "\.(js|css|jpg|jpeg|png|webp|svg|woff2?)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
 </IfModule>

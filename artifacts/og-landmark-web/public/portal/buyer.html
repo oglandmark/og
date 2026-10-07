@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OG Landmark — Buyer Portal</title>
-  <link rel="icon" href="/og-landmark-logo-square.png" />
+  <link rel="icon" href="/og-logo.png" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -58,12 +58,13 @@
     .portal-links a:hover{text-decoration:underline}
     @media(max-width:768px){.brand{display:none}.form-side{width:100%;padding:32px 24px}}
   </style>
+  <script src="/og-api-base.js"></script>
 </head>
 <body>
 <div class="split">
   <div class="brand">
     <div class="brand-content">
-      <img src="/og-landmark-logo-white.png" class="brand-logo" alt="OG Landmark" />
+      <img src="/og-logo.png" class="brand-logo" alt="OG Landmark" />
       <div class="brand-title">OG Landmark</div>
       <div class="brand-sub">Premium Real Estate</div>
       <div class="brand-tagline">Find your dream property across Pakistan's finest residential and commercial markets.</div>
@@ -99,7 +100,7 @@
       <div class="divider"><span>or</span></div>
       <button class="btn btn-outline" onclick="showPanel('panel-register')" style="margin-top:0">New here? Register for free →</button>
       <div class="portal-links">
-        Other portals: <a href="/portal/seller">Seller</a>
+        Other portals: <a href="/portal/seller.html">Seller</a>
       </div>
     </div>
 
@@ -278,7 +279,7 @@ async function doLogin() {
 
     localStorage.setItem('og_token', d.token);
     localStorage.setItem('og_user', JSON.stringify(d.user));
-    window.location.href = '/buyer';
+    window.location.href = '/portal/buyer-dashboard.html';
   } catch(e) {
     showErr('login-err', 'Connection error. Please try again.');
     setLoading('login-btn', false, 'Sign In');
@@ -362,7 +363,7 @@ async function doRegister() {
     // Save auth and redirect to dashboard
     localStorage.setItem('og_user', JSON.stringify(d.user));
     localStorage.setItem('og_token', d.token);
-    window.location.href = '/buyer';
+    window.location.href = '/portal/buyer-dashboard.html';
   } catch(e) {
     showErr('reg-err', 'Connection error. Please try again.');
     setLoading('reg-btn', false, 'Create Account');

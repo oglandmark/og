@@ -6,6 +6,10 @@
   RewriteEngine On
   RewriteBase /
 
+  # Public deletion pages used by Google Play and direct web links
+  RewriteRule ^account-deletion/?$ pages/account-deletion.html [L,NC]
+  RewriteRule ^data-deletion/?$ pages/data-deletion.html [L,NC]
+
   # Prefer existing files and directories
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d

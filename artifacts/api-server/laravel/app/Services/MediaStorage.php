@@ -125,4 +125,30 @@ class MediaStorage
 
         return array_values(array_unique($paths));
     }
+
+    /**
+     * Delete upload files only when the updated document no longer references them.
+     *
+     * @return list<string> public paths that could not be removed
+     */
+    public function deleteUnreferencedPaths(array $candidatePaths, array $document): array
+    {
+        $referenced = array_fill_keys($this->referencedPaths($document), true);
+        $failed = [];
+
+        foreach (array_unique($candidatePaths) as $path) {
+            if (!is_string($path) || isset($referenced[$path])) {
+                continue;
+            }
+            $file = $this->fileForPublicPath($path);
+            if ($file === null || !is_file($file)) {
+                continue;
+            }
+            if (!@unlink($file)) {
+                $failed[] = $path;
+            }
+        }
+
+        return $failed;
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\JsonStore;
 use App\Services\MediaStorage;
+use App\Services\AccountDataDeletionService;
 use App\Services\DeveloperApiService;
 use App\Services\NotificationDeliveryService;
 use Illuminate\Http\Request;
@@ -382,7 +383,7 @@ class ApiController extends Controller
             if ($index === null) return $this->json(['error' => 'Invalid or expired reset code'], 400);
             $data['users'][$index]['password'] = $this->hashLegacyPassword($newPassword);
             JsonStore::write($data);
-            $this->invalidateSessions($user['id']);
+            $this->invalidateSessions($user['id'], $user['email'] ?? null);
             return $this->json(['success' => true]);
         }
 
@@ -894,7 +895,24 @@ class ApiController extends Controller
             if ($method === 'PUT') { $data['users'][$index][$key] = $request->input('url'); JsonStore::write($data); return $this->json(['url' => $data['users'][$index][$key]]); }
         }
         if ($method === 'GET') return $this->json($this->safeUser($data['users'][$index]));
-        if ($method === 'DELETE') { array_splice($data['users'], $index, 1); JsonStore::write($data); $this->destroySession($request); return response()->noContent(); }
+        if ($method === 'DELETE') {
+            $deletion = app(AccountDataDeletionService::class);
+            $updatedData = $deletion->removeFromDocument($data, (string) $user['id']);
+            $mediaStorage = app(MediaStorage::class);
+            $removedMediaPaths = array_values(array_diff(
+                $mediaStorage->referencedPaths($data),
+                $mediaStorage->referencedPaths($updatedData),
+            ));
+            JsonStore::write($updatedData);
+            $failedMediaDeletes = $mediaStorage->deleteUnreferencedPaths($removedMediaPaths, $updatedData);
+            if ($failedMediaDeletes !== []) {
+                Log::warning('Account deletion could not remove some unreferenced uploads.', [
+                    'count' => count($failedMediaDeletes),
+                ]);
+            }
+            $this->invalidateSessions($user['id']);
+            return response()->noContent();
+        }
         if ($method === 'PUT') {
             if ($request->has('coverPhoto') && !$this->canManageAgentCover($data['users'][$index])) {
                 return $this->json(['error' => 'Only admin-enabled Agent accounts can manage a cover photo.'], 403);
@@ -1698,10 +1716,21 @@ class ApiController extends Controller
         try { DB::table('auth_sessions')->where('token_hash', hash('sha256', $token))->delete(); } catch (\Throwable) {}
     }
 
-    private function invalidateSessions($userId): void
+    private function invalidateSessions($userId, ?string $email = null): void
     {
         try { DB::table('auth_sessions')->where('user_id', $userId)->delete(); } catch (\Throwable $exception) {
             Log::warning('Laravel auth sessions could not be invalidated.', ['error' => $exception->getMessage()]);
+        }
+        if (is_string($email) && trim($email) !== '') {
+            try {
+                DB::table('auth_challenges')
+                    ->whereRaw('LOWER(email) = ?', [strtolower(trim($email))])
+                    ->delete();
+            } catch (\Throwable $exception) {
+                Log::warning('Laravel account verification challenges could not be removed.', [
+                    'error' => $exception->getMessage(),
+                ]);
+            }
         }
     }
 

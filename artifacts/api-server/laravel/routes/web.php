@@ -40,6 +40,7 @@ foreach ([
     'privacy' => 'privacy-policy.html',
     'terms' => 'terms.html',
     'account-deletion' => 'account-deletion.html',
+    'data-deletion' => 'data-deletion.html',
 ] as $path => $filename) {
     Route::get('/' . $path, fn () => response()->file(public_path('pages/' . $filename)))
         ->name('legal.' . $path);

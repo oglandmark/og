@@ -15,6 +15,10 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const mysql = require('mysql2/promise');
 const multer = require('multer');
+const {
+  deleteAccountData,
+  removeUnreferencedAccountMedia,
+} = require('./account-data-deletion');
 
 // ─── File Upload (Multer) ─────────────────────────────────────────────────────
 // Media bytes live on the configured file volume, never in MySQL. In
@@ -459,12 +463,21 @@ async function createSession(user) {
   }
   return token;
 }
-async function invalidateUserSessions(userId) {
+async function invalidateUserSessions(userId, email = null) {
   if (mysqlDb) {
     await mysqlDb`DELETE FROM auth_sessions WHERE user_id = ${userId}`;
+    if (typeof email === 'string' && email.trim()) {
+      await mysqlDb`DELETE FROM auth_challenges WHERE LOWER(email) = LOWER(${email.trim()})`;
+    }
   } else if (localPreview) {
     for (const [token, session] of tokenStore.entries()) {
       if (session.userId === userId) tokenStore.delete(token);
+    }
+    if (typeof email === 'string' && email.trim()) {
+      const challengeSuffix = `:${email.trim().toLowerCase()}`;
+      for (const key of otpStore.keys()) {
+        if (key.toLowerCase().endsWith(challengeSuffix)) otpStore.delete(key);
+      }
     }
   }
 }
@@ -5212,16 +5225,28 @@ app.put('/api/account', requireAuth, async (req, res) => {
   await writeData(data); const { password, ...safe } = user; res.json(safe);
 });
 app.delete('/api/account', requireAuth, async (req, res) => {
-  const data = await readData(); const user = data.users.find(u => u.id === req.currentUser.id);
-  if (user) { user.status = 'Deleted'; user.email = `deleted-${user.id}-${Date.now()}@invalid.local`; await writeData(data); }
-  if (mysqlDb) {
-    try {
-      await mysqlDb`DELETE FROM auth_sessions WHERE user_id = ${req.currentUser.id}`;
-    } catch {
-      return res.status(500).json({ error: 'Could not clear sessions' });
+  try {
+    const userId = req.currentUser.id;
+    const data = await readData();
+    const accountEmail = data.users.find(user => String(user.id) === String(userId))?.email || req.currentUser.email;
+    const { data: updatedData, removedUploadPaths } = deleteAccountData(data, userId);
+    await writeData(updatedData);
+    await invalidateUserSessions(userId, accountEmail);
+    const failedMediaDeletes = await removeUnreferencedAccountMedia(
+      updatedData,
+      removedUploadPaths,
+      mediaStorageDir,
+    );
+    if (failedMediaDeletes.length) {
+      console.warn('Account deletion could not remove some unreferenced uploads.', {
+        count: failedMediaDeletes.length,
+      });
     }
+    return res.status(204).end();
+  } catch (error) {
+    console.error('Account deletion failed.', error);
+    return res.status(500).json({ error: 'Account data could not be deleted.' });
   }
-  res.status(204).end();
 });
 app.put('/api/account/profile-photo', requireAuth, async (req, res) => {
   if (!req.body.url || typeof req.body.url !== 'string') return res.status(400).json({ error: 'url is required' });

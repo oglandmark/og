@@ -910,7 +910,7 @@ class ApiController extends Controller
                     'count' => count($failedMediaDeletes),
                 ]);
             }
-            $this->invalidateSessions($user['id']);
+            $this->invalidateSessions($user['id'], $user['email'] ?? null);
             return response()->noContent();
         }
         if ($method === 'PUT') {

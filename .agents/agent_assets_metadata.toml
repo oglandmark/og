@@ -2,48 +2,6 @@ uploads = []
 generated = []
 
 [[outputs]]
-id = "d8wAjMbo8n1hNL11LLdQx"
-uri = "file://exports/OG%20Web%20v10.zip"
-type = "unspecified"
-title = "OG Web v10.zip"
-description = "Current Laravel Blade website package with PHP dependencies and public assets. The archive excludes .env secrets, local database data, logs, and uploaded media."
-logical_id = "5518fdea-1a2c-4932-a3da-0db8245311b3"
-content_hash = "sha256:b328adc959c1cb6b04122197ea80951f7d56ee948451f479fc4928bb2e6c1cf0"
-size = 39337776
-mtime_ms = 1790954725159
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/5518fdea-1a2c-4932-a3da-0db8245311b3/5ef647f4-c6de-4d9c-a010-2e55824e3d44"
-storage_version_token = "1790954764544677"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "LFetlg5IdF8ejXRfyPYcw"
-uri = "file://exports/OG%20Web%20v11.zip"
-type = "unspecified"
-title = "OG Web v11.zip"
-description = "Latest Laravel Blade website package with a root-level Hostinger entry point and rewrite rules to prevent the previous nested-folder 403. Includes merged buyer portal updates; excludes private .env, local database, logs, caches, and uploaded media."
-logical_id = "4a7bfe1e-1003-4e45-b76f-a23dacceefc5"
-content_hash = "sha256:3da0ac0f1ed1b2e1beeb011165a43c62f8c3c7121379fde7920cc60f204981e5"
-size = 41330838
-mtime_ms = 1790955814713
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/4a7bfe1e-1003-4e45-b76f-a23dacceefc5/1aa9be7f-a073-4cfb-945e-d406e0ebe28a"
-storage_version_token = "1790955839510294"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "NpPkFRhjfJa_CCUPHDJ3T"
-uri = "file://exports/OG-Landmark-Mobile-Source-2026-10-03.zip"
-type = "unspecified"
-title = "OG Landmark Mobile Source ZIP"
-description = "Latest mobile app source, assets, workspace configuration, and shared API client. Archive integrity checked; secrets and generated caches excluded. This is source code, not an installable APK/AAB."
-logical_id = "4f2d86ed-6c11-4511-9b78-954b6ade76ed"
-content_hash = "sha256:9030f2772e1ec15ea675b4faf22be705fb89c0c79c465c8229c95800ee1932f5"
-size = 28183241
-mtime_ms = 1791002580713
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/4f2d86ed-6c11-4511-9b78-954b6ade76ed/f183ded4-a393-469a-a365-7fa66f24abb6"
-storage_version_token = "1791002596285797"
-content_type = "application/octet-stream"
-
-[[outputs]]
 id = "SUdzHdduU-1qH2RLktmsA"
 uri = "file://exports/current-splash-preview.png"
 type = "image"
@@ -202,11 +160,11 @@ id = "dIY8eelU09eukU9eXC3pu"
 uri = "file://exports/og-landmark-full-updated-zips/OG-Landmark-Frontend-Complete-Updated-2026-10-08.zip"
 type = "unspecified"
 title = "OG Landmark — Complete Updated Frontend ZIP"
-description = "Complete frontend package with the chosen support email, current phone and WhatsApp details, updated privacy and account-deletion pages, route rules, cache-busted homepage bundle, and refreshed nested build.zip."
+description = "Final full frontend archive with support@oglandmark.com, phone 03011484303, WhatsApp +923011484303, updated legal pages and routes, refreshed nested build.zip, and Hostinger Node-app upload instructions."
 logical_id = "9c956672-4be8-4c49-a841-671d0821703d"
-content_hash = "sha256:6ef46eb1dce4819cc240458f8bf16f9d3e78bff5984db65eb8fbd35e3cb493d7"
-size = 97309223
-mtime_ms = 1791402404793
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/9c956672-4be8-4c49-a841-671d0821703d/d77d78bf-b5af-4052-b7d6-e3531f8a7c74"
-storage_version_token = "1791402902720632"
+content_hash = "sha256:fc2f27eb8bf59da7d8c872470600a04d657144a94db1db9e88c29e74543291db"
+size = 97309397
+mtime_ms = 1791403151905
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/9c956672-4be8-4c49-a841-671d0821703d/9fc6de1a-25c5-4b5b-84b6-0af2f0141dcd"
+storage_version_token = "1791403207744730"
 content_type = "application/octet-stream"

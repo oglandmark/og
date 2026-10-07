@@ -5784,11 +5784,13 @@ let patchedWebsiteBundleCache = null;
 app.get('/assets/index-CXxrK7KP.js', (_req, res, next) => {
   try {
     if (patchedWebsiteBundleCache === null) {
-      const phonePatchedBundle = fs.readFileSync(path.join(publicDir, 'assets', 'index-CXxrK7KP.js'), 'utf8')
-        .replaceAll('0304 2569000', '03011484303')
+      const contactPatchedBundle = fs.readFileSync(path.join(publicDir, 'assets', 'index-CXxrK7KP.js'), 'utf8')
+        .replaceAll('0304 2569000', '0301 1484303')
         .replaceAll('03042569000', '03011484303')
-        .replaceAll('923042569000', '923011484303');
-      patchedWebsiteBundleCache = patchDashboardAuth(phonePatchedBundle);
+        .replaceAll('923042569000', '923011484303')
+        .replaceAll('+92 300 1234567', '+92 301 1484303')
+        .replaceAll('info@oglandmark.com', 'support@oglandmark.com');
+      patchedWebsiteBundleCache = patchDashboardAuth(contactPatchedBundle);
     }
     res.setHeader('Cache-Control', 'no-store');
     res.type('application/javascript').send(patchedWebsiteBundleCache);

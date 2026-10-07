@@ -5,8 +5,8 @@ description: Keeps Hostinger deployment archives portable and synchronized with 
 
 External Hostinger deployment ZIPs must not include Replit-generated npm lockfiles because their resolved URLs can point at the private package-firewall registry.
 
-After changing public legal pages, regenerate both the full frontend package and the focused upload overlay from the current source. Verify the page contents and route rules in every package copy, including nested build archives, before presenting them.
+After changing public legal pages or contact details, rebuild from the latest supplied frontend ZIP. Regenerate the focused overlay too unless the user asks for one archive only. Verify homepage bundle values, cache-busted HTML references, legal pages, and route rules across source/build copies and nested archives.
 
-**Why:** Hostinger cannot resolve `package-firewall.replit.local`, causing dependency installation to fail before the app build starts. Separately, ZIP copies can retain older page content even after the working website is updated.
+**Why:** Hostinger cannot resolve `package-firewall.replit.local`, causing dependency installation to fail before the app build starts. Public contact text can also be transformed separately in the runtime asset route and static builder, while unchanged JavaScript URLs may remain cached.
 
-**How to apply:** Ship standalone Node packages with `.npmrc` set to `https://registry.npmjs.org/` and omit workspace lockfiles. For legal-page updates, build the full package and the focused overlay from the same source, then compare their archived pages and rewrites—including nested ZIPs—before delivery.
+**How to apply:** Ship standalone Node packages with `.npmrc` set to `https://registry.npmjs.org/` and omit workspace lockfiles. Keep runtime and static contact rewrites in sync, bump the homepage bundle URL, fetch the served JavaScript, and compare every requested archive copy—including nested ZIPs—before delivery.

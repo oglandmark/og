@@ -6,3 +6,4 @@ exports/og-landmark-2.0.22-22-96dca796.aab filter=lfs diff=lfs merge=lfs -text
 exports/og-landmark-2.0.23-23.apk filter=lfs diff=lfs merge=lfs -text
 deliverables/OG-Landmark-2.0.24-code24.aab filter=lfs diff=lfs merge=lfs -text
 attached_assets/frontend_(3)_1791368306370.zip filter=lfs diff=lfs merge=lfs -text
+exports/og-landmark-full-updated-zips/OG-Landmark-Frontend-Complete-Updated-2026-10-08.zip filter=lfs diff=lfs merge=lfs -text

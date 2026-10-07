@@ -20,11 +20,13 @@ fs.cpSync(publicDir, outputDir, {
 
 const websiteBundle = path.join(outputDir, 'assets', 'index-CXxrK7KP.js');
 if (fs.existsSync(websiteBundle)) {
-  const phonePatchedBundle = fs.readFileSync(websiteBundle, 'utf8')
-    .replaceAll('0304 2569000', '03011484303')
+  const contactPatchedBundle = fs.readFileSync(websiteBundle, 'utf8')
+    .replaceAll('0304 2569000', '0301 1484303')
     .replaceAll('03042569000', '03011484303')
-    .replaceAll('923042569000', '923011484303');
-  const patchedBundle = patchDashboardAuth(phonePatchedBundle);
+    .replaceAll('923042569000', '923011484303')
+    .replaceAll('+92 300 1234567', '+92 301 1484303')
+    .replaceAll('info@oglandmark.com', 'support@oglandmark.com');
+  const patchedBundle = patchDashboardAuth(contactPatchedBundle);
   fs.writeFileSync(websiteBundle, patchedBundle);
 }
 

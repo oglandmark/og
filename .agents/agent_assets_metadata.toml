@@ -196,3 +196,17 @@ mtime_ms = 1791400985421
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/379cf30e-17dc-4f3a-adae-8d6327151a02/7724ef0f-033a-4238-964d-8fd1b1ff3a80"
 storage_version_token = "1791401088088749"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "dIY8eelU09eukU9eXC3pu"
+uri = "file://exports/og-landmark-full-updated-zips/OG-Landmark-Frontend-Complete-Updated-2026-10-08.zip"
+type = "unspecified"
+title = "OG Landmark — Complete Updated Frontend ZIP"
+description = "Complete frontend package with the chosen support email, current phone and WhatsApp details, updated privacy and account-deletion pages, route rules, cache-busted homepage bundle, and refreshed nested build.zip."
+logical_id = "9c956672-4be8-4c49-a841-671d0821703d"
+content_hash = "sha256:6ef46eb1dce4819cc240458f8bf16f9d3e78bff5984db65eb8fbd35e3cb493d7"
+size = 97309223
+mtime_ms = 1791402404793
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/9c956672-4be8-4c49-a841-671d0821703d/d77d78bf-b5af-4052-b7d6-e3531f8a7c74"
+storage_version_token = "1791402902720632"
+content_type = "application/octet-stream"

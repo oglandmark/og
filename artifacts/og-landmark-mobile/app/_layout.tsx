@@ -331,12 +331,12 @@ function StartupSplash({
     if (reduceMotion) return undefined;
 
     outerRotation.value = withRepeat(
-      withTiming(360, { duration: 7000, easing: Easing.linear }),
+      withTiming(360, { duration: 3500, easing: Easing.linear }),
       -1,
       false,
     );
     innerRotation.value = withRepeat(
-      withTiming(-360, { duration: 9000, easing: Easing.linear }),
+      withTiming(-360, { duration: 4500, easing: Easing.linear }),
       -1,
       false,
     );

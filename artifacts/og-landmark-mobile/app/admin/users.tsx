@@ -4,7 +4,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, FlatList, Pressable,
+  ActivityIndicator, Alert, FlatList, Platform, Pressable,
   RefreshControl, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -12,7 +12,13 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
-import { getAdminUsers, updateUserRole, deleteAdminUser, ApiUser } from '@/lib/api';
+import {
+  getAdminUsers,
+  updateUserRole,
+  setAgentCoverUploadAccess,
+  deleteAdminUser,
+  ApiUser,
+} from '@/lib/api';
 
 const NAVY = '#0B1F3A';
 const GOLD = '#C8A45A';
@@ -30,6 +36,7 @@ export default function AdminUsers() {
   const [users,      setUsers]      = useState<ApiUser[]>([]);
   const [filtered,   setFiltered]   = useState<ApiUser[]>([]);
   const [query,      setQuery]      = useState('');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'agents'>('all');
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -37,16 +44,19 @@ export default function AdminUsers() {
   const load = useCallback(async () => {
     try {
       setError('');
-      const data = await getAdminUsers({ limit: 100 });
+      const data = await getAdminUsers({
+        limit: 500,
+        role: roleFilter === 'agents' ? 'Agent' : undefined,
+      });
       setUsers(data);
       setFiltered(data);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not load users. Check the API connection and try again.');
     }
     finally { setLoading(false); setRefreshing(false); }
-  }, []);
+  }, [roleFilter]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { setLoading(true); load(); }, [load]);
 
   useEffect(() => {
     if (!query.trim()) { setFiltered(users); return; }
@@ -58,6 +68,16 @@ export default function AdminUsers() {
     ));
   }, [query, users]);
 
+  function replaceUser(updated: ApiUser) {
+    if (roleFilter === 'agents' && updated.role.toLowerCase() !== 'agent') {
+      setUsers(prev => prev.filter(u => u.id !== updated.id));
+      setFiltered(prev => prev.filter(u => u.id !== updated.id));
+      return;
+    }
+    setUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
+    setFiltered(prev => prev.map(u => u.id === updated.id ? updated : u));
+  }
+
   function handleChangeRole(user: ApiUser) {
     Alert.alert(
       'Change Role',
@@ -67,15 +87,37 @@ export default function AdminUsers() {
           text: r,
           onPress: async () => {
             try {
-              await updateUserRole(user.id, r);
-              const updated = { ...user, role: r };
-              setUsers(prev => prev.map(u => u.id === user.id ? updated : u));
-              setFiltered(prev => prev.map(u => u.id === user.id ? updated : u));
+              replaceUser(await updateUserRole(user.id, r));
             } catch { Alert.alert('Error', 'Could not update role.'); }
           },
         })),
         { text: 'Cancel', style: 'cancel' },
       ]
+    );
+  }
+
+  function handleAgentCoverAccess(user: ApiUser) {
+    const enabled = user.agentCoverUploadEnabled !== true;
+    Alert.alert(
+      enabled ? 'Enable Agent cover uploads?' : 'Disable Agent cover uploads?',
+      `${enabled ? 'Allow' : 'Stop'} ${user.name} from adding or removing an Agent cover photo?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: enabled ? 'Enable' : 'Disable',
+          style: enabled ? 'default' : 'destructive',
+          onPress: async () => {
+            try {
+              replaceUser(await setAgentCoverUploadAccess(user.id, enabled));
+            } catch (cause) {
+              Alert.alert(
+                'Error',
+                cause instanceof Error ? cause.message : 'Could not update Agent cover access.',
+              );
+            }
+          },
+        },
+      ],
     );
   }
 
@@ -111,6 +153,34 @@ export default function AdminUsers() {
           <View style={[s.roleBadge, { backgroundColor: roleColor + '18' }]}>
             <Text style={[s.roleText, { color: roleColor }]}>{item.role}</Text>
           </View>
+          {item.role.toLowerCase() === 'agent' ? (
+            <Pressable
+              accessibilityRole="switch"
+              accessibilityState={{ checked: item.agentCoverUploadEnabled === true }}
+              onPress={() => handleAgentCoverAccess(item)}
+              style={[
+                s.coverAccessButton,
+                {
+                  backgroundColor: item.agentCoverUploadEnabled === true ? colors.action + '18' : colors.secondary,
+                  borderColor: item.agentCoverUploadEnabled === true ? colors.action + '55' : colors.border,
+                },
+              ]}
+            >
+              <Feather
+                name={item.agentCoverUploadEnabled === true ? 'check-circle' : 'image'}
+                size={12}
+                color={item.agentCoverUploadEnabled === true ? colors.action : colors.mutedForeground}
+              />
+              <Text
+                style={[
+                  s.coverAccessText,
+                  { color: item.agentCoverUploadEnabled === true ? colors.action : colors.mutedForeground },
+                ]}
+              >
+                {item.agentCoverUploadEnabled === true ? 'Cover uploads enabled' : 'Enable cover uploads'}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
         <View style={s.actions}>
           <Pressable
@@ -134,12 +204,38 @@ export default function AdminUsers() {
 
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
-      <View style={[s.header, { backgroundColor: NAVY, paddingTop: top + 14 }]}>
+      <View style={[s.header, { backgroundColor: NAVY, paddingTop: top + (Platform.OS === 'web' ? 67 : 0) + 14 }]}>
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <Feather name="arrow-left" size={20} color="#8a9ab5" />
         </Pressable>
-        <Text style={s.headerTitle}>Users ({filtered.length})</Text>
+        <Text style={s.headerTitle}>{roleFilter === 'agents' ? 'Agents' : 'Users'} ({filtered.length})</Text>
         <View style={{ width: 24 }} />
+      </View>
+
+      <View style={[s.filterRow, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        {([
+          { key: 'all', label: 'All users' },
+          { key: 'agents', label: 'Agents' },
+        ] as const).map(option => {
+          const selected = roleFilter === option.key;
+          return (
+            <Pressable
+              key={option.key}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              testID={`admin-user-filter-${option.key}`}
+              onPress={() => setRoleFilter(option.key)}
+              style={[
+                s.filterButton,
+                { backgroundColor: selected ? colors.action : colors.secondary, borderColor: selected ? colors.action : colors.border },
+              ]}
+            >
+              <Text style={[s.filterText, { color: selected ? colors.actionForeground : colors.mutedForeground }]}>
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       {/* Search */}
@@ -192,6 +288,9 @@ const s = StyleSheet.create({
   header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16 },
   headerTitle: { fontFamily: 'Inter_700Bold', fontSize: 17, color: '#ffffff' },
   searchWrap:  { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
+  filterRow:   { flexDirection: 'row', gap: 8, paddingHorizontal: 14, paddingVertical: 9, borderBottomWidth: 1 },
+  filterButton:{ minHeight: 34, paddingHorizontal: 13, borderWidth: 1, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  filterText:  { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   searchInput: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 14, paddingVertical: 0 },
   card:        { borderRadius: 14, borderWidth: 1, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar:      { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
@@ -200,6 +299,8 @@ const s = StyleSheet.create({
   email:       { fontFamily: 'Inter_400Regular', fontSize: 12, marginTop: 1 },
   roleBadge:   { borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3, alignSelf: 'flex-start', marginTop: 5 },
   roleText:    { fontFamily: 'Inter_700Bold', fontSize: 10 },
+  coverAccessButton: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 5, borderWidth: 1, borderRadius: 7, paddingHorizontal: 7, paddingVertical: 5, marginTop: 7 },
+  coverAccessText: { fontFamily: 'Inter_600SemiBold', fontSize: 10 },
   actions:     { flexDirection: 'row', gap: 6 },
   actBtn:      { width: 34, height: 34, borderRadius: 9, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   empty:       { alignItems: 'center', paddingTop: 80, gap: 12 },

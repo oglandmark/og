@@ -4,8 +4,8 @@ const translations = {
   en: {
     // ── App wide ─────────────────────────────────────
     appName: 'OG Landmark',
-    appTagline: "Pakistan's Premium Real Estate",
-    trustLine: 'OG Landmark · Trusted Property Network',
+    appTagline: 'Real Estate Listings in Pakistan',
+    trustLine: 'OG Landmark · Property Listings',
     version: 'OG Landmark · Real estate with perspective',
 
     // ── Language screen ───────────────────────────────
@@ -19,7 +19,7 @@ const translations = {
 
     // ── Welcome screen ────────────────────────────────
     welcomeTagline: 'Okara District',
-    welcomeBold: 'Premium Property Marketplace',
+    welcomeBold: 'Property Listings and Projects',
     pillResidential: '🏠 Residential',
     pillAgri: '🌾 Agriculture',
     pillCommercial: '🏢 Commercial',
@@ -702,8 +702,8 @@ const translations = {
   ur: {
     // ── App wide ─────────────────────────────────────
     appName: 'OG Landmark',
-    appTagline: 'پاکستان کا پریمیم رئیل اسٹیٹ',
-    trustLine: 'OG Landmark · قابل اعتماد پراپرٹی نیٹ ورک',
+    appTagline: 'پاکستان میں جائیداد کی فہرستیں',
+    trustLine: 'OG Landmark · جائیداد کی فہرستیں',
     version: 'OG Landmark · جائیداد میں نیا نقطہ نظر',
 
     // ── Language screen ───────────────────────────────
@@ -717,7 +717,7 @@ const translations = {
 
     // ── Welcome screen ────────────────────────────────
     welcomeTagline: 'اوکاڑہ ضلع کا',
-    welcomeBold: 'پریمیم پراپرٹی مارکیٹ پلیس',
+    welcomeBold: 'جائیداد کی فہرستیں اور منصوبے',
     pillResidential: '🏠 رہائشی',
     pillAgri: '🌾 زرعی',
     pillCommercial: '🏢 تجارتی',

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -68,7 +68,7 @@ export default function AdminNotifications() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: NAVY, paddingTop: top + 14 }]}>
+      <View style={[styles.header, { backgroundColor: NAVY, paddingTop: top + (Platform.OS === 'web' ? 67 : 0) + 14 }]}>
         <Pressable onPress={() => router.back()} hitSlop={8}><Feather name="arrow-left" size={20} color="#8a9ab5" /></Pressable>
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={styles.eyebrow}>ADMIN TOOLS</Text>

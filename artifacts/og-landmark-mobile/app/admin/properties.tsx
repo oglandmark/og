@@ -14,17 +14,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { LocationPicker } from '@/components/LocationPicker';
 import { openGoogleMaps, type LocationData } from '@/lib/locationService';
+import { formatPropertyCoordinates, getPropertyCoordinates } from '@/lib/propertyCoordinates';
+import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import {
   getAdminProperties, ApiProperty,
   approveProperty, rejectProperty,
   toggleFeatureProperty, deleteAdminProperty, updateProperty,
-  getAdminPropertyReview, AdminPropertyReview,
+  getAdminPropertyReview, AdminPropertyReview, setAdminDemoPropertiesHidden,
 } from '@/lib/api';
+import { formatPrice, properties as bundledDemoProperties, Property as DemoProperty } from '@/lib/properties';
 
 const NAVY = '#0B1F3A';
 const GOLD = '#C8A45A';
 
-const STATUS_TABS = ['Pending', 'Active', 'Rejected', 'All'] as const;
+const STATUS_TABS = ['Pending', 'Active', 'Rejected', 'All', 'Demos'] as const;
 type StatusTab = typeof STATUS_TABS[number];
 
 function statusColor(s: string) {
@@ -34,24 +37,16 @@ function statusColor(s: string) {
   return '#6b7280';
 }
 
-// Valid, non-null-island coordinates
-function hasValidCoords(lat?: number, lng?: number): lat is number {
-  return (
-    typeof lat === 'number' && typeof lng === 'number' &&
-    isFinite(lat) && isFinite(lng) &&
-    !(lat === 0 && lng === 0) &&
-    lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
-  );
-}
-
 // Open in the device maps app. Prefer coordinates; fall back to an address search.
 function openInMaps(prop: ApiProperty) {
   const label = prop.title || prop.address || undefined;
-  if (hasValidCoords(prop.lat, prop.lng)) {
-    openGoogleMaps(prop.lat as number, prop.lng as number, label);
+  const coordinates = getPropertyCoordinates(prop);
+  if (coordinates) {
+    openGoogleMaps(coordinates.latitude, coordinates.longitude, label);
     return;
   }
-  const query = [prop.address, prop.city].filter(Boolean).join(', ').trim();
+  const query = [prop.location?.address || prop.address, prop.location?.city || prop.city]
+    .filter(Boolean).join(', ').trim();
   if (query) {
     const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
     Linking.openURL(url).catch(() => Alert.alert('Error', 'Could not open Maps.'));
@@ -63,10 +58,13 @@ function openInMaps(prop: ApiProperty) {
 export default function AdminProperties() {
   const colors = useColors();
   const { top } = useSafeAreaInsets();
+  const { hiddenDemoPropertyIds, refreshDemoPropertyVisibility } = useDemoPropertyVisibility();
   const [tab,        setTab]        = useState<StatusTab>('Pending');
   const [properties, setProperties] = useState<ApiProperty[]>([]);
+  const [demoProperties, setDemoProperties] = useState<DemoProperty[]>(bundledDemoProperties);
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [demoActionBusy, setDemoActionBusy] = useState(false);
   const [editingProperty, setEditingProperty] = useState<ApiProperty | null>(null);
   const [loadError, setLoadError] = useState('');
   const [rejectingProperty, setRejectingProperty] = useState<ApiProperty | null>(null);
@@ -85,14 +83,20 @@ export default function AdminProperties() {
   const load = useCallback(async () => {
     setLoadError('');
     try {
+      if (tab === 'Demos') {
+        await refreshDemoPropertyVisibility();
+        setDemoProperties(bundledDemoProperties);
+        setProperties([]);
+        return;
+      }
       const status = tab === 'All' ? undefined : tab;
-      const data = await getAdminProperties({ status, limit: 50 });
+      const data = await getAdminProperties({ status, limit: 500 });
       setProperties(data);
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Could not load properties.');
     }
     finally { setLoading(false); setRefreshing(false); }
-  }, [tab]);
+  }, [refreshDemoPropertyVisibility, tab]);
 
   useEffect(() => { setLoading(true); load(); }, [load]);
 
@@ -161,16 +165,102 @@ export default function AdminProperties() {
     ]);
   }
 
+  function toggleDemoVisibility(property: DemoProperty, hidden: boolean) {
+    const title = hidden ? 'Restore demo property?' : 'Remove demo property?';
+    const message = hidden
+      ? 'This demo example will appear again in the app’s offline fallback.'
+      : 'This only removes the bundled demo example from the mobile app. Customer listings are not affected.';
+    Alert.alert(title, message, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: hidden ? 'Restore' : 'Remove',
+        style: hidden ? 'default' : 'destructive',
+        onPress: async () => {
+          setDemoActionBusy(true);
+          try {
+            await setAdminDemoPropertiesHidden([property.id], !hidden);
+            await refreshDemoPropertyVisibility();
+          } catch (error) {
+            Alert.alert('Could not update demo property', error instanceof Error ? error.message : 'Please try again.');
+          } finally {
+            setDemoActionBusy(false);
+          }
+        },
+      },
+    ]);
+  }
+
+  function removeAllVisibleDemos() {
+    const ids = demoProperties
+      .filter((property) => !hiddenDemoPropertyIds.includes(property.id))
+      .map((property) => property.id);
+    if (ids.length === 0) return;
+
+    Alert.alert(
+      'Remove all demo properties?',
+      `This removes ${ids.length} bundled demo examples from the mobile app. Customer listings are not affected.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove all',
+          style: 'destructive',
+          onPress: async () => {
+            setDemoActionBusy(true);
+            try {
+              await setAdminDemoPropertiesHidden(ids, true);
+              await refreshDemoPropertyVisibility();
+            } catch (error) {
+              Alert.alert('Could not remove demo properties', error instanceof Error ? error.message : 'Please try again.');
+            } finally {
+              setDemoActionBusy(false);
+            }
+          },
+        },
+      ],
+    );
+  }
+
+  const renderDemoItem = ({ item }: { item: DemoProperty }) => {
+    const hidden = hiddenDemoPropertyIds.includes(item.id);
+    return (
+      <View style={[s.demoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Image source={item.image} style={s.demoThumb} />
+        <View style={s.demoInfo}>
+          <Text style={[s.title, { color: colors.foreground }]} numberOfLines={2}>{item.title}</Text>
+          <Text style={[s.meta, { color: colors.mutedForeground }]} numberOfLines={1}>
+            {item.city} · {formatPrice(item.price, item.status)}
+          </Text>
+          <Text style={[s.demoStatus, { color: hidden ? colors.mutedForeground : colors.action }]}>
+            {hidden ? 'Removed from app' : 'Offline fallback'}
+          </Text>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${hidden ? 'Restore' : 'Remove'} ${item.title}`}
+          testID={`admin-demo-property-toggle-${item.id}`}
+          disabled={demoActionBusy}
+          onPress={() => toggleDemoVisibility(item, hidden)}
+          style={[s.demoAction, { borderColor: hidden ? colors.border : '#dc262640', opacity: demoActionBusy ? 0.5 : 1 }]}
+        >
+          <Feather name={hidden ? 'rotate-ccw' : 'trash-2'} size={14} color={hidden ? colors.action : '#dc2626'} />
+          <Text style={[s.demoActionText, { color: hidden ? colors.action : '#dc2626' }]}>
+            {hidden ? 'Restore' : 'Remove'}
+          </Text>
+        </Pressable>
+      </View>
+    );
+  };
+
   function beginLocationEdit(prop: ApiProperty) {
-    const hasCoords = hasValidCoords(prop.lat, prop.lng);
+    const coordinates = getPropertyCoordinates(prop);
     setEditingProperty(prop);
-    setEditLatitude(hasCoords ? prop.lat! : null);
-    setEditLongitude(hasCoords ? prop.lng! : null);
-    setEditLocation(hasCoords ? {
-      latitude: prop.lat!,
-      longitude: prop.lng!,
-      fullAddress: prop.address || '',
-      city: prop.city || undefined,
+    setEditLatitude(coordinates?.latitude ?? null);
+    setEditLongitude(coordinates?.longitude ?? null);
+    setEditLocation(coordinates ? {
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
+      fullAddress: prop.location?.address || prop.address || '',
+      city: prop.location?.city || prop.city || undefined,
       locationSource: 'manual',
     } : null);
     setEditConfirmed(false);
@@ -193,15 +283,29 @@ export default function AdminProperties() {
 
     setSavingLocation(true);
     try {
+      const address = editLocation?.fullAddress || editingProperty.address;
+      const city = editLocation?.city || editingProperty.location?.city || editingProperty.city;
+      const location = {
+        ...(editingProperty.location ?? {}),
+        latitude: editLatitude,
+        longitude: editLongitude,
+        address,
+        city,
+        ...(editLocation?.streetAddress ? { streetAddress: editLocation.streetAddress } : {}),
+        ...(editLocation?.locationSource ? { source: editLocation.locationSource } : {}),
+        ...(editLocation?.accuracy != null ? { accuracy: editLocation.accuracy } : {}),
+        ...(editLocation?.placeId ? { placeId: editLocation.placeId } : {}),
+      };
       const payload = {
         lat: editLatitude,
         lng: editLongitude,
-        address: editLocation?.fullAddress || editingProperty.address,
-        city: editLocation?.city || editingProperty.city,
+        address,
+        city,
+        location,
       };
       await updateProperty(editingProperty.id, payload);
       setProperties((prev) => prev.map((prop) =>
-        prop.id === editingProperty.id ? { ...prop, ...payload } : prop
+        prop.id === editingProperty.id ? { ...prop, ...payload, location } : prop
       ));
       closeLocationEdit(true);
     } catch {
@@ -213,8 +317,11 @@ export default function AdminProperties() {
 
   const renderItem = ({ item }: { item: ApiProperty }) => {
     const thumb = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null;
-    const coords = hasValidCoords(item.lat, item.lng);
-    const locationText = [item.address, item.city].filter(Boolean).join(', ').trim();
+    const coords = getPropertyCoordinates(item);
+    const locationText = [
+      item.location?.address || item.address,
+      item.location?.city || item.city,
+    ].filter(Boolean).join(', ').trim();
     const hasLocation = coords || !!locationText;
     return (
     <View style={[s.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -266,7 +373,7 @@ export default function AdminProperties() {
           )}
           <Text style={[s.locCoords, { color: colors.mutedForeground }]}>
             {coords
-              ? `${(item.lat as number).toFixed(5)}, ${(item.lng as number).toFixed(5)}`
+              ? formatPropertyCoordinates(coords)
               : 'No GPS coordinates — using address'}
           </Text>
           <View style={s.locActions}>
@@ -319,7 +426,7 @@ export default function AdminProperties() {
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[s.header, { backgroundColor: NAVY, paddingTop: top + 14 }]}>
+      <View style={[s.header, { backgroundColor: NAVY, paddingTop: top + (Platform.OS === 'web' ? 67 : 0) + 14 }]}>
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <Feather name="arrow-left" size={20} color="#8a9ab5" />
         </Pressable>
@@ -350,6 +457,39 @@ export default function AdminProperties() {
             <Text style={[s.actText, { color: NAVY }]}>Retry</Text>
           </Pressable>
         </View>
+      ) : tab === 'Demos' ? (
+        <FlatList
+          data={demoProperties}
+          keyExtractor={item => `demo-${item.id}`}
+          renderItem={renderDemoItem}
+          contentContainerStyle={{ padding: 14, gap: 10, paddingBottom: 40 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={GOLD} />}
+          ListHeaderComponent={
+            <View style={s.demoHeader}>
+              <Text style={[s.demoDescription, { color: colors.mutedForeground }]}>
+                These bundled examples appear only as an offline fallback. Remove them here to hide them across the app.
+              </Text>
+              {demoProperties.some(item => !hiddenDemoPropertyIds.includes(item.id)) ? (
+                <Pressable
+                  accessibilityRole="button"
+                  testID="admin-remove-all-demo-properties"
+                  disabled={demoActionBusy}
+                  onPress={removeAllVisibleDemos}
+                  style={[s.removeAllDemos, { opacity: demoActionBusy ? 0.5 : 1 }]}
+                >
+                  <Feather name="trash-2" size={14} color="#dc2626" />
+                  <Text style={s.removeAllDemosText}>Remove all visible demos</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          }
+          ListEmptyComponent={
+            <View style={s.empty}>
+              <Feather name="check-circle" size={40} color={colors.mutedForeground} />
+              <Text style={[s.emptyText, { color: colors.mutedForeground }]}>No demo properties</Text>
+            </View>
+          }
+        />
       ) : (
         <FlatList
           data={properties}
@@ -509,7 +649,13 @@ export default function AdminProperties() {
                     ['Purpose', reviewData.property.status],
                     ['Price', `PKR ${Number(reviewData.property.price || 0).toLocaleString()}`],
                     ['Area', `${reviewData.property.area ?? 0} ${reviewData.property.areaUnit ?? ''}`],
-                    ['Location', [reviewData.property.address, reviewData.property.city].filter(Boolean).join(', ')],
+                    ['Location', [
+                      reviewData.property.location?.address || reviewData.property.address,
+                      reviewData.property.location?.city || reviewData.property.city,
+                    ].filter(Boolean).join(', ')],
+                    ['Exact pin', getPropertyCoordinates(reviewData.property)
+                      ? formatPropertyCoordinates(getPropertyCoordinates(reviewData.property)!)
+                      : 'Not submitted'],
                   ].map(([label, value]) => (
                     <View key={label} style={s.reviewRow}>
                       <Text style={[s.reviewLabel, { color: colors.mutedForeground }]}>{label}</Text>
@@ -517,6 +663,15 @@ export default function AdminProperties() {
                     </View>
                   ))}
                 </View>
+                {getPropertyCoordinates(reviewData.property) ? (
+                  <Pressable
+                    style={[s.locBtn, { borderColor: GOLD, alignSelf: 'flex-start', marginTop: 12 }]}
+                    onPress={() => openInMaps(reviewData.property)}
+                  >
+                    <Feather name="map" size={13} color={GOLD} />
+                    <Text style={[s.locBtnText, { color: GOLD }]}>Open exact pin in Maps</Text>
+                  </Pressable>
+                ) : null}
                 <Text style={[s.reviewSectionTitle, { color: colors.foreground }]}>Description</Text>
                 <Text style={[s.reviewDescription, { color: colors.mutedForeground }]}>
                   {reviewData.property.description || 'No description provided.'}
@@ -547,6 +702,16 @@ const s = StyleSheet.create({
   tabItem:     { flex: 1, alignItems: 'center', paddingVertical: 13 },
   tabText:     { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   card:        { borderRadius: 14, borderWidth: 1, padding: 14 },
+  demoCard:    { borderRadius: 14, borderWidth: 1, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  demoThumb:   { width: 64, height: 64, borderRadius: 10 },
+  demoInfo:    { flex: 1, minWidth: 0 },
+  demoStatus:  { fontFamily: 'Inter_600SemiBold', fontSize: 10, marginTop: 3 },
+  demoAction:  { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: 9, paddingHorizontal: 9 },
+  demoActionText: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
+  demoHeader:  { gap: 10, marginBottom: 4 },
+  demoDescription: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18 },
+  removeAllDemos: { alignSelf: 'flex-start', minHeight: 38, flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderColor: '#dc262640', borderRadius: 10, paddingHorizontal: 12 },
+  removeAllDemosText: { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#dc2626' },
   cardTop:     { flexDirection: 'row', gap: 10, marginBottom: 12 },
   thumb:       { width: 72, height: 72, borderRadius: 10 },
   thumbPlaceholder: { alignItems: 'center', justifyContent: 'center' },

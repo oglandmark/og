@@ -32,6 +32,7 @@ import { markNotificationRead } from '@/lib/api';
 
 SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
+const STARTUP_SPLASH_MIN_DURATION_MS = 7000;
 
 function RootLayoutNav() {
   const colors = useColors();
@@ -41,7 +42,16 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
   const [navigationReady, setNavigationReady] = React.useState(false);
+  const [splashDurationElapsed, setSplashDurationElapsed] = React.useState(false);
   const handledNotificationResponses = React.useRef(new Set<string>());
+
+  useEffect(() => {
+    const timeout = setTimeout(
+      () => setSplashDurationElapsed(true),
+      STARTUP_SPLASH_MIN_DURATION_MS,
+    );
+    return () => clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -198,7 +208,7 @@ function RootLayoutNav() {
         <Stack.Screen name="project/[id]" options={{ presentation: 'card', animation: 'none' }} />
         <Stack.Screen name="(auth)" options={{ presentation: 'card', animation: 'none' }} />
       </Stack>
-      {!navigationReady && (
+      {(!navigationReady || !splashDurationElapsed) && (
         <StartupSplash colors={colors} overlay />
       )}
     </View>

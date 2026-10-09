@@ -14,7 +14,7 @@
 - [EAS build log redaction](eas-build-log-redaction.md) — startup logs can print project environment-variable values; avoid raw log output and redact before review.
 - [Plot calculator geometry](plot-calculator-geometry.md) — irregular plots need diagonals for exact triangulation; side-only results must be labelled estimates or declined.
 - [EAS cloud monorepo builds](eas-cloud-monorepo-build.md) — direct CLI uploads bypass GitHub, but remote pnpm can fail on esbuild build-script policy in this workspace.
-- [EAS pnpm 8 lockfile compatibility](eas-pnpm8-lockfile.md) — EAS uses pnpm 8.9.2 here; catalog refs and pnpm 9/10 lockfiles are not build-compatible.
+- [EAS pnpm and lockfile compatibility](eas-pnpm8-lockfile.md) — align the lockfile with the target build profile's explicit pnpm version, not only the root package-manager field.
 - [Expo preview native libraries](expo-preview-native-libraries.md) — Replit Expo preview needs the desktop libraries used by React Native DevTools; keep the root pnpm pin unset locally.
 - [Expo dependency alignment](expo-dependency-alignment.md) — package fixes can trigger mid-install Metro resolution errors; verify module resolution and the final bundle after installation finishes.
 - [Expo preview bundle resolver](expo-preview-bundle-resolver.md) — a proxied Expo web bundle can fail resolving expo-router when the artifact path is treated as a Metro module path; diagnose before changing workflows.

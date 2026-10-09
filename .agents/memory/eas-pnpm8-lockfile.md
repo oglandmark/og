@@ -1,10 +1,10 @@
 ---
-name: EAS pnpm 8 lockfile compatibility
-description: EAS Android builds in this workspace use pnpm 8.9.2 and require its legacy-compatible lockfile format.
+name: EAS pnpm and lockfile compatibility
+description: Align the lockfile format with the explicit package-manager version in the target EAS build profile.
 ---
 
-EAS ignores the root package-manager version pin in this monorepo and currently installs with pnpm 8.9.2. Pnpm 8.9.2 cannot consume pnpm 9/10 lockfiles or the `catalog:` dependency protocol.
+EAS build contexts can use different pnpm versions. The `pnpm` setting on a specific `eas.json` build profile is an explicit supported override; do not confuse it with the root `packageManager` field, which a builder may ignore. In this workspace, a production profile pinned to pnpm 10.26.1 accepted the v9 lockfile with a frozen install, while pnpm 10 rejected a v6 lockfile with `ERR_PNPM_LOCKFILE_BREAKING_CHANGE`. Earlier EAS contexts used pnpm 8.9.2 and required a v6 lockfile. These lockfile majors are not interchangeable.
 
-**Why:** Production Android builds failed before Gradle because the pnpm 10 lockfile was reported as incompatible; a later frozen install also exposed a missing dependency snapshot that only the builder-compatible pnpm 8 repair resolved. A subsequent retry showed the local workspace's database manifest differed from the exact GitHub commit EAS built, so a lockfile validated only against local manifests can still fail remotely.
+**Why:** Production Android builds have failed before Gradle when the builder's pnpm major did not match the lockfile. Root-level package-manager metadata, explicit profile configuration, and historical builder logs are not equivalent signals.
 
-**How to apply:** Verify the exact workspace manifests and archive contents that EAS will use. For direct uploads, when mobile/shared manifests match the last successful build, a detached temporary worktree with that version-6 lockfile lets pnpm 8.9.2 install without changing the local pnpm 9/10 lockfile. Validate with a frozen install using pnpm 8.9.2; confirm `.easignore` retains required app/shared files while excluding unrelated large assets. If manifests differ, regenerate the version-6 lockfile in an isolated worktree with a separate modules directory and review resolved mobile package versions. In this workspace, pnpm 10's `--config.lockfile-version=6.0` did not down-convert the version-9 lockfile, so verify the generated header rather than trusting the flag.
+**How to apply:** Read the exact build profile's `pnpm` setting first. Validate the lockfile with that pnpm version and the same workspace manifests and `.easignore` archive shape EAS will use. If the profile does not pin pnpm, verify the actual builder policy rather than inferring it from the root `packageManager` field or an older build.

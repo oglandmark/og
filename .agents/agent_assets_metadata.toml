@@ -168,3 +168,17 @@ mtime_ms = 1791403151905
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/9c956672-4be8-4c49-a841-671d0821703d/9fc6de1a-25c5-4b5b-84b6-0af2f0141dcd"
 storage_version_token = "1791403207744730"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "aH8X5z6p-3fTsuTVS1ZNm"
+uri = "file://generated-artifacts/OG-Landmark-Laravel-Backend-2026-10-09.zip"
+type = "unspecified"
+title = "OG Landmark Laravel Backend ZIP"
+description = "Current Laravel backend source package with vendor dependencies. Excludes .env, live data, uploaded media, logs, and caches; includes Hostinger upload instructions and a DDL-only schema helper."
+logical_id = "0c6ae7ce-9631-4f0b-8050-213de9c89520"
+content_hash = "sha256:7b59e719981b802c42e289c8cd5b9b75724c366a8728d0c6b8bd8a73ec60844a"
+size = 37974163
+mtime_ms = 1791571229908
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/0c6ae7ce-9631-4f0b-8050-213de9c89520/c9e361dd-5b86-4e1a-9244-1b73853a95d0"
+storage_version_token = "1791571256663257"
+content_type = "application/octet-stream"

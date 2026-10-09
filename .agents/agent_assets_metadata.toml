@@ -16,76 +16,6 @@ storage_version_token = "1791042744174639"
 content_type = "image/png"
 
 [[outputs]]
-id = "5CJ8hNj2wPLCWepqDsI9z"
-uri = "file://deliverables/OG%20Landmark%2003-10-26.zip"
-type = "unspecified"
-title = "OG Landmark 03-10-26"
-description = "Complete mobile Expo source ZIP with app code, assets, workspace config, and required API-client package. No APK or credentials included."
-logical_id = "98ffbc8d-f3b2-4a07-914b-046f779ccf37"
-content_hash = "sha256:68abeac45c69368351d42fb763bb24678fa244856f619e16e3333817602dd87f"
-size = 19583726
-mtime_ms = 1791050827881
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/98ffbc8d-f3b2-4a07-914b-046f779ccf37/f5559661-08e3-43ee-88b1-fc6fda603025"
-storage_version_token = "1791050866693691"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "IEB8vbnjh7jx7WQz4o2Oy"
-uri = "file://deliverables/OG-Landmark-2.0.24-code24.aab"
-type = "unspecified"
-title = "OG Landmark Android AAB — 2.0.24 (24)"
-description = "Verified production Android App Bundle from source commit 147f34059aa5c9879bf55806969ef0a340efa2f2. Not submitted to Google Play."
-logical_id = "de0df2c2-2422-4c91-935f-a837f2485e76"
-content_hash = "sha256:4705dd8ec803494de225b01b81dec6c50a9b17a0a5641e59315c9867715c9b1e"
-size = 95412766
-mtime_ms = 1791055036437
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/de0df2c2-2422-4c91-935f-a837f2485e76/714905a4-a0f4-4b74-9aea-5f1d5dc863c1"
-storage_version_token = "1791055082697755"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "ORPrTSKZZuOzVS9Gg1m1M"
-uri = "file://exports/og-landmark-deletion-deploy-zips/OG-Landmark-Frontend-Deletion-Pages.zip"
-type = "unspecified"
-title = "OG Landmark — Frontend update ZIP"
-description = "Static legal-page overlay: account/data deletion pages and rewrite rules. Does not replace the full website."
-logical_id = "6f72d585-74d5-4178-aa69-7bf1982bc4af"
-content_hash = "sha256:4c4da1b8a3b20e6eea8812a7f46c16678b3cf528a0150b10d0efa6747edabf3a"
-size = 20735
-mtime_ms = 1791398435934
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/6f72d585-74d5-4178-aa69-7bf1982bc4af/1fc50a22-8dea-46f7-9bd5-f072a6bea1a6"
-storage_version_token = "1791398472178401"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "fcaEPOOafPz8jlineFVFC"
-uri = "file://exports/og-landmark-deletion-deploy-zips/OG-Landmark-Laravel-Backend-Deletion-Update.zip"
-type = "unspecified"
-title = "OG Landmark — Laravel backend update ZIP"
-description = "Overlay files for the active Laravel API. No .env, database, or uploaded media included."
-logical_id = "ffb38a7b-ca0b-42bf-a8a4-106c189878f3"
-content_hash = "sha256:6b9b107724814f42c2d092f2f7e52a3495a85d02aaadfa2ff530df64549c10dd"
-size = 29514
-mtime_ms = 1791398436018
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/ffb38a7b-ca0b-42bf-a8a4-106c189878f3/4776dcd4-124d-49e2-8273-056f116b068e"
-storage_version_token = "1791398473460488"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "MzoIYwwjIHne31Wgp_Og3"
-uri = "file://exports/og-landmark-deletion-deploy-zips/OG-Landmark-MySQL-Schema-Only.zip"
-type = "unspecified"
-title = "OG Landmark — MySQL schema-only ZIP"
-description = "DDL-only schema reference; contains no production records. No new DB migration is required for account deletion."
-logical_id = "2b1c0de7-d5bf-4f6c-b45f-0e72919ecacb"
-content_hash = "sha256:9999e55352dc5cc4439765ed67f93d9402bef813cdc79036c722a52b7b42b34a"
-size = 2319
-mtime_ms = 1791398436022
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/2b1c0de7-d5bf-4f6c-b45f-0e72919ecacb/ba5b558e-bb87-4dfa-b3f6-22de1f408354"
-storage_version_token = "1791398474708933"
-content_type = "application/octet-stream"
-
-[[outputs]]
 id = "NhMZW6-44eXE8jNHJnYlp"
 uri = "file://exports/og-landmark-full-updated-zips/OG-Landmark-Frontend-Full-Updated-2026-10-07.zip"
 type = "unspecified"
@@ -181,4 +111,18 @@ size = 37974163
 mtime_ms = 1791571229908
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/0c6ae7ce-9631-4f0b-8050-213de9c89520/c9e361dd-5b86-4e1a-9244-1b73853a95d0"
 storage_version_token = "1791571256663257"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "fUUbjlR8bTaxnqgtK8Njg"
+uri = "file://generated-artifacts/OG-Landmark-Website-Frontend-Source-2026-10-10.zip"
+type = "unspecified"
+title = "OG Landmark Website Frontend Source"
+description = "Current website frontend files in the Hostinger-ready frontend/build/ layout. Excludes backend, secrets, runtime data, dependencies, and user-uploaded media."
+logical_id = "cd107a39-052d-44a5-be75-a6837f1aa88c"
+content_hash = "sha256:75ad8fe0f17f1ba882daeb7ad1fae5bbe65b2121f8ec6dc315f3252697193c4e"
+size = 13137958
+mtime_ms = 1791574011966
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/cd107a39-052d-44a5-be75-a6837f1aa88c/1d2b5a04-873e-4231-8a10-341e730b4b79"
+storage_version_token = "1791574021862172"
 content_type = "application/octet-stream"

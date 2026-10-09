@@ -774,12 +774,11 @@
         var stars='';
         for(var i=0;i<5;i++){ stars+='<span style="color:'+(i<Math.round(rating)?'#f59e0b':'#d1d5db')+'">★</span>'; }
 
-        var phoneHtml=a.phone?'<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#475569;margin-bottom:6px"><span style="color:#0B1F3A">📞</span><a href="tel:'+esc(a.phone)+'" style="color:#475569;text-decoration:none">'+esc(a.phone)+'</a></div>':'';
+        var phoneHtml='<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#475569;margin-bottom:6px"><span style="color:#0B1F3A">📞</span><a href="tel:+923011484303" style="color:#475569;text-decoration:none">03011484303</a></div>';
         var emailHtml=a.email?'<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#475569;margin-bottom:12px"><span style="color:#0B1F3A">✉</span><a href="mailto:'+esc(a.email)+'" style="color:#475569;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">'+esc(a.email)+'</a></div>':'';
         var profileUrl='/agents/'+a.id;
         var waMsg=encodeURIComponent('Hi, I would like to connect with agent '+a.name+' from OG Landmark.');
-        var contactPhone=(a.phone||'').replace(/\D/g,'');
-        if(contactPhone&&contactPhone.length>=10&&contactPhone[0]!=='9') contactPhone='92'+contactPhone.slice(contactPhone.startsWith('0')?1:0);
+        var contactPhone='923011484303';
         var btnStyle='display:block;width:100%;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-align:center;font-family:inherit;transition:.2s;text-decoration:none;box-sizing:border-box';
         var listingsLabel=a.propertiesCount?a.propertiesCount+' Listings':'';
 
@@ -796,7 +795,7 @@
             '</div>'+
           '</div>'+
           '<div style="padding:0 20px 16px">'+
-            (a.phone||a.email?'<div style="border-top:1px solid #f1f5f9;padding-top:12px;margin-bottom:12px">'+phoneHtml+emailHtml+'</div>':'')+
+            '<div style="border-top:1px solid #f1f5f9;padding-top:12px;margin-bottom:12px">'+phoneHtml+emailHtml+'</div>'+
             '<div style="display:flex;flex-direction:column;gap:8px">'+
               '<a href="'+profileUrl+'" style="'+btnStyle+';background:#0B1F3A;color:#fff" onmouseover="this.style.background=\'#172e52\'" onmouseout="this.style.background=\'#0B1F3A\'">View Profile</a>'+
               (contactPhone

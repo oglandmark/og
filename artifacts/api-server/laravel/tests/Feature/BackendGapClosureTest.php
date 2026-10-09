@@ -203,13 +203,13 @@ class BackendGapClosureTest extends TestCase
             'city' => 'Okara',
             'address' => 'QA-only test address',
             'description' => 'Temporary development workflow test listing; not for sale.',
-            'lat' => 30.8086,
-            'lng' => 73.4537,
+            'lat' => 30.8086123,
+            'lng' => 73.4537654,
             'images' => [$imageUrl],
             'coverImage' => $imageUrl,
             'location' => [
-                'latitude' => 30.8086,
-                'longitude' => 73.4537,
+                'latitude' => 30.8086123,
+                'longitude' => 73.4537654,
                 'city' => 'Okara',
                 'district' => 'Okara',
                 'locality' => 'QA Test Area',
@@ -221,7 +221,11 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonPath('sellerId', $buyerId)
             ->assertJsonPath('approvalStatus', 'Pending')
             ->assertJsonPath('listingStatus', 'Pending')
-            ->assertJsonPath('images.0', $imageUrl);
+            ->assertJsonPath('images.0', $imageUrl)
+            ->assertJsonPath('lat', 30.8086123)
+            ->assertJsonPath('lng', 73.4537654)
+            ->assertJsonPath('location.latitude', 30.8086123)
+            ->assertJsonPath('location.longitude', 73.4537654);
         $propertyId = $property->json('id');
 
         // Sign in through the same OTP-gated admin flow used by the app.
@@ -252,16 +256,41 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonCount(1)
             ->assertJsonPath('0.id', $propertyId)
             ->assertJsonPath('0.images.0', $imageUrl)
-            ->assertJsonPath('0.coverImage', $imageUrl);
+            ->assertJsonPath('0.coverImage', $imageUrl)
+            ->assertJsonPath('0.lat', 30.8086123)
+            ->assertJsonPath('0.lng', 73.4537654)
+            ->assertJsonPath('0.location.latitude', 30.8086123)
+            ->assertJsonPath('0.location.longitude', 73.4537654);
         $this->withToken($adminToken)
             ->getJson("/api/admin/properties/{$propertyId}/review")
             ->assertOk()
             ->assertJsonPath('property.id', $propertyId)
             ->assertJsonPath('property.images.0', $imageUrl)
             ->assertJsonPath('property.coverImage', $imageUrl)
+            ->assertJsonPath('property.lat', 30.8086123)
+            ->assertJsonPath('property.lng', 73.4537654)
+            ->assertJsonPath('property.location.latitude', 30.8086123)
+            ->assertJsonPath('property.location.longitude', 73.4537654)
             ->assertJsonPath('seller.id', $buyerId)
             ->assertJsonPath('seller.role', 'Buyer')
             ->assertJsonCount(0, 'audit');
+
+        $this->putJson("/api/properties/{$propertyId}", [
+            'lat' => 31.1234567,
+            'lng' => 72.7654321,
+            'location' => [
+                'latitude' => 31.1234567,
+                'longitude' => 72.7654321,
+                'address' => 'QA-only updated test address',
+                'city' => 'Okara',
+                'source' => 'map_tap',
+            ],
+        ], ['Authorization' => "Bearer {$adminToken}"])
+            ->assertOk()
+            ->assertJsonPath('lat', 31.1234567)
+            ->assertJsonPath('lng', 72.7654321)
+            ->assertJsonPath('location.latitude', 31.1234567)
+            ->assertJsonPath('location.longitude', 72.7654321);
         $this->withoutHeader('Authorization')
             ->getJson("/api/properties/{$propertyId}")
             ->assertNotFound();

@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { LocationPicker } from '@/components/LocationPicker';
 import { openGoogleMaps, type LocationData } from '@/lib/locationService';
+import { formatPropertyCoordinates, getPropertyCoordinates } from '@/lib/propertyCoordinates';
 import {
   getAdminProperties, ApiProperty,
   approveProperty, rejectProperty,
@@ -34,24 +35,16 @@ function statusColor(s: string) {
   return '#6b7280';
 }
 
-// Valid, non-null-island coordinates
-function hasValidCoords(lat?: number, lng?: number): lat is number {
-  return (
-    typeof lat === 'number' && typeof lng === 'number' &&
-    isFinite(lat) && isFinite(lng) &&
-    !(lat === 0 && lng === 0) &&
-    lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
-  );
-}
-
 // Open in the device maps app. Prefer coordinates; fall back to an address search.
 function openInMaps(prop: ApiProperty) {
   const label = prop.title || prop.address || undefined;
-  if (hasValidCoords(prop.lat, prop.lng)) {
-    openGoogleMaps(prop.lat as number, prop.lng as number, label);
+  const coordinates = getPropertyCoordinates(prop);
+  if (coordinates) {
+    openGoogleMaps(coordinates.latitude, coordinates.longitude, label);
     return;
   }
-  const query = [prop.address, prop.city].filter(Boolean).join(', ').trim();
+  const query = [prop.location?.address || prop.address, prop.location?.city || prop.city]
+    .filter(Boolean).join(', ').trim();
   if (query) {
     const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
     Linking.openURL(url).catch(() => Alert.alert('Error', 'Could not open Maps.'));
@@ -162,15 +155,15 @@ export default function AdminProperties() {
   }
 
   function beginLocationEdit(prop: ApiProperty) {
-    const hasCoords = hasValidCoords(prop.lat, prop.lng);
+    const coordinates = getPropertyCoordinates(prop);
     setEditingProperty(prop);
-    setEditLatitude(hasCoords ? prop.lat! : null);
-    setEditLongitude(hasCoords ? prop.lng! : null);
-    setEditLocation(hasCoords ? {
-      latitude: prop.lat!,
-      longitude: prop.lng!,
-      fullAddress: prop.address || '',
-      city: prop.city || undefined,
+    setEditLatitude(coordinates?.latitude ?? null);
+    setEditLongitude(coordinates?.longitude ?? null);
+    setEditLocation(coordinates ? {
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
+      fullAddress: prop.location?.address || prop.address || '',
+      city: prop.location?.city || prop.city || undefined,
       locationSource: 'manual',
     } : null);
     setEditConfirmed(false);
@@ -193,15 +186,29 @@ export default function AdminProperties() {
 
     setSavingLocation(true);
     try {
+      const address = editLocation?.fullAddress || editingProperty.address;
+      const city = editLocation?.city || editingProperty.location?.city || editingProperty.city;
+      const location = {
+        ...(editingProperty.location ?? {}),
+        latitude: editLatitude,
+        longitude: editLongitude,
+        address,
+        city,
+        ...(editLocation?.streetAddress ? { streetAddress: editLocation.streetAddress } : {}),
+        ...(editLocation?.locationSource ? { source: editLocation.locationSource } : {}),
+        ...(editLocation?.accuracy != null ? { accuracy: editLocation.accuracy } : {}),
+        ...(editLocation?.placeId ? { placeId: editLocation.placeId } : {}),
+      };
       const payload = {
         lat: editLatitude,
         lng: editLongitude,
-        address: editLocation?.fullAddress || editingProperty.address,
-        city: editLocation?.city || editingProperty.city,
+        address,
+        city,
+        location,
       };
       await updateProperty(editingProperty.id, payload);
       setProperties((prev) => prev.map((prop) =>
-        prop.id === editingProperty.id ? { ...prop, ...payload } : prop
+        prop.id === editingProperty.id ? { ...prop, ...payload, location } : prop
       ));
       closeLocationEdit(true);
     } catch {
@@ -213,8 +220,11 @@ export default function AdminProperties() {
 
   const renderItem = ({ item }: { item: ApiProperty }) => {
     const thumb = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null;
-    const coords = hasValidCoords(item.lat, item.lng);
-    const locationText = [item.address, item.city].filter(Boolean).join(', ').trim();
+    const coords = getPropertyCoordinates(item);
+    const locationText = [
+      item.location?.address || item.address,
+      item.location?.city || item.city,
+    ].filter(Boolean).join(', ').trim();
     const hasLocation = coords || !!locationText;
     return (
     <View style={[s.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -266,7 +276,7 @@ export default function AdminProperties() {
           )}
           <Text style={[s.locCoords, { color: colors.mutedForeground }]}>
             {coords
-              ? `${(item.lat as number).toFixed(5)}, ${(item.lng as number).toFixed(5)}`
+              ? formatPropertyCoordinates(coords)
               : 'No GPS coordinates — using address'}
           </Text>
           <View style={s.locActions}>
@@ -509,7 +519,13 @@ export default function AdminProperties() {
                     ['Purpose', reviewData.property.status],
                     ['Price', `PKR ${Number(reviewData.property.price || 0).toLocaleString()}`],
                     ['Area', `${reviewData.property.area ?? 0} ${reviewData.property.areaUnit ?? ''}`],
-                    ['Location', [reviewData.property.address, reviewData.property.city].filter(Boolean).join(', ')],
+                    ['Location', [
+                      reviewData.property.location?.address || reviewData.property.address,
+                      reviewData.property.location?.city || reviewData.property.city,
+                    ].filter(Boolean).join(', ')],
+                    ['Exact pin', getPropertyCoordinates(reviewData.property)
+                      ? formatPropertyCoordinates(getPropertyCoordinates(reviewData.property)!)
+                      : 'Not submitted'],
                   ].map(([label, value]) => (
                     <View key={label} style={s.reviewRow}>
                       <Text style={[s.reviewLabel, { color: colors.mutedForeground }]}>{label}</Text>
@@ -517,6 +533,15 @@ export default function AdminProperties() {
                     </View>
                   ))}
                 </View>
+                {getPropertyCoordinates(reviewData.property) ? (
+                  <Pressable
+                    style={[s.locBtn, { borderColor: GOLD, alignSelf: 'flex-start', marginTop: 12 }]}
+                    onPress={() => openInMaps(reviewData.property)}
+                  >
+                    <Feather name="map" size={13} color={GOLD} />
+                    <Text style={[s.locBtnText, { color: GOLD }]}>Open exact pin in Maps</Text>
+                  </Pressable>
+                ) : null}
                 <Text style={[s.reviewSectionTitle, { color: colors.foreground }]}>Description</Text>
                 <Text style={[s.reviewDescription, { color: colors.mutedForeground }]}>
                   {reviewData.property.description || 'No description provided.'}

@@ -16,6 +16,7 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const multer = require('multer');
 const patchDashboardAuth = require('./scripts/patch-dashboard-auth');
+const patchPublicContacts = require('./scripts/patch-public-contacts');
 const {
   deleteAccountData,
   removeUnreferencedAccountMedia,
@@ -5784,12 +5785,9 @@ let patchedWebsiteBundleCache = null;
 app.get('/assets/index-CXxrK7KP.js', (_req, res, next) => {
   try {
     if (patchedWebsiteBundleCache === null) {
-      const contactPatchedBundle = fs.readFileSync(path.join(publicDir, 'assets', 'index-CXxrK7KP.js'), 'utf8')
-        .replaceAll('0304 2569000', '0301 1484303')
-        .replaceAll('03042569000', '03011484303')
-        .replaceAll('923042569000', '923011484303')
-        .replaceAll('+92 300 1234567', '+92 301 1484303')
-        .replaceAll('info@oglandmark.com', 'support@oglandmark.com');
+      const contactPatchedBundle = patchPublicContacts(
+        fs.readFileSync(path.join(publicDir, 'assets', 'index-CXxrK7KP.js'), 'utf8'),
+      ).replaceAll('info@oglandmark.com', 'support@oglandmark.com');
       patchedWebsiteBundleCache = patchDashboardAuth(contactPatchedBundle);
     }
     res.setHeader('Cache-Control', 'no-store');
@@ -5954,14 +5952,14 @@ app.get('/agents/:id', async (req, res) => {
       <div class="cta">
         <h3>Contact ${a.name}</h3>
         <p>Get in touch for property inquiries and consultations.</p>
-        ${a.phone ? `<a href="tel:${a.phone}" class="btn">📞 ${a.phone}</a>` : ''}
-        ${wa ? `<a href="https://wa.me/${wa}?text=${encodeURIComponent('Hi '+a.name+', I found your profile on OG Landmark and would like to discuss a property.')}" class="btn btn-out" target="_blank">💬 WhatsApp</a>` : ''}
+        <a href="tel:+923011484303" class="btn">📞 03011484303</a>
+        <a href="https://wa.me/923011484303?text=${encodeURIComponent('Hi '+a.name+', I found your profile on OG Landmark and would like to discuss a property.')}" class="btn btn-out" target="_blank">💬 WhatsApp</a>
         ${a.email ? `<a href="mailto:${a.email}" class="btn btn-out" style="margin-bottom:0">✉ Email</a>` : ''}
       </div>
       <div class="card" style="margin-top:16px">
         <h3>Quick Info</h3>
         <div style="font-size:13px;display:flex;flex-direction:column;gap:8px">
-          ${a.phone ? `<div style="display:flex;justify-content:space-between"><span style="color:#94a3b8">Phone</span><span style="font-weight:600">${a.phone}</span></div>` : ''}
+          <div style="display:flex;justify-content:space-between"><span style="color:#94a3b8">Phone</span><span style="font-weight:600">03011484303</span></div>
           ${a.email ? `<div style="display:flex;justify-content:space-between"><span style="color:#94a3b8">Email</span><a href="mailto:${a.email}" style="font-weight:600;color:#1e293b;text-decoration:none">${a.email}</a></div>` : ''}
           <div style="display:flex;justify-content:space-between"><span style="color:#94a3b8">Rating</span><span style="font-weight:600;color:#f59e0b">★ ${rating}/5</span></div>
         </div>
@@ -6327,11 +6325,11 @@ app.get('/properties/:id', async (req, res) => {
         <div class="agent-name">${agent.name}</div>
         <div class="agent-role">${agent.title || agent.specialization || 'Property Agent'}</div>
         <div class="agent-stars">${'★'.repeat(Math.round(agent.rating||5))}</div>
-        ${agent.phone ? `<div class="agent-contact">📞 ${agent.phone}</div>` : ''}
+        <div class="agent-contact">📞 03011484303</div>
         ${agent.email ? `<div class="agent-contact">✉ ${agent.email}</div>` : ''}
         <div class="agent-btns">
           ${agent.id ? `<button class="btn-agent btn-agent-prim" onclick="window.location.href='/agents/${agent.id}'">View Profile</button>` : ''}
-          <a href="tel:${(agent.phone||'').replace(/\s/g,'')}" class="btn-agent btn-agent-sec" style="display:flex;align-items:center;justify-content:center">📞 Contact</a>
+          <a href="tel:+923011484303" class="btn-agent btn-agent-sec" style="display:flex;align-items:center;justify-content:center">📞 Contact</a>
         </div>
       </div>` : ''}
     </div>

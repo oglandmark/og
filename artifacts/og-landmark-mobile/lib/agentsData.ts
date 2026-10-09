@@ -3,6 +3,7 @@
  * Replace with oglandmark.com API response when live.
  */
 import type { ImageSourcePropType } from 'react-native';
+import { PUBLIC_CONTACT_PHONE } from './publicContact';
 
 export type SampleAgent = {
   id: string;
@@ -66,7 +67,7 @@ export function apiAgentToSample(agent: ManagedAgentRecord): SampleAgent {
     listings: Number(agent.listings || 0),
     areas: Array.isArray(agent.areas) ? agent.areas : [],
     color: agent.color || '#0B1F3A',
-    phone: agent.phone || '',
+    phone: PUBLIC_CONTACT_PHONE,
     specialties: Array.isArray(agent.specialties) ? agent.specialties : [],
     about: agent.about || '',
   };
@@ -87,7 +88,7 @@ export const SAMPLE_AGENTS: SampleAgent[] = [
     listings: 48,
     areas: ['Okara City', 'Depalpur'],
     color: '#183B60',
-    phone: '03012345678',
+    phone: PUBLIC_CONTACT_PHONE,
     specialties: ['Residential', 'Agricultural Land', 'Plots'],
     about:
       'Residential plots, houses, and agricultural land in Okara City and Depalpur.',
@@ -106,7 +107,7 @@ export const SAMPLE_AGENTS: SampleAgent[] = [
     listings: 32,
     areas: ['Renala Khurd', 'Okara City'],
     color: '#0B1F3A',
-    phone: '03042569000',
+    phone: PUBLIC_CONTACT_PHONE,
     specialties: ['Commercial', 'Residential', 'Rentals'],
     about:
       'Commercial and residential properties, including rentals, in Renala Khurd and Okara City.',
@@ -125,7 +126,7 @@ export const SAMPLE_AGENTS: SampleAgent[] = [
     listings: 61,
     areas: ['Depalpur', 'Hujra Shah Muqeem'],
     color: '#8b6c2a',
-    phone: '03331234567',
+    phone: PUBLIC_CONTACT_PHONE,
     specialties: ['Agricultural Land', 'Plots', 'Commercial', 'Investment'],
     about:
       'Agricultural land, plots, and commercial properties in Depalpur and Hujra Shah Muqeem.',
@@ -143,7 +144,7 @@ export const SAMPLE_AGENTS: SampleAgent[] = [
     listings: 21,
     areas: ['Okara City', 'Renala Khurd'],
     color: '#4a2d6b',
-    phone: '03156789012',
+    phone: PUBLIC_CONTACT_PHONE,
     specialties: ['Residential', 'Rentals', 'Plots'],
     about:
       'Residential rentals and plots in Okara City and Renala Khurd.',
@@ -161,7 +162,7 @@ export const SAMPLE_AGENTS: SampleAgent[] = [
     listings: 27,
     areas: ['Okara City', 'Depalpur', 'Renala Khurd'],
     color: '#374151',
-    phone: '03219876543',
+    phone: PUBLIC_CONTACT_PHONE,
     specialties: ['Commercial', 'Industrial', 'Investment'],
     about:
       'Commercial shops, offices, warehouses, and industrial plots across Okara District.',

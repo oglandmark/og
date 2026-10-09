@@ -83,7 +83,7 @@ function getCityRegion(city?: string) {
 
 function fmtCoord(n: number, isLat: boolean) {
   const dir = isLat ? (n >= 0 ? 'N' : 'S') : (n >= 0 ? 'E' : 'W');
-  return `${Math.abs(n).toFixed(5)}° ${dir}`;
+  return `${Math.abs(n).toFixed(7)}° ${dir}`;
 }
 
 // ─── PinnedMapCard (property detail — read only) ───────────────────────────────

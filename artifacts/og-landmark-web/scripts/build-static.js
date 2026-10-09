@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const patchDashboardAuth = require('./patch-dashboard-auth');
+const patchPublicContacts = require('./patch-public-contacts');
 
 const artifactDir = path.resolve(__dirname, '..');
 const publicDir = path.join(artifactDir, 'public');
@@ -20,11 +21,7 @@ fs.cpSync(publicDir, outputDir, {
 
 const websiteBundle = path.join(outputDir, 'assets', 'index-CXxrK7KP.js');
 if (fs.existsSync(websiteBundle)) {
-  const contactPatchedBundle = fs.readFileSync(websiteBundle, 'utf8')
-    .replaceAll('0304 2569000', '0301 1484303')
-    .replaceAll('03042569000', '03011484303')
-    .replaceAll('923042569000', '923011484303')
-    .replaceAll('+92 300 1234567', '+92 301 1484303')
+  const contactPatchedBundle = patchPublicContacts(fs.readFileSync(websiteBundle, 'utf8'))
     .replaceAll('info@oglandmark.com', 'support@oglandmark.com');
   const patchedBundle = patchDashboardAuth(contactPatchedBundle);
   fs.writeFileSync(websiteBundle, patchedBundle);

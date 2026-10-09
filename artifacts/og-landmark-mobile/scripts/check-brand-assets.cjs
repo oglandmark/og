@@ -261,7 +261,7 @@ const startupLayout = fs.readFileSync(
   path.resolve(projectRoot, "app/_layout.tsx"),
   "utf8"
 );
-if (!startupLayout.includes("<OGLandmarkLogo size={156} />") || !startupLayout.includes("OG Landmark")) {
+if (!/<OGLandmarkLogo\s+size=\{\d+\}\s*\/>/.test(startupLayout) || !startupLayout.includes("OG Landmark")) {
   fail("The in-app startup splash must retain both the logo and OG Landmark name.");
 }
 console.log("✓ Native splash image is transparent; the in-app startup splash keeps the logo and name.");

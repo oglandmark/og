@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ActivityIndicator, AppState, InteractionManager, Platform, View } from 'react-native';
+import { AppState, InteractionManager, Platform, View } from 'react-native';
 import { setAudioModeAsync } from 'expo-audio';
 import type { NotificationResponse } from 'expo-notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -210,24 +210,50 @@ const rootStyles = {
     flex: 1,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
-    paddingHorizontal: 32,
-  },
-  loadingStatus: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: 9,
-    marginTop: 28,
-    opacity: 0.82,
+    paddingHorizontal: 24,
   },
   startupBrand: {
     fontFamily: 'PlayfairDisplay_600SemiBold',
     fontSize: 20,
     letterSpacing: 0.4,
-    marginTop: 10,
+    marginTop: 12,
+    textAlign: 'center' as const,
   },
-  loadingStatusText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 12,
+  startupMark: {
+    width: '76%' as const,
+    maxWidth: 260,
+    aspectRatio: 1,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  startupRingOuter: {
+    position: 'absolute' as const,
+    top: '4%' as const,
+    right: '4%' as const,
+    bottom: '4%' as const,
+    left: '4%' as const,
+    borderWidth: 1,
+    borderRadius: 999,
+  },
+  startupRingInner: {
+    position: 'absolute' as const,
+    top: '11%' as const,
+    right: '11%' as const,
+    bottom: '11%' as const,
+    left: '11%' as const,
+    borderWidth: 1,
+    borderRadius: 999,
+  },
+  startupDot: {
+    position: 'absolute' as const,
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+  startupDotSmall: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
   },
   startupOverlay: {
     position: 'absolute' as const,
@@ -253,20 +279,22 @@ function StartupSplash({
       accessibilityLabel="Loading OG Landmark"
       style={[
         rootStyles.loading,
-        { backgroundColor: '#ffffff' },
+        { backgroundColor: colors.background },
         overlay && rootStyles.startupOverlay,
       ]}
     >
-      <OGLandmarkLogo size={156} />
+      <View style={rootStyles.startupMark}>
+        <View style={[rootStyles.startupRingOuter, { borderColor: colors.border, opacity: 0.72 }]} />
+        <View style={[rootStyles.startupRingInner, { borderColor: colors.border, opacity: 0.62 }]} />
+        <View style={[rootStyles.startupDot, { top: '12%', left: '33%', backgroundColor: colors.gold, opacity: 0.62 }]} />
+        <View style={[rootStyles.startupDot, rootStyles.startupDotSmall, { top: '68%', left: '8%', backgroundColor: colors.actionSoft, opacity: 0.34 }]} />
+        <View style={[rootStyles.startupDot, rootStyles.startupDotSmall, { top: '81%', right: '17%', backgroundColor: colors.gold, opacity: 0.5 }]} />
+        <View style={[rootStyles.startupDot, rootStyles.startupDotSmall, { top: '40%', right: '8%', backgroundColor: colors.actionSoft, opacity: 0.3 }]} />
+        <OGLandmarkLogo size={112} />
+      </View>
       <Text style={[rootStyles.startupBrand, { color: colors.actionDeep }]}>
         OG Landmark
       </Text>
-      <View style={rootStyles.loadingStatus}>
-        <ActivityIndicator color={colors.action} size="small" />
-        <Text style={[rootStyles.loadingStatusText, { color: colors.actionDeep }]}>
-          Preparing your experience
-        </Text>
-      </View>
     </View>
   );
 }

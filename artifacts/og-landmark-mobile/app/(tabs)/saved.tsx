@@ -7,6 +7,7 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { PropertyCard } from '@/components/PropertyCard';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { properties } from '@/lib/properties';
+import { filterVisibleDemoProperties } from '@/lib/demoPropertyVisibility';
 import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import { useSaved } from '@/context/SavedContext';
 import { useColors } from '@/hooks/useColors';
@@ -20,9 +21,9 @@ export default function SavedScreen() {
   const tabBarHeight = useTabBarHeight();
   const { savedIds } = useSaved();
   const onScroll = useTabBarScrollHandler();
-  const savedProperties = properties.filter((property) =>
-    savedIds.includes(property.id)
-    && (property.isDemo !== true || !hiddenDemoPropertyIds.includes(property.id)),
+  const savedProperties = filterVisibleDemoProperties(
+    properties.filter((property) => savedIds.includes(property.id)),
+    hiddenDemoPropertyIds,
   );
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 

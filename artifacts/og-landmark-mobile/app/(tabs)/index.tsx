@@ -28,6 +28,10 @@ import { PropertyDemoBadge } from '@/components/PropertyDemoBadge';
 import { VideoWatermark } from '@/components/VideoWatermark';
 import { getAgents, getBanners, getMobileSettings, getProperties, API_BASE, type BannerSlide as ApiBannerSlide, type MobileContent } from '@/lib/api';
 import { apiPropertyToProperty } from '@/lib/properties';
+import {
+  filterVisibleDemoProperties,
+  selectHomePropertySource,
+} from '@/lib/demoPropertyVisibility';
 import { ExploreMapView } from '@/components/ExploreMapView';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { formatPrice, properties, propertyImages, Property } from '@/lib/properties';
@@ -1546,10 +1550,8 @@ export default function HomeScreen() {
   const handleDrawerInfo = (_info: DrawerInfo) => { setDrawerOpen(true); };
 
   // Use API properties when available, fall back to local mock
-  const propertySource = apiProps.length > 0 ? apiProps : properties;
-  const allProps = propertySource.filter(
-    (property) => property.isDemo !== true || !hiddenDemoPropertyIds.includes(property.id),
-  );
+  const propertySource = selectHomePropertySource(apiProps, properties);
+  const allProps = filterVisibleDemoProperties(propertySource, hiddenDemoPropertyIds);
 
   // Data slices — all driven from live API data (or local fallback)
   const featuredProps    = allProps.filter((p) => p.featured);

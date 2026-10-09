@@ -18,6 +18,10 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { PropertyCard } from '@/components/PropertyCard';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { properties, apiPropertyToProperty } from '@/lib/properties';
+import {
+  filterVisibleDemoProperties,
+  keepCachedPropertiesWhenRemoteIsEmpty,
+} from '@/lib/demoPropertyVisibility';
 import { getPropertiesPage } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
 import { GlassCard } from '@/components/GlassCard';
@@ -492,9 +496,7 @@ export default function ExploreScreen() {
   const { hiddenDemoPropertyIds } = useDemoPropertyVisibility();
   const [allProperties, setAllProperties]     = useState(() => uniqueProperties(properties));
   const demoVisibleProperties = useMemo(
-    () => allProperties.filter((property) =>
-      property.isDemo !== true || !hiddenDemoPropertyIds.includes(property.id),
-    ),
+    () => filterVisibleDemoProperties(allProperties, hiddenDemoPropertyIds),
     [allProperties, hiddenDemoPropertyIds],
   );
   const [nearMe, setNearMe]                   = useState<{ lat: number; lng: number; radiusKm: number } | null>(null);
@@ -542,7 +544,10 @@ export default function ExploreScreen() {
         getPropertiesPage({ limit: 24, offset: 0 })
           .then((page) => {
             if (!cancelled) {
-              if (page.items.length) setAllProperties(uniqueProperties(page.items.map(apiPropertyToProperty)));
+              setAllProperties((current) => keepCachedPropertiesWhenRemoteIsEmpty(
+                current,
+                uniqueProperties(page.items.map(apiPropertyToProperty)),
+              ));
               setRemoteOffset(page.items.length);
               setRemoteHasMore(page.hasMore);
             }
@@ -590,9 +595,10 @@ export default function ExploreScreen() {
             // Keep bundled properties available when the remote catalogue is
             // empty or temporarily unavailable. The local radius/bounds
             // filter still produces correct Near Me results from that cache.
-            if (page.items.length) {
-              setAllProperties(uniqueProperties(page.items.map(apiPropertyToProperty)));
-            }
+            setAllProperties((current) => keepCachedPropertiesWhenRemoteIsEmpty(
+              current,
+              uniqueProperties(page.items.map(apiPropertyToProperty)),
+            ));
             setRemoteOffset(page.items.length);
             setRemoteHasMore(page.hasMore);
           }

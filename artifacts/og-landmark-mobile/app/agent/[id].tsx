@@ -18,6 +18,7 @@ import { addInquiry } from '@/lib/inquiriesStore';
 import { getMyListings, UserListing } from '@/lib/listingsStore';
 import { PropertyCard } from '@/components/PropertyCard';
 import { properties } from '@/lib/properties';
+import { filterVisibleDemoProperties } from '@/lib/demoPropertyVisibility';
 import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import VisitSchedulerModal from '@/components/VisitSchedulerModal';
 import { PUBLIC_CONTACT_PHONE_E164, publicWhatsAppUrl } from '@/lib/publicContact';
@@ -264,9 +265,9 @@ export default function AgentProfileScreen() {
 
   const saleListings   = agentListings.filter((l) => l.status === 'For Sale');
   const rentListings   = agentListings.filter((l) => l.status === 'For Rent');
-  const matchedProps   = properties.filter((p) =>
-    (p.agent === agent.displayName || p.agent === agent.agency)
-    && (p.isDemo !== true || !hiddenDemoPropertyIds.includes(p.id)),
+  const matchedProps   = filterVisibleDemoProperties(
+    properties.filter((p) => p.agent === agent.displayName || p.agent === agent.agency),
+    hiddenDemoPropertyIds,
   );
 
   return (

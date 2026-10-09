@@ -8,7 +8,7 @@
     "build": "node scripts/build.js",
     "eas-build-pre-install": "node scripts/check-mapbox-build.cjs",
     "serve": "node server/serve.js",
-    "test:location": "../../scripts/node_modules/.bin/tsx --test tests/location-regressions.test.ts tests/listing-lifecycle.integration.test.ts tests/property-media.test.ts tests/public-contact.test.ts tests/property-coordinates.test.ts",
+    "test:location": "../../scripts/node_modules/.bin/tsx --test tests/location-regressions.test.ts tests/listing-lifecycle.integration.test.ts tests/property-media.test.ts tests/public-contact.test.ts tests/property-coordinates.test.ts tests/demo-property-visibility.test.ts",
     "check:brand-assets": "node scripts/check-brand-assets.cjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

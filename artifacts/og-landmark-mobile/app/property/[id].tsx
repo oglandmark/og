@@ -11,6 +11,7 @@ import { StaticMap } from '@/components/MapViewComponent';
 import { openDirections } from '@/lib/locationService';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatAreaDisplay, formatPrice, properties, propertyImages, apiPropertyToProperty } from '@/lib/properties';
+import { isDemoPropertyHidden } from '@/lib/demoPropertyVisibility';
 import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import { getProperty, incrementView, submitInquiry, bookAppointment, type ApiProperty } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
@@ -642,7 +643,7 @@ function PropertyDetailScreen() {
   const galleryScrollRef = useRef<ScrollView>(null);
   const images = propertyImages(property);
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
-  const demoWasRemoved = property.isDemo === true && hiddenDemoPropertyIds.includes(property.id);
+  const demoWasRemoved = isDemoPropertyHidden(property, hiddenDemoPropertyIds);
 
   // Fetch live property from API + increment view count
   useEffect(() => {

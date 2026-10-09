@@ -265,34 +265,39 @@ const rootStyles = {
   },
   startupRingDot: {
     position: 'absolute' as const,
-    width: 5,
-    height: 5,
+    width: 6,
+    height: 6,
     borderRadius: 3,
   },
   startupRingDotSmall: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  startupRingDotAccent: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
   },
   startupRingDotTop: {
-    top: -2,
+    top: -3,
     left: '50%' as const,
-    marginLeft: -2.5,
+    marginLeft: -3,
   },
   startupRingDotBottom: {
-    bottom: -2,
+    bottom: -3,
     left: '50%' as const,
-    marginLeft: -2,
+    marginLeft: -3,
   },
   startupRingDotLeft: {
-    left: -2,
+    left: -3,
     top: '50%' as const,
-    marginTop: -2,
+    marginTop: -3,
   },
   startupRingDotRight: {
-    right: -2,
+    right: -3,
     top: '50%' as const,
-    marginTop: -2,
+    marginTop: -3,
   },
   startupOverlay: {
     position: 'absolute' as const,
@@ -326,12 +331,12 @@ function StartupSplash({
     if (reduceMotion) return undefined;
 
     outerRotation.value = withRepeat(
-      withTiming(360, { duration: 14000, easing: Easing.linear }),
+      withTiming(360, { duration: 7000, easing: Easing.linear }),
       -1,
       false,
     );
     innerRotation.value = withRepeat(
-      withTiming(-360, { duration: 18000, easing: Easing.linear }),
+      withTiming(-360, { duration: 9000, easing: Easing.linear }),
       -1,
       false,
     );
@@ -360,8 +365,10 @@ function StartupSplash({
             outerRingMotion,
           ]}
         >
-          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotTop, { backgroundColor: colors.gold, opacity: 0.68 }]} />
-          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotSmall, rootStyles.startupRingDotBottom, { backgroundColor: colors.actionSoft, opacity: 0.48 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotAccent, rootStyles.startupRingDotTop, { backgroundColor: colors.gold, opacity: 0.76 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotSmall, rootStyles.startupRingDotRight, { backgroundColor: colors.actionSoft, opacity: 0.4 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotBottom, { backgroundColor: colors.gold, opacity: 0.58 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotSmall, rootStyles.startupRingDotLeft, { backgroundColor: colors.actionSoft, opacity: 0.34 }]} />
         </Animated.View>
         <Animated.View
           style={[
@@ -370,8 +377,10 @@ function StartupSplash({
             innerRingMotion,
           ]}
         >
-          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotLeft, { backgroundColor: colors.actionSoft, opacity: 0.42 }]} />
-          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotSmall, rootStyles.startupRingDotRight, { backgroundColor: colors.gold, opacity: 0.58 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotSmall, rootStyles.startupRingDotTop, { backgroundColor: colors.actionSoft, opacity: 0.34 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotAccent, rootStyles.startupRingDotRight, { backgroundColor: colors.gold, opacity: 0.74 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotSmall, rootStyles.startupRingDotBottom, { backgroundColor: colors.actionSoft, opacity: 0.4 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotLeft, { backgroundColor: colors.gold, opacity: 0.54 }]} />
         </Animated.View>
         <OGLandmarkLogo size={112} />
       </View>

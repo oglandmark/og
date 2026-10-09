@@ -151,17 +151,58 @@ class DashboardAuthCompatibilityTest extends TestCase
             ->assertJsonPath('agentCoverUploadEnabled', false);
 
         $data = JsonStore::read();
+        $data['mobileAgents'] = [
+            ['id' => 2001, 'authUserId' => 902, 'email' => 'dashboard-seller@example.test'],
+            ['id' => 2002, 'authUserId' => 903, 'email' => 'other-agent@example.test'],
+        ];
         $data['agentLeads'] = [
             ['id' => 9101, 'userId' => 902, 'agentId' => '902', 'name' => 'Owned lead', 'status' => 'new'],
             ['id' => 9102, 'userId' => 903, 'agentId' => '903', 'name' => 'Other agent lead', 'status' => 'new'],
         ];
         $data['agentVisits'] = [
-            ['id' => 'agent-visit-1', 'userId' => 902, 'agentId' => '902', 'date' => now()->toDateString(), 'status' => 'Requested'],
-            ['id' => 'agent-visit-2', 'userId' => 903, 'agentId' => '903', 'date' => now()->toDateString(), 'status' => 'Requested'],
+            ['id' => 9111, 'userId' => 902, 'agentId' => '902', 'date' => now()->toDateString(), 'status' => 'Requested'],
+            ['id' => 9112, 'userId' => 903, 'agentId' => '903', 'date' => now()->toDateString(), 'status' => 'Requested'],
         ];
         JsonStore::write($data);
 
         $agentToken = $this->login('dashboard-seller@example.test');
+        $buyerToken = $this->login('dashboard-buyer@example.test');
+        $buyerVisit = $this->withToken($buyerToken)
+            ->postJson('/api/agent-visits', [
+                'agentId' => '2001',
+                'clientName' => 'Scheduled client',
+                'clientPhone' => '03001234567',
+                'propertyTitle' => 'Test listing',
+                'propertyCity' => 'Lahore',
+                'date' => now()->toDateString(),
+                'time' => '10:00 AM',
+                'status' => 'Requested',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('agentId', '2001')
+            ->assertJsonPath('userId', 904);
+        $buyerVisitId = $buyerVisit->json('id');
+
+        $this->withToken($buyerToken)
+            ->getJson('/api/agent-visits')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.id', $buyerVisitId);
+
+        $this->withToken($agentToken)
+            ->postJson('/api/agent-visits', [
+                'agentId' => '903',
+                'clientName' => 'Agent client',
+                'clientPhone' => '03001234568',
+                'propertyTitle' => 'Agent-created visit',
+                'propertyCity' => 'Lahore',
+                'date' => now()->toDateString(),
+                'time' => '11:00 AM',
+                'status' => 'Requested',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('agentId', 902);
+
         $this->withToken($agentToken)
             ->getJson('/api/auth/me')
             ->assertOk()
@@ -180,8 +221,21 @@ class DashboardAuthCompatibilityTest extends TestCase
         $this->withToken($agentToken)
             ->getJson('/api/agent-visits')
             ->assertOk()
-            ->assertJsonCount(1)
-            ->assertJsonPath('0.id', 'agent-visit-1');
+            ->assertJsonCount(3)
+            ->assertJsonFragment(['id' => $buyerVisitId])
+            ->assertJsonFragment(['id' => 9111])
+            ->assertJsonMissing(['id' => 9112]);
+        $this->withToken($agentToken)
+            ->patchJson('/api/agent-visits/' . $buyerVisitId, [
+                'agentId' => '903',
+                'status' => 'Confirmed',
+            ])
+            ->assertOk()
+            ->assertJsonPath('agentId', '2001')
+            ->assertJsonPath('status', 'Confirmed');
+        $this->withToken($agentToken)
+            ->patchJson('/api/agent-visits/9112', ['status' => 'Confirmed'])
+            ->assertNotFound();
     }
 
     public function test_admin_otp_exchange_creates_a_valid_session_but_dashboard_expects_a_different_login_response(): void

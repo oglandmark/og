@@ -18,6 +18,11 @@ const multer = require('multer');
 const patchDashboardAuth = require('./scripts/patch-dashboard-auth');
 const patchPublicContacts = require('./scripts/patch-public-contacts');
 const {
+  canAccessAgentVisit,
+  normalizeAgentVisitCreate,
+  sanitizeAgentVisitPatch,
+} = require('./agent-visit-access');
+const {
   deleteAccountData,
   removeUnreferencedAccountMedia,
 } = require('./account-data-deletion');
@@ -5624,10 +5629,61 @@ app.get('/api/developer/projects/:id', requireAuth, async (req, res) => {
 // Non-developer mobile workflows use these explicit aliases; they keep the
 // same document payloads as the equivalent /api/mobile resources.
 function personalCrud(path, key, prefix) {
-  app.get(path, requireAuth, async (req, res) => { const d = await readData(); res.json((d[key] || []).filter(x => String(x.userId) === String(req.currentUser.id) || req.currentUser.role === 'Admin')); });
-  app.post(path, requireAuth, async (req, res) => { const d = await readData(); d[key] ||= []; const item = { ...req.body, id: req.body.id || `${prefix}_${crypto.randomBytes(10).toString('hex')}`, userId: req.currentUser.id, createdAt: new Date().toISOString() }; d[key].push(item); await writeData(d); res.status(201).json(item); });
-  app.patch(`${path}/:id`, requireAuth, async (req, res) => { const d = await readData(); const item = findRecord(d[key], req.params.id); if (!item) return res.status(404).json({ error: 'Not found' }); if (String(item.userId) !== String(req.currentUser.id) && req.currentUser.role !== 'Admin') return res.status(403).json({ error: 'Forbidden' }); Object.assign(item, req.body); await writeData(d); res.json(item); });
-  app.delete(`${path}/:id`, requireAuth, async (req, res) => { const d = await readData(); const i = (d[key] || []).findIndex(x => String(x.id) === req.params.id); if (i < 0) return res.status(404).json({ error: 'Not found' }); if (String(d[key][i].userId) !== String(req.currentUser.id) && req.currentUser.role !== 'Admin') return res.status(403).json({ error: 'Forbidden' }); d[key].splice(i, 1); await writeData(d); res.status(204).end(); });
+  app.get(path, requireAuth, async (req, res) => {
+    const data = await readData();
+    const user = req.currentUser;
+    const items = data[key] || [];
+    if (key === 'agentVisits') {
+      return res.json(items.filter((item) => canAccessAgentVisit(data, item, user)));
+    }
+    res.json(items.filter((item) => String(item.userId) === String(user.id) || user.role === 'Admin'));
+  });
+  app.post(path, requireAuth, async (req, res) => {
+    const data = await readData();
+    data[key] ||= [];
+    const item = {
+      ...req.body,
+      id: req.body.id || `${prefix}_${crypto.randomBytes(10).toString('hex')}`,
+      userId: req.currentUser.id,
+      createdAt: new Date().toISOString(),
+    };
+    const record = key === 'agentVisits'
+      ? normalizeAgentVisitCreate(item, req.currentUser)
+      : item;
+    data[key].push(record);
+    await writeData(data);
+    res.status(201).json(record);
+  });
+  app.patch(`${path}/:id`, requireAuth, async (req, res) => {
+    const data = await readData();
+    const item = findRecord(data[key], req.params.id);
+    if (!item) return res.status(404).json({ error: 'Not found' });
+    const user = req.currentUser;
+    if (key === 'agentVisits') {
+      if (!canAccessAgentVisit(data, item, user)) return res.status(404).json({ error: 'Not found' });
+      Object.assign(item, sanitizeAgentVisitPatch(req.body, user));
+    } else {
+      if (String(item.userId) !== String(user.id) && user.role !== 'Admin') return res.status(403).json({ error: 'Forbidden' });
+      Object.assign(item, req.body);
+    }
+    item.updatedAt = new Date().toISOString();
+    await writeData(data);
+    res.json(item);
+  });
+  app.delete(`${path}/:id`, requireAuth, async (req, res) => {
+    const data = await readData();
+    const index = (data[key] || []).findIndex((item) => String(item.id) === req.params.id);
+    if (index < 0) return res.status(404).json({ error: 'Not found' });
+    const user = req.currentUser;
+    if (key === 'agentVisits') {
+      if (!canAccessAgentVisit(data, data[key][index], user)) return res.status(404).json({ error: 'Not found' });
+    } else if (String(data[key][index].userId) !== String(user.id) && user.role !== 'Admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    data[key].splice(index, 1);
+    await writeData(data);
+    res.status(204).end();
+  });
 }
 personalCrud('/api/buyer-requests', 'buyerRequests', 'request');
 personalCrud('/api/agent-leads', 'agentLeads', 'agentlead');

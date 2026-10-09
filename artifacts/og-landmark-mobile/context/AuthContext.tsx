@@ -93,6 +93,7 @@ function mapApiUser(apiU: {
   agencyName?: string;
   companyName?: string;
   verificationStatus?: string;
+  approvalStatus?: string;
   joinedDate?: string;
   authProvider?: string;
   avatarUrl?: string;
@@ -100,6 +101,16 @@ function mapApiUser(apiU: {
   coverPhoto?: string | null;
   agentCoverUploadEnabled?: boolean;
 }): User {
+  const apiStatus = apiU.role.toLowerCase() === 'agent'
+    ? apiU.approvalStatus ?? apiU.verificationStatus
+    : apiU.verificationStatus ?? apiU.approvalStatus;
+  const approval = String(apiStatus ?? '').trim().toLowerCase();
+  const verificationStatus: User['verificationStatus'] = ['approved', 'verified'].includes(approval)
+    ? 'verified'
+    : approval === 'rejected'
+      ? 'rejected'
+      : 'pending';
+
   return {
     id: String(apiU.id),
     name: apiU.name,
@@ -110,7 +121,7 @@ function mapApiUser(apiU: {
     city: apiU.city,
     agencyName: apiU.agencyName,
     companyName: apiU.companyName,
-    verificationStatus: (apiU.verificationStatus as User['verificationStatus']) || 'pending',
+    verificationStatus,
     joinedAt: apiU.joinedDate || new Date().toISOString(),
     authProvider: apiU.authProvider,
     avatarUrl: apiU.avatarUrl,

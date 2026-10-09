@@ -1670,7 +1670,11 @@ class ApiController extends Controller
     {
         $data[$key] ??= [];
         if ($method === 'GET' && $id === null) {
-            if ($user && !$this->isAdmin($user)) return $this->json(collect($data[$key])->filter(fn ($x) => (string) ($x['userId'] ?? $x['developerId'] ?? '') === (string) $user['id'])->values());
+            if ($user && !$this->isAdmin($user)) {
+                return $this->json(collect($data[$key])
+                    ->filter(fn ($item) => $this->collectionRecordVisibleToUser($key, $item, $user, $data))
+                    ->values());
+            }
             return $this->json($data[$key]);
         }
         if ($method === 'POST') {
@@ -1679,6 +1683,9 @@ class ApiController extends Controller
             if (!$this->isAdmin($user)) {
                 foreach (['id', 'userId', 'developerId', 'ownerId', 'createdBy', 'sellerId', 'buyerId', 'reporterId'] as $protectedKey) {
                     unset($payload[$protectedKey]);
+                }
+                if ($key === 'agentVisits' && strtolower((string) ($user['role'] ?? '')) === 'agent') {
+                    $payload['agentId'] = $user['id'];
                 }
             }
             $item = array_merge($payload, [
@@ -1689,14 +1696,16 @@ class ApiController extends Controller
             $data[$key][] = $item; JsonStore::write($data); return $this->json($item, 201);
         }
         $index = $this->indexById($data[$key], $id); if ($index === null) return $this->json(['error' => 'Not found'], 404);
-        if ($user && !$this->isAdmin($user) && !$this->recordBelongsToUser($data[$key][$index], $user)) {
+        if ($user && !$this->isAdmin($user) && !$this->collectionRecordBelongsToUser($key, $data[$key][$index], $user, $data)) {
             return $this->json(['error' => 'Not found'], 404);
         }
         if ($method === 'DELETE') { array_splice($data[$key], $index, 1); JsonStore::write($data); return response()->noContent(); }
         if (in_array($method, ['PUT', 'PATCH'], true)) {
             $patch = $request->all();
             if ($user && !$this->isAdmin($user)) {
-                foreach (['id', 'userId', 'developerId', 'ownerId', 'createdBy', 'sellerId', 'buyerId', 'reporterId'] as $protectedKey) {
+                $protectedKeys = ['id', 'userId', 'developerId', 'ownerId', 'createdBy', 'sellerId', 'buyerId', 'reporterId'];
+                if ($key === 'agentVisits') $protectedKeys[] = 'agentId';
+                foreach ($protectedKeys as $protectedKey) {
                     unset($patch[$protectedKey]);
                 }
             }
@@ -1705,6 +1714,46 @@ class ApiController extends Controller
             return $this->json($data[$key][$index]);
         }
         return $this->json($data[$key][$index]);
+    }
+
+    private function collectionRecordBelongsToUser(string $key, array $item, array $user, array $data): bool
+    {
+        if ($key === 'agentVisits' && strtolower((string) ($user['role'] ?? '')) === 'agent') {
+            $agentIds = $this->linkedAgentIds($data, $user);
+            foreach (['agentId', 'agentUserId', 'agentProfileId'] as $field) {
+                if (isset($item[$field]) && in_array((string) $item[$field], $agentIds, true)) return true;
+            }
+        }
+
+        return $this->recordBelongsToUser($item, $user);
+    }
+
+    private function collectionRecordVisibleToUser(string $key, array $item, array $user, array $data): bool
+    {
+        if ($key === 'agentVisits' && strtolower((string) ($user['role'] ?? '')) === 'agent') {
+            $agentIds = $this->linkedAgentIds($data, $user);
+            foreach (['agentId', 'agentUserId', 'agentProfileId'] as $field) {
+                if (isset($item[$field]) && in_array((string) $item[$field], $agentIds, true)) return true;
+            }
+        }
+
+        return (string) ($item['userId'] ?? $item['developerId'] ?? '') === (string) ($user['id'] ?? '');
+    }
+
+    private function linkedAgentIds(array $data, array $user): array
+    {
+        $userId = (string) ($user['id'] ?? '');
+        $email = strtolower(trim((string) ($user['email'] ?? '')));
+        $ids = [$userId];
+        foreach ($data['mobileAgents'] ?? [] as $agent) {
+            if (!is_array($agent)) continue;
+            $linkedById = (string) ($agent['authUserId'] ?? '') === $userId;
+            $linkedByEmail = strtolower((string) ($user['role'] ?? '')) === 'agent'
+                && $email !== ''
+                && strtolower(trim((string) ($agent['email'] ?? ''))) === $email;
+            if ($linkedById || $linkedByEmail) $ids[] = (string) ($agent['id'] ?? '');
+        }
+        return array_values(array_unique(array_filter($ids, fn ($id) => $id !== '')));
     }
 
     private function recordBelongsToUser(array $item, array $user): bool

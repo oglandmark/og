@@ -42,3 +42,4 @@
 - [Normalized core storage](normalized-core-storage.md) — keep app accounts in `app_users`, preserve full payloads, and dual-write `app_data` for rollback.
 - [Play Store metadata claims](play-store-metadata.md) — keep OG Landmark store copy factual; Google rejected the “trusted” short and full description claims.
 - [Public contacts and listing pins](public-contact-and-listing-pins.md) — public property/agent call and WhatsApp use 03011484303; preserve account phones and selected coordinates.
+- [Browser admin extensions](browser-admin-extensions.md) — keep editable admin enhancements separate from the legacy compiled bundle.

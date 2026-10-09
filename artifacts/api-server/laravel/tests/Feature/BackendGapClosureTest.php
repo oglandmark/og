@@ -189,6 +189,17 @@ class BackendGapClosureTest extends TestCase
         $this->assertFileExists(
             $this->mediaStorageDirectory . DIRECTORY_SEPARATOR . basename((string) $uploadedPath),
         );
+        $this->get($uploadedPath)->assertOk();
+        $secondUpload = $this->post('/api/upload/single', [
+            'image' => UploadedFile::fake()->image('mobile-qa-house-interior.jpg')->size(40),
+        ], ['Authorization' => "Bearer {$buyerToken}"])->assertOk();
+        $secondImageUrl = (string) $secondUpload->json('url');
+        $this->assertNotSame('', $secondImageUrl);
+        $secondUploadedPath = parse_url($secondImageUrl, PHP_URL_PATH);
+        $this->assertFileExists(
+            $this->mediaStorageDirectory . DIRECTORY_SEPARATOR . basename((string) $secondUploadedPath),
+        );
+        $this->get($secondUploadedPath)->assertOk();
 
         $property = $this->postJson('/api/properties', [
             'title' => 'QA-only mobile house listing',
@@ -205,7 +216,7 @@ class BackendGapClosureTest extends TestCase
             'description' => 'Temporary development workflow test listing; not for sale.',
             'lat' => 30.8086123,
             'lng' => 73.4537654,
-            'images' => [$imageUrl],
+            'images' => [$imageUrl, $secondImageUrl],
             'coverImage' => $imageUrl,
             'location' => [
                 'latitude' => 30.8086123,
@@ -221,7 +232,9 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonPath('sellerId', $buyerId)
             ->assertJsonPath('approvalStatus', 'Pending')
             ->assertJsonPath('listingStatus', 'Pending')
+            ->assertJsonCount(2, 'images')
             ->assertJsonPath('images.0', $imageUrl)
+            ->assertJsonPath('images.1', $secondImageUrl)
             ->assertJsonPath('lat', 30.8086123)
             ->assertJsonPath('lng', 73.4537654)
             ->assertJsonPath('location.latitude', 30.8086123)
@@ -256,6 +269,7 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonCount(1)
             ->assertJsonPath('0.id', $propertyId)
             ->assertJsonPath('0.images.0', $imageUrl)
+            ->assertJsonPath('0.images.1', $secondImageUrl)
             ->assertJsonPath('0.coverImage', $imageUrl)
             ->assertJsonPath('0.lat', 30.8086123)
             ->assertJsonPath('0.lng', 73.4537654)
@@ -266,6 +280,7 @@ class BackendGapClosureTest extends TestCase
             ->assertOk()
             ->assertJsonPath('property.id', $propertyId)
             ->assertJsonPath('property.images.0', $imageUrl)
+            ->assertJsonPath('property.images.1', $secondImageUrl)
             ->assertJsonPath('property.coverImage', $imageUrl)
             ->assertJsonPath('property.lat', 30.8086123)
             ->assertJsonPath('property.lng', 73.4537654)

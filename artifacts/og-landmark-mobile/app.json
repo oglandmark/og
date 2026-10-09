@@ -49,8 +49,12 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#FFFFFF",
+          "image": "./assets/images/og-landmark-splash-transparent.png",
+          "imageWidth": 1,
+          "resizeMode": "contain",
           "dark": {
-            "backgroundColor": "#FFFFFF"
+            "backgroundColor": "#FFFFFF",
+            "image": "./assets/images/og-landmark-splash-transparent.png"
           }
         }
       ],

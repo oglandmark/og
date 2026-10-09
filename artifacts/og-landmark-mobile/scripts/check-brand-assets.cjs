@@ -45,7 +45,7 @@ function paethPredictor(left, above, upperLeft) {
   return aboveDistance <= upperLeftDistance ? above : upperLeft;
 }
 
-function getRgbaPngAlphaBounds(assetPath) {
+function getRgbaPngAlphaBounds(assetPath, { allowEmpty = false } = {}) {
   const data = fs.readFileSync(assetPath);
   const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
   if (data.length < 33 || !data.subarray(0, 8).equals(signature)) {
@@ -148,7 +148,7 @@ function getRgbaPngAlphaBounds(assetPath) {
     previousRow = row;
   }
 
-  if (maxX < 0) {
+  if (maxX < 0 && !allowEmpty) {
     fail("Adaptive foreground has no visible artwork.");
   }
   return { width, height, minX, minY, maxX, maxY };
@@ -222,8 +222,19 @@ const splashPlugin = config.plugins?.find(
   (plugin) => Array.isArray(plugin) && plugin[0] === "expo-splash-screen"
 );
 const splashOptions = Array.isArray(splashPlugin) ? splashPlugin[1] : undefined;
-if (splashOptions?.image || splashOptions?.dark?.image) {
-  fail("Native splash must not show a separate logo-only image.");
+const splashImage = resolveAsset("Transparent splash image", splashOptions?.image);
+const splashImageBounds = getRgbaPngAlphaBounds(splashImage, { allowEmpty: true });
+if (
+  splashImageBounds.width !== 1 ||
+  splashImageBounds.height !== 1 ||
+  splashImageBounds.maxX >= 0 ||
+  splashOptions?.imageWidth !== 1
+) {
+  fail("Native splash image must be a fully transparent 1x1 pixel.");
+}
+const darkSplashImage = resolveAsset("Dark transparent splash image", splashOptions?.dark?.image);
+if (darkSplashImage !== splashImage) {
+  fail("Light and dark native splash images must use the same transparent pixel.");
 }
 if (!splashOptions?.backgroundColor) {
   fail("Native splash must keep a plain background while the named app splash loads.");
@@ -253,4 +264,4 @@ const startupLayout = fs.readFileSync(
 if (!startupLayout.includes("<OGLandmarkLogo size={156} />") || !startupLayout.includes("OG Landmark")) {
   fail("The in-app startup splash must retain both the logo and OG Landmark name.");
 }
-console.log("✓ Native splash has no logo-only image; the in-app startup splash keeps the logo and name.");
+console.log("✓ Native splash image is transparent; the in-app startup splash keeps the logo and name.");

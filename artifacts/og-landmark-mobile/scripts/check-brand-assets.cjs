@@ -222,12 +222,14 @@ const splashPlugin = config.plugins?.find(
   (plugin) => Array.isArray(plugin) && plugin[0] === "expo-splash-screen"
 );
 const splashOptions = Array.isArray(splashPlugin) ? splashPlugin[1] : undefined;
-const splashImage = resolveAsset("Splash image", splashOptions?.image);
-if (splashOptions?.dark?.image) {
-  const darkSplashImage = resolveAsset("Dark splash image", splashOptions.dark.image);
-  if (darkSplashImage !== splashImage) {
-    fail("Light and dark splash images must use the same brand mark.");
-  }
+if (splashOptions?.image || splashOptions?.dark?.image) {
+  fail("Native splash must not show a separate logo-only image.");
+}
+if (!splashOptions?.backgroundColor) {
+  fail("Native splash must keep a plain background while the named app splash loads.");
+}
+if (splashOptions?.dark?.backgroundColor !== splashOptions.backgroundColor) {
+  fail("Light and dark native splash backgrounds must match.");
 }
 
 const logoComponent = fs.readFileSync(
@@ -244,7 +246,11 @@ const startupLogo = path.resolve(projectRoot, "assets/images", primaryLogo[1]);
 if (!fs.existsSync(startupLogo)) {
   fail(`In-app startup logo does not exist: ${primaryLogo[1]}`);
 }
-if (splashImage === startupLogo) {
-  fail("Native splash must use a dedicated image separate from the in-app logo.");
+const startupLayout = fs.readFileSync(
+  path.resolve(projectRoot, "app/_layout.tsx"),
+  "utf8"
+);
+if (!startupLayout.includes("<OGLandmarkLogo size={156} />") || !startupLayout.includes("OG Landmark")) {
+  fail("The in-app startup splash must retain both the logo and OG Landmark name.");
 }
-console.log("✓ Native splash uses a dedicated image separate from the in-app logo.");
+console.log("✓ Native splash has no logo-only image; the in-app startup splash keeps the logo and name.");

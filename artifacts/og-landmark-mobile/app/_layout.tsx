@@ -1,5 +1,14 @@
 import React, { useEffect } from 'react';
 import { AppState, InteractionManager, Platform, View } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { setAudioModeAsync } from 'expo-audio';
 import type { NotificationResponse } from 'expo-notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -254,16 +263,36 @@ const rootStyles = {
     borderWidth: 1,
     borderRadius: 999,
   },
-  startupDot: {
+  startupRingDot: {
     position: 'absolute' as const,
     width: 5,
     height: 5,
     borderRadius: 3,
   },
-  startupDotSmall: {
+  startupRingDotSmall: {
     width: 4,
     height: 4,
     borderRadius: 2,
+  },
+  startupRingDotTop: {
+    top: -2,
+    left: '50%' as const,
+    marginLeft: -2.5,
+  },
+  startupRingDotBottom: {
+    bottom: -2,
+    left: '50%' as const,
+    marginLeft: -2,
+  },
+  startupRingDotLeft: {
+    left: -2,
+    top: '50%' as const,
+    marginTop: -2,
+  },
+  startupRingDotRight: {
+    right: -2,
+    top: '50%' as const,
+    marginTop: -2,
   },
   startupOverlay: {
     position: 'absolute' as const,
@@ -283,6 +312,36 @@ function StartupSplash({
   colors: ReturnType<typeof useColors>;
   overlay?: boolean;
 }) {
+  const reduceMotion = useReducedMotion();
+  const outerRotation = useSharedValue(0);
+  const innerRotation = useSharedValue(0);
+  const outerRingMotion = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${outerRotation.value}deg` }],
+  }));
+  const innerRingMotion = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${innerRotation.value}deg` }],
+  }));
+
+  useEffect(() => {
+    if (reduceMotion) return undefined;
+
+    outerRotation.value = withRepeat(
+      withTiming(360, { duration: 14000, easing: Easing.linear }),
+      -1,
+      false,
+    );
+    innerRotation.value = withRepeat(
+      withTiming(-360, { duration: 18000, easing: Easing.linear }),
+      -1,
+      false,
+    );
+
+    return () => {
+      cancelAnimation(outerRotation);
+      cancelAnimation(innerRotation);
+    };
+  }, [innerRotation, outerRotation, reduceMotion]);
+
   return (
     <View
       accessible
@@ -294,12 +353,26 @@ function StartupSplash({
       ]}
     >
       <View style={rootStyles.startupMark}>
-        <View style={[rootStyles.startupRingOuter, { borderColor: colors.border, opacity: 0.72 }]} />
-        <View style={[rootStyles.startupRingInner, { borderColor: colors.border, opacity: 0.62 }]} />
-        <View style={[rootStyles.startupDot, { top: '12%', left: '33%', backgroundColor: colors.gold, opacity: 0.62 }]} />
-        <View style={[rootStyles.startupDot, rootStyles.startupDotSmall, { top: '68%', left: '8%', backgroundColor: colors.actionSoft, opacity: 0.34 }]} />
-        <View style={[rootStyles.startupDot, rootStyles.startupDotSmall, { top: '81%', right: '17%', backgroundColor: colors.gold, opacity: 0.5 }]} />
-        <View style={[rootStyles.startupDot, rootStyles.startupDotSmall, { top: '40%', right: '8%', backgroundColor: colors.actionSoft, opacity: 0.3 }]} />
+        <Animated.View
+          style={[
+            rootStyles.startupRingOuter,
+            { borderColor: colors.border, opacity: 0.72 },
+            outerRingMotion,
+          ]}
+        >
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotTop, { backgroundColor: colors.gold, opacity: 0.68 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotSmall, rootStyles.startupRingDotBottom, { backgroundColor: colors.actionSoft, opacity: 0.48 }]} />
+        </Animated.View>
+        <Animated.View
+          style={[
+            rootStyles.startupRingInner,
+            { borderColor: colors.border, opacity: 0.62 },
+            innerRingMotion,
+          ]}
+        >
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotLeft, { backgroundColor: colors.actionSoft, opacity: 0.42 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotSmall, rootStyles.startupRingDotRight, { backgroundColor: colors.gold, opacity: 0.58 }]} />
+        </Animated.View>
         <OGLandmarkLogo size={112} />
       </View>
       <Text style={[rootStyles.startupBrand, { color: colors.actionDeep }]}>

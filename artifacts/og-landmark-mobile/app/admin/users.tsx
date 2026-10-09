@@ -4,7 +4,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, FlatList, Pressable,
+  ActivityIndicator, Alert, FlatList, Platform, Pressable,
   RefreshControl, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -195,7 +195,7 @@ export default function AdminUsers() {
 
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
-      <View style={[s.header, { backgroundColor: NAVY, paddingTop: top + 14 }]}>
+      <View style={[s.header, { backgroundColor: NAVY, paddingTop: top + (Platform.OS === 'web' ? 67 : 0) + 14 }]}>
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <Feather name="arrow-left" size={20} color="#8a9ab5" />
         </Pressable>

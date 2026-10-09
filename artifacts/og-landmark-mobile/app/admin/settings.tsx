@@ -4,7 +4,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Pressable, ScrollView,
+  ActivityIndicator, Alert, Platform, Pressable, ScrollView,
   StyleSheet, Switch, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -84,7 +84,7 @@ export default function AdminSettings() {
 
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
-      <View style={[s.header, { backgroundColor: NAVY, paddingTop: top + 14 }]}>
+      <View style={[s.header, { backgroundColor: NAVY, paddingTop: top + (Platform.OS === 'web' ? 67 : 0) + 14 }]}>
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <Feather name="arrow-left" size={20} color="#8a9ab5" />
         </Pressable>

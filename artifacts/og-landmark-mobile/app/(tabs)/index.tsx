@@ -95,7 +95,7 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.25)' }]} />
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close menu" />
         </View>
-        <View style={[s.drawerPanel, { width: Math.min(width * 0.86, 360), paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18, backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
+        <View style={[s.drawerPanel, { width: Math.min(width * 0.86, 360), paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) + 18, paddingBottom: insets.bottom + 18, backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
           <LinearGradient pointerEvents="none" colors={[colors.glassOverlay, 'transparent']} style={StyleSheet.absoluteFill} />
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.drawerScrollContent} keyboardShouldPersistTaps="handled">

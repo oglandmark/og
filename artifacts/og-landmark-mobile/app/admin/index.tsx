@@ -3,7 +3,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Modal, Pressable, RefreshControl,
+  ActivityIndicator, Alert, Modal, Platform, Pressable, RefreshControl,
   ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -115,7 +115,7 @@ export default function AdminDashboard() {
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[s.header, { backgroundColor: NAVY, paddingTop: top + 14 }]}>
+      <View style={[s.header, { backgroundColor: NAVY, paddingTop: top + (Platform.OS === 'web' ? 67 : 0) + 14 }]}>
         <View>
           <Text style={s.greeting}>Admin Panel</Text>
           <Text style={s.adminName}>{user?.name ?? 'Administrator'}</Text>

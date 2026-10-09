@@ -67,7 +67,7 @@ export default function AdminLoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
-        contentContainerStyle={[s.scroll, { paddingTop: top + 24 }]}
+        contentContainerStyle={[s.scroll, { paddingTop: top + (Platform.OS === 'web' ? 67 : 0) + 24 }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

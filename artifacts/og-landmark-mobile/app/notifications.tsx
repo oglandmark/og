@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, View,
+  ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, StyleSheet, View,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -111,7 +111,7 @@ export default function NotificationsScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 12, backgroundColor: colors.background }]}>
+      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) + 12, backgroundColor: colors.background }]}>
         <Pressable accessibilityLabel="Back" onPress={() => router.back()} style={styles.iconButton}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>

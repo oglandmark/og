@@ -6,7 +6,7 @@
 - [Hostinger startup timeout](hostinger-startup-timeout.md) — bind the Node port before MySQL initialization so external health checks do not time out.
 - [Hostinger media recovery](hostinger-media-recovery.md) — back up app_data media references and files together, then verify live photo/video delivery after restore.
 - [Hostinger SMTP delivery](hostinger-smtp-delivery.md) — use a real mailbox and verify SMTP from the API workflow, not only the CLI.
-- [Mobile listing uploads](mobile-listing-uploads.md) — upload Android property photos one at a time, with a legacy collection-route fallback for deployed backend compatibility.
+- [Mobile listing uploads](mobile-listing-uploads.md) — keep sequential upload/fallback compatibility and normalize relative media URLs before native rendering.
 - [Neon PostgreSQL production database](neon-database.md) — production persistence uses the user's Neon database through a server-only DATABASE_URL.
 - [Neon auth schema](neon-auth-schema.md) — app_data alone is insufficient; auth tables must exist before production auth flows are exercised.
 - [Expo GitHub build dispatch](expo-github-build-dispatch.md) — after repository linking, EAS dispatch can still return transient 503s; verify no queued build before retrying.

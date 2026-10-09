@@ -250,11 +250,15 @@ class BackendGapClosureTest extends TestCase
             ->getJson('/api/admin/properties?status=Pending')
             ->assertOk()
             ->assertJsonCount(1)
-            ->assertJsonPath('0.id', $propertyId);
+            ->assertJsonPath('0.id', $propertyId)
+            ->assertJsonPath('0.images.0', $imageUrl)
+            ->assertJsonPath('0.coverImage', $imageUrl);
         $this->withToken($adminToken)
             ->getJson("/api/admin/properties/{$propertyId}/review")
             ->assertOk()
             ->assertJsonPath('property.id', $propertyId)
+            ->assertJsonPath('property.images.0', $imageUrl)
+            ->assertJsonPath('property.coverImage', $imageUrl)
             ->assertJsonPath('seller.id', $buyerId)
             ->assertJsonPath('seller.role', 'Buyer')
             ->assertJsonCount(0, 'audit');

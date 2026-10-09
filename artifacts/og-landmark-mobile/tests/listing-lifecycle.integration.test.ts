@@ -186,6 +186,8 @@ test('authenticated listing lifecycle keeps media, seller review context, and st
     const seller = reviewBody.seller as JsonRecord;
     assert.equal(reviewedProperty.id, propertyId);
     assert.equal(reviewedProperty.sellerName, 'Task 31 Seller');
+    assert.deepEqual(reviewedProperty.images, validListing.images);
+    assert.equal(reviewedProperty.coverImage, validListing.coverImage);
     assert.equal(seller.id, 2);
     assert.equal(seller.email, 'task31-seller@example.com');
     assert.equal('password' in seller, false);

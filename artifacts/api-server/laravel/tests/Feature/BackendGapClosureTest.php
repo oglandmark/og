@@ -264,6 +264,13 @@ class BackendGapClosureTest extends TestCase
         $adminToken = (string) $adminLogin->json('token');
 
         $this->withToken($adminToken)
+            ->getJson('/api/notifications?category=properties')
+            ->assertOk()
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.type', 'PROPERTY_LISTING_SUBMITTED')
+            ->assertJsonPath('items.0.propertyId', $propertyId);
+
+        $this->withToken($adminToken)
             ->getJson('/api/admin/properties?status=Pending')
             ->assertOk()
             ->assertJsonCount(1)
@@ -322,6 +329,13 @@ class BackendGapClosureTest extends TestCase
             ->assertOk()
             ->assertJsonPath('approvalStatus', 'Active')
             ->assertJsonPath('listingStatus', 'Active');
+        $this->withToken($buyerToken)
+            ->getJson('/api/notifications?category=properties')
+            ->assertOk()
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.type', 'NEW_PROPERTY_LISTING')
+            ->assertJsonPath('items.0.propertyId', $propertyId)
+            ->assertJsonPath('items.0.deepLink', "/property/{$propertyId}");
         $this->withToken($adminToken)
             ->getJson("/api/admin/properties/{$propertyId}/review")
             ->assertOk()
@@ -528,6 +542,54 @@ class BackendGapClosureTest extends TestCase
         $saved = JsonStore::read();
         $this->assertNotEmpty($saved['notifications'][0]['userDeletedAt']);
         $this->assertEmpty($saved['notifications'][2]['userDeletedAt'] ?? null);
+    }
+
+    public function test_admin_can_hide_and_restore_bundled_demo_properties_without_deleting_real_listings(): void
+    {
+        $this->seedData([
+            'users' => [
+                $this->user(1, 'demo-admin@example.test', 'Admin'),
+                $this->user(2, 'demo-buyer@example.test', 'Buyer'),
+            ],
+            'properties' => [
+                ['id' => 1, 'title' => 'Real customer listing', 'approvalStatus' => 'Active'],
+            ],
+            'nextId' => 2,
+        ]);
+        $adminToken = $this->token('demo-admin@example.test');
+        $buyerToken = $this->token('demo-buyer@example.test');
+
+        $this->withToken($adminToken)
+            ->patchJson('/api/admin/demo-properties', [
+                'ids' => [1, 2],
+                'hidden' => true,
+            ])
+            ->assertOk()
+            ->assertJsonPath('hiddenDemoPropertyIds', [1, 2]);
+
+        $this->getJson('/api/mobile/settings')
+            ->assertOk()
+            ->assertJsonPath('hiddenDemoPropertyIds', [1, 2]);
+
+        $this->withToken($buyerToken)
+            ->patchJson('/api/admin/demo-properties', [
+                'ids' => [1],
+                'hidden' => false,
+            ])
+            ->assertForbidden();
+
+        $this->withToken($adminToken)
+            ->patchJson('/api/admin/demo-properties', [
+                'ids' => [1],
+                'hidden' => false,
+            ])
+            ->assertOk()
+            ->assertJsonPath('hiddenDemoPropertyIds', [2]);
+
+        JsonStore::reset();
+        $saved = JsonStore::read();
+        $this->assertSame('Real customer listing', $saved['properties'][0]['title']);
+        $this->assertSame([2], $saved['mobileSettings']['hiddenDemoPropertyIds']);
     }
 
     public function test_mobile_broadcast_creates_notifications_and_sends_push_requests(): void

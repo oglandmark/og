@@ -773,10 +773,23 @@ export type MobileSettings = {
   appVersion: string;
   minAppVersion: string;
   content: MobileContent;
+  hiddenDemoPropertyIds?: number[];
 };
 
 export async function getMobileSettings(): Promise<MobileSettings> {
   return apiFetch<MobileSettings>('/api/mobile/settings', {}, false);
+}
+
+export async function setAdminDemoPropertiesHidden(
+  ids: number[],
+  hidden: boolean,
+): Promise<number[]> {
+  if (ids.length === 0) return [];
+  const response = await apiFetch<{ hiddenDemoPropertyIds: number[] }>('/api/admin/demo-properties', {
+    method: 'PATCH',
+    body: JSON.stringify({ ids, hidden }),
+  });
+  return response.hiddenDemoPropertyIds;
 }
 export async function uploadImage(uri: string, filename = 'photo.jpg'): Promise<{ url: string }> {
   const form = new FormData();

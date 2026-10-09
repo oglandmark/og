@@ -19,6 +19,7 @@ import { SkeletonShimmer } from '@/components/SkeletonShimmer';
 import { PropertyCard } from '@/components/PropertyCard';
 import { useColors } from '@/hooks/useColors';
 import { useLanguage } from '@/context/LanguageContext';
+import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import { BrandMark } from '@/components/BrandMark';
 import { NotificationBell } from '@/components/NotificationBell';
 import { BrowseDiscoveryModule } from '@/components/BrowseDiscoveryModule';
@@ -1424,6 +1425,7 @@ export default function HomeScreen() {
   const tabBarHeight = useTabBarHeight();
   const tabBarScrollHandler = useTabBarScrollHandler();
   const { role, user } = useAuth();
+  const { hiddenDemoPropertyIds } = useDemoPropertyVisibility();
   const { toggleSaved } = useSaved();
 
   // Scroll-to-top when user taps the Home tab icon while already on this screen
@@ -1518,12 +1520,12 @@ export default function HomeScreen() {
       .catch(() => setManagedAgents([]));
   }, []));
 
-  // Fetch live properties from API on every focus; fall back to local mock silently
+  // Fetch live properties on focus; bundled examples remain the offline fallback
   useFocusEffect(useCallback(() => {
     setApiLoading(true);
     setPropertyError('');
     getProperties({ limit: 60 })
-      .then((ps) => { if (ps.length) setApiProps(ps.map(apiPropertyToProperty)); })
+      .then((ps) => setApiProps(ps.map(apiPropertyToProperty)))
       .catch(() => setPropertyError('Live properties are temporarily unavailable. Showing curated examples instead.'))
       .finally(() => setApiLoading(false));
   }, []));
@@ -1544,7 +1546,10 @@ export default function HomeScreen() {
   const handleDrawerInfo = (_info: DrawerInfo) => { setDrawerOpen(true); };
 
   // Use API properties when available, fall back to local mock
-  const allProps = apiProps.length > 0 ? apiProps : properties;
+  const propertySource = apiProps.length > 0 ? apiProps : properties;
+  const allProps = propertySource.filter(
+    (property) => property.isDemo !== true || !hiddenDemoPropertyIds.includes(property.id),
+  );
 
   // Data slices — all driven from live API data (or local fallback)
   const featuredProps    = allProps.filter((p) => p.featured);

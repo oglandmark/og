@@ -36,6 +36,7 @@ export default function AdminUsers() {
   const [users,      setUsers]      = useState<ApiUser[]>([]);
   const [filtered,   setFiltered]   = useState<ApiUser[]>([]);
   const [query,      setQuery]      = useState('');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'agents'>('all');
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -43,16 +44,19 @@ export default function AdminUsers() {
   const load = useCallback(async () => {
     try {
       setError('');
-      const data = await getAdminUsers({ limit: 100 });
+      const data = await getAdminUsers({
+        limit: 500,
+        role: roleFilter === 'agents' ? 'Agent' : undefined,
+      });
       setUsers(data);
       setFiltered(data);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not load users. Check the API connection and try again.');
     }
     finally { setLoading(false); setRefreshing(false); }
-  }, []);
+  }, [roleFilter]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { setLoading(true); load(); }, [load]);
 
   useEffect(() => {
     if (!query.trim()) { setFiltered(users); return; }
@@ -65,6 +69,11 @@ export default function AdminUsers() {
   }, [query, users]);
 
   function replaceUser(updated: ApiUser) {
+    if (roleFilter === 'agents' && updated.role.toLowerCase() !== 'agent') {
+      setUsers(prev => prev.filter(u => u.id !== updated.id));
+      setFiltered(prev => prev.filter(u => u.id !== updated.id));
+      return;
+    }
     setUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
     setFiltered(prev => prev.map(u => u.id === updated.id ? updated : u));
   }
@@ -199,8 +208,34 @@ export default function AdminUsers() {
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <Feather name="arrow-left" size={20} color="#8a9ab5" />
         </Pressable>
-        <Text style={s.headerTitle}>Users ({filtered.length})</Text>
+        <Text style={s.headerTitle}>{roleFilter === 'agents' ? 'Agents' : 'Users'} ({filtered.length})</Text>
         <View style={{ width: 24 }} />
+      </View>
+
+      <View style={[s.filterRow, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        {([
+          { key: 'all', label: 'All users' },
+          { key: 'agents', label: 'Agents' },
+        ] as const).map(option => {
+          const selected = roleFilter === option.key;
+          return (
+            <Pressable
+              key={option.key}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              testID={`admin-user-filter-${option.key}`}
+              onPress={() => setRoleFilter(option.key)}
+              style={[
+                s.filterButton,
+                { backgroundColor: selected ? colors.action : colors.secondary, borderColor: selected ? colors.action : colors.border },
+              ]}
+            >
+              <Text style={[s.filterText, { color: selected ? colors.actionForeground : colors.mutedForeground }]}>
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       {/* Search */}
@@ -253,6 +288,9 @@ const s = StyleSheet.create({
   header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16 },
   headerTitle: { fontFamily: 'Inter_700Bold', fontSize: 17, color: '#ffffff' },
   searchWrap:  { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
+  filterRow:   { flexDirection: 'row', gap: 8, paddingHorizontal: 14, paddingVertical: 9, borderBottomWidth: 1 },
+  filterButton:{ minHeight: 34, paddingHorizontal: 13, borderWidth: 1, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  filterText:  { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   searchInput: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 14, paddingVertical: 0 },
   card:        { borderRadius: 14, borderWidth: 1, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar:      { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },

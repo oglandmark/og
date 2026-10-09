@@ -27,6 +27,7 @@ import { saveSearch, getSavedSearches } from '@/lib/savedSearchesStore';
 import { addRecentSearch, getRecentSearches, clearRecentSearches, removeRecentSearch } from '@/lib/recentSearchesStore';
 import { getVisitHistory, type VisitRecord } from '@/lib/visitHistoryStore';
 import { useAuth } from '@/context/AuthContext';
+import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { ExploreMapView, type MapBounds } from '@/components/ExploreMapView';
 import { getCurrentPosition, haversineDistance, formatDistance } from '@/lib/locationService';
@@ -488,7 +489,14 @@ export default function ExploreScreen() {
   const [isProjectsMode, setIsProjectsMode]   = useState(
     params.category === 'Projects' || params.propertyType === 'Project',
   );
+  const { hiddenDemoPropertyIds } = useDemoPropertyVisibility();
   const [allProperties, setAllProperties]     = useState(() => uniqueProperties(properties));
+  const demoVisibleProperties = useMemo(
+    () => allProperties.filter((property) =>
+      property.isDemo !== true || !hiddenDemoPropertyIds.includes(property.id),
+    ),
+    [allProperties, hiddenDemoPropertyIds],
+  );
   const [nearMe, setNearMe]                   = useState<{ lat: number; lng: number; radiusKm: number } | null>(null);
   const [mapAreaSearch, setMapAreaSearch]     = useState<{ lat: number; lng: number; radiusKm: number } | null>(null);
   const [nearMeLoading, setNearMeLoading]     = useState(false);
@@ -632,7 +640,7 @@ export default function ExploreScreen() {
   // ── Memos ──────────────────────────────────────────────────────────────────
 
   const filteredProperties = useMemo(() => {
-    let matched = allProperties.filter((p) => matchesProperty(p, filters, query));
+    let matched = demoVisibleProperties.filter((p) => matchesProperty(p, filters, query));
 
     // GPS or searched-place radius filter
     const radiusLocation = nearMe ?? searchedPlace ?? mapAreaSearch;
@@ -661,7 +669,7 @@ export default function ExploreScreen() {
     }
 
     return radiusLocation ? matched : sortProperties(matched, filters.sortBy);
-  }, [allProperties, filters, query, nearMe, searchedPlace, mapAreaSearch, mapBoundsFilter]);
+  }, [demoVisibleProperties, filters, query, nearMe, searchedPlace, mapAreaSearch, mapBoundsFilter]);
 
   const loadedPages = Math.ceil(filteredProperties.length / EXPLORE_PAGE_SIZE);
   const totalPages = Math.max(1, loadedPages + (remoteHasMore ? 1 : 0));
@@ -678,8 +686,8 @@ export default function ExploreScreen() {
   }, [query, filters, nearMe, searchedPlace, mapAreaSearch, mapBoundsFilter, viewMode]);
 
   const draftResultCount = useMemo(
-    () => allProperties.filter((p) => matchesProperty(p, draftFilters, query)).length,
-    [allProperties, draftFilters, query],
+    () => demoVisibleProperties.filter((p) => matchesProperty(p, draftFilters, query)).length,
+    [demoVisibleProperties, draftFilters, query],
   );
 
   const activeChips = useMemo(() => buildChips(filters, query), [filters, query]);

@@ -26,6 +26,7 @@ import { LocalizedText as Text } from '@/components/LocalizedText';
 import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { SavedProvider } from '@/context/SavedContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { DemoPropertyVisibilityProvider } from '@/context/DemoPropertyVisibilityContext';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
 import { OnboardingProvider, useOnboarding } from '@/context/OnboardingContext';
 import { useColors } from '@/hooks/useColors';
@@ -449,13 +450,15 @@ export default function RootLayout() {
             <OnboardingProvider>
               <LanguageProvider>
                 <AuthProvider>
-                  <SavedProvider>
-                    <GestureHandlerRootView style={{ flex: 1 }}>
-                       <KeyboardProvider>
-                         <DirectionalApp />
-                       </KeyboardProvider>
-                    </GestureHandlerRootView>
-                  </SavedProvider>
+                  <DemoPropertyVisibilityProvider>
+                    <SavedProvider>
+                      <GestureHandlerRootView style={{ flex: 1 }}>
+                        <KeyboardProvider>
+                          <DirectionalApp />
+                        </KeyboardProvider>
+                      </GestureHandlerRootView>
+                    </SavedProvider>
+                  </DemoPropertyVisibilityProvider>
                 </AuthProvider>
               </LanguageProvider>
             </OnboardingProvider>

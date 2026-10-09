@@ -499,6 +499,9 @@ class ApiController extends Controller
                 'images' => array_values($payload['images'] ?? []),
             ]);
             $data['properties'][] = $property;
+            if (strtolower((string) ($property['listingStatus'] ?? '')) !== 'draft') {
+                $this->notifyAdminsForPropertySubmission($data, $property, 'submitted');
+            }
             JsonStore::write($data);
             return $this->json($property, 201);
         }
@@ -525,6 +528,10 @@ class ApiController extends Controller
                 return $this->json(['error' => 'Forbidden'], 403);
             }
             $from = $property['approvalStatus'] ?? $property['listingStatus'] ?? null;
+            $previousApprovalStatus = strtolower((string) ($property['approvalStatus'] ?? $property['listingStatus'] ?? ''));
+            $previousListingStatus = strtolower((string) ($property['listingStatus'] ?? $property['approvalStatus'] ?? ''));
+            $wasPubliclyListed = in_array($previousApprovalStatus, ['active', 'approved'], true)
+                && in_array($previousListingStatus, ['active', 'approved'], true);
             if ($action === 'approve' || $action === 'verify') {
                 $data['properties'][$index]['approvalStatus'] = 'Active';
                 $data['properties'][$index]['listingStatus'] = 'Active';
@@ -543,6 +550,9 @@ class ApiController extends Controller
                 'fromStatus' => $from, 'toStatus' => $data['properties'][$index]['approvalStatus'] ?? null,
                 'createdAt' => now()->toISOString(),
             ];
+            if (in_array($action, ['approve', 'verify'], true) && !$wasPubliclyListed) {
+                $this->notifyUsersOfPublishedProperty($data, $data['properties'][$index]);
+            }
             JsonStore::write($data);
             return $this->json($data['properties'][$index]);
         }
@@ -614,6 +624,42 @@ class ApiController extends Controller
                 'totalReports' => count($data['reports'] ?? []),
                 'totalViews' => array_sum(array_map(fn ($p) => (int) ($p['views'] ?? 0), $properties)),
             ]);
+        }
+        if ($resource === 'demo-properties' && $method === 'PATCH' && $id === null) {
+            $validator = Validator::make($request->all(), [
+                'ids' => ['required', 'array', 'min:1', 'max:500'],
+                'ids.*' => ['required', 'integer', 'min:1'],
+                'hidden' => ['required', 'boolean'],
+            ]);
+            if ($validator->fails()) {
+                return $this->json([
+                    'error' => 'A list of demo property IDs and a valid hidden value are required.',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            $settings = is_array($data['mobileSettings'] ?? null) ? $data['mobileSettings'] : [];
+            $hiddenIds = collect($settings['hiddenDemoPropertyIds'] ?? [])
+                ->filter(fn ($demoId) => is_numeric($demoId) && (int) $demoId > 0)
+                ->map(fn ($demoId) => (int) $demoId)
+                ->unique()
+                ->values()
+                ->all();
+            $requestedIds = collect($request->input('ids'))
+                ->map(fn ($demoId) => (int) $demoId)
+                ->unique()
+                ->values()
+                ->all();
+            $hiddenIds = $request->boolean('hidden')
+                ? array_values(array_unique(array_merge($hiddenIds, $requestedIds)))
+                : array_values(array_diff($hiddenIds, $requestedIds));
+            sort($hiddenIds);
+
+            $data['mobileSettings'] = array_merge($settings, [
+                'hiddenDemoPropertyIds' => $hiddenIds,
+            ]);
+            JsonStore::write($data);
+            return $this->json(['hiddenDemoPropertyIds' => $hiddenIds]);
         }
         if ($resource === 'properties' && $id !== null && ($parts[2] ?? '') === 'feature' && $method === 'PATCH') {
             return $this->properties($request, [$id, 'feature'], 'PATCH');
@@ -1106,11 +1152,19 @@ class ApiController extends Controller
         }
         $data = JsonStore::read();
         if ($resource === 'settings') {
-            $settings = $data['mobileSettings'] ?? [
+            $defaultSettings = [
                 'verificationBadgeEnabled' => true, 'pushNotificationsEnabled' => true,
                 'darkModeEnabled' => true, 'maintenanceMode' => false, 'maintenanceMessage' => '',
                 'appVersion' => '1.0.0', 'minAppVersion' => '1.0.0', 'content' => [],
+                'hiddenDemoPropertyIds' => [],
             ];
+            $settings = array_merge(
+                $defaultSettings,
+                is_array($data['mobileSettings'] ?? null) ? $data['mobileSettings'] : [],
+            );
+            if (!is_array($settings['hiddenDemoPropertyIds'] ?? null)) {
+                $settings['hiddenDemoPropertyIds'] = [];
+            }
             if ($method === 'GET') return $this->json($settings);
             $admin = $this->currentUser($request, true); if (!$this->isAdmin($admin)) return $this->json(['error' => 'Forbidden'], 403);
             $settings = $this->deepMerge($settings, $request->all()); $data['mobileSettings'] = $settings; JsonStore::write($data);
@@ -1758,6 +1812,91 @@ class ApiController extends Controller
     private function mediaBaseUrl(): string
     {
         return rtrim((string) env('MEDIA_PUBLIC_BASE_URL', ''), '/');
+    }
+
+    private function notifyAdminsForPropertySubmission(array &$data, array $property, string $event): void
+    {
+        $adminIds = collect($data['users'] ?? [])
+            ->filter(fn ($user) => is_array($user)
+                && strtolower((string) ($user['role'] ?? '')) === 'admin'
+                && strtolower((string) ($user['status'] ?? 'active')) === 'active')
+            ->pluck('id')
+            ->all();
+        if (!$adminIds) return;
+
+        $propertyId = $property['id'] ?? null;
+        $title = trim((string) ($property['title'] ?? ''));
+        $listingTitle = $title !== '' ? $title : 'A property listing';
+        $city = trim((string) ($property['city'] ?? $property['location']['city'] ?? ''));
+        $message = $city !== ''
+            ? "{$listingTitle} in {$city} was submitted for review."
+            : "{$listingTitle} was submitted for review.";
+        app(NotificationDeliveryService::class)->deliver($data, $adminIds, [
+            'type' => 'PROPERTY_LISTING_SUBMITTED',
+            'category' => 'properties',
+            'title' => 'New property listing for review',
+            'message' => $message,
+            'body' => $message,
+            'imageUrl' => $property['coverImage'] ?? ($property['images'][0] ?? null),
+            'entityType' => 'property',
+            'entityId' => $propertyId,
+            'propertyId' => $propertyId,
+            'deepLink' => $propertyId !== null ? "/property/{$propertyId}" : null,
+            'eventKey' => "property:{$propertyId}:{$event}",
+            'metadata' => ['city' => $city],
+        ]);
+    }
+
+    private function notifyUsersOfPublishedProperty(array &$data, array $property): void
+    {
+        $city = trim((string) ($property['city'] ?? $property['location']['city'] ?? ''));
+        $normalizedCity = strtolower($city);
+        $recipientIds = collect($data['users'] ?? [])
+            ->filter(function ($user) use ($data, $normalizedCity) {
+                if (!is_array($user)
+                    || strtolower((string) ($user['status'] ?? 'active')) !== 'active') {
+                    return false;
+                }
+
+                $userId = (string) ($user['id'] ?? '');
+                $preferences = (array) ($data['notificationPreferences'][$userId] ?? []);
+                $selectedCities = $preferences['cities'] ?? [];
+                if (is_string($selectedCities)) $selectedCities = [$selectedCities];
+                if (!is_array($selectedCities)) $selectedCities = [];
+                $selectedCities = collect($selectedCities)
+                    ->map(fn ($selectedCity) => strtolower(trim((string) $selectedCity)))
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                return $normalizedCity === ''
+                    || !$selectedCities
+                    || in_array($normalizedCity, $selectedCities, true);
+            })
+            ->pluck('id')
+            ->all();
+        if (!$recipientIds) return;
+
+        $propertyId = $property['id'] ?? null;
+        $title = trim((string) ($property['title'] ?? ''));
+        $listingTitle = $title !== '' ? $title : 'A new property';
+        $message = $city !== ''
+            ? "{$listingTitle} in {$city} is now available."
+            : "{$listingTitle} is now available.";
+        app(NotificationDeliveryService::class)->deliver($data, $recipientIds, [
+            'type' => 'NEW_PROPERTY_LISTING',
+            'category' => 'properties',
+            'title' => 'New property listing',
+            'message' => $message,
+            'body' => $message,
+            'imageUrl' => $property['coverImage'] ?? ($property['images'][0] ?? null),
+            'entityType' => 'property',
+            'entityId' => $propertyId,
+            'propertyId' => $propertyId,
+            'deepLink' => $propertyId !== null ? "/property/{$propertyId}" : null,
+            'eventKey' => "property:{$propertyId}:published",
+            'metadata' => ['city' => $city],
+        ]);
     }
 
     private function safeUser(array $user): array { unset($user['password']); return $user; }

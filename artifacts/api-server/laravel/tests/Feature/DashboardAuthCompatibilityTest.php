@@ -139,6 +139,51 @@ class DashboardAuthCompatibilityTest extends TestCase
             ->assertUnauthorized();
     }
 
+    public function test_admin_promoted_agent_can_sign_in_and_read_only_their_dashboard_data(): void
+    {
+        $this->seedDashboardFixture();
+        $adminToken = $this->login('dashboard-admin@example.test');
+
+        $this->withToken($adminToken)
+            ->patchJson('/api/admin/users/902/role', ['role' => 'Agent'])
+            ->assertOk()
+            ->assertJsonPath('role', 'Agent')
+            ->assertJsonPath('agentCoverUploadEnabled', false);
+
+        $data = JsonStore::read();
+        $data['agentLeads'] = [
+            ['id' => 9101, 'userId' => 902, 'agentId' => '902', 'name' => 'Owned lead', 'status' => 'new'],
+            ['id' => 9102, 'userId' => 903, 'agentId' => '903', 'name' => 'Other agent lead', 'status' => 'new'],
+        ];
+        $data['agentVisits'] = [
+            ['id' => 'agent-visit-1', 'userId' => 902, 'agentId' => '902', 'date' => now()->toDateString(), 'status' => 'Requested'],
+            ['id' => 'agent-visit-2', 'userId' => 903, 'agentId' => '903', 'date' => now()->toDateString(), 'status' => 'Requested'],
+        ];
+        JsonStore::write($data);
+
+        $agentToken = $this->login('dashboard-seller@example.test');
+        $this->withToken($agentToken)
+            ->getJson('/api/auth/me')
+            ->assertOk()
+            ->assertJsonPath('role', 'Agent')
+            ->assertJsonMissingPath('password');
+        $this->withToken($agentToken)
+            ->getJson('/api/my-properties')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.id', 991);
+        $this->withToken($agentToken)
+            ->getJson('/api/agent-leads')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.id', 9101);
+        $this->withToken($agentToken)
+            ->getJson('/api/agent-visits')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.id', 'agent-visit-1');
+    }
+
     public function test_admin_otp_exchange_creates_a_valid_session_but_dashboard_expects_a_different_login_response(): void
     {
         $this->seedDashboardFixture();

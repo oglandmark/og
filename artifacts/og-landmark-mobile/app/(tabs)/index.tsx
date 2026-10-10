@@ -1535,10 +1535,16 @@ export default function HomeScreen() {
   }, []));
 
   useFocusEffect(useCallback(() => {
+    if (!user || role !== 'agent') {
+      setUserListings([]);
+      return undefined;
+    }
+
     getUserListings()
       .then((ls) => setUserListings(ls.filter((l) => l.role === 'agent').map(userListingToProperty)))
       .catch(() => undefined);
-  }, []));
+    return undefined;
+  }, [role, user]));
 
   useEffect(() => {
     if (user && role === 'developer') {

@@ -42,7 +42,7 @@ import { markNotificationRead } from '@/lib/api';
 
 SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
-const STARTUP_SPLASH_MIN_DURATION_MS = 7000;
+const STARTUP_SPLASH_MIN_DURATION_MS = 900;
 
 function RootLayoutNav() {
   const colors = useColors();
@@ -412,7 +412,9 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts(fontDefinitions);
   const [fontGateTimedOut, setFontGateTimedOut] = React.useState(false);
   useEffect(() => {
-    if (fontsLoaded || fontError || fontGateTimedOut) SplashScreen.hideAsync();
+    if (fontsLoaded || fontError || fontGateTimedOut) {
+      void SplashScreen.hideAsync().catch(() => undefined);
+    }
   }, [fontsLoaded, fontError, fontGateTimedOut]);
   useEffect(() => {
     const timeout = setTimeout(

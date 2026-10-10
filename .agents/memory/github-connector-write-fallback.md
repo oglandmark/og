@@ -14,3 +14,9 @@ For bulk source syncs, avoid parsing a large Base64 JSON payload directly from `
 **Why:** A large callback stdout payload produced malformed JSON in the durable runtime, while the same payload staged to a file could be read and verified reliably.
 
 **How to apply:** Keep temporary payloads out of version control, split batches below the file-read limit, validate before creating blobs, and remove staging files after the sync.
+
+The GitHub connector proxy rate-limits bulk writes at roughly 10 requests per second per Repl. Keep blob uploads below that rate and retry 429 responses after the indicated delay.
+
+**Why:** A burst of six parallel blob writes exceeded the proxy limit during a mobile source sync.
+
+**How to apply:** Prefer sequential or low-concurrency uploads with a small delay; verify every returned blob SHA before creating the commit.

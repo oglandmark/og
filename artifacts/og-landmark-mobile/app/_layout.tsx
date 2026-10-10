@@ -42,7 +42,7 @@ import { markNotificationRead } from '@/lib/api';
 
 SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
-const STARTUP_SPLASH_MIN_DURATION_MS = 900;
+const STARTUP_SPLASH_MIN_DURATION_MS = 7000;
 
 function RootLayoutNav() {
   const colors = useColors();

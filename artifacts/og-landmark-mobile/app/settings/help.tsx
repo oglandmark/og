@@ -65,23 +65,23 @@ export default function HelpScreen() {
       sub: 'Chat with us · Usually responds in 1–2 hours',
       color: '#25d366',
       bg: '#25d36618',
-      onPress: () => Linking.openURL('https://wa.me/923042569000?text=Hi%2C%20I%20need%20help%20with%20OG%20Landmark.'),
+      onPress: () => Linking.openURL('https://wa.me/923011484303?text=Hi%2C%20I%20need%20help%20with%20OG%20Landmark.'),
     },
     {
       icon: 'phone' as const,
       label: 'Call Support',
-      sub: '+92 304 256 9000 · Mon–Sat, 9am–6pm',
+      sub: '03011484303 · Mon–Sat, 9am–6pm',
       color: '#0B1F3A',
       bg: colors.secondary,
-      onPress: () => Linking.openURL('tel:+923042569000'),
+      onPress: () => Linking.openURL('tel:+923011484303'),
     },
     {
       icon: 'mail' as const,
       label: 'Email Support',
-      sub: 'support@oglandmark.pk · Reply within 24hrs',
+      sub: 'support@oglandmark.com · Reply within 24hrs',
       color: '#c8a45a',
       bg: '#c8a45a18',
-      onPress: () => Linking.openURL('mailto:support@oglandmark.pk?subject=Support%20Request&body=Hi%20OG%20Landmark%2C%0A%0A'),
+      onPress: () => Linking.openURL('mailto:support@oglandmark.com?subject=Support%20Request&body=Hi%20OG%20Landmark%2C%0A%0A'),
     },
   ];
 

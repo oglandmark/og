@@ -176,6 +176,22 @@ test('authenticated listing lifecycle keeps media, seller review context, and st
     assert.deepEqual(createdProperty.images, validListing.images);
     assert.equal(createdProperty.coverImage, validListing.coverImage);
     assert.equal(createdProperty.sellerId, 2);
+    assert.equal(createdProperty.lat, 30.8077123);
+    assert.equal(createdProperty.lng, 73.4561988);
+    assert.equal((createdProperty.location as JsonRecord).latitude, 30.8077123);
+    assert.equal((createdProperty.location as JsonRecord).longitude, 73.4561988);
+
+    const adminList = await request(baseUrl, '/api/admin/properties?status=Pending', {
+      token: adminToken,
+    });
+    assert.equal(adminList.status, 200);
+    assert.ok(Array.isArray(adminList.body));
+    const listedProperty = adminList.body.find(item => Number(item.id) === propertyId) as JsonRecord | undefined;
+    assert.ok(listedProperty);
+    assert.equal(listedProperty.lat, 30.8077123);
+    assert.equal(listedProperty.lng, 73.4561988);
+    assert.equal((listedProperty.location as JsonRecord).latitude, 30.8077123);
+    assert.equal((listedProperty.location as JsonRecord).longitude, 73.4561988);
 
     const review = await request(baseUrl, `/api/admin/properties/${propertyId}/review`, {
       token: adminToken,
@@ -186,6 +202,12 @@ test('authenticated listing lifecycle keeps media, seller review context, and st
     const seller = reviewBody.seller as JsonRecord;
     assert.equal(reviewedProperty.id, propertyId);
     assert.equal(reviewedProperty.sellerName, 'Task 31 Seller');
+    assert.deepEqual(reviewedProperty.images, validListing.images);
+    assert.equal(reviewedProperty.coverImage, validListing.coverImage);
+    assert.equal(reviewedProperty.lat, 30.8077123);
+    assert.equal(reviewedProperty.lng, 73.4561988);
+    assert.equal((reviewedProperty.location as JsonRecord).latitude, 30.8077123);
+    assert.equal((reviewedProperty.location as JsonRecord).longitude, 73.4561988);
     assert.equal(seller.id, 2);
     assert.equal(seller.email, 'task31-seller@example.com');
     assert.equal('password' in seller, false);

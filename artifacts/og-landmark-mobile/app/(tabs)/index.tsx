@@ -19,6 +19,7 @@ import { SkeletonShimmer } from '@/components/SkeletonShimmer';
 import { PropertyCard } from '@/components/PropertyCard';
 import { useColors } from '@/hooks/useColors';
 import { useLanguage } from '@/context/LanguageContext';
+import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import { BrandMark } from '@/components/BrandMark';
 import { NotificationBell } from '@/components/NotificationBell';
 import { BrowseDiscoveryModule } from '@/components/BrowseDiscoveryModule';
@@ -27,6 +28,10 @@ import { PropertyDemoBadge } from '@/components/PropertyDemoBadge';
 import { VideoWatermark } from '@/components/VideoWatermark';
 import { getAgents, getBanners, getMobileSettings, getProperties, API_BASE, type BannerSlide as ApiBannerSlide, type MobileContent } from '@/lib/api';
 import { apiPropertyToProperty } from '@/lib/properties';
+import {
+  filterVisibleDemoProperties,
+  selectHomePropertySource,
+} from '@/lib/demoPropertyVisibility';
 import { ExploreMapView } from '@/components/ExploreMapView';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { formatPrice, properties, propertyImages, Property } from '@/lib/properties';
@@ -95,7 +100,7 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.25)' }]} />
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close menu" />
         </View>
-        <View style={[s.drawerPanel, { width: Math.min(width * 0.86, 360), paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18, backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
+        <View style={[s.drawerPanel, { width: Math.min(width * 0.86, 360), paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) + 18, paddingBottom: insets.bottom + 18, backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
           <LinearGradient pointerEvents="none" colors={[colors.glassOverlay, 'transparent']} style={StyleSheet.absoluteFill} />
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.drawerScrollContent} keyboardShouldPersistTaps="handled">
@@ -1424,6 +1429,7 @@ export default function HomeScreen() {
   const tabBarHeight = useTabBarHeight();
   const tabBarScrollHandler = useTabBarScrollHandler();
   const { role, user } = useAuth();
+  const { hiddenDemoPropertyIds } = useDemoPropertyVisibility();
   const { toggleSaved } = useSaved();
 
   // Scroll-to-top when user taps the Home tab icon while already on this screen
@@ -1518,21 +1524,27 @@ export default function HomeScreen() {
       .catch(() => setManagedAgents([]));
   }, []));
 
-  // Fetch live properties from API on every focus; fall back to local mock silently
+  // Fetch live properties on focus; bundled examples remain the offline fallback
   useFocusEffect(useCallback(() => {
     setApiLoading(true);
     setPropertyError('');
     getProperties({ limit: 60 })
-      .then((ps) => { if (ps.length) setApiProps(ps.map(apiPropertyToProperty)); })
+      .then((ps) => setApiProps(ps.map(apiPropertyToProperty)))
       .catch(() => setPropertyError('Live properties are temporarily unavailable. Showing curated examples instead.'))
       .finally(() => setApiLoading(false));
   }, []));
 
   useFocusEffect(useCallback(() => {
+    if (!user || role !== 'agent') {
+      setUserListings([]);
+      return undefined;
+    }
+
     getUserListings()
       .then((ls) => setUserListings(ls.filter((l) => l.role === 'agent').map(userListingToProperty)))
       .catch(() => undefined);
-  }, []));
+    return undefined;
+  }, [role, user]));
 
   useEffect(() => {
     if (user && role === 'developer') {
@@ -1544,7 +1556,8 @@ export default function HomeScreen() {
   const handleDrawerInfo = (_info: DrawerInfo) => { setDrawerOpen(true); };
 
   // Use API properties when available, fall back to local mock
-  const allProps = apiProps.length > 0 ? apiProps : properties;
+  const propertySource = selectHomePropertySource(apiProps, properties);
+  const allProps = filterVisibleDemoProperties(propertySource, hiddenDemoPropertyIds);
 
   // Data slices — all driven from live API data (or local fallback)
   const featuredProps    = allProps.filter((p) => p.featured);

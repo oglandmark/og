@@ -1,31 +1,31 @@
 /**
  * OG Landmark — Centralized API Client
  * -------------------------------------
- * Dev URL  : set EXPO_PUBLIC_API_URL in .env.local
- * Prod URL : https://api.oglandmark.com
+ * All environments: https://www.oglandmark.com
  *
  * All requests include the auth token stored in AsyncStorage.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import { resolveApiBase } from './apiBase';
+import {
+  normalizePropertyMedia,
+  resolveMediaUrl as resolveMediaUrlForBase,
+} from './propertyMedia';
 
 // ─── Base URL ──────────────────────────────────────────────────────────────────
-// Override via EXPO_PUBLIC_API_URL in .env.local (no trailing /api)
-// e.g.  EXPO_PUBLIC_API_URL=https://api.oglandmark.com
-const configuredApiUrl = String(process.env.EXPO_PUBLIC_API_URL || '').trim().replace(/\/+$/, '');
-// Replit's browser preview cannot call the production API directly because
-// api.oglandmark.com only allows product-site origins. In the web preview,
-// route /api requests through the Replit website server's Laravel proxy; native
-// apps and production builds continue to use the canonical API directly.
-const replitWebPreviewApiBase =
-  Platform.OS === 'web' && process.env.EXPO_PUBLIC_REPL_ID && process.env.EXPO_PUBLIC_DOMAIN
-    ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-    : '';
-export const API_BASE: string =
-  configuredApiUrl ||
-  replitWebPreviewApiBase ||
-  'https://api.oglandmark.com';
+// Use the live website backend directly in development and production.
+// Mobile API requests do not go through a Replit API proxy or server.
+export const API_BASE = resolveApiBase();
+
+export function resolveMediaUrl(value?: string | null): string | undefined {
+  return resolveMediaUrlForBase(value, API_BASE);
+}
+
+function normalizeApiProperty(property: ApiProperty): ApiProperty {
+  return normalizePropertyMedia(property, API_BASE);
+}
 
 const TOKEN_KEY = '@og-landmark/api-token';
 
@@ -237,6 +237,7 @@ export type ApiUser = {
   avatarUrl?: string;
   profilePhoto?: string | null;
   coverPhoto?: string | null;
+  agentCoverUploadEnabled?: boolean;
 };
 
 // Server returns { user, token } on success (no `success` field)
@@ -466,7 +467,8 @@ export async function getProperties(filters: PropertiesFilter = {}): Promise<Api
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([k, v]) => { if (v !== undefined) params.set(k, String(v)); });
   const qs = params.toString();
-  return apiFetch<ApiProperty[]>(`/api/properties${qs ? `?${qs}` : ''}`, {}, false);
+  const properties = await apiFetch<ApiProperty[]>(`/api/properties${qs ? `?${qs}` : ''}`, {}, false);
+  return properties.map(normalizeApiProperty);
 }
 
 /** Fetch one bounded page without loading the whole catalogue into memory. */
@@ -480,14 +482,14 @@ export async function getPropertiesPage(filters: PropertiesFilter = {}): Promise
     const offset = Number(filters.offset ?? 0);
     const limit = Number(filters.limit ?? response.length);
     return {
-      items: response,
+      items: response.map(normalizeApiProperty),
       total: offset + response.length,
       offset,
       limit,
       hasMore: false,
     };
   }
-  return response;
+  return { ...response, items: response.items.map(normalizeApiProperty) };
 }
 
 /**
@@ -514,7 +516,7 @@ export async function getNearbyProperties(
 }
 
 export async function getProperty(id: number): Promise<ApiProperty> {
-  return apiFetch<ApiProperty>(`/api/properties/${id}`, {}, false);
+  return normalizeApiProperty(await apiFetch<ApiProperty>(`/api/properties/${id}`, {}, false));
 }
 
 export async function incrementView(id: number): Promise<void> {
@@ -689,6 +691,10 @@ export async function getBanners(): Promise<BannerSlide[]> {
   return apiFetch<BannerSlide[]>('/api/mobile/banners', {}, false);
 }
 
+export async function getAdminBanners(): Promise<BannerSlide[]> {
+  return apiFetch<BannerSlide[]>('/api/mobile/banners/all');
+}
+
 // ─── Mobile settings ───────────────────────────────────────────────────────────
 export type MobilePortalConfig = {
   title: string;
@@ -767,17 +773,33 @@ export type MobileSettings = {
   appVersion: string;
   minAppVersion: string;
   content: MobileContent;
+  hiddenDemoPropertyIds?: number[];
 };
 
 export async function getMobileSettings(): Promise<MobileSettings> {
   return apiFetch<MobileSettings>('/api/mobile/settings', {}, false);
+}
+
+export async function setAdminDemoPropertiesHidden(
+  ids: number[],
+  hidden: boolean,
+): Promise<number[]> {
+  if (ids.length === 0) return [];
+  const response = await apiFetch<{ hiddenDemoPropertyIds: number[] }>('/api/admin/demo-properties', {
+    method: 'PATCH',
+    body: JSON.stringify({ ids, hidden }),
+  });
+  return response.hiddenDemoPropertyIds;
 }
 export async function uploadImage(uri: string, filename = 'photo.jpg'): Promise<{ url: string }> {
   const form = new FormData();
   // React Native FormData accepts { uri, type, name }. Keep the extension and
   // MIME type aligned because Android content:// URIs often have no extension.
   form.append('image', imageUploadFile(uri, filename) as unknown as Blob);
-  return apiUpload<{ url: string }>('/api/upload/single', form);
+  const uploaded = await apiUpload<{ url: string }>('/api/upload/single', form);
+  const url = resolveMediaUrl(uploaded.url);
+  if (!url) throw new Error('The server did not return an uploaded photo URL.');
+  return { ...uploaded, url };
 }
 
 export async function uploadVideo(uri: string, filename = 'video.mp4'): Promise<{ url: string }> {
@@ -785,7 +807,10 @@ export async function uploadVideo(uri: string, filename = 'video.mp4'): Promise<
   const ext = filename.split('.').pop()?.toLowerCase() ?? 'mp4';
   const mimeType = ext === 'mov' ? 'video/quicktime' : ext === 'avi' ? 'video/x-msvideo' : 'video/mp4';
   form.append('video', { uri, type: mimeType, name: filename } as unknown as Blob);
-  return apiUpload<{ url: string }>('/api/upload/video', form);
+  const uploaded = await apiUpload<{ url: string }>('/api/upload/video', form);
+  const url = resolveMediaUrl(uploaded.url);
+  if (!url) throw new Error('The server did not return an uploaded video URL.');
+  return { ...uploaded, url };
 }
 
 function isUploadCompatibilityError(error: unknown): error is ApiRequestError {
@@ -802,7 +827,7 @@ async function uploadImageToLegacyCollectionRoute(
   const response = await apiUpload<{ urls?: string[]; url?: string }>('/api/upload', form);
   const url = response.urls?.[0] || response.url;
   if (!url) throw new Error('The server did not return an uploaded photo URL.');
-  return { url };
+  return { url: resolveMediaUrl(url) ?? url };
 }
 
 async function uploadListingImage(uri: string, filename: string): Promise<{ url: string }> {
@@ -833,18 +858,24 @@ export async function uploadMultipleImages(uris: string[]): Promise<string[]> {
 
 export async function uploadProfilePhoto(uri: string): Promise<{ url: string }> {
   const uploaded = await uploadImage(uri, `profile_${Date.now()}.jpg`);
-  return apiFetch<{ url: string }>('/api/account/profile-photo', {
+  const saved = await apiFetch<{ url: string }>('/api/account/profile-photo', {
     method: 'PUT',
     body: JSON.stringify(uploaded),
   });
+  const url = resolveMediaUrl(saved.url);
+  if (!url) throw new Error('The server did not return a saved profile photo URL.');
+  return { ...saved, url };
 }
 
 export async function uploadCoverPhoto(uri: string): Promise<{ url: string }> {
   const uploaded = await uploadImage(uri, `cover_${Date.now()}.jpg`);
-  return apiFetch<{ url: string }>('/api/account/cover-photo', {
+  const saved = await apiFetch<{ url: string }>('/api/account/cover-photo', {
     method: 'PUT',
     body: JSON.stringify(uploaded),
   });
+  const url = resolveMediaUrl(saved.url);
+  if (!url) throw new Error('The server did not return a saved cover photo URL.');
+  return { ...saved, url };
 }
 
 // ─── Properties CRUD (for agents / sellers posting listings) ──────────────────
@@ -886,27 +917,30 @@ export type CreatePropertyPayload = {
 };
 
 export async function createProperty(payload: CreatePropertyPayload): Promise<ApiProperty> {
-  return apiFetch<ApiProperty>('/api/properties', {
+  const property = await apiFetch<ApiProperty>('/api/properties', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
+  return normalizeApiProperty(property);
 }
 
 export async function updateProperty(id: number, payload: Partial<CreatePropertyPayload>): Promise<ApiProperty> {
-  return apiFetch<ApiProperty>(`/api/properties/${id}`, {
+  const property = await apiFetch<ApiProperty>(`/api/properties/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   });
+  return normalizeApiProperty(property);
 }
 
 export async function updatePropertyListingStatus(
   id: number,
   listingStatus: NonNullable<CreatePropertyPayload['listingStatus']>,
 ): Promise<ApiProperty> {
-  return apiFetch<ApiProperty>(`/api/properties/${id}/listing-status`, {
+  const property = await apiFetch<ApiProperty>(`/api/properties/${id}/listing-status`, {
     method: 'PATCH',
     body: JSON.stringify({ listingStatus }),
   });
+  return normalizeApiProperty(property);
 }
 
 export async function deleteProperty(id: number): Promise<void> {
@@ -915,7 +949,8 @@ export async function deleteProperty(id: number): Promise<void> {
 
 // Returns the logged-in user's own properties — ALL approval statuses (Pending/Active/Rejected)
 export async function getMyProperties(): Promise<ApiProperty[]> {
-  return apiFetch<ApiProperty[]>('/api/my-properties');
+  const properties = await apiFetch<ApiProperty[]>('/api/my-properties');
+  return properties.map(normalizeApiProperty);
 }
 
 // ─── Offers ───────────────────────────────────────────────────────────────────
@@ -1072,8 +1107,7 @@ export type ApiAgent = {
 };
 
 function resolveAgentPhoto(value?: string | null): string | undefined {
-  if (!value) return undefined;
-  return /^https?:\/\//i.test(value) ? value : `${API_BASE}${value.startsWith('/') ? value : `/${value}`}`;
+  return resolveMediaUrl(value);
 }
 
 export async function getAgents(
@@ -1119,9 +1153,10 @@ export async function getAdminProperties(
   const qs = new URLSearchParams();
   if (params.limit) qs.set('limit', String(params.limit));
   if (params.status) qs.set('status', params.status);
-  return apiFetch<ApiProperty[]>(
+  const properties = await apiFetch<ApiProperty[]>(
     `/api/admin/properties${qs.toString() ? `?${qs}` : ''}`,
   );
+  return properties.map(normalizeApiProperty);
 }
 
 export async function verifyAdminProperty(id: number): Promise<void> {
@@ -1147,10 +1182,17 @@ export async function getAdminUsers(
   );
 }
 
-export async function updateUserRole(userId: number, role: string): Promise<void> {
-  await apiFetch(`/api/admin/users/${userId}/role`, {
+export async function updateUserRole(userId: number, role: string): Promise<ApiUser> {
+  return apiFetch<ApiUser>(`/api/admin/users/${userId}/role`, {
     method: 'PATCH',
     body: JSON.stringify({ role }),
+  });
+}
+
+export async function setAgentCoverUploadAccess(userId: number, enabled: boolean): Promise<ApiUser> {
+  return apiFetch<ApiUser>(`/api/admin/users/${userId}/agent-cover-access`, {
+    method: 'PATCH',
+    body: JSON.stringify({ enabled }),
   });
 }
 
@@ -1183,7 +1225,8 @@ export type AdminPropertyReview = {
   audit: ApiProperty['reviewHistory'];
 };
 export async function getAdminPropertyReview(id: number): Promise<AdminPropertyReview> {
-  return apiFetch<AdminPropertyReview>(`/api/admin/properties/${id}/review`);
+  const review = await apiFetch<AdminPropertyReview>(`/api/admin/properties/${id}/review`);
+  return { ...review, property: normalizeApiProperty(review.property) };
 }
 export async function toggleFeatureProperty(id: number, featured: boolean): Promise<void> {
   await apiFetch(`/api/admin/properties/${id}/feature`, {
@@ -1249,11 +1292,18 @@ export async function sendBroadcastPush(
 
 // ── Admin banner management ────────────────────────────────────────────────────
 export async function createBanner(payload: {
-  title: string; subtitle?: string; imageUrl: string; actionUrl?: string;
-}): Promise<void> {
-  await apiFetch('/api/mobile/banners', {
+  category: 'homes' | 'commercial' | 'agriculture' | 'plots' | 'projects';
+  title: string;
+  subtitle?: string;
+  eyebrow?: string;
+  cta?: string;
+  route?: string;
+  ctaParams?: Record<string, string>;
+  imageUrl: string;
+}): Promise<{ success: boolean; banner?: BannerSlide }> {
+  return apiFetch('/api/mobile/banners', {
     method: 'POST',
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ type: 'image', ...payload }),
   });
 }
 export async function deleteBanner(id: number): Promise<void> {

@@ -21,6 +21,11 @@ import { PropertyGalleryModal } from '@/components/PropertyGalleryModal';
 import { PropertyDemoBadge } from '@/components/PropertyDemoBadge';
 import { propertyImages } from '@/lib/properties';
 import { shareProperty } from '@/lib/share';
+import {
+  PUBLIC_CONTACT_PHONE,
+  PUBLIC_CONTACT_PHONE_E164,
+  publicWhatsAppUrl,
+} from '@/lib/publicContact';
 
 function PropertyCardInner({ property, compact = false }: { property: Property; compact?: boolean }) {
   const colors = useColors();
@@ -242,7 +247,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
 
       <View style={[ctaStyles.row, compact && ctaStyles.compactRow, { borderTopColor: colors.border, backgroundColor: colors.surfaceRaised }]}>
         <Pressable
-          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`sms:${property.agentPhone ?? '03042569000'}`); }}
+          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`sms:${PUBLIC_CONTACT_PHONE}`); }}
           style={({ pressed }) => [ctaStyles.smsBtn, compact && ctaStyles.compactButton, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.75 : 1 }]}
           hitSlop={6}
           accessibilityRole="button"
@@ -253,7 +258,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
         </Pressable>
 
         <Pressable
-          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`tel:${property.agentPhone ?? '03042569000'}`); }}
+          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`); }}
           style={({ pressed }) => [ctaStyles.callBtn, compact && ctaStyles.compactButton, { backgroundColor: colors.action, opacity: pressed ? 0.82 : 1 }]}
           hitSlop={6}
           accessibilityRole="button"
@@ -264,7 +269,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
         </Pressable>
 
         <Pressable
-          onPress={(e) => { e.stopPropagation(); void Linking.openURL(`https://wa.me/92${(property.agentPhone ?? '03042569000').replace(/\D/g, '').replace(/^0/, '')}`); }}
+          onPress={(e) => { e.stopPropagation(); void Linking.openURL(publicWhatsAppUrl(`I am interested in ${property.title}`)); }}
           style={({ pressed }) => [ctaStyles.waBtn, { opacity: pressed ? 0.75 : 1 }]}
           hitSlop={6}
           accessibilityRole="button"

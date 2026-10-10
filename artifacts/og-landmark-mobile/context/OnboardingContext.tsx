@@ -11,16 +11,36 @@ const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 // Bump this when the onboarding experience changes so existing installs
 // see the updated flow once instead of silently skipping to Home.
 const ONBOARDING_KEY = '@og-landmark/onboarding-complete-v4';
+const ONBOARDING_HYDRATION_TIMEOUT_MS = 2000;
 
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+    const watchdog = setTimeout(() => {
+      if (mounted) setIsLoading(false);
+    }, ONBOARDING_HYDRATION_TIMEOUT_MS);
+
     AsyncStorage.getItem(ONBOARDING_KEY)
-      .then((value) => setHasCompletedOnboarding(value === 'true'))
-      .catch(() => setHasCompletedOnboarding(false))
-      .finally(() => setIsLoading(false));
+      .then((value) => {
+        if (mounted) setHasCompletedOnboarding(value === 'true');
+      })
+      .catch(() => {
+        if (mounted) setHasCompletedOnboarding(false);
+      })
+      .finally(() => {
+        if (mounted) {
+          clearTimeout(watchdog);
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+      clearTimeout(watchdog);
+    };
   }, []);
 
   const completeOnboarding = useCallback(async () => {

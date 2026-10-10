@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 // BlurView removed — crashes Android GPU
 import { useColors } from '@/hooks/useColors';
-import { Redirect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -83,9 +83,9 @@ export default function PostAdScreen() {
     return <NotLoggedInPrompt colors={colors} topInset={topInset} insets={insets} router={router} />;
   }
 
-  // Property posting now opens the full listing form directly. The form owns
-  // the Buy/Rent choice so users do not have to pass through a second menu.
-  return <Redirect href="/post/listing" />;
+  // Keep this tab as its own entry screen rather than redirecting immediately
+  // on mount. The user can choose the posting action before opening its route.
+  return <SelectionScreen colors={colors} topInset={topInset} router={router} />;
 }
 
 // ─── Selection Screen ───────────────────────────────────────────────────────────

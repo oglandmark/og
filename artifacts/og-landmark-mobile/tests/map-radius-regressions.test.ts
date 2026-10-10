@@ -69,18 +69,22 @@ test('web radius updates resize the existing circle without rebuilding the viewp
   );
 });
 
-test('Android map overrides reuse the shared Mapbox WebView implementation', () => {
+test('Android and iOS native maps use the shared Mapbox renderer', () => {
   const androidMap = readComponent('MapViewComponent.android.tsx');
   const androidExplore = readComponent('ExploreMapView.android.tsx');
   const nativeMap = readComponent('MapViewComponent.native.tsx');
   const nativeExplore = readComponent('ExploreMapView.native.tsx');
+  const mapboxFallback = readComponent('ExpoGoMapFallback.tsx');
+  const appConfig = JSON.parse(readFileSync(resolve(mobileRoot, 'app.json'), 'utf8'));
 
   assert.match(androidMap, /MapViewComponent\.native/);
   assert.match(androidExplore, /ExploreMapView\.native/);
   assert.match(nativeMap, /ExpoGoMapFallback/);
   assert.match(nativeExplore, /ExpoGoMapFallback/);
-  assert.match(nativeMap, /satellite=\{satellite\}/);
-  assert.match(readComponent('ExpoGoMapFallback.tsx'), /EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN/);
+  assert.doesNotMatch(nativeMap, /GoogleMapCanvas/);
+  assert.doesNotMatch(nativeExplore, /GoogleMapCanvas/);
+  assert.match(mapboxFallback, /EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN/);
+  assert.doesNotMatch(JSON.stringify(appConfig.expo.plugins), /withGoogleMapsApiKey/);
 });
 
 test('map surfaces expose Map and Satellite modes without Street View', () => {
@@ -217,7 +221,7 @@ test('listing location picker follows the selected city with a fixed center pin 
   assert.match(postAd, /if \(cityChanged\) \{[\s\S]*setLatitude\(null\);[\s\S]*setLongitude\(null\);[\s\S]*setSelectedLocation\(null\);[\s\S]*setLocationConfirmed\(false\);/);
 });
 
-test('native Mapbox maps keep the area center synced after map movement', () => {
+test('native maps keep the area center synced after map movement', () => {
   const native = readComponent('ExploreMapView.native.tsx');
   assert.match(native, /setAreaCenter\(\{ latitude: region\.latitude, longitude: region\.longitude \}\)/);
 });

@@ -18,7 +18,10 @@ import { addInquiry } from '@/lib/inquiriesStore';
 import { getMyListings, UserListing } from '@/lib/listingsStore';
 import { PropertyCard } from '@/components/PropertyCard';
 import { properties } from '@/lib/properties';
+import { filterVisibleDemoProperties } from '@/lib/demoPropertyVisibility';
+import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import VisitSchedulerModal from '@/components/VisitSchedulerModal';
+import { PUBLIC_CONTACT_PHONE_E164, publicWhatsAppUrl } from '@/lib/publicContact';
 
 // ── Contact Modal ─────────────────────────────────────────────────────────────
 
@@ -106,7 +109,7 @@ function ContactModal({
                 placeholderTextColor={colors.mutedForeground}
                 style={[cm.input, { backgroundColor: colors.secondary, borderColor: colors.border, color: colors.foreground }]} />
               <View style={cm.actions}>
-                <Pressable onPress={() => Linking.openURL(`https://wa.me/92${agent.phone.replace(/^0/, '')}`)
+                <Pressable onPress={() => Linking.openURL(publicWhatsAppUrl(`Hello, I found your profile on OG Landmark.`))
                 } style={[cm.altBtn, { borderColor: '#25d366', backgroundColor: '#25d36612' }]}>
                   <Feather name="message-circle" size={15} color="#25d366" />
                   <Text style={[cm.altBtnText, { color: '#25d366' }]}>WhatsApp</Text>
@@ -176,6 +179,7 @@ function toProfile(a: SampleAgent, isSample = false): AgentProfile {
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function AgentProfileScreen() {
+  const { hiddenDemoPropertyIds } = useDemoPropertyVisibility();
   const colors  = useColors();
   const router  = useRouter();
   const insets  = useSafeAreaInsets();
@@ -261,7 +265,10 @@ export default function AgentProfileScreen() {
 
   const saleListings   = agentListings.filter((l) => l.status === 'For Sale');
   const rentListings   = agentListings.filter((l) => l.status === 'For Rent');
-  const matchedProps   = properties.filter((p) => p.agent === agent.displayName || p.agent === agent.agency);
+  const matchedProps   = filterVisibleDemoProperties(
+    properties.filter((p) => p.agent === agent.displayName || p.agent === agent.agency),
+    hiddenDemoPropertyIds,
+  );
 
   return (
     <>
@@ -321,8 +328,8 @@ export default function AgentProfileScreen() {
       {/* ── ACTION BUTTONS ─────────────────────────────────────────────── */}
       <View style={[styles.actionsRow, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         {[
-          { icon: 'phone',    label: 'Call',     color: '#183B60', onPress: () => Linking.openURL(`tel:${agent.phone}`) },
-          { icon: 'message-circle', label: 'WhatsApp', color: '#25d366', onPress: () => Linking.openURL(`https://wa.me/92${agent.phone.replace(/^0/, '')}`) },
+          { icon: 'phone',    label: 'Call',     color: '#183B60', onPress: () => Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`) },
+          { icon: 'message-circle', label: 'WhatsApp', color: '#25d366', onPress: () => Linking.openURL(publicWhatsAppUrl(`Hello, I found your profile on OG Landmark.`)) },
           { icon: 'calendar', label: 'Schedule', color: '#c8a45a', onPress: () => setVisitOpen(true) },
           { icon: 'send',     label: 'Enquire',  color: '#0B1F3A', onPress: () => setContactOpen(true) },
         ].map((a) => (
@@ -474,7 +481,7 @@ export default function AgentProfileScreen() {
 
       {/* ── CONTACT CTA ───────────────────────────────────────────────── */}
       <View style={styles.footerCTA}>
-        <Pressable onPress={() => Linking.openURL(`tel:${agent.phone}`)}
+        <Pressable onPress={() => Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`)}
           style={({ pressed }) => [styles.callBtn, { borderColor: colors.action, opacity: pressed ? 0.8 : 1 }]}>
           <Feather name="phone" size={16} color={colors.action} />
           <Text style={[styles.callBtnText, { color: colors.action }]}>Call Agent</Text>
@@ -502,7 +509,7 @@ export default function AgentProfileScreen() {
       providerId={agent.id}
       projectTitle={`Viewing with ${agent.displayName}`}
       contactPerson={agent.displayName}
-      contactPhone={agent.phone}
+      contactPhone={PUBLIC_CONTACT_PHONE_E164}
       location={agent.areas[0] ?? 'Okara'}
       buyerId={user?.id}
     />

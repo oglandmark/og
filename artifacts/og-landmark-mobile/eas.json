@@ -5,6 +5,7 @@
   "build": {
     "preview": {
       "node": "20.19.4",
+      "environment": "production",
       "distribution": "internal",
       "android": {
         "image": "ubuntu-22.04-jdk-17-ndk-r21e",
@@ -13,6 +14,7 @@
     },
     "production": {
       "node": "20.19.4",
+      "pnpm": "10.26.1",
       "environment": "production",
       "distribution": "store",
       "android": {

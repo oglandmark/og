@@ -11,7 +11,8 @@ import { BrandMark } from '@/components/BrandMark';
 type Section = 'about' | 'legal' | 'security';
 type LegalTab = 'terms' | 'privacy';
 
-const EFFECTIVE_DATE = 'September 6, 2026';
+const TERMS_EFFECTIVE_DATE = 'September 6, 2026';
+const PRIVACY_EFFECTIVE_DATE = 'October 2, 2026';
 
 function BulletList({
   items,
@@ -106,7 +107,7 @@ function LegalDocument({
       <View style={[styles.updated, { backgroundColor: colors.selectionTint, borderColor: colors.selectionBorder }]}>
         <Feather name="calendar" size={13} color={colors.selectionForeground} />
         <Text style={[styles.updatedText, { color: colors.selectionForeground }]}>
-          Effective {EFFECTIVE_DATE}
+          Effective {isTerms ? TERMS_EFFECTIVE_DATE : PRIVACY_EFFECTIVE_DATE}
         </Text>
       </View>
 
@@ -176,7 +177,7 @@ function LegalDocument({
 
           <SectionCard icon="share-2" eyebrow="03" title="When information is shared" colors={colors}>
             <Paragraph colors={colors}>
-              We share only what is needed to operate the requested service. For example, an enquiry may include your name and contact details with the relevant seller, agent, or developer. We may also use trusted providers for hosting, email delivery, notifications, and security.
+              We share only what is needed to operate the requested service. For example, an enquiry may include your name and contact details with the relevant seller, agent, or developer. We may also use third-party service providers for hosting, email delivery, notifications, and security.
             </Paragraph>
             <Paragraph colors={colors}>
               We do not sell personal information for advertising. We may disclose information when required by law, to protect users, or as part of a genuine business transfer.
@@ -187,7 +188,27 @@ function LegalDocument({
             <Paragraph colors={colors}>
               We retain information only as long as reasonably needed for the service, security, dispute handling, legal requirements, or a legitimate business purpose. You can update account details, manage optional permissions, and request account deletion through the app or support.
             </Paragraph>
-            <Pressable onPress={() => Linking.openURL('mailto:support@oglandmark.pk')} style={[styles.inlineAction, { borderColor: colors.selectionBorder, backgroundColor: colors.selectionTint }]}>
+            <Pressable
+              accessibilityRole="link"
+              onPress={() => Linking.openURL('https://oglandmark.com/privacy-policy')}
+              style={[styles.inlineAction, { borderColor: colors.selectionBorder, backgroundColor: colors.selectionTint }]}
+            >
+              <Feather name="external-link" size={14} color={colors.selectionForeground} />
+              <Text style={[styles.inlineActionText, { color: colors.selectionForeground }]}>Read the full Privacy Policy</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="link"
+              onPress={() => Linking.openURL('https://oglandmark.com/account-deletion')}
+              style={[styles.inlineAction, { borderColor: colors.selectionBorder, backgroundColor: colors.selectionTint }]}
+            >
+              <Feather name="user-x" size={14} color={colors.selectionForeground} />
+              <Text style={[styles.inlineActionText, { color: colors.selectionForeground }]}>Request account deletion online</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="link"
+              onPress={() => Linking.openURL('mailto:support@oglandmark.com')}
+              style={[styles.inlineAction, { borderColor: colors.selectionBorder, backgroundColor: colors.selectionTint }]}
+            >
               <Feather name="mail" size={14} color={colors.selectionForeground} />
               <Text style={[styles.inlineActionText, { color: colors.selectionForeground }]}>Contact privacy support</Text>
             </Pressable>
@@ -223,7 +244,7 @@ function AboutContent({ colors }: { colors: ReturnType<typeof useColors> }) {
 
       <SectionCard icon="compass" eyebrow="OUR PERSPECTIVE" title="A more considered property platform" colors={colors}>
         <Paragraph colors={colors}>
-          OG Landmark brings buyers, property owners, agents, and developers together through one trusted digital experience. We focus on clear information, practical tools, and responsive communication so people can make better-informed property decisions.
+          OG Landmark brings buyers, property owners, agents, and developers together on one digital platform. It provides property listings, communication tools, and options for arranging visits.
         </Paragraph>
         <Paragraph colors={colors}>
           Our roots are in Okara District and the wider Punjab region, with a platform built to support homes, land, commercial spaces, and development projects.
@@ -332,7 +353,7 @@ function SecurityContent({ colors, router }: { colors: ReturnType<typeof useColo
           <Text style={[styles.contactTitle, { color: colors.foreground }]}>Need help with privacy or security?</Text>
           <Text style={[styles.contactBody, { color: colors.mutedForeground }]}>Our support team can help with account access and data requests.</Text>
         </View>
-        <Pressable onPress={() => Linking.openURL('mailto:support@oglandmark.pk')} hitSlop={8}>
+        <Pressable onPress={() => Linking.openURL('mailto:support@oglandmark.com')} hitSlop={8}>
           <Feather name="arrow-up-right" size={17} color={colors.action} />
         </Pressable>
       </View>
@@ -384,7 +405,7 @@ export default function LegalScreen() {
       <View style={styles.footer}>
         <BrandMark />
         <Text style={[styles.footerText, { color: colors.mutedForeground }]}>Clearer property decisions.</Text>
-        <Text style={[styles.footerMeta, { color: colors.mutedForeground }]}>© 2026 OG Landmark · Effective {EFFECTIVE_DATE}</Text>
+        <Text style={[styles.footerMeta, { color: colors.mutedForeground }]}>© 2026 OG Landmark</Text>
       </View>
     </ScrollView>
   );

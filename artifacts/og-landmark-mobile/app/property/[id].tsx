@@ -11,6 +11,8 @@ import { StaticMap } from '@/components/MapViewComponent';
 import { openDirections } from '@/lib/locationService';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatAreaDisplay, formatPrice, properties, propertyImages, apiPropertyToProperty } from '@/lib/properties';
+import { isDemoPropertyHidden } from '@/lib/demoPropertyVisibility';
+import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import { getProperty, incrementView, submitInquiry, bookAppointment, type ApiProperty } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
@@ -23,6 +25,11 @@ import { WhatsAppLogo } from '@/components/WhatsAppIcon';
 import { recordVisit } from '@/lib/visitHistoryStore';
 import { addInquiry } from '@/lib/inquiriesStore';
 import { PropertyMediaStrip } from '@/components/PropertyMediaStrip';
+import {
+  PUBLIC_CONTACT_PHONE,
+  PUBLIC_CONTACT_PHONE_E164,
+  publicWhatsAppUrl,
+} from '@/lib/publicContact';
 
 const SCREEN_W = Dimensions.get('window').width;
 
@@ -188,7 +195,7 @@ function InquiryModal({
 
   if (!visible) return null;
 
-  const agentPhone = property.agentPhone;
+  const agentPhone = PUBLIC_CONTACT_PHONE_E164;
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose} statusBarTranslucent>
@@ -342,7 +349,7 @@ function InquiryModal({
               {/* Actions */}
               <View style={iq.actions}>
                 {agentPhone ? (
-                  <Pressable onPress={() => Linking.openURL(`https://wa.me/92${agentPhone.replace(/\D/g, '').replace(/^0/, '')}`)}
+                  <Pressable onPress={() => Linking.openURL(publicWhatsAppUrl(`I am interested in ${property.title}`))}
                     style={[iq.altBtn, { borderColor: '#25d366', backgroundColor: '#25d36612' }]}>
                     <Feather name="message-circle" size={15} color="#25d366" />
                     <Text style={[iq.altBtnText, { color: '#25d366' }]}>WhatsApp</Text>
@@ -441,7 +448,7 @@ function AppointmentModal({
                 {'\n'}has been submitted. The agent will confirm shortly.
               </Text>
               <View style={iq.successBtns}>
-                <Pressable onPress={() => Linking.openURL(`tel:${property.agentPhone ?? '03042569000'}`)}
+                <Pressable onPress={() => Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`)}
                   style={[iq.successBtn, { backgroundColor: colors.secondary, borderColor: colors.border, borderWidth: 1 }]}>
                   <Feather name="phone" size={15} color={colors.foreground} />
                   <Text style={[iq.successBtnText, { color: colors.foreground }]}>Call Agent</Text>
@@ -618,6 +625,7 @@ function PropertyDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isLoggedIn } = useAuth();
+  const { hiddenDemoPropertyIds } = useDemoPropertyVisibility();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isSaved, toggleSaved } = useSaved();
   const numId = Number(id);
@@ -635,6 +643,7 @@ function PropertyDetailScreen() {
   const galleryScrollRef = useRef<ScrollView>(null);
   const images = propertyImages(property);
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
+  const demoWasRemoved = isDemoPropertyHidden(property, hiddenDemoPropertyIds);
 
   // Fetch live property from API + increment view count
   useEffect(() => {
@@ -651,7 +660,7 @@ function PropertyDetailScreen() {
 
   // Record visit whenever this property is opened
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn || demoWasRemoved) return;
     void recordVisit({
       propertyId:     property.id,
       propertyTitle:  property.title,
@@ -660,11 +669,11 @@ function PropertyDetailScreen() {
       propertyPrice:  property.price,
       propertyStatus: property.status,
     }).catch(() => undefined);
-  }, [isLoggedIn, property.id, property.title, property.type, property.city, property.price, property.status]);
+  }, [isLoggedIn, demoWasRemoved, property.id, property.title, property.type, property.city, property.price, property.status]);
 
-  const agentPhone = property.agentPhone ?? '03042569000';
-  const waUrl = `https://wa.me/92${agentPhone.replace(/\D/g, '').replace(/^0/, '')}`;
-  const smsUrl = `sms:${agentPhone}`;
+  const agentPhone = PUBLIC_CONTACT_PHONE_E164;
+  const waUrl = publicWhatsAppUrl(`I am interested in ${property.title}`);
+  const smsUrl = `sms:${PUBLIC_CONTACT_PHONE}`;
   const bottomBarH = insets.bottom + 70;
 
   const requireSignIn = (action: 'inquiry' | 'visit') => {
@@ -687,6 +696,24 @@ function PropertyDetailScreen() {
   const openBooking = () => {
     if (requireSignIn('visit')) setBookingOpen(true);
   };
+
+  if (demoWasRemoved) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <Feather name="trash-2" size={32} color={colors.mutedForeground} />
+        <Text style={{ color: colors.foreground, fontFamily: 'Inter_700Bold', fontSize: 18, marginTop: 14, textAlign: 'center' }}>
+          This demo listing has been removed
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.back()}
+          style={{ marginTop: 18, borderRadius: 10, backgroundColor: colors.action, paddingHorizontal: 18, paddingVertical: 11 }}
+        >
+          <Text style={{ color: colors.actionForeground, fontFamily: 'Inter_600SemiBold', fontSize: 13 }}>Go back</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <>
@@ -1022,7 +1049,7 @@ function PropertyDetailScreen() {
             <Pressable onPress={() => Linking.openURL(waUrl)} style={[styles.callButton, { backgroundColor: '#25D366' }]}>
               <WhatsAppLogo size={20} />
             </Pressable>
-            <Pressable onPress={() => Linking.openURL(`tel:${property.agentPhone ?? '03042569000'}`)} style={[styles.callButton, { backgroundColor: colors.action }]}>
+            <Pressable onPress={() => Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`)} style={[styles.callButton, { backgroundColor: colors.action }]}>
               <Feather name="phone" size={17} color={colors.actionForeground} />
             </Pressable>
           </View>

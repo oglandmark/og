@@ -1,21 +1,32 @@
 import React, { useEffect } from 'react';
-import { ActivityIndicator, AppState, InteractionManager, Platform, View } from 'react-native';
+import { AppState, InteractionManager, Platform, View } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { setAudioModeAsync } from 'expo-audio';
 import type { NotificationResponse } from 'expo-notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold } from '@expo-google-fonts/playfair-display';
 import { useFonts, type FontSource } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { SavedProvider } from '@/context/SavedContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { DemoPropertyVisibilityProvider } from '@/context/DemoPropertyVisibilityContext';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
 import { OnboardingProvider, useOnboarding } from '@/context/OnboardingContext';
 import { useColors } from '@/hooks/useColors';
@@ -31,6 +42,7 @@ import { markNotificationRead } from '@/lib/api';
 
 SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
+const STARTUP_SPLASH_MIN_DURATION_MS = Platform.OS === 'web' ? 0 : 7000;
 
 function RootLayoutNav() {
   const colors = useColors();
@@ -40,7 +52,16 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
   const [navigationReady, setNavigationReady] = React.useState(false);
+  const [splashDurationElapsed, setSplashDurationElapsed] = React.useState(false);
   const handledNotificationResponses = React.useRef(new Set<string>());
+
+  useEffect(() => {
+    const timeout = setTimeout(
+      () => setSplashDurationElapsed(true),
+      STARTUP_SPLASH_MIN_DURATION_MS,
+    );
+    return () => clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -197,7 +218,7 @@ function RootLayoutNav() {
         <Stack.Screen name="project/[id]" options={{ presentation: 'card', animation: 'none' }} />
         <Stack.Screen name="(auth)" options={{ presentation: 'card', animation: 'none' }} />
       </Stack>
-      {!navigationReady && (
+      {(!navigationReady || !splashDurationElapsed) && (
         <StartupSplash colors={colors} overlay />
       )}
     </View>
@@ -209,18 +230,75 @@ const rootStyles = {
     flex: 1,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
-    paddingHorizontal: 32,
+    paddingHorizontal: 24,
   },
-  loadingStatus: {
-    flexDirection: 'row' as const,
+  startupBrand: {
+    fontFamily: 'PlayfairDisplay_600SemiBold',
+    fontSize: 20,
+    letterSpacing: 0.4,
+    marginTop: 12,
+    textAlign: 'center' as const,
+  },
+  startupMark: {
+    width: '76%' as const,
+    maxWidth: 260,
+    aspectRatio: 1,
     alignItems: 'center' as const,
-    gap: 9,
-    marginTop: 28,
-    opacity: 0.82,
+    justifyContent: 'center' as const,
   },
-  loadingStatusText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 12,
+  startupRingOuter: {
+    position: 'absolute' as const,
+    top: '4%' as const,
+    right: '4%' as const,
+    bottom: '4%' as const,
+    left: '4%' as const,
+    borderWidth: 1,
+    borderRadius: 999,
+  },
+  startupRingInner: {
+    position: 'absolute' as const,
+    top: '11%' as const,
+    right: '11%' as const,
+    bottom: '11%' as const,
+    left: '11%' as const,
+    borderWidth: 1,
+    borderRadius: 999,
+  },
+  startupRingDot: {
+    position: 'absolute' as const,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  startupRingDotSmall: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  startupRingDotAccent: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  startupRingDotTop: {
+    top: -3,
+    left: '50%' as const,
+    marginLeft: -3,
+  },
+  startupRingDotBottom: {
+    bottom: -3,
+    left: '50%' as const,
+    marginLeft: -3,
+  },
+  startupRingDotLeft: {
+    left: -3,
+    top: '50%' as const,
+    marginTop: -3,
+  },
+  startupRingDotRight: {
+    right: -3,
+    top: '50%' as const,
+    marginTop: -3,
   },
   startupOverlay: {
     position: 'absolute' as const,
@@ -240,23 +318,76 @@ function StartupSplash({
   colors: ReturnType<typeof useColors>;
   overlay?: boolean;
 }) {
+  const reduceMotion = useReducedMotion();
+  const outerRotation = useSharedValue(0);
+  const innerRotation = useSharedValue(0);
+  const outerRingMotion = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${outerRotation.value}deg` }],
+  }));
+  const innerRingMotion = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${innerRotation.value}deg` }],
+  }));
+
+  useEffect(() => {
+    if (reduceMotion) return undefined;
+
+    outerRotation.value = withRepeat(
+      withTiming(360, { duration: 2800, easing: Easing.linear }),
+      -1,
+      false,
+    );
+    innerRotation.value = withRepeat(
+      withTiming(-360, { duration: 3600, easing: Easing.linear }),
+      -1,
+      false,
+    );
+
+    return () => {
+      cancelAnimation(outerRotation);
+      cancelAnimation(innerRotation);
+    };
+  }, [innerRotation, outerRotation, reduceMotion]);
+
   return (
     <View
       accessible
       accessibilityLabel="Loading OG Landmark"
       style={[
         rootStyles.loading,
-        { backgroundColor: '#ffffff' },
+        { backgroundColor: colors.background },
         overlay && rootStyles.startupOverlay,
       ]}
     >
-      <OGLandmarkLogo size={156} />
-      <View style={rootStyles.loadingStatus}>
-        <ActivityIndicator color={colors.action} size="small" />
-        <Text style={[rootStyles.loadingStatusText, { color: colors.actionDeep }]}>
-          Preparing your experience
-        </Text>
+      <View style={rootStyles.startupMark}>
+        <Animated.View
+          style={[
+            rootStyles.startupRingOuter,
+            { borderColor: colors.border, opacity: 0.72 },
+            outerRingMotion,
+          ]}
+        >
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotAccent, rootStyles.startupRingDotTop, { backgroundColor: colors.gold, opacity: 0.76 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotSmall, rootStyles.startupRingDotRight, { backgroundColor: colors.actionSoft, opacity: 0.4 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotBottom, { backgroundColor: colors.gold, opacity: 0.58 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotSmall, rootStyles.startupRingDotLeft, { backgroundColor: colors.actionSoft, opacity: 0.34 }]} />
+        </Animated.View>
+        <Animated.View
+          style={[
+            rootStyles.startupRingInner,
+            { borderColor: colors.border, opacity: 0.62 },
+            innerRingMotion,
+          ]}
+        >
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotSmall, rootStyles.startupRingDotTop, { backgroundColor: colors.actionSoft, opacity: 0.34 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotAccent, rootStyles.startupRingDotRight, { backgroundColor: colors.gold, opacity: 0.74 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotSmall, rootStyles.startupRingDotBottom, { backgroundColor: colors.actionSoft, opacity: 0.4 }]} />
+          <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotLeft, { backgroundColor: colors.gold, opacity: 0.54 }]} />
+        </Animated.View>
+        <OGLandmarkLogo size={112} />
       </View>
+      <Text style={[rootStyles.startupBrand, { color: colors.actionDeep }]}>
+        OG Landmark
+      </Text>
     </View>
   );
 }
@@ -281,7 +412,9 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts(fontDefinitions);
   const [fontGateTimedOut, setFontGateTimedOut] = React.useState(false);
   useEffect(() => {
-    if (fontsLoaded || fontError || fontGateTimedOut) SplashScreen.hideAsync();
+    if (fontsLoaded || fontError || fontGateTimedOut) {
+      void SplashScreen.hideAsync().catch(() => undefined);
+    }
   }, [fontsLoaded, fontError, fontGateTimedOut]);
   useEffect(() => {
     const timeout = setTimeout(
@@ -307,26 +440,33 @@ export default function RootLayout() {
   // The browser preview can render with platform fallback fonts while the
   // bundled font manifest is unavailable in offline mode. Native keeps the
   // gate so the branded splash does not reveal unstyled text.
-  if (Platform.OS !== 'web' && !fontsLoaded && !fontError && !fontGateTimedOut) return null;
+  if (Platform.OS !== 'web' && !fontsLoaded && !fontError && !fontGateTimedOut) {
+    return <StatusBar style="dark" />;
+  }
   return (
-    <SafeAreaProvider>
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <OnboardingProvider>
-            <LanguageProvider>
-              <AuthProvider>
-                <SavedProvider>
-                  <GestureHandlerRootView style={{ flex: 1 }}>
-                     <KeyboardProvider>
-                       <DirectionalApp />
-                     </KeyboardProvider>
-                  </GestureHandlerRootView>
-                </SavedProvider>
-              </AuthProvider>
-            </LanguageProvider>
-          </OnboardingProvider>
-        </QueryClientProvider>
-      </ErrorBoundary>
-    </SafeAreaProvider>
+    <>
+      <StatusBar style="dark" />
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <OnboardingProvider>
+              <LanguageProvider>
+                <AuthProvider>
+                  <DemoPropertyVisibilityProvider>
+                    <SavedProvider>
+                      <GestureHandlerRootView style={{ flex: 1 }}>
+                        <KeyboardProvider>
+                          <DirectionalApp />
+                        </KeyboardProvider>
+                      </GestureHandlerRootView>
+                    </SavedProvider>
+                  </DemoPropertyVisibilityProvider>
+                </AuthProvider>
+              </LanguageProvider>
+            </OnboardingProvider>
+          </QueryClientProvider>
+        </ErrorBoundary>
+      </SafeAreaProvider>
+    </>
   );
 }

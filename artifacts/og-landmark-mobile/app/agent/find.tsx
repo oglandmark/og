@@ -9,6 +9,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
+import { PUBLIC_CONTACT_PHONE_E164, publicWhatsAppUrl } from '@/lib/publicContact';
 import { GlassCard } from '@/components/GlassCard';
 import { useColors } from '@/hooks/useColors';
 import { apiAgentToSample, SampleAgent } from '@/lib/agentsData';
@@ -366,7 +367,7 @@ function AgentListCard({
       {/* CTA row */}
       <View style={[lc.ctaRow, { borderColor: colors.border }]}>
         <Pressable
-          onPress={(e) => { e.stopPropagation(); Linking.openURL(`tel:${agent.phone}`); }}
+          onPress={(e) => { e.stopPropagation(); Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`); }}
           style={[lc.callBtn, { backgroundColor: '#183B6012', borderColor: '#183B6033' }]}
           hitSlop={6}
         >
@@ -374,7 +375,7 @@ function AgentListCard({
           <Text style={[lc.callBtnText, { color: '#183B60' }]}>Call</Text>
         </Pressable>
         <Pressable
-          onPress={(e) => { e.stopPropagation(); Linking.openURL(`https://wa.me/92${agent.phone.replace(/^0/, '')}`); }}
+          onPress={(e) => { e.stopPropagation(); Linking.openURL(publicWhatsAppUrl(`Hello, I found your profile on OG Landmark.`)); }}
           style={[lc.callBtn, { backgroundColor: '#25d36612', borderColor: '#25d36633' }]}
           hitSlop={6}
         >

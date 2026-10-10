@@ -186,7 +186,7 @@ export default function VerificationScreen() {
       {/* Contact support */}
       <AnimatedReveal delay={180}>
         <Pressable
-          onPress={() => Linking.openURL('https://wa.me/923042569000?text=Hi%2C%20I%20need%20help%20with%20my%20OG%20Landmark%20agent%20verification.')}
+          onPress={() => Linking.openURL('https://wa.me/923011484303?text=Hi%2C%20I%20need%20help%20with%20my%20OG%20Landmark%20agent%20verification.')}
           style={[styles.whatsappBtn, { backgroundColor: '#25d36618', borderColor: '#25d36633' }]}
         >
           <Feather name="message-circle" size={18} color="#25d366" />

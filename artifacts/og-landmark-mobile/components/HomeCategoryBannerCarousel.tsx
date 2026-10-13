@@ -43,6 +43,7 @@ export default function HomeCategoryBannerCarousel({
   const colors = useColors();
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
+  const slideHeight = Math.round(Math.min(192, Math.max(176, windowWidth * 0.46)));
   const scrollRef = useRef<ScrollView>(null);
   const activeIndexRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -169,7 +170,8 @@ export default function HomeCategoryBannerCarousel({
             style={[
               styles.slide,
               {
-                width: carouselWidth,
+                 width: carouselWidth,
+                 height: slideHeight,
                 borderColor: colors.glassBorder,
                 borderRadius: colors.radii?.xl ?? 22,
               },
@@ -189,13 +191,15 @@ export default function HomeCategoryBannerCarousel({
               accessibilityIgnoresInvertColors
             />
             <LinearGradient
-              colors={[
-                colors.actionGlassSoft,
-                colors.actionGlass,
-                colors.actionGlassStrong,
-              ]}
-              locations={[0, 0.42, 1]}
+              colors={[colors.actionGlassSoft, 'transparent']}
+              locations={[0, 1]}
               style={StyleSheet.absoluteFill}
+              pointerEvents="none"
+            />
+            <LinearGradient
+              colors={['transparent', colors.actionGlassStrong]}
+              locations={[0, 1]}
+              style={[styles.bottomGradient, { height: Math.round(slideHeight * 0.62) }]}
               pointerEvents="none"
             />
             <View style={styles.topLine} pointerEvents="none">
@@ -266,7 +270,7 @@ export default function HomeCategoryBannerCarousel({
                 </Text>
                 <Feather
                   name="arrow-up-right"
-                  size={16}
+                  size={14}
                   color={colors.actionDeep}
                   accessible={false}
                 />
@@ -333,9 +337,14 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
   },
   slide: {
-    height: 176,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  bottomGradient: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
   topLine: {
     position: 'absolute',
@@ -390,8 +399,8 @@ const styles = StyleSheet.create({
   title: {
     maxWidth: '100%',
     fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 21,
-    lineHeight: 25,
+    fontSize: 23,
+    lineHeight: 28,
     letterSpacing: -0.35,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 8,
@@ -401,22 +410,22 @@ const styles = StyleSheet.create({
     marginBottom: 7,
     maxWidth: 310,
     fontFamily: 'Inter_400Regular',
-    fontSize: 10,
-    lineHeight: 14,
+    fontSize: 11,
+    lineHeight: 16,
     letterSpacing: 0.1,
   },
   cta: {
-    minHeight: 36,
-    paddingHorizontal: 14,
-    borderRadius: 8,
+    minHeight: 31,
+    paddingHorizontal: 11,
+    borderRadius: 7,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 11,
+    gap: 8,
   },
   ctaText: {
     fontFamily: 'Inter_600SemiBold',
-    fontSize: 12,
+    fontSize: 11,
     letterSpacing: 0.1,
   },
   pagination: {

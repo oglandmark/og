@@ -1,8 +1,12 @@
 import { Stack } from 'expo-router';
 import React from 'react';
+import { Platform } from 'react-native';
 
 export default function SettingsLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false, animation: 'none' }} />
+    <Stack screenOptions={{
+      headerShown: false,
+      animation: Platform.OS === 'web' ? 'none' : 'slide_from_right',
+    }} />
   );
 }

@@ -15,27 +15,27 @@
 const colors = {
   light: {
     // Legacy aliases (kept for backward compatibility)
-    text: '#1c2024',
-    tint: '#c8a45a',
+    text: '#15243A',
+    tint: '#B9914D',
 
     // Core surfaces
-    background: '#f8fafc',
-    foreground: '#1c2024',
+    background: '#F5F4F0',
+    foreground: '#15243A',
 
     // Cards / elevated surfaces
-    card: '#ffffff',
-    cardForeground: '#1c2024',
-    glassCard: '#fffffff2',
-    glassBorder: '#e4e9ef',
-    glassOverlay: '#ffffff80',
-    mapGlass: 'rgba(255, 255, 255, 0.78)',
-    mapGlassBorder: 'rgba(255, 255, 255, 0.88)',
-    mapGlassPanel: 'rgba(255, 255, 255, 0.68)',
-    mapGlassPanelBorder: 'rgba(255, 255, 255, 0.94)',
+    card: '#FFFEFB',
+    cardForeground: '#15243A',
+    glassCard: '#FFFEFBF2',
+    glassBorder: '#E5E1D8',
+    glassOverlay: '#FFFEFB80',
+    mapGlass: 'rgba(255, 254, 251, 0.88)',
+    mapGlassBorder: 'rgba(255, 254, 251, 0.94)',
+    mapGlassPanel: 'rgba(255, 254, 251, 0.78)',
+    mapGlassPanelBorder: 'rgba(255, 254, 251, 0.96)',
 
     // Primary action color (buttons, links, active states)
-    primary: '#c7a263',
-    primaryForeground: '#1c2024',
+    primary: '#B9914D',
+    primaryForeground: '#15243A',
 
     // Official OG Landmark navy for interactive controls and CTAs
     action: '#0B1F3A',
@@ -44,53 +44,53 @@ const colors = {
     actionForeground: '#ffffff',
     actionPressed: '#082036',
     // Premium glass control tokens
-    gold: '#d8b36a',
-    goldForeground: '#1c2024',
-    goldGlass: '#d9b96db8',
-    goldGlassBorder: '#e8c985',
+    gold: '#C6A15D',
+    goldForeground: '#15243A',
+    goldGlass: '#C6A15DB8',
+    goldGlassBorder: '#DDC58F',
     actionGlass: '#0B1F3AD9',
     actionGlassStrong: '#071428E8',
     actionGlassSoft: '#6A8DAF2E',
     actionGlassBorder: '#ffffff55',
     actionGlassHighlight: '#ffffff24',
-    actionGlow: '#86A7C5',
+    actionGlow: '#9AAFC2',
 
     // Editorial surfaces used for quiet hierarchy and premium depth
-    surfaceRaised: '#ffffff',
-    surfaceTint: '#f1f4f7',
+    surfaceRaised: '#FFFEFB',
+    surfaceTint: '#EFEEE9',
     surfaceDeep: '#0B1F3A',
     shadow: '#071428',
     focusRing: '#b98d45',
 
     // Premium selected-state treatment for category/filter/tab/chip controls
-    selectionBackground: '#fbfcfd',
-    selectionTint: '#f3f7fa',
+    selectionBackground: '#F8F6F0',
+    selectionTint: '#EDEAE1',
     selectionBorder: '#0B1F3A',
     selectionForeground: '#0B1F3A',
 
     // Secondary / less-emphasis interactive surfaces
-    secondary: '#eef2f5',
-    secondaryForeground: '#1c2024',
+    secondary: '#EFEEE9',
+    secondaryForeground: '#15243A',
 
     // Muted / subdued elements (dividers, timestamps, placeholders)
-    muted: '#edf1f4',
-    mutedForeground: '#72746f',
+    muted: '#EAE8E1',
+    mutedForeground: '#6E7782',
 
     // Accent highlights (badges, selected items, focus rings)
-    accent: '#f1e6c9',
-    accentForeground: '#6f531d',
+    accent: '#F0E6CE',
+    accentForeground: '#70572E',
 
     // Destructive actions (delete, error states)
     destructive: '#b94b42',
     destructiveForeground: '#ffffff',
-    success: '#2d7a57',
+    success: '#33745A',
     successForeground: '#ffffff',
     warning: '#b9822b',
     warningForeground: '#ffffff',
 
     // Borders and input outlines
-    border: '#dfe5eb',
-    input: '#dfe5eb',
+    border: '#E3DFD6',
+    input: '#D9D5CC',
   },
 
   // Shared layout tokens. Keeping these beside the semantic palette prevents

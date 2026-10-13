@@ -24,6 +24,7 @@ import { BrandMark } from '@/components/BrandMark';
 import { NotificationBell } from '@/components/NotificationBell';
 import { BrowseDiscoveryModule } from '@/components/BrowseDiscoveryModule';
 import HomeCategoryBannerCarousel, { type HomeCategoryBannerSlide } from '@/components/HomeCategoryBannerCarousel';
+import { shouldUseBundledHomeBanner } from '@/lib/homeBannerImageSource';
 import { PropertyDemoBadge } from '@/components/PropertyDemoBadge';
 import { VideoWatermark } from '@/components/VideoWatermark';
 import { getAgents, getBanners, getMobileSettings, getProperties, API_BASE, type BannerSlide as ApiBannerSlide, type MobileContent } from '@/lib/api';
@@ -319,9 +320,11 @@ function mapApiBanner(slide: ApiBannerSlide): HomeCategoryBannerSlide | null {
   if (!category) return null;
 
   const defaults = HOME_BANNER_COPY[category];
-  const image = slide.imageUrl
-    ? { uri: slide.imageUrl.startsWith('http') ? slide.imageUrl : `${API_BASE}${slide.imageUrl}` }
-    : HOME_BANNER_IMAGES[category];
+  const imageUrl = slide.imageUrl?.trim();
+  const image =
+    imageUrl && !shouldUseBundledHomeBanner(imageUrl, category)
+      ? { uri: imageUrl.startsWith('http') ? imageUrl : `${API_BASE}${imageUrl}` }
+      : HOME_BANNER_IMAGES[category];
 
   return {
     id: slide.id,
@@ -1921,9 +1924,11 @@ export default function HomeScreen() {
               <Text style={[s.ctaBtn1Text, { color: colors.actionForeground }]}>{ctaContent.btn1}</Text>
               <Feather name="arrow-up-right" size={15} color={colors.actionForeground} />
             </Pressable>
-            <Pressable onPress={() => router.push(ctaContent.btn2Route as any)} style={({ pressed }) => [s.ctaBtn2, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.82 : 1 }]}>
-              <Text style={[s.ctaBtn2Text, { color: colors.foreground }]}>{ctaContent.btn2}</Text>
-            </Pressable>
+            {ctaContent.btn2Route !== '/(auth)/login' && (
+              <Pressable onPress={() => router.push(ctaContent.btn2Route as any)} style={({ pressed }) => [s.ctaBtn2, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.82 : 1 }]}>
+                <Text style={[s.ctaBtn2Text, { color: colors.foreground }]}>{ctaContent.btn2}</Text>
+              </Pressable>
+            )}
           </View>
         </View>
       </AnimatedReveal>

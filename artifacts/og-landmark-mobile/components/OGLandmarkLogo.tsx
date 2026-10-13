@@ -1,6 +1,6 @@
 /** OG Landmark brand assets supplied by the product owner. */
 import React from 'react';
-import { Image } from 'react-native';
+import { Image } from 'expo-image';
 
 const logoAsset = require('@/assets/images/og-landmark-brand-mark.png');
 const inverseLogoAsset = require('@/assets/images/og-landmark-brand-mark-white.png');
@@ -16,7 +16,8 @@ export function OGLandmarkLogo({
     <Image
       source={inverse ? inverseLogoAsset : logoAsset}
       style={{ width: size, height: size }}
-      resizeMode="contain"
+      contentFit="contain"
+      transition={0}
       accessibilityLabel="OG Landmark logo"
     />
   );

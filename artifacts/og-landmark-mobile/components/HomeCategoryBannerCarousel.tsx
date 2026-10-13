@@ -43,7 +43,7 @@ export default function HomeCategoryBannerCarousel({
   const colors = useColors();
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
-  const slideHeight = Math.round(Math.min(232, Math.max(200, windowWidth * 0.5625)));
+  const slideHeight = Math.round(Math.min(192, Math.max(176, windowWidth * 0.46)));
   const scrollRef = useRef<ScrollView>(null);
   const activeIndexRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -270,7 +270,7 @@ export default function HomeCategoryBannerCarousel({
                 </Text>
                 <Feather
                   name="arrow-up-right"
-                  size={16}
+                  size={14}
                   color={colors.actionDeep}
                   accessible={false}
                 />
@@ -415,17 +415,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
   cta: {
-    minHeight: 36,
-    paddingHorizontal: 14,
-    borderRadius: 8,
+    minHeight: 31,
+    paddingHorizontal: 11,
+    borderRadius: 7,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 11,
+    gap: 8,
   },
   ctaText: {
     fontFamily: 'Inter_600SemiBold',
-    fontSize: 12,
+    fontSize: 11,
     letterSpacing: 0.1,
   },
   pagination: {

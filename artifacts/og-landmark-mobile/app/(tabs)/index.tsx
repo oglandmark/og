@@ -1924,9 +1924,11 @@ export default function HomeScreen() {
               <Text style={[s.ctaBtn1Text, { color: colors.actionForeground }]}>{ctaContent.btn1}</Text>
               <Feather name="arrow-up-right" size={15} color={colors.actionForeground} />
             </Pressable>
-            <Pressable onPress={() => router.push(ctaContent.btn2Route as any)} style={({ pressed }) => [s.ctaBtn2, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.82 : 1 }]}>
-              <Text style={[s.ctaBtn2Text, { color: colors.foreground }]}>{ctaContent.btn2}</Text>
-            </Pressable>
+            {ctaContent.btn2Route !== '/(auth)/login' && (
+              <Pressable onPress={() => router.push(ctaContent.btn2Route as any)} style={({ pressed }) => [s.ctaBtn2, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.82 : 1 }]}>
+                <Text style={[s.ctaBtn2Text, { color: colors.foreground }]}>{ctaContent.btn2}</Text>
+              </Pressable>
+            )}
           </View>
         </View>
       </AnimatedReveal>

@@ -18,9 +18,6 @@ import {
   approveProperty, rejectProperty, deleteAdminProperty,
 } from '@/lib/api';
 
-const NAVY = '#0B1F3A';
-const GOLD = '#C8A45A';
-
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const colors = useColors();
@@ -95,12 +92,12 @@ export default function AdminDashboard() {
   }
 
   const statCards = stats ? [
-    { label: 'Total Properties', value: stats.totalProperties,      icon: 'home'      as const, color: '#1e40af' },
-    { label: 'Pending Approvals', value: stats.pendingApprovals ?? 0, icon: 'clock'    as const, color: '#b45309' },
-    { label: 'Active Listings',  value: stats.activeListings ?? 0,  icon: 'check-circle' as const, color: '#15803d' },
-    { label: 'Total Users',      value: stats.totalUsers,           icon: 'users'     as const, color: '#7c3aed' },
-    { label: 'Total Inquiries',  value: stats.totalInquiries ?? 0,  icon: 'mail'      as const, color: '#0e7490' },
-    { label: 'Reports',          value: stats.pendingReports ?? 0,  icon: 'alert-circle' as const, color: '#dc2626' },
+    { label: 'Total Properties', value: stats.totalProperties,      icon: 'home'      as const, color: colors.action },
+    { label: 'Pending Approvals', value: stats.pendingApprovals ?? 0, icon: 'clock'    as const, color: colors.warning },
+    { label: 'Active Listings',  value: stats.activeListings ?? 0,  icon: 'check-circle' as const, color: colors.success },
+    { label: 'Total Users',      value: stats.totalUsers,           icon: 'users'     as const, color: colors.actionSoft },
+    { label: 'Total Inquiries',  value: stats.totalInquiries ?? 0,  icon: 'mail'      as const, color: colors.primary },
+    { label: 'Reports',          value: stats.pendingReports ?? 0,  icon: 'alert-circle' as const, color: colors.destructive },
   ] : [];
 
   const navItems = [
@@ -115,23 +112,23 @@ export default function AdminDashboard() {
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[s.header, { backgroundColor: NAVY, paddingTop: top + (Platform.OS === 'web' ? 67 : 0) + 14 }]}>
+      <View style={[s.header, { backgroundColor: colors.action, paddingTop: top + (Platform.OS === 'web' ? 67 : 0) + 14 }]}>
         <View>
           <Text style={s.greeting}>Admin Panel</Text>
           <Text style={s.adminName}>{user?.name ?? 'Administrator'}</Text>
         </View>
-        <Pressable onPress={handleLogout} style={s.logoutBtn} hitSlop={8}>
+        <Pressable onPress={handleLogout} style={s.logoutBtn} hitSlop={8} accessibilityRole="button" accessibilityLabel="Log out of admin panel">
           <Feather name="log-out" size={18} color="#8a9ab5" />
         </Pressable>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={GOLD} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.gold} />}
         contentContainerStyle={{ paddingBottom: 40 }}
       >
         {loading ? (
-          <ActivityIndicator size="large" color={GOLD} style={{ marginTop: 60 }} />
+            <ActivityIndicator size="large" color={colors.gold} style={{ marginTop: 60 }} />
         ) : (
           <>
             {/* Stat cards */}
@@ -153,10 +150,10 @@ export default function AdminDashboard() {
               {navItems.map((n) => (
                 <Pressable
                   key={n.label}
-                  style={({ pressed }) => [s.navCard, { backgroundColor: NAVY, opacity: pressed ? 0.85 : 1 }]}
+                  style={({ pressed }) => [s.navCard, { backgroundColor: colors.action, opacity: pressed ? 0.85 : 1 }]}
                   onPress={() => router.push(n.route as any)}
                 >
-                  <Feather name={n.icon} size={22} color={GOLD} />
+                  <Feather name={n.icon} size={22} color={colors.gold} />
                   <Text style={s.navLabel}>{n.label}</Text>
                 </Pressable>
               ))}
@@ -180,14 +177,18 @@ export default function AdminDashboard() {
                     </View>
                     <View style={s.pendingActions}>
                       <Pressable
-                        style={[s.approveBtn, { backgroundColor: '#15803d' }]}
+                        style={[s.approveBtn, { backgroundColor: colors.success }]}
                         onPress={() => handleApprove(p)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Approve ${p.title}`}
                       >
                         <Feather name="check" size={14} color="#fff" />
                       </Pressable>
                       <Pressable
-                        style={[s.approveBtn, { backgroundColor: '#dc2626' }]}
+                        style={[s.approveBtn, { backgroundColor: colors.destructive }]}
                         onPress={() => beginReject(p)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Reject ${p.title}`}
                       >
                         <Feather name="x" size={14} color="#fff" />
                       </Pressable>
@@ -198,7 +199,7 @@ export default function AdminDashboard() {
                   style={[s.viewAll, { borderColor: colors.border }]}
                   onPress={() => router.push('/admin/properties' as any)}
                 >
-                  <Text style={[s.viewAllText, { color: GOLD }]}>View All Properties →</Text>
+                  <Text style={[s.viewAllText, { color: colors.primary }]}>View All Properties</Text>
                 </Pressable>
               </>
             )}
@@ -254,20 +255,20 @@ export default function AdminDashboard() {
 
 const s = StyleSheet.create({
   root:         { flex: 1 },
-  header:       { paddingHorizontal: 20, paddingBottom: 20, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
-  greeting:     { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#8a9ab5', letterSpacing: 1, textTransform: 'uppercase' },
-  adminName:    { fontFamily: 'Inter_700Bold', fontSize: 20, color: '#ffffff', marginTop: 2 },
-  logoutBtn:    { width: 36, height: 36, borderRadius: 10, backgroundColor: '#ffffff0f', alignItems: 'center', justifyContent: 'center' },
+  header:       { paddingHorizontal: 22, paddingBottom: 24, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  greeting:     { fontFamily: 'Inter_600SemiBold', fontSize: 10, color: '#D9C99E', letterSpacing: 1.3, textTransform: 'uppercase' },
+  adminName:    { fontFamily: 'PlayfairDisplay_500Medium', fontSize: 23, color: '#FFFEFB', marginTop: 4 },
+  logoutBtn:    { width: 40, height: 40, borderRadius: 13, backgroundColor: '#FFFEFB18', alignItems: 'center', justifyContent: 'center' },
   statsGrid:    { flexDirection: 'row', flexWrap: 'wrap', padding: 16, gap: 10 },
-  statCard:     { width: '47%', borderRadius: 14, borderWidth: 1, padding: 14 },
+  statCard:     { flexBasis: '47%', flexGrow: 1, minWidth: 142, borderRadius: 16, borderWidth: 1, padding: 15 },
   statIcon:     { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   statValue:    { fontFamily: 'Inter_700Bold', fontSize: 24, marginBottom: 2 },
   statLabel:    { fontFamily: 'Inter_400Regular', fontSize: 11 },
-  sectionTitle: { fontFamily: 'Inter_700Bold', fontSize: 15, paddingHorizontal: 16, marginBottom: 10, marginTop: 6 },
+  sectionTitle: { fontFamily: 'PlayfairDisplay_500Medium', fontSize: 19, paddingHorizontal: 18, marginBottom: 11, marginTop: 9 },
   navRow:       { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 16, marginBottom: 16 },
-  navCard:      { flexBasis: '47%', flexGrow: 1, minWidth: 145, borderRadius: 14, padding: 16, alignItems: 'center', gap: 8 },
-  navLabel:     { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#ffffff' },
-  pendingCard:  { marginHorizontal: 16, marginBottom: 8, borderRadius: 12, borderWidth: 1, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  navCard:      { flexBasis: '47%', flexGrow: 1, minWidth: 145, borderRadius: 16, padding: 17, alignItems: 'center', gap: 9 },
+  navLabel:     { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#FFFEFB' },
+  pendingCard:  { marginHorizontal: 18, marginBottom: 9, borderRadius: 14, borderWidth: 1, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
   pendingTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   pendingMeta:  { fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 2 },
   pendingActions:{ flexDirection: 'row', gap: 6 },

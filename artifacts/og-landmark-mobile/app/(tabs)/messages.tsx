@@ -161,7 +161,7 @@ export default function MessagesScreen() {
         keyboardVerticalOffset={0}
       >
         <View style={[styles.chatHeader, { paddingTop: topPad + 12, paddingBottom: 14, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <Pressable onPress={() => setActiveConv(null)} hitSlop={12} style={styles.backBtn}>
+            <Pressable onPress={() => setActiveConv(null)} hitSlop={12} style={styles.backBtn} accessibilityRole="button" accessibilityLabel="Back to conversations">
             <Feather name="arrow-left" size={21} color={colors.foreground} />
           </Pressable>
           <View style={[styles.chatAvatar, { backgroundColor: colors.action }]}>
@@ -183,6 +183,8 @@ export default function MessagesScreen() {
               }
             }}
             hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Call contact"
           >
             <Feather name="phone" size={17} color={colors.action} />
           </Pressable>
@@ -236,7 +238,7 @@ export default function MessagesScreen() {
             textAlign={rtl}
             style={[styles.msgInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
              onSubmitEditing={() => void sendMessage()} returnKeyType="send" editable={!sending} />
-           <Pressable onPress={() => void sendMessage()} disabled={sending} style={[styles.sendBtn, { backgroundColor: colors.action, opacity: inputText.trim() && !sending ? 1 : 0.5 }]}>
+   <Pressable onPress={() => void sendMessage()} disabled={sending || !inputText.trim()} accessibilityRole="button" accessibilityLabel="Send message" style={[styles.sendBtn, { backgroundColor: colors.action, opacity: inputText.trim() && !sending ? 1 : 0.5 }]}>
             <Feather name={isRTL ? 'arrow-left' : 'send'} size={17} color={colors.actionForeground} />
           </Pressable>
         </View>
@@ -255,9 +257,11 @@ export default function MessagesScreen() {
         <AnimatedReveal>
           <View style={[styles.listHeader, { paddingTop: topPad + 12, paddingHorizontal: 20, paddingBottom: 8 }]}>
             <BrandMark />
-            <Pressable
+              <Pressable
               onPress={handleNewConversation}
               style={({ pressed }) => [styles.headerAction, { backgroundColor: colors.secondary, opacity: pressed ? 0.7 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel="New conversation information"
             >
               <Feather name="edit" size={17} color={colors.action} />
             </Pressable>
@@ -321,29 +325,29 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   listHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { fontFamily: 'Inter_700Bold', fontSize: 24, letterSpacing: -0.3, marginBottom: 4 },
-  subtitle: { fontFamily: 'Inter_400Regular', fontSize: 12 },
-  convItem: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingVertical: 15, borderBottomWidth: 1 },
-  convAvatar: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  convAvatarText: { fontFamily: 'Inter_700Bold', fontSize: 18, color: '#ffffff' },
+  title: { fontFamily: 'PlayfairDisplay_500Medium', fontSize: 27, letterSpacing: -0.35, marginBottom: 4 },
+  subtitle: { fontFamily: 'Inter_400Regular', fontSize: 13 },
+  convItem: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingVertical: 17, borderBottomWidth: 1 },
+  convAvatar: { width: 50, height: 50, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  convAvatarText: { fontFamily: 'Inter_700Bold', fontSize: 17, color: '#FFFEFB' },
   convCopy: { flex: 1, gap: 4 },
   convTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  convName: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  convName: { fontFamily: 'Inter_600SemiBold', fontSize: 14.5 },
   convTime: { fontFamily: 'Inter_400Regular', fontSize: 11 },
   convBottomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   convPreview: { fontFamily: 'Inter_400Regular', fontSize: 12, flex: 1 },
   unreadBadge: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginLeft: 8 },
   unreadText: { fontFamily: 'Inter_700Bold', fontSize: 10 },
-  emptyState: { alignItems: 'center', justifyContent: 'center', padding: 60, gap: 12 },
+  emptyState: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 34, paddingVertical: 56, gap: 12 },
   inlineState: { alignItems: 'center', justifyContent: 'center', padding: 40, gap: 12 },
   emptyTitle: { fontFamily: 'Inter_700Bold', fontSize: 18 },
   emptyDesc: { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center', lineHeight: 20 },
   retryButton: { borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10 },
   retryText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  chatHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, borderBottomWidth: 1 },
+  chatHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, borderBottomWidth: 1 },
   backBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
-  chatAvatar: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  chatAvatarText: { fontFamily: 'Inter_700Bold', fontSize: 15, color: '#ffffff' },
+  chatAvatar: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  chatAvatarText: { fontFamily: 'Inter_700Bold', fontSize: 15, color: '#FFFEFB' },
   chatName: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   chatStatus: { fontFamily: 'Inter_400Regular', fontSize: 11 },
   headerAction: { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
@@ -352,10 +356,10 @@ const styles = StyleSheet.create({
   msgRowThem: { justifyContent: 'flex-start' },
   msgAvatar: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
   msgAvatarText: { fontFamily: 'Inter_700Bold', fontSize: 11 },
-  bubble: { maxWidth: '75%', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10, gap: 4 },
+  bubble: { maxWidth: '78%', borderRadius: 18, paddingHorizontal: 15, paddingVertical: 11, gap: 4 },
   bubbleText: { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 19 },
   bubbleTime: { fontFamily: 'Inter_400Regular', fontSize: 9, textAlign: 'right' },
   inputRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, paddingTop: 12, borderTopWidth: 1 },
-  msgInput: { flex: 1, height: 46, borderRadius: 23, borderWidth: 1.5, paddingHorizontal: 16, fontFamily: 'Inter_400Regular', fontSize: 13 },
-  sendBtn: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
+  msgInput: { flex: 1, height: 48, borderRadius: 16, borderWidth: 1, paddingHorizontal: 16, fontFamily: 'Inter_400Regular', fontSize: 13 },
+  sendBtn: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
 });

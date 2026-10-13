@@ -49,8 +49,9 @@ export function Button({
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
       style={[
-        [styles.button, { borderRadius: colors.radii.md }],
-        { backgroundColor: palette.backgroundColor, borderColor: palette.borderColor, opacity: disabled ? 0.55 : 1 },
+        styles.button,
+        { borderRadius: colors.radii.md },
+        { backgroundColor: palette.backgroundColor, borderColor: palette.borderColor, opacity: disabled ? 0.52 : 1 },
         style,
       ]}
     >
@@ -84,7 +85,7 @@ export function StatusNotice({
   const colors = useColors();
   const toneColor = tone === 'error' ? colors.destructive : tone === 'success' ? colors.action : colors.mutedForeground;
   return (
-    <View style={[styles.notice, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radii.lg }]}>
+      <View style={[styles.notice, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radii.lg }]}>
       <View style={[styles.noticeIcon, { backgroundColor: `${toneColor}18` }]}>
         <Feather name={icon} size={17} color={toneColor} />
       </View>
@@ -117,7 +118,7 @@ export function EmptyState({
   const colors = useColors();
   return (
     <View style={[styles.empty, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radii.lg }]}>
-      <View style={[styles.emptyIcon, { backgroundColor: colors.selectionTint }]}>
+      <View style={[styles.emptyIcon, { backgroundColor: colors.accent }]}>
         <Feather name={icon} size={24} color={colors.action} />
       </View>
       <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{title}</Text>
@@ -129,41 +130,41 @@ export function EmptyState({
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 40,
+    minHeight: 46,
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
+    borderRadius: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  buttonText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20 },
+  buttonText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 20, letterSpacing: 0.15 },
   notice: {
-    marginHorizontal: 16,
-    marginTop: 14,
+    marginHorizontal: 20,
+    marginTop: 16,
     borderWidth: 1,
     borderRadius: 14,
-    padding: 13,
+    padding: 15,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
   },
-  noticeIcon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  noticeIcon: { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   noticeCopy: { flex: 1, gap: 3 },
-  noticeTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  noticeTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 14, letterSpacing: 0.05 },
   noticeMessage: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17 },
   noticeAction: { fontFamily: 'Inter_600SemiBold', fontSize: 12, marginTop: 4 },
   empty: {
-    marginHorizontal: 16,
-    padding: 24,
+    marginHorizontal: 20,
+    padding: 26,
     borderWidth: 1,
     borderRadius: 16,
     alignItems: 'center',
-    gap: 9,
+    gap: 10,
   },
-  emptyIcon: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
-  emptyTitle: { fontFamily: 'Inter_700Bold', fontSize: 16, textAlign: 'center' },
-  emptyMessage: { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 19, textAlign: 'center', maxWidth: 280, marginBottom: 4 },
+  emptyIcon: { width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 3 },
+  emptyTitle: { fontFamily: 'PlayfairDisplay_500Medium', fontSize: 18, textAlign: 'center' },
+  emptyMessage: { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 20, textAlign: 'center', maxWidth: 292, marginBottom: 5 },
 });

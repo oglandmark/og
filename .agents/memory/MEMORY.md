@@ -9,7 +9,7 @@
 - [Mobile listing uploads](mobile-listing-uploads.md) — keep sequential upload/fallback compatibility and normalize relative media URLs before native rendering.
 - [Neon PostgreSQL production database](neon-database.md) — production persistence uses the user's Neon database through a server-only DATABASE_URL.
 - [Neon auth schema](neon-auth-schema.md) — app_data alone is insufficient; auth tables must exist before production auth flows are exercised.
-- [Expo GitHub build dispatch](expo-github-build-dispatch.md) — after repository linking, EAS dispatch can still return transient 503s; verify no queued build before retrying.
+- [Expo GitHub build dispatch](expo-github-build-dispatch.md) — after transfers, align the owner slug and verify app ID against the project URL; investigate repo binding when dispatch finds none.
 - [EAS environment project matching](eas-environment-project-id.md) — production variables must be added to the exact EAS project ID used by the build.
 - [EAS build log redaction](eas-build-log-redaction.md) — startup logs can print project environment-variable values; avoid raw log output and redact before review.
 - [Plot calculator geometry](plot-calculator-geometry.md) — irregular plots need diagonals for exact triangulation; side-only results must be labelled estimates or declined.

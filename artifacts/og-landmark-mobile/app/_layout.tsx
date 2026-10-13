@@ -44,7 +44,7 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 const STARTUP_SPLASH_MIN_DURATION_MS = 7000;
 
-function RootLayoutNav() {
+function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
   const colors = useColors();
   const { isRTL } = useLanguage();
   const { isLoggedIn, isLoading, user } = useAuth();
@@ -203,23 +203,22 @@ function RootLayoutNav() {
     }
   }, [hasCompletedOnboarding, isLoggedIn, isLoading, onboardingLoading, segments, router]);
 
-  if (isLoading) {
-    return <StartupSplash colors={colors} />;
-  }
-
   return (
     <View style={{ flex: 1, backgroundColor: colors.action, direction: isRTL ? 'rtl' : 'ltr' }}>
-      <Stack screenOptions={{ headerShown: false, animation: 'none' }}>
+      <Stack screenOptions={{
+        headerShown: false,
+        animation: Platform.OS === 'web' ? 'none' : 'slide_from_right',
+      }}>
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="tools" options={{ headerShown: false }} />
         <Stack.Screen name="admin" options={{ headerShown: false }} />
-        <Stack.Screen name="property/[id]" options={{ presentation: 'card', animation: 'none' }} />
-        <Stack.Screen name="project/[id]" options={{ presentation: 'card', animation: 'none' }} />
-        <Stack.Screen name="(auth)" options={{ presentation: 'card', animation: 'none' }} />
+        <Stack.Screen name="property/[id]" options={{ presentation: 'card' }} />
+        <Stack.Screen name="project/[id]" options={{ presentation: 'card' }} />
+        <Stack.Screen name="(auth)" options={{ presentation: 'card' }} />
       </Stack>
-      {(!navigationReady || !splashDurationElapsed) && (
-        <StartupSplash colors={colors} overlay />
+      {(isLoading || !navigationReady || !splashDurationElapsed) && (
+        <StartupSplash colors={colors} overlay fontsReady={fontsReady} />
       )}
     </View>
   );
@@ -233,7 +232,6 @@ const rootStyles = {
     paddingHorizontal: 24,
   },
   startupBrand: {
-    fontFamily: 'PlayfairDisplay_600SemiBold',
     fontSize: 20,
     letterSpacing: 0.4,
     marginTop: 12,
@@ -314,9 +312,11 @@ const rootStyles = {
 function StartupSplash({
   colors,
   overlay = false,
+  fontsReady = true,
 }: {
   colors: ReturnType<typeof useColors>;
   overlay?: boolean;
+  fontsReady?: boolean;
 }) {
   const reduceMotion = useReducedMotion();
   const outerRotation = useSharedValue(0);
@@ -385,18 +385,22 @@ function StartupSplash({
         </Animated.View>
         <OGLandmarkLogo size={112} />
       </View>
-      <Text style={[rootStyles.startupBrand, { color: colors.actionDeep }]}>
+      <Text style={[
+        rootStyles.startupBrand,
+        fontsReady && { fontFamily: 'PlayfairDisplay_600SemiBold' },
+        { color: colors.actionDeep },
+      ]}>
         OG Landmark
       </Text>
     </View>
   );
 }
 
-function DirectionalApp() {
+function DirectionalApp({ fontsReady }: { fontsReady: boolean }) {
   const { isRTL } = useLanguage();
   return (
     <View style={{ flex: 1, direction: isRTL ? 'rtl' : 'ltr' }}>
-      <RootLayoutNav />
+      <RootLayoutNav fontsReady={fontsReady} />
     </View>
   );
 }
@@ -409,19 +413,9 @@ export default function RootLayout() {
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
     PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold,
   };
-  const [fontsLoaded, fontError] = useFonts(fontDefinitions);
-  const [fontGateTimedOut, setFontGateTimedOut] = React.useState(false);
+  const [fontsLoaded] = useFonts(fontDefinitions);
   useEffect(() => {
-    if (fontsLoaded || fontError || fontGateTimedOut) {
-      void SplashScreen.hideAsync().catch(() => undefined);
-    }
-  }, [fontsLoaded, fontError, fontGateTimedOut]);
-  useEffect(() => {
-    const timeout = setTimeout(
-      () => setFontGateTimedOut(true),
-       Platform.OS === 'web' ? 1800 : 2500,
-    );
-    return () => clearTimeout(timeout);
+    void SplashScreen.hideAsync().catch(() => undefined);
   }, []);
 
   // ── Set audio session ONCE at app startup so videos play with sound
@@ -437,12 +431,6 @@ export default function RootLayout() {
     });
     return () => interactionTask.cancel();
   }, []);
-  // The browser preview can render with platform fallback fonts while the
-  // bundled font manifest is unavailable in offline mode. Native keeps the
-  // gate so the branded splash does not reveal unstyled text.
-  if (Platform.OS !== 'web' && !fontsLoaded && !fontError && !fontGateTimedOut) {
-    return <StatusBar style="dark" />;
-  }
   return (
     <>
       <StatusBar style="dark" />
@@ -456,7 +444,7 @@ export default function RootLayout() {
                     <SavedProvider>
                       <GestureHandlerRootView style={{ flex: 1 }}>
                         <KeyboardProvider>
-                          <DirectionalApp />
+                          <DirectionalApp fontsReady={fontsLoaded} />
                         </KeyboardProvider>
                       </GestureHandlerRootView>
                     </SavedProvider>

@@ -113,6 +113,7 @@ export default function TabLayout() {
         tabBar={(props) => <AnimatedTabBar {...props} height={tabBarHeight} hidden={tabBarHidden} />}
         screenOptions={{
           headerShown: false,
+          animation: Platform.OS === 'web' ? 'none' : 'fade',
           tabBarHideOnKeyboard: true,
           tabBarActiveTintColor:   colors.action,
           tabBarInactiveTintColor: colors.mutedForeground,

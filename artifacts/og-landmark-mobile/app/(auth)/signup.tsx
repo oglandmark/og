@@ -39,9 +39,7 @@ export default function SignUpScreen() {
   const [identifier, setIdentifier] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPwd,  setShowPwd]  = useState(false);
-  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState('');
 
@@ -95,8 +93,6 @@ export default function SignUpScreen() {
       setError('Password must be at least 8 characters and include a letter and number.');
       return;
     }
-    if (password !== confirmPassword)                          { setError('Passwords do not match.');                           return; }
-
     setError('');
     setLoading(true);
 
@@ -106,7 +102,6 @@ export default function SignUpScreen() {
       username: !isMobileIdentifier && !value.includes('@') ? value.toLowerCase() : undefined,
       phone:   signupPhone,
       password,
-      confirmPassword,
       role:    'buyer',
     });
 
@@ -227,26 +222,6 @@ export default function SignUpScreen() {
               />
               <Pressable onPress={() => setShowPwd(v => !v)} hitSlop={8} style={styles.eyeBtn}>
                 <Feather name={showPwd ? 'eye' : 'eye-off'} size={18} color={MUTED} />
-              </Pressable>
-            </View>
-            <View style={[styles.underlineLine, { borderColor: BORDER }]} />
-          </View>
-
-          {/* Confirm password */}
-          <View style={styles.fieldWrap}>
-            <Text style={[styles.label, { textAlign: rtl }]}>CONFIRM PASSWORD</Text>
-            <View style={styles.passRow}>
-              <TextInput
-                value={confirmPassword}
-                onChangeText={(v) => { setConfirmPassword(v); setError(''); }}
-                secureTextEntry={!showConfirmPwd}
-                placeholder="Re-enter your password"
-                placeholderTextColor={MUTED}
-                textAlign={rtl}
-                style={[styles.underlineInput, { flex: 1, borderBottomWidth: 0 }]}
-              />
-              <Pressable onPress={() => setShowConfirmPwd(v => !v)} hitSlop={8} style={styles.eyeBtn}>
-                <Feather name={showConfirmPwd ? 'eye' : 'eye-off'} size={18} color={MUTED} />
               </Pressable>
             </View>
             <View style={[styles.underlineLine, { borderColor: BORDER }]} />

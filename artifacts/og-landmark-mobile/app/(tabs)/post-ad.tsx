@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -16,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 // BlurView removed — crashes Android GPU
 import { useColors } from '@/hooks/useColors';
-import { Redirect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -27,6 +28,7 @@ import { addUserListing } from '@/lib/listingsStore';
 import { uploadMultipleImages, uploadVideo } from '@/lib/api';
 import { LocationPicker } from '@/components/LocationPicker';
 import type { LocationData } from '@/lib/locationService';
+import { POST_AD_LISTING_ROUTE, shouldOpenPostAdListing } from '@/lib/postAdEntry';
 
 // ─── Types & Constants ─────────────────────────────────────────────────────────
 
@@ -75,15 +77,26 @@ export default function PostAdScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, isLoading, user } = useAuth();
 
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
+  const shouldRedirectToListing = shouldOpenPostAdListing(isLoading, isLoggedIn);
 
-  if (!isLoggedIn) {
-    return <NotLoggedInPrompt colors={colors} topInset={topInset} insets={insets} router={router} />;
+  useFocusEffect(useCallback(() => {
+    if (shouldRedirectToListing) {
+      router.replace(POST_AD_LISTING_ROUTE);
+    }
+  }, [shouldRedirectToListing, router]));
+
+  if (isLoading || shouldRedirectToListing) {
+    return (
+      <View style={[styles.screen, { backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={colors.action} />
+      </View>
+    );
   }
 
-  return <Redirect href="/post/listing" />;
+  return <NotLoggedInPrompt colors={colors} topInset={topInset} insets={insets} router={router} />;
 }
 
 // ─── Not logged in ─────────────────────────────────────────────────────────────

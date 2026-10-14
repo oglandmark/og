@@ -126,3 +126,17 @@ mtime_ms = 1791574011966
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/cd107a39-052d-44a5-be75-a6837f1aa88c/1d2b5a04-873e-4231-8a10-341e730b4b79"
 storage_version_token = "1791574021862172"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "iVpUBc1J785-ZK4Dg7dpV"
+uri = "file://generated-artifacts/og-landmark-android-2.0.35-36.aab"
+type = "unspecified"
+title = "OG Landmark Android AAB — 2.0.35 (36)"
+description = "Production Android App Bundle. Built from the latest workspace source; not submitted to Google Play."
+logical_id = "0e0d1c17-fc77-4114-bcb5-1cf6b0f4c75f"
+content_hash = "sha256:cbfc15989de2c3a10aab51f9fe98ee068cb1ebf8137b6a89eb7ac2b410eef465"
+size = 95184746
+mtime_ms = 1791978125692
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/0e0d1c17-fc77-4114-bcb5-1cf6b0f4c75f/b27bfcbb-410b-4c38-9536-e2b3f2ad513a"
+storage_version_token = "1791978128354011"
+content_type = "application/octet-stream"

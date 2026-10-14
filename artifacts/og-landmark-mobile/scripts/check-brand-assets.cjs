@@ -222,25 +222,30 @@ const splashPlugin = config.plugins?.find(
   (plugin) => Array.isArray(plugin) && plugin[0] === "expo-splash-screen"
 );
 const splashOptions = Array.isArray(splashPlugin) ? splashPlugin[1] : undefined;
-const splashImage = resolveAsset("Transparent splash image", splashOptions?.image);
+const splashImage = resolveAsset("Native splash logo", splashOptions?.image);
 const splashImageBounds = getRgbaPngAlphaBounds(splashImage, { allowEmpty: true });
 if (
-  splashImageBounds.width !== 1 ||
-  splashImageBounds.height !== 1 ||
-  splashImageBounds.maxX >= 0 ||
-  splashOptions?.imageWidth !== 1
+  splashImageBounds.width < 256 ||
+  splashImageBounds.height < 256 ||
+  splashImageBounds.maxX < 0 ||
+  splashOptions?.imageWidth < 160
 ) {
-  fail("Native splash image must be a fully transparent 1x1 pixel.");
+  fail("Native splash image must contain a visible, full-size branded logo.");
 }
-const darkSplashImage = resolveAsset("Dark transparent splash image", splashOptions?.dark?.image);
-if (darkSplashImage !== splashImage) {
-  fail("Light and dark native splash images must use the same transparent pixel.");
+const darkSplashImage = resolveAsset("Dark native splash logo", splashOptions?.dark?.image);
+const darkSplashImageBounds = getRgbaPngAlphaBounds(darkSplashImage, { allowEmpty: true });
+if (
+  darkSplashImageBounds.width < 256 ||
+  darkSplashImageBounds.height < 256 ||
+  darkSplashImageBounds.maxX < 0
+) {
+  fail("Dark native splash image must contain a visible branded logo.");
 }
-if (!splashOptions?.backgroundColor) {
-  fail("Native splash must keep a plain background while the named app splash loads.");
+if (!splashOptions?.backgroundColor || !splashOptions?.dark?.backgroundColor) {
+  fail("Light and dark native splash screens must define matching brand backgrounds.");
 }
-if (splashOptions?.dark?.backgroundColor !== splashOptions.backgroundColor) {
-  fail("Light and dark native splash backgrounds must match.");
+if (splashOptions?.backgroundColor !== "#F5F4F0" || splashOptions?.dark?.backgroundColor !== "#F5F4F0") {
+  fail("Native splash backgrounds must match the app's startup surface color.");
 }
 
 const logoComponent = fs.readFileSync(
@@ -264,4 +269,7 @@ const startupLayout = fs.readFileSync(
 if (!/<OGLandmarkLogo\s+size=\{\d+\}\s*\/>/.test(startupLayout) || !startupLayout.includes("OG Landmark")) {
   fail("The in-app startup splash must retain both the logo and OG Landmark name.");
 }
-console.log("✓ Native splash image is transparent; the in-app startup splash keeps the logo and name.");
+if (!/STARTUP_SPLASH_MIN_DURATION_MS\s*=\s*7000\b/.test(startupLayout)) {
+  fail("The branded startup splash must stay visible for at least seven seconds.");
+}
+console.log("✓ Native splash has branded light/dark logos; the in-app startup splash keeps the logo and name.");

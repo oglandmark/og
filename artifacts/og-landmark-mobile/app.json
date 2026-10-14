@@ -2,7 +2,7 @@
   "expo": {
     "name": "OG Landmark",
     "slug": "og-landmark-uin4dnqfp8-zl28mrpom",
-    "version": "2.0.33",
+    "version": "2.0.35",
     "orientation": "portrait",
     "icon": "./assets/images/og-landmark-logo-square.png",
     "scheme": "og-land-mobile",
@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.oglandmark.app",
-      "versionCode": 34,
+      "versionCode": 36,
       "softwareKeyboardLayoutMode": "resize",
       "icon": "./assets/images/og-landmark-logo-square.png",
       "adaptiveIcon": {
@@ -48,13 +48,13 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFFFFF",
-          "image": "./assets/images/og-landmark-splash-transparent.png",
-          "imageWidth": 1,
+          "backgroundColor": "#F5F4F0",
+          "image": "./assets/images/og-landmark-brand-mark-rgba.png",
+          "imageWidth": 220,
           "resizeMode": "contain",
           "dark": {
-            "backgroundColor": "#FFFFFF",
-            "image": "./assets/images/og-landmark-splash-transparent.png"
+            "backgroundColor": "#F5F4F0",
+            "image": "./assets/images/og-landmark-brand-mark-rgba.png"
           }
         }
       ],

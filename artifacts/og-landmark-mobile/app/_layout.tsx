@@ -28,7 +28,6 @@ import { SavedProvider } from '@/context/SavedContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { DemoPropertyVisibilityProvider } from '@/context/DemoPropertyVisibilityContext';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
-import { OnboardingProvider, useOnboarding } from '@/context/OnboardingContext';
 import { useColors } from '@/hooks/useColors';
 import {
   configurePushNotifications,
@@ -44,11 +43,10 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 const STARTUP_SPLASH_MIN_DURATION_MS = 7000;
 
-function RootLayoutNav() {
+function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
   const colors = useColors();
   const { isRTL } = useLanguage();
   const { isLoggedIn, isLoading, user } = useAuth();
-  const { isLoading: onboardingLoading, hasCompletedOnboarding } = useOnboarding();
   const segments = useSegments();
   const router = useRouter();
   const [navigationReady, setNavigationReady] = React.useState(false);
@@ -156,8 +154,7 @@ function RootLayoutNav() {
   }, [user?.id]);
 
   useEffect(() => {
-    if (isLoading || onboardingLoading) return;
-    const inOnboarding = segments[0] === 'onboarding';
+    if (isLoading) return;
     const inAuth      = segments[0] === '(auth)';
     const inTabs      = segments[0] === '(tabs)';
     const inAdmin     = segments[0] === 'admin';
@@ -171,22 +168,8 @@ function RootLayoutNav() {
     const inAnnouncements = segments[0] === 'announcements';
     const inKnownRoute = inTabs || inAuth || inProperty || inProject || inSettings || inAgent || inPost || inAdmin || inTools || inNotifications || inAnnouncements;
 
-    // Allow registration routes even when onboarding is already completed
-    const isRegisterRoute = inOnboarding && ['select-role', 'register-buyer', 'register-agent', 'register-developer'].includes(segments[1] as string);
-
     if (isLoggedIn && inAuth) {
-      // Keep authenticated users out of login, signup, and reset-password
-      // screens after a session is restored or created.
-      router.replace('/(tabs)');
-      setTimeout(() => setNavigationReady(true), 120);
-    } else if (!hasCompletedOnboarding && !inOnboarding) {
-      router.replace('/onboarding');
-      // Reveal after short delay to let navigation commit
-      setTimeout(() => setNavigationReady(true), 120);
-    } else if (hasCompletedOnboarding && inOnboarding && !isRegisterRoute) {
-      router.replace('/(tabs)');
-      setTimeout(() => setNavigationReady(true), 120);
-    } else if (isLoggedIn && inOnboarding) {
+      // Keep authenticated users out of login and reset-password screens.
       router.replace('/(tabs)');
       setTimeout(() => setNavigationReady(true), 120);
     } else if (inAdmin && (!isLoggedIn || user?.role !== 'admin')) {
@@ -194,32 +177,31 @@ function RootLayoutNav() {
       // a normal buyer/agent account, even if they manually enter the route.
       router.replace(isLoggedIn ? '/(tabs)' : '/(auth)/login');
       setTimeout(() => setNavigationReady(true), 120);
-    } else if (!inKnownRoute && !inOnboarding) {
+    } else if (!inKnownRoute) {
       // Guest or anyone at an unknown/root route → send to tabs directly
       router.replace('/(tabs)');
       setTimeout(() => setNavigationReady(true), 120);
     } else {
       setNavigationReady(true);
     }
-  }, [hasCompletedOnboarding, isLoggedIn, isLoading, onboardingLoading, segments, router]);
-
-  if (isLoading) {
-    return <StartupSplash colors={colors} />;
-  }
+  }, [isLoggedIn, isLoading, segments, router]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.action, direction: isRTL ? 'rtl' : 'ltr' }}>
-      <Stack screenOptions={{ headerShown: false, animation: 'none' }}>
-        <Stack.Screen name="onboarding" />
+    <View style={{ flex: 1, backgroundColor: colors.background, direction: isRTL ? 'rtl' : 'ltr' }}>
+      <Stack screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.background },
+        animation: Platform.OS === 'ios' ? 'slide_from_right' : 'none',
+      }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="tools" options={{ headerShown: false }} />
         <Stack.Screen name="admin" options={{ headerShown: false }} />
-        <Stack.Screen name="property/[id]" options={{ presentation: 'card', animation: 'none' }} />
-        <Stack.Screen name="project/[id]" options={{ presentation: 'card', animation: 'none' }} />
-        <Stack.Screen name="(auth)" options={{ presentation: 'card', animation: 'none' }} />
+        <Stack.Screen name="property/[id]" options={{ presentation: 'card' }} />
+        <Stack.Screen name="project/[id]" options={{ presentation: 'card' }} />
+        <Stack.Screen name="(auth)" options={{ presentation: 'card' }} />
       </Stack>
-      {(!navigationReady || !splashDurationElapsed) && (
-        <StartupSplash colors={colors} overlay />
+      {(isLoading || !navigationReady || !splashDurationElapsed) && (
+        <StartupSplash colors={colors} overlay fontsReady={fontsReady} />
       )}
     </View>
   );
@@ -233,7 +215,6 @@ const rootStyles = {
     paddingHorizontal: 24,
   },
   startupBrand: {
-    fontFamily: 'PlayfairDisplay_600SemiBold',
     fontSize: 20,
     letterSpacing: 0.4,
     marginTop: 12,
@@ -314,9 +295,11 @@ const rootStyles = {
 function StartupSplash({
   colors,
   overlay = false,
+  fontsReady = true,
 }: {
   colors: ReturnType<typeof useColors>;
   overlay?: boolean;
+  fontsReady?: boolean;
 }) {
   const reduceMotion = useReducedMotion();
   const outerRotation = useSharedValue(0);
@@ -385,18 +368,22 @@ function StartupSplash({
         </Animated.View>
         <OGLandmarkLogo size={112} />
       </View>
-      <Text style={[rootStyles.startupBrand, { color: colors.actionDeep }]}>
+      <Text style={[
+        rootStyles.startupBrand,
+        fontsReady && { fontFamily: 'PlayfairDisplay_600SemiBold' },
+        { color: colors.actionDeep },
+      ]}>
         OG Landmark
       </Text>
     </View>
   );
 }
 
-function DirectionalApp() {
+function DirectionalApp({ fontsReady }: { fontsReady: boolean }) {
   const { isRTL } = useLanguage();
   return (
     <View style={{ flex: 1, direction: isRTL ? 'rtl' : 'ltr' }}>
-      <RootLayoutNav />
+      <RootLayoutNav fontsReady={fontsReady} />
     </View>
   );
 }
@@ -409,19 +396,9 @@ export default function RootLayout() {
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
     PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold,
   };
-  const [fontsLoaded, fontError] = useFonts(fontDefinitions);
-  const [fontGateTimedOut, setFontGateTimedOut] = React.useState(false);
+  const [fontsLoaded] = useFonts(fontDefinitions);
   useEffect(() => {
-    if (fontsLoaded || fontError || fontGateTimedOut) {
-      void SplashScreen.hideAsync().catch(() => undefined);
-    }
-  }, [fontsLoaded, fontError, fontGateTimedOut]);
-  useEffect(() => {
-    const timeout = setTimeout(
-      () => setFontGateTimedOut(true),
-       Platform.OS === 'web' ? 1800 : 2500,
-    );
-    return () => clearTimeout(timeout);
+    void SplashScreen.hideAsync().catch(() => undefined);
   }, []);
 
   // ── Set audio session ONCE at app startup so videos play with sound
@@ -437,33 +414,25 @@ export default function RootLayout() {
     });
     return () => interactionTask.cancel();
   }, []);
-  // The browser preview can render with platform fallback fonts while the
-  // bundled font manifest is unavailable in offline mode. Native keeps the
-  // gate so the branded splash does not reveal unstyled text.
-  if (Platform.OS !== 'web' && !fontsLoaded && !fontError && !fontGateTimedOut) {
-    return <StatusBar style="dark" />;
-  }
   return (
     <>
       <StatusBar style="dark" />
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <ErrorBoundary>
           <QueryClientProvider client={queryClient}>
-            <OnboardingProvider>
-              <LanguageProvider>
-                <AuthProvider>
-                  <DemoPropertyVisibilityProvider>
-                    <SavedProvider>
-                      <GestureHandlerRootView style={{ flex: 1 }}>
-                        <KeyboardProvider>
-                          <DirectionalApp />
-                        </KeyboardProvider>
-                      </GestureHandlerRootView>
-                    </SavedProvider>
-                  </DemoPropertyVisibilityProvider>
-                </AuthProvider>
-              </LanguageProvider>
-            </OnboardingProvider>
+            <LanguageProvider>
+              <AuthProvider>
+                <DemoPropertyVisibilityProvider>
+                  <SavedProvider>
+                    <GestureHandlerRootView style={{ flex: 1 }}>
+                      <KeyboardProvider>
+                        <DirectionalApp fontsReady={fontsLoaded} />
+                      </KeyboardProvider>
+                    </GestureHandlerRootView>
+                  </SavedProvider>
+                </DemoPropertyVisibilityProvider>
+              </AuthProvider>
+            </LanguageProvider>
           </QueryClientProvider>
         </ErrorBoundary>
       </SafeAreaProvider>

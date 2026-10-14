@@ -919,6 +919,8 @@ function GuestScreen({
             <Feather name="arrow-right" size={15} color={colors.action} />
           </Pressable>
           <Pressable onPress={() => router.push('/(auth)/signup' as any)}
+            accessibilityRole="button"
+            accessibilityLabel="Create Account"
             style={({ pressed }) => [gst.registerBtn, { opacity: pressed ? 0.87 : 1 }]}>
             <Text style={gst.registerBtnText}>Create Account</Text>
           </Pressable>
@@ -1549,7 +1551,7 @@ const gst = StyleSheet.create({
   loginBtn:      { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#c8a45a', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 9, marginTop: 14, width: '100%', justifyContent: 'center' },
   loginBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#0B1F3A' },
   registerBtn:   { backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 9, width: '100%', alignItems: 'center' },
-  registerBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
+  registerBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
   lockPill:      { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 },
   lockText:      { fontFamily: 'Inter_600SemiBold', fontSize: 10 },
 });

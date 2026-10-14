@@ -9,7 +9,7 @@ export default function DeveloperLayout() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.background },
-        animation: Platform.OS === 'ios' ? 'slide_from_right' : 'fade_from_bottom',
+        animation: Platform.OS === 'ios' ? 'slide_from_right' : 'none',
       }}
     />
   );

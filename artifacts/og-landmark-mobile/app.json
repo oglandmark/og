@@ -48,13 +48,13 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFFFFF",
-          "image": "./assets/images/og-landmark-splash-transparent.png",
-          "imageWidth": 1,
+          "backgroundColor": "#F5F4F0",
+          "image": "./assets/images/og-landmark-brand-mark-rgba.png",
+          "imageWidth": 220,
           "resizeMode": "contain",
           "dark": {
-            "backgroundColor": "#FFFFFF",
-            "image": "./assets/images/og-landmark-splash-transparent.png"
+            "backgroundColor": "#F5F4F0",
+            "image": "./assets/images/og-landmark-brand-mark-rgba.png"
           }
         }
       ],

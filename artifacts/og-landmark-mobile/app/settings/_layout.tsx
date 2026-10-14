@@ -6,7 +6,7 @@ export default function SettingsLayout() {
   return (
     <Stack screenOptions={{
       headerShown: false,
-      animation: Platform.OS === 'web' ? 'none' : 'slide_from_right',
+      animation: Platform.OS === 'ios' ? 'slide_from_right' : 'none',
     }} />
   );
 }

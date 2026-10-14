@@ -9,6 +9,10 @@ const screenSource = readFileSync(
   resolve(fileURLToPath(new URL('../app/(tabs)/post-ad.tsx', import.meta.url))),
   'utf8',
 );
+const tabLayoutSource = readFileSync(
+  resolve(fileURLToPath(new URL('../app/(tabs)/_layout.tsx', import.meta.url))),
+  'utf8',
+);
 
 test('logged-in users open the listing page directly after auth finishes loading', () => {
   assert.equal(shouldOpenPostAdListing(false, true), true);
@@ -25,4 +29,13 @@ test('Post an Ad uses focus-based direct navigation instead of rendering a Redir
   assert.match(screenSource, /useFocusEffect/);
   assert.match(screenSource, /router\.replace\(POST_AD_LISTING_ROUTE\)/);
   assert.doesNotMatch(screenSource, /<Redirect\b/);
+});
+
+test('all navigation tabs render full labels with wrapping instead of truncating', () => {
+  assert.match(tabLayoutSource, /numberOfLines=\{2\}/);
+  assert.equal(
+    (tabLayoutSource.match(/tabBarLabel:\s*\(\{\s*color\s*\}\)\s*=>\s*<FullTabLabel/g) ?? []).length,
+    10,
+    'buyer, professional, and profile tabs must all use the full-label component',
+  );
 });

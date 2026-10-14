@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 // BlurView removed — crashes Android
@@ -34,7 +34,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { ExploreMapView, type MapBounds } from '@/components/ExploreMapView';
-import { getCurrentPosition, haversineDistance, formatDistance } from '@/lib/locationService';
+import { haversineDistance, formatDistance } from '@/lib/locationService';
 import {
   fetchAutocompleteSuggestions,
   fetchPlaceDetails,
@@ -499,20 +499,40 @@ export default function ExploreScreen() {
     () => filterVisibleDemoProperties(allProperties, hiddenDemoPropertyIds),
     [allProperties, hiddenDemoPropertyIds],
   );
-  const [nearMe, setNearMe]                   = useState<{ lat: number; lng: number; radiusKm: number } | null>(null);
   const [mapAreaSearch, setMapAreaSearch]     = useState<{ lat: number; lng: number; radiusKm: number } | null>(null);
-  const [nearMeLoading, setNearMeLoading]     = useState(false);
   const [searchedPlace, setSearchedPlace]     = useState<{ lat: number; lng: number; radiusKm: number; label: string } | null>(null);
   const [placeSuggestions, setPlaceSuggestions] = useState<AutocompleteSuggestion[]>([]);
   const [placeSuggestionsLoading, setPlaceSuggestionsLoading] = useState(false);
   const [mapBoundsFilter, setMapBoundsFilter] = useState<MapBounds | null>(null);
   const [geoLoading, setGeoLoading]             = useState(false);
-  const [geoError, setGeoError]                 = useState('');
+  const [isExploreFocused, setIsExploreFocused] = useState(false);
   const [remoteOffset, setRemoteOffset]         = useState(0);
   const [remoteHasMore, setRemoteHasMore]       = useState(false);
   const [remoteLoadingMore, setRemoteLoadingMore] = useState(false);
   const [currentPage, setCurrentPage]           = useState(1);
   const searchRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const initialParamsCleared = useRef(false);
+
+  useEffect(() => {
+    if (initialParamsCleared.current) return;
+    const hasInitialParams = Object.values(params).some((value) => value !== undefined && value !== '');
+    if (!hasInitialParams) return;
+    initialParamsCleared.current = true;
+    router.setParams({
+      type: undefined,
+      search: undefined,
+      city: undefined,
+      category: undefined,
+      propertyType: undefined,
+      minPrice: undefined,
+      maxPrice: undefined,
+      minArea: undefined,
+      maxArea: undefined,
+      agriWater: undefined,
+      agriRoad: undefined,
+      verifiedOnly: undefined,
+    });
+  }, [params, router]);
 
   // ── Effects ────────────────────────────────────────────────────────────────
 
@@ -535,11 +555,11 @@ export default function ExploreScreen() {
   }, []);
 
   useEffect(() => {
-    const radiusLocation = nearMe ?? searchedPlace ?? mapAreaSearch;
+    if (!isExploreFocused) return;
+    const radiusLocation = searchedPlace ?? mapAreaSearch;
     if (!radiusLocation && !mapBoundsFilter) {
       let cancelled = false;
       const interactionTask = InteractionManager.runAfterInteractions(() => {
-        setGeoError('');
         setGeoLoading(true);
         getPropertiesPage({ limit: 24, offset: 0 })
           .then((page) => {
@@ -552,11 +572,7 @@ export default function ExploreScreen() {
               setRemoteHasMore(page.hasMore);
             }
           })
-          .catch(() => {
-            if (!cancelled) {
-              setGeoError('');
-            }
-          })
+          .catch(() => {})
           .finally(() => {
             if (!cancelled) setGeoLoading(false);
           });
@@ -569,7 +585,6 @@ export default function ExploreScreen() {
 
     let cancelled = false;
     setGeoLoading(true);
-    setGeoError('');
 
     const request = radiusLocation
       ? getPropertiesPage({
@@ -594,7 +609,7 @@ export default function ExploreScreen() {
           if (!cancelled) {
             // Keep bundled properties available when the remote catalogue is
             // empty or temporarily unavailable. The local radius/bounds
-            // filter still produces correct Near Me results from that cache.
+            // filter still produces correct map-search results from that cache.
             setAllProperties((current) => keepCachedPropertiesWhenRemoteIsEmpty(
               current,
               uniqueProperties(page.items.map(apiPropertyToProperty)),
@@ -603,11 +618,7 @@ export default function ExploreScreen() {
             setRemoteHasMore(page.hasMore);
           }
         })
-        .catch(() => {
-          if (!cancelled) {
-            setGeoError('');
-          }
-        })
+        .catch(() => {})
         .finally(() => {
           if (!cancelled) setGeoLoading(false);
         });
@@ -617,7 +628,7 @@ export default function ExploreScreen() {
       cancelled = true;
       interactionTask.cancel();
     };
-  }, [nearMe, searchedPlace, mapAreaSearch, mapBoundsFilter]);
+  }, [isExploreFocused, searchedPlace, mapAreaSearch, mapBoundsFilter]);
 
   useEffect(() => {
     const text = query.trim();
@@ -649,7 +660,7 @@ export default function ExploreScreen() {
     let matched = demoVisibleProperties.filter((p) => matchesProperty(p, filters, query));
 
     // GPS or searched-place radius filter
-    const radiusLocation = nearMe ?? searchedPlace ?? mapAreaSearch;
+    const radiusLocation = searchedPlace ?? mapAreaSearch;
     if (radiusLocation) {
       matched = matched
         .map((p) => {
@@ -675,7 +686,7 @@ export default function ExploreScreen() {
     }
 
     return radiusLocation ? matched : sortProperties(matched, filters.sortBy);
-  }, [demoVisibleProperties, filters, query, nearMe, searchedPlace, mapAreaSearch, mapBoundsFilter]);
+  }, [demoVisibleProperties, filters, query, searchedPlace, mapAreaSearch, mapBoundsFilter]);
 
   const loadedPages = Math.ceil(filteredProperties.length / EXPLORE_PAGE_SIZE);
   const totalPages = Math.max(1, loadedPages + (remoteHasMore ? 1 : 0));
@@ -689,7 +700,7 @@ export default function ExploreScreen() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [query, filters, nearMe, searchedPlace, mapAreaSearch, mapBoundsFilter, viewMode]);
+  }, [query, filters, searchedPlace, mapAreaSearch, mapBoundsFilter, viewMode]);
 
   const draftResultCount = useMemo(
     () => demoVisibleProperties.filter((p) => matchesProperty(p, draftFilters, query)).length,
@@ -699,13 +710,13 @@ export default function ExploreScreen() {
   const activeChips = useMemo(() => buildChips(filters, query), [filters, query]);
 
   const activeFilterCount = activeChips.length
-    + Number(Boolean(nearMe || searchedPlace || mapAreaSearch || mapBoundsFilter));
+    + Number(Boolean(searchedPlace || mapAreaSearch || mapBoundsFilter));
   const hasActiveFilters = activeFilterCount > 0;
 
   const loadMoreProperties = useCallback(async (): Promise<boolean> => {
     if (remoteLoadingMore || !remoteHasMore || isProjectsMode || viewMode !== 'list') return false;
     setRemoteLoadingMore(true);
-    const radiusLocation = nearMe ?? searchedPlace ?? mapAreaSearch;
+    const radiusLocation = searchedPlace ?? mapAreaSearch;
     const geoFilters = radiusLocation
       ? { lat: radiusLocation.lat, lng: radiusLocation.lng, radiusKm: radiusLocation.radiusKm }
       : mapBoundsFilter
@@ -733,7 +744,7 @@ export default function ExploreScreen() {
     }
   }, [
     remoteLoadingMore, remoteHasMore, isProjectsMode, viewMode,
-    nearMe, searchedPlace, mapAreaSearch, mapBoundsFilter, remoteOffset,
+    searchedPlace, mapAreaSearch, mapBoundsFilter, remoteOffset,
   ]);
 
   const handlePageChange = useCallback(async (page: number) => {
@@ -820,41 +831,42 @@ export default function ExploreScreen() {
     setDraftFilters({ ...emptyFilters });
     setQuery('');
     setIsProjectsMode(false);
-    setNearMe(null);
     setSearchedPlace(null);
     setMapAreaSearch(null);
     setMapBoundsFilter(null);
+    setCurrentPage(1);
+    setRemoteOffset(0);
+    setRemoteHasMore(false);
   }, []);
 
-  const handleNearMe = useCallback(async () => {
-    if (nearMe) {
-      setNearMe(null);
-      setMapAreaSearch(null);
-      setGeoError('');
-      setMapScreenOpen(false);
-      setViewMode('list');
-      return;
-    }
-    setNearMeLoading(true);
-    setGeoError('');
+  const resetExploreStateOnBlur = useCallback(() => {
+    setFilters({ ...emptyFilters });
+    setDraftFilters({ ...emptyFilters });
+    setQuery('');
+    setIsProjectsMode(false);
+    setSearchedPlace(null);
     setMapAreaSearch(null);
-    setViewMode('map');
-    openMapScreen();
-    try {
-      const pos = await getCurrentPosition();
-      if (!pos) {
-        setGeoError('We could not read your location. Keep Location Services on and try Near Me again.');
-        return;
-      }
-      setNearMe({ lat: pos.latitude, lng: pos.longitude, radiusKm: 10 });
-      setSearchedPlace(null);
-      setMapBoundsFilter(null);
-    } catch {
-      setGeoError('We could not read your location. Keep Location Services on and try Near Me again.');
-    } finally {
-      setNearMeLoading(false);
-    }
-  }, [nearMe, openMapScreen]);
+    setMapBoundsFilter(null);
+    setViewMode('list');
+    setMapScreenOpen(false);
+    setFilterSheetOpen(false);
+    setOpenSection(null);
+    setSearchFocused(false);
+    setMapSearchFocused(false);
+    setGeoLoading(false);
+    setRemoteOffset(0);
+    setRemoteHasMore(false);
+    setRemoteLoadingMore(false);
+    setCurrentPage(1);
+  }, []);
+
+  useFocusEffect(useCallback(() => {
+    setIsExploreFocused(true);
+    return () => {
+      setIsExploreFocused(false);
+      resetExploreStateOnBlur();
+    };
+  }, [resetExploreStateOnBlur]));
 
   const handlePlaceSuggestion = useCallback(async (suggestion: AutocompleteSuggestion) => {
     const details = await fetchPlaceDetails(suggestion.placeId);
@@ -877,7 +889,6 @@ export default function ExploreScreen() {
       radiusKm: 25,
       label,
     });
-    setNearMe(null);
     setMapAreaSearch(null);
     setMapBoundsFilter(null);
     setViewMode('map');
@@ -905,7 +916,6 @@ export default function ExploreScreen() {
 
   const applyMapAreaSearch = useCallback((area: { lat: number; lng: number; radiusKm: number }) => {
     setMapAreaSearch(area);
-    setNearMe(null);
     setSearchedPlace(null);
     setMapBoundsFilter(null);
     closeMapScreen();
@@ -961,15 +971,6 @@ export default function ExploreScreen() {
           <View style={[ex.geoStatus, { backgroundColor: colors.actionGlassSoft, borderColor: colors.actionGlow + '55' }]}>
             <ActivityIndicator size="small" color={colors.action} />
             <Text style={[ex.geoStatusText, { color: colors.action }]}>Updating live listings…</Text>
-          </View>
-        )}
-        {!!geoError && !geoLoading && (
-          <View style={[ex.geoStatus, { backgroundColor: colors.accent, borderColor: colors.primary + '66' }]}>
-            <Feather name="alert-circle" size={14} color={colors.accentForeground} />
-            <Text style={[ex.geoStatusText, { color: colors.accentForeground }]} numberOfLines={2}>{geoError}</Text>
-            <Pressable onPress={() => setGeoError('')} hitSlop={8} accessibilityRole="button" accessibilityLabel="Dismiss listing refresh message">
-              <Feather name="x" size={14} color={colors.accentForeground} />
-            </Pressable>
           </View>
         )}
 
@@ -1095,37 +1096,6 @@ export default function ExploreScreen() {
 
         {/* Quick filter row */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={ex.quickFilters}>
-          {/* Near Me pill */}
-          <Pressable
-            onPress={handleNearMe}
-            disabled={nearMeLoading}
-             style={[ex.quickChip, { backgroundColor: nearMe ? colors.selectionBackground : colors.glassCard, borderColor: nearMe ? colors.selectionBorder : colors.glassBorder, borderWidth: nearMe ? 1.5 : 1, opacity: nearMeLoading ? 0.65 : 1 }]}
-          >
-             <Feather name="crosshair" size={12} color={nearMe ? colors.selectionForeground : colors.mutedForeground} />
-             <Text style={[ex.quickChipText, { color: nearMe ? colors.selectionForeground : colors.foreground, fontWeight: nearMe ? '600' : '400' }]}>
-              {nearMeLoading ? 'Locating…' : 'Near Me'}
-            </Text>
-          </Pressable>
-
-          {/* Near Me radius selector */}
-          {nearMe && (
-            <>
-              {[1, 5, 10, 25, 50].map((km) => (
-                <Pressable
-                  key={km}
-                  onPress={() => setNearMe((prev) => prev ? { ...prev, radiusKm: km } : null)}
-                  style={[ex.quickChip, {
-                     backgroundColor: nearMe.radiusKm === km ? colors.selectionBackground : colors.glassCard,
-                     borderColor: nearMe.radiusKm === km ? colors.selectionBorder : colors.glassBorder,
-                     borderWidth: nearMe.radiusKm === km ? 1.5 : 1,
-                  }]}
-                >
-                   <Text style={[ex.quickChipText, { color: nearMe.radiusKm === km ? colors.selectionForeground : colors.foreground, fontWeight: nearMe.radiusKm === km ? '600' : '400' }]}>{km} km</Text>
-                </Pressable>
-              ))}
-            </>
-          )}
-
           {searchedPlace && (
             <Pressable
               onPress={() => { setSearchedPlace(null); setQuery(''); }}
@@ -1141,7 +1111,11 @@ export default function ExploreScreen() {
 
           {/* Projects pill */}
           <Pressable
-            onPress={() => { setIsProjectsMode((v) => !v); }}
+            onPress={() => {
+              setIsProjectsMode((current) => !current);
+              setCurrentPage(1);
+              flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+            }}
              style={[ex.quickChip, { backgroundColor: isProjectsMode ? colors.selectionBackground : colors.glassCard, borderColor: isProjectsMode ? colors.selectionBorder : colors.glassBorder, borderWidth: isProjectsMode ? 1.5 : 1 }]}
           >
              <Text style={[ex.quickChipText, { color: isProjectsMode ? colors.selectionForeground : colors.foreground, fontWeight: isProjectsMode ? '600' : '400' }]}>Projects</Text>
@@ -1237,8 +1211,6 @@ export default function ExploreScreen() {
                 count={filteredProperties.length}
                 colors={colors}
                 onSelect={(id) => router.push(`/property/${id}` as any)}
-                userLat={nearMe?.lat}
-                userLng={nearMe?.lng}
                 centerLat={searchedPlace?.lat}
                 centerLng={searchedPlace?.lng}
               />
@@ -1300,16 +1272,16 @@ export default function ExploreScreen() {
               <Text style={[ex.mapScreenBackText, { color: colors.mutedForeground }]}>Filters</Text>
             </Pressable>
             <Text style={[ex.mapScreenTitle, { color: colors.foreground }]}>
-              {nearMe || nearMeLoading ? 'Properties Near Me' : 'Map Search'}
+              Map Search
             </Text>
             <View style={ex.mapScreenHeaderSide} />
           </View>
 
           <View style={ex.mapStage}>
             <ExploreMapView
-               key={`${nearMe ? 'near-me-10km' : 'map-default'}-${mapScreenSession}`}
+              key={`map-search-${mapScreenSession}`}
               fullScreen
-              initialRadiusKm={mapAreaSearch?.radiusKm ?? (nearMe ? nearMe.radiusKm : undefined)}
+              initialRadiusKm={mapAreaSearch?.radiusKm ?? searchedPlace?.radiusKm}
               properties={filteredProperties.map((p: any) => ({
                 ...p,
                 distance: p._distLabel,
@@ -1321,30 +1293,10 @@ export default function ExploreScreen() {
                 closeMapScreen();
                 router.push(`/property/${id}` as any);
               }}
-              userLat={nearMe?.lat}
-              userLng={nearMe?.lng}
               centerLat={mapAreaSearch?.lat ?? searchedPlace?.lat}
               centerLng={mapAreaSearch?.lng ?? searchedPlace?.lng}
               onApplyArea={applyMapAreaSearch}
             />
-
-             {nearMeLoading && !nearMe && (
-               <View style={[ex.locationMapStatus, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                 <ActivityIndicator size="small" color={colors.action} />
-                 <Text style={[ex.locationMapStatusTitle, { color: colors.foreground }]}>Finding your location</Text>
-                 <Text style={[ex.locationMapStatusText, { color: colors.mutedForeground }]}>
-                   Allow GPS access to show properties within 10 KM.
-                 </Text>
-               </View>
-             )}
-
-             {!nearMeLoading && !!geoError && !nearMe && (
-               <View style={[ex.locationMapStatus, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                 <Feather name="map-pin" size={18} color={colors.primary} />
-                 <Text style={[ex.locationMapStatusTitle, { color: colors.foreground }]}>Location unavailable</Text>
-                 <Text style={[ex.locationMapStatusText, { color: colors.mutedForeground }]}>{geoError}</Text>
-               </View>
-             )}
 
             <View style={ex.mapSearchOverlay}>
               <View style={[ex.mapSearchBar, {
@@ -2060,9 +2012,6 @@ const ex = StyleSheet.create({
   mapScreenHeaderSide: { width: 92 },
   mapStage:        { flex: 1, position: 'relative' },
   mapSearchOverlay: { position: 'absolute', top: 14, left: 60, right: 18, zIndex: 10 },
-  locationMapStatus: { position: 'absolute', top: '38%', left: 28, right: 28, alignItems: 'center', borderRadius: 18, borderWidth: 1, paddingHorizontal: 18, paddingVertical: 18, zIndex: 8, shadowColor: '#0B1F3A', shadowOpacity: 0.16, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
-  locationMapStatusTitle: { fontFamily: 'Inter_700Bold', fontSize: 14, marginTop: 8, textAlign: 'center' },
-  locationMapStatusText: { fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 16, marginTop: 5, textAlign: 'center' },
   mapSearchBar:    { height: Platform.OS === 'web' ? 30 : 38, minHeight: Platform.OS === 'web' ? 30 : 38, borderRadius: Platform.OS === 'web' ? 10 : 12, borderWidth: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 9, gap: 7, shadowColor: '#0B1F3A', shadowOpacity: 0.16, shadowRadius: 9, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
   mapSearchIconWrap: { width: Platform.OS === 'web' ? 20 : 28, height: Platform.OS === 'web' ? 20 : 28, borderRadius: Platform.OS === 'web' ? 7 : 9, alignItems: 'center', justifyContent: 'center' },
   mapSearchInput:  { flex: 1, fontFamily: 'Inter_500Medium', fontSize: 13, paddingVertical: 0 },

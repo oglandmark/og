@@ -7,7 +7,7 @@ export default function AuthLayout() {
     <Stack screenOptions={{
       headerShown: false,
       presentation: 'card',
-      animation: Platform.OS === 'web' ? 'none' : 'slide_from_right',
+      animation: Platform.OS === 'ios' ? 'slide_from_right' : 'none',
     }} />
   );
 }

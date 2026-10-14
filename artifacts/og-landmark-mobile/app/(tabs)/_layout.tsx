@@ -13,6 +13,20 @@ import { TabBarVisibilityContext } from '@/context/TabBarScrollContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { getMobileSettings } from '@/lib/api';
 import { useMobileContent } from '@/hooks/useMobileContent';
+import { LocalizedText as Text } from '@/components/LocalizedText';
+
+function FullTabLabel({ label, color }: { label: string; color: ColorValue }) {
+  return (
+    <Text
+      numberOfLines={2}
+      adjustsFontSizeToFit
+      minimumFontScale={0.82}
+      style={[styles.tabLabel, { color }]}
+    >
+      {label}
+    </Text>
+  );
+}
 
 // ── Static tab icon ───────────────────────────────────────────────────────────
 function TabIcon({
@@ -91,7 +105,7 @@ export default function TabLayout() {
 
   // Keep the visible navigation compact and let only the safe-area inset extend
   // behind the Android system navigation / iOS home indicator.
-  const tabBarHeight     = isWeb ? 84 : 68 + insets.bottom;
+  const tabBarHeight     = isWeb ? 92 : 68 + insets.bottom;
   const tabBarPadBottom  = isWeb ? 30 : 6 + insets.bottom;
 
   const isBuyer      = !role || role === 'buyer';
@@ -113,12 +127,11 @@ export default function TabLayout() {
         tabBar={(props) => <AnimatedTabBar {...props} height={tabBarHeight} hidden={tabBarHidden} />}
         screenOptions={{
           headerShown: false,
-          animation: Platform.OS === 'web' ? 'none' : 'fade',
+          animation: Platform.OS === 'ios' ? 'fade' : 'none',
           tabBarHideOnKeyboard: true,
           tabBarActiveTintColor:   colors.action,
           tabBarInactiveTintColor: colors.mutedForeground,
-          tabBarLabelStyle: { fontFamily: 'Inter_600SemiBold', fontSize: 10, letterSpacing: 0.35, marginTop: 2 },
-          tabBarItemStyle: { paddingTop: 2 },
+          tabBarItemStyle: { paddingTop: 2, minWidth: 0 },
           tabBarStyle: {
             position: 'absolute',
             bottom: 0,
@@ -147,26 +160,73 @@ export default function TabLayout() {
         }}
       >
       {/* ── BUYER TABS ──────────────────── */}
-      <Tabs.Screen name="index"   options={{ title: navLabels.home || tr('tabHome'),    href: isVisible('home', isBuyer) ? undefined : null, tabBarIcon: ({ color, size, focused }) => <TabIcon name="home"   color={color} size={size} focused={focused} /> }} />
-      <Tabs.Screen name="explore" options={{ title: navLabels.explore || tr('tabExplore'), href: isVisible('explore', isBuyer) ? undefined : null, tabBarIcon: ({ color, size, focused }) => <TabIcon name="search" color={color} size={size} focused={focused} /> }} />
+      <Tabs.Screen name="index" options={{
+        title: navLabels.home || tr('tabHome'),
+        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.home || tr('tabHome')} color={color} />,
+        href: isVisible('home', isBuyer) ? undefined : null,
+        tabBarIcon: ({ color, size, focused }) => <TabIcon name="home" color={color} size={size} focused={focused} />,
+      }} />
+      <Tabs.Screen name="explore" options={{
+        title: navLabels.explore || tr('tabExplore'),
+        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.explore || tr('tabExplore')} color={color} />,
+        href: isVisible('explore', isBuyer) ? undefined : null,
+        tabBarIcon: ({ color, size, focused }) => <TabIcon name="search" color={color} size={size} focused={focused} />,
+      }} />
       <Tabs.Screen name="post-ad" options={{
-        title: navLabels.postAd || tr('tabPostAd'), href: isVisible('postAd', isBuyer) ? undefined : null,
+        title: navLabels.postAd || tr('tabPostAd'),
+        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.postAd || tr('tabPostAd')} color={color} />,
+        href: isVisible('postAd', isBuyer) ? undefined : null,
         tabBarActiveTintColor: colors.action,
         tabBarIcon: ({ color, focused }) => <PostAdIcon color={color} focused={focused} />,
       }} />
-      <Tabs.Screen name="saved"   options={{ title: navLabels.saved || tr('tabSaved'),   href: isVisible('saved', isBuyer) ? undefined : null, tabBarIcon: ({ color, size, focused }) => <TabIcon name="heart"  color={color} size={size} focused={focused} /> }} />
+      <Tabs.Screen name="saved" options={{
+        title: navLabels.saved || tr('tabSaved'),
+        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.saved || tr('tabSaved')} color={color} />,
+        href: isVisible('saved', isBuyer) ? undefined : null,
+        tabBarIcon: ({ color, size, focused }) => <TabIcon name="heart" color={color} size={size} focused={focused} />,
+      }} />
 
       {/* ── PROFESSIONAL TABS ───────────── */}
-      <Tabs.Screen name="dashboard" options={{ title: navLabels.dashboard || tr('tabDashboard'), href: isVisible('agentPortal', isProfessional) ? undefined : null, tabBarIcon: ({ color, size, focused }) => <TabIcon name="bar-chart-2"   color={color} size={size} focused={focused} /> }} />
-      <Tabs.Screen name="listings"  options={{ title: navLabels.listings || tr('tabListings'),  href: isVisible('agentPortal', isAgent) ? undefined : null, tabBarIcon: ({ color, size, focused }) => <TabIcon name="home"           color={color} size={size} focused={focused} /> }} />
-      <Tabs.Screen name="projects"  options={{ title: navLabels.projects || tr('tabProjects'),  href: isVisible('developerPortal', isDeveloper) ? undefined : null, tabBarIcon: ({ color, size, focused }) => <TabIcon name="layers"         color={color} size={size} focused={focused} /> }} />
-      <Tabs.Screen name="leads"     options={{ title: navLabels.leads || tr('tabLeads'),     href: isVisible('agentPortal', isProfessional) ? undefined : null, tabBarIcon: ({ color, size, focused }) => <TabIcon name="users"          color={color} size={size} focused={focused} /> }} />
-      <Tabs.Screen name="messages"  options={{ title: navLabels.messages || tr('tabMessages'),  href: isVisible('agentPortal', isProfessional) ? undefined : null, tabBarIcon: ({ color, size, focused }) => <TabIcon name="message-circle" color={color} size={size} focused={focused} /> }} />
+      <Tabs.Screen name="dashboard" options={{
+        title: navLabels.dashboard || tr('tabDashboard'),
+        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.dashboard || tr('tabDashboard')} color={color} />,
+        href: isVisible('agentPortal', isProfessional) ? undefined : null,
+        tabBarIcon: ({ color, size, focused }) => <TabIcon name="bar-chart-2" color={color} size={size} focused={focused} />,
+      }} />
+      <Tabs.Screen name="listings" options={{
+        title: navLabels.listings || tr('tabListings'),
+        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.listings || tr('tabListings')} color={color} />,
+        href: isVisible('agentPortal', isAgent) ? undefined : null,
+        tabBarIcon: ({ color, size, focused }) => <TabIcon name="home" color={color} size={size} focused={focused} />,
+      }} />
+      <Tabs.Screen name="projects" options={{
+        title: navLabels.projects || tr('tabProjects'),
+        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.projects || tr('tabProjects')} color={color} />,
+        href: isVisible('developerPortal', isDeveloper) ? undefined : null,
+        tabBarIcon: ({ color, size, focused }) => <TabIcon name="layers" color={color} size={size} focused={focused} />,
+      }} />
+      <Tabs.Screen name="leads" options={{
+        title: navLabels.leads || tr('tabLeads'),
+        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.leads || tr('tabLeads')} color={color} />,
+        href: isVisible('agentPortal', isProfessional) ? undefined : null,
+        tabBarIcon: ({ color, size, focused }) => <TabIcon name="users" color={color} size={size} focused={focused} />,
+      }} />
+      <Tabs.Screen name="messages" options={{
+        title: navLabels.messages || tr('tabMessages'),
+        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.messages || tr('tabMessages')} color={color} />,
+        href: isVisible('agentPortal', isProfessional) ? undefined : null,
+        tabBarIcon: ({ color, size, focused }) => <TabIcon name="message-circle" color={color} size={size} focused={focused} />,
+      }} />
 
       {/* ── ALWAYS VISIBLE ──────────────── */}
       {/* Keep the utility route available to internal links, but never show it in the tab bar. */}
       <Tabs.Screen name="calculator" options={{ href: null }} />
-      <Tabs.Screen name="profile"    options={{ title: navLabels.profile || tr('tabProfile'), href: visibility.profile === false ? null : undefined, tabBarIcon: ({ color, size, focused }) => <TabIcon name="user" color={color} size={size} focused={focused} /> }} />
+      <Tabs.Screen name="profile" options={{
+        title: navLabels.profile || tr('tabProfile'),
+        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.profile || tr('tabProfile')} color={color} />,
+        href: visibility.profile === false ? null : undefined,
+        tabBarIcon: ({ color, size, focused }) => <TabIcon name="user" color={color} size={size} focused={focused} />,
+      }} />
       </Tabs>
       </ErrorBoundary>
     </TabBarVisibilityContext.Provider>
@@ -184,6 +244,16 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  tabLabel: {
+    width: '100%',
+    paddingHorizontal: 1,
+    marginTop: 2,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 10,
+    lineHeight: 11,
+    letterSpacing: 0.15,
+    textAlign: 'center',
   },
   postIcon:  { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginTop: -13, borderWidth: 3 },
 });

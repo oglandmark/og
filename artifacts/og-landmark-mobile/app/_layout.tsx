@@ -187,10 +187,11 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
   }, [isLoggedIn, isLoading, segments, router]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.action, direction: isRTL ? 'rtl' : 'ltr' }}>
+    <View style={{ flex: 1, backgroundColor: colors.background, direction: isRTL ? 'rtl' : 'ltr' }}>
       <Stack screenOptions={{
         headerShown: false,
-        animation: Platform.OS === 'web' ? 'none' : 'slide_from_right',
+        contentStyle: { backgroundColor: colors.background },
+        animation: Platform.OS === 'ios' ? 'slide_from_right' : 'none',
       }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="tools" options={{ headerShown: false }} />

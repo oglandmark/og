@@ -109,6 +109,15 @@ test('Home retains its bundled offline fallback and Explore keeps cached listing
     2,
     'both Explore catalogue request paths must retain cached listings on empty results',
   );
-  assert.match(explore, /\.catch\(\(\) => \{\s*if \(!cancelled\) \{\s*setGeoError\(''\);/);
+  assert.match(explore, /\.catch\(\(\) => \{\}\)\s*\.finally\(\(\) => \{\s*if \(!cancelled\) setGeoLoading\(false\);\s*\}\)/);
   assert.match(detail, /catch\(\(\) => undefined\); \/\/ keep mock on failure/);
+});
+
+test('Explore removes Near Me and clears temporary filters after leaving the page', () => {
+  const explore = readScreen('app', '(tabs)', 'explore.tsx');
+
+  assert.doesNotMatch(explore, /Near Me|nearMe/);
+  assert.match(explore, /router\.setParams\(\{[\s\S]*?verifiedOnly: undefined,/);
+  assert.match(explore, /resetExploreStateOnBlur[\s\S]*?setFilters\(\{ \.\.\.emptyFilters \}\)[\s\S]*?setIsProjectsMode\(false\)/);
+  assert.match(explore, /useFocusEffect\(useCallback\(\(\) => \{[\s\S]*?return \(\) => \{[\s\S]*?resetExploreStateOnBlur\(\)/);
 });

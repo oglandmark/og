@@ -20,3 +20,9 @@ The GitHub connector proxy rate-limits bulk writes at roughly 10 requests per se
 **Why:** A burst of six parallel blob writes exceeded the proxy limit during a mobile source sync.
 
 **How to apply:** Prefer sequential or low-concurrency uploads with a small delay; verify every returned blob SHA before creating the commit.
+
+The Git Data API's blob-create response may include the SHA but omit the byte size. Verify the returned SHA against the local Git blob hash, and when size is absent, fetch that blob once and compare its reported and decoded byte lengths before adding it to a tree.
+
+**Why:** A correct blob upload was initially flagged because the create response omitted `size`; a read-back confirmed the bytes matched.
+
+**How to apply:** Treat an absent size as a reason to verify via `GET /git/blobs/{sha}`, not as a failed write or a reason to skip byte verification.

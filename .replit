@@ -52,6 +52,11 @@ localPort = 8082
 externalPort = 3000
 
 [[ports]]
+localPort = 18115
+externalPort = 3002
+exposeLocalhost = true
+
+[[ports]]
 localPort = 25189
 externalPort = 80
 

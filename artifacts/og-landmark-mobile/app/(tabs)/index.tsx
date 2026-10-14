@@ -111,7 +111,7 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
                 <Feather name="x" size={18} color={colors.actionForeground} />
               </Pressable>
             </View>
-            <Pressable onPress={() => onNavigate('/(auth)/login')} style={({ pressed }) => [s.drawerAccount, { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder, opacity: pressed ? 0.78 : 1 }]} accessibilityRole="button" accessibilityLabel="Sign in or create account">
+            <Pressable onPress={() => onNavigate('/(auth)/login')} style={({ pressed }) => [s.drawerAccount, { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder, opacity: pressed ? 0.78 : 1 }]} accessibilityRole="button" accessibilityLabel="Sign in to your account">
               <View style={[s.drawerAccountIcon, { backgroundColor: colors.goldGlass }]}><Feather name="user" size={18} color={colors.goldForeground} /></View>
               <View style={s.drawerAccountCopy}><Text style={[s.drawerAccountTitle, { color: colors.actionForeground }]}>Welcome to OG Landmark</Text><Text style={[s.drawerAccountDetail, { color: colors.actionForeground }]}>Sign in to manage your properties</Text></View>
               <Feather name="arrow-up-right" size={16} color={colors.gold} />

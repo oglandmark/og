@@ -170,15 +170,12 @@ export default function LoginScreen() {
             {tr('loginBtn')}
           </Button>
 
-          {/* Divider */}
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>{tr('orContinueWith')}</Text>
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Supported social sign-in only. Unsupported providers are not shown
-              as tappable actions, which avoids dead-end error states. */}
           <View style={styles.socialRow}>
             <Pressable
               onPress={() => { void facebook.signIn(); }}
@@ -190,10 +187,8 @@ export default function LoginScreen() {
                 : <FontAwesome5 name="facebook" size={18} color="#1877f2" />}
               <Text style={styles.socialText}>Facebook</Text>
             </Pressable>
-
           </View>
 
-          {/* Sign up link */}
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>{tr('noAccount')}</Text>
             <Pressable onPress={() => router.push('/(auth)/signup')} hitSlop={6}>

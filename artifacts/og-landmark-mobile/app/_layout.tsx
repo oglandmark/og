@@ -28,7 +28,6 @@ import { SavedProvider } from '@/context/SavedContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { DemoPropertyVisibilityProvider } from '@/context/DemoPropertyVisibilityContext';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
-import { OnboardingProvider, useOnboarding } from '@/context/OnboardingContext';
 import { useColors } from '@/hooks/useColors';
 import {
   configurePushNotifications,
@@ -48,7 +47,6 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
   const colors = useColors();
   const { isRTL } = useLanguage();
   const { isLoggedIn, isLoading, user } = useAuth();
-  const { isLoading: onboardingLoading, hasCompletedOnboarding } = useOnboarding();
   const segments = useSegments();
   const router = useRouter();
   const [navigationReady, setNavigationReady] = React.useState(false);
@@ -156,8 +154,7 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
   }, [user?.id]);
 
   useEffect(() => {
-    if (isLoading || onboardingLoading) return;
-    const inOnboarding = segments[0] === 'onboarding';
+    if (isLoading) return;
     const inAuth      = segments[0] === '(auth)';
     const inTabs      = segments[0] === '(tabs)';
     const inAdmin     = segments[0] === 'admin';
@@ -171,22 +168,8 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
     const inAnnouncements = segments[0] === 'announcements';
     const inKnownRoute = inTabs || inAuth || inProperty || inProject || inSettings || inAgent || inPost || inAdmin || inTools || inNotifications || inAnnouncements;
 
-    // Allow registration routes even when onboarding is already completed
-    const isRegisterRoute = inOnboarding && ['select-role', 'register-buyer', 'register-agent', 'register-developer'].includes(segments[1] as string);
-
     if (isLoggedIn && inAuth) {
-      // Keep authenticated users out of login, signup, and reset-password
-      // screens after a session is restored or created.
-      router.replace('/(tabs)');
-      setTimeout(() => setNavigationReady(true), 120);
-    } else if (!hasCompletedOnboarding && !inOnboarding) {
-      router.replace('/onboarding');
-      // Reveal after short delay to let navigation commit
-      setTimeout(() => setNavigationReady(true), 120);
-    } else if (hasCompletedOnboarding && inOnboarding && !isRegisterRoute) {
-      router.replace('/(tabs)');
-      setTimeout(() => setNavigationReady(true), 120);
-    } else if (isLoggedIn && inOnboarding) {
+      // Keep authenticated users out of login and reset-password screens.
       router.replace('/(tabs)');
       setTimeout(() => setNavigationReady(true), 120);
     } else if (inAdmin && (!isLoggedIn || user?.role !== 'admin')) {
@@ -194,14 +177,14 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
       // a normal buyer/agent account, even if they manually enter the route.
       router.replace(isLoggedIn ? '/(tabs)' : '/(auth)/login');
       setTimeout(() => setNavigationReady(true), 120);
-    } else if (!inKnownRoute && !inOnboarding) {
+    } else if (!inKnownRoute) {
       // Guest or anyone at an unknown/root route → send to tabs directly
       router.replace('/(tabs)');
       setTimeout(() => setNavigationReady(true), 120);
     } else {
       setNavigationReady(true);
     }
-  }, [hasCompletedOnboarding, isLoggedIn, isLoading, onboardingLoading, segments, router]);
+  }, [isLoggedIn, isLoading, segments, router]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.action, direction: isRTL ? 'rtl' : 'ltr' }}>
@@ -209,7 +192,6 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
         headerShown: false,
         animation: Platform.OS === 'web' ? 'none' : 'slide_from_right',
       }}>
-        <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="tools" options={{ headerShown: false }} />
         <Stack.Screen name="admin" options={{ headerShown: false }} />
@@ -437,21 +419,19 @@ export default function RootLayout() {
       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <ErrorBoundary>
           <QueryClientProvider client={queryClient}>
-            <OnboardingProvider>
-              <LanguageProvider>
-                <AuthProvider>
-                  <DemoPropertyVisibilityProvider>
-                    <SavedProvider>
-                      <GestureHandlerRootView style={{ flex: 1 }}>
-                        <KeyboardProvider>
-                          <DirectionalApp fontsReady={fontsLoaded} />
-                        </KeyboardProvider>
-                      </GestureHandlerRootView>
-                    </SavedProvider>
-                  </DemoPropertyVisibilityProvider>
-                </AuthProvider>
-              </LanguageProvider>
-            </OnboardingProvider>
+            <LanguageProvider>
+              <AuthProvider>
+                <DemoPropertyVisibilityProvider>
+                  <SavedProvider>
+                    <GestureHandlerRootView style={{ flex: 1 }}>
+                      <KeyboardProvider>
+                        <DirectionalApp fontsReady={fontsLoaded} />
+                      </KeyboardProvider>
+                    </GestureHandlerRootView>
+                  </SavedProvider>
+                </DemoPropertyVisibilityProvider>
+              </AuthProvider>
+            </LanguageProvider>
           </QueryClientProvider>
         </ErrorBoundary>
       </SafeAreaProvider>

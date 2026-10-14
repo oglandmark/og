@@ -6,9 +6,6 @@ import * as WebBrowser from 'expo-web-browser';
 WebBrowser.maybeCompleteAuthSession();
 
 const facebookAppId = process.env.EXPO_PUBLIC_FACEBOOK_APP_ID?.trim() || '';
-// The existing app scheme is already registered in app.json, so Facebook
-// can return to the app without requiring a generated fb<APP_ID> scheme.
-// This exact URI must also be added to Meta's Valid OAuth Redirect URIs.
 const facebookRedirectUri =
   process.env.EXPO_PUBLIC_FACEBOOK_REDIRECT_URI?.trim() ||
   'og-land-mobile://oauthredirect';
@@ -18,18 +15,11 @@ export type SocialLoginResult = {
   error?: string;
 };
 
-/**
- * Facebook's client-side result is only an access token. The API must verify
- * that token against the server-only Meta app secret before creating a session.
- */
 export function useFacebookAuth(
   onAccessToken: (accessToken: string) => Promise<SocialLoginResult>,
 ) {
   const [request, , promptAsync] = Facebook.useAuthRequest(
     {
-      // Keep the hook mount-safe when Meta configuration has not been added.
-      // The button reports a useful configuration error instead of crashing
-      // the entire auth screen during development.
       clientId: facebookAppId || 'facebook-not-configured',
       responseType: ResponseType.Token,
       scopes: ['public_profile', 'email'],
@@ -59,15 +49,11 @@ export function useFacebookAuth(
         setError('Facebook login was not completed. Please try again.');
         return;
       }
-
-      const accessToken =
-        result.authentication?.accessToken ||
-        result.params?.access_token;
+      const accessToken = result.authentication?.accessToken || result.params?.access_token;
       if (!accessToken) {
         setError('Facebook did not return a valid login token.');
         return;
       }
-
       const loginResult = await onAccessToken(accessToken);
       if (!loginResult.success) {
         setError(loginResult.error || 'Facebook login failed. Please try again.');

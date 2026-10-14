@@ -268,9 +268,6 @@ export async function logoutAPI(): Promise<void> {
   }
 }
 
-// ─── Social login (Google / Facebook) ─────────────────────────────────────────
-// Sends the OAuth access token to the LOCAL api-server which verifies it
-// with Google/Facebook and returns a user + JWT.
 export async function loginWithSocial(
   provider: 'google' | 'facebook',
   accessToken: string,
@@ -288,24 +285,21 @@ export async function registerWithAPI(payload: {
   name: string; username?: string; email?: string; password: string; phone: string; role: string;
   confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
 }): Promise<LoginResponse> {
-  // Server expects firstName / lastName separately
   const parts = payload.name.trim().split(' ');
   const firstName = parts[0] ?? payload.name;
   const lastName = parts.slice(1).join(' ');
-
   const res = await apiFetch<LoginResponse>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify({
       firstName,
       lastName,
-      username:       payload.username,
-      email:         payload.email || undefined,
-      phone:         payload.phone.trim(),
-      password:      payload.password,
+      username: payload.username,
+      email: payload.email || undefined,
+      phone: payload.phone.trim(),
+      password: payload.password,
       confirmPassword: payload.confirmPassword ?? payload.password,
-      role:          payload.role.toLowerCase(),
-      city:          payload.city,
-      // extra fields agents/sellers use
+      role: payload.role.toLowerCase(),
+      city: payload.city,
       specialization: payload.agencyName || payload.companyName,
     }),
   }, false, AUTH_FETCH_TIMEOUT_MS);

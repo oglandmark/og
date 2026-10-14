@@ -118,7 +118,7 @@ function NotLoggedInPrompt({ colors, topInset, insets, router }: any) {
         </View>
         <Text style={[styles.loginCardTitle, { color: colors.foreground }]}>Seller account required</Text>
         <Text style={[styles.loginCardBody, { color: colors.mutedForeground }]}>
-          Log in or create a free account to list your property and reach thousands of verified buyers.
+          Log in or register to list your property and reach thousands of verified buyers.
         </Text>
         <View style={styles.authActionRow}>
           <AnimatedPressable
@@ -137,10 +137,10 @@ function NotLoggedInPrompt({ colors, topInset, insets, router }: any) {
               { borderColor: colors.action, backgroundColor: colors.card, opacity: pressed ? 0.72 : 1 },
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Sign up to post an ad"
+            accessibilityLabel="Register to post an ad"
           >
             <Feather name="user-plus" size={16} color={colors.action} />
-            <Text style={[styles.authSecondaryText, { color: colors.action }]}>Sign Up</Text>
+            <Text style={[styles.authSecondaryText, { color: colors.action }]}>Register</Text>
           </Pressable>
         </View>
       </View>

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -16,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 // BlurView removed — crashes Android GPU
 import { useColors } from '@/hooks/useColors';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -27,6 +28,7 @@ import { addUserListing } from '@/lib/listingsStore';
 import { uploadMultipleImages, uploadVideo } from '@/lib/api';
 import { LocationPicker } from '@/components/LocationPicker';
 import type { LocationData } from '@/lib/locationService';
+import { POST_AD_LISTING_ROUTE, shouldOpenPostAdListing } from '@/lib/postAdEntry';
 
 // ─── Types & Constants ─────────────────────────────────────────────────────────
 
@@ -75,100 +77,26 @@ export default function PostAdScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, isLoading, user } = useAuth();
 
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
+  const shouldRedirectToListing = shouldOpenPostAdListing(isLoading, isLoggedIn);
 
-  if (!isLoggedIn) {
-    return <NotLoggedInPrompt colors={colors} topInset={topInset} insets={insets} router={router} />;
+  useFocusEffect(useCallback(() => {
+    if (shouldRedirectToListing) {
+      router.replace(POST_AD_LISTING_ROUTE);
+    }
+  }, [shouldRedirectToListing, router]));
+
+  if (isLoading || shouldRedirectToListing) {
+    return (
+      <View style={[styles.screen, { backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={colors.action} />
+      </View>
+    );
   }
 
-  // Keep this tab as its own entry screen rather than redirecting immediately
-  // on mount. The user can choose the posting action before opening its route.
-  return <SelectionScreen colors={colors} topInset={topInset} router={router} />;
-}
-
-// ─── Selection Screen ───────────────────────────────────────────────────────────
-
-const POST_OPTIONS = [
-  {
-    id: 'sale',
-    icon: 'home' as const,
-    title: 'Property for Sale',
-    description: 'List a property for sale and connect with genuine buyers.',
-    accent: '#0f4c81',
-    route: (router: any) => router.push('/post/listing?purpose=sale'),
-  },
-  {
-    id: 'rent',
-    icon: 'key' as const,
-    title: 'Property for Rent',
-    description: 'Advertise your property for rent and receive inquiries.',
-    accent: '#183B60',
-    route: (router: any) => router.push('/post/listing?purpose=rent'),
-  },
-  {
-    id: 'buyer',
-    icon: 'search' as const,
-    title: 'Buyer Request',
-    description: 'Tell agents and sellers what property you are looking for.',
-    accent: '#8b6c2a',
-    route: (router: any) => router.push('/post/buyer-request'),
-  },
-  {
-    id: 'service',
-    icon: 'briefcase' as const,
-    title: 'Professional Service',
-    description: 'Promote your real estate service or professional profile.',
-    accent: '#374151',
-    route: (router: any) => router.push('/(tabs)/profile'),
-  },
-] as const;
-
-function SelectionScreen({ colors, topInset, router }: any) {
-  const tabBarHeight = useTabBarHeight();
-  return (
-    <ScrollView
-      style={[styles.screen, { backgroundColor: colors.background }]}
-      contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: tabBarHeight, paddingHorizontal: 20 }}
-      showsVerticalScrollIndicator={false}
-    >
-      <AnimatedReveal>
-        <Text style={[styles.eyebrow, { color: colors.primary }]}>OG LANDMARK</Text>
-        <Text style={[styles.pageTitle, { color: colors.foreground }]}>What would you{'\n'}like to post?</Text>
-        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-          Choose what you want to publish on OG Landmark.
-        </Text>
-      </AnimatedReveal>
-
-      {POST_OPTIONS.map((opt, i) => (
-        <AnimatedReveal key={opt.id} delay={80 + i * 60} distance={16}>
-          <AnimatedPressable
-            onPress={() => opt.route(router)}
-            style={[styles.postCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-          >
-            <View style={[styles.postIconWrap, { backgroundColor: opt.accent + '18', borderColor: opt.accent + '33' }]}>
-              <Feather name={opt.icon} size={26} color={opt.accent} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.postTitle, { color: colors.foreground }]}>{opt.title}</Text>
-              <Text style={[styles.postDesc, { color: colors.mutedForeground }]}>{opt.description}</Text>
-            </View>
-            <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
-          </AnimatedPressable>
-        </AnimatedReveal>
-      ))}
-
-      <AnimatedReveal delay={380} distance={8}>
-        <View style={[styles.selectionHint, { backgroundColor: colors.accent, borderColor: colors.border }]}>
-          <Feather name="shield" size={13} color={colors.accentForeground} />
-          <Text style={[styles.selectionHintText, { color: colors.accentForeground }]}>
-            All property listings are reviewed by the OG Landmark team before going live.
-          </Text>
-        </View>
-      </AnimatedReveal>
-    </ScrollView>
-  );
+  return <NotLoggedInPrompt colors={colors} topInset={topInset} insets={insets} router={router} />;
 }
 
 // ─── Not logged in ─────────────────────────────────────────────────────────────

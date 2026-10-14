@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -8,94 +9,203 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
-import { Button } from '@/components/PolishedUI';
+import { Feather, FontAwesome5 } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
-import { useColors } from '@/hooks/useColors';
+import { useLanguage } from '@/context/LanguageContext';
+import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
+import { useFacebookAuth } from '@/lib/facebookAuth';
+import { Button } from '@/components/PolishedUI';
 
-export default function SignupScreen() {
-  const router = useRouter();
+const ACTION = '#0B1F3A';
+const GOLD = '#c8a45a';
+const MUTED = '#8a8f98';
+const BORDER = '#e4e6ea';
+
+export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
-  const colors = useColors();
-  const { registerAPI } = useAuth();
+  const { registerAPI, loginSocial } = useAuth();
+  const { tr, isRTL } = useLanguage();
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [identifier, setIdentifier] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const submit = async () => {
-    const normalizedEmail = email.trim().toLowerCase();
-    const normalizedPhone = phone.trim();
-    if (!name.trim()) return setError('Enter your full name.');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) return setError('Enter a valid email address.');
-    if (normalizedPhone.replace(/\D/g, '').length < 10) return setError('Enter a valid phone number.');
+  const rtl = isRTL ? 'right' as const : 'left' as const;
+  const identifierValue = identifier.trim();
+  const isMobileIdentifier = identifierValue.length > 0 && /^[+\d\s().-]+$/.test(identifierValue);
+  const signupPhone = isMobileIdentifier ? identifierValue : mobileNumber.trim();
+  const signupPhoneDigits = signupPhone.replace(/\D/g, '');
+  const isValidSignupPhone = signupPhoneDigits.length >= 10 && signupPhoneDigits.length <= 15;
+
+  const handleFacebookSignup = useCallback(async (accessToken: string) => {
+    if (!signupPhone) {
+      const message = tr('signupMobileRequired');
+      setError(message);
+      return { success: false, error: message };
+    }
+    if (!isValidSignupPhone) {
+      const message = tr('signupMobileError');
+      setError(message);
+      return { success: false, error: message };
+    }
+    const result = await loginSocial('facebook', accessToken, signupPhone);
+    if (result.success) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace('/(tabs)');
+    }
+    return result;
+  }, [isValidSignupPhone, loginSocial, signupPhone, tr]);
+  const facebook = useFacebookAuth(handleFacebookSignup);
+
+  const startFacebookSignup = () => {
+    if (!signupPhone) { setError(tr('signupMobileRequired')); return; }
+    if (!isValidSignupPhone) { setError(tr('signupMobileError')); return; }
+    setError('');
+    void facebook.signIn();
+  };
+
+  async function handleRegister() {
+    if (!name.trim()) { setError('Full name is required.'); return; }
+    const value = identifier.trim();
+    if (!value) { setError(tr('signupIdentifierRequired')); return; }
+    if (!isMobileIdentifier && value.includes('@') && !value.includes('.')) {
+      setError(tr('signupEmailError')); return;
+    }
+    if (!isMobileIdentifier && !value.includes('@') && !/^[A-Za-z][A-Za-z0-9._-]{2,29}$/.test(value)) {
+      setError(tr('signupUsernameError')); return;
+    }
+    if (!signupPhone) { setError(tr('signupMobileRequired')); return; }
+    if (!isValidSignupPhone) { setError(tr('signupMobileError')); return; }
     if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
-      return setError('Password must be at least 8 characters and include a letter and number.');
+      setError('Password must be at least 8 characters and include a letter and number.');
+      return;
     }
 
     setError('');
     setLoading(true);
     const result = await registerAPI({
       name: name.trim(),
-      email: normalizedEmail,
-      phone: normalizedPhone,
+      email: !isMobileIdentifier && value.includes('@') ? value.toLowerCase() : undefined,
+      username: !isMobileIdentifier && !value.includes('@') ? value.toLowerCase() : undefined,
+      phone: signupPhone,
       password,
       role: 'buyer',
     });
     setLoading(false);
+
+    if (result.pendingApproval) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      Alert.alert(
+        'Account submitted',
+        'Your account is awaiting approval. You can continue exploring while we review your details.',
+        [{ text: 'Continue', onPress: () => router.replace('/(tabs)') }],
+      );
+      return;
+    }
     if (!result.success) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError(result.error ?? 'Registration failed. Please try again.');
       return;
     }
-    if (result.pendingApproval) {
-      Alert.alert('Account submitted', result.pendingMessage ?? 'Your account is awaiting approval.', [
-        { text: 'Continue', onPress: () => router.replace('/(tabs)') },
-      ]);
-      return;
-    }
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.replace('/(tabs)');
-  };
+  }
 
-  const fieldStyle = [styles.input, { color: colors.foreground, borderBottomColor: colors.border }];
   return (
-    <KeyboardAvoidingView
-      style={[styles.screen, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
-        contentContainerStyle={{ paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) + 12, paddingBottom: insets.bottom + 34 }}
+        contentContainerStyle={{ paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) + 12, paddingBottom: insets.bottom + 32 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
-            <Feather name="chevron-left" size={26} color={colors.action} />
-          </Pressable>
-          <Text style={[styles.title, { color: colors.foreground }]}>Register</Text>
-          <View style={{ width: 26 }} />
+        <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
+          <Feather name="chevron-left" size={26} color={ACTION} />
+        </Pressable>
+        <View style={styles.logoWrap}>
+          <OGLandmarkLogo size={104} />
+          <Text style={styles.logoName}>OG Landmark</Text>
+          <Text style={styles.logoSub}>REAL ESTATE</Text>
         </View>
 
-        <View style={styles.form}>
-          <Text style={[styles.intro, { color: colors.mutedForeground }]}>
-            Create a buyer account to continue posting your ad.
-          </Text>
-          <Text style={[styles.label, { color: colors.mutedForeground }]}>Full name</Text>
-          <TextInput value={name} onChangeText={setName} placeholder="Your name" autoCapitalize="words" style={fieldStyle} />
-          <Text style={[styles.label, { color: colors.mutedForeground }]}>Email address</Text>
-          <TextInput value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" style={fieldStyle} />
-          <Text style={[styles.label, { color: colors.mutedForeground }]}>Phone</Text>
-          <TextInput value={phone} onChangeText={setPhone} placeholder="03xx xxxxxxx" keyboardType="phone-pad" style={fieldStyle} />
-          <Text style={[styles.label, { color: colors.mutedForeground }]}>Password</Text>
-          <TextInput value={password} onChangeText={setPassword} placeholder="At least 8 characters" secureTextEntry autoCapitalize="none" style={fieldStyle} />
-          {!!error && <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text>}
-          <Button onPress={() => { void submit(); }} loading={loading} style={styles.submit}>
-            Register
+        <View style={styles.content}>
+          <Text style={styles.title}>Create Account</Text>
+          {!!(error || facebook.error) && (
+            <View style={styles.errorBox}>
+              <Feather name="alert-circle" size={13} color="#b94b42" />
+              <Text style={[styles.errorText, { textAlign: rtl }]}>{error || facebook.error}</Text>
+            </View>
+          )}
+
+          <View style={styles.fieldWrap}>
+            <Text style={[styles.label, { textAlign: rtl }]}>FULL NAME</Text>
+            <TextInput value={name} onChangeText={(v) => { setName(v); setError(''); }}
+              placeholder="Muhammad Ali" placeholderTextColor={MUTED} textAlign={rtl}
+              autoCapitalize="words" style={styles.underlineInput} />
+          </View>
+
+          <View style={styles.fieldWrap}>
+            <Text style={[styles.label, { textAlign: rtl }]}>{tr('signupIdentifierLabel')}</Text>
+            <TextInput value={identifier} onChangeText={(v) => { setIdentifier(v); setError(''); }}
+              keyboardType={isMobileIdentifier ? 'phone-pad' : 'default'} autoCapitalize="none"
+              placeholder={tr('signupEmailPlaceholder')} placeholderTextColor={MUTED}
+              textAlign="left" style={[styles.underlineInput, styles.identifierInput]} />
+          </View>
+
+          {!isMobileIdentifier && (
+            <View style={styles.fieldWrap}>
+              <Text style={[styles.label, { textAlign: rtl }]}>{tr('signupMobileLabel')} *</Text>
+              <TextInput value={mobileNumber} onChangeText={(v) => { setMobileNumber(v); setError(''); }}
+                keyboardType="phone-pad" placeholder={tr('signupMobilePlaceholder')}
+                placeholderTextColor={MUTED} textAlign="left"
+                style={[styles.underlineInput, styles.identifierInput]} />
+            </View>
+          )}
+
+          <View style={styles.fieldWrap}>
+            <Text style={[styles.label, { textAlign: rtl }]}>PASSWORD</Text>
+            <View style={styles.passRow}>
+              <TextInput value={password} onChangeText={(v) => { setPassword(v); setError(''); }}
+                secureTextEntry={!showPwd} placeholder="Min. 8 characters"
+                placeholderTextColor={MUTED} textAlign={rtl}
+                style={[styles.underlineInput, { flex: 1, borderBottomWidth: 0 }]} />
+              <Pressable onPress={() => setShowPwd((v) => !v)} hitSlop={8} style={styles.eyeBtn}>
+                <Feather name={showPwd ? 'eye' : 'eye-off'} size={18} color={MUTED} />
+              </Pressable>
+            </View>
+            <View style={styles.underlineLine} />
+          </View>
+
+          <Button onPress={() => { void handleRegister(); }} loading={loading}
+            accessibilityLabel="Create Account" style={styles.submitBtn}>
+            Create Account
           </Button>
+
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or continue with</Text>
+            <View style={styles.dividerLine} />
+          </View>
+          <View style={styles.socialRow}>
+            <Pressable onPress={startFacebookSignup} disabled={loading || facebook.loading}
+              style={({ pressed }) => [styles.socialBtn, { opacity: pressed || facebook.loading ? 0.5 : 1 }]}>
+              {facebook.loading ? <ActivityIndicator size="small" color="#1877f2" />
+                : <FontAwesome5 name="facebook" size={18} color="#1877f2" />}
+              <Text style={styles.socialText}>Facebook</Text>
+            </Pressable>
+          </View>
+          <View style={styles.footerRow}>
+            <Text style={styles.footerText}>Already have an account?</Text>
+            <Pressable onPress={() => router.push('/(auth)/login')} hitSlop={6}>
+              <Text style={styles.footerLink}> Sign In</Text>
+            </Pressable>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -103,13 +213,30 @@ export default function SignupScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 24 },
-  title: { fontSize: 20, fontWeight: '700' },
-  form: { paddingHorizontal: 24, gap: 12 },
-  intro: { fontSize: 14, lineHeight: 20, marginBottom: 10 },
-  label: { fontSize: 12, marginTop: 8 },
-  input: { fontSize: 15, borderBottomWidth: 1, paddingVertical: 12 },
-  error: { fontSize: 13, lineHeight: 18, marginTop: 8 },
-  submit: { marginTop: 16 },
+  screen: { flex: 1, backgroundColor: '#fff' },
+  backBtn: { marginLeft: 16, marginBottom: 4, width: 40, height: 40, justifyContent: 'center' },
+  logoWrap: { alignItems: 'center', marginBottom: 28, marginTop: 4, gap: 10 },
+  logoName: { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 18, letterSpacing: 0.4, color: ACTION },
+  logoSub: { fontFamily: 'Inter_500Medium', fontSize: 9, letterSpacing: 3, color: GOLD, marginTop: -4 },
+  content: { paddingHorizontal: 24 },
+  title: { fontFamily: 'Inter_700Bold', fontSize: 22, color: '#1c2024', marginBottom: 24, letterSpacing: -0.3, textAlign: 'center' },
+  errorBox: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#b94b4212', borderRadius: 10, borderWidth: 1, borderColor: '#b94b4230', padding: 11, marginBottom: 16 },
+  errorText: { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#b94b42', flex: 1 },
+  fieldWrap: { marginBottom: 20 },
+  label: { fontFamily: 'Inter_500Medium', fontSize: 12, color: MUTED, marginBottom: 8, letterSpacing: 0.5 },
+  underlineInput: { fontFamily: 'Inter_400Regular', fontSize: 14, color: '#1c2024', borderBottomWidth: 1, borderBottomColor: BORDER, paddingBottom: 10, paddingTop: 2 },
+  identifierInput: { writingDirection: 'ltr' },
+  passRow: { flexDirection: 'row', alignItems: 'center' },
+  eyeBtn: { paddingLeft: 8 },
+  underlineLine: { borderBottomWidth: 1, borderColor: BORDER },
+  submitBtn: { height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: BORDER },
+  dividerText: { fontFamily: 'Inter_400Regular', fontSize: 12, color: MUTED },
+  socialRow: { flexDirection: 'row', gap: 10, marginBottom: 30 },
+  socialBtn: { flex: 1, height: 44, borderRadius: 10, borderWidth: 1, borderColor: BORDER, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#fff' },
+  socialText: { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#1c2024' },
+  footerRow: { flexDirection: 'row', justifyContent: 'center', marginBottom: 20, flexWrap: 'wrap' },
+  footerText: { fontFamily: 'Inter_400Regular', fontSize: 13, color: '#1c2024' },
+  footerLink: { fontFamily: 'Inter_700Bold', fontSize: 13, color: GOLD },
 });

@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { AppState, InteractionManager, Platform, View } from 'react-native';
 import Animated, {
+  FadeIn,
+  FadeOut,
   cancelAnimation,
   Easing,
   useAnimatedStyle,
@@ -332,9 +334,11 @@ function StartupSplash({
   }, [innerRotation, outerRotation, reduceMotion]);
 
   return (
-    <View
+    <Animated.View
       accessible
       accessibilityLabel="Loading OG Landmark"
+      entering={FadeIn.duration(220)}
+      exiting={FadeOut.duration(280)}
       style={[
         rootStyles.loading,
         { backgroundColor: colors.background },
@@ -343,6 +347,8 @@ function StartupSplash({
     >
       <View style={rootStyles.startupMark}>
         <Animated.View
+          renderToHardwareTextureAndroid
+          shouldRasterizeIOS
           style={[
             rootStyles.startupRingOuter,
             { borderColor: colors.border, opacity: 0.72 },
@@ -355,6 +361,8 @@ function StartupSplash({
           <View style={[rootStyles.startupRingDot, rootStyles.startupRingDotSmall, rootStyles.startupRingDotLeft, { backgroundColor: colors.actionSoft, opacity: 0.34 }]} />
         </Animated.View>
         <Animated.View
+          renderToHardwareTextureAndroid
+          shouldRasterizeIOS
           style={[
             rootStyles.startupRingInner,
             { borderColor: colors.border, opacity: 0.62 },
@@ -375,7 +383,7 @@ function StartupSplash({
       ]}>
         OG Landmark
       </Text>
-    </View>
+    </Animated.View>
   );
 }
 

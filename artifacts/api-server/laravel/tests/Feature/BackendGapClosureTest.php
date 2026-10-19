@@ -129,7 +129,7 @@ class BackendGapClosureTest extends TestCase
             'password' => 'TestPassword123',
             'name' => 'Dashboard Buyer',
             'phone' => '03001234567',
-            'role' => 'buyer',
+            'role' => 'Buyer',
         ])
             ->assertCreated()
             ->assertJsonPath('user.role', 'User')

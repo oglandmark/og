@@ -298,9 +298,9 @@ export async function registerWithAPI(payload: {
       phone: payload.phone.trim(),
       password: payload.password,
       confirmPassword: payload.confirmPassword ?? payload.password,
-      // Public signup is always the canonical User account. Keep the case
-      // expected by the case-sensitive legacy registration validators.
-      role: 'User',
+      // Older production validators accept Buyer/Seller even though public
+      // accounts are normalized to User by the current API.
+      role: 'Buyer',
       city: payload.city,
       specialization: payload.agencyName || payload.companyName,
     }),

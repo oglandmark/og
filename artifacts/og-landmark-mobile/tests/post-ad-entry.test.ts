@@ -35,6 +35,22 @@ test('Post an Ad uses focus-based direct navigation instead of rendering a Redir
   assert.doesNotMatch(screenSource, /<Redirect\b/);
 });
 
+test('signed-in Post an Ad tab taps open the listing route without selecting the tab screen', () => {
+  assert.match(
+    tabLayoutSource,
+    /tabPress:\s*\(event\)\s*=>\s*\{\s*if \(isLoading \|\| !isLoggedIn\) return;\s*event\.preventDefault\(\);\s*router\.replace\(POST_AD_LISTING_ROUTE\);/,
+  );
+});
+
+test('Android tab background avoids BlurView GPU compositing', () => {
+  const androidBackground = tabLayoutSource.match(
+    /if \(Platform\.OS === 'android'\) \{([\s\S]*?)\n            \}/,
+  );
+  assert.ok(androidBackground, 'Android must have a dedicated tab background');
+  assert.match(androidBackground[1], /backgroundColor: colors\.background/);
+  assert.doesNotMatch(androidBackground[1], /<BlurView/);
+});
+
 test('the listing form does not mount its native map until the user opens the location picker', () => {
   const guardedMapModal = locationPickerSource.match(/\{mapVisible && \(\s*<Modal[\s\S]*?<\/Modal>\s*\)\}/);
   assert.ok(guardedMapModal, 'the full-screen map modal must only mount while it is visible');

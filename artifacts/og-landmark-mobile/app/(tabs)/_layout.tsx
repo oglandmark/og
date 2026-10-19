@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Platform, StyleSheet, View, type ColorValue } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { BottomTabBar, type BottomTabBarProps } from 'expo-router/tabs';
 import { Feather } from '@expo/vector-icons';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
@@ -14,6 +14,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { getMobileSettings } from '@/lib/api';
 import { useMobileContent } from '@/hooks/useMobileContent';
 import { LocalizedText as Text } from '@/components/LocalizedText';
+import { POST_AD_LISTING_ROUTE } from '@/lib/postAdEntry';
 
 function FullTabLabel({ label, color }: { label: string; color: ColorValue }) {
   return (
@@ -94,8 +95,9 @@ function AnimatedTabBar({
 
 export default function TabLayout() {
   const colors = useColors();
-  const { role } = useAuth();
+  const { role, isLoggedIn, isLoading } = useAuth();
   const { tr } = useLanguage();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === 'web';
   const tabBarHidden = useSharedValue(false);
@@ -142,13 +144,24 @@ export default function TabLayout() {
             borderTopWidth: 0,
             elevation: 0,
           },
-          tabBarBackground: () =>
-            Platform.OS === 'web' ? (
-              <View style={[StyleSheet.absoluteFill, styles.tabGlass, { borderTopColor: colors.glassBorder }]}>
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceRaised + '20' }]} />
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
-              </View>
-            ) : (
+          tabBarBackground: () => {
+            if (Platform.OS === 'android') {
+              return (
+                <View
+                  pointerEvents="none"
+                  style={[StyleSheet.absoluteFill, styles.tabGlass, { backgroundColor: colors.background, borderTopColor: colors.border }]}
+                />
+              );
+            }
+            if (Platform.OS === 'web') {
+              return (
+                <View style={[StyleSheet.absoluteFill, styles.tabGlass, { borderTopColor: colors.glassBorder }]}>
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceRaised + '20' }]} />
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
+                </View>
+              );
+            }
+            return (
               <BlurView
                 intensity={72}
                 tint="light"
@@ -156,7 +169,8 @@ export default function TabLayout() {
               >
                 <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
               </BlurView>
-            ),
+            );
+          },
         }}
       >
       {/* ── BUYER TABS ──────────────────── */}
@@ -178,6 +192,12 @@ export default function TabLayout() {
         href: isVisible('postAd', isBuyer) ? undefined : null,
         tabBarActiveTintColor: colors.action,
         tabBarIcon: ({ color, focused }) => <PostAdIcon color={color} focused={focused} />,
+      }} listeners={{
+        tabPress: (event) => {
+          if (isLoading || !isLoggedIn) return;
+          event.preventDefault();
+          router.replace(POST_AD_LISTING_ROUTE);
+        },
       }} />
       <Tabs.Screen name="saved" options={{
         title: navLabels.saved || tr('tabSaved'),

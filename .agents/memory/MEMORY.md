@@ -45,3 +45,4 @@
 - [Play Store metadata claims](play-store-metadata.md) — keep OG Landmark store copy factual; Google rejected the “trusted” short and full description claims.
 - [Public contacts and listing pins](public-contact-and-listing-pins.md) — public property/agent call and WhatsApp use 03011484303; preserve account phones and selected coordinates.
 - [Browser admin extensions](browser-admin-extensions.md) — keep editable admin enhancements separate from the legacy compiled bundle.
+- [User-controlled app builds](build-approval.md) — do not start a new mobile build until the user explicitly authorizes it.

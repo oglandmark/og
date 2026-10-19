@@ -13,6 +13,10 @@ const tabLayoutSource = readFileSync(
   resolve(fileURLToPath(new URL('../app/(tabs)/_layout.tsx', import.meta.url))),
   'utf8',
 );
+const locationPickerSource = readFileSync(
+  resolve(fileURLToPath(new URL('../components/LocationPicker.tsx', import.meta.url))),
+  'utf8',
+);
 
 test('logged-in users open the listing page directly after auth finishes loading', () => {
   assert.equal(shouldOpenPostAdListing(false, true), true);
@@ -29,6 +33,12 @@ test('Post an Ad uses focus-based direct navigation instead of rendering a Redir
   assert.match(screenSource, /useFocusEffect/);
   assert.match(screenSource, /router\.replace\(POST_AD_LISTING_ROUTE\)/);
   assert.doesNotMatch(screenSource, /<Redirect\b/);
+});
+
+test('the listing form does not mount its native map until the user opens the location picker', () => {
+  const guardedMapModal = locationPickerSource.match(/\{mapVisible && \(\s*<Modal[\s\S]*?<\/Modal>\s*\)\}/);
+  assert.ok(guardedMapModal, 'the full-screen map modal must only mount while it is visible');
+  assert.match(guardedMapModal[0], /<InteractiveMap/);
 });
 
 test('all navigation tabs render full labels with wrapping instead of truncating', () => {

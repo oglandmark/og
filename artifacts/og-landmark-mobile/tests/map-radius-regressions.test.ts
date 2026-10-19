@@ -165,7 +165,7 @@ test('full-screen map lets users show the selected radius results in Explore', (
   assert.match(range, /Show \{resultCount\} properties in Explore/);
   assert.match(explore, /onApplyArea=\{applyMapAreaSearch\}/);
   assert.match(explore, /setMapAreaSearch\(area\)/);
-  assert.match(explore, /nearMe \?\? searchedPlace \?\? mapAreaSearch/);
+  assert.match(explore, /const radiusLocation = searchedPlace \?\? mapAreaSearch/);
   assert.match(native, /onChange=\{setAreaRadiusKm\}/);
 });
 

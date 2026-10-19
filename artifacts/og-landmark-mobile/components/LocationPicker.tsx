@@ -629,13 +629,14 @@ export function LocationPicker({
           <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
         </Pressable>
 
-        <Modal
-          visible={mapVisible}
-          animationType="none"
-          presentationStyle="fullScreen"
-          statusBarTranslucent
-          onRequestClose={closeMap}
-        >
+        {mapVisible && (
+          <Modal
+            visible
+            animationType="none"
+            presentationStyle="fullScreen"
+            statusBarTranslucent
+            onRequestClose={closeMap}
+          >
           <View style={[lp.fullScreen, { backgroundColor: colors.background }]}>
             <View style={[lp.fullHeader, { backgroundColor: colors.background, borderBottomColor: colors.border, paddingTop: insets.top + 8 }]}>
               <Pressable
@@ -753,7 +754,8 @@ export function LocationPicker({
               </Pressable>
             </View>
           </View>
-        </Modal>
+          </Modal>
+        )}
       </>
     );
   }

@@ -96,11 +96,11 @@ class DashboardAuthCompatibilityTest extends TestCase
             ->assertOk()
             ->assertJsonCount(4)
             ->assertJsonMissingPath('0.password');
-        // The uploaded admin dashboard requests /users for its summary list,
-        // while Laravel's admin collection route is /admin/users.
         $this->withToken($adminToken)
             ->getJson('/api/users')
-            ->assertNotFound();
+            ->assertOk()
+            ->assertJsonCount(4)
+            ->assertJsonMissingPath('0.password');
 
         $sellerToken = $this->login('dashboard-seller@example.test');
         $this->withToken($sellerToken)
@@ -138,6 +138,59 @@ class DashboardAuthCompatibilityTest extends TestCase
         $this->withToken('expired-or-invalid-fixture-token')
             ->getJson('/api/my-properties')
             ->assertUnauthorized();
+    }
+
+    public function test_admin_can_create_update_suspend_and_delete_users_through_the_admin_dashboard_api(): void
+    {
+        $this->seedDashboardFixture();
+        $adminToken = $this->login('dashboard-admin@example.test');
+        $adminHeaders = ['Authorization' => "Bearer {$adminToken}"];
+
+        $created = $this->postJson('/api/users', [
+            'name' => 'Admin-created User',
+            'email' => 'admin-created@example.test',
+            'phone' => '+923001112233',
+            'password' => 'AdminCreated123',
+            'role' => 'User',
+            'status' => 'Active',
+        ], $adminHeaders)
+            ->assertCreated()
+            ->assertJsonPath('name', 'Admin-created User')
+            ->assertJsonPath('accountType', 'User')
+            ->assertJsonPath('status', 'Active')
+            ->assertJsonMissingPath('password');
+        $newUserId = $created->json('id');
+
+        $this->putJson("/api/users/{$newUserId}", [
+            'name' => 'Updated User',
+            'email' => 'updated-user@example.test',
+            'phone' => '+923009998877',
+            'status' => 'Suspended',
+            'password' => 'UpdatedPass123',
+        ], $adminHeaders)
+            ->assertOk()
+            ->assertJsonPath('name', 'Updated User')
+            ->assertJsonPath('email', 'updated-user@example.test')
+            ->assertJsonPath('status', 'Suspended')
+            ->assertJsonMissingPath('password');
+
+        $this->patchJson("/api/admin/users/{$newUserId}/role", ['role' => 'Agent'], $adminHeaders)
+            ->assertOk()
+            ->assertJsonPath('role', 'Agent')
+            ->assertJsonPath('accountType', 'User')
+            ->assertJsonPath('permissions.0', 'agent');
+
+        $sellerToken = $this->login('dashboard-seller@example.test');
+        $sellerHeaders = ['Authorization' => "Bearer {$sellerToken}"];
+        $this->postJson('/api/users', [
+            'name' => 'Unauthorized User',
+            'email' => 'unauthorized@example.test',
+            'password' => 'Unauthorized123',
+            'role' => 'Admin',
+        ], $sellerHeaders)->assertForbidden();
+        $this->putJson('/api/users/903', ['status' => 'Suspended'], $sellerHeaders)->assertForbidden();
+
+        $this->deleteJson("/api/users/{$newUserId}", [], $adminHeaders)->assertNoContent();
     }
 
     public function test_admin_promoted_agent_can_sign_in_and_read_only_their_dashboard_data(): void

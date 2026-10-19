@@ -2020,7 +2020,7 @@ async function loadAll(){
     ['inquiries',()=>api('GET','/api/inquiries')],
     ['blog',()=>api('GET','/api/blog')],
     ['hidden website agents',()=>api('GET','/api/settings/hidden-react-agents')],
-    ['city agents',()=>api('GET','/api/city-agents')],
+    ['city agents',()=>api('GET','/api/admin/city-agents')],
     ['mobile agents',()=>api('GET','/api/admin/mobile-agents')],
   ];
   const results=await Promise.all(sources.map(async ([label,request])=>{
@@ -3174,7 +3174,7 @@ async function savePropEdit(){
 let allCityAgents = [];
 
 async function loadCityAgents(){
-  try{ allCityAgents = await api('GET','/api/city-agents'); } catch(e){ allCityAgents=[]; }
+  try{ allCityAgents = await api('GET','/api/admin/city-agents'); } catch(e){ allCityAgents=[]; }
 }
 
 function prPopulateAgentCard(p){
@@ -3323,10 +3323,10 @@ async function saveCityAgent(){
   if(!city||!name||!phone){ showToast('City, name and phone are required','error'); return; }
   try{
     if(editCityAgentId){
-      await api('PUT',`/api/city-agents/${editCityAgentId}`,{city,name,phone,whatsapp,active});
+      await api('PUT',`/api/admin/city-agents/${editCityAgentId}`,{city,name,phone,whatsapp,active});
       showToast('Agent updated!','success');
     } else {
-      await api('POST','/api/city-agents',{city,name,phone,whatsapp,active});
+      await api('POST','/api/admin/city-agents',{city,name,phone,whatsapp,active});
       showToast('City agent added!','success');
     }
     document.getElementById('ca-modal').classList.remove('open');
@@ -3338,7 +3338,7 @@ async function deleteCityAgent(id){
   const a=allCityAgents.find(x=>x.id===id);
   if(!confirm(`Delete agent "${a?.name}" for ${a?.city}?`)) return;
   try{
-    await api('DELETE',`/api/city-agents/${id}`);
+    await api('DELETE',`/api/admin/city-agents/${id}`);
     showToast('Agent deleted','success');
     await loadAll();
   }catch(e){ showToast(e.message,'error'); }
@@ -3457,8 +3457,19 @@ async function saveUser(){
   const pw=document.getElementById('user-password').value;
   if(pw) body.password=pw;
   try{
-    if(editUserId){ await api('PUT',`/api/users/${editUserId}`,body); showToast('User updated','success'); }
-    else{ await api('POST','/api/users',{...body,joinedDate:new Date().toISOString().split('T')[0]}); showToast('User added','success'); }
+    if(editUserId){
+      const existing=allUsers.find(user=>String(user.id)===String(editUserId));
+      const profile={name:body.name,email:body.email,phone:body.phone,status:body.status};
+      if(pw) profile.password=pw;
+      await api('PUT',`/api/users/${editUserId}`,profile);
+      if(existing&&existing.role!==body.role) await api('PATCH',`/api/admin/users/${editUserId}/role`,{role:body.role});
+      showToast('User updated','success');
+    }
+    else{
+      if(!pw){ showToast('Password is required for a new account','error'); return; }
+      await api('POST','/api/users',body);
+      showToast('User added','success');
+    }
     closeAddUserModal(); await loadAll();
   } catch(e){ showToast(e.message,'error'); }
 }

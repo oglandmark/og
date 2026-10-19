@@ -899,6 +899,51 @@ class ApiController extends Controller
     {
         $user = $this->currentUser($request, true);
         $id = $parts[0] ?? null;
+        if ($id === null && $method === 'GET') {
+            if (!$this->isAdmin($user)) return $this->json(['error' => 'Forbidden'], 403);
+            $limit = max(1, min(500, (int) $request->input('limit', 500)));
+            return $this->json(collect(JsonStore::read()['users'] ?? [])
+                ->take($limit)
+                ->map(fn ($account) => $this->safeUser($account))
+                ->values());
+        }
+        if ($id === null && $method === 'POST') {
+            if (!$this->isAdmin($user)) return $this->json(['error' => 'Forbidden'], 403);
+            $validator = Validator::make($request->all(), [
+                'name' => ['required', 'string', 'max:160'],
+                'email' => ['required', 'email', 'max:320'],
+                'phone' => ['nullable', 'string', 'max:40'],
+                'password' => ['required', 'string', 'min:8', 'max:256'],
+                'role' => ['required', 'in:User,Agent,Developer,Admin'],
+                'status' => ['nullable', 'in:Active,Suspended'],
+            ]);
+            if ($validator->fails()) {
+                return $this->json(['error' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
+            }
+            $data = JsonStore::read();
+            $email = strtolower(trim((string) $request->input('email')));
+            if (collect($data['users'] ?? [])->contains(fn ($account) => strtolower((string) ($account['email'] ?? '')) === $email)) {
+                return $this->json(['error' => 'An account with this email already exists.'], 409);
+            }
+            $role = $request->input('role');
+            $permission = strtolower($role);
+            $newUser = [
+                'id' => JsonStore::nextId($data),
+                'name' => trim((string) $request->input('name')),
+                'email' => $email,
+                'phone' => trim((string) $request->input('phone', '')),
+                'accountType' => 'User',
+                'permissions' => in_array($permission, ['agent', 'developer', 'admin'], true) ? [$permission] : [],
+                'role' => $role,
+                'status' => $request->input('status', 'Active'),
+                'password' => $this->hashLegacyPassword((string) $request->input('password')),
+                'joinedDate' => now()->toISOString(),
+                'createdByAdmin' => true,
+            ];
+            $data['users'][] = $newUser;
+            JsonStore::write($data);
+            return $this->json($this->safeUser($newUser), 201);
+        }
         if ($id === null || (string) $id !== (string) $user['id']) {
             if (!$this->isAdmin($user)) return $this->json(['error' => 'Forbidden'], 403);
         }
@@ -909,13 +954,59 @@ class ApiController extends Controller
             if ($request->has('coverPhoto') && !$this->canManageAgentCover($data['users'][$index])) {
                 return $this->json(['error' => 'Only admin-enabled Agent accounts can manage a cover photo.'], 403);
             }
+            $isAdmin = $this->isAdmin($user);
+            if (!$isAdmin && ($request->has('status') || $request->has('password'))) {
+                return $this->json(['error' => 'Only an admin can change account status or password.'], 403);
+            }
+            if ($request->has('email')) {
+                $email = strtolower(trim((string) $request->input('email')));
+                if ($email !== '' && collect($data['users'] ?? [])->contains(fn ($account) =>
+                    (string) ($account['id'] ?? '') !== (string) $id
+                    && strtolower((string) ($account['email'] ?? '')) === $email
+                )) {
+                    return $this->json(['error' => 'An account with this email already exists.'], 409);
+                }
+                $request->merge(['email' => $email]);
+            }
+            if ($request->has('status') && !in_array($request->input('status'), ['Active', 'Suspended'], true)) {
+                return $this->json(['error' => 'Status must be Active or Suspended.'], 422);
+            }
+            if ($request->has('password') && strlen((string) $request->input('password')) < 8) {
+                return $this->json(['error' => 'Password must be at least 8 characters.'], 422);
+            }
+            if ($isAdmin && $request->input('status') === 'Suspended'
+                && strtolower((string) ($data['users'][$index]['role'] ?? '')) === 'admin') {
+                $activeAdmins = collect($data['users'] ?? [])->filter(fn ($account) =>
+                    strtolower((string) ($account['role'] ?? '')) === 'admin'
+                    && ($account['status'] ?? 'Active') === 'Active'
+                )->count();
+                if ((string) $data['users'][$index]['id'] === (string) $user['id'] || $activeAdmins <= 1) {
+                    return $this->json(['error' => 'The signed-in or final active admin account cannot be suspended.'], 409);
+                }
+            }
             $allowed = ['name', 'phone', 'email', 'agencyName', 'companyName', 'city', 'profilePhoto', 'coverPhoto'];
             foreach ($allowed as $key) if ($request->has($key)) $data['users'][$index][$key] = $request->input($key);
+            if ($isAdmin && $request->has('status')) $data['users'][$index]['status'] = $request->input('status');
+            if ($isAdmin && $request->has('password')) {
+                $data['users'][$index]['password'] = $this->hashLegacyPassword((string) $request->input('password'));
+            }
             JsonStore::write($data); return $this->json($this->safeUser($data['users'][$index]));
         }
         if ($method === 'PATCH' && ($parts[1] ?? '') === 'push-token') {
             $data['users'][$index]['pushToken'] = $request->input('pushToken');
             JsonStore::write($data); return $this->json(['success' => true]);
+        }
+        if ($method === 'DELETE') {
+            if (!$this->isAdmin($user)) return $this->json(['error' => 'Forbidden'], 403);
+            if (strtolower((string) ($data['users'][$index]['role'] ?? '')) === 'admin') {
+                $adminCount = collect($data['users'] ?? [])->filter(fn ($account) => strtolower((string) ($account['role'] ?? '')) === 'admin')->count();
+                if ((string) $data['users'][$index]['id'] === (string) $user['id'] || $adminCount <= 1) {
+                    return $this->json(['error' => 'The signed-in or final admin account cannot be deleted.'], 409);
+                }
+            }
+            array_splice($data['users'], $index, 1);
+            JsonStore::write($data);
+            return response()->noContent();
         }
         return $this->json($this->safeUser($data['users'][$index]));
     }

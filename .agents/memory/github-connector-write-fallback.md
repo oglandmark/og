@@ -27,8 +27,8 @@ The Git Data API's blob-create response may include the SHA but omit the byte si
 
 **How to apply:** Treat an absent size as a reason to verify via `GET /git/blobs/{sha}`, not as a failed write or a reason to skip byte verification.
 
-A GitHub connection can report healthy or already bound while Git CLI still rejects authentication; that state does not prove the workspace can push.
+A GitHub connection can report healthy or already bound while Git CLI still rejects authentication; that state does not prove the workspace can push. `addIntegration` can also return success/already-bound while `searchIntegrations` remains `not_added` and `listConnections` yields no usable connection.
 
-**Why:** In this workspace, the GitHub connection reported healthy, but `git push` rejected authentication and `gh auth status` found no logged-in account.
+**Why:** In this workspace, the GitHub connection reported healthy, but `git push` rejected authentication and `gh auth status` found no logged-in account. A later bind attempt also reported success without producing a usable connection for API access.
 
-**How to apply:** After one failed authenticated push, verify the actual bound integration and CLI auth state. Do not retry the push repeatedly or handle credentials in chat; stop and have the user repair the Replit GitHub connection if no usable write path is available.
+**How to apply:** After one failed authenticated push, verify the actual bound integration and CLI auth state. Do not retry the push repeatedly or handle credentials in chat; stop and have the user repair the Replit GitHub connection if neither CLI nor connector API access is usable.

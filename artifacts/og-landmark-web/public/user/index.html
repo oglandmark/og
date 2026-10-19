@@ -17,8 +17,7 @@
         var destinationByRole = {
           admin: '/admin/',
           agent: '/portal/agent-dashboard.html',
-          seller: '/portal/seller-dashboard.html',
-          buyer: '/portal/seller-dashboard.html',
+          developer: '/portal/seller-dashboard.html',
           user: '/portal/seller-dashboard.html'
         };
         var destination = '/auth';
@@ -43,9 +42,10 @@
           var access = ['admin', 'agent', 'developer'].find(function (permission) {
             return permissions.includes(permission);
           }) || role;
-          if (token && user && (destinationByRole[access] || destinationByRole.user)) {
-            destination = destinationByRole[access] || destinationByRole.user;
-            if (access === 'admin') localStorage.setItem('adminAuth', 'true');
+          var dashboardAccess = ['admin', 'agent', 'developer'].includes(access) ? access : 'user';
+          if (token && user) {
+            destination = destinationByRole[dashboardAccess] || destinationByRole.user;
+            if (dashboardAccess === 'admin') localStorage.setItem('adminAuth', 'true');
           }
         } catch (error) {}
         window.location.replace(destination);

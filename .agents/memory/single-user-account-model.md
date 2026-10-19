@@ -7,4 +7,4 @@ Every public account registers and signs in as one `User` account. A user can br
 
 **Why:** The product owner chose a single public account type while explicitly preserving internal access needed for moderation and operations.
 
-**How to apply:** Do not expose Buyer/Seller choices in public signup. Never trust a submitted account type to grant staff permissions; preserve existing staff access through server-checked capabilities.
+**How to apply:** Do not expose Buyer/Seller choices in public signup. Auth responses should use `accountType: User`, normalize legacy Buyer/Seller roles, and serialize staff capabilities in `permissions`. Derive those capabilities from server-owned account data; never trust submitted account types or permissions.

@@ -399,16 +399,16 @@
           : [];
         const access = ['admin', 'agent', 'developer'].find(permission => permissions.includes(permission))
           || String(user.role || '').toLowerCase();
-        const role = ['admin', 'agent', 'developer'].includes(access) ? access[0].toUpperCase() + access.slice(1) : 'User';
+        const staffRole = ['admin', 'agent', 'developer'].includes(access);
+        const role = staffRole ? access[0].toUpperCase() + access.slice(1) : 'User';
+        const dashboardAccess = staffRole ? access : 'user';
         const dashMap = {
           admin:'/admin/',
           agent:'/portal/agent-dashboard.html',
           developer:'/portal/seller-dashboard.html',
-          seller:'/portal/seller-dashboard.html',
-          buyer:'/portal/seller-dashboard.html',
           user:'/portal/seller-dashboard.html'
         };
-        const dashUrl = dashMap[access] || dashMap.user;
+        const dashUrl = dashMap[dashboardAccess] || dashMap.user;
         const initials = (user.name||role).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
         const roleColor = { Admin:'#dc2626', Agent:'#7c3aed', Developer:'#0e7490', Seller:'#16a34a', Buyer:'#2563eb', User:'#C8A45A' }[role] || '#C8A45A';
 
@@ -529,16 +529,15 @@
               var access = ['admin', 'agent', 'developer'].find(function (permission) {
                 return permissions.includes(permission);
               }) || role;
+              var dashboardAccess = ['admin', 'agent', 'developer'].includes(access) ? access : 'user';
               var dashboardByRole = {
                 admin: '/admin/',
                 agent: '/portal/agent-dashboard.html',
                 developer: '/portal/seller-dashboard.html',
-                seller: '/portal/seller-dashboard.html',
-                buyer: '/portal/seller-dashboard.html',
                 user: '/portal/seller-dashboard.html'
               };
-              var dest = dashboardByRole[access] || dashboardByRole.user;
-              if (access === 'admin') {
+              var dest = dashboardByRole[dashboardAccess] || dashboardByRole.user;
+              if (dashboardAccess === 'admin') {
                 try { localStorage.setItem('adminAuth', 'true'); } catch (e) {}
               }
               // Avoid redirect loops when already on the target dashboard.

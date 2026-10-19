@@ -58,7 +58,7 @@ test('fails explicitly if the expected dashboard bundle changes', () => {
   );
 });
 
-test('a saved Buyer session on /user is restored and sent to the Buyer dashboard', () => {
+test('a saved legacy Buyer session on /user is restored and sent to the User dashboard', () => {
   const storage = createLocalStorage({
     'og-landmark-store': JSON.stringify({
       state: {
@@ -87,7 +87,7 @@ test('a saved Buyer session on /user is restored and sent to the Buyer dashboard
 
   assert.equal(storage.getItem('og_token'), 'buyer-session-test');
   assert.equal(JSON.parse(storage.getItem('og_user')).id, 123);
-  assert.equal(location.href, '/portal/buyer-dashboard.html');
+  assert.equal(location.href, '/portal/seller-dashboard.html');
 });
 
 test('the standalone /user entry can recover a persisted session before redirecting', () => {
@@ -113,4 +113,29 @@ test('the standalone /user entry can recover a persisted session before redirect
   assert.equal(destination, '/portal/seller-dashboard.html');
   assert.equal(storage.getItem('og_token'), 'seller-session-test');
   assert.equal(JSON.parse(storage.getItem('og_user')).id, 456);
+});
+
+test('legacy Seller sessions without canonical permissions also open the User dashboard', () => {
+  const storage = createLocalStorage({
+    'og_token': 'seller-session-test',
+    'og_user': JSON.stringify({ id: 789, role: 'Seller' }),
+  });
+  const location = { pathname: '/user', href: '/user' };
+  const timers = [];
+  const script = extractMarkedInlineScript(
+    websiteHtmlPath,
+    '<!-- ── Post-login/register redirect to the existing role dashboards ── -->',
+  );
+
+  vm.runInNewContext(script, {
+    localStorage: storage,
+    window: { location },
+    setTimeout(callback) {
+      timers.push(callback);
+      return timers.length;
+    },
+  });
+  timers.forEach(callback => callback());
+
+  assert.equal(location.href, '/portal/seller-dashboard.html');
 });

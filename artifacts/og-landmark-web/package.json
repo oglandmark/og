@@ -13,6 +13,7 @@
     "import:postgres": "node scripts/import-data-postgres.js",
     "test:db-adapter": "node --test database/connection.test.js scripts/json-parity.test.js",
     "test:dashboard-auth": "node --test scripts/patch-dashboard-auth.test.js",
+    "test:auth-compatibility": "node --test scripts/auth-contract.test.js scripts/auth-compatibility-api.test.js",
     "test:agent-visits": "node --test scripts/agent-visit-access.test.js",
     "test:account-deletion": "node --test scripts/account-data-deletion.test.js scripts/account-deletion-api.test.js",
     "test:public-contacts": "node --test scripts/patch-public-contacts.test.js",

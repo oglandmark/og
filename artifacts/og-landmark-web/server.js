@@ -27,6 +27,11 @@ const {
   removeUnreferencedAccountMedia,
 } = require('./account-data-deletion');
 const {
+  hasPermission,
+  resolveAuthenticatedUser,
+  toPublicUser,
+} = require('./scripts/auth-contract');
+const {
   provider: databaseProvider,
   configured: databaseConfigured,
   localPreview,
@@ -636,7 +641,8 @@ async function getRequestUser(req) {
       return null;
     }
     const data = await readData();
-    return data.users.find(u => u.id === userId) || null;
+    const user = data.users.find(u => u.id === userId);
+    return user ? resolveAuthenticatedUser(user) : null;
   } catch { return null; }
 }
 
@@ -645,18 +651,20 @@ function requireAuth(req, res, next) {
   getRequestUser(req).then(user => {
     if (!user) return res.status(401).json({ error: 'Authentication required. Please log in.' });
     req.currentUser = user;
-    req.auth = { userId: user.id, role: user.role };
+    req.auth = { userId: user.id, role: user.role, permissions: user.permissions };
     next();
   }).catch(() => res.status(500).json({ error: 'Auth check failed' }));
 }
 
-// Requires Admin role
+// Requires the server-owned admin capability; never trust a role supplied by
+// the browser. Legacy Admin accounts are mapped to this permission by the
+// shared auth contract.
 function requireAdmin(req, res, next) {
   getRequestUser(req).then(user => {
     if (!user) return res.status(401).json({ error: 'Authentication required. Please log in.' });
-    if (user.role !== 'Admin') return res.status(403).json({ error: 'Admin access required.' });
+    if (!hasPermission(user, 'admin')) return res.status(403).json({ error: 'Admin access required.' });
     req.currentUser = user;
-    req.auth = { userId: user.id, role: user.role };
+    req.auth = { userId: user.id, role: user.role, permissions: user.permissions };
     next();
   }).catch(() => res.status(500).json({ error: 'Auth check failed' }));
 }
@@ -3051,7 +3059,7 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(403).json({ error: 'Account is suspended. Please contact admin.' });
     }
     // ── Agent approval gate ──────────────────────────────────────────────────
-    if (user.role === 'Agent') {
+    if (hasPermission(user, 'agent')) {
       if (user.approvalStatus === 'Pending') {
         return res.status(403).json({
           error: 'Your agent account is pending admin approval. You will be notified once approved.',
@@ -3065,7 +3073,7 @@ app.post('/api/auth/login', async (req, res) => {
         });
       }
     }
-    const { password: _, ...safe } = user;
+    const safe = toPublicUser(user);
     const token = await createSession(user);
     res.json({ user: safe, token });
   } catch (err) {
@@ -3099,7 +3107,7 @@ app.post('/api/auth/admin-verify', async (req, res) => {
 
     const data = await readData();
     const user = data.users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (!user || user.role !== 'Admin') {
+    if (!user || !hasPermission(user, 'admin')) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     if (!verifyPassword(password, user.password)) {
@@ -3143,7 +3151,10 @@ app.post('/api/auth/admin-otp', async (req, res) => {
     // OTP verified ✓
     const data = await readData();
     const user = data.users.find(u => u.email.toLowerCase() === key);
-    const { password: _, ...safe } = user;
+    if (!user || !hasPermission(user, 'admin')) {
+      return res.status(401).json({ error: 'Admin access is no longer available for this account.' });
+    }
+    const safe = toPublicUser(user);
     const token = await createSession(user);
     res.json({ success: true, user: safe, token });
   } catch (err) {
@@ -3206,7 +3217,7 @@ app.post('/api/auth/register', async (req, res) => {
     };
     data.users.push(newUser);
     await writeData(data);
-    const { password: _, ...safe } = newUser;
+    const safe = toPublicUser(newUser);
     const token = await createSession(newUser);
     res.status(201).json({ user: safe, token });
   } catch (err) {
@@ -3307,7 +3318,9 @@ app.post('/api/auth/google', async (req, res) => {
         name: name || email.split('@')[0],
         email,
         phone,
-        role: 'Buyer',
+        accountType: 'User',
+        permissions: [],
+        role: 'User',
         status: 'Active',
         password: hashPassword(crypto.randomBytes(32).toString('hex')),
         joinedDate: new Date().toISOString().split('T')[0],
@@ -3318,7 +3331,9 @@ app.post('/api/auth/google', async (req, res) => {
 
     if (user.status === 'Inactive') return res.status(403).json({ error: 'Account is deactivated. Contact support.' });
 
-    const { password: _p, resetCode: _rc, resetCodeExpiry: _re, ...safe } = user;
+    const safe = toPublicUser(user);
+    delete safe.resetCode;
+    delete safe.resetCodeExpiry;
     const token = await createSession(user);
     res.json({ user: safe, token });
   } catch (err) {
@@ -3403,7 +3418,7 @@ async function socialAuthHandler(req, res) {
       }
       user = {
         id: nextId(data), name: profile.name || String(profile.email).split('@')[0],
-        email: socialEmail, phone, role: 'Buyer', status: 'Active',
+        email: socialEmail, phone, accountType: 'User', permissions: [], role: 'User', status: 'Active',
         password: hashPassword(crypto.randomBytes(32).toString('hex')),
         authProvider: provider, [providerField]: providerId,
         ...(profile.avatarUrl ? { avatarUrl: profile.avatarUrl } : {}),
@@ -3430,7 +3445,7 @@ async function socialAuthHandler(req, res) {
     if (['Inactive', 'Suspended', 'Deleted'].includes(user.status)) {
       return res.status(403).json({ error: 'Account is unavailable. Please contact support.' });
     }
-    const { password: _, ...safe } = user;
+    const safe = toPublicUser(user);
     res.json({ user: safe, token: await createSession(user) });
   } catch (err) {
     console.error('Social auth error:', err.message);
@@ -4183,8 +4198,7 @@ app.get('/api/auth/me', async (req, res) => {
   try {
     const user = await getRequestUser(req);
     if (!user) return res.status(401).json({ error: 'Not authenticated' });
-    const { password: _, ...safe } = user;
-    res.json(safe);
+    res.json(toPublicUser(user));
   } catch (err) {
     res.status(401).json({ error: 'Invalid or expired token' });
   }
@@ -5451,12 +5465,12 @@ function stampedRecord(body, user, idPrefix) {
 }
 
 app.get('/api/account', requireAuth, async (req, res) => {
-  const { password, ...user } = req.currentUser; res.json(user);
+  res.json(toPublicUser(req.currentUser));
 });
 app.put('/api/account', requireAuth, async (req, res) => {
   const data = await readData(); const user = data.users.find(u => u.id === req.currentUser.id);
   for (const key of ['name', 'phone', 'city', 'agencyName', 'companyName', 'profilePhoto', 'coverPhoto']) if (req.body[key] !== undefined) user[key] = req.body[key];
-  await writeData(data); const { password, ...safe } = user; res.json(safe);
+  await writeData(data); res.json(toPublicUser(user));
 });
 app.delete('/api/account', requireAuth, async (req, res) => {
   try {
@@ -5746,8 +5760,9 @@ app.get('/portal/agent',  (req, res) => { noCache(res); res.sendFile(path.join(p
 
 // ─── ROLE-SPECIFIC DASHBOARDS ─────────────────────────────────────────────────
 const dashboardUrlByRole = {
-  buyer: '/portal/buyer-dashboard.html',
+  buyer: '/portal/seller-dashboard.html',
   seller: '/portal/seller-dashboard.html',
+  user: '/portal/seller-dashboard.html',
   agent: '/portal/agent-dashboard.html',
 };
 const redirectToDashboard = (role) => (req, res) => {

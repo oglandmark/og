@@ -26,3 +26,9 @@ The Git Data API's blob-create response may include the SHA but omit the byte si
 **Why:** A correct blob upload was initially flagged because the create response omitted `size`; a read-back confirmed the bytes matched.
 
 **How to apply:** Treat an absent size as a reason to verify via `GET /git/blobs/{sha}`, not as a failed write or a reason to skip byte verification.
+
+A GitHub connection can report healthy or already bound while Git CLI still rejects authentication; that state does not prove the workspace can push.
+
+**Why:** In this workspace, the GitHub connection reported healthy, but `git push` rejected authentication and `gh auth status` found no logged-in account.
+
+**How to apply:** After one failed authenticated push, verify the actual bound integration and CLI auth state. Do not retry the push repeatedly or handle credentials in chat; stop and have the user repair the Replit GitHub connection if no usable write path is available.

@@ -96,7 +96,7 @@ export default function SignUpScreen() {
       username: !isMobileIdentifier && !value.includes('@') ? value.toLowerCase() : undefined,
       phone: signupPhone,
       password,
-      role: 'buyer',
+      role: 'user',
     });
     setLoading(false);
 

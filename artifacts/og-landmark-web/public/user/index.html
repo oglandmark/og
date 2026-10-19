@@ -18,7 +18,8 @@
           admin: '/admin/',
           agent: '/portal/agent-dashboard.html',
           seller: '/portal/seller-dashboard.html',
-          buyer: '/portal/buyer-dashboard.html'
+          buyer: '/portal/seller-dashboard.html',
+          user: '/portal/seller-dashboard.html'
         };
         var destination = '/auth';
         try {
@@ -36,9 +37,15 @@
             }
           }
           var role = String((user && user.role) || '').trim().toLowerCase();
-          if (token && user && destinationByRole[role]) {
-            destination = destinationByRole[role];
-            if (role === 'admin') localStorage.setItem('adminAuth', 'true');
+          var permissions = Array.isArray(user && user.permissions)
+            ? user.permissions.map(function (permission) { return String(permission).toLowerCase(); })
+            : [];
+          var access = ['admin', 'agent', 'developer'].find(function (permission) {
+            return permissions.includes(permission);
+          }) || role;
+          if (token && user && (destinationByRole[access] || destinationByRole.user)) {
+            destination = destinationByRole[access] || destinationByRole.user;
+            if (access === 'admin') localStorage.setItem('adminAuth', 'true');
           }
         } catch (error) {}
         window.location.replace(destination);

@@ -24,9 +24,9 @@ class PortalActionController extends Controller
     {
         $user = $this->sessionUser($request);
         if (!$user) {
-            return redirect()->route('auth.login', ['role' => 'buyer'])->with('auth_message', 'Please sign in to send and track your enquiry.');
+            return redirect()->route('auth.login')->with('auth_message', 'Please sign in to send and track your enquiry.');
         }
-        abort_unless(strtolower((string) ($user['role'] ?? '')) === 'buyer', 403);
+        abort_unless(in_array(strtolower((string) ($user['role'] ?? '')), ['user', 'buyer', 'seller'], true), 403);
 
         $validated = $request->validate([
             'message' => ['required', 'string', 'min:5', 'max:5000'],
@@ -55,9 +55,9 @@ class PortalActionController extends Controller
     {
         $user = $this->sessionUser($request);
         if (!$user) {
-            return redirect()->route('auth.login', ['role' => 'seller'])->with('auth_message', 'Please sign in to continue.');
+            return redirect()->route('auth.login')->with('auth_message', 'Please sign in to continue.');
         }
-        abort_unless(in_array(strtolower((string) ($user['role'] ?? '')), ['seller', 'developer'], true), 403);
+        abort_unless(in_array(strtolower((string) ($user['role'] ?? '')), ['user', 'buyer', 'seller', 'developer'], true), 403);
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:180'],
@@ -104,7 +104,7 @@ class PortalActionController extends Controller
             ]);
         }
 
-        return redirect()->route('portal.page', ['role' => 'seller', 'page' => 'listings'])
+        return redirect()->route('portal.page', ['role' => 'user', 'page' => 'listings'])
             ->with('success', 'Your property has been submitted for review.');
     }
 
@@ -179,9 +179,9 @@ class PortalActionController extends Controller
     {
         $user = $this->sessionUser($request);
         if (!$user) {
-            return redirect()->route('auth.login', ['role' => 'buyer'])->with('auth_message', 'Please sign in to save homes.');
+            return redirect()->route('auth.login')->with('auth_message', 'Please sign in to save homes.');
         }
-        abort_unless(strtolower((string) ($user['role'] ?? '')) === 'buyer', 403);
+        abort_unless(in_array(strtolower((string) ($user['role'] ?? '')), ['user', 'buyer', 'seller'], true), 403);
 
         if (!ctype_digit($id) || (int) $id < 1 || !$this->publicProperty($id)) {
             return back()->withErrors(['property' => 'This listing is no longer available to save.']);

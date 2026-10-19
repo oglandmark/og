@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Seller Dashboard – OG Landmark</title>
+<title>User Dashboard – OG Landmark</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -354,7 +354,7 @@ tr:hover td{background:#fafaf8}
 <aside id="sidebar">
   <div class="sb-logo">
     <img src="/images/og-logo.png" alt="OG Landmark"/>
-    <div><span>OG Landmark</span><small>Seller Portal</small></div>
+    <div><span>OG Landmark</span><small>User Portal</small></div>
   </div>
   <nav>
     <a onclick="showPage('dashboard')" id="nav-dashboard" class="active">
@@ -1256,9 +1256,9 @@ function init(){
   const u = localStorage.getItem('og_user');
   if(!token||!u){ logout(); return; }
   try { currentUser = JSON.parse(u); } catch(e){ logout(); return; }
-  if(!currentUser||!['Seller','Agent','Admin'].includes(currentUser.role)){ logout(); return; }
+  if(!currentUser||!['User','Seller','Agent','Admin','Developer'].includes(currentUser.role)){ logout(); return; }
   const av = (currentUser.name||'S')[0].toUpperCase();
-  document.getElementById('sb-uname').textContent = currentUser.name||'Seller';
+  document.getElementById('sb-uname').textContent = currentUser.name||'User';
   document.getElementById('sb-uemail').textContent = currentUser.email||'';
   document.getElementById('sb-avatar').textContent = av;
   document.getElementById('top-avatar').textContent = av;

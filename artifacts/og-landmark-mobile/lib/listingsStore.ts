@@ -20,7 +20,7 @@ export type UserListing = {
   apiId?: number;          // backend ID — set after successful POST
   postedBy: string;
   agentName: string;
-  role: 'agent' | 'buyer';
+  role: 'agent' | 'user' | 'buyer';
   title: string;
   type: string;
   category: string;

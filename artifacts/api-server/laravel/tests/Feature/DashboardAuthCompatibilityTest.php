@@ -106,7 +106,8 @@ class DashboardAuthCompatibilityTest extends TestCase
         $this->withToken($sellerToken)
             ->getJson('/api/auth/me')
             ->assertOk()
-            ->assertJsonPath('role', 'Seller');
+            ->assertJsonPath('role', 'User')
+            ->assertJsonPath('accountType', 'User');
         $this->withToken($sellerToken)
             ->getJson('/api/my-properties')
             ->assertOk()

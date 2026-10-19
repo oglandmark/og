@@ -1047,7 +1047,7 @@ export default function ProfileScreen() {
         .then(setPhotoUri)
         .catch(() => setPhotoUri(null));
 
-      if (role === 'agent' || role === 'buyer') {
+      if (role === 'agent' || role === 'user' || role === 'buyer') {
         void getMyListings(user?.id ?? '')
           .then((myL) => setListingsCount(myL.length))
           .catch(() => setListingsCount(0));
@@ -1059,7 +1059,7 @@ export default function ProfileScreen() {
           .catch(() => setAgentLeadsCount(0));
       }
 
-      if (role === 'buyer' || role === null) {
+      if (role === 'user' || role === 'buyer' || role === null) {
         void getInquiries().then(setInquiries).catch(() => setInquiries([]));
         void getVisitHistory().then(setVisitHistory).catch(() => setVisitHistory([]));
         void getSavedSearches().then(setSavedSearches).catch(() => setSavedSearches([]));
@@ -1325,7 +1325,7 @@ export default function ProfileScreen() {
       <ProfileCompletionCard user={user} photoUri={photoUri} colors={colors} router={router} />
 
       {/* ── BUYER ──────────────────────────────────────────────────────── */}
-      {role === 'buyer' && (
+      {(role === 'user' || role === 'buyer') && (
         <>
           {/* Activity stats strip */}
           <AnimatedReveal delay={120}>

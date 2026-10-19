@@ -188,7 +188,7 @@ class BuyerPortalActionsTest extends TestCase
             ->assertSessionHasErrors('message');
     }
 
-    public function test_save_and_enquiry_actions_require_a_buyer_and_show_failure_feedback(): void
+    public function test_any_user_account_can_save_homes_and_send_enquiries(): void
     {
         $this->seedData([
             'users' => [
@@ -203,13 +203,14 @@ class BuyerPortalActionsTest extends TestCase
         $sellerSession = ['api_token' => $this->token('seller@example.com')];
 
         $this->from('/properties')->post('/properties/31/saved')
-            ->assertRedirect(route('auth.login', ['role' => 'buyer']));
+            ->assertRedirect(route('auth.login'));
         $this->from('/properties')->withSession($sellerSession)
             ->post('/properties/31/saved')
-            ->assertForbidden();
+            ->assertRedirect('/properties');
         $this->from('/properties/31')->withSession($sellerSession)
             ->post('/properties/31/inquiries', ['message' => 'Please arrange a visit.'])
-            ->assertForbidden();
+            ->assertRedirect('/properties/31')
+            ->assertSessionHas('success');
 
         $this->from('/properties')->withSession($buyerSession)
             ->post('/properties/999/saved')

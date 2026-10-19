@@ -16,7 +16,8 @@ import {
 } from '@/lib/api';
 import { clearLocalAccountData } from '@/lib/accountCleanup';
 
-export type Role = 'buyer' | 'agent' | 'developer' | 'admin';
+// `buyer` remains accepted only for cached sessions from older app versions.
+export type Role = 'user' | 'buyer' | 'agent' | 'developer' | 'admin';
 
 export type User = {
   id: string;
@@ -25,6 +26,7 @@ export type User = {
   email: string;
   phone: string;
   role: Role;
+  accountType?: 'user';
   city?: string;
   area?: string;
   purpose?: string;
@@ -74,12 +76,12 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 const STORAGE_KEY = '@og-landmark/user-v2';
 
-function mapRole(r: string): Role {
+function mapRole(r: string, permissions: string[] = []): Role {
   const low = (r || '').toLowerCase();
-  if (low === 'admin') return 'admin';
-  if (low === 'agent') return 'agent';
-  if (low === 'developer' || low === 'seller') return 'developer';
-  return 'buyer';
+  if (low === 'admin' || permissions.includes('admin')) return 'admin';
+  if (low === 'agent' || permissions.includes('agent')) return 'agent';
+  if (low === 'developer' || permissions.includes('developer')) return 'developer';
+  return 'user';
 }
 
 function mapApiUser(apiU: {
@@ -89,6 +91,7 @@ function mapApiUser(apiU: {
   email: string;
   phone?: string;
   role: string;
+  permissions?: string[];
   city?: string;
   agencyName?: string;
   companyName?: string;
@@ -117,7 +120,8 @@ function mapApiUser(apiU: {
     username: apiU.username,
     email: apiU.email,
     phone: apiU.phone || '',
-    role: mapRole(apiU.role),
+    role: mapRole(apiU.role, (apiU.permissions ?? []).map((permission) => permission.toLowerCase())),
+    accountType: 'user',
     city: apiU.city,
     agencyName: apiU.agencyName,
     companyName: apiU.companyName,
@@ -274,10 +278,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
   }): Promise<{ success: boolean; error?: string; pendingApproval?: boolean; pendingMessage?: string }> => {
     try {
-      const backendRole = payload.role === 'agent' ? 'Agent'
-        : payload.role === 'developer' ? 'Seller'
-        : 'Buyer';
-      const res = await registerWithAPI({ ...payload, role: backendRole });
+      const res = await registerWithAPI({ ...payload, role: 'User' });
       if (res.pending) {
         return { success: true, pendingApproval: true, pendingMessage: res.message ?? 'Your account is under review.' };
       }
@@ -285,7 +286,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const mapped = {
         ...mapApiUser(res.user),
         phone: res.user.phone || payload.phone || '',
-        role: payload.role,
+        role: 'user' as const,
+        accountType: 'user' as const,
         city: res.user.city || payload.city,
         agencyName: payload.agencyName,
         companyName: payload.companyName,

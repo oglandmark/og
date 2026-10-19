@@ -108,7 +108,7 @@ export default function TabLayout() {
   const tabBarHeight     = isWeb ? 92 : 68 + insets.bottom;
   const tabBarPadBottom  = isWeb ? 30 : 6 + insets.bottom;
 
-  const isBuyer      = !role || role === 'buyer';
+  const isBuyer      = !role || role === 'user' || role === 'buyer';
   const isAgent      = role === 'agent';
   const isDeveloper  = role === 'developer';
   const isProfessional = isAgent || isDeveloper;

@@ -1177,7 +1177,7 @@ function BuyerForm({ colors, topInset, user, router }: any) {
         id: `buyer_${Date.now()}`,
         postedBy: user.id,
         agentName: user.name,
-        role: 'buyer',
+        role: 'user',
         title: `Looking for ${buyerType} in ${city || 'Okara District'}`,
         type: buyerType,
         category: 'Looking For',

@@ -352,17 +352,24 @@
           const txt = el.textContent.trim();
           if (
             txt === 'Property Developer' || txt === '🏗 Property Developer' || txt === 'Developer' ||
-            txt === 'Agent' || txt === '🏢 Agent' || txt === 'Real Estate Agent'
+            txt === 'Agent' || txt === '🏢 Agent' || txt === 'Real Estate Agent' ||
+            txt === 'Buyer' || txt === 'Seller'
           ) {
             el.style.display = 'none';
             el.setAttribute('data-og-hidden', '1');
           }
         });
         document.querySelectorAll(
-          '[data-value="developer"], [value="developer"], [data-value="agent"], [value="agent"]'
+          '[data-value="developer"], [value="developer"], [data-value="agent"], [value="agent"], [data-value="buyer"], [value="buyer"], [data-value="seller"], [value="seller"]'
         ).forEach(el => {
           el.style.display = 'none';
           el.setAttribute('data-og-hidden', '1');
+        });
+        document.querySelectorAll('label').forEach(label => {
+          const text = (label.textContent || '').trim().toLowerCase();
+          if (!['i’m here as a', "i'm here as a", 'account type', 'account role', 'role'].includes(text)) return;
+          const field = label.parentElement?.parentElement || label.parentElement;
+          if (field) field.style.display = 'none';
         });
       }
 
@@ -387,16 +394,23 @@
         const uStr  = localStorage.getItem('og_user');
         if (!token || !uStr) return;
         let user; try { user = JSON.parse(uStr); } catch(e){ return; }
-        const role = user.role || 'Buyer';
+        const permissions = Array.isArray(user.permissions)
+          ? user.permissions.map(permission => String(permission).toLowerCase())
+          : [];
+        const access = ['admin', 'agent', 'developer'].find(permission => permissions.includes(permission))
+          || String(user.role || '').toLowerCase();
+        const role = ['admin', 'agent', 'developer'].includes(access) ? access[0].toUpperCase() + access.slice(1) : 'User';
         const dashMap = {
           admin:'/admin/',
           agent:'/portal/agent-dashboard.html',
+          developer:'/portal/seller-dashboard.html',
           seller:'/portal/seller-dashboard.html',
-          buyer:'/portal/buyer-dashboard.html'
+          buyer:'/portal/seller-dashboard.html',
+          user:'/portal/seller-dashboard.html'
         };
-        const dashUrl = dashMap[String(role).toLowerCase()] || '/auth';
+        const dashUrl = dashMap[access] || dashMap.user;
         const initials = (user.name||role).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-        const roleColor = { Admin:'#dc2626', Agent:'#7c3aed', Seller:'#16a34a', Buyer:'#2563eb' }[role] || '#C8A45A';
+        const roleColor = { Admin:'#dc2626', Agent:'#7c3aed', Developer:'#0e7490', Seller:'#16a34a', Buyer:'#2563eb', User:'#C8A45A' }[role] || '#C8A45A';
 
         const sty = document.createElement('style');
         sty.textContent = `
@@ -509,14 +523,22 @@
               if (!token || !uStr) return;
               var user = JSON.parse(uStr);
               var role = String(user.role || '').toLowerCase();
+              var permissions = Array.isArray(user.permissions)
+                ? user.permissions.map(function (permission) { return String(permission).toLowerCase(); })
+                : [];
+              var access = ['admin', 'agent', 'developer'].find(function (permission) {
+                return permissions.includes(permission);
+              }) || role;
               var dashboardByRole = {
                 admin: '/admin/',
                 agent: '/portal/agent-dashboard.html',
+                developer: '/portal/seller-dashboard.html',
                 seller: '/portal/seller-dashboard.html',
-                buyer: '/portal/buyer-dashboard.html'
+                buyer: '/portal/seller-dashboard.html',
+                user: '/portal/seller-dashboard.html'
               };
-              var dest = dashboardByRole[role] || '/auth';
-              if (role === 'admin') {
+              var dest = dashboardByRole[access] || dashboardByRole.user;
+              if (access === 'admin') {
                 try { localStorage.setItem('adminAuth', 'true'); } catch (e) {}
               }
               // Avoid redirect loops when already on the target dashboard.

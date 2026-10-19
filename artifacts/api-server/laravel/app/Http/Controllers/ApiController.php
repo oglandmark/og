@@ -270,7 +270,6 @@ class ApiController extends Controller
                     },
                 ],
                 'password' => ['required', 'min:8'],
-                'role' => ['nullable', 'in:buyer,agent,seller,developer,Buyer,Agent,Seller,Developer'],
             ]);
             if ($validator->fails()) {
                 return $this->json(['error' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
@@ -282,12 +281,6 @@ class ApiController extends Controller
                 return $this->json(['error' => 'An account with this email already exists.'], 409);
             }
             $name = trim((string) ($input['name'] ?? trim(($input['firstName'] ?? '') . ' ' . ($input['lastName'] ?? ''))));
-            $role = match (strtolower((string) ($input['role'] ?? 'buyer'))) {
-                'agent' => 'Agent',
-                'seller' => 'Seller',
-                'developer' => 'Developer',
-                default => 'Buyer',
-            };
             $user = [
                 'id' => JsonStore::nextId($data),
                 'name' => $name !== '' ? $name : 'OG Landmark User',
@@ -295,7 +288,9 @@ class ApiController extends Controller
                 'username' => $input['username'] ?? null,
                 'phone' => trim((string) $input['phone']),
                 'city' => $input['city'] ?? null,
-                'role' => $role,
+                'accountType' => 'User',
+                'permissions' => [],
+                'role' => 'User',
                 'status' => 'Active',
                 'password' => $this->hashLegacyPassword($input['password']),
                 'joinedDate' => now()->toISOString(),
@@ -303,9 +298,6 @@ class ApiController extends Controller
             $data['users'][] = $user;
             JsonStore::write($data);
 
-            if ($role === 'Agent') {
-                return $this->json(['pending' => true, 'message' => 'Your agent account is awaiting approval.'], 201);
-            }
             return $this->json(['user' => $this->safeUser($user), 'token' => $this->createSession($user)], 201);
         }
 
@@ -717,7 +709,7 @@ class ApiController extends Controller
         if ($resource === 'users' && $id !== null && $method === 'PATCH' && ($parts[2] ?? '') === 'role') {
             $index = $this->indexById($data['users'] ?? [], $id);
             if ($index === null) return $this->json(['error' => 'User not found'], 404);
-            $roles = ['buyer' => 'Buyer', 'seller' => 'Seller', 'agent' => 'Agent', 'developer' => 'Developer', 'admin' => 'Admin'];
+            $roles = ['user' => 'User', 'agent' => 'Agent', 'developer' => 'Developer', 'admin' => 'Admin'];
             $requestedRole = strtolower(trim((string) $request->input('role', '')));
             if (!isset($roles[$requestedRole])) return $this->json(['error' => 'Unsupported account role.'], 422);
             $targetIsAdmin = strtolower((string) ($data['users'][$index]['role'] ?? '')) === 'admin';
@@ -729,6 +721,10 @@ class ApiController extends Controller
             }
             $previousRole = strtolower((string) ($data['users'][$index]['role'] ?? ''));
             $data['users'][$index]['role'] = $roles[$requestedRole];
+            $data['users'][$index]['accountType'] = 'User';
+            $data['users'][$index]['permissions'] = in_array($requestedRole, ['agent', 'developer', 'admin'], true)
+                ? [$requestedRole]
+                : [];
             if ($requestedRole !== 'agent' || $previousRole !== 'agent') {
                 $data['users'][$index]['agentCoverUploadEnabled'] = false;
             }
@@ -1948,7 +1944,24 @@ class ApiController extends Controller
         ]);
     }
 
-    private function safeUser(array $user): array { unset($user['password']); return $user; }
+    private function safeUser(array $user): array
+    {
+        unset($user['password']);
+        $legacyRole = strtolower((string) ($user['role'] ?? 'user'));
+        $permissions = array_values(array_unique(array_filter(
+            (array) ($user['permissions'] ?? []),
+            fn ($permission) => in_array(strtolower((string) $permission), ['admin', 'agent', 'developer'], true),
+        )));
+        if (in_array($legacyRole, ['admin', 'agent', 'developer'], true)) {
+            $permissions[] = $legacyRole;
+        }
+        $user['permissions'] = array_values(array_unique($permissions));
+        $user['accountType'] = 'User';
+        if (in_array($legacyRole, ['buyer', 'seller', 'user'], true)) {
+            $user['role'] = 'User';
+        }
+        return $user;
+    }
     private function findUserByEmail(string $email): ?array { return collect(JsonStore::read()['users'] ?? [])->first(fn ($u) => strtolower((string) ($u['email'] ?? '')) === strtolower(trim($email))); }
     private function isAdmin(?array $user): bool { return $user !== null && strtolower((string) ($user['role'] ?? '')) === 'admin'; }
     private function canManageAgentCover(array $user): bool

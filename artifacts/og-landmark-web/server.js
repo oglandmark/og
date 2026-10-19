@@ -1991,9 +1991,8 @@ app.get('/api/my-properties', requireAuth, async (req, res) => {
 
 app.post('/api/properties', requireAuth, async (req, res) => {
   try {
-    // A newly registered account starts as Buyer, but buyers may also submit
-    // a property they own. The listing remains Pending until admin review.
-    if (!['Buyer', 'Seller', 'Agent', 'Admin'].includes(req.currentUser.role)) {
+    // Public User accounts may browse and list; new listings still require admin review.
+    if (!['User', 'Buyer', 'Seller', 'Agent', 'Admin'].includes(req.currentUser.role)) {
       return res.status(403).json({ error: 'Your account is not allowed to submit a property listing.' });
     }
     const data = await readData();
@@ -3166,7 +3165,7 @@ app.get('/api/debug/db', async (req, res) => {
 
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { firstName, lastName, password, role } = req.body;
+    const { firstName, lastName, password } = req.body;
     const phone = String(req.body.phone ?? '').trim();
     const email = normalizeEmail(req.body.email);
     const requestedUsername = normalizeUsername(req.body.username);
@@ -3182,14 +3181,6 @@ app.post('/api/auth/register', async (req, res) => {
     if (passwordError) return res.status(400).json({ error: passwordError });
     const confirmPassword = req.body.confirmPassword ?? req.body.passwordConfirmation ?? password;
     if (confirmPassword !== password) return res.status(400).json({ error: 'Passwords do not match.' });
-    // ── Developers cannot self-register ─────────────────────────────────────
-    const requestedRole = (role || '').toLowerCase();
-    if (requestedRole === 'developer') {
-      return res.status(403).json({
-        error: 'This role is not available for registration.',
-        code: 'ROLE_NOT_ALLOWED'
-      });
-    }
     const data = await readData();
     const phoneKey = normalizePhone(phone);
     const username = uniqueUsername(data.users, requestedUsername, email || firstName || phone);
@@ -3200,28 +3191,22 @@ app.post('/api/auth/register', async (req, res) => {
     if (duplicateUsername) return res.status(409).json({ error: 'This username is already in use. Please choose another.' });
     if (duplicatePhone) return res.status(409).json({ error: 'This mobile number is already registered.' });
 
-    const { city, specialization, experience } = req.body;
-    const roleMap = { buyer: 'Buyer', seller: 'Seller', farmer: 'Buyer', agent: 'Agent' };
-    const isAgent = requestedRole === 'agent';
     const newUser = {
       id: nextId(data),
       name: `${firstName} ${lastName || ''}`.trim(),
       username,
       email: email || '',
       phone: phone ? String(phone).trim() : '',
-      role: roleMap[requestedRole] || 'Buyer',
-      status: isAgent ? 'Pending' : 'Active',
-      ...(isAgent && { approvalStatus: 'Pending', city: city || '', specialization: specialization || '', experience: experience || '', createdByAdmin: false }),
+      accountType: 'User',
+      permissions: [],
+      role: 'User',
+      status: 'Active',
       password: hashPassword(password),
       joinedDate: new Date().toISOString().split('T')[0],
     };
     data.users.push(newUser);
     await writeData(data);
     const { password: _, ...safe } = newUser;
-    if (isAgent) {
-      // Agents must wait for admin approval — do not issue a token
-      return res.status(201).json({ pending: true, message: 'Your agent registration is submitted. Please wait for admin approval.' });
-    }
     const token = await createSession(newUser);
     res.status(201).json({ user: safe, token });
   } catch (err) {

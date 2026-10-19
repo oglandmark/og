@@ -354,7 +354,7 @@ class ApiCompatibilityTest extends TestCase
             ->assertForbidden();
 
         $this->withToken($adminToken)
-            ->patchJson('/api/admin/users/10/role', ['role' => 'buyer'])
+            ->patchJson('/api/admin/users/10/role', ['role' => 'user'])
             ->assertOk()
             ->assertJsonPath('agentCoverUploadEnabled', false);
         $this->withToken($agentToken)

@@ -62,15 +62,18 @@ Route::post('/logout', [WebsiteAuthController::class, 'logout'])->name('auth.log
 Route::get('/admin/login', fn () => redirect()->route('auth.login', ['role' => 'admin']))->name('admin.login');
 Route::post('/portal/seller/properties', [PortalActionController::class, 'storeProperty'])
     ->middleware('throttle:8,1')
+    ->name('portal.property.store.legacy');
+Route::post('/portal/user/properties', [PortalActionController::class, 'storeProperty'])
+    ->middleware('throttle:8,1')
     ->name('portal.property.store');
 Route::post('/portal/admin/properties/{id}/{action}', [PortalActionController::class, 'moderateProperty'])
     ->where(['id' => '[^/]+', 'action' => 'approve|reject|request-changes|verify|feature'])
     ->middleware('throttle:30,1')
     ->name('portal.property.moderate');
 Route::get('/portal/{role}/{page?}', [PortalController::class, 'show'])
-    ->where(['role' => 'buyer|seller|agent|admin', 'page' => '.*'])
+    ->where(['role' => 'user|buyer|seller|agent|admin', 'page' => '.*'])
     ->name('portal.page');
-foreach (['buyer', 'seller', 'agent', 'admin'] as $portalRole) {
+foreach (['user', 'buyer', 'seller', 'agent', 'admin'] as $portalRole) {
     Route::get('/' . $portalRole . '/{page?}', fn (?string $page = null) => redirect()->route('portal.page', [
         'role' => $portalRole,
         'page' => $page ?: 'dashboard',

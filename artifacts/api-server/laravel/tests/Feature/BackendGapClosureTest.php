@@ -91,7 +91,7 @@ class BackendGapClosureTest extends TestCase
         return (string) $response->json('token');
     }
 
-    public function test_seller_registration_preserves_the_requested_role(): void
+    public function test_public_registration_always_creates_a_user_account(): void
     {
         $this->seedData(['users' => [], 'properties' => []]);
 
@@ -103,7 +103,9 @@ class BackendGapClosureTest extends TestCase
             'role' => 'seller',
         ])
             ->assertCreated()
-            ->assertJsonPath('user.role', 'Seller');
+            ->assertJsonPath('user.role', 'User')
+            ->assertJsonPath('user.accountType', 'User')
+            ->assertJsonPath('user.permissions', []);
 
         $this->postJson('/api/auth/register', [
             'email' => 'developer@example.com',
@@ -113,7 +115,9 @@ class BackendGapClosureTest extends TestCase
             'role' => 'developer',
         ])
             ->assertCreated()
-            ->assertJsonPath('user.role', 'Developer');
+            ->assertJsonPath('user.role', 'User')
+            ->assertJsonPath('user.accountType', 'User')
+            ->assertJsonPath('user.permissions', []);
     }
 
     public function test_buyer_registration_returns_a_session_usable_by_dashboard_requests(): void
@@ -128,7 +132,8 @@ class BackendGapClosureTest extends TestCase
             'role' => 'buyer',
         ])
             ->assertCreated()
-            ->assertJsonPath('user.role', 'Buyer');
+            ->assertJsonPath('user.role', 'User')
+            ->assertJsonPath('user.accountType', 'User');
 
         $token = (string) $registration->json('token');
         $this->assertNotSame('', $token);
@@ -137,7 +142,8 @@ class BackendGapClosureTest extends TestCase
             ->getJson('/api/auth/me')
             ->assertOk()
             ->assertJsonPath('email', 'buyer-dashboard@example.test')
-            ->assertJsonPath('role', 'Buyer');
+            ->assertJsonPath('role', 'User')
+            ->assertJsonPath('accountType', 'User');
     }
 
     public function test_mobile_signup_listing_admin_review_and_publication_work_end_to_end(): void
@@ -168,7 +174,8 @@ class BackendGapClosureTest extends TestCase
             'role' => 'buyer',
             'city' => 'Okara',
         ])->assertCreated()
-            ->assertJsonPath('user.role', 'Buyer');
+            ->assertJsonPath('user.role', 'User')
+            ->assertJsonPath('user.accountType', 'User');
 
         $buyerId = $registration->json('user.id');
         $buyerToken = (string) $registration->json('token');
@@ -177,7 +184,8 @@ class BackendGapClosureTest extends TestCase
             ->getJson('/api/auth/me')
             ->assertOk()
             ->assertJsonPath('id', $buyerId)
-            ->assertJsonPath('role', 'Buyer');
+            ->assertJsonPath('role', 'User')
+            ->assertJsonPath('accountType', 'User');
 
         // Exercise the same authenticated, single-photo upload used by mobile.
         $upload = $this->post('/api/upload/single', [
@@ -294,7 +302,7 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonPath('property.location.latitude', 30.8086123)
             ->assertJsonPath('property.location.longitude', 73.4537654)
             ->assertJsonPath('seller.id', $buyerId)
-            ->assertJsonPath('seller.role', 'Buyer')
+            ->assertJsonPath('seller.role', 'User')
             ->assertJsonCount(0, 'audit');
 
         $this->putJson("/api/properties/{$propertyId}", [

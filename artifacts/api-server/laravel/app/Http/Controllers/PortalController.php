@@ -10,6 +10,14 @@ use Illuminate\Support\Facades\DB;
 class PortalController extends Controller
 {
     private const NAVIGATION = [
+        'user' => [
+            ['label' => 'Overview', 'page' => 'dashboard'],
+            ['label' => 'Saved homes', 'page' => 'saved-homes'],
+            ['label' => 'My inquiries', 'page' => 'inquiries'],
+            ['label' => 'My listings', 'page' => 'listings'],
+            ['label' => 'Add a property', 'page' => 'add-property'],
+            ['label' => 'Account', 'page' => 'account'],
+        ],
         'buyer' => [
             ['label' => 'Overview', 'page' => 'dashboard'],
             ['label' => 'Saved homes', 'page' => 'saved-homes'],
@@ -61,9 +69,11 @@ class PortalController extends Controller
         unset($user['password']);
 
         $userRole = strtolower((string) ($user['role'] ?? 'buyer'));
-        $roleMatches = $role === 'admin'
-            ? $userRole === 'admin'
-            : $userRole === $role || ($role === 'seller' && $userRole === 'developer');
+        $roleMatches = $role === 'user'
+            ? in_array($userRole, ['user', 'buyer', 'seller'], true)
+            : ($role === 'admin'
+                ? $userRole === 'admin'
+                : $userRole === $role || ($role === 'seller' && $userRole === 'developer'));
 
         abort_unless($roleMatches, 403, 'You do not have access to this portal.');
 
@@ -97,6 +107,12 @@ class PortalController extends Controller
         ], $userId);
 
         $stats = match ($role) {
+            'user' => [
+                ['label' => 'Saved homes', 'value' => $savedHomes->count()],
+                ['label' => 'Inquiries', 'value' => $buyerInquiries->count()],
+                ['label' => 'My listings', 'value' => $ownedProperties->count()],
+                ['label' => 'Active listings', 'value' => $ownedProperties->filter(fn ($item) => strtolower((string) ($item['listingStatus'] ?? '')) === 'active')->count()],
+            ],
             'buyer' => [
                 ['label' => 'Saved homes', 'value' => $savedHomes->count()],
                 ['label' => 'Inquiries', 'value' => $buyerInquiries->count()],
@@ -177,10 +193,11 @@ class PortalController extends Controller
             })->filter(fn ($item) => is_array($item))->values();
         }
 
-        if ($role === 'buyer') {
+        if (in_array($role, ['buyer', 'user'], true)) {
             return match ($page) {
                 'saved-homes' => $sets['saved']->map(fn ($item) => $this->attachProperty($item, $data)),
-                'inquiries' => $sets['inquiries'],
+                'inquiries' => $sets['buyerInquiries'],
+                'listings', 'add-property' => $sets['properties'],
                 'offers' => $sets['offers'],
                 'visits' => $sets['appointments'],
                 default => $sets['buyerInquiries']->take(8),

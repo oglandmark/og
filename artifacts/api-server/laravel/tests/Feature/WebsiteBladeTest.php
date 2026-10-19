@@ -33,7 +33,7 @@ class WebsiteBladeTest extends TestCase
                 'id' => 91,
                 'email' => 'seller@example.com',
                 'name' => 'Website Seller',
-                'role' => 'Seller',
+                'role' => 'User',
                 'status' => 'Active',
                 'password' => "pbkdf2:{$salt}:{$hash}",
             ],
@@ -47,7 +47,10 @@ class WebsiteBladeTest extends TestCase
         $this->get('/login?role=admin')->assertOk()->assertSee('Administrator email');
         $this->get('/register')->assertOk()->assertSee('Mobile number');
         $this->get('/auth?role=buyer')->assertRedirect('/register?role=buyer');
-        $this->get('/register?role=buyer')->assertOk()->assertSee('value="buyer" selected', false);
+        $this->get('/register?role=buyer')
+            ->assertOk()
+            ->assertSee('One account to explore properties and list your own.')
+            ->assertDontSee('name="role"', false);
         $this->get('/privacy-policy')->assertOk();
         $this->get('/terms')->assertOk();
         $this->get('/account-deletion')->assertOk();
@@ -69,20 +72,19 @@ class WebsiteBladeTest extends TestCase
             'phone' => '03001234567',
             'password' => $password,
             'password_confirmation' => $password,
-            'role' => 'buyer',
             'city' => 'Lahore',
-        ])->assertRedirect('/portal/buyer/dashboard');
+        ])->assertRedirect('/portal/user/dashboard');
 
-        $this->get('/portal/buyer/dashboard')->assertOk();
+        $this->get('/portal/user/dashboard')->assertOk();
         $this->post('/logout')->assertRedirect('/');
 
         $this->from('/login?role=buyer')->post('/login', [
             'role' => 'buyer',
             'identifier' => $email,
             'password' => $password,
-        ])->assertRedirect('/portal/buyer/dashboard');
+        ])->assertRedirect('/portal/user/dashboard');
 
-        $this->get('/portal/buyer/dashboard')->assertOk();
+        $this->get('/portal/user/dashboard')->assertOk();
     }
 
     public function test_contact_form_keeps_the_lead_when_smtp_is_not_ready(): void
@@ -107,22 +109,22 @@ class WebsiteBladeTest extends TestCase
         $this->assertSame('Please call me about a home in Lahore.', $lead['message']);
     }
 
-    public function test_seller_can_submit_a_property_from_the_blade_portal(): void
+    public function test_user_can_submit_a_property_and_open_their_listings_dashboard(): void
     {
         $seller = $this->seller();
         $this->seedData(['users' => [$seller['user']], 'properties' => []]);
 
         $this->from('/login')->post('/login', [
-            'role' => 'seller',
+            'role' => 'user',
             'identifier' => 'seller@example.com',
             'password' => $seller['passwordPlaintext'],
-        ])->assertRedirect('/portal/seller/dashboard');
+        ])->assertRedirect('/portal/user/dashboard');
 
-        $this->get('/portal/seller/add-property')
+        $this->get('/portal/user/add-property')
             ->assertOk()
             ->assertSee('Submit for review');
 
-        $this->from('/portal/seller/add-property')->post('/portal/seller/properties', [
+        $this->from('/portal/user/add-property')->post('/portal/seller/properties', [
             'title' => 'Test family home',
             'type' => 'House',
             'purpose' => 'For Sale',
@@ -134,8 +136,9 @@ class WebsiteBladeTest extends TestCase
             'bathrooms' => '4',
             'description' => 'A well-maintained family home.',
             'image_urls' => '',
-        ])->assertRedirect('/portal/seller/listings')
+        ])->assertRedirect('/portal/user/listings')
             ->assertSessionHas('success');
+        $this->get('/portal/user/listings')->assertOk()->assertSee('Test family home');
 
         $property = JsonStore::read()['properties'][0] ?? null;
         $this->assertIsArray($property);

@@ -1140,10 +1140,10 @@ tr:hover td{background:#f8fafc}
       <div class="form-group"><label>Full Name *</label><input id="user-name" type="text" required/></div>
       <div class="form-group"><label>Email *</label><input id="user-email" type="email" required/></div>
       <div class="form-group"><label>Phone</label><input id="user-phone" type="tel" placeholder="+92 3XX XXXXXXX"/></div>
-      <div class="form-group"><label>Role *</label>
+      <div class="form-group"><label>Internal access *</label>
         <select id="user-role" required>
-          <option value="Buyer">Buyer</option><option value="Seller">Seller</option>
-          <option value="Agent">Agent</option><option value="Admin">Admin</option>
+          <option value="User">User</option><option value="Agent">Agent access</option>
+          <option value="Developer">Developer access</option><option value="Admin">Admin access</option>
         </select>
       </div>
       <div class="form-group"><label>Password</label><input id="user-password" type="password" placeholder="Leave blank to keep unchanged"/></div>
@@ -2659,10 +2659,10 @@ function renderSettings(){
     {l:'Pending Review',v:allProps.filter(p=>p.approvalStatus==='Pending').length},
     {l:'Priority Listings (Home Page)',v:allProps.filter(p=>p.priority).length},
     {l:'Featured Properties',v:allProps.filter(p=>p.featured).length},
-    {l:'Total Users',v:allUsers.length},
-    {l:'Sellers',v:allUsers.filter(u=>u.role==='Seller').length},
-    {l:'Agents',v:allUsers.filter(u=>u.role==='Agent').length},
-    {l:'Buyers',v:allUsers.filter(u=>u.role==='Buyer').length},
+    {l:'User Accounts',v:allUsers.length},
+    {l:'Agent Access',v:allUsers.filter(u=>u.permissions?.includes('agent')||u.role==='Agent').length},
+    {l:'Developer Access',v:allUsers.filter(u=>u.permissions?.includes('developer')||u.role==='Developer').length},
+    {l:'Admin Access',v:allUsers.filter(u=>u.permissions?.includes('admin')||u.role==='Admin').length},
     {l:'Total Inquiries',v:allInqs.length},
     {l:'Blog Posts',v:allBlog.length},
   ].map(s=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">${s.l}</span><span style="font-weight:700">${s.v}</span></div>`).join('');
@@ -3437,7 +3437,7 @@ async function prDeleteProperty(){
 }
 
 // ── USER ACTIONS ──
-function openAddUserModal(){ editUserId=null; document.getElementById('user-modal-title').textContent='Add New User'; document.getElementById('edit-user-id').value=''; document.getElementById('user-name').value=''; document.getElementById('user-email').value=''; document.getElementById('user-phone').value=''; document.getElementById('user-role').value='Buyer'; document.getElementById('user-password').value=''; document.getElementById('add-user-modal').classList.add('open'); }
+function openAddUserModal(){ editUserId=null; document.getElementById('user-modal-title').textContent='Add New User'; document.getElementById('edit-user-id').value=''; document.getElementById('user-name').value=''; document.getElementById('user-email').value=''; document.getElementById('user-phone').value=''; document.getElementById('user-role').value='User'; document.getElementById('user-password').value=''; document.getElementById('add-user-modal').classList.add('open'); }
 function openEditUserModal(id){
   const u=allUsers.find(x=>x.id===id); if(!u) return;
   editUserId=id;
@@ -3446,7 +3446,7 @@ function openEditUserModal(id){
   document.getElementById('user-name').value=u.name||'';
   document.getElementById('user-email').value=u.email||'';
   document.getElementById('user-phone').value=u.phone||'';
-  document.getElementById('user-role').value=u.role||'Buyer';
+  document.getElementById('user-role').value=u.role||'User';
   document.getElementById('user-status').value=u.status||'Active';
   document.getElementById('user-password').value='';
   document.getElementById('add-user-modal').classList.add('open');
@@ -3645,7 +3645,7 @@ function showPage(name){
 }
 
 function statusBadge(s){ const m={Active:'badge-green',Pending:'badge-yellow',Rejected:'badge-red'}; return `<span class="badge ${m[s]||'badge-gray'}">${s||'—'}</span>`; }
-function roleBadge(r){ const m={Admin:'badge-red',Seller:'badge-blue',Agent:'badge-purple',Buyer:'badge-green',Developer:'badge-yellow'}; return `<span class="badge ${m[r]||'badge-gray'}">${r}</span>`; }
+function roleBadge(r){ const m={Admin:'badge-red',Agent:'badge-purple',User:'badge-green',Developer:'badge-yellow'}; const label=r==='Admin'?'Admin access':r==='Agent'?'Agent access':r==='Developer'?'Developer access':'User'; return `<span class="badge ${m[r]||'badge-gray'}">${label}</span>`; }
 function fmtPrice(p){ if(!p) return '0'; if(p>=10000000) return (p/10000000).toFixed(1)+' Cr'; if(p>=100000) return (p/100000).toFixed(0)+' L'; return p.toLocaleString(); }
 function fmtDate(d){ if(!d) return '—'; return new Date(d).toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'}); }
 function showToast(msg,type='success'){

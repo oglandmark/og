@@ -11,10 +11,7 @@ class WebsiteAuthController extends Controller
 {
     public function login(Request $request): View
     {
-        $role = strtolower((string) $request->query('role', 'buyer'));
-        if (!in_array($role, ['buyer', 'seller', 'agent', 'admin'], true)) {
-            $role = 'buyer';
-        }
+        $role = strtolower((string) $request->query('role', 'user')) === 'admin' ? 'admin' : 'user';
 
         return view('auth.login', [
             'intendedRole' => $role,
@@ -24,12 +21,7 @@ class WebsiteAuthController extends Controller
 
     public function register(Request $request): View
     {
-        $role = strtolower((string) $request->query('role', 'buyer'));
-        if (!in_array($role, ['buyer', 'seller', 'agent'], true)) {
-            $role = 'buyer';
-        }
-
-        return view('auth.register', ['intendedRole' => $role]);
+        return view('auth.register', ['intendedRole' => 'user']);
     }
 
     public function authenticate(Request $request): RedirectResponse
@@ -38,8 +30,7 @@ class WebsiteAuthController extends Controller
             $request->merge(['identifier' => $request->input('email')]);
         }
 
-        $role = strtolower((string) $request->input('role', 'buyer'));
-        abort_unless(in_array($role, ['buyer', 'seller', 'agent', 'admin'], true), 422);
+        $role = strtolower((string) $request->input('role', 'user')) === 'admin' ? 'admin' : 'user';
 
         $rules = $request->filled('otp')
             ? ['identifier' => ['required', 'email', 'max:320'], 'otp' => ['required', 'digits:6']]
@@ -101,19 +92,13 @@ class WebsiteAuthController extends Controller
             'email' => ['required', 'email', 'max:320'],
             'phone' => ['required', 'string', 'max:32'],
             'password' => ['required', 'string', 'min:8', 'max:256', 'confirmed'],
-            'role' => ['required', 'in:buyer,seller,agent'],
             'city' => ['nullable', 'string', 'max:120'],
         ]);
 
-        $result = $this->api('auth/register', 'POST', $validated);
+        $result = $this->api('auth/register', 'POST', [...$validated, 'role' => 'User']);
         if ($result['status'] < 200 || $result['status'] >= 300) {
             return back()->withInput($request->except('password', 'password_confirmation'))
                 ->withErrors(['register' => $result['data']['error'] ?? 'Your account could not be created.']);
-        }
-
-        if (!empty($result['data']['pending'])) {
-            return redirect()->route('auth.login', ['role' => 'agent'])
-                ->with('success', 'Your agent profile was submitted and is awaiting approval.');
         }
 
         if (empty($result['data']['token'])) {
@@ -140,8 +125,11 @@ class WebsiteAuthController extends Controller
     private function startSession(Request $request, array $auth): RedirectResponse
     {
         $user = $auth['user'] ?? [];
-        $role = strtolower((string) ($user['role'] ?? 'buyer'));
-        $role = in_array($role, ['buyer', 'seller', 'agent', 'admin'], true) ? $role : 'buyer';
+        $role = strtolower((string) ($user['role'] ?? 'user'));
+        $permissions = array_map('strtolower', (array) ($user['permissions'] ?? []));
+        $role = in_array('admin', $permissions, true) || $role === 'admin' ? 'admin'
+            : (in_array('agent', $permissions, true) || $role === 'agent' ? 'agent'
+                : (in_array('developer', $permissions, true) || $role === 'developer' ? 'seller' : 'user'));
 
         $request->session()->regenerate();
         $request->session()->put('api_token', (string) $auth['token']);

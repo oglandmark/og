@@ -24,11 +24,10 @@ const NAVY = '#0B1F3A';
 const GOLD = '#C8A45A';
 
 const ROLE_COLORS: Record<string, string> = {
-  Admin:     '#7c3aed', Agent: '#1e40af', Seller: '#0e7490',
-  Developer: '#0e7490', Buyer: '#15803d',
+  Admin: '#7c3aed', Agent: '#1e40af', Developer: '#0e7490', User: '#15803d',
 };
 
-const ROLES = ['Buyer', 'Seller', 'Agent', 'Developer', 'Admin'];
+const ROLES = ['User', 'Agent', 'Developer', 'Admin'];
 
 export default function AdminUsers() {
   const colors = useColors();

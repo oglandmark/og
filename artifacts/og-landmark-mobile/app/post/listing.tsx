@@ -9,6 +9,7 @@ import {
   ActivityIndicator, Alert, Image, Platform,
   Pressable, ScrollView, StyleSheet, View,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -75,14 +76,39 @@ const PROPERTY_TYPES: PropType[] = [
   { key: 'Apartment Project', icon: 'layers',    label: 'Apt / Villa Project',category: 'project',     purposes: ['Sale'] },
 ];
 
-const TYPE_GROUPS: { label: string; category: PropCategory; icon: keyof typeof Feather.glyphMap }[] = [
-  { label: 'Residential', category: 'residential', icon: 'home' },
-  { label: 'Plots',        category: 'plot',        icon: 'map-pin' },
-  { label: 'Agricultural', category: 'agricultural',icon: 'map' },
-  { label: 'Commercial',   category: 'commercial',  icon: 'briefcase' },
-  { label: 'Industrial',   category: 'industrial',  icon: 'settings' },
-  { label: 'Projects',     category: 'project',     icon: 'layers' },
+const TYPE_GROUPS: { label: string; category: PropCategory; emoji: string }[] = [
+  { label: 'Residential', category: 'residential', emoji: '🏠' },
+  { label: 'Plots',        category: 'plot',        emoji: '📐' },
+  { label: 'Agricultural', category: 'agricultural',emoji: '🌾' },
+  { label: 'Commercial',   category: 'commercial',  emoji: '🛍️' },
+  { label: 'Industrial',   category: 'industrial',  emoji: '🏭' },
+  { label: 'Projects',     category: 'project',     emoji: '🏗️' },
 ];
+
+// Restore the colourful 3D-style property illustrations used by the earlier
+// listing flow while keeping each type's icon mapping explicit and accessible.
+const PROPERTY_TYPE_EMOJIS: Record<string, string> = {
+  House: '🏠',
+  Apartment: '🏢',
+  'Upper Portion': '🏠',
+  'Lower Portion': '🏠',
+  Room: '🛏️',
+  Villa: '🏡',
+  'Farm House': '🌳',
+  'Residential Plot': '📐',
+  'Commercial Plot': '🏢',
+  'Agricultural Land': '🌾',
+  'Farm / Orchard': '🌳',
+  Shop: '🛍️',
+  Office: '💼',
+  'Building / Plaza': '🏢',
+  Warehouse: '📦',
+  Showroom: '🏬',
+  Factory: '🏭',
+  'Industrial Land': '🏭',
+  'Housing Society': '🏗️',
+  'Apartment Project': '🏙️',
+};
 
 const PURPOSES = ['Sale', 'Rent', 'Lease'] as const;
 type Purpose = (typeof PURPOSES)[number];
@@ -917,7 +943,7 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
             <Pressable key={g.category} onPress={() => setActiveGroup(g.category)}
                accessibilityRole="button" accessibilityState={{ selected: active }} accessibilityLabel={`${g.label} property types`}
                style={[s.groupTab, { backgroundColor: active ? colors.selectionBackground : colors.secondary, borderColor: active ? colors.selectionBorder : colors.border, borderWidth: active ? 1.5 : 1 }]}>
-              <Feather name={g.icon} size={14} color={active ? colors.action : colors.mutedForeground} />
+              <Text style={s.groupEmoji}>{g.emoji}</Text>
                <Text style={[s.groupTabText, { color: active ? colors.selectionForeground : colors.foreground, fontWeight: active ? '600' : '400' }]}>{g.label}</Text>
             </Pressable>
           );
@@ -932,9 +958,21 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
             <Pressable key={t.key} onPress={() => handleTypeSelect(t.key)}
                accessibilityRole="button" accessibilityState={{ selected: sel }} accessibilityLabel={t.label}
                style={[s.typeCard, { backgroundColor: sel ? colors.selectionBackground : colors.card, borderColor: sel ? colors.selectionBorder : colors.border, borderWidth: sel ? 2 : 1 }]}>
-              <View style={[s.typeIconTile, { backgroundColor: sel ? colors.accent : colors.secondary, borderColor: sel ? colors.goldGlassBorder : colors.border }]}>
-                <Feather name={t.icon} size={19} color={sel ? colors.action : colors.mutedForeground} />
-              </View>
+              <LinearGradient
+                colors={sel ? [colors.accent, colors.card] : [colors.card, colors.secondary]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[
+                  s.typeIconTile,
+                  {
+                    borderColor: sel ? colors.goldGlassBorder : colors.border,
+                    shadowColor: colors.shadow,
+                  },
+                ]}
+              >
+                <View pointerEvents="none" style={[s.typeIconHighlight, { backgroundColor: colors.surfaceRaised + '99' }]} />
+                <Text style={[s.typeEmoji, { textShadowColor: colors.shadow + '26' }]}>{PROPERTY_TYPE_EMOJIS[t.key] ?? '🏠'}</Text>
+              </LinearGradient>
                <Text style={[s.typeLabel, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{t.label}</Text>
               {sel && <View style={[s.typeSelectedMark, { backgroundColor: colors.action }]}><Feather name="check" size={9} color={colors.actionForeground} /></View>}
             </Pressable>
@@ -1938,7 +1976,7 @@ function StepPreview({ form, colors, category }: any) {
         ) : (
           <View style={[s.previewImagePlaceholder, { backgroundColor: colors.secondary }]}>
             <View style={[s.previewEmptyIcon, { backgroundColor: colors.accent, borderColor: colors.goldGlassBorder }]}>
-              <Feather name={typeInfo?.icon ?? 'home'} size={27} color={colors.action} />
+              <Text style={[s.previewTypeEmoji, { textShadowColor: colors.shadow + '26' }]}>{PROPERTY_TYPE_EMOJIS[form.propertyType] ?? '🏠'}</Text>
             </View>
             <Text style={[s.stepSub, { color: colors.mutedForeground, marginTop: 6 }]}>No cover photo</Text>
           </View>
@@ -2219,9 +2257,13 @@ const s = StyleSheet.create({
   // Type selection
   groupTab:             { flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderRadius: 13, paddingHorizontal: 12, paddingVertical: 10 },
   groupTabText:         { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
+  groupEmoji:           { fontSize: 15, lineHeight: 19 },
   typeGrid:             { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
-  typeCard:             { width: '31%', minHeight: 104, borderRadius: 16, borderWidth: 1, paddingHorizontal: 7, paddingVertical: 11, alignItems: 'center', justifyContent: 'center', gap: 7, position: 'relative' },
-  typeIconTile:         { width: 39, height: 39, borderWidth: 1, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  typeCard:             { width: '31%', minHeight: 116, borderRadius: 17, borderWidth: 1, paddingHorizontal: 7, paddingVertical: 11, alignItems: 'center', justifyContent: 'center', gap: 8, position: 'relative' },
+  typeIconTile:         { width: 53, height: 53, borderWidth: 1, borderRadius: 18, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.16, shadowRadius: 8, elevation: 5 },
+  typeIconHighlight:    { position: 'absolute', top: 4, left: 7, right: 7, height: 11, borderRadius: 10 },
+  typeEmoji:            { fontSize: 29, lineHeight: 36, includeFontPadding: false, textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 2 },
+  previewTypeEmoji:     { fontSize: 31, lineHeight: 40, includeFontPadding: false, textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 2 },
   typeSelectedMark:     { position: 'absolute', top: 7, right: 7, width: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   typeLabel:            { fontFamily: 'Inter_600SemiBold', fontSize: 10, textAlign: 'center', lineHeight: 14 },
   // Purpose

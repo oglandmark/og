@@ -9,6 +9,61 @@ export interface HealthStatus {
   status: string;
 }
 
+export type AdminUserCreateRole = typeof AdminUserCreateRole[keyof typeof AdminUserCreateRole];
+
+
+export const AdminUserCreateRole = {
+  User: 'User',
+  Agent: 'Agent',
+  Developer: 'Developer',
+  Admin: 'Admin',
+} as const;
+
+export interface AdminUserCreate {
+  /** @maxLength 160 */
+  name: string;
+  email: string;
+  /** @maxLength 40 */
+  phone?: string;
+  city?: string;
+  agencyName?: string;
+  companyName?: string;
+  /** @minLength 8 */
+  password: string;
+  role: AdminUserCreateRole;
+}
+
+export type AdminUserUpdateStatus = typeof AdminUserUpdateStatus[keyof typeof AdminUserUpdateStatus];
+
+
+export const AdminUserUpdateStatus = {
+  Active: 'Active',
+  Suspended: 'Suspended',
+} as const;
+
+export interface AdminUserUpdate {
+  /** @maxLength 160 */
+  name?: string;
+  email?: string;
+  /** @maxLength 40 */
+  phone?: string;
+  city?: string;
+  agencyName?: string;
+  companyName?: string;
+  /** @minLength 8 */
+  password?: string;
+  status?: AdminUserUpdateStatus;
+}
+
+export interface AdminManagedUser {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  status?: string;
+}
+
 export interface AgentCoverAccessUpdate {
   enabled: boolean;
 }
@@ -111,5 +166,19 @@ export type AgentProgressReport = AgentProgressInput & {
   status: AgentProgressReportStatus;
   adminNote?: string;
   submittedAt: string;
+};
+
+export type UpdateAdminManagedUserRoleBodyRole = typeof UpdateAdminManagedUserRoleBodyRole[keyof typeof UpdateAdminManagedUserRoleBodyRole];
+
+
+export const UpdateAdminManagedUserRoleBodyRole = {
+  User: 'User',
+  Agent: 'Agent',
+  Developer: 'Developer',
+  Admin: 'Admin',
+} as const;
+
+export type UpdateAdminManagedUserRoleBody = {
+  role: UpdateAdminManagedUserRoleBodyRole;
 };
 

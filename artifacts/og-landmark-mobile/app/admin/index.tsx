@@ -14,6 +14,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useColors } from '@/hooks/useColors';
 import {
   getAdminStats, AdminStats,
+  getDeveloperAdminAnalytics, DeveloperAdminAnalytics,
   getAdminProperties, ApiProperty,
   approveProperty, rejectProperty, deleteAdminProperty,
 } from '@/lib/api';
@@ -25,6 +26,7 @@ export default function AdminDashboard() {
 
   const [stats,      setStats]      = useState<AdminStats | null>(null);
   const [pending,    setPending]    = useState<ApiProperty[]>([]);
+  const [developerAnalytics, setDeveloperAnalytics] = useState<DeveloperAdminAnalytics | null>(null);
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [rejectingProperty, setRejectingProperty] = useState<ApiProperty | null>(null);
@@ -33,12 +35,14 @@ export default function AdminDashboard() {
 
   const load = useCallback(async () => {
     try {
-      const [s, p] = await Promise.all([
+      const [s, p, developer] = await Promise.all([
         getAdminStats(),
         getAdminProperties({ status: 'Pending' }),
+        getDeveloperAdminAnalytics().catch(() => null),
       ]);
       setStats(s);
       setPending(p.slice(0, 5));
+      setDeveloperAnalytics(developer);
     } catch {
       // silently fail
     } finally {
@@ -145,6 +149,19 @@ export default function AdminDashboard() {
                 </View>
               ))}
             </View>
+            {developerAnalytics ? (
+              <View style={[s.developerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={s.developerHeading}>
+                  <Feather name="layers" size={17} color={colors.action} />
+                  <Text style={[s.developerTitle, { color: colors.foreground }]}>Developer activity</Text>
+                </View>
+                <View style={s.developerStats}>
+                  <Text style={[s.developerMetric, { color: colors.foreground }]}>{developerAnalytics.projects} projects</Text>
+                  <Text style={[s.developerMetric, { color: colors.foreground }]}>{developerAnalytics.leads} leads</Text>
+                  <Text style={[s.developerMetric, { color: colors.foreground }]}>{developerAnalytics.units} units</Text>
+                </View>
+              </View>
+            ) : null}
 
             {/* Nav shortcuts */}
             <Text style={[s.sectionTitle, { color: colors.foreground }]}>Manage</Text>
@@ -266,6 +283,11 @@ const s = StyleSheet.create({
   statIcon:     { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   statValue:    { fontFamily: 'Inter_700Bold', fontSize: 24, marginBottom: 2 },
   statLabel:    { fontFamily: 'Inter_400Regular', fontSize: 11 },
+  developerCard: { marginHorizontal: 16, marginBottom: 12, borderRadius: 15, borderWidth: 1, padding: 14 },
+  developerHeading: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  developerTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  developerStats: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
+  developerMetric: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   sectionTitle: { fontFamily: 'PlayfairDisplay_500Medium', fontSize: 19, paddingHorizontal: 18, marginBottom: 11, marginTop: 9 },
   navRow:       { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 16, marginBottom: 16 },
   navCard:      { flexBasis: '47%', flexGrow: 1, minWidth: 145, borderRadius: 16, padding: 17, alignItems: 'center', gap: 9 },

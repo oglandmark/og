@@ -205,6 +205,99 @@ paths:
           description: Report not found
         "422":
           description: Invalid review
+  /users:
+    post:
+      operationId: createAdminManagedUser
+      tags: [admin]
+      summary: Create a user account from the Admin mobile panel
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUserCreate"
+      responses:
+        "201":
+          description: Created account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminManagedUser"
+        "403":
+          description: Administrator authentication required
+        "409":
+          description: Email is already in use
+        "422":
+          description: Invalid account details
+  /users/{id}:
+    put:
+      operationId: updateAdminManagedUser
+      tags: [admin]
+      summary: Update account details, status, or password
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUserUpdate"
+      responses:
+        "200":
+          description: Updated account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminManagedUser"
+        "403":
+          description: Administrator authentication required
+        "404":
+          description: Account not found
+        "422":
+          description: Invalid account details
+  /admin/users/{id}/role:
+    patch:
+      operationId: updateAdminManagedUserRole
+      tags: [admin]
+      summary: Change a user role
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum: [User, Agent, Developer, Admin]
+              required: [role]
+      responses:
+        "200":
+          description: Updated account role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminManagedUser"
+        "403":
+          description: Administrator authentication required
+        "422":
+          description: Invalid role
 components:
   securitySchemes:
     BearerAuth:
@@ -218,6 +311,72 @@ components:
           type: string
       required:
         - status
+    AdminUserCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 160
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          maxLength: 40
+        city:
+          type: string
+        agencyName:
+          type: string
+        companyName:
+          type: string
+        password:
+          type: string
+          minLength: 8
+        role:
+          type: string
+          enum: [User, Agent, Developer, Admin]
+      required: [name, email, password, role]
+    AdminUserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 160
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          maxLength: 40
+        city:
+          type: string
+        agencyName:
+          type: string
+        companyName:
+          type: string
+        password:
+          type: string
+          minLength: 8
+        status:
+          type: string
+          enum: [Active, Suspended]
+    AdminManagedUser:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+      required: [id, name, email, role]
     AgentCoverAccessUpdate:
       type: object
       properties:

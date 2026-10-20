@@ -18,7 +18,7 @@ import { formatPropertyCoordinates, getPropertyCoordinates } from '@/lib/propert
 import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import {
   getAdminProperties, ApiProperty,
-  approveProperty, rejectProperty,
+  approveProperty, rejectProperty, requestPropertyChanges,
   toggleFeatureProperty, deleteAdminProperty, updateProperty,
   getAdminPropertyReview, AdminPropertyReview, setAdminDemoPropertiesHidden,
 } from '@/lib/api';
@@ -27,13 +27,14 @@ import { formatPrice, properties as bundledDemoProperties, Property as DemoPrope
 const NAVY = '#0B1F3A';
 const GOLD = '#C8A45A';
 
-const STATUS_TABS = ['Pending', 'Active', 'Rejected', 'All', 'Demos'] as const;
+const STATUS_TABS = ['Pending', 'Changes Requested', 'Active', 'Rejected', 'All', 'Demos'] as const;
 type StatusTab = typeof STATUS_TABS[number];
 
 function statusColor(s: string) {
   if (s === 'Active')   return '#15803d';
   if (s === 'Pending')  return '#b45309';
   if (s === 'Rejected') return '#dc2626';
+  if (s === 'Changes Requested') return '#b45309';
   return '#6b7280';
 }
 
@@ -69,6 +70,7 @@ export default function AdminProperties() {
   const [loadError, setLoadError] = useState('');
   const [rejectingProperty, setRejectingProperty] = useState<ApiProperty | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [reviewDecision, setReviewDecision] = useState<'reject' | 'request_changes'>('reject');
   const [rejecting, setRejecting] = useState(false);
   const [reviewingProperty, setReviewingProperty] = useState<ApiProperty | null>(null);
   const [reviewData, setReviewData] = useState<AdminPropertyReview | null>(null);
@@ -110,6 +112,13 @@ export default function AdminProperties() {
   function beginReject(prop: ApiProperty) {
     setRejectingProperty(prop);
     setRejectReason('');
+    setReviewDecision('reject');
+  }
+
+  function beginRequestChanges(prop: ApiProperty) {
+    setRejectingProperty(prop);
+    setRejectReason('');
+    setReviewDecision('request_changes');
   }
 
   async function submitReject() {
@@ -122,12 +131,13 @@ export default function AdminProperties() {
     }
     setRejecting(true);
     try {
-      await rejectProperty(property.id, reason);
+      if (reviewDecision === 'request_changes') await requestPropertyChanges(property.id, reason);
+      else await rejectProperty(property.id, reason);
       setProperties((items) => items.filter((item) => item.id !== property.id));
       setRejectingProperty(null);
       setRejectReason('');
     } catch (error) {
-      Alert.alert('Could not reject', error instanceof Error ? error.message : 'Please try again.');
+      Alert.alert(reviewDecision === 'request_changes' ? 'Could not request changes' : 'Could not reject', error instanceof Error ? error.message : 'Please try again.');
     } finally {
       setRejecting(false);
     }
@@ -407,6 +417,10 @@ export default function AdminProperties() {
               <Feather name="x" size={13} color="#fff" />
               <Text style={s.actText}>Reject</Text>
             </Pressable>
+            <Pressable style={[s.actBtn, { backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.warning }]} onPress={() => beginRequestChanges(item)}>
+              <Feather name="edit-3" size={13} color={colors.warning} />
+              <Text style={[s.actText, { color: colors.warning }]}>Request changes</Text>
+            </Pressable>
           </>
         )}
         <Pressable style={[s.actBtn, { backgroundColor: item.featured ? GOLD : colors.secondary, borderWidth: 1, borderColor: GOLD }]} onPress={() => doFeature(item)}>
@@ -574,7 +588,7 @@ export default function AdminProperties() {
       >
         <View style={s.modalBackdrop}>
           <View style={[s.rejectSheet, { backgroundColor: colors.background }]}>
-            <Text style={[s.modalTitle, { color: colors.foreground }]}>Reject Listing</Text>
+            <Text style={[s.modalTitle, { color: colors.foreground }]}>{reviewDecision === 'request_changes' ? 'Request Listing Changes' : 'Reject Listing'}</Text>
             <Text style={[s.modalSub, { color: colors.mutedForeground }]}>
               {rejectingProperty?.title}
             </Text>
@@ -599,10 +613,10 @@ export default function AdminProperties() {
               <Pressable
                 onPress={submitReject}
                 disabled={rejecting}
-                style={[s.modalSave, { backgroundColor: '#dc2626', opacity: rejecting ? 0.6 : 1 }]}
+                style={[s.modalSave, { backgroundColor: reviewDecision === 'request_changes' ? colors.warning : '#dc2626', opacity: rejecting ? 0.6 : 1 }]}
               >
-                {rejecting ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="x" size={15} color="#fff" />}
-                <Text style={[s.modalSaveText, { color: '#fff' }]}>{rejecting ? 'Rejecting…' : 'Reject Listing'}</Text>
+                {rejecting ? <ActivityIndicator size="small" color="#fff" /> : <Feather name={reviewDecision === 'request_changes' ? 'edit-3' : 'x'} size={15} color="#fff" />}
+                <Text style={[s.modalSaveText, { color: '#fff' }]}>{rejecting ? 'Saving…' : reviewDecision === 'request_changes' ? 'Send correction request' : 'Reject Listing'}</Text>
               </Pressable>
             </View>
           </View>

@@ -168,3 +168,31 @@ mtime_ms = 1792511503790
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/8b6650fb-29d7-4243-a1a4-99b38ba537ec/fe5b8b99-839e-4825-a37b-81d54c8750ef"
 storage_version_token = "1792511691063276"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "FHzb4XdsXiDw0-zPyyXfn"
+uri = "file://generated-artifacts/OG%20Land%20laravel%20backend%2050.zip"
+type = "unspecified"
+title = "OG Land laravel backend 50.zip"
+description = "Complete Laravel backend source package with vendor dependencies and Hostinger upload guide. Environment secrets, local database, and uploaded media are excluded."
+logical_id = "3371aac9-9dcc-42c8-8214-1e09b54c6373"
+content_hash = "sha256:2a540dbef301fc0ef74147493861dbadaf3a7e9373baf3184ed425afb9cd7365"
+size = 38498053
+mtime_ms = 1792521285555
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/3371aac9-9dcc-42c8-8214-1e09b54c6373/2689b8fd-4305-4fed-a8e3-d6cc1bcc3404"
+storage_version_token = "1792521352642957"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "GYH1fH9arOmavjB_49MNu"
+uri = "file://generated-artifacts/OG%20Land%20website%20complete.zip"
+type = "unspecified"
+title = "OG Land website complete.zip"
+description = "Complete current website package with Node server, frontend assets, source, and deployment scripts. Environment secrets, runtime database snapshot, and uploaded media are excluded."
+logical_id = "d76d7453-da72-4d20-9508-a3de4637e980"
+content_hash = "sha256:f791e9afa91fe8cd6100c99493e368d92ffc33e18edd488721360d52ba97f6d8"
+size = 13330267
+mtime_ms = 1792521286531
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/d76d7453-da72-4d20-9508-a3de4637e980/e9d14113-d353-4578-9b0d-f65996eb1f68"
+storage_version_token = "1792521354017379"
+content_type = "application/octet-stream"

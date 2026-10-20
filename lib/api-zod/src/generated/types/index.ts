@@ -6,6 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './adminManagedUser';
+export * from './adminUserCreate';
+export * from './adminUserCreateRole';
+export * from './adminUserUpdate';
+export * from './adminUserUpdateStatus';
 export * from './agentAdminMessage';
 export * from './agentAdminMessageInput';
 export * from './agentAdminMessageSenderRole';
@@ -19,3 +24,5 @@ export * from './agentProgressReportStatus';
 export * from './agentProgressReview';
 export * from './agentProgressReviewStatus';
 export * from './healthStatus';
+export * from './updateAdminManagedUserRoleBody';
+export * from './updateAdminManagedUserRoleBodyRole';

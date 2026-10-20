@@ -1169,6 +1169,17 @@ export async function getAdminStats(): Promise<AdminStats> {
   return apiFetch<AdminStats>('/api/admin/stats');
 }
 
+export type DeveloperAdminAnalytics = {
+  projects: number;
+  leads: number;
+  units: number;
+  generatedAt: string;
+};
+
+export async function getDeveloperAdminAnalytics(): Promise<DeveloperAdminAnalytics> {
+  return apiFetch<DeveloperAdminAnalytics>('/api/admin/developer-analytics');
+}
+
 export async function getAdminProperties(
   params: { limit?: number; status?: string } = {},
 ): Promise<ApiProperty[]> {
@@ -1202,6 +1213,26 @@ export async function getAdminUsers(
   return apiFetch<ApiUser[]>(
     `/api/admin/users${qs.toString() ? `?${qs}` : ''}`,
   );
+}
+
+export async function createAdminUser(payload: {
+  name: string;
+  email: string;
+  phone?: string;
+  city?: string;
+  agencyName?: string;
+  companyName?: string;
+  password: string;
+  role: 'User' | 'Agent' | 'Developer' | 'Admin';
+}): Promise<ApiUser> {
+  return apiFetch<ApiUser>('/api/users', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export async function updateAdminUser(
+  userId: number,
+  payload: Partial<Pick<ApiUser, 'name' | 'email' | 'phone' | 'city' | 'agencyName' | 'companyName' | 'status'>> & { password?: string },
+): Promise<ApiUser> {
+  return apiFetch<ApiUser>(`/api/users/${userId}`, { method: 'PUT', body: JSON.stringify(payload) });
 }
 
 export async function updateUserRole(userId: number, role: string): Promise<ApiUser> {

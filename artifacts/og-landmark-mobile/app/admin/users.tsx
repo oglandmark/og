@@ -4,7 +4,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, FlatList, Platform, Pressable,
+  ActivityIndicator, Alert, FlatList, Modal, Platform, Pressable,
   RefreshControl, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -12,8 +12,11 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import {
+  createAdminUser,
   getAdminUsers,
+  updateAdminUser,
   updateUserRole,
   setAgentCoverUploadAccess,
   deleteAdminUser,
@@ -39,6 +42,10 @@ export default function AdminUsers() {
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [editingUser, setEditingUser] = useState<ApiUser | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [savingUser, setSavingUser] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '', phone: '', city: '', agencyName: '', companyName: '', password: '', role: 'User', status: 'Active' });
 
   const load = useCallback(async () => {
     try {
@@ -77,22 +84,62 @@ export default function AdminUsers() {
     setFiltered(prev => prev.map(u => u.id === updated.id ? updated : u));
   }
 
-  function handleChangeRole(user: ApiUser) {
-    Alert.alert(
-      'Change Role',
-      `Current role: ${user.role}\nSelect new role for ${user.name}`,
-      [
-        ...ROLES.filter(r => r !== user.role).map(r => ({
-          text: r,
-          onPress: async () => {
-            try {
-              replaceUser(await updateUserRole(user.id, r));
-            } catch { Alert.alert('Error', 'Could not update role.'); }
-          },
-        })),
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+  function openEditor(user?: ApiUser) {
+    setEditingUser(user ?? null);
+    setForm({
+      name: user?.name ?? '',
+      email: user?.email ?? '',
+      phone: user?.phone ?? '',
+      city: user?.city ?? '',
+      agencyName: user?.agencyName ?? '',
+      companyName: user?.companyName ?? '',
+      password: '',
+      role: user?.role ?? 'User',
+      status: user?.status === 'Suspended' ? 'Suspended' : 'Active',
+    });
+    setEditorOpen(true);
+  }
+
+  async function saveUser() {
+    if (!form.name.trim() || !form.email.trim() || (!editingUser && form.password.length < 8)) {
+      Alert.alert('Required fields', 'Enter a name, valid email, and a password of at least 8 characters for a new account.');
+      return;
+    }
+    setSavingUser(true);
+    try {
+      if (editingUser) {
+        let updated = await updateAdminUser(editingUser.id, {
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          city: form.city.trim(),
+          agencyName: form.agencyName.trim(),
+          companyName: form.companyName.trim(),
+          status: form.status,
+          ...(form.password ? { password: form.password } : {}),
+        });
+        if (form.role !== editingUser.role) updated = await updateUserRole(updated.id, form.role);
+        replaceUser(updated);
+      } else {
+        const created = await createAdminUser({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          city: form.city.trim(),
+          agencyName: form.agencyName.trim(),
+          companyName: form.companyName.trim(),
+          password: form.password,
+          role: form.role as 'User' | 'Agent' | 'Developer' | 'Admin',
+        });
+        setUsers((current) => [created, ...current]);
+        setFiltered((current) => [created, ...current]);
+      }
+      setEditorOpen(false);
+    } catch (cause) {
+      Alert.alert('Could not save account', cause instanceof Error ? cause.message : 'Please check the details and try again.');
+    } finally {
+      setSavingUser(false);
+    }
   }
 
   function handleAgentCoverAccess(user: ApiUser) {
@@ -152,6 +199,9 @@ export default function AdminUsers() {
           <View style={[s.roleBadge, { backgroundColor: roleColor + '18' }]}>
             <Text style={[s.roleText, { color: roleColor }]}>{item.role}</Text>
           </View>
+          <Text style={[s.email, { color: item.status === 'Suspended' ? colors.destructive : colors.success, marginTop: 5, fontWeight: '700' }]}>
+            {item.status === 'Suspended' ? 'Suspended' : 'Active'}
+          </Text>
           {item.role.toLowerCase() === 'agent' ? (
             <Pressable
               accessibilityRole="switch"
@@ -184,8 +234,9 @@ export default function AdminUsers() {
         <View style={s.actions}>
           <Pressable
             style={[s.actBtn, { borderColor: colors.border, backgroundColor: colors.secondary }]}
-            onPress={() => handleChangeRole(item)}
+            onPress={() => openEditor(item)}
             hitSlop={6}
+            accessibilityLabel={`Edit ${item.name}`}
           >
             <Feather name="edit-2" size={13} color={GOLD} />
           </Pressable>
@@ -208,7 +259,10 @@ export default function AdminUsers() {
           <Feather name="arrow-left" size={20} color="#8a9ab5" />
         </Pressable>
         <Text style={s.headerTitle}>{roleFilter === 'agents' ? 'Agents' : 'Users'} ({filtered.length})</Text>
-        <View style={{ width: 24 }} />
+        <Pressable onPress={() => openEditor()} accessibilityRole="button" accessibilityLabel="Add user" style={[s.addButton, { backgroundColor: colors.action }]}>
+          <Feather name="user-plus" size={17} color={colors.actionForeground} />
+          <Text style={{ color: colors.actionForeground, fontWeight: '700', fontSize: 12 }}>Add</Text>
+        </Pressable>
       </View>
 
       <View style={[s.filterRow, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
@@ -278,6 +332,59 @@ export default function AdminUsers() {
           }
         />
       )}
+      <Modal visible={editorOpen} transparent animationType="slide" onRequestClose={() => !savingUser && setEditorOpen(false)}>
+        <View style={s.modalBackdrop}>
+          <View style={[s.editorSheet, { backgroundColor: colors.background }]}>
+            <View style={s.editorHeader}>
+              <View>
+                <Text style={[s.headerTitle, { color: colors.foreground }]}>{editingUser ? 'Edit account' : 'Create account'}</Text>
+                <Text style={{ color: colors.mutedForeground, fontSize: 12, marginTop: 4 }}>Manage account access and details</Text>
+              </View>
+              <Pressable onPress={() => setEditorOpen(false)} disabled={savingUser} accessibilityLabel="Close editor">
+                <Feather name="x" size={22} color={colors.mutedForeground} />
+              </Pressable>
+            </View>
+            <KeyboardAwareScrollViewCompat contentContainerStyle={s.formContent} bottomOffset={28} keyboardShouldPersistTaps="handled">
+              {([
+                ['Full name', 'name'],
+                ['Email address', 'email'],
+                ['Phone', 'phone'],
+                ['City', 'city'],
+                ['Agency', 'agencyName'],
+                ['Company', 'companyName'],
+                ['Password (leave blank to keep current)', 'password'],
+              ] as const).map(([label, key]) => (
+                <View key={key}>
+                  <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>{label}</Text>
+                  <TextInput
+                    value={form[key]}
+                    onChangeText={(value) => setForm((current) => ({ ...current, [key]: value }))}
+                    placeholder={label}
+                    placeholderTextColor={colors.mutedForeground}
+                    keyboardType={key === 'email' ? 'email-address' : 'default'}
+                    autoCapitalize={key === 'email' ? 'none' : 'sentences'}
+                    secureTextEntry={key === 'password'}
+                    style={[s.fieldInput, { color: colors.foreground, backgroundColor: colors.card, borderColor: colors.border }]}
+                  />
+                </View>
+              ))}
+              <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>ROLE</Text>
+              <View style={s.optionRow}>
+                {ROLES.map((role) => <Pressable key={role} onPress={() => setForm((current) => ({ ...current, role }))} style={[s.option, { borderColor: form.role === role ? colors.action : colors.border, backgroundColor: form.role === role ? colors.action : colors.card }]}><Text style={{ color: form.role === role ? colors.actionForeground : colors.foreground, fontWeight: '700', fontSize: 12 }}>{role}</Text></Pressable>)}
+              </View>
+              {editingUser ? <>
+                <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>ACCOUNT STATUS</Text>
+                <View style={s.optionRow}>
+                  {(['Active', 'Suspended'] as const).map((status) => <Pressable key={status} onPress={() => setForm((current) => ({ ...current, status }))} style={[s.option, { borderColor: form.status === status ? colors.action : colors.border, backgroundColor: form.status === status ? colors.action : colors.card }]}><Text style={{ color: form.status === status ? colors.actionForeground : colors.foreground, fontWeight: '700', fontSize: 12 }}>{status}</Text></Pressable>)}
+                </View>
+              </> : null}
+              <Pressable onPress={() => void saveUser()} disabled={savingUser} style={[s.saveButton, { backgroundColor: colors.action, opacity: savingUser ? 0.6 : 1 }]}>
+                {savingUser ? <ActivityIndicator color={colors.actionForeground} /> : <Text style={{ color: colors.actionForeground, fontWeight: '800' }}>{editingUser ? 'Save account' : 'Create account'}</Text>}
+              </Pressable>
+            </KeyboardAwareScrollViewCompat>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -307,4 +414,14 @@ const s = StyleSheet.create({
   errorCard:   { margin: 20, padding: 16, borderRadius: 12, alignItems: 'center', gap: 12 },
   errorText:   { fontFamily: 'Inter_400Regular', fontSize: 13, textAlign: 'center' },
   retryButton: { borderRadius: 9, paddingHorizontal: 16, paddingVertical: 10 },
+  addButton: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 11, minHeight: 36, borderRadius: 10 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(5,14,24,0.72)', justifyContent: 'flex-end' },
+  editorSheet: { maxHeight: '92%', borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingTop: 20 },
+  editorHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 14 },
+  formContent: { paddingHorizontal: 20, paddingBottom: 30, gap: 12 },
+  fieldLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5, marginBottom: 5 },
+  fieldInput: { minHeight: 44, borderRadius: 10, borderWidth: 1, paddingHorizontal: 12 },
+  optionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  option: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 },
+  saveButton: { minHeight: 46, alignItems: 'center', justifyContent: 'center', borderRadius: 12, marginTop: 4 },
 });

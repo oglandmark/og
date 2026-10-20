@@ -1080,6 +1080,13 @@ class BackendGapClosureTest extends TestCase
                 'sellerId' => 2,
                 'approvalStatus' => 'Pending',
                 'listingStatus' => 'Pending',
+            ], [
+                'id' => 42,
+                'title' => 'Lahore corner plot',
+                'city' => 'Lahore',
+                'sellerId' => 2,
+                'approvalStatus' => 'Pending',
+                'listingStatus' => 'Pending',
             ]],
             'notifications' => [],
             'notificationEvents' => [],
@@ -1096,12 +1103,16 @@ class BackendGapClosureTest extends TestCase
         $this->patchJson('/api/properties/41/approve', [], $adminHeaders)
             ->assertOk()
             ->assertJsonPath('approvalStatus', 'Active');
+        $this->patchJson('/api/properties/42/request-changes', ['reason' => 'Please add the plot dimensions.'], $adminHeaders)
+            ->assertOk()
+            ->assertJsonPath('approvalStatus', 'Changes Requested');
 
         $this->getJson('/api/notifications?category=account', $buyerHeaders)
             ->assertOk()
-            ->assertJsonCount(2, 'items')
+            ->assertJsonCount(3, 'items')
             ->assertJsonFragment(['type' => 'ACCOUNT_ADMIN_UPDATED'])
-            ->assertJsonFragment(['type' => 'PROPERTY_LISTING_APPROVED']);
+            ->assertJsonFragment(['type' => 'PROPERTY_LISTING_APPROVED'])
+            ->assertJsonFragment(['type' => 'PROPERTY_CHANGES_REQUESTED']);
         $this->getJson('/api/notifications?category=properties', $buyerHeaders)
             ->assertOk()
             ->assertJsonCount(1, 'items')
@@ -1111,6 +1122,6 @@ class BackendGapClosureTest extends TestCase
         $this->patchJson('/api/properties/41/approve', [], $adminHeaders)->assertOk();
         $this->getJson('/api/notifications?category=account', $buyerHeaders)
             ->assertOk()
-            ->assertJsonCount(2, 'items');
+            ->assertJsonCount(3, 'items');
     }
 }

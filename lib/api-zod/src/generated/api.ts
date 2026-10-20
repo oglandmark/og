@@ -255,3 +255,92 @@ export const ReviewAgentProgressReportResponse = zod.object({
 }))
 
 
+/**
+ * @summary Create a user account from the Admin mobile panel
+ */
+export const createAdminManagedUserBodyNameMax = 160;
+
+export const createAdminManagedUserBodyPhoneMax = 40;
+
+export const createAdminManagedUserBodyPasswordMin = 8;
+
+
+
+export const CreateAdminManagedUserBody = zod.object({
+  "name": zod.string().max(createAdminManagedUserBodyNameMax),
+  "email": zod.email(),
+  "phone": zod.string().max(createAdminManagedUserBodyPhoneMax).optional(),
+  "city": zod.string().optional(),
+  "agencyName": zod.string().optional(),
+  "companyName": zod.string().optional(),
+  "password": zod.string().min(createAdminManagedUserBodyPasswordMin),
+  "role": zod.enum(['User', 'Agent', 'Developer', 'Admin'])
+})
+
+export const CreateAdminManagedUserResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.email(),
+  "phone": zod.string().optional(),
+  "role": zod.string(),
+  "status": zod.string().optional()
+})
+
+
+/**
+ * @summary Update account details, status, or password
+ */
+export const UpdateAdminManagedUserParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const updateAdminManagedUserBodyNameMax = 160;
+
+export const updateAdminManagedUserBodyPhoneMax = 40;
+
+export const updateAdminManagedUserBodyPasswordMin = 8;
+
+
+
+export const UpdateAdminManagedUserBody = zod.object({
+  "name": zod.string().max(updateAdminManagedUserBodyNameMax).optional(),
+  "email": zod.email().optional(),
+  "phone": zod.string().max(updateAdminManagedUserBodyPhoneMax).optional(),
+  "city": zod.string().optional(),
+  "agencyName": zod.string().optional(),
+  "companyName": zod.string().optional(),
+  "password": zod.string().min(updateAdminManagedUserBodyPasswordMin).optional(),
+  "status": zod.enum(['Active', 'Suspended']).optional()
+})
+
+export const UpdateAdminManagedUserResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.email(),
+  "phone": zod.string().optional(),
+  "role": zod.string(),
+  "status": zod.string().optional()
+})
+
+
+/**
+ * @summary Change a user role
+ */
+export const UpdateAdminManagedUserRoleParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateAdminManagedUserRoleBody = zod.object({
+  "role": zod.enum(['User', 'Agent', 'Developer', 'Admin'])
+})
+
+export const UpdateAdminManagedUserRoleResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.email(),
+  "phone": zod.string().optional(),
+  "role": zod.string(),
+  "status": zod.string().optional()
+})
+
+

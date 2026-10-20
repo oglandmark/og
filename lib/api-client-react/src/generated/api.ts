@@ -20,6 +20,9 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminManagedUser,
+  AdminUserCreate,
+  AdminUserUpdate,
   AgentAdminMessageInput,
   AgentAdminThread,
   AgentCoverAccessUpdate,
@@ -27,7 +30,8 @@ import type {
   AgentProgressInput,
   AgentProgressReport,
   AgentProgressReview,
-  HealthStatus
+  HealthStatus,
+  UpdateAdminManagedUserRoleBody
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -731,5 +735,271 @@ export const useReviewAgentProgressReport = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getReviewAgentProgressReportMutationOptions(options));
+    }
+
+export const getCreateAdminManagedUserUrl = () => {
+
+
+
+
+  return `/api/users`
+}
+
+/**
+ * @summary Create a user account from the Admin mobile panel
+ */
+export const createAdminManagedUser = async (adminUserCreate: AdminUserCreate, options?: Parameters<typeof customFetch>[1]): Promise<AdminManagedUser> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminManagedUser>(getCreateAdminManagedUserUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(adminUserCreate)
+  }
+);}
+
+
+
+
+
+export const getCreateAdminManagedUserMutationKey = () => ['createAdminManagedUser'] as const;
+
+export const getCreateAdminManagedUserMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminManagedUser>>, TError,CreateAdminManagedUserMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAdminManagedUser>>, TError,CreateAdminManagedUserMutationVariables, TContext> => {
+
+const mutationKey = getCreateAdminManagedUserMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAdminManagedUser>>, CreateAdminManagedUserMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAdminManagedUser(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAdminManagedUserMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminManagedUser>>>
+    export type CreateAdminManagedUserMutationBody = BodyType<AdminUserCreate>
+    export type CreateAdminManagedUserMutationError = ErrorType<void>
+    export type CreateAdminManagedUserMutationVariables = {data: BodyType<AdminUserCreate>}
+
+    /**
+ * @summary Create a user account from the Admin mobile panel
+ */
+export const useCreateAdminManagedUser = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminManagedUser>>, TError,CreateAdminManagedUserMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAdminManagedUser>>,
+        TError,
+        CreateAdminManagedUserMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateAdminManagedUserMutationOptions(options));
+    }
+
+export const getUpdateAdminManagedUserUrl = (id: number,) => {
+
+
+
+
+  return `/api/users/${id}`
+}
+
+/**
+ * @summary Update account details, status, or password
+ */
+export const updateAdminManagedUser = async (id: number,
+    adminUserUpdate: AdminUserUpdate, options?: Parameters<typeof customFetch>[1]): Promise<AdminManagedUser> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminManagedUser>(getUpdateAdminManagedUserUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(adminUserUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminManagedUserMutationKey = () => ['updateAdminManagedUser'] as const;
+
+export const getUpdateAdminManagedUserMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminManagedUser>>, TError,UpdateAdminManagedUserMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminManagedUser>>, TError,UpdateAdminManagedUserMutationVariables, TContext> => {
+
+const mutationKey = getUpdateAdminManagedUserMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminManagedUser>>, UpdateAdminManagedUserMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateAdminManagedUser(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminManagedUserMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminManagedUser>>>
+    export type UpdateAdminManagedUserMutationBody = BodyType<AdminUserUpdate>
+    export type UpdateAdminManagedUserMutationError = ErrorType<void>
+    export type UpdateAdminManagedUserMutationVariables = {id: number;data: BodyType<AdminUserUpdate>}
+
+    /**
+ * @summary Update account details, status, or password
+ */
+export const useUpdateAdminManagedUser = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminManagedUser>>, TError,UpdateAdminManagedUserMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminManagedUser>>,
+        TError,
+        UpdateAdminManagedUserMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateAdminManagedUserMutationOptions(options));
+    }
+
+export const getUpdateAdminManagedUserRoleUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/users/${id}/role`
+}
+
+/**
+ * @summary Change a user role
+ */
+export const updateAdminManagedUserRole = async (id: number,
+    updateAdminManagedUserRoleBody: UpdateAdminManagedUserRoleBody, options?: Parameters<typeof customFetch>[1]): Promise<AdminManagedUser> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminManagedUser>(getUpdateAdminManagedUserRoleUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateAdminManagedUserRoleBody)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminManagedUserRoleMutationKey = () => ['updateAdminManagedUserRole'] as const;
+
+export const getUpdateAdminManagedUserRoleMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminManagedUserRole>>, TError,UpdateAdminManagedUserRoleMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminManagedUserRole>>, TError,UpdateAdminManagedUserRoleMutationVariables, TContext> => {
+
+const mutationKey = getUpdateAdminManagedUserRoleMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminManagedUserRole>>, UpdateAdminManagedUserRoleMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateAdminManagedUserRole(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminManagedUserRoleMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminManagedUserRole>>>
+    export type UpdateAdminManagedUserRoleMutationBody = BodyType<UpdateAdminManagedUserRoleBody>
+    export type UpdateAdminManagedUserRoleMutationError = ErrorType<void>
+    export type UpdateAdminManagedUserRoleMutationVariables = {id: number;data: BodyType<UpdateAdminManagedUserRoleBody>}
+
+    /**
+ * @summary Change a user role
+ */
+export const useUpdateAdminManagedUserRole = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminManagedUserRole>>, TError,UpdateAdminManagedUserRoleMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminManagedUserRole>>,
+        TError,
+        UpdateAdminManagedUserRoleMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateAdminManagedUserRoleMutationOptions(options));
     }
 

@@ -113,7 +113,7 @@ const PROPERTY_TYPE_EMOJIS: Record<string, string> = {
 const PURPOSES = ['Sale', 'Rent', 'Lease'] as const;
 type Purpose = (typeof PURPOSES)[number];
 
-const AREA_UNITS = ['Marla', 'Kanal', 'Acre', 'Sq. Ft.'] as const;
+const AREA_UNITS = ['Marla', 'Kanal', 'Acre'] as const;
 const FURNISHING = ['Furnished', 'Semi-Furnished', 'Unfurnished'];
 const FACING_OPTS = ['East', 'West', 'North', 'South', 'Corner'];
 const CITIES = okaraDistrict.cities;
@@ -1220,7 +1220,7 @@ function StepBasic({ form, update, colors, errors }: any) {
                   },
                 ]}
               >
-                <OptionGlassSurface selected={form.areaUnit === u} colors={colors} radius={10} />
+                <OptionGlassSurface selected={form.areaUnit === u} colors={colors} radius={8} />
                 <Text style={[s.unitText, { color: form.areaUnit === u ? colors.selectionForeground : colors.mutedForeground, fontWeight: form.areaUnit === u ? '600' : '400' }]}>{u}</Text>
               </Pressable>
             ))}
@@ -2338,10 +2338,10 @@ const s = StyleSheet.create({
   // Inputs
   inputWrap:            { borderRadius: 15, borderWidth: 1, overflow: 'hidden', marginBottom: 2 },
   input:                { fontFamily: 'Inter_400Regular', fontSize: 14, paddingHorizontal: 15, paddingVertical: 13 },
-  unitSeg:              { flexDirection: 'row', gap: 4 },
-  unitBtn:              { flex: 1, height: 36, borderRadius: 10, borderWidth: 1, alignItems: 'stretch', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 2 },
+  unitSeg:              { flexDirection: 'row', gap: 5 },
+  unitBtn:              { flex: 1, height: 38, borderRadius: 8, borderWidth: 1, alignItems: 'stretch', justifyContent: 'center', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 2 },
   optionGlassSheen:     { position: 'absolute', top: 2, left: 8, right: 8, height: 5, borderRadius: 999 },
-  unitText:             { fontFamily: 'Inter_600SemiBold', fontSize: 10 },
+  unitText:             { fontFamily: 'Inter_600SemiBold', fontSize: 11, textAlign: 'center' },
   // Chips
   chip:                 { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10 },
   chipText:             { fontFamily: 'Inter_600SemiBold', fontSize: 12 },

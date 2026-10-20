@@ -140,3 +140,17 @@ mtime_ms = 1791978125692
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/0e0d1c17-fc77-4114-bcb5-1cf6b0f4c75f/b27bfcbb-410b-4c38-9536-e2b3f2ad513a"
 storage_version_token = "1791978128354011"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "B47IIbA8ORLB4ty-IqOUa"
+uri = "file://generated-artifacts/OG-Landmark-Laravel-Backend-Admin-Reset-2026-10-20.zip"
+type = "unspecified"
+title = "OG Landmark Laravel Backend — Admin Reset Update"
+description = "Updated Hostinger backend package with the admin password-reset API routes. Excludes .env, live database data, logs, cached settings, and uploaded media."
+logical_id = "4006ae24-cb0b-4685-9d81-f88fe6bfb86d"
+content_hash = "sha256:c1146cb4f46b8af5c700b63c8d4bade357cb3721fbe2af34b28d84e17f35bb43"
+size = 38734265
+mtime_ms = 1792488980663
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/4006ae24-cb0b-4685-9d81-f88fe6bfb86d/5ecdfa5f-0624-4595-b977-41445eab29dd"
+storage_version_token = "1792489007420826"
+content_type = "application/octet-stream"

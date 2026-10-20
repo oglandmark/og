@@ -228,7 +228,7 @@ export default function CalculatorScreen() {
       <View style={[lc.banner, { backgroundColor: '#f59e0b0c', borderColor: '#f59e0b33', marginHorizontal: 18, marginBottom: 14 }]}>
         <Feather name="info" size={11} color="#d97706" />
         <Text style={[lc.note, { color: '#d97706', flex: 1, lineHeight: 15 }]}>
-          Results are indicative only. Consult a verified OG Landmark agent for accurate valuations.
+          Accurate mode calculates plot area from valid side and diagonal measurements. Enter all required diagonals for irregular plots; results depend on the measurements provided.
         </Text>
       </View>
 

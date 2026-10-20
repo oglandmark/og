@@ -40,7 +40,9 @@ function ResultCard({ result, colors }: { result: CalcResult; colors: Colors }) 
     <View style={[styles.resultCard, { backgroundColor: colors.secondary, borderColor: colors.primary + '55' }]}>
       <View style={styles.resultHeading}>
         <Feather name="check-circle" size={15} color={colors.primary} />
-        <Text style={[styles.resultTitle, { color: colors.primary }]}>AREA RESULT</Text>
+        <Text style={[styles.resultTitle, { color: colors.primary }]}>
+          {result.isEstimate ? 'AREA ESTIMATE' : 'EXACT AREA RESULT'}
+        </Text>
       </View>
       <View style={styles.resultGrid}>
         {values.map(([label, value], index) => (
@@ -51,7 +53,7 @@ function ResultCard({ result, colors }: { result: CalcResult; colors: Colors }) 
         ))}
       </View>
       <Text style={[styles.resultNote, { color: colors.mutedForeground }]}>
-        {result.note || '1 Marla = 272.25 sq ft · 1 Kanal = 20 Marla · 1 Acre = 8 Kanal'}
+        {result.note || 'Exact triangle area from the entered side lengths. 1 Marla = 272.25 sq ft · 1 Kanal = 20 Marla · 1 Acre = 8 Kanal'}
       </Text>
     </View>
   );
@@ -159,7 +161,7 @@ export function PlotMeasurementCalculator({
   const { isLoggedIn } = useAuth();
   const [corners, setCorners] = useState<CalcCorners>(4);
   const [unit, setUnit] = useState<CalcUnit>('ft');
-  const [mode, setMode] = useState<CalcMode>('basic');
+  const [mode, setMode] = useState<CalcMode>('accurate');
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [labels, setLabels] = useState<Record<string, string>>({});
   const [result, setResult] = useState<CalcResult | null>(null);
@@ -228,7 +230,7 @@ export function PlotMeasurementCalculator({
     if (!result) { Alert.alert('Calculate first', 'Calculate an area before sharing the result.'); return; }
     const message = [
       'OG LANDMARK · LAND MEASUREMENT',
-      `${corners}-sided plot · ${mode === 'accurate' ? 'Accurate' : 'Basic estimate'}`,
+      `${corners}-sided plot · ${result.isEstimate ? 'Approximate estimate' : 'Exact from entered measurements'}`,
       `Area: ${formatNumber(result.sqft)} sq ft`,
       `Square yards: ${formatNumber(result.sqYards)} · Marla: ${formatNumber(result.marla, 3)} · Kanal: ${formatNumber(result.kanal, 3)}`,
       'Measure with confidence. Verify on-site with a qualified professional.',

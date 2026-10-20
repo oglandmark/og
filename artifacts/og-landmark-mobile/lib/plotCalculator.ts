@@ -60,11 +60,19 @@ function parseMeasurement(raw: Record<string, string>, key: string, unit: CalcUn
 }
 
 function triangleArea(a: number, b: number, c: number): number | null {
-  const semiperimeter = (a + b + c) / 2;
-  const squaredArea = semiperimeter *
-    (semiperimeter - a) * (semiperimeter - b) * (semiperimeter - c);
-  if (!Number.isFinite(squaredArea) || squaredArea < 0) return null;
-  return Math.sqrt(squaredArea);
+  const [longest, middle, shortest] = [a, b, c].sort((left, right) => right - left);
+  const shortestTriangleTerm = shortest - (longest - middle);
+  if (!Number.isFinite(shortestTriangleTerm) || shortestTriangleTerm <= 0) return null;
+
+  // Kahan's rearranged Heron formula is more numerically stable for near-flat
+  // triangles than multiplying four semiperimeter terms directly.
+  const product =
+    (longest + (middle + shortest)) *
+    shortestTriangleTerm *
+    (shortest + (longest - middle)) *
+    (longest + (middle - shortest));
+  if (!Number.isFinite(product) || product <= 0) return null;
+  return Math.sqrt(product) / 4;
 }
 
 type TriangleCalculation = { area: number; isEstimate: boolean };

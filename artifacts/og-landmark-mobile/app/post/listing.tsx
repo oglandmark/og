@@ -1220,7 +1220,7 @@ function StepBasic({ form, update, colors, errors }: any) {
                   },
                 ]}
               >
-                <OptionGlassSurface selected={form.areaUnit === u} colors={colors} radius={999} />
+                <OptionGlassSurface selected={form.areaUnit === u} colors={colors} radius={10} />
                 <Text style={[s.unitText, { color: form.areaUnit === u ? colors.selectionForeground : colors.mutedForeground, fontWeight: form.areaUnit === u ? '600' : '400' }]}>{u}</Text>
               </Pressable>
             ))}
@@ -2339,7 +2339,7 @@ const s = StyleSheet.create({
   inputWrap:            { borderRadius: 15, borderWidth: 1, overflow: 'hidden', marginBottom: 2 },
   input:                { fontFamily: 'Inter_400Regular', fontSize: 14, paddingHorizontal: 15, paddingVertical: 13 },
   unitSeg:              { flexDirection: 'row', gap: 4 },
-  unitBtn:              { flex: 1, height: 36, borderRadius: 999, borderWidth: 1, alignItems: 'stretch', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 2 },
+  unitBtn:              { flex: 1, height: 36, borderRadius: 10, borderWidth: 1, alignItems: 'stretch', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 2 },
   optionGlassSheen:     { position: 'absolute', top: 2, left: 8, right: 8, height: 5, borderRadius: 999 },
   unitText:             { fontFamily: 'Inter_600SemiBold', fontSize: 10 },
   // Chips

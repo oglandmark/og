@@ -40,6 +40,7 @@ import {
   subscribeToNotificationResponses,
 } from '@/lib/pushNotifications';
 import { markNotificationRead } from '@/lib/api';
+import { getOnboardingCompletion } from '@/lib/onboarding';
 
 SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
@@ -157,36 +158,60 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
 
   useEffect(() => {
     if (isLoading) return;
-    const inAuth      = segments[0] === '(auth)';
-    const inTabs      = segments[0] === '(tabs)';
-    const inAdmin     = segments[0] === 'admin';
-    const inProperty  = segments[0] === 'property';
-    const inProject   = segments[0] === 'project';
-    const inSettings  = segments[0] === 'settings';
-    const inAgent     = segments[0] === 'agent';
-    const inPost      = segments[0] === 'post';
-    const inTools     = segments[0] === 'tools';
-    const inNotifications = segments[0] === 'notifications';
-    const inAnnouncements = segments[0] === 'announcements';
-    const inKnownRoute = inTabs || inAuth || inProperty || inProject || inSettings || inAgent || inPost || inAdmin || inTools || inNotifications || inAnnouncements;
+    let cancelled = false;
 
-    if (isLoggedIn && inAuth) {
-      // Keep authenticated users out of login and reset-password screens.
-      router.replace('/(tabs)');
-      setTimeout(() => setNavigationReady(true), 120);
-    } else if (inAdmin && (!isLoggedIn || user?.role !== 'admin')) {
-      // Admin screens are never reachable by an unauthenticated user or by
-      // a normal buyer/agent account, even if they manually enter the route.
-      router.replace(isLoggedIn ? '/(tabs)' : '/(auth)/login');
-      setTimeout(() => setNavigationReady(true), 120);
-    } else if (!inKnownRoute) {
-      // Guest or anyone at an unknown/root route → send to tabs directly
-      router.replace('/(tabs)');
-      setTimeout(() => setNavigationReady(true), 120);
-    } else {
-      setNavigationReady(true);
-    }
-  }, [isLoggedIn, isLoading, segments, router]);
+    const resolveStartupRoute = async () => {
+      const completed = await getOnboardingCompletion().catch(() => true);
+      if (cancelled) return;
+
+      const inOnboarding = segments[0] === 'onboarding';
+      const finishNavigation = () => setTimeout(() => setNavigationReady(true), 120);
+
+      if (!completed && !inOnboarding) {
+        router.replace('/onboarding');
+        finishNavigation();
+        return;
+      }
+      if (completed && inOnboarding) {
+        router.replace('/(tabs)');
+        finishNavigation();
+        return;
+      }
+      if (inOnboarding) {
+        setNavigationReady(true);
+        return;
+      }
+
+      const inAuth = segments[0] === '(auth)';
+      const inAdmin = segments[0] === 'admin';
+      const inKnownRoute = [
+        '(tabs)', '(auth)', 'property', 'project', 'settings', 'agent',
+        'post', 'admin', 'tools', 'notifications', 'announcements',
+      ].includes(segments[0] ?? '');
+
+      if (isLoggedIn && inAuth) {
+        // Keep authenticated users out of login and reset-password screens.
+        router.replace('/(tabs)');
+        finishNavigation();
+      } else if (inAdmin && (!isLoggedIn || user?.role !== 'admin')) {
+        // Admin screens are never reachable by an unauthenticated user or by
+        // a normal buyer/agent account, even if they manually enter the route.
+        router.replace(isLoggedIn ? '/(tabs)' : '/(auth)/login');
+        finishNavigation();
+      } else if (!inKnownRoute) {
+        // Guests and unknown root routes go to Home after onboarding.
+        router.replace('/(tabs)');
+        finishNavigation();
+      } else {
+        setNavigationReady(true);
+      }
+    };
+
+    void resolveStartupRoute();
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn, isLoading, segments, router, user?.role]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background, direction: isRTL ? 'rtl' : 'ltr' }}>
@@ -201,6 +226,7 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Screen name="property/[id]" options={{ presentation: 'card' }} />
         <Stack.Screen name="project/[id]" options={{ presentation: 'card' }} />
         <Stack.Screen name="(auth)" options={{ presentation: 'card' }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
       </Stack>
       {(isLoading || !navigationReady || !splashDurationElapsed) && (
         <StartupSplash colors={colors} overlay fontsReady={fontsReady} />

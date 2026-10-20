@@ -16,3 +16,11 @@ Keep the JavaScript animated splash visible for at least 7 seconds and until aut
 **Why:** On October 20, 2026, the user clarified that the 7-second animated splash should remain while the separate logo-only native opening screen should be removed.
 
 **How to apply:** Keep Expo's splash-screen plugin for a plain background without an image, hide the native screen after the first React render, and reveal the app only after the animation duration, auth hydration, and route readiness are all satisfied.
+
+## First-install onboarding
+
+On a fresh install, show three introduction screens—Homes, Commercial, and Agriculture Land—after the 7-second animated splash. Mark onboarding complete when the user finishes or skips it. On later launches, keep the splash and go directly to Home.
+
+**Why:** The user confirmed this exact first-install-only sequence on October 20, 2026.
+
+**How to apply:** Keep onboarding completion separate from authentication state so logging out does not show the introduction again.

@@ -511,11 +511,7 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
   }
 
   return (
-    <GlassCard
-      intensity={38}
-      style={[mod.wrapper, { backgroundColor: 'transparent', borderColor: 'transparent', borderWidth: 0 }]}
-      contentStyle={mod.wrapperContent}
-    >
+    <View style={[mod.wrapper, mod.wrapperContent]}>
 
       {/* ── Header ── */}
       <View style={mod.header}>
@@ -563,24 +559,27 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
               style={[
                 mod.catChip,
                 {
-                  backgroundColor: sel ? colors.glassCard : 'transparent',
-                  borderColor: 'transparent',
-                  borderWidth: 0,
+                  backgroundColor: sel ? 'transparent' : colors.glassOverlay,
+                  borderColor: sel ? 'transparent' : colors.glassBorder,
+                  borderWidth: sel ? 0 : 1,
                 },
               ]}
             >
               <View style={[
                 mod.catIcon,
-                {
-                  backgroundColor: sel ? colors.goldGlass : colors.actionGlass,
-                  borderColor: sel ? colors.goldGlassBorder : colors.actionGlassBorder,
-                },
+                sel ? {
+                  backgroundColor: colors.goldGlass,
+                  borderColor: colors.goldGlassBorder,
+                  borderWidth: 1,
+                } : undefined,
               ]}>
-                <LinearGradient
-                  colors={[colors.actionGlassHighlight, 'transparent']}
-                  style={[StyleSheet.absoluteFill, { pointerEvents: 'none' } as any]}
-                />
-                <Feather name={cat.icon} size={17} color={sel ? colors.goldForeground : colors.actionForeground} />
+                {sel ? (
+                  <LinearGradient
+                    colors={[colors.actionGlassHighlight, 'transparent']}
+                    style={[StyleSheet.absoluteFill, { pointerEvents: 'none' } as any]}
+                  />
+                ) : null}
+                <Feather name={cat.icon} size={17} color={sel ? colors.goldForeground : colors.mutedForeground} />
               </View>
               <Text style={[
                 mod.catLabel,
@@ -698,7 +697,7 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
         ))}
       </ScrollView>
 
-    </GlassCard>
+    </View>
   );
 }
 
@@ -707,7 +706,7 @@ const mod = StyleSheet.create({
   wrapper: {
     marginHorizontal: 16,
     marginVertical: 12,
-    borderRadius: 20,
+    borderRadius: 0,
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -741,7 +740,7 @@ const mod = StyleSheet.create({
     borderRadius: 18,
   },
   catIcon: {
-    width: 38, height: 38, borderRadius: 19, borderWidth: 1,
+    width: 38, height: 38, borderRadius: 19,
     alignItems: 'center', justifyContent: 'center',
     overflow: 'hidden',
   },

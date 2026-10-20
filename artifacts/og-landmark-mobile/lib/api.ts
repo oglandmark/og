@@ -286,7 +286,7 @@ export async function logoutAPI(): Promise<void> {
 }
 
 export async function loginWithSocial(
-  provider: 'google' | 'facebook',
+  provider: 'facebook',
   accessToken: string,
   phone?: string,
 ): Promise<LoginResponse> {

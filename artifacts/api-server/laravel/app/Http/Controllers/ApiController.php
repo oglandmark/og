@@ -10,6 +10,7 @@ use App\Services\NotificationDeliveryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -113,6 +114,10 @@ class ApiController extends Controller
 
         if (($segments[0] ?? '') === 'my-properties') {
             return $this->myProperties($request);
+        }
+
+        if (($segments[0] ?? '') === 'comparison') {
+            return $this->comparison($request, $method);
         }
 
         if (($segments[0] ?? '') === 'search' && ($segments[1] ?? '') === 'ai') {
@@ -248,10 +253,7 @@ class ApiController extends Controller
         }
 
         if ($action === 'social' && $method === 'POST') {
-            return $this->json([
-                'error' => 'Social sign-in is unavailable until this app is configured to verify the provider token.',
-                'code' => 'SOCIAL_AUTH_NOT_CONFIGURED',
-            ], 501);
+            return $this->socialAuth($request);
         }
 
         if ($action === 'register' && $method === 'POST') {
@@ -1791,6 +1793,61 @@ class ApiController extends Controller
         return $this->crudNamed($request, $data, $key, $id, $method, $user);
     }
 
+    private function comparison(Request $request, string $method)
+    {
+        $user = $this->currentUser($request, true);
+        $data = JsonStore::read();
+        $data['comparisons'] = is_array($data['comparisons'] ?? null) ? $data['comparisons'] : [];
+        $index = null;
+        foreach ($data['comparisons'] as $candidateIndex => $record) {
+            if (is_array($record) && (string) ($record['userId'] ?? '') === (string) $user['id']) {
+                $index = $candidateIndex;
+                break;
+            }
+        }
+
+        if ($method === 'GET') {
+            return $this->json(array_values($data['comparisons'][$index]['propertyIds'] ?? []));
+        }
+
+        if ($method === 'PUT') {
+            $validator = Validator::make($request->all(), [
+                'propertyIds' => ['required', 'array', 'max:3'],
+                'propertyIds.*' => ['required', 'integer', 'min:1', 'distinct'],
+            ]);
+            if ($validator->fails()) {
+                return $this->json(['error' => 'Choose up to three distinct property IDs.', 'errors' => $validator->errors()], 422);
+            }
+
+            $propertyIds = array_map('intval', $request->input('propertyIds'));
+            $record = [
+                'id' => $index === null
+                    ? JsonStore::nextId($data, 'comparison')
+                    : $data['comparisons'][$index]['id'],
+                'userId' => $user['id'],
+                'propertyIds' => $propertyIds,
+                'updatedAt' => now()->toISOString(),
+            ];
+            if ($index === null) {
+                $data['comparisons'][] = $record;
+            } else {
+                $data['comparisons'][$index] = array_merge($data['comparisons'][$index], $record);
+            }
+            JsonStore::write($data);
+            return $this->json($propertyIds);
+        }
+
+        if ($method === 'DELETE') {
+            if ($index !== null) {
+                array_splice($data['comparisons'], $index, 1);
+                JsonStore::write($data);
+            }
+            return response()->noContent();
+        }
+
+        return $this->json(['error' => 'Method not allowed'], 405);
+    }
+
     private function crudNamed(Request $request, array $data, string $key, ?string $id, string $method, ?array $user = null)
     {
         $data[$key] ??= [];
@@ -1934,6 +1991,122 @@ class ApiController extends Controller
             Log::warning('Laravel auth session could not be persisted.', ['error' => $exception->getMessage()]);
         }
         return $token;
+    }
+
+    private function socialAuth(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'provider' => ['required', 'in:facebook'],
+            'accessToken' => ['required', 'string', 'max:4096'],
+            'phone' => ['nullable', 'string', 'max:30'],
+        ]);
+        if ($validator->fails()) {
+            return $this->json(['error' => 'Invalid social sign-in request.', 'errors' => $validator->errors()], 422);
+        }
+
+        $appId = trim((string) config('services.facebook.app_id'));
+        $appSecret = trim((string) config('services.facebook.app_secret'));
+        if ($appId === '' || $appSecret === '') {
+            return $this->json([
+                'error' => 'Facebook sign-in is not configured on the server.',
+                'code' => 'SOCIAL_AUTH_NOT_CONFIGURED',
+            ], 503);
+        }
+
+        $accessToken = (string) $request->input('accessToken');
+        try {
+            $debugResponse = Http::timeout(8)->get('https://graph.facebook.com/debug_token', [
+                'input_token' => $accessToken,
+                'access_token' => "{$appId}|{$appSecret}",
+            ]);
+            $tokenData = $debugResponse->json('data');
+            if (!$debugResponse->successful()
+                || !is_array($tokenData)
+                || !($tokenData['is_valid'] ?? false)
+                || (string) ($tokenData['app_id'] ?? '') !== $appId
+                || ((int) ($tokenData['expires_at'] ?? 0) > 0 && (int) $tokenData['expires_at'] <= time())) {
+                return $this->json(['error' => 'Facebook access token is invalid or expired.'], 401);
+            }
+
+            $profileResponse = Http::timeout(8)
+                ->withToken($accessToken)
+                ->get('https://graph.facebook.com/me', [
+                    'fields' => 'id,name,email',
+                    'appsecret_proof' => hash_hmac('sha256', $accessToken, $appSecret),
+                ]);
+            $profile = $profileResponse->json();
+            if (!$profileResponse->successful()
+                || !is_array($profile)
+                || empty($profile['id'])
+                || (string) ($tokenData['user_id'] ?? '') !== (string) $profile['id']) {
+                return $this->json(['error' => 'Unable to verify the Facebook account.'], 401);
+            }
+        } catch (\Throwable $exception) {
+            Log::warning('Facebook token verification failed.', ['error' => $exception->getMessage()]);
+            return $this->json(['error' => 'Facebook sign-in is temporarily unavailable.'], 503);
+        }
+
+        $email = strtolower(trim((string) ($profile['email'] ?? '')));
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->json(['error' => 'Facebook must provide a valid email address for this account.'], 422);
+        }
+
+        $data = JsonStore::read();
+        $data['users'] = is_array($data['users'] ?? null) ? $data['users'] : [];
+        $facebookId = (string) $profile['id'];
+        $index = null;
+        foreach ($data['users'] as $userIndex => $candidate) {
+            if (!is_array($candidate)) continue;
+            $sameFacebookId = (string) ($candidate['facebookId'] ?? '') === $facebookId;
+            $sameEmail = strtolower(trim((string) ($candidate['email'] ?? ''))) === $email;
+            if ($sameFacebookId || $sameEmail) {
+                $index = $userIndex;
+                break;
+            }
+        }
+
+        if ($index === null) {
+            $phone = preg_replace('/\D+/', '', (string) $request->input('phone', ''));
+            if (strlen($phone) < 10 || strlen($phone) > 15) {
+                return $this->json([
+                    'error' => 'A valid mobile number is required to create an account.',
+                    'code' => 'MOBILE_REQUIRED_FOR_SOCIAL_SIGNUP',
+                ], 422);
+            }
+            $user = [
+                'id' => JsonStore::nextId($data),
+                'name' => trim((string) ($profile['name'] ?? '')) ?: 'Facebook User',
+                'email' => $email,
+                'phone' => $phone,
+                'role' => 'User',
+                'accountType' => 'User',
+                'status' => 'Active',
+                'authProvider' => 'facebook',
+                'facebookId' => $facebookId,
+                'verificationStatus' => 'verified',
+                'joinedDate' => now()->toISOString(),
+            ];
+            $data['users'][] = $user;
+        } else {
+            $user = $data['users'][$index];
+            if (in_array(strtolower((string) ($user['status'] ?? 'active')), ['inactive', 'suspended', 'blocked'], true)) {
+                return $this->json(['error' => 'This account is not active.'], 403);
+            }
+            $existingFacebookId = (string) ($user['facebookId'] ?? '');
+            if ($existingFacebookId !== '' && $existingFacebookId !== $facebookId) {
+                return $this->json(['error' => 'This email is already linked to another Facebook account.'], 409);
+            }
+            $user['facebookId'] = $facebookId;
+            $user['authProvider'] = 'facebook';
+            $user['verificationStatus'] = $user['verificationStatus'] ?? 'verified';
+            if (empty($user['phone']) && $request->filled('phone')) {
+                $user['phone'] = preg_replace('/\D+/', '', (string) $request->input('phone'));
+            }
+            $data['users'][$index] = $user;
+        }
+
+        JsonStore::write($data);
+        return $this->json(['user' => $this->safeUser($user), 'token' => $this->createSession($user)]);
     }
 
     private function destroySession(Request $request): void

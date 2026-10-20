@@ -63,7 +63,7 @@ type AuthContextValue = {
   isAdmin: boolean;
   login: (user: User) => Promise<void>;
   loginAPI: (identifier: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  loginSocial: (provider: 'google' | 'facebook', accessToken: string, phone?: string) => Promise<{ success: boolean; error?: string }>;
+  loginSocial: (provider: 'facebook', accessToken: string, phone?: string) => Promise<{ success: boolean; error?: string }>;
   loginAdmin: (email: string, password: string) => Promise<{ success: boolean; error?: string; otpRequired?: boolean }>;
   verifyAdminOtp: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
   registerAPI: (payload: {
@@ -257,7 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [login]);
 
   const loginSocial = useCallback(async (
-    provider: 'google' | 'facebook',
+    provider: 'facebook',
     accessToken: string,
     phone?: string,
   ): Promise<{ success: boolean; error?: string }> => {

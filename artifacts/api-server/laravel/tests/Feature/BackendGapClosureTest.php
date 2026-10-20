@@ -146,6 +146,61 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonPath('accountType', 'User');
     }
 
+    public function test_mobile_facebook_signup_verifies_provider_and_returns_session(): void
+    {
+        $this->seedData(['users' => []]);
+        config([
+            'services.facebook.app_id' => 'test-facebook-app-id',
+            'services.facebook.app_secret' => 'test-facebook-app-secret',
+        ]);
+        Http::fake([
+            'graph.facebook.com/debug_token*' => Http::response([
+                'data' => [
+                    'app_id' => 'test-facebook-app-id',
+                    'user_id' => 'facebook-user-42',
+                    'is_valid' => true,
+                    'expires_at' => now()->addHour()->timestamp,
+                ],
+            ]),
+            'graph.facebook.com/me*' => Http::response([
+                'id' => 'facebook-user-42',
+                'name' => 'Facebook QA',
+                'email' => 'facebook-qa@example.test',
+            ]),
+        ]);
+
+        $response = $this->postJson('/api/auth/social', [
+            'provider' => 'facebook',
+            'accessToken' => 'facebook-access-token-test',
+            'phone' => '03001234567',
+        ])->assertOk()
+            ->assertJsonPath('user.name', 'Facebook QA')
+            ->assertJsonPath('user.email', 'facebook-qa@example.test')
+            ->assertJsonPath('user.phone', '03001234567')
+            ->assertJsonPath('user.facebookId', 'facebook-user-42')
+            ->assertJsonPath('user.authProvider', 'facebook');
+
+        $token = (string) $response->json('token');
+        $this->assertNotSame('', $token);
+        $this->getJson('/api/auth/me', ['Authorization' => "Bearer {$token}"])
+            ->assertOk()
+            ->assertJsonPath('email', 'facebook-qa@example.test');
+
+        Http::assertSent(fn (Request $request) =>
+            str_starts_with($request->url(), 'https://graph.facebook.com/debug_token?')
+            && $request['input_token'] === 'facebook-access-token-test'
+            && $request['access_token'] === 'test-facebook-app-id|test-facebook-app-secret'
+        );
+        Http::assertSent(fn (Request $request) =>
+            str_starts_with($request->url(), 'https://graph.facebook.com/me')
+            && $request['appsecret_proof'] === hash_hmac(
+                'sha256',
+                'facebook-access-token-test',
+                'test-facebook-app-secret',
+            )
+        );
+    }
+
     public function test_mobile_signup_listing_admin_review_and_publication_work_end_to_end(): void
     {
         $this->useTemporaryMediaStorage();
@@ -186,6 +241,23 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonPath('id', $buyerId)
             ->assertJsonPath('role', 'User')
             ->assertJsonPath('accountType', 'User');
+
+        $comparisonHeaders = ['Authorization' => "Bearer {$buyerToken}"];
+        $this->getJson('/api/comparison', $comparisonHeaders)
+            ->assertOk()
+            ->assertExactJson([]);
+        $this->putJson('/api/comparison', ['propertyIds' => [71, 72]], $comparisonHeaders)
+            ->assertOk()
+            ->assertExactJson([71, 72]);
+        $this->getJson('/api/comparison', $comparisonHeaders)
+            ->assertOk()
+            ->assertExactJson([71, 72]);
+        $this->putJson('/api/comparison', ['propertyIds' => [71, 71, 72, 73]], $comparisonHeaders)
+            ->assertUnprocessable();
+        $this->deleteJson('/api/comparison', [], $comparisonHeaders)->assertNoContent();
+        $this->getJson('/api/comparison', $comparisonHeaders)
+            ->assertOk()
+            ->assertExactJson([]);
 
         // Exercise the same authenticated, single-photo upload used by mobile.
         $upload = $this->post('/api/upload/single', [

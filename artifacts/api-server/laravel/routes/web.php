@@ -48,6 +48,10 @@ foreach ([
 
 Route::get('/login', [WebsiteAuthController::class, 'login'])->name('auth.login');
 Route::post('/login', [WebsiteAuthController::class, 'authenticate'])->middleware('throttle:6,1')->name('auth.login.submit');
+Route::get('/admin/forgot-password', [WebsiteAuthController::class, 'forgotAdminPassword'])->name('admin.password.request');
+Route::post('/admin/forgot-password', [WebsiteAuthController::class, 'sendAdminPasswordReset'])->middleware('throttle:5,1')->name('admin.password.email');
+Route::get('/admin/reset-password', [WebsiteAuthController::class, 'resetAdminPassword'])->name('admin.password.reset');
+Route::post('/admin/reset-password', [WebsiteAuthController::class, 'updateAdminPassword'])->middleware('throttle:6,1')->name('admin.password.update');
 Route::get('/register', [WebsiteAuthController::class, 'register'])->name('auth.register');
 Route::get('/auth', function (Request $request) {
     $mode = strtolower((string) $request->query('mode', $request->query('tab', 'register')));

@@ -24,6 +24,56 @@ class WebsiteAuthController extends Controller
         return view('auth.register', ['intendedRole' => 'user']);
     }
 
+    public function forgotAdminPassword(): View
+    {
+        return view('auth.forgot-password');
+    }
+
+    public function sendAdminPasswordReset(Request $request): RedirectResponse
+    {
+        $validated = $request->validate(['email' => ['required', 'email', 'max:320']]);
+        $result = $this->api('auth/admin-forgot-password', 'POST', $validated);
+
+        if ($result['status'] < 200 || $result['status'] >= 300) {
+            return back()->withInput()->withErrors([
+                'reset' => $result['data']['error'] ?? 'Password reset is temporarily unavailable. Please try again.',
+            ]);
+        }
+
+        return redirect()->route('admin.password.reset', ['email' => $validated['email']])
+            ->with('success', 'If an administrator account matches that email, a reset code will be sent. Check your inbox and spam folder. If it does not arrive, contact support.');
+    }
+
+    public function resetAdminPassword(Request $request): View
+    {
+        return view('auth.reset-password', [
+            'email' => (string) $request->query('email', ''),
+        ]);
+    }
+
+    public function updateAdminPassword(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'max:320'],
+            'code' => ['required', 'digits:6'],
+            'newPassword' => ['required', 'string', 'min:8', 'max:256', 'confirmed'],
+        ]);
+
+        $result = $this->api('auth/admin-reset-password', 'POST', [
+            'email' => strtolower(trim($validated['email'])),
+            'code' => $validated['code'],
+            'newPassword' => $validated['newPassword'],
+        ]);
+
+        if ($result['status'] < 200 || $result['status'] >= 300) {
+            return back()->withInput($request->except('newPassword', 'newPassword_confirmation'))
+                ->withErrors(['reset' => $result['data']['error'] ?? 'Password could not be reset. Request a new code and try again.']);
+        }
+
+        return redirect()->route('auth.login', ['role' => 'admin'])
+            ->with('success', 'Your password has been reset. Sign in with your new password.');
+    }
+
     public function authenticate(Request $request): RedirectResponse
     {
         if (!$request->filled('identifier') && $request->filled('email')) {

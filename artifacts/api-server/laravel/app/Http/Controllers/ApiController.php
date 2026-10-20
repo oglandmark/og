@@ -301,11 +301,12 @@ class ApiController extends Controller
             return $this->json(['user' => $this->safeUser($user), 'token' => $this->createSession($user)], 201);
         }
 
-        if (in_array($action, ['forgot-password', 'request-reset'], true) && $method === 'POST') {
+        $adminResetRequest = in_array($action, ['admin-forgot-password', 'admin-request-reset'], true);
+        if (in_array($action, ['forgot-password', 'request-reset', 'admin-forgot-password', 'admin-request-reset'], true) && $method === 'POST') {
             $email = strtolower(trim((string) $request->input('email')));
             if ($email === '') return $this->json(['error' => 'Email is required'], 400);
             $user = $this->findUserByEmail($email);
-            if (!$user) {
+            if (!$user || ($adminResetRequest && !$this->isAdmin($user))) {
                 return $this->json(['success' => true, 'message' => 'If an account exists with this email, a reset code has been sent.']);
             }
 
@@ -348,7 +349,8 @@ class ApiController extends Controller
             ]);
         }
 
-        if (in_array($action, ['reset-password', 'confirm-reset'], true) && $method === 'POST') {
+        $adminResetConfirmation = in_array($action, ['admin-reset-password', 'admin-confirm-reset'], true);
+        if (in_array($action, ['reset-password', 'confirm-reset', 'admin-reset-password', 'admin-confirm-reset'], true) && $method === 'POST') {
             $email = strtolower(trim((string) $request->input('email')));
             $code = trim((string) ($request->input('code') ?? $request->input('otp')));
             $newPassword = (string) $request->input('newPassword');
@@ -360,7 +362,9 @@ class ApiController extends Controller
             }
 
             $user = $this->findUserByEmail($email);
-            if (!$user) return $this->json(['error' => 'Invalid or expired reset code'], 400);
+            if (!$user || ($adminResetConfirmation && !$this->isAdmin($user))) {
+                return $this->json(['error' => 'Invalid or expired reset code'], 400);
+            }
             $challenge = $this->consumeChallenge($email, 'password-reset', $code);
             if (!$challenge['ok']) {
                 return $this->json([

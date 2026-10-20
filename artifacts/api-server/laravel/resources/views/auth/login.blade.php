@@ -16,5 +16,6 @@
  @endif
  <button type="submit" class="btn btn-gold" style="width:100%">{{ $intendedRole==='admin' && $adminOtpSent ? 'Verify and sign in' : 'Sign in' }} <span>↗</span></button>
 </form>
+ @if($intendedRole==='admin' && !$adminOtpSent)<p style="margin-top:18px;text-align:right"><a class="text-link" href="{{ route('admin.password.request') }}">Forgot your password?</a></p>@endif
 @if($intendedRole!=='admin')<p style="margin-top:22px;font-size:12px">New to OG Landmark? <a class="text-link" href="{{ route('auth.register') }}">Create an account</a></p>@endif
 @endsection

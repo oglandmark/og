@@ -222,24 +222,11 @@ const splashPlugin = config.plugins?.find(
   (plugin) => Array.isArray(plugin) && plugin[0] === "expo-splash-screen"
 );
 const splashOptions = Array.isArray(splashPlugin) ? splashPlugin[1] : undefined;
-const splashImage = resolveAsset("Native splash logo", splashOptions?.image);
-const splashImageBounds = getRgbaPngAlphaBounds(splashImage, { allowEmpty: true });
-if (
-  splashImageBounds.width < 256 ||
-  splashImageBounds.height < 256 ||
-  splashImageBounds.maxX < 0 ||
-  splashOptions?.imageWidth < 160
-) {
-  fail("Native splash image must contain a visible, full-size branded logo.");
+if (!splashOptions) {
+  fail("The Expo native splash plugin must stay configured.");
 }
-const darkSplashImage = resolveAsset("Dark native splash logo", splashOptions?.dark?.image);
-const darkSplashImageBounds = getRgbaPngAlphaBounds(darkSplashImage, { allowEmpty: true });
-if (
-  darkSplashImageBounds.width < 256 ||
-  darkSplashImageBounds.height < 256 ||
-  darkSplashImageBounds.maxX < 0
-) {
-  fail("Dark native splash image must contain a visible branded logo.");
+if (splashOptions.image || splashOptions.dark?.image) {
+  fail("Native splash screens must not show a static logo; branding belongs to the animated in-app splash.");
 }
 if (!splashOptions?.backgroundColor || !splashOptions?.dark?.backgroundColor) {
   fail("Light and dark native splash screens must define matching brand backgrounds.");
@@ -272,4 +259,4 @@ if (!/<OGLandmarkLogo\s+size=\{\d+\}\s*\/>/.test(startupLayout) || !startupLayou
 if (!/STARTUP_SPLASH_MIN_DURATION_MS\s*=\s*7000\b/.test(startupLayout)) {
   fail("The branded startup splash must stay visible for at least seven seconds.");
 }
-console.log("✓ Native splash has branded light/dark logos; the in-app startup splash keeps the logo and name.");
+console.log("✓ Native splash is color-only; the animated in-app splash keeps the logo, name, and seven-second minimum.");

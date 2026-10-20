@@ -48,12 +48,8 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/og-landmark-brand-mark-rgba.png",
-          "imageWidth": 240,
           "backgroundColor": "#F5F4F0",
-          "resizeMode": "contain",
           "dark": {
-            "image": "./assets/images/og-landmark-brand-mark-rgba.png",
             "backgroundColor": "#F5F4F0"
           }
         }

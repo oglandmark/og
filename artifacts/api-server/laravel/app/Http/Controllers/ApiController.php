@@ -112,6 +112,14 @@ class ApiController extends Controller
             return $this->conversations($request, array_slice($segments, 1), $method);
         }
 
+        if (($segments[0] ?? '') === 'agent-admin-messages') {
+            return $this->agentAdminMessages($request, array_slice($segments, 1), $method);
+        }
+
+        if (($segments[0] ?? '') === 'agent-progress') {
+            return $this->agentProgress($request, array_slice($segments, 1), $method);
+        }
+
         if (($segments[0] ?? '') === 'my-properties') {
             return $this->myProperties($request);
         }
@@ -1708,6 +1716,176 @@ class ApiController extends Controller
         JsonStore::write($data);
 
         return $this->json($inquiry, 201);
+    }
+
+    private function agentAdminMessages(Request $request, array $parts, string $method)
+    {
+        $user = $this->currentUser($request, true);
+        $isAdmin = $this->isAdmin($user);
+        $isAgent = strtolower((string) ($user['role'] ?? '')) === 'agent';
+        if (!$isAdmin && !$isAgent) return $this->json(['error' => 'Only Agents and Admins can use this inbox.'], 403);
+
+        $data = JsonStore::read();
+        $data['agentAdminThreads'] = is_array($data['agentAdminThreads'] ?? null) ? $data['agentAdminThreads'] : [];
+        $threadId = (string) ($parts[0] ?? '');
+        if ($method === 'GET' && $threadId === '') {
+            $threads = collect($data['agentAdminThreads']);
+            if ($isAgent) $threads = $threads->filter(fn ($thread) => (string) ($thread['agentUserId'] ?? '') === (string) $user['id']);
+            return $this->json($threads->sortByDesc('updatedAt')->values());
+        }
+
+        if ($isAgent && $method === 'POST' && $threadId === '') {
+            $validator = Validator::make($request->all(), ['text' => ['required', 'string', 'max:4000']]);
+            if ($validator->fails()) return $this->json(['error' => $validator->errors()->first()], 422);
+            $threadIndex = collect($data['agentAdminThreads'])->search(
+                fn ($thread) => (string) ($thread['agentUserId'] ?? '') === (string) $user['id'],
+            );
+            if ($threadIndex === false) {
+                $data['agentAdminThreads'][] = [
+                    'id' => 'agent-' . $user['id'],
+                    'agentUserId' => $user['id'],
+                    'agentName' => $user['name'] ?? 'Agent',
+                    'agentEmail' => $user['email'] ?? '',
+                    'messages' => [],
+                    'status' => 'open',
+                    'createdAt' => now()->toISOString(),
+                ];
+                $threadIndex = array_key_last($data['agentAdminThreads']);
+            }
+        } elseif ($isAdmin && $method === 'POST' && $threadId !== '') {
+            $validator = Validator::make($request->all(), ['text' => ['required', 'string', 'max:4000']]);
+            if ($validator->fails()) return $this->json(['error' => $validator->errors()->first()], 422);
+            $threadIndex = $this->indexById($data['agentAdminThreads'], $threadId);
+            if ($threadIndex === null) return $this->json(['error' => 'Agent thread not found.'], 404);
+        } else {
+            return $this->json(['error' => 'Method not allowed.'], 405);
+        }
+
+        $thread = &$data['agentAdminThreads'][$threadIndex];
+        $message = [
+            'id' => (string) JsonStore::nextId($data, 'agentAdminMessages'),
+            'senderId' => $user['id'],
+            'senderRole' => $isAdmin ? 'Admin' : 'Agent',
+            'senderName' => $user['name'] ?? ($isAdmin ? 'Admin' : 'Agent'),
+            'text' => trim((string) $request->input('text')),
+            'createdAt' => now()->toISOString(),
+        ];
+        $thread['messages'][] = $message;
+        $thread['lastMessage'] = $message['text'];
+        $thread['updatedAt'] = $message['createdAt'];
+        $thread['status'] = 'open';
+        $recipientIds = $isAdmin
+            ? [(int) ($thread['agentUserId'] ?? 0)]
+            : collect($data['users'] ?? [])->filter(fn ($candidate) =>
+                strtolower((string) ($candidate['role'] ?? '')) === 'admin'
+                && !in_array(strtolower((string) ($candidate['status'] ?? 'active')), ['inactive', 'suspended', 'blocked'], true)
+            )->pluck('id')->all();
+        app(NotificationDeliveryService::class)->deliver($data, $recipientIds, [
+            'type' => 'AGENT_ADMIN_MESSAGE',
+            'category' => 'system',
+            'title' => $isAdmin ? 'Message from Admin' : 'New Agent message',
+            'message' => mb_substr($message['text'], 0, 160),
+            'entityType' => 'agent_admin_message',
+            'entityId' => $thread['id'],
+            'eventKey' => 'agent-admin-message:' . $thread['id'] . ':' . $message['id'],
+            'priority' => 'HIGH',
+            'deepLink' => $isAdmin ? '/agent/communications' : '/admin/agent-communications',
+            'forPortal' => $isAdmin ? 'agent' : 'admin',
+        ]);
+        JsonStore::write($data);
+        return $this->json($thread, 201);
+    }
+
+    private function agentProgress(Request $request, array $parts, string $method)
+    {
+        $user = $this->currentUser($request, true);
+        $isAdmin = $this->isAdmin($user);
+        $isAgent = strtolower((string) ($user['role'] ?? '')) === 'agent';
+        if (!$isAdmin && !$isAgent) return $this->json(['error' => 'Only Agents and Admins can access progress reports.'], 403);
+
+        $data = JsonStore::read();
+        $data['agentProgress'] = is_array($data['agentProgress'] ?? null) ? $data['agentProgress'] : [];
+        $id = $parts[0] ?? null;
+        if ($method === 'GET' && $id === null) {
+            $reports = collect($data['agentProgress']);
+            if ($isAgent) $reports = $reports->filter(fn ($report) => (string) ($report['agentUserId'] ?? '') === (string) $user['id']);
+            return $this->json($reports->sortByDesc('submittedAt')->values());
+        }
+        if ($method === 'POST' && $id === null && $isAgent) {
+            $validator = Validator::make($request->all(), [
+                'date' => ['required', 'date_format:Y-m-d'],
+                'summary' => ['required', 'string', 'max:2500'],
+                'leadsContacted' => ['required', 'integer', 'min:0', 'max:10000'],
+                'visitsCompleted' => ['required', 'integer', 'min:0', 'max:10000'],
+                'followUps' => ['required', 'integer', 'min:0', 'max:10000'],
+                'blockers' => ['nullable', 'string', 'max:1500'],
+            ]);
+            if ($validator->fails()) return $this->json(['error' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
+            if (collect($data['agentProgress'])->contains(
+                fn ($report) => (string) ($report['agentUserId'] ?? '') === (string) $user['id'] && ($report['date'] ?? '') === $request->input('date'),
+            )) return $this->json(['error' => 'A daily progress report has already been submitted for this date.'], 409);
+
+            $report = [
+                'id' => JsonStore::nextId($data, 'agentProgress'),
+                'agentUserId' => $user['id'],
+                'agentName' => $user['name'] ?? 'Agent',
+                'date' => $request->input('date'),
+                'summary' => trim((string) $request->input('summary')),
+                'leadsContacted' => (int) $request->input('leadsContacted'),
+                'visitsCompleted' => (int) $request->input('visitsCompleted'),
+                'followUps' => (int) $request->input('followUps'),
+                'blockers' => trim((string) $request->input('blockers', '')),
+                'status' => 'submitted',
+                'submittedAt' => now()->toISOString(),
+            ];
+            $data['agentProgress'][] = $report;
+            $adminIds = collect($data['users'] ?? [])->filter(fn ($candidate) =>
+                strtolower((string) ($candidate['role'] ?? '')) === 'admin'
+                && !in_array(strtolower((string) ($candidate['status'] ?? 'active')), ['inactive', 'suspended', 'blocked'], true)
+            )->pluck('id')->all();
+            app(NotificationDeliveryService::class)->deliver($data, $adminIds, [
+                'type' => 'AGENT_PROGRESS_SUBMITTED',
+                'category' => 'system',
+                'title' => 'Agent daily progress submitted',
+                'message' => ($report['agentName'] . ' submitted progress for ' . $report['date'] . '.'),
+                'entityType' => 'agent_progress',
+                'entityId' => $report['id'],
+                'eventKey' => 'agent-progress:' . $report['id'],
+                'priority' => 'NORMAL',
+                'deepLink' => '/admin/agent-progress',
+                'forPortal' => 'admin',
+            ]);
+            JsonStore::write($data);
+            return $this->json($report, 201);
+        }
+        if ($method === 'PATCH' && $id !== null && $isAdmin) {
+            $index = $this->indexById($data['agentProgress'], $id);
+            if ($index === null) return $this->json(['error' => 'Progress report not found.'], 404);
+            $validator = Validator::make($request->all(), [
+                'status' => ['required', 'in:reviewed,needs_follow_up'],
+                'adminNote' => ['nullable', 'string', 'max:1200'],
+            ]);
+            if ($validator->fails()) return $this->json(['error' => $validator->errors()->first()], 422);
+            $data['agentProgress'][$index]['status'] = $request->input('status');
+            $data['agentProgress'][$index]['adminNote'] = trim((string) $request->input('adminNote', ''));
+            $data['agentProgress'][$index]['reviewedAt'] = now()->toISOString();
+            $report = $data['agentProgress'][$index];
+            app(NotificationDeliveryService::class)->deliver($data, [(int) $report['agentUserId']], [
+                'type' => 'AGENT_PROGRESS_REVIEWED',
+                'category' => 'system',
+                'title' => 'Daily progress reviewed',
+                'message' => 'Your report for ' . ($report['date'] ?? 'today') . ' was ' . str_replace('_', ' ', $report['status']) . '.',
+                'entityType' => 'agent_progress',
+                'entityId' => $report['id'],
+                'eventKey' => 'agent-progress-review:' . $report['id'] . ':' . $report['status'],
+                'priority' => 'NORMAL',
+                'deepLink' => '/agent/progress',
+                'forPortal' => 'agent',
+            ]);
+            JsonStore::write($data);
+            return $this->json($report);
+        }
+        return $this->json(['error' => 'Method not allowed.'], 405);
     }
 
     private function conversations(Request $request, array $parts, string $method)

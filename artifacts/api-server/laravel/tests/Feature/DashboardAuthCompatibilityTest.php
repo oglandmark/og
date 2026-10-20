@@ -346,4 +346,61 @@ class DashboardAuthCompatibilityTest extends TestCase
 
         $this->assertSame(200, $verification->status());
     }
+
+    public function test_agent_admin_messages_and_progress_reports_notify_both_sides(): void
+    {
+        $this->seedDashboardFixture();
+        $adminToken = $this->login('dashboard-admin@example.test');
+        $adminHeaders = ['Authorization' => "Bearer {$adminToken}"];
+        $this->patchJson('/api/admin/users/902/role', ['role' => 'Agent'], $adminHeaders)->assertOk();
+        $agentToken = $this->login('dashboard-seller@example.test');
+        $agentHeaders = ['Authorization' => "Bearer {$agentToken}"];
+
+        $agentMessage = $this->postJson('/api/agent-admin-messages', ['text' => 'Please review my area update.'], $agentHeaders)
+            ->assertCreated()
+            ->assertJsonPath('messages.0.senderRole', 'Agent');
+        $threadId = $agentMessage->json('id');
+        $this->getJson('/api/agent-admin-messages', $adminHeaders)
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.id', $threadId);
+
+        $this->postJson("/api/agent-admin-messages/{$threadId}", ['text' => 'Received, thank you.'], $adminHeaders)
+            ->assertCreated()
+            ->assertJsonPath('messages.1.senderRole', 'Admin');
+
+        $report = $this->postJson('/api/agent-progress', [
+            'date' => now()->format('Y-m-d'),
+            'summary' => 'Followed up with assigned clients and completed a site visit.',
+            'leadsContacted' => 4,
+            'visitsCompleted' => 1,
+            'followUps' => 3,
+            'blockers' => 'Waiting for updated site plan.',
+        ], $agentHeaders)->assertCreated()
+            ->assertJsonPath('status', 'submitted');
+        $reportId = $report->json('id');
+
+        $this->getJson('/api/agent-progress', $adminHeaders)
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.id', $reportId);
+        $this->patchJson("/api/agent-progress/{$reportId}", [
+            'status' => 'needs_follow_up',
+            'adminNote' => 'Please add the site-plan delivery date.',
+        ], $adminHeaders)
+            ->assertOk()
+            ->assertJsonPath('status', 'needs_follow_up');
+        $this->getJson('/api/agent-progress', $agentHeaders)
+            ->assertOk()
+            ->assertJsonPath('0.adminNote', 'Please add the site-plan delivery date.');
+
+        $this->getJson('/api/notifications', $adminHeaders)
+            ->assertOk()
+            ->assertJsonFragment(['title' => 'New Agent message'])
+            ->assertJsonFragment(['title' => 'Agent daily progress submitted']);
+        $this->getJson('/api/notifications', $agentHeaders)
+            ->assertOk()
+            ->assertJsonFragment(['title' => 'Message from Admin'])
+            ->assertJsonFragment(['title' => 'Daily progress reviewed']);
+    }
 }

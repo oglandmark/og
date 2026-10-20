@@ -39,7 +39,7 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            type: number
       requestBody:
         required: true
         content:
@@ -59,6 +59,152 @@ paths:
           description: User not found
         "422":
           description: Invalid request or target is not an Agent
+  /agent-admin-messages:
+    get:
+      operationId: getAgentAdminMessages
+      tags: [admin]
+      summary: List Agent-Admin message threads
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Threads visible to the authenticated Agent or Admin
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgentAdminThread"
+        "403":
+          description: Agent or Admin role required
+    post:
+      operationId: sendAgentAdminMessage
+      tags: [admin]
+      summary: Send an Agent message to the Admin team
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentAdminMessageInput"
+      responses:
+        "201":
+          description: Updated Agent message thread
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentAdminThread"
+        "403":
+          description: Agent role required
+        "422":
+          description: Invalid message
+  /agent-admin-messages/{threadId}:
+    post:
+      operationId: replyToAgentMessage
+      tags: [admin]
+      summary: Reply to an Agent message thread
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentAdminMessageInput"
+      responses:
+        "201":
+          description: Updated Agent message thread
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentAdminThread"
+        "403":
+          description: Administrator authentication required
+        "404":
+          description: Thread not found
+  /agent-progress:
+    get:
+      operationId: getAgentProgressReports
+      tags: [admin]
+      summary: List progress reports visible to the authenticated Agent or Admin
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Progress reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgentProgressReport"
+        "403":
+          description: Agent or Admin role required
+    post:
+      operationId: submitAgentProgressReport
+      tags: [admin]
+      summary: Submit an Agent daily progress report
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentProgressInput"
+      responses:
+        "201":
+          description: Submitted report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentProgressReport"
+        "403":
+          description: Agent role required
+        "409":
+          description: A report already exists for this date
+        "422":
+          description: Invalid report
+  /agent-progress/{id}:
+    patch:
+      operationId: reviewAgentProgressReport
+      tags: [admin]
+      summary: Review an Agent progress report
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentProgressReview"
+      responses:
+        "200":
+          description: Reviewed progress report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentProgressReport"
+        "403":
+          description: Administrator authentication required
+        "404":
+          description: Report not found
+        "422":
+          description: Invalid review
 components:
   securitySchemes:
     BearerAuth:
@@ -95,4 +241,107 @@ components:
         - name
         - role
         - agentCoverUploadEnabled
+    AgentAdminMessageInput:
+      type: object
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 4000
+      required: [text]
+    AgentAdminMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        senderId:
+          type: number
+        senderRole:
+          type: string
+          enum: [Agent, Admin]
+        senderName:
+          type: string
+        text:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, senderId, senderRole, senderName, text, createdAt]
+    AgentAdminThread:
+      type: object
+      properties:
+        id:
+          type: string
+        agentUserId:
+          type: number
+        agentName:
+          type: string
+        agentEmail:
+          type: string
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/AgentAdminMessage"
+        lastMessage:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [open, closed]
+      required: [id, agentUserId, agentName, agentEmail, messages, updatedAt, status]
+    AgentProgressInput:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        summary:
+          type: string
+          minLength: 1
+          maxLength: 2500
+        leadsContacted:
+          type: number
+          minimum: 0
+        visitsCompleted:
+          type: number
+          minimum: 0
+        followUps:
+          type: number
+          minimum: 0
+        blockers:
+          type: string
+          maxLength: 1500
+      required: [date, summary, leadsContacted, visitsCompleted, followUps]
+    AgentProgressReview:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [reviewed, needs_follow_up]
+        adminNote:
+          type: string
+          maxLength: 1200
+      required: [status]
+    AgentProgressReport:
+      allOf:
+        - $ref: "#/components/schemas/AgentProgressInput"
+        - type: object
+          properties:
+            id:
+              type: number
+            agentUserId:
+              type: number
+            agentName:
+              type: string
+            status:
+              type: string
+              enum: [submitted, reviewed, needs_follow_up]
+            adminNote:
+              type: string
+            submittedAt:
+              type: string
+              format: date-time
+          required: [id, agentUserId, agentName, status, submittedAt]
 

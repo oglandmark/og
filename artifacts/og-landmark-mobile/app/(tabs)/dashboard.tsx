@@ -407,6 +407,8 @@ export default function DashboardScreen() {
     { key: 'addLead', label: agentPortal?.actionLabels?.addLead || 'Add Lead', icon: 'user-plus' as const, route: '/agent/add-lead' },
     { key: 'visits', label: agentPortal?.actionLabels?.visits || 'Schedule Visit', icon: 'calendar' as const, route: '/agent/visits' },
     { key: 'messages', label: agentPortal?.actionLabels?.messages || 'Messages', icon: 'message-circle' as const, route: '/(tabs)/messages' },
+    { key: 'adminMessages', label: 'Message Admin', icon: 'send' as const, route: '/agent/communications' },
+    { key: 'dailyProgress', label: 'Daily Progress', icon: 'clipboard' as const, route: '/agent/progress' },
   ].filter((action) => agentPortal?.actionVisibility?.[action.key] !== false);
 
   return (

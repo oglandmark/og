@@ -22,7 +22,7 @@ export const HealthCheckResponse = zod.object({
  * @summary Set Agent cover upload access
  */
 export const SetAgentCoverUploadAccessParams = zod.object({
-  "id": zod.coerce.number().int()
+  "id": zod.coerce.number()
 })
 
 export const SetAgentCoverUploadAccessBody = zod.object({
@@ -35,3 +35,223 @@ export const SetAgentCoverUploadAccessResponse = zod.object({
   "role": zod.string(),
   "agentCoverUploadEnabled": zod.boolean()
 })
+
+
+/**
+ * @summary List Agent-Admin message threads
+ */
+export const GetAgentAdminMessagesResponseItem = zod.object({
+  "id": zod.string(),
+  "agentUserId": zod.number(),
+  "agentName": zod.string(),
+  "agentEmail": zod.string(),
+  "messages": zod.array(zod.object({
+  "id": zod.string(),
+  "senderId": zod.number(),
+  "senderRole": zod.enum(['Agent', 'Admin']),
+  "senderName": zod.string(),
+  "text": zod.string(),
+  "createdAt": zod.coerce.date()
+})),
+  "lastMessage": zod.string().optional(),
+  "updatedAt": zod.coerce.date(),
+  "status": zod.enum(['open', 'closed'])
+})
+export const GetAgentAdminMessagesResponse = zod.array(GetAgentAdminMessagesResponseItem)
+
+
+/**
+ * @summary Send an Agent message to the Admin team
+ */
+export const sendAgentAdminMessageBodyTextMax = 4000;
+
+
+
+export const SendAgentAdminMessageBody = zod.object({
+  "text": zod.string().min(1).max(sendAgentAdminMessageBodyTextMax)
+})
+
+export const SendAgentAdminMessageResponse = zod.object({
+  "id": zod.string(),
+  "agentUserId": zod.number(),
+  "agentName": zod.string(),
+  "agentEmail": zod.string(),
+  "messages": zod.array(zod.object({
+  "id": zod.string(),
+  "senderId": zod.number(),
+  "senderRole": zod.enum(['Agent', 'Admin']),
+  "senderName": zod.string(),
+  "text": zod.string(),
+  "createdAt": zod.coerce.date()
+})),
+  "lastMessage": zod.string().optional(),
+  "updatedAt": zod.coerce.date(),
+  "status": zod.enum(['open', 'closed'])
+})
+
+
+/**
+ * @summary Reply to an Agent message thread
+ */
+export const ReplyToAgentMessageParams = zod.object({
+  "threadId": zod.coerce.string()
+})
+
+export const replyToAgentMessageBodyTextMax = 4000;
+
+
+
+export const ReplyToAgentMessageBody = zod.object({
+  "text": zod.string().min(1).max(replyToAgentMessageBodyTextMax)
+})
+
+export const ReplyToAgentMessageResponse = zod.object({
+  "id": zod.string(),
+  "agentUserId": zod.number(),
+  "agentName": zod.string(),
+  "agentEmail": zod.string(),
+  "messages": zod.array(zod.object({
+  "id": zod.string(),
+  "senderId": zod.number(),
+  "senderRole": zod.enum(['Agent', 'Admin']),
+  "senderName": zod.string(),
+  "text": zod.string(),
+  "createdAt": zod.coerce.date()
+})),
+  "lastMessage": zod.string().optional(),
+  "updatedAt": zod.coerce.date(),
+  "status": zod.enum(['open', 'closed'])
+})
+
+
+/**
+ * @summary List progress reports visible to the authenticated Agent or Admin
+ */
+export const getAgentProgressReportsResponseOneSummaryMax = 2500;
+
+export const getAgentProgressReportsResponseOneLeadsContactedMin = 0;
+
+export const getAgentProgressReportsResponseOneVisitsCompletedMin = 0;
+
+export const getAgentProgressReportsResponseOneFollowUpsMin = 0;
+
+export const getAgentProgressReportsResponseOneBlockersMax = 1500;
+
+
+
+export const GetAgentProgressReportsResponseItem = zod.object({
+  "date": zod.coerce.date(),
+  "summary": zod.string().min(1).max(getAgentProgressReportsResponseOneSummaryMax),
+  "leadsContacted": zod.number().min(getAgentProgressReportsResponseOneLeadsContactedMin),
+  "visitsCompleted": zod.number().min(getAgentProgressReportsResponseOneVisitsCompletedMin),
+  "followUps": zod.number().min(getAgentProgressReportsResponseOneFollowUpsMin),
+  "blockers": zod.string().max(getAgentProgressReportsResponseOneBlockersMax).optional()
+}).and(zod.object({
+  "id": zod.number(),
+  "agentUserId": zod.number(),
+  "agentName": zod.string(),
+  "status": zod.enum(['submitted', 'reviewed', 'needs_follow_up']),
+  "adminNote": zod.string().optional(),
+  "submittedAt": zod.coerce.date()
+}))
+export const GetAgentProgressReportsResponse = zod.array(GetAgentProgressReportsResponseItem)
+
+
+/**
+ * @summary Submit an Agent daily progress report
+ */
+export const submitAgentProgressReportBodySummaryMax = 2500;
+
+export const submitAgentProgressReportBodyLeadsContactedMin = 0;
+
+export const submitAgentProgressReportBodyVisitsCompletedMin = 0;
+
+export const submitAgentProgressReportBodyFollowUpsMin = 0;
+
+export const submitAgentProgressReportBodyBlockersMax = 1500;
+
+
+
+export const SubmitAgentProgressReportBody = zod.object({
+  "date": zod.coerce.date(),
+  "summary": zod.string().min(1).max(submitAgentProgressReportBodySummaryMax),
+  "leadsContacted": zod.number().min(submitAgentProgressReportBodyLeadsContactedMin),
+  "visitsCompleted": zod.number().min(submitAgentProgressReportBodyVisitsCompletedMin),
+  "followUps": zod.number().min(submitAgentProgressReportBodyFollowUpsMin),
+  "blockers": zod.string().max(submitAgentProgressReportBodyBlockersMax).optional()
+})
+
+export const submitAgentProgressReportResponseOneSummaryMax = 2500;
+
+export const submitAgentProgressReportResponseOneLeadsContactedMin = 0;
+
+export const submitAgentProgressReportResponseOneVisitsCompletedMin = 0;
+
+export const submitAgentProgressReportResponseOneFollowUpsMin = 0;
+
+export const submitAgentProgressReportResponseOneBlockersMax = 1500;
+
+
+
+export const SubmitAgentProgressReportResponse = zod.object({
+  "date": zod.coerce.date(),
+  "summary": zod.string().min(1).max(submitAgentProgressReportResponseOneSummaryMax),
+  "leadsContacted": zod.number().min(submitAgentProgressReportResponseOneLeadsContactedMin),
+  "visitsCompleted": zod.number().min(submitAgentProgressReportResponseOneVisitsCompletedMin),
+  "followUps": zod.number().min(submitAgentProgressReportResponseOneFollowUpsMin),
+  "blockers": zod.string().max(submitAgentProgressReportResponseOneBlockersMax).optional()
+}).and(zod.object({
+  "id": zod.number(),
+  "agentUserId": zod.number(),
+  "agentName": zod.string(),
+  "status": zod.enum(['submitted', 'reviewed', 'needs_follow_up']),
+  "adminNote": zod.string().optional(),
+  "submittedAt": zod.coerce.date()
+}))
+
+
+/**
+ * @summary Review an Agent progress report
+ */
+export const ReviewAgentProgressReportParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const reviewAgentProgressReportBodyAdminNoteMax = 1200;
+
+
+
+export const ReviewAgentProgressReportBody = zod.object({
+  "status": zod.enum(['reviewed', 'needs_follow_up']),
+  "adminNote": zod.string().max(reviewAgentProgressReportBodyAdminNoteMax).optional()
+})
+
+export const reviewAgentProgressReportResponseOneSummaryMax = 2500;
+
+export const reviewAgentProgressReportResponseOneLeadsContactedMin = 0;
+
+export const reviewAgentProgressReportResponseOneVisitsCompletedMin = 0;
+
+export const reviewAgentProgressReportResponseOneFollowUpsMin = 0;
+
+export const reviewAgentProgressReportResponseOneBlockersMax = 1500;
+
+
+
+export const ReviewAgentProgressReportResponse = zod.object({
+  "date": zod.coerce.date(),
+  "summary": zod.string().min(1).max(reviewAgentProgressReportResponseOneSummaryMax),
+  "leadsContacted": zod.number().min(reviewAgentProgressReportResponseOneLeadsContactedMin),
+  "visitsCompleted": zod.number().min(reviewAgentProgressReportResponseOneVisitsCompletedMin),
+  "followUps": zod.number().min(reviewAgentProgressReportResponseOneFollowUpsMin),
+  "blockers": zod.string().max(reviewAgentProgressReportResponseOneBlockersMax).optional()
+}).and(zod.object({
+  "id": zod.number(),
+  "agentUserId": zod.number(),
+  "agentName": zod.string(),
+  "status": zod.enum(['submitted', 'reviewed', 'needs_follow_up']),
+  "adminNote": zod.string().optional(),
+  "submittedAt": zod.coerce.date()
+}))
+
+

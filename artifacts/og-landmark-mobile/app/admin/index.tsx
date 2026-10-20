@@ -104,6 +104,8 @@ export default function AdminDashboard() {
     { label: 'Properties',  icon: 'home'     as const, route: '/admin/properties' as const },
     { label: 'Users',       icon: 'users'    as const, route: '/admin/users'      as const },
     { label: 'Reports',     icon: 'alert-circle' as const, route: '/admin/reports' as const },
+    { label: 'Agent Messages', icon: 'message-circle' as const, route: '/admin/agent-communications' as const },
+    { label: 'Agent Progress', icon: 'activity' as const, route: '/admin/agent-progress' as const },
     { label: 'Banners',     icon: 'image' as const, route: '/admin/banners' as const },
     { label: 'Notifications', icon: 'bell'   as const, route: '/admin/notifications' as const },
     { label: 'Settings',    icon: 'settings' as const, route: '/admin/settings'   as const },

@@ -100,6 +100,8 @@ export default function NotificationsScreen() {
       router.push({ pathname: '/project/[id]', params: { id: String(item.projectId || item.entityId) } });
     } else if (item.announcementId || item.entityType === 'announcement') {
       router.push({ pathname: '/announcements/[id]', params: { id: String(item.announcementId || item.entityId) } });
+    } else if (item.deepLink?.startsWith('/')) {
+      router.push(item.deepLink as never);
     }
   };
 

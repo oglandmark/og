@@ -19,3 +19,97 @@ export interface AgentCoverAccessUser {
   role: string;
   agentCoverUploadEnabled: boolean;
 }
+
+export interface AgentAdminMessageInput {
+  /**
+     * @minLength 1
+     * @maxLength 4000
+     */
+  text: string;
+}
+
+export type AgentAdminMessageSenderRole = typeof AgentAdminMessageSenderRole[keyof typeof AgentAdminMessageSenderRole];
+
+
+export const AgentAdminMessageSenderRole = {
+  Agent: 'Agent',
+  Admin: 'Admin',
+} as const;
+
+export interface AgentAdminMessage {
+  id: string;
+  senderId: number;
+  senderRole: AgentAdminMessageSenderRole;
+  senderName: string;
+  text: string;
+  createdAt: string;
+}
+
+export type AgentAdminThreadStatus = typeof AgentAdminThreadStatus[keyof typeof AgentAdminThreadStatus];
+
+
+export const AgentAdminThreadStatus = {
+  open: 'open',
+  closed: 'closed',
+} as const;
+
+export interface AgentAdminThread {
+  id: string;
+  agentUserId: number;
+  agentName: string;
+  agentEmail: string;
+  messages: AgentAdminMessage[];
+  lastMessage?: string;
+  updatedAt: string;
+  status: AgentAdminThreadStatus;
+}
+
+export interface AgentProgressInput {
+  date: string;
+  /**
+     * @minLength 1
+     * @maxLength 2500
+     */
+  summary: string;
+  /** @minimum 0 */
+  leadsContacted: number;
+  /** @minimum 0 */
+  visitsCompleted: number;
+  /** @minimum 0 */
+  followUps: number;
+  /** @maxLength 1500 */
+  blockers?: string;
+}
+
+export type AgentProgressReviewStatus = typeof AgentProgressReviewStatus[keyof typeof AgentProgressReviewStatus];
+
+
+export const AgentProgressReviewStatus = {
+  reviewed: 'reviewed',
+  needs_follow_up: 'needs_follow_up',
+} as const;
+
+export interface AgentProgressReview {
+  status: AgentProgressReviewStatus;
+  /** @maxLength 1200 */
+  adminNote?: string;
+}
+
+export type AgentProgressReportStatus = typeof AgentProgressReportStatus[keyof typeof AgentProgressReportStatus];
+
+
+export const AgentProgressReportStatus = {
+  submitted: 'submitted',
+  reviewed: 'reviewed',
+  needs_follow_up: 'needs_follow_up',
+} as const;
+
+export type AgentProgressReport = AgentProgressInput & {
+  id: number;
+  agentUserId: number;
+  agentName: string;
+  status: AgentProgressReportStatus;
+  adminNote?: string;
+  submittedAt: string;
+};
+

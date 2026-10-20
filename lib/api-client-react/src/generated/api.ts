@@ -20,8 +20,13 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AgentAdminMessageInput,
+  AgentAdminThread,
   AgentCoverAccessUpdate,
   AgentCoverAccessUser,
+  AgentProgressInput,
+  AgentProgressReport,
+  AgentProgressReview,
   HealthStatus
 } from './api.schemas';
 
@@ -219,3 +224,512 @@ export const useSetAgentCoverUploadAccess = <TError = ErrorType<void>,
       > => {
       return useMutation(getSetAgentCoverUploadAccessMutationOptions(options));
     }
+
+export const getGetAgentAdminMessagesUrl = () => {
+
+
+
+
+  return `/api/agent-admin-messages`
+}
+
+/**
+ * @summary List Agent-Admin message threads
+ */
+export const getAgentAdminMessages = async ( options?: Parameters<typeof customFetch>[1]): Promise<AgentAdminThread[]> => {
+
+  return customFetch<AgentAdminThread[]>(getGetAgentAdminMessagesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAgentAdminMessagesQueryKey = () => {
+    return [
+    `/api/agent-admin-messages`
+    ] as const;
+    }
+
+
+export const getGetAgentAdminMessagesQueryOptions = <TData = Awaited<ReturnType<typeof getAgentAdminMessages>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAgentAdminMessages>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAgentAdminMessagesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAgentAdminMessages>>> = ({ signal }) => getAgentAdminMessages({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAgentAdminMessages>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAgentAdminMessagesQueryResult = NonNullable<Awaited<ReturnType<typeof getAgentAdminMessages>>>
+export type GetAgentAdminMessagesQueryError = ErrorType<void>
+
+
+/**
+ * @summary List Agent-Admin message threads
+ */
+
+export function useGetAgentAdminMessages<TData = Awaited<ReturnType<typeof getAgentAdminMessages>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAgentAdminMessages>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAgentAdminMessagesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSendAgentAdminMessageUrl = () => {
+
+
+
+
+  return `/api/agent-admin-messages`
+}
+
+/**
+ * @summary Send an Agent message to the Admin team
+ */
+export const sendAgentAdminMessage = async (agentAdminMessageInput: AgentAdminMessageInput, options?: Parameters<typeof customFetch>[1]): Promise<AgentAdminThread> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AgentAdminThread>(getSendAgentAdminMessageUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(agentAdminMessageInput)
+  }
+);}
+
+
+
+
+
+export const getSendAgentAdminMessageMutationKey = () => ['sendAgentAdminMessage'] as const;
+
+export const getSendAgentAdminMessageMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendAgentAdminMessage>>, TError,SendAgentAdminMessageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendAgentAdminMessage>>, TError,SendAgentAdminMessageMutationVariables, TContext> => {
+
+const mutationKey = getSendAgentAdminMessageMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendAgentAdminMessage>>, SendAgentAdminMessageMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  sendAgentAdminMessage(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendAgentAdminMessageMutationResult = NonNullable<Awaited<ReturnType<typeof sendAgentAdminMessage>>>
+    export type SendAgentAdminMessageMutationBody = BodyType<AgentAdminMessageInput>
+    export type SendAgentAdminMessageMutationError = ErrorType<void>
+    export type SendAgentAdminMessageMutationVariables = {data: BodyType<AgentAdminMessageInput>}
+
+    /**
+ * @summary Send an Agent message to the Admin team
+ */
+export const useSendAgentAdminMessage = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendAgentAdminMessage>>, TError,SendAgentAdminMessageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof sendAgentAdminMessage>>,
+        TError,
+        SendAgentAdminMessageMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSendAgentAdminMessageMutationOptions(options));
+    }
+
+export const getReplyToAgentMessageUrl = (threadId: string,) => {
+
+
+
+
+  return `/api/agent-admin-messages/${threadId}`
+}
+
+/**
+ * @summary Reply to an Agent message thread
+ */
+export const replyToAgentMessage = async (threadId: string,
+    agentAdminMessageInput: AgentAdminMessageInput, options?: Parameters<typeof customFetch>[1]): Promise<AgentAdminThread> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AgentAdminThread>(getReplyToAgentMessageUrl(threadId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(agentAdminMessageInput)
+  }
+);}
+
+
+
+
+
+export const getReplyToAgentMessageMutationKey = () => ['replyToAgentMessage'] as const;
+
+export const getReplyToAgentMessageMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replyToAgentMessage>>, TError,ReplyToAgentMessageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof replyToAgentMessage>>, TError,ReplyToAgentMessageMutationVariables, TContext> => {
+
+const mutationKey = getReplyToAgentMessageMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replyToAgentMessage>>, ReplyToAgentMessageMutationVariables> = (props) => {
+          const {threadId,data} = props ?? {};
+
+          return  replyToAgentMessage(threadId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReplyToAgentMessageMutationResult = NonNullable<Awaited<ReturnType<typeof replyToAgentMessage>>>
+    export type ReplyToAgentMessageMutationBody = BodyType<AgentAdminMessageInput>
+    export type ReplyToAgentMessageMutationError = ErrorType<void>
+    export type ReplyToAgentMessageMutationVariables = {threadId: string;data: BodyType<AgentAdminMessageInput>}
+
+    /**
+ * @summary Reply to an Agent message thread
+ */
+export const useReplyToAgentMessage = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replyToAgentMessage>>, TError,ReplyToAgentMessageMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof replyToAgentMessage>>,
+        TError,
+        ReplyToAgentMessageMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReplyToAgentMessageMutationOptions(options));
+    }
+
+export const getGetAgentProgressReportsUrl = () => {
+
+
+
+
+  return `/api/agent-progress`
+}
+
+/**
+ * @summary List progress reports visible to the authenticated Agent or Admin
+ */
+export const getAgentProgressReports = async ( options?: Parameters<typeof customFetch>[1]): Promise<AgentProgressReport[]> => {
+
+  return customFetch<AgentProgressReport[]>(getGetAgentProgressReportsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAgentProgressReportsQueryKey = () => {
+    return [
+    `/api/agent-progress`
+    ] as const;
+    }
+
+
+export const getGetAgentProgressReportsQueryOptions = <TData = Awaited<ReturnType<typeof getAgentProgressReports>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAgentProgressReports>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAgentProgressReportsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAgentProgressReports>>> = ({ signal }) => getAgentProgressReports({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAgentProgressReports>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAgentProgressReportsQueryResult = NonNullable<Awaited<ReturnType<typeof getAgentProgressReports>>>
+export type GetAgentProgressReportsQueryError = ErrorType<void>
+
+
+/**
+ * @summary List progress reports visible to the authenticated Agent or Admin
+ */
+
+export function useGetAgentProgressReports<TData = Awaited<ReturnType<typeof getAgentProgressReports>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAgentProgressReports>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAgentProgressReportsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSubmitAgentProgressReportUrl = () => {
+
+
+
+
+  return `/api/agent-progress`
+}
+
+/**
+ * @summary Submit an Agent daily progress report
+ */
+export const submitAgentProgressReport = async (agentProgressInput: AgentProgressInput, options?: Parameters<typeof customFetch>[1]): Promise<AgentProgressReport> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AgentProgressReport>(getSubmitAgentProgressReportUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(agentProgressInput)
+  }
+);}
+
+
+
+
+
+export const getSubmitAgentProgressReportMutationKey = () => ['submitAgentProgressReport'] as const;
+
+export const getSubmitAgentProgressReportMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitAgentProgressReport>>, TError,SubmitAgentProgressReportMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitAgentProgressReport>>, TError,SubmitAgentProgressReportMutationVariables, TContext> => {
+
+const mutationKey = getSubmitAgentProgressReportMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitAgentProgressReport>>, SubmitAgentProgressReportMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  submitAgentProgressReport(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubmitAgentProgressReportMutationResult = NonNullable<Awaited<ReturnType<typeof submitAgentProgressReport>>>
+    export type SubmitAgentProgressReportMutationBody = BodyType<AgentProgressInput>
+    export type SubmitAgentProgressReportMutationError = ErrorType<void>
+    export type SubmitAgentProgressReportMutationVariables = {data: BodyType<AgentProgressInput>}
+
+    /**
+ * @summary Submit an Agent daily progress report
+ */
+export const useSubmitAgentProgressReport = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitAgentProgressReport>>, TError,SubmitAgentProgressReportMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof submitAgentProgressReport>>,
+        TError,
+        SubmitAgentProgressReportMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSubmitAgentProgressReportMutationOptions(options));
+    }
+
+export const getReviewAgentProgressReportUrl = (id: number,) => {
+
+
+
+
+  return `/api/agent-progress/${id}`
+}
+
+/**
+ * @summary Review an Agent progress report
+ */
+export const reviewAgentProgressReport = async (id: number,
+    agentProgressReview: AgentProgressReview, options?: Parameters<typeof customFetch>[1]): Promise<AgentProgressReport> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AgentProgressReport>(getReviewAgentProgressReportUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(agentProgressReview)
+  }
+);}
+
+
+
+
+
+export const getReviewAgentProgressReportMutationKey = () => ['reviewAgentProgressReport'] as const;
+
+export const getReviewAgentProgressReportMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewAgentProgressReport>>, TError,ReviewAgentProgressReportMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reviewAgentProgressReport>>, TError,ReviewAgentProgressReportMutationVariables, TContext> => {
+
+const mutationKey = getReviewAgentProgressReportMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reviewAgentProgressReport>>, ReviewAgentProgressReportMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  reviewAgentProgressReport(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReviewAgentProgressReportMutationResult = NonNullable<Awaited<ReturnType<typeof reviewAgentProgressReport>>>
+    export type ReviewAgentProgressReportMutationBody = BodyType<AgentProgressReview>
+    export type ReviewAgentProgressReportMutationError = ErrorType<void>
+    export type ReviewAgentProgressReportMutationVariables = {id: number;data: BodyType<AgentProgressReview>}
+
+    /**
+ * @summary Review an Agent progress report
+ */
+export const useReviewAgentProgressReport = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewAgentProgressReport>>, TError,ReviewAgentProgressReportMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reviewAgentProgressReport>>,
+        TError,
+        ReviewAgentProgressReportMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReviewAgentProgressReportMutationOptions(options));
+    }
+

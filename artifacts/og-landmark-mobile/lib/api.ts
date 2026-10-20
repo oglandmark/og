@@ -1222,6 +1222,77 @@ export async function deleteAdminUser(userId: number): Promise<void> {
   await apiFetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
 }
 
+export type AgentAdminMessage = {
+  id: string;
+  senderId: number;
+  senderRole: 'Agent' | 'Admin';
+  senderName: string;
+  text: string;
+  createdAt: string;
+};
+
+export type AgentAdminThread = {
+  id: string;
+  agentUserId: number;
+  agentName: string;
+  agentEmail: string;
+  messages: AgentAdminMessage[];
+  lastMessage?: string;
+  updatedAt: string;
+  status: 'open' | 'closed';
+};
+
+export async function getAgentAdminThreads(): Promise<AgentAdminThread[]> {
+  return apiFetch<AgentAdminThread[]>('/api/agent-admin-messages');
+}
+
+export async function sendAgentAdminMessage(text: string, threadId?: string): Promise<AgentAdminThread> {
+  const path = threadId
+    ? `/api/agent-admin-messages/${encodeURIComponent(threadId)}`
+    : '/api/agent-admin-messages';
+  return apiFetch<AgentAdminThread>(path, { method: 'POST', body: JSON.stringify({ text }) });
+}
+
+export type AgentProgressReport = {
+  id: number;
+  agentUserId: number;
+  agentName: string;
+  date: string;
+  summary: string;
+  leadsContacted: number;
+  visitsCompleted: number;
+  followUps: number;
+  blockers: string;
+  status: 'submitted' | 'reviewed' | 'needs_follow_up';
+  adminNote?: string;
+  submittedAt: string;
+};
+
+export async function getAgentProgressReports(): Promise<AgentProgressReport[]> {
+  return apiFetch<AgentProgressReport[]>('/api/agent-progress');
+}
+
+export async function submitAgentProgressReport(report: Pick<
+  AgentProgressReport,
+  'date' | 'summary' | 'leadsContacted' | 'visitsCompleted' | 'followUps' | 'blockers'
+>): Promise<AgentProgressReport> {
+  return apiFetch<AgentProgressReport>('/api/agent-progress', {
+    method: 'POST',
+    body: JSON.stringify(report),
+  });
+}
+
+export async function reviewAgentProgressReport(
+  id: number,
+  status: 'reviewed' | 'needs_follow_up',
+  adminNote = '',
+): Promise<AgentProgressReport> {
+  return apiFetch<AgentProgressReport>(`/api/agent-progress/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status, adminNote }),
+  });
+}
+
 // ── Admin property actions ──────────────────────────────────────────────────
 export async function approveProperty(id: number): Promise<void> {
   await apiFetch(`/api/properties/${id}/approve`, { method: 'PATCH' });

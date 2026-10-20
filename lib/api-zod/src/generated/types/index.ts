@@ -6,6 +6,16 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './agentAdminMessage';
+export * from './agentAdminMessageInput';
+export * from './agentAdminMessageSenderRole';
+export * from './agentAdminThread';
+export * from './agentAdminThreadStatus';
 export * from './agentCoverAccessUpdate';
 export * from './agentCoverAccessUser';
+export * from './agentProgressInput';
+export * from './agentProgressReport';
+export * from './agentProgressReportStatus';
+export * from './agentProgressReview';
+export * from './agentProgressReviewStatus';
 export * from './healthStatus';

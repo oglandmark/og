@@ -209,6 +209,19 @@ class BackendGapClosureTest extends TestCase
         );
         $this->get($secondUploadedPath)->assertOk();
 
+        $videoUpload = $this->post('/api/upload/video', [
+            'video' => UploadedFile::fake()->create('mobile-qa-tour.m4v', 120, 'video/mp4'),
+        ], ['Authorization' => "Bearer {$buyerToken}"])
+            ->assertOk()
+            ->assertJsonPath('media.kind', 'video');
+        $this->assertNotSame('', (string) $videoUpload->json('url'));
+
+        $this->post('/api/upload/single', [
+            'image' => UploadedFile::fake()->create('unsupported-vector.svg', 20, 'image/svg+xml'),
+        ], ['Authorization' => "Bearer {$buyerToken}"])
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'UPLOAD_FORMAT_NOT_SUPPORTED');
+
         $property = $this->postJson('/api/properties', [
             'title' => 'QA-only mobile house listing',
             'type' => 'House',

@@ -7,9 +7,10 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import { Image, Platform } from 'react-native';
 import { File } from 'expo-file-system';
 import { fetch as expoFetch } from 'expo/fetch';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { resolveApiBase } from './apiBase';
 import {
   normalizePropertyMedia,
@@ -149,17 +150,32 @@ async function apiUpload<T>(path: string, form: FormData, timeoutMs = 180_000): 
   }
 }
 
-function imageUploadFile(uri: string, filename = 'photo.jpg'): { file: File; filename: string } {
-  const cleanUri = uri.split(/[?#]/, 1)[0];
-  const uriExt = cleanUri.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
-  const requestedExt = filename.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
-  const ext = uriExt === 'png' || uriExt === 'webp'
-    ? uriExt
-    : requestedExt === 'png' || requestedExt === 'webp'
-      ? requestedExt
-      : 'jpg';
+function getImageDimensions(uri: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    Image.getSize(uri, (width, height) => resolve({ width, height }), reject);
+  });
+}
+
+async function imageUploadFile(uri: string, filename = 'photo.jpg'): Promise<{ file: File; filename: string }> {
+  let normalized: Awaited<ReturnType<typeof manipulateAsync>>;
+  try {
+    const { width, height } = await getImageDimensions(uri);
+    const maxEdge = 2048;
+    const scale = Math.min(1, maxEdge / Math.max(width, height));
+    const actions = scale < 1
+      ? [{ resize: { width: Math.round(width * scale), height: Math.round(height * scale) } }]
+      : [];
+    // Re-encode gallery photos as JPEG so HEIC/HEIF/AVIF and camera-specific
+    // extensions do not reach the API as unsupported raw upload types.
+    normalized = await manipulateAsync(uri, actions, {
+      compress: 0.82,
+      format: SaveFormat.JPEG,
+    });
+  } catch {
+    throw new Error('This photo could not be converted. Try choosing a JPG, PNG, or another photo from your gallery.');
+  }
   const baseName = filename.replace(/\.[^.]*$/, '').replace(/[^a-z0-9_-]/gi, '_') || 'photo';
-  return { file: new File(uri), filename: `${baseName}.${ext}` };
+  return { file: new File(normalized.uri), filename: `${baseName}.jpg` };
 }
 
 // ─── Inquiry & Appointment submission ─────────────────────────────────────────
@@ -790,7 +806,7 @@ export async function setAdminDemoPropertiesHidden(
 }
 export async function uploadImage(uri: string, filename = 'photo.jpg'): Promise<{ url: string }> {
   const form = new FormData();
-  const uploadFile = imageUploadFile(uri, filename);
+  const uploadFile = await imageUploadFile(uri, filename);
   form.append('image', uploadFile.file, uploadFile.filename);
   const uploaded = await apiUpload<{ url: string }>('/api/upload/single', form);
   const url = resolveMediaUrl(uploaded.url);
@@ -813,7 +829,13 @@ function isUploadCompatibilityError(error: unknown): error is ApiRequestError {
   return error instanceof ApiRequestError
     // The legacy route uses the same media storage. Do not retry storage errors
     // or generic server failures: the same file can be written twice or fail twice.
-    && !['MEDIA_STORAGE_NOT_READY', 'MEDIA_STORAGE_WRITE_FAILED'].includes(error.code ?? '')
+    && ![
+      'MEDIA_STORAGE_NOT_READY',
+      'MEDIA_STORAGE_WRITE_FAILED',
+      'UPLOAD_FILE_TOO_LARGE',
+      'UPLOAD_FILE_INVALID',
+      'UPLOAD_FORMAT_NOT_SUPPORTED',
+    ].includes(error.code ?? '')
     && [400, 404, 415, 422].includes(error.status);
 }
 
@@ -822,7 +844,7 @@ async function uploadImageToLegacyCollectionRoute(
   filename: string,
 ): Promise<{ url: string }> {
   const form = new FormData();
-  const uploadFile = imageUploadFile(uri, filename);
+  const uploadFile = await imageUploadFile(uri, filename);
   form.append('images', uploadFile.file, uploadFile.filename);
   const response = await apiUpload<{ urls?: string[]; url?: string }>('/api/upload', form);
   const url = response.urls?.[0] || response.url;

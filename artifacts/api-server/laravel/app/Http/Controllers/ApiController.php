@@ -1214,8 +1214,28 @@ class ApiController extends Controller
         $urls = [];
         $media = [];
         foreach ($files as $file) {
-            if (!$file->isValid() || !in_array(strtolower($file->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'mov'], true)) {
-                return $this->json(['error' => 'Allowed: JPG, PNG, WebP, MP4, MOV'], 422);
+            if (!$file->isValid()) {
+                $uploadError = $file->getError();
+                if (in_array($uploadError, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
+                    return $this->json([
+                        'error' => 'This file is too large for the server. Choose a smaller photo or shorter video.',
+                        'code' => 'UPLOAD_FILE_TOO_LARGE',
+                    ], 413);
+                }
+
+                return $this->json([
+                    'error' => 'The selected file could not be read. Please choose it again.',
+                    'code' => 'UPLOAD_FILE_INVALID',
+                ], 422);
+            }
+            if (!in_array(strtolower($file->getClientOriginalExtension()), [
+                'jpg', 'jpeg', 'png', 'webp',
+                'mp4', 'mov', 'm4v', '3gp', 'webm', 'avi',
+            ], true)) {
+                return $this->json([
+                    'error' => 'This file format is not supported. Photos are converted to JPEG; videos can be MP4, MOV, M4V, 3GP, WebM, or AVI.',
+                    'code' => 'UPLOAD_FORMAT_NOT_SUPPORTED',
+                ], 422);
             }
             $name = now()->format('YmdHis') . '-' . Str::random(24) . '.' . strtolower($file->getClientOriginalExtension());
             $mimeType = $file->getMimeType();

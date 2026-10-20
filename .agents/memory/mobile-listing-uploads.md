@@ -14,3 +14,9 @@ Mobile clients must normalize relative image and video paths to absolute URLs at
 **Why:** Laravel may return paths such as `/images/uploads/...` when `MEDIA_PUBLIC_BASE_URL` is unset, but native image and video sources need absolute URIs.
 
 **How to apply:** Normalize upload responses and property list, detail, create, and admin-review responses; verify both the admin thumbnail and review gallery paths.
+
+Normalize selected photos to compressed JPEG on-device before upload; accept common video containers explicitly and return size-limit errors separately from unsupported-format errors.
+
+**Why:** iOS gallery photos may be HEIC/HEIF and large originals can exceed host PHP upload limits, while Expo Go does not transparently transcode arbitrary video codecs.
+
+**How to apply:** Resize photos to a reasonable maximum edge and encode JPEG before multipart upload. Keep video format support explicit (for example MP4/MOV/M4V/3GP/WebM/AVI); do not promise arbitrary codecs or bypass server upload limits.

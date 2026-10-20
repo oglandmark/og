@@ -7,8 +7,10 @@ const api = readFileSync(new URL('../lib/api.ts', import.meta.url), 'utf8');
 test('native media uploads use Expo File parts and Expo fetch', () => {
   assert.match(api, /import \{ File \} from 'expo-file-system'/);
   assert.match(api, /import \{ fetch as expoFetch \} from 'expo\/fetch'/);
+  assert.match(api, /import \{ manipulateAsync, SaveFormat \} from 'expo-image-manipulator'/);
   assert.match(api, /async function apiUpload[\s\S]*?const res = await expoFetch/);
-  assert.match(api, /function imageUploadFile[\s\S]*?new File\(uri\)/);
+  assert.match(api, /async function imageUploadFile[\s\S]*?format: SaveFormat\.JPEG/);
+  assert.match(api, /new File\(normalized\.uri\)/);
   assert.match(api, /form\.append\('image', uploadFile\.file, uploadFile\.filename\)/);
   assert.match(api, /form\.append\('video', new File\(uri\), filename\)/);
   assert.match(api, /form\.append\('images', uploadFile\.file, uploadFile\.filename\)/);
@@ -18,6 +20,8 @@ test('native media uploads use Expo File parts and Expo fetch', () => {
 test('generic server errors and media-storage failures are not retried through the legacy route', () => {
   const compatibilityCheck = api.match(/function isUploadCompatibilityError[\s\S]*?\n}/)?.[0] ?? '';
   assert.match(compatibilityCheck, /MEDIA_STORAGE_WRITE_FAILED/);
+  assert.match(compatibilityCheck, /UPLOAD_FILE_TOO_LARGE/);
+  assert.match(compatibilityCheck, /UPLOAD_FORMAT_NOT_SUPPORTED/);
   assert.match(compatibilityCheck, /\[400, 404, 415, 422\]/);
   assert.doesNotMatch(compatibilityCheck, /500|502|503|413/);
 });

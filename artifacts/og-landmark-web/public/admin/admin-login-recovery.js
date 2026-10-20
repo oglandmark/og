@@ -83,7 +83,9 @@
   let step = 'email';
 
   function recoveryApiEndpoint(path) {
-    const base = String(window.__OG_LIVE_API_BASE__ || 'https://api.oglandmark.com/api').replace(/\/+$/, '');
+    // Respect the same environment-aware API base used by the rest of the site:
+    // Replit preview uses its local Laravel proxy; the live site uses production.
+    const base = String(window.__OG_API_BASE__ || '/api').replace(/\/+$/, '');
     return `${base}${path}`;
   }
 

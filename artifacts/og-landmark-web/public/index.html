@@ -387,6 +387,60 @@
       applyTextReplacements();
       hideDeveloperOption();
 
+      // ── PUBLIC USER AUTH NAV ──
+      // Replace the role-specific Buy/Sell actions with one User register/login pair.
+      (function(){
+        const style = document.createElement('style');
+        style.textContent = `
+          a[href*="auth?role=buyer"], a[href*="auth?role=seller"] { display:none!important; }
+          .og-guest-auth{display:flex!important;align-items:center;gap:8px;white-space:nowrap}
+          .og-guest-auth a{display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;transition:.2s}
+          .og-guest-register{color:#C8A45A;border:1.5px solid #C8A45A;background:transparent}
+          .og-guest-register:hover{background:#C8A45A;color:#0B1F3A}
+          .og-guest-login{color:#fff;border:1.5px solid #0B1F3A;background:#0B1F3A}
+          .og-guest-login:hover{background:#122C4B;border-color:#122C4B}
+          @media(max-width:640px){.og-guest-auth{gap:6px}.og-guest-auth a{padding:7px 10px;font-size:12px}}
+        `;
+        document.head.appendChild(style);
+
+        function isLoggedIn(){
+          return Boolean(localStorage.getItem('og_token') && localStorage.getItem('og_user'));
+        }
+
+        function addGuestLinks(){
+          if(isLoggedIn()){
+            document.querySelectorAll('.og-guest-auth').forEach(node => node.remove());
+            return;
+          }
+
+          const roleLinks = Array.from(document.querySelectorAll(
+            'a[href*="auth?role=buyer"], a[href*="auth?role=seller"]'
+          ));
+          const parents = new Set(roleLinks.map(link => link.parentElement).filter(Boolean));
+          parents.forEach(parent => {
+            if(parent.querySelector('.og-guest-auth')) return;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'og-guest-auth';
+
+            const register = document.createElement('a');
+            register.className = 'og-guest-register';
+            register.href = '/register';
+            register.textContent = 'Register';
+
+            const login = document.createElement('a');
+            login.className = 'og-guest-login';
+            login.href = '/login';
+            login.textContent = 'Login';
+
+            wrapper.append(register, login);
+            parent.insertBefore(wrapper, roleLinks.find(link => link.parentElement === parent));
+          });
+        }
+
+        addGuestLinks();
+        new MutationObserver(addGuestLinks).observe(document.body, {childList:true, subtree:true});
+      })();
+
       // ── AUTH-AWARE NAVBAR ──
       // When logged in: replace Buy/Sell buttons with profile dropdown + Dashboard link
       (function(){

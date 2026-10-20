@@ -345,7 +345,7 @@
         }
       }
 
-      // ── HIDE DEVELOPER & AGENT OPTIONS FROM REGISTRATION ──
+      // ── HIDE ACCOUNT-TYPE SELECTOR FROM PUBLIC REGISTRATION ──
       function hideDeveloperOption() {
         // Radix UI select items: role="option" or data-radix-select-item
         document.querySelectorAll('[role="option"], [data-radix-select-item]').forEach(el => {
@@ -367,9 +367,10 @@
         });
         document.querySelectorAll('label').forEach(label => {
           const text = (label.textContent || '').trim().toLowerCase();
-          if (!['i’m here as a', "i'm here as a", 'account type', 'account role', 'role'].includes(text)) return;
-          const field = label.parentElement?.parentElement || label.parentElement;
-          if (field) field.style.display = 'none';
+          if (!['i’m here as a', "i'm here as a", 'i am a', 'account type', 'account role', 'role'].includes(text)) return;
+          const field = label.parentElement;
+          if (field && field.tagName !== 'FORM') field.style.display = 'none';
+          else label.style.display = 'none';
         });
       }
 

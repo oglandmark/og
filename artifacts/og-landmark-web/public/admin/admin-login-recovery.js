@@ -82,6 +82,11 @@
   let busy = false;
   let step = 'email';
 
+  function liveApiEndpoint(path) {
+    const base = String(window.__OG_LIVE_API_BASE__ || 'https://api.oglandmark.com/api').replace(/\/+$/, '');
+    return `${base}${path}`;
+  }
+
   function showNotice(message, kind = 'success') {
     notice = message;
     noticeKind = kind;
@@ -159,13 +164,16 @@
       actionButton.textContent = 'Sending code…';
     }
     try {
-      const response = await fetch('/api/auth/admin-forgot-password', {
+      const response = await fetch(liveApiEndpoint('/auth/admin-forgot-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'Could not send the reset code. Try again.');
+      if (data.smtpOff) {
+        throw new Error('The production email service could not deliver the code. Please contact support.');
+      }
       step = 'code';
       notice = 'If the email matches an admin account, a code has been sent. Check your inbox and spam folder.';
       noticeKind = 'success';
@@ -201,7 +209,7 @@
       submitButton.textContent = 'Updating password…';
     }
     try {
-      const response = await fetch('/api/auth/admin-reset-password', {
+      const response = await fetch(liveApiEndpoint('/auth/admin-reset-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code, newPassword: password }),

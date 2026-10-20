@@ -17,6 +17,7 @@
   var isPreviewHost = /(^localhost$|^127\.0\.0\.1$|\.replit\.dev$|\.replit\.app$|\.repl\.co$)/i
     .test(window.location.hostname);
   var previewBase = isPreviewHost ? '/api' : LIVE;
+  window.__OG_LIVE_API_BASE__ = LIVE;
   // A production API URL saved during an earlier preview session should not
   // bypass the local Laravel proxy when this site is opened on Replit.
   if (isPreviewHost && !fromQuery && fromStorage === LIVE) fromStorage = null;

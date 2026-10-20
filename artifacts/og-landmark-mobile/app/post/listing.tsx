@@ -541,8 +541,13 @@ export default function ListingWizard() {
         let uploadedLocal: string[];
         try {
           uploadedLocal = await uploadMultipleImages(localUris);
-        } catch {
-          throw new Error('Photos could not be uploaded. Please check your connection and try again.');
+        } catch (error) {
+          const reason = error instanceof Error ? error.message.trim() : '';
+          throw new Error(
+            reason
+              ? `Photos could not be uploaded. ${reason}`
+              : 'Photos could not be uploaded. Please check your connection and try again.',
+          );
         }
         uploadedImages = [...form.photos];
         localPhotoIndexes.forEach((index, localIndex) => {
@@ -562,7 +567,14 @@ export default function ListingWizard() {
       if (form.video?.uri) {
         if (isLocalMediaUri(form.video.uri)) {
           try { uploadedVideoUrl = (await uploadVideo(form.video.uri, form.video.filename ?? 'video.mp4')).url; }
-          catch { throw new Error('Video could not be uploaded. Please try again or remove the video.'); }
+          catch (error) {
+            const reason = error instanceof Error ? error.message.trim() : '';
+            throw new Error(
+              reason
+                ? `Video could not be uploaded. ${reason}`
+                : 'Video could not be uploaded. Please try again or remove the video.',
+            );
+          }
         }
       }
       const location = [form.locality, form.society, form.city].filter(Boolean).join(', ');

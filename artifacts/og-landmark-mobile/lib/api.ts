@@ -811,6 +811,9 @@ export async function uploadVideo(uri: string, filename = 'video.mp4'): Promise<
 
 function isUploadCompatibilityError(error: unknown): error is ApiRequestError {
   return error instanceof ApiRequestError
+    // The legacy route uses the same media storage, so retrying cannot fix a
+    // production storage outage and only sends the same file twice.
+    && error.code !== 'MEDIA_STORAGE_NOT_READY'
     && [400, 404, 413, 415, 422, 500, 502, 503].includes(error.status);
 }
 

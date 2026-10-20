@@ -306,6 +306,15 @@ class ApiController extends Controller
                 'joinedDate' => now()->toISOString(),
             ];
             $data['users'][] = $user;
+            $this->notifyAccountUpdate(
+                $data,
+                (int) $user['id'],
+                'ACCOUNT_WELCOME',
+                'Welcome to OG Landmark',
+                'Your account is ready. You can save properties and receive listing and service updates.',
+                false,
+                'account:created:' . $user['id'],
+            );
             JsonStore::write($data);
 
             return $this->json(['user' => $this->safeUser($user), 'token' => $this->createSession($user)], 201);
@@ -388,6 +397,15 @@ class ApiController extends Controller
             $index = $this->indexById($data['users'] ?? [], $user['id']);
             if ($index === null) return $this->json(['error' => 'Invalid or expired reset code'], 400);
             $data['users'][$index]['password'] = $this->hashLegacyPassword($newPassword);
+            $this->notifyAccountUpdate(
+                $data,
+                (int) $user['id'],
+                'ACCOUNT_PASSWORD_CHANGED',
+                'Password changed',
+                'Your OG Landmark account password was changed. If you did not make this change, contact support.',
+                true,
+                'account:password-reset:' . Str::uuid(),
+            );
             JsonStore::write($data);
             $this->invalidateSessions($user['id'], $user['email'] ?? null);
             return $this->json(['success' => true]);
@@ -536,17 +554,21 @@ class ApiController extends Controller
             $from = $property['approvalStatus'] ?? $property['listingStatus'] ?? null;
             $previousApprovalStatus = strtolower((string) ($property['approvalStatus'] ?? $property['listingStatus'] ?? ''));
             $previousListingStatus = strtolower((string) ($property['listingStatus'] ?? $property['approvalStatus'] ?? ''));
+            $reviewNotificationType = null;
             $wasPubliclyListed = in_array($previousApprovalStatus, ['active', 'approved'], true)
                 && in_array($previousListingStatus, ['active', 'approved'], true);
             if ($action === 'approve' || $action === 'verify') {
                 $data['properties'][$index]['approvalStatus'] = 'Active';
                 $data['properties'][$index]['listingStatus'] = 'Active';
+                if (!$wasPubliclyListed) $reviewNotificationType = 'PROPERTY_LISTING_APPROVED';
             } elseif ($action === 'reject') {
                 $data['properties'][$index]['approvalStatus'] = 'Rejected';
                 $data['properties'][$index]['rejectionReason'] = $request->input('reason');
+                if ($previousApprovalStatus !== 'rejected') $reviewNotificationType = 'PROPERTY_LISTING_REJECTED';
             } elseif ($action === 'request-changes') {
                 $data['properties'][$index]['approvalStatus'] = 'Changes Requested';
                 $data['properties'][$index]['changeRequest'] = $request->input('reason');
+                if ($previousApprovalStatus !== 'changes requested') $reviewNotificationType = 'PROPERTY_CHANGES_REQUESTED';
             } elseif ($action === 'feature') {
                 $data['properties'][$index]['featured'] = $request->has('featured') ? $request->boolean('featured') : !(bool) ($property['featured'] ?? false);
             }
@@ -558,6 +580,9 @@ class ApiController extends Controller
             ];
             if (in_array($action, ['approve', 'verify'], true) && !$wasPubliclyListed) {
                 $this->notifyUsersOfPublishedProperty($data, $data['properties'][$index]);
+            }
+            if ($reviewNotificationType !== null) {
+                $this->notifyPropertyOwnerOfReview($data, $data['properties'][$index], $reviewNotificationType, trim((string) $request->input('reason', '')));
             }
             JsonStore::write($data);
             return $this->json($data['properties'][$index]);
@@ -741,6 +766,17 @@ class ApiController extends Controller
                 : [];
             if ($requestedRole !== 'agent' || $previousRole !== 'agent') {
                 $data['users'][$index]['agentCoverUploadEnabled'] = false;
+            }
+            if ($previousRole !== $requestedRole) {
+                $this->notifyAccountUpdate(
+                    $data,
+                    (int) $data['users'][$index]['id'],
+                    'ACCOUNT_ROLE_UPDATED',
+                    'Account access updated',
+                    'Your OG Landmark account access is now set to ' . $roles[$requestedRole] . '.',
+                    true,
+                    'account:role:' . Str::uuid(),
+                );
             }
             JsonStore::write($data);
             return $this->json($this->safeUser($data['users'][$index]));
@@ -955,6 +991,15 @@ class ApiController extends Controller
                 'createdByAdmin' => true,
             ];
             $data['users'][] = $newUser;
+            $this->notifyAccountUpdate(
+                $data,
+                (int) $newUser['id'],
+                'ACCOUNT_WELCOME',
+                'Welcome to OG Landmark',
+                'Your account is ready. You can save properties and receive listing and service updates.',
+                false,
+                'account:created:' . $newUser['id'],
+            );
             JsonStore::write($data);
             return $this->json($this->safeUser($newUser), 201);
         }
@@ -998,11 +1043,41 @@ class ApiController extends Controller
                     return $this->json(['error' => 'The signed-in or final active admin account cannot be suspended.'], 409);
                 }
             }
+            $originalAccount = $data['users'][$index];
+            $changedFields = [];
             $allowed = ['name', 'phone', 'email', 'agencyName', 'companyName', 'city', 'profilePhoto', 'coverPhoto'];
-            foreach ($allowed as $key) if ($request->has($key)) $data['users'][$index][$key] = $request->input($key);
+            foreach ($allowed as $key) {
+                if (!$request->has($key)) continue;
+                $newValue = $request->input($key);
+                if (($originalAccount[$key] ?? null) !== $newValue) $changedFields[] = $key;
+                $data['users'][$index][$key] = $newValue;
+            }
             if ($isAdmin && $request->has('status')) $data['users'][$index]['status'] = $request->input('status');
             if ($isAdmin && $request->has('password')) {
                 $data['users'][$index]['password'] = $this->hashLegacyPassword((string) $request->input('password'));
+            }
+            if ($isAdmin && $request->has('status') && ($originalAccount['status'] ?? null) !== $request->input('status')) {
+                $changedFields[] = 'status';
+            }
+            if ($isAdmin && $request->has('password')) $changedFields[] = 'password';
+            if ($isAdmin
+                && (string) ($data['users'][$index]['id'] ?? '') !== (string) ($user['id'] ?? '')
+                && $changedFields !== []) {
+                $target = $data['users'][$index];
+                $hasSecurityChange = in_array('status', $changedFields, true) || in_array('password', $changedFields, true);
+                $this->notifyAccountUpdate(
+                    $data,
+                    (int) $target['id'],
+                    'ACCOUNT_ADMIN_UPDATED',
+                    $hasSecurityChange ? 'Account security update' : 'Account details updated',
+                    in_array('status', $changedFields, true)
+                        ? 'Your OG Landmark account status was changed to ' . (string) ($target['status'] ?? 'Active') . '.'
+                        : (in_array('password', $changedFields, true)
+                            ? 'An administrator changed your account password. If you did not expect this, contact support.'
+                            : 'OG Landmark support updated your account details.'),
+                    $hasSecurityChange,
+                    'account:admin-update:' . Str::uuid(),
+                );
             }
             JsonStore::write($data); return $this->json($this->safeUser($data['users'][$index]));
         }
@@ -2369,6 +2444,64 @@ class ApiController extends Controller
             'deepLink' => $propertyId !== null ? "/property/{$propertyId}" : null,
             'eventKey' => "property:{$propertyId}:{$event}",
             'metadata' => ['city' => $city],
+        ]);
+    }
+
+    private function notifyAccountUpdate(
+        array &$data,
+        int $recipientId,
+        string $type,
+        string $title,
+        string $message,
+        bool $mandatory = false,
+        ?string $eventKey = null,
+    ): void {
+        app(NotificationDeliveryService::class)->deliver($data, [$recipientId], [
+            'type' => $type,
+            'category' => 'account',
+            'title' => $title,
+            'message' => $message,
+            'body' => $message,
+            'entityType' => 'account',
+            'entityId' => $recipientId,
+            'deepLink' => '/(tabs)/profile',
+            'mandatory' => $mandatory,
+            'eventKey' => $eventKey ?? "account:{$recipientId}:" . Str::uuid(),
+        ]);
+    }
+
+    private function notifyPropertyOwnerOfReview(array &$data, array $property, string $type, string $reason = ''): void
+    {
+        $ownerId = $property['sellerId'] ?? $property['userId'] ?? null;
+        if (!is_numeric($ownerId)) return;
+
+        $title = trim((string) ($property['title'] ?? 'Your property listing'));
+        $listingTitle = $title !== '' ? $title : 'Your property listing';
+        if ($type === 'PROPERTY_LISTING_APPROVED') {
+            $message = "{$listingTitle} is approved and now visible to users.";
+            $notificationTitle = 'Listing approved';
+        } elseif ($type === 'PROPERTY_LISTING_REJECTED') {
+            $message = "{$listingTitle} was not approved.";
+            if ($reason !== '') $message .= " Admin note: {$reason}";
+            $notificationTitle = 'Listing not approved';
+        } else {
+            $message = "Changes are needed before {$listingTitle} can be approved.";
+            if ($reason !== '') $message .= " Admin note: {$reason}";
+            $notificationTitle = 'Listing changes requested';
+        }
+
+        $propertyId = $property['id'] ?? null;
+        app(NotificationDeliveryService::class)->deliver($data, [(int) $ownerId], [
+            'type' => $type,
+            'category' => 'account',
+            'title' => $notificationTitle,
+            'message' => $message,
+            'body' => $message,
+            'entityType' => 'property',
+            'entityId' => $propertyId,
+            'propertyId' => $propertyId,
+            'deepLink' => $propertyId !== null ? "/property/{$propertyId}" : null,
+            'eventKey' => 'property:' . $propertyId . ':review:' . strtolower($type) . ':' . Str::uuid(),
         ]);
     }
 

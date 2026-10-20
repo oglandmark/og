@@ -90,6 +90,8 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
         router.push(deepLink as any);
       } else if (deepLink.startsWith('/agent/') || deepLink.startsWith('/admin/')) {
         router.push(deepLink as any);
+      } else if (deepLink.startsWith('/(tabs)/') || deepLink.startsWith('/settings/')) {
+        router.push(deepLink as any);
       } else if (propertyId !== undefined && propertyId !== null && String(propertyId)) {
         router.push({
           pathname: '/property/[id]',

@@ -1064,4 +1064,53 @@ class BackendGapClosureTest extends TestCase
             ->assertOk()
             ->assertJsonPath('0.title', 'Updated home banner');
     }
+
+    public function test_users_receive_notifications_for_new_listings_and_account_updates(): void
+    {
+        Http::fake();
+        $this->seedData([
+            'users' => [
+                $this->user(1, 'admin@example.test', 'Admin'),
+                $this->user(2, 'buyer@example.test', 'Buyer'),
+            ],
+            'properties' => [[
+                'id' => 41,
+                'title' => 'Lahore family home',
+                'city' => 'Lahore',
+                'sellerId' => 2,
+                'approvalStatus' => 'Pending',
+                'listingStatus' => 'Pending',
+            ]],
+            'notifications' => [],
+            'notificationEvents' => [],
+            'notificationPreferences' => [],
+        ]);
+        $adminToken = $this->token('admin@example.test');
+        $buyerToken = $this->token('buyer@example.test');
+        $adminHeaders = ['Authorization' => "Bearer {$adminToken}"];
+        $buyerHeaders = ['Authorization' => "Bearer {$buyerToken}"];
+
+        $this->putJson('/api/users/2', ['name' => 'Updated Buyer'], $adminHeaders)
+            ->assertOk()
+            ->assertJsonPath('name', 'Updated Buyer');
+        $this->patchJson('/api/properties/41/approve', [], $adminHeaders)
+            ->assertOk()
+            ->assertJsonPath('approvalStatus', 'Active');
+
+        $this->getJson('/api/notifications?category=account', $buyerHeaders)
+            ->assertOk()
+            ->assertJsonCount(2, 'items')
+            ->assertJsonFragment(['type' => 'ACCOUNT_ADMIN_UPDATED'])
+            ->assertJsonFragment(['type' => 'PROPERTY_LISTING_APPROVED']);
+        $this->getJson('/api/notifications?category=properties', $buyerHeaders)
+            ->assertOk()
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.type', 'NEW_PROPERTY_LISTING')
+            ->assertJsonPath('items.0.propertyId', 41);
+
+        $this->patchJson('/api/properties/41/approve', [], $adminHeaders)->assertOk();
+        $this->getJson('/api/notifications?category=account', $buyerHeaders)
+            ->assertOk()
+            ->assertJsonCount(2, 'items');
+    }
 }

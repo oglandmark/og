@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, StyleSheet, View,
+  ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -22,6 +22,8 @@ const filters: Array<{ key: NotificationCategory | 'all'; label: string }> = [
   { key: 'properties', label: 'Properties' },
   { key: 'projects', label: 'Projects' },
   { key: 'announcements', label: 'Announcements' },
+  { key: 'account', label: 'Account' },
+  { key: 'system', label: 'System' },
 ];
 
 function relativeTime(value: string) {
@@ -138,7 +140,7 @@ export default function NotificationsScreen() {
       </View>
 
       {isLoggedIn ? (
-        <View style={[styles.filterRow, { borderBottomColor: colors.border }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[styles.filterRow, { borderBottomColor: colors.border }]} contentContainerStyle={styles.filterRowContent}>
           {filters.map((entry) => (
             <Pressable
               key={entry.key}
@@ -150,7 +152,7 @@ export default function NotificationsScreen() {
               </Text>
             </Pressable>
           ))}
-        </View>
+        </ScrollView>
       ) : null}
 
       {unreadCount > 0 ? (
@@ -251,7 +253,8 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.4 },
   title: { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 25, marginTop: 1 },
   markAll: { width: 38, height: 38, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  filterRow: { flexDirection: 'row', gap: 7, paddingHorizontal: 18, paddingBottom: 12, borderBottomWidth: 1 },
+  filterRow: { maxHeight: 54, borderBottomWidth: 1 },
+  filterRowContent: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 18, paddingBottom: 10 },
   filter: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
   filterText: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   unreadSummary: { fontFamily: 'Inter_600SemiBold', fontSize: 11, paddingHorizontal: 18, paddingTop: 14 },

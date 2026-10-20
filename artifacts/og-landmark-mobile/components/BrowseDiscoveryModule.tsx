@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard } from '@/components/GlassCard';
 import { properties } from '@/lib/properties';
 
@@ -511,7 +510,11 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
   }
 
   return (
-    <View style={[mod.wrapper, mod.wrapperContent]}>
+    <GlassCard
+      intensity={38}
+      style={[mod.wrapper, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}
+      contentStyle={mod.wrapperContent}
+    >
 
       {/* ── Header ── */}
       <View style={mod.header}>
@@ -558,32 +561,23 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
               }}
               style={[
                 mod.catChip,
-                {
-                  backgroundColor: sel ? 'transparent' : colors.glassOverlay,
-                  borderColor: sel ? 'transparent' : colors.glassBorder,
-                  borderWidth: sel ? 0 : 1,
-                },
+                sel
+                  ? { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 2 }
+                  : { backgroundColor: colors.glassOverlay, borderColor: colors.glassBorder },
               ]}
             >
               <View style={[
                 mod.catIcon,
-                sel ? {
-                  backgroundColor: colors.goldGlass,
-                  borderColor: colors.goldGlassBorder,
-                  borderWidth: 1,
-                } : undefined,
+                {
+                  backgroundColor: sel ? colors.selectionTint : colors.glassOverlay,
+                  borderColor: sel ? colors.selectionBorder : colors.glassBorder,
+                },
               ]}>
-                {sel ? (
-                  <LinearGradient
-                    colors={[colors.actionGlassHighlight, 'transparent']}
-                    style={[StyleSheet.absoluteFill, { pointerEvents: 'none' } as any]}
-                  />
-                ) : null}
-                <Feather name={cat.icon} size={17} color={sel ? colors.goldForeground : colors.mutedForeground} />
+                <Feather name={cat.icon} size={17} color={sel ? colors.selectionForeground : colors.mutedForeground} />
               </View>
               <Text style={[
                 mod.catLabel,
-                { color: sel ? colors.primary : colors.foreground, fontWeight: sel ? '700' : '500' },
+                { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '500' },
               ]}>
                  {(categoryLabels as any)?.[cat.key.toLowerCase()] || cat.label}
               </Text>
@@ -619,15 +613,14 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
               onPress={() => goToTab(tab)}
               style={[
                 mod.tabPill,
-                {
-                  backgroundColor: sel ? colors.goldGlass : 'transparent',
-                  borderWidth: 0,
-                },
+                sel
+                  ? { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }
+                  : { backgroundColor: 'transparent' },
               ]}
             >
               <Text style={[
                 mod.tabText,
-                { color: sel ? colors.goldForeground : colors.mutedForeground,
+                { color: sel ? colors.selectionForeground : colors.mutedForeground,
                   fontWeight: sel ? '600' : '400' },
               ]}>
                 {tab}
@@ -697,7 +690,7 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
         ))}
       </ScrollView>
 
-    </View>
+    </GlassCard>
   );
 }
 
@@ -706,7 +699,7 @@ const mod = StyleSheet.create({
   wrapper: {
     marginHorizontal: 16,
     marginVertical: 12,
-    borderRadius: 0,
+    borderRadius: 20,
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -737,10 +730,10 @@ const mod = StyleSheet.create({
   catChip: {
     alignItems: 'center', gap: 7,
     minWidth: 86, paddingHorizontal: 10, paddingVertical: 10,
-    borderRadius: 18,
+    borderRadius: 18, borderWidth: 1,
   },
   catIcon: {
-    width: 38, height: 38, borderRadius: 19,
+    width: 38, height: 38, borderRadius: 19, borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',
     overflow: 'hidden',
   },

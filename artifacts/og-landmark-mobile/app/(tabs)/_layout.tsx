@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Platform, StyleSheet, View, type ColorValue } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Tabs, useRouter } from 'expo-router';
 import { BottomTabBar, type BottomTabBarProps } from 'expo-router/tabs';
@@ -147,10 +148,18 @@ export default function TabLayout() {
           tabBarBackground: () => {
             if (Platform.OS === 'android') {
               return (
-                <View
-                  pointerEvents="none"
-                  style={[StyleSheet.absoluteFill, styles.tabGlass, { backgroundColor: colors.background, borderTopColor: colors.border }]}
-                />
+                <BlurView
+                  intensity={76}
+                  tint="light"
+                  blurMethod="dimezisBlurView"
+                  style={[StyleSheet.absoluteFill, styles.tabGlass, { borderTopColor: colors.glassBorder }]}
+                >
+                  <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
+                  <LinearGradient
+                    colors={[colors.actionGlassHighlight, 'transparent']}
+                    style={[styles.tabGlassHighlight, { pointerEvents: 'none' } as any]}
+                  />
+                </BlurView>
               );
             }
             if (Platform.OS === 'web') {
@@ -158,16 +167,24 @@ export default function TabLayout() {
                 <View style={[StyleSheet.absoluteFill, styles.tabGlass, { borderTopColor: colors.glassBorder }]}>
                   <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceRaised + '20' }]} />
                   <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
+                  <LinearGradient
+                    colors={[colors.actionGlassHighlight, 'transparent']}
+                    style={[styles.tabGlassHighlight, { pointerEvents: 'none' } as any]}
+                  />
                 </View>
               );
             }
             return (
               <BlurView
-                intensity={72}
+                intensity={76}
                 tint="light"
                 style={[StyleSheet.absoluteFill, styles.tabGlass, { borderTopColor: colors.glassBorder }]}
               >
                 <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
+                <LinearGradient
+                  colors={[colors.actionGlassHighlight, 'transparent']}
+                  style={[styles.tabGlassHighlight, { pointerEvents: 'none' } as any]}
+                />
               </BlurView>
             );
           },
@@ -256,6 +273,7 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   animatedTabBarFrame: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 20 },
   tabGlass: { overflow: 'hidden', borderTopWidth: 1, borderTopLeftRadius: 28, borderTopRightRadius: 28 },
+  tabGlassHighlight: { position: 'absolute', top: 0, left: 0, right: 0, height: 34, borderTopLeftRadius: 28, borderTopRightRadius: 28 },
   tabIconWrap: {
     width: 44,
     height: 32,

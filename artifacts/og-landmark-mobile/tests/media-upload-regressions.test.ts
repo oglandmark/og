@@ -14,3 +14,10 @@ test('native media uploads use Expo File parts and Expo fetch', () => {
   assert.match(api, /form\.append\('images', uploadFile\.file, uploadFile\.filename\)/);
   assert.doesNotMatch(api, /form\.append\('(image|video|images)',\s*\{\s*uri,/);
 });
+
+test('generic server errors and media-storage failures are not retried through the legacy route', () => {
+  const compatibilityCheck = api.match(/function isUploadCompatibilityError[\s\S]*?\n}/)?.[0] ?? '';
+  assert.match(compatibilityCheck, /MEDIA_STORAGE_WRITE_FAILED/);
+  assert.match(compatibilityCheck, /\[400, 404, 415, 422\]/);
+  assert.doesNotMatch(compatibilityCheck, /500|502|503|413/);
+});

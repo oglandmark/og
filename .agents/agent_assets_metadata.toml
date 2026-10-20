@@ -154,3 +154,17 @@ mtime_ms = 1792488980663
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/4006ae24-cb0b-4685-9d81-f88fe6bfb86d/5ecdfa5f-0624-4595-b977-41445eab29dd"
 storage_version_token = "1792489007420826"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "zVu2ZQMsGqC6UwRcY17VB"
+uri = "file://generated-artifacts/og-landmark-photo-upload-fix.zip"
+type = "unspecified"
+title = "OG Landmark photo-upload API fix"
+description = "Hostinger patch package. Replaces only ApiController.php and includes safe deployment instructions; no .env, database, or media files."
+logical_id = "8b6650fb-29d7-4243-a1a4-99b38ba537ec"
+content_hash = "sha256:f602b1111e793ae54d4039733808451bce161c3df35e1cb29b1bdc4fed2a2ad7"
+size = 21809
+mtime_ms = 1792510062550
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/8b6650fb-29d7-4243-a1a4-99b38ba537ec/889fb187-36d0-43be-a63f-bfb01abe2fc8"
+storage_version_token = "1792510071880373"
+content_type = "application/octet-stream"

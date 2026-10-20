@@ -811,10 +811,10 @@ export async function uploadVideo(uri: string, filename = 'video.mp4'): Promise<
 
 function isUploadCompatibilityError(error: unknown): error is ApiRequestError {
   return error instanceof ApiRequestError
-    // The legacy route uses the same media storage, so retrying cannot fix a
-    // production storage outage and only sends the same file twice.
-    && error.code !== 'MEDIA_STORAGE_NOT_READY'
-    && [400, 404, 413, 415, 422, 500, 502, 503].includes(error.status);
+    // The legacy route uses the same media storage. Do not retry storage errors
+    // or generic server failures: the same file can be written twice or fail twice.
+    && !['MEDIA_STORAGE_NOT_READY', 'MEDIA_STORAGE_WRITE_FAILED'].includes(error.code ?? '')
+    && [400, 404, 415, 422].includes(error.status);
 }
 
 async function uploadImageToLegacyCollectionRoute(

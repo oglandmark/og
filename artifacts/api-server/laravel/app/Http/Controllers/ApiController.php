@@ -1218,16 +1218,30 @@ class ApiController extends Controller
                 return $this->json(['error' => 'Allowed: JPG, PNG, WebP, MP4, MOV'], 422);
             }
             $name = now()->format('YmdHis') . '-' . Str::random(24) . '.' . strtolower($file->getClientOriginalExtension());
-            $file->move($directory, $name);
+            $mimeType = $file->getMimeType();
+            $kind = str_starts_with((string) $mimeType, 'video/') ? 'video' : 'image';
+            try {
+                $file->move($directory, $name);
+            } catch (\Throwable $exception) {
+                Log::error('Uploaded media could not be written to storage.', [
+                    'filename' => $name,
+                    'error' => $exception->getMessage(),
+                ]);
+
+                return $this->json([
+                    'error' => 'The uploaded file could not be saved. Please contact support.',
+                    'code' => 'MEDIA_STORAGE_WRITE_FAILED',
+                ], 503);
+            }
             $path = '/images/uploads/' . $name;
             $url = $mediaStorage->url($path);
             $urls[] = $url;
             $media[] = [
                 'url' => $url,
                 'path' => $path,
-                'mimeType' => $file->getMimeType(),
+                'mimeType' => $mimeType,
                 'bytes' => filesize($directory . DIRECTORY_SEPARATOR . $name) ?: 0,
-                'kind' => str_starts_with((string) $file->getMimeType(), 'video/') ? 'video' : 'image',
+                'kind' => $kind,
             ];
         }
         return $this->json(count($urls) === 1

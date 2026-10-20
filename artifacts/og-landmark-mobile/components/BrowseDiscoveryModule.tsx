@@ -513,7 +513,7 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
   return (
     <GlassCard
       intensity={38}
-      style={[mod.wrapper, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}
+      style={[mod.wrapper, { backgroundColor: 'transparent', borderColor: 'transparent', borderWidth: 0 }]}
       contentStyle={mod.wrapperContent}
     >
 
@@ -563,9 +563,9 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
               style={[
                 mod.catChip,
                 {
-                  backgroundColor: sel ? colors.glassCard : colors.glassOverlay,
-                  borderColor: colors.glassBorder,
-                  borderWidth: 1,
+                  backgroundColor: sel ? colors.glassCard : 'transparent',
+                  borderColor: 'transparent',
+                  borderWidth: 0,
                 },
               ]}
             >
@@ -738,7 +738,7 @@ const mod = StyleSheet.create({
   catChip: {
     alignItems: 'center', gap: 7,
     minWidth: 86, paddingHorizontal: 10, paddingVertical: 10,
-    borderRadius: 18, borderWidth: 1,
+    borderRadius: 18,
   },
   catIcon: {
     width: 38, height: 38, borderRadius: 19, borderWidth: 1,

@@ -7,4 +7,4 @@ EAS startup logs may print configured project environment-variable values in the
 
 **Why:** A failed Android build included a client-side map key in its startup log output before dependency installation stopped.
 
-**How to apply:** Prefer build status metadata over raw logs. If logs are necessary, filter or redact environment-variable lines before displaying or summarizing them.
+**How to apply:** Prefer build status metadata over raw logs. If logs are necessary, never print the full log payload; extract only the specific failure lines and redact environment-variable values before reviewing or summarizing.

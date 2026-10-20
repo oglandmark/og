@@ -49,8 +49,12 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#F5F4F0",
+          "image": "./assets/images/og-landmark-brand-mark-rgba.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
           "dark": {
-            "backgroundColor": "#F5F4F0"
+            "backgroundColor": "#F5F4F0",
+            "image": "./assets/images/og-landmark-brand-mark-rgba.png"
           }
         }
       ],

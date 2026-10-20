@@ -9,10 +9,10 @@ Native startup must not depend indefinitely on the API session check. Restore a 
 
 **How to apply:** Keep the auth hydration timeout separate from request timeouts, preserve the cached identity only as a temporary rendering fallback, and keep protected API calls responsible for final token enforcement.
 
-## Animated startup splash
+## Startup screen
 
-Do not gate the JavaScript startup splash on bundled-font loading, and keep one splash instance mounted while auth and navigation readiness change. Use a system-font fallback until branded fonts are ready.
+Keep the JavaScript animated splash visible for at least 7 seconds and until auth and navigation are ready, but keep the native Android launch screen to a neutral background without its own static logo image. Load branded fonts in the background with a system-font fallback, and render the animated overlay inside its required providers.
 
-**Why:** The native splash is static; waiting for fonts delayed the animated splash by about three seconds, and switching from the loading splash to an overlay remounted the rings.
+**Why:** On October 20, 2026, the user clarified that the 7-second animated splash should remain while the separate logo-only native opening screen should be removed.
 
-**How to apply:** Hide the native splash after the first React render, start the animated splash immediately, keep it visible through auth/navigation readiness and the configured minimum duration, then reveal the app. Preserve the minimum duration recorded in the mobile polish guardrails unless the user changes it.
+**How to apply:** Keep Expo's splash-screen plugin for a plain background without an image, hide the native screen after the first React render, and reveal the app only after the animation duration, auth hydration, and route readiness are all satisfied.

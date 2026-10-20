@@ -397,9 +397,8 @@ function DirectionalApp({ fontsReady }: { fontsReady: boolean }) {
 }
 
 export default function RootLayout() {
-  // Expo Web can spend 12 seconds waiting for remote font-face assets in the
-  // preview proxy. Web already has safe browser fallbacks, while native must
-  // keep the bundled fonts for the branded startup screen.
+  // Load bundled fonts in the background; the animated splash uses a system
+  // fallback until the branded font is ready.
   const fontDefinitions: Record<string, FontSource> = Platform.OS === 'web' ? {} : {
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
     PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold,

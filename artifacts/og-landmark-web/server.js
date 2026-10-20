@@ -3227,16 +3227,14 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // ─── FORGOT / RESET PASSWORD ───────────────────────────────────────────────────
-async function handlePasswordResetRequest(req, res, adminOnly = false) {
+app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const email = normalizeEmail(req.body.email);
     if (!email) return res.status(400).json({ error: 'Email is required' });
     const data = await readData();
     const user = data.users.find(u => normalizeEmail(u.email) === email);
     // Always return success to prevent email enumeration
-    if (!user || (adminOnly && !hasPermission(user, 'admin'))) {
-      return res.json({ success: true, message: 'If an account exists with this email, a reset code has been sent.' });
-    }
+    if (!user) return res.json({ success: true, message: 'If an account exists with this email, a reset code has been sent.' });
 
     const code = generateOTP();
     await saveChallenge(email.toLowerCase(), 'password-reset', code, 15);
@@ -3262,12 +3260,9 @@ async function handlePasswordResetRequest(req, res, adminOnly = false) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
-}
+});
 
-app.post('/api/auth/forgot-password', (req, res) => handlePasswordResetRequest(req, res));
-app.post('/api/auth/admin-forgot-password', (req, res) => handlePasswordResetRequest(req, res, true));
-
-async function handlePasswordReset(req, res, adminOnly = false) {
+app.post('/api/auth/reset-password', async (req, res) => {
   try {
     const email = normalizeEmail(req.body.email);
     const code = String(req.body.code || '').trim();
@@ -3278,9 +3273,7 @@ async function handlePasswordReset(req, res, adminOnly = false) {
 
     const data = await readData();
     const user = data.users.find(u => normalizeEmail(u.email) === email);
-    if (!user || (adminOnly && !hasPermission(user, 'admin'))) {
-      return res.status(400).json({ error: 'Invalid or expired reset code' });
-    }
+    if (!user) return res.status(400).json({ error: 'Invalid or expired reset code' });
     const challenge = await consumeChallenge(email.toLowerCase(), 'password-reset', code);
     if (!challenge.ok) return res.status(400).json({ error: challenge.reason === 'expired' ? 'Reset code has expired. Please request a new one.' : 'Incorrect reset code. Please try again.' });
 
@@ -3293,10 +3286,7 @@ async function handlePasswordReset(req, res, adminOnly = false) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
-}
-
-app.post('/api/auth/reset-password', (req, res) => handlePasswordReset(req, res));
-app.post('/api/auth/admin-reset-password', (req, res) => handlePasswordReset(req, res, true));
+});
 
 // ─── GOOGLE AUTH ───────────────────────────────────────────────────────────────
 app.post('/api/auth/google', async (req, res) => {

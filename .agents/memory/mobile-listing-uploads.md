@@ -3,11 +3,11 @@ name: Mobile listing upload compatibility
 description: Records the deployment-compatible strategy for property photos selected from Android.
 ---
 
-Property listing photos should be uploaded as one authenticated file per request. If the single-file route is unavailable or returns a multipart compatibility error, retry that same file through the legacy collection route with a one-file form.
+On current Expo/React Native Android, append `File` objects from `expo-file-system` and send multipart requests with `expo/fetch`; do not append legacy `{ uri, type, name }` objects. Upload listing photos as one authenticated file per request. If the single-file route is unavailable or returns a server-side multipart compatibility error, retry that same file through the legacy collection route with a one-file form.
 
-**Why:** Android `content://` multipart batches can be rejected by older Hostinger proxy/Multer deployments, and retrying a whole batch can duplicate files or exceed request limits.
+**Why:** Newer Android FormData rejects legacy React Native file-part objects with `Unsupported FormDataPart implementation`. Separately, Android `content://` multipart batches can be rejected by older Hostinger proxy/Multer deployments, and retrying a whole batch can duplicate files or exceed request limits.
 
-**How to apply:** Keep the mobile uploader sequential and preserve authentication failures as real errors; only use the collection-route fallback for server-side compatibility statuses.
+**How to apply:** Use Expo's `File` and fetch APIs for the client-side multipart part, keep the mobile uploader sequential, preserve authentication failures as real errors, and only use the collection-route fallback for server-side compatibility statuses.
 
 Mobile clients must normalize relative image and video paths to absolute URLs at the API boundary before rendering or storing them in property records. Preserve external CDN URLs.
 

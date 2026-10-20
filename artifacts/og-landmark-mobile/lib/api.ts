@@ -8,6 +8,8 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import { File } from 'expo-file-system';
+import { fetch as expoFetch } from 'expo/fetch';
 import { resolveApiBase } from './apiBase';
 import {
   normalizePropertyMedia,
@@ -117,7 +119,7 @@ async function apiUpload<T>(path: string, form: FormData, timeoutMs = 180_000): 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(`${API_BASE}${path}`, {
+    const res = await expoFetch(`${API_BASE}${path}`, {
       method: 'POST',
       body: form,
       headers,
@@ -147,7 +149,7 @@ async function apiUpload<T>(path: string, form: FormData, timeoutMs = 180_000): 
   }
 }
 
-function imageUploadFile(uri: string, filename = 'photo.jpg') {
+function imageUploadFile(uri: string, filename = 'photo.jpg'): { file: File; filename: string } {
   const cleanUri = uri.split(/[?#]/, 1)[0];
   const uriExt = cleanUri.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
   const requestedExt = filename.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
@@ -157,8 +159,7 @@ function imageUploadFile(uri: string, filename = 'photo.jpg') {
       ? requestedExt
       : 'jpg';
   const baseName = filename.replace(/\.[^.]*$/, '').replace(/[^a-z0-9_-]/gi, '_') || 'photo';
-  const type = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
-  return { uri, type, name: `${baseName}.${ext}` };
+  return { file: new File(uri), filename: `${baseName}.${ext}` };
 }
 
 // ─── Inquiry & Appointment submission ─────────────────────────────────────────
@@ -789,9 +790,8 @@ export async function setAdminDemoPropertiesHidden(
 }
 export async function uploadImage(uri: string, filename = 'photo.jpg'): Promise<{ url: string }> {
   const form = new FormData();
-  // React Native FormData accepts { uri, type, name }. Keep the extension and
-  // MIME type aligned because Android content:// URIs often have no extension.
-  form.append('image', imageUploadFile(uri, filename) as unknown as Blob);
+  const uploadFile = imageUploadFile(uri, filename);
+  form.append('image', uploadFile.file, uploadFile.filename);
   const uploaded = await apiUpload<{ url: string }>('/api/upload/single', form);
   const url = resolveMediaUrl(uploaded.url);
   if (!url) throw new Error('The server did not return an uploaded photo URL.');
@@ -800,9 +800,9 @@ export async function uploadImage(uri: string, filename = 'photo.jpg'): Promise<
 
 export async function uploadVideo(uri: string, filename = 'video.mp4'): Promise<{ url: string }> {
   const form = new FormData();
-  const ext = filename.split('.').pop()?.toLowerCase() ?? 'mp4';
-  const mimeType = ext === 'mov' ? 'video/quicktime' : ext === 'avi' ? 'video/x-msvideo' : 'video/mp4';
-  form.append('video', { uri, type: mimeType, name: filename } as unknown as Blob);
+  // Expo File implements Blob and can be streamed by expo/fetch. Passing the
+  // older `{ uri, type, name }` React Native part throws on newer Android.
+  form.append('video', new File(uri), filename);
   const uploaded = await apiUpload<{ url: string }>('/api/upload/video', form);
   const url = resolveMediaUrl(uploaded.url);
   if (!url) throw new Error('The server did not return an uploaded video URL.');
@@ -822,7 +822,8 @@ async function uploadImageToLegacyCollectionRoute(
   filename: string,
 ): Promise<{ url: string }> {
   const form = new FormData();
-  form.append('images', imageUploadFile(uri, filename) as unknown as Blob);
+  const uploadFile = imageUploadFile(uri, filename);
+  form.append('images', uploadFile.file, uploadFile.filename);
   const response = await apiUpload<{ urls?: string[]; url?: string }>('/api/upload', form);
   const url = response.urls?.[0] || response.url;
   if (!url) throw new Error('The server did not return an uploaded photo URL.');

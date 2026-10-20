@@ -42,47 +42,46 @@ type PropType = {
   key: string;
   icon: keyof typeof Feather.glyphMap;
   label: string;
-  emoji: string;
   category: PropCategory;
   purposes: string[];   // which purposes apply
 };
 
 const PROPERTY_TYPES: PropType[] = [
   // Residential
-  { key: 'House',              icon: 'home',      emoji: '🏠', label: 'House',              category: 'residential', purposes: ['Sale', 'Rent'] },
-  { key: 'Apartment',         icon: 'layers',    emoji: '🏢', label: 'Apartment / Flat',   category: 'residential', purposes: ['Sale', 'Rent'] },
-  { key: 'Upper Portion',     icon: 'arrow-up',  emoji: '🏠', label: 'Upper Portion',      category: 'residential', purposes: ['Sale', 'Rent'] },
-  { key: 'Lower Portion',     icon: 'arrow-down',emoji: '🏠', label: 'Lower Portion',      category: 'residential', purposes: ['Sale', 'Rent'] },
-  { key: 'Room',               icon: 'square',    emoji: '🛏️', label: 'Room',               category: 'residential', purposes: ['Rent'] },
-  { key: 'Villa',              icon: 'home',      emoji: '🏡', label: 'Villa',              category: 'residential', purposes: ['Sale', 'Rent'] },
-  { key: 'Farm House',        icon: 'home',      emoji: '🌳', label: 'Farm House',         category: 'residential', purposes: ['Sale', 'Rent'] },
+  { key: 'House',              icon: 'home',      label: 'House',              category: 'residential', purposes: ['Sale', 'Rent'] },
+  { key: 'Apartment',         icon: 'layers',    label: 'Apartment / Flat',   category: 'residential', purposes: ['Sale', 'Rent'] },
+  { key: 'Upper Portion',     icon: 'arrow-up',  label: 'Upper Portion',      category: 'residential', purposes: ['Sale', 'Rent'] },
+  { key: 'Lower Portion',     icon: 'arrow-down',label: 'Lower Portion',      category: 'residential', purposes: ['Sale', 'Rent'] },
+  { key: 'Room',               icon: 'square',    label: 'Room',               category: 'residential', purposes: ['Rent'] },
+  { key: 'Villa',              icon: 'home',      label: 'Villa',              category: 'residential', purposes: ['Sale', 'Rent'] },
+  { key: 'Farm House',        icon: 'home',      label: 'Farm House',         category: 'residential', purposes: ['Sale', 'Rent'] },
   // Plots
-  { key: 'Residential Plot',  icon: 'map-pin',   emoji: '📐', label: 'Residential Plot',   category: 'plot',        purposes: ['Sale'] },
-  { key: 'Commercial Plot',   icon: 'map-pin',   emoji: '🏢', label: 'Commercial Plot',    category: 'plot',        purposes: ['Sale'] },
+  { key: 'Residential Plot',  icon: 'map-pin',   label: 'Residential Plot',   category: 'plot',        purposes: ['Sale'] },
+  { key: 'Commercial Plot',   icon: 'map-pin',   label: 'Commercial Plot',    category: 'plot',        purposes: ['Sale'] },
   // Agricultural
-  { key: 'Agricultural Land', icon: 'map',       emoji: '🌾', label: 'Agricultural Land',  category: 'agricultural',purposes: ['Sale', 'Lease'] },
-  { key: 'Farm / Orchard',    icon: 'feather',   emoji: '🌳', label: 'Farm / Orchard',     category: 'agricultural',purposes: ['Sale', 'Lease'] },
+  { key: 'Agricultural Land', icon: 'map',       label: 'Agricultural Land',  category: 'agricultural',purposes: ['Sale', 'Lease'] },
+  { key: 'Farm / Orchard',    icon: 'feather',   label: 'Farm / Orchard',     category: 'agricultural',purposes: ['Sale', 'Lease'] },
   // Commercial
-  { key: 'Shop',               icon: 'shopping-bag', emoji: '🛍️', label: 'Shop',            category: 'commercial',  purposes: ['Sale', 'Rent'] },
-  { key: 'Office',             icon: 'monitor',   emoji: '💼', label: 'Office',             category: 'commercial',  purposes: ['Sale', 'Rent'] },
-  { key: 'Building / Plaza',  icon: 'grid',      emoji: '🏢', label: 'Building / Plaza',   category: 'commercial',  purposes: ['Sale', 'Rent'] },
-  { key: 'Warehouse',          icon: 'archive',   emoji: '📦', label: 'Warehouse',          category: 'commercial',  purposes: ['Sale', 'Rent'] },
-  { key: 'Showroom',           icon: 'eye',       emoji: '🏬', label: 'Showroom',           category: 'commercial',  purposes: ['Sale', 'Rent'] },
+  { key: 'Shop',               icon: 'shopping-bag', label: 'Shop',            category: 'commercial',  purposes: ['Sale', 'Rent'] },
+  { key: 'Office',             icon: 'monitor',   label: 'Office',             category: 'commercial',  purposes: ['Sale', 'Rent'] },
+  { key: 'Building / Plaza',  icon: 'grid',      label: 'Building / Plaza',   category: 'commercial',  purposes: ['Sale', 'Rent'] },
+  { key: 'Warehouse',          icon: 'archive',   label: 'Warehouse',          category: 'commercial',  purposes: ['Sale', 'Rent'] },
+  { key: 'Showroom',           icon: 'eye',       label: 'Showroom',           category: 'commercial',  purposes: ['Sale', 'Rent'] },
   // Industrial
-  { key: 'Factory',            icon: 'zap',       emoji: '🏭', label: 'Factory / Industrial', category: 'industrial', purposes: ['Sale', 'Rent'] },
-  { key: 'Industrial Land',   icon: 'layout',    emoji: '🏭', label: 'Industrial Land',    category: 'industrial',  purposes: ['Sale', 'Lease'] },
+  { key: 'Factory',            icon: 'zap',       label: 'Factory / Industrial', category: 'industrial', purposes: ['Sale', 'Rent'] },
+  { key: 'Industrial Land',   icon: 'layout',    label: 'Industrial Land',    category: 'industrial',  purposes: ['Sale', 'Lease'] },
   // Projects
-  { key: 'Housing Society',   icon: 'home',      emoji: '🏗️', label: 'Housing Society',    category: 'project',     purposes: ['Sale'] },
-  { key: 'Apartment Project', icon: 'layers',    emoji: '🏙️', label: 'Apt / Villa Project',category: 'project',     purposes: ['Sale'] },
+  { key: 'Housing Society',   icon: 'home',      label: 'Housing Society',    category: 'project',     purposes: ['Sale'] },
+  { key: 'Apartment Project', icon: 'layers',    label: 'Apt / Villa Project',category: 'project',     purposes: ['Sale'] },
 ];
 
-const TYPE_GROUPS: { label: string; category: PropCategory; emoji: string }[] = [
-  { label: 'Residential', category: 'residential', emoji: '🏠' },
-  { label: 'Plots',        category: 'plot',        emoji: '📐' },
-  { label: 'Agricultural', category: 'agricultural',emoji: '🌾' },
-  { label: 'Commercial',   category: 'commercial',  emoji: '🛍️' },
-  { label: 'Industrial',   category: 'industrial',  emoji: '🏭' },
-  { label: 'Projects',     category: 'project',     emoji: '🏗️' },
+const TYPE_GROUPS: { label: string; category: PropCategory; icon: keyof typeof Feather.glyphMap }[] = [
+  { label: 'Residential', category: 'residential', icon: 'home' },
+  { label: 'Plots',        category: 'plot',        icon: 'map-pin' },
+  { label: 'Agricultural', category: 'agricultural',icon: 'map' },
+  { label: 'Commercial',   category: 'commercial',  icon: 'briefcase' },
+  { label: 'Industrial',   category: 'industrial',  icon: 'settings' },
+  { label: 'Projects',     category: 'project',     icon: 'layers' },
 ];
 
 const PURPOSES = ['Sale', 'Rent', 'Lease'] as const;
@@ -468,6 +467,12 @@ export default function ListingWizard() {
   }, [editId, router]);
 
   const category = categoryOf(form.propertyType);
+  const progressPercent = [
+    Boolean(form.propertyType),
+    Boolean(form.city && form.latitude != null && form.longitude != null && locationConfirmed),
+    Boolean(form.price && form.area),
+    form.photos.length > 0,
+  ].filter(Boolean).length * 25;
   const update = (patch: Partial<Form>) => setForm((f) => ({ ...f, ...patch }));
 
   // ── Validation ──────────────────────────────────────────────────────────────
@@ -717,7 +722,7 @@ export default function ListingWizard() {
           <Text style={[s.headerTitle, { color: colors.foreground }]}>{editingListing ? 'Update your listing' : 'Post an Ad'}</Text>
           <Text style={[s.headerSub, { color: colors.mutedForeground }]}>{editingListing ? 'Address the review feedback before resubmitting' : 'Create a listing buyers can trust'}</Text>
           <View style={[s.progressTrack, { backgroundColor: colors.border }]}>
-            <View style={[s.progressFill, { width: '100%', backgroundColor: colors.action }]} />
+            <View style={[s.progressFill, { width: `${progressPercent}%`, backgroundColor: colors.action }]} />
           </View>
         </View>
         <View style={[s.purposeBadge, { backgroundColor: colors.accent, borderColor: colors.goldGlassBorder }]}>
@@ -831,7 +836,7 @@ function TransactionToggle({ form, update, colors }: { form: Form; update: (p: P
               style={[
                 s.transactionToggleOption,
                 {
-                  backgroundColor: 'transparent',
+                  backgroundColor: active ? colors.selectionBackground : colors.card,
                   borderColor: active ? colors.action : colors.border,
                 },
               ]}
@@ -910,8 +915,9 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
           const active = g.category === activeGroup;
           return (
             <Pressable key={g.category} onPress={() => setActiveGroup(g.category)}
+               accessibilityRole="button" accessibilityState={{ selected: active }} accessibilityLabel={`${g.label} property types`}
                style={[s.groupTab, { backgroundColor: active ? colors.selectionBackground : colors.secondary, borderColor: active ? colors.selectionBorder : colors.border, borderWidth: active ? 1.5 : 1 }]}>
-              <Text style={{ fontSize: 12 }}>{g.emoji}</Text>
+              <Feather name={g.icon} size={14} color={active ? colors.action : colors.mutedForeground} />
                <Text style={[s.groupTabText, { color: active ? colors.selectionForeground : colors.foreground, fontWeight: active ? '600' : '400' }]}>{g.label}</Text>
             </Pressable>
           );
@@ -924,9 +930,13 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
           const sel = form.propertyType === t.key;
           return (
             <Pressable key={t.key} onPress={() => handleTypeSelect(t.key)}
+               accessibilityRole="button" accessibilityState={{ selected: sel }} accessibilityLabel={t.label}
                style={[s.typeCard, { backgroundColor: sel ? colors.selectionBackground : colors.card, borderColor: sel ? colors.selectionBorder : colors.border, borderWidth: sel ? 2 : 1 }]}>
-              <Text style={{ fontSize: 20 }}>{t.emoji}</Text>
+              <View style={[s.typeIconTile, { backgroundColor: sel ? colors.accent : colors.secondary, borderColor: sel ? colors.goldGlassBorder : colors.border }]}>
+                <Feather name={t.icon} size={19} color={sel ? colors.action : colors.mutedForeground} />
+              </View>
                <Text style={[s.typeLabel, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{t.label}</Text>
+              {sel && <View style={[s.typeSelectedMark, { backgroundColor: colors.action }]}><Feather name="check" size={9} color={colors.actionForeground} /></View>}
             </Pressable>
           );
         })}
@@ -1927,7 +1937,9 @@ function StepPreview({ form, colors, category }: any) {
           </>
         ) : (
           <View style={[s.previewImagePlaceholder, { backgroundColor: colors.secondary }]}>
-            <Text style={{ fontSize: 32 }}>{typeInfo?.emoji ?? '🏠'}</Text>
+            <View style={[s.previewEmptyIcon, { backgroundColor: colors.accent, borderColor: colors.goldGlassBorder }]}>
+              <Feather name={typeInfo?.icon ?? 'home'} size={27} color={colors.action} />
+            </View>
             <Text style={[s.stepSub, { color: colors.mutedForeground, marginTop: 6 }]}>No cover photo</Text>
           </View>
         )}
@@ -2171,8 +2183,8 @@ function BoolGrid({ items, form, update, colors, tristate }: { items: { key: str
 const s = StyleSheet.create({
   screen:               { flex: 1 },
   // Header
-  header:               { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 15 },
-  backBtn:              { width: 38, height: 38, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  header:               { flexDirection: 'row', alignItems: 'flex-start', gap: 11, borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 15 },
+  backBtn:              { width: 40, height: 40, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   headerStep:           { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.5, marginBottom: 3 },
   headerTitle:          { fontFamily: 'Inter_700Bold', fontSize: 21, lineHeight: 25, marginBottom: 2 },
   headerSub:            { fontFamily: 'Inter_400Regular', fontSize: 10, marginBottom: 9 },
@@ -2181,35 +2193,37 @@ const s = StyleSheet.create({
   purposeBadge:         { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', borderWidth: 1, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, marginTop: 1 },
   purposeBadgeText:     { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 0.4 },
   // Single-page sections
-  progressCard:         { borderWidth: 1, borderRadius: 20, padding: 15, marginBottom: 12 },
-  progressCardHeader:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 },
+  progressCard:         { borderWidth: 1, borderRadius: 19, padding: 16, marginBottom: 14 },
+  progressCardHeader:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   progressCardEyebrow:  { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.2, marginBottom: 4 },
   progressCardTitle:    { fontFamily: 'Inter_700Bold', fontSize: 16 },
   progressCount:        { borderRadius: 10, paddingHorizontal: 9, paddingVertical: 6 },
   progressCountText:    { fontFamily: 'Inter_700Bold', fontSize: 10 },
   progressSteps:        { flexDirection: 'row', alignItems: 'flex-start' },
   progressStep:         { alignItems: 'center', gap: 6, minWidth: 54 },
-  progressStepIcon:     { width: 28, height: 28, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  progressStepIcon:     { width: 31, height: 31, borderRadius: 11, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   progressStepLabel:    { fontFamily: 'Inter_600SemiBold', fontSize: 9 },
-  progressConnector:    { height: 2, flex: 1, marginTop: 13, marginHorizontal: 4, borderRadius: 2 },
-  formSection:          { borderWidth: 1, borderRadius: 22, padding: 18, marginBottom: 12, overflow: 'hidden' },
-  validationBanner:     { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 16, padding: 13, marginBottom: 12 },
+  progressConnector:    { height: 2, flex: 1, marginTop: 14, marginHorizontal: 5, borderRadius: 2 },
+  formSection:          { borderWidth: 1, borderRadius: 20, padding: 18, marginBottom: 14, overflow: 'hidden' },
+  validationBanner:     { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 14, padding: 13, marginBottom: 14 },
   validationText:        { fontFamily: 'Inter_500Medium', fontSize: 12, lineHeight: 17, flex: 1 },
-  transactionToggle:    { borderWidth: 1, borderRadius: 20, padding: 14, marginBottom: 12 },
+  transactionToggle:    { borderWidth: 1, borderRadius: 18, padding: 14, marginBottom: 14 },
   transactionToggleLabel:{ fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.2, marginBottom: 9 },
   transactionToggleTrack:{ flexDirection: 'row', gap: 6, borderWidth: 1, borderRadius: 14, padding: 4 },
   transactionToggleOption:{ flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderRadius: 11 },
   transactionToggleText:{ fontFamily: 'Inter_600SemiBold', fontSize: 14 },
-  stepEyebrow:          { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.5, marginBottom: 5 },
-  stepTitle:            { fontFamily: 'Inter_700Bold', fontSize: 23, lineHeight: 28, marginBottom: 6 },
-  stepSub:              { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, marginBottom: 16 },
+  stepEyebrow:          { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.45, marginBottom: 6, textTransform: 'uppercase' },
+  stepTitle:            { fontFamily: 'Inter_700Bold', fontSize: 22, lineHeight: 27, marginBottom: 6 },
+  stepSub:              { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, marginBottom: 17 },
   label:                { fontFamily: 'Inter_600SemiBold', fontSize: 12, marginBottom: 8, marginTop: 2 },
   // Type selection
-  groupTab:             { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 20, paddingHorizontal: 13, paddingVertical: 9 },
+  groupTab:             { flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderRadius: 13, paddingHorizontal: 12, paddingVertical: 10 },
   groupTabText:         { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
-  typeGrid:             { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  typeCard:             { width: '30.5%', minHeight: 92, borderRadius: 16, borderWidth: 1, padding: 13, alignItems: 'center', justifyContent: 'center', gap: 7 },
-  typeLabel:            { fontFamily: 'Inter_600SemiBold', fontSize: 10, textAlign: 'center', lineHeight: 13 },
+  typeGrid:             { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
+  typeCard:             { width: '31%', minHeight: 104, borderRadius: 16, borderWidth: 1, paddingHorizontal: 7, paddingVertical: 11, alignItems: 'center', justifyContent: 'center', gap: 7, position: 'relative' },
+  typeIconTile:         { width: 39, height: 39, borderWidth: 1, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  typeSelectedMark:     { position: 'absolute', top: 7, right: 7, width: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  typeLabel:            { fontFamily: 'Inter_600SemiBold', fontSize: 10, textAlign: 'center', lineHeight: 14 },
   // Purpose
   purposeRow:           { flexDirection: 'row', gap: 10, marginBottom: 18 },
   purposeBtn:           { borderWidth: 1, borderRadius: 12, paddingVertical: 9, alignItems: 'center' },
@@ -2269,7 +2283,8 @@ const s = StyleSheet.create({
   previewThumbWrap:     { width: 66, height: 52, borderRadius: 9, overflow: 'hidden', borderWidth: 2, borderColor: 'transparent', position: 'relative' },
   previewThumb:         { width: '100%', height: '100%' },
   previewCoverMark:     { position: 'absolute', left: 3, bottom: 3, width: 16, height: 16, borderRadius: 5, alignItems: 'center', justifyContent: 'center' },
-  previewImagePlaceholder: { width: '100%', height: 160, alignItems: 'center', justifyContent: 'center' },
+  previewImagePlaceholder: { width: '100%', height: 160, alignItems: 'center', justifyContent: 'center', gap: 5 },
+  previewEmptyIcon:     { width: 58, height: 58, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   previewBody:          { padding: 16, gap: 8 },
   previewRow:           { flexDirection: 'row', gap: 8 },
   previewTitle:         { fontFamily: 'Inter_700Bold', fontSize: 17, lineHeight: 22 },
@@ -2291,11 +2306,11 @@ const s = StyleSheet.create({
   statusBadge:          { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   statusBadgeText:      { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#ffffff' },
   // Submit
-  submitSection:        { alignItems: 'center', borderWidth: 1, borderRadius: 20, padding: 18, marginTop: 2 },
+  submitSection:        { alignItems: 'center', borderWidth: 1, borderRadius: 20, padding: 19, marginTop: 2, marginBottom: 6 },
   submitIcon:           { width: 46, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   submitTitle:          { fontFamily: 'Inter_700Bold', fontSize: 18, marginBottom: 6 },
   submitHint:           { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, textAlign: 'center', marginBottom: 16 },
-  submitBtn:            { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 18 },
+  submitBtn:            { width: '100%', minHeight: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14 },
   submitBtnText:        { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   submitFootnote:        { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 10 },
   // Hint

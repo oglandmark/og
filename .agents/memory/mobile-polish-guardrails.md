@@ -5,6 +5,12 @@ description: Durable UI rules for extending the OG Landmark Expo app without cha
 
 Use the shared semantic tokens and reusable controls for new mobile UI, while preserving the current navy/gold identity, the official roof/house + OG mark in theme navy (#0B1F3A), and navigation. Keep the former three-pillar mark out of the product. Use a transparent symbol-only logo without the LANDMARK wordmark for app icons and compact headers. Keep the animated app-opening splash (two subtle rings, four markers per ring, official mark, and “OG Landmark” beneath) visible for at least 7 seconds; do not restore a separate static logo-only native splash image. Use the white inverse mark on navy surfaces and the navy mark on light surfaces. Interactive property cards must keep their image, favorite, share, and media controls outside the body detail press target; do not nest pressable controls inside another pressable.
 
+For property-listing selection UI, use premium flat 2D Feather line icons rather than emoji glyphs, with restrained navy/gold treatments.
+
+**Why:** The user asked to polish property listing and use premium 2D icons.
+
+**How to apply:** Keep iconography consistent across property-type categories, selection tiles, and listing progress, and use semantic colors instead of one-off hardcoded palettes.
+
 **Why:** On October 3, 2026, the user confirmed the roof/house + OG artwork as the official logo and requested its navy color to match the product theme. The three-pillar mark must remain removed throughout the app. The Expo Go loading view's label is the configured project name, not the in-app splash; changing it also changes the installed app's display name. The app is also rendered on web through React Native Web, where nested pressables become nested HTML buttons and produce hydration/runtime errors. Central tokens keep the visual language consistent across the many legacy screens.
 
 **How to apply:** Extend `PolishedUI` and the semantic color/layout tokens before adding one-off controls. Use the official roof/house + OG mark in #0B1F3A on light surfaces and its white inverse on dark surfaces. Keep the three-pillar artwork out of active app, web, portal, legal-page, and icon assets. For cards, make the body the detail target and leave media/action controls as sibling press targets. Respect reduced-motion settings in shared animations.

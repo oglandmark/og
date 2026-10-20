@@ -919,6 +919,31 @@ function ListingProgress({ form, locationConfirmed, colors }: { form: Form; loca
   );
 }
 
+function PropertyTypeIcon({ type, colors, size = 24 }: { type: string; colors: any; size?: number }) {
+  const direction = type === 'Upper Portion' ? 'up' : type === 'Lower Portion' ? 'down' : null;
+  const emoji = PROPERTY_TYPE_EMOJIS[type] ?? '🏠';
+  const emojiStyle = size > 24 ? s.previewTypeEmoji : s.typeEmoji;
+
+  if (!direction) {
+    return <Text style={[emojiStyle, { textShadowColor: colors.shadow + '26' }]}>{emoji}</Text>;
+  }
+
+  return (
+    <View style={s.portionIllustration} accessible={false}>
+      <Text style={[emojiStyle, { textShadowColor: colors.shadow + '26' }]}>{emoji}</Text>
+      <View
+        style={[
+          s.portionDirectionBadge,
+          direction === 'up' ? s.portionDirectionBadgeUp : s.portionDirectionBadgeDown,
+          { backgroundColor: colors.gold, borderColor: colors.surfaceRaised },
+        ]}
+      >
+        <Feather name={direction === 'up' ? 'arrow-up' : 'arrow-down'} size={8} color={colors.action} />
+      </View>
+    </View>
+  );
+}
+
 function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Form>) => void; colors: any }) {
   const [activeGroup, setActiveGroup] = useState<PropCategory>(categoryOf(form.propertyType));
   const typesInGroup = PROPERTY_TYPES.filter((t) => t.category === activeGroup);
@@ -971,7 +996,7 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
                 ]}
               >
                 <View pointerEvents="none" style={[s.typeIconHighlight, { backgroundColor: colors.surfaceRaised + '99' }]} />
-                <Text style={[s.typeEmoji, { textShadowColor: colors.shadow + '26' }]}>{PROPERTY_TYPE_EMOJIS[t.key] ?? '🏠'}</Text>
+                <PropertyTypeIcon type={t.key} colors={colors} />
               </LinearGradient>
                <Text style={[s.typeLabel, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{t.label}</Text>
               {sel && <View style={[s.typeSelectedMark, { backgroundColor: colors.action }]}><Feather name="check" size={9} color={colors.actionForeground} /></View>}
@@ -1976,7 +2001,7 @@ function StepPreview({ form, colors, category }: any) {
         ) : (
           <View style={[s.previewImagePlaceholder, { backgroundColor: colors.secondary }]}>
             <View style={[s.previewEmptyIcon, { backgroundColor: colors.accent, borderColor: colors.goldGlassBorder }]}>
-              <Text style={[s.previewTypeEmoji, { textShadowColor: colors.shadow + '26' }]}>{PROPERTY_TYPE_EMOJIS[form.propertyType] ?? '🏠'}</Text>
+              <PropertyTypeIcon type={form.propertyType} colors={colors} size={25} />
             </View>
             <Text style={[s.stepSub, { color: colors.mutedForeground, marginTop: 6 }]}>No cover photo</Text>
           </View>
@@ -2264,6 +2289,10 @@ const s = StyleSheet.create({
   typeIconHighlight:    { position: 'absolute', top: 3, left: 6, right: 6, height: 9, borderRadius: 9 },
   typeEmoji:            { fontSize: 24, lineHeight: 30, includeFontPadding: false, textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 2 },
   previewTypeEmoji:     { fontSize: 25, lineHeight: 32, includeFontPadding: false, textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 2 },
+  portionIllustration:  { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  portionDirectionBadge:{ position: 'absolute', right: 0, width: 15, height: 15, borderRadius: 8, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  portionDirectionBadgeUp: { top: 0 },
+  portionDirectionBadgeDown: { bottom: 0 },
   typeSelectedMark:     { position: 'absolute', top: 7, right: 7, width: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   typeLabel:            { fontFamily: 'Inter_600SemiBold', fontSize: 10, textAlign: 'center', lineHeight: 14 },
   // Purpose

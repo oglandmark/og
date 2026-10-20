@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard } from '@/components/GlassCard';
 import { properties } from '@/lib/properties';
 
@@ -561,23 +562,29 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
               }}
               style={[
                 mod.catChip,
-                 sel
-                    ? { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 2 }
-                  : { backgroundColor: colors.glassOverlay, borderColor: colors.glassBorder },
+                {
+                  backgroundColor: sel ? colors.glassCard : colors.glassOverlay,
+                  borderColor: colors.glassBorder,
+                  borderWidth: 1,
+                },
               ]}
             >
               <View style={[
                 mod.catIcon,
                 {
-                    backgroundColor: sel ? colors.selectionTint : colors.glassOverlay,
-                   borderColor: sel ? colors.selectionBorder : colors.glassBorder,
+                  backgroundColor: sel ? colors.goldGlass : colors.actionGlass,
+                  borderColor: sel ? colors.goldGlassBorder : colors.actionGlassBorder,
                 },
               ]}>
-                <Feather name={cat.icon} size={17} color={sel ? colors.selectionForeground : colors.mutedForeground} />
+                <LinearGradient
+                  colors={[colors.actionGlassHighlight, 'transparent']}
+                  style={[StyleSheet.absoluteFill, { pointerEvents: 'none' } as any]}
+                />
+                <Feather name={cat.icon} size={17} color={sel ? colors.goldForeground : colors.actionForeground} />
               </View>
               <Text style={[
                 mod.catLabel,
-                { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '500' },
+                { color: sel ? colors.primary : colors.foreground, fontWeight: sel ? '700' : '500' },
               ]}>
                  {(categoryLabels as any)?.[cat.key.toLowerCase()] || cat.label}
               </Text>
@@ -613,14 +620,15 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
               onPress={() => goToTab(tab)}
               style={[
                 mod.tabPill,
-                 sel
-                   ? { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }
-                   : { backgroundColor: 'transparent' },
+                {
+                  backgroundColor: sel ? colors.goldGlass : 'transparent',
+                  borderWidth: 0,
+                },
               ]}
             >
               <Text style={[
                 mod.tabText,
-                { color: sel ? colors.selectionForeground : colors.mutedForeground,
+                { color: sel ? colors.goldForeground : colors.mutedForeground,
                   fontWeight: sel ? '600' : '400' },
               ]}>
                 {tab}
@@ -735,6 +743,7 @@ const mod = StyleSheet.create({
   catIcon: {
     width: 38, height: 38, borderRadius: 19, borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',
+    overflow: 'hidden',
   },
   catLabel: { fontSize: 13, fontWeight: '500' },
   countRow: { paddingHorizontal: 18, marginBottom: 12 },

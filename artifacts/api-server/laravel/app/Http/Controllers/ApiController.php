@@ -345,18 +345,25 @@ class ApiController extends Controller
             }
 
             $smtpOff = false;
-            try {
-                if (!config('mail.mailers.smtp.username') || !config('mail.mailers.smtp.password')) {
-                    $smtpOff = true;
-                } else {
+            $smtpUsernameConfigured = (bool) config('mail.mailers.smtp.username');
+            $smtpPasswordConfigured = (bool) config('mail.mailers.smtp.password');
+            if (!$smtpUsernameConfigured || !$smtpPasswordConfigured) {
+                $smtpOff = true;
+                Log::warning('Password reset email skipped because SMTP credentials are unavailable.', [
+                    'usernameConfigured' => $smtpUsernameConfigured,
+                    'passwordConfigured' => $smtpPasswordConfigured,
+                    'mailer' => config('mail.default'),
+                ]);
+            } else {
+                try {
                     Mail::raw("Your OG Landmark password reset code is {$code}. It expires in 15 minutes. Do not share this code.", function ($message) use ($email) {
                         $message->to($email)
                             ->subject('OG Landmark — Password Reset Code');
                     });
+                } catch (\Throwable $exception) {
+                    $smtpOff = true;
+                    Log::error('Password reset email could not be sent.', ['error' => $exception->getMessage()]);
                 }
-            } catch (\Throwable $exception) {
-                $smtpOff = true;
-                Log::error('Password reset email could not be sent.', ['error' => $exception->getMessage()]);
             }
 
             if ($smtpOff) {
@@ -370,7 +377,7 @@ class ApiController extends Controller
                 'success' => true,
                 'smtpOff' => $smtpOff,
                 'message' => $smtpOff
-                    ? 'Email service is not configured. Please contact admin to get your reset code.'
+                    ? 'Email delivery is unavailable right now. Please contact support to get your reset code.'
                     : 'Reset code sent. Check your email.',
             ]);
         }

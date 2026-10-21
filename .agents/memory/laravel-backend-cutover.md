@@ -21,6 +21,12 @@ The Replit website preview should serve the uploaded React build and proxy only 
 
 **How to apply:** Keep webpage and API proxy controls separate. Use the existing static website routes with the local Laravel API, and enable the Laravel HTML proxy only when explicitly requested.
 
+The real public website is `https://oglandmark.com`; `api.oglandmark.com` must not serve the Laravel marketing pages. Keep `/api/*` and the separate public website unchanged.
+
+**Why:** The user clarified that the actual website is the separate OG Landmark site and asked to remove the later-created marketing frontend from the API host.
+
+**How to apply:** Use a host-aware guard on Laravel marketing page routes, return JSON at the API host root, and deploy that Laravel change separately to Hostinger without replacing website assets.
+
 An HTTP 200 from `/api/healthz` is not enough to approve a cutover: compare its readiness fields with the current health contract, then test an OPTIONS preflight from the actual Expo web origin.
 
 **Why:** A reachable Hostinger route can report a disconnected database, serve an older health response shape, and allow the public website through CORS while rejecting the separate Expo preview origin.

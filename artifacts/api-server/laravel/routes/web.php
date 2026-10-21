@@ -5,18 +5,23 @@ use App\Http\Controllers\PortalActionController;
 use App\Http\Controllers\WebsiteAuthController;
 use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\WebsiteLeadController;
+use App\Http\Middleware\HideWebsiteMarketingOnApiHost;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Services\MediaStorage;
 
-Route::get('/', [WebsiteController::class, 'home'])->name('home');
-Route::get('/properties/map', [WebsiteController::class, 'propertiesMap'])->name('properties.map');
-Route::get('/properties', [WebsiteController::class, 'properties'])->name('properties.index');
-Route::get('/properties/{id}', [WebsiteController::class, 'propertyDetail'])->where('id', '[^/]+')->name('properties.show');
-Route::get('/agents', [WebsiteController::class, 'agents'])->name('agents.index');
-Route::get('/agents/{id}', [WebsiteController::class, 'agentDetail'])->where('id', '[^/]+')->name('agents.show');
-Route::get('/about', [WebsiteController::class, 'about'])->name('about');
-Route::get('/contact', [WebsiteController::class, 'contact'])->name('contact');
+Route::middleware(HideWebsiteMarketingOnApiHost::class)->group(function () {
+    Route::get('/', [WebsiteController::class, 'home'])->name('home');
+    Route::get('/properties/map', [WebsiteController::class, 'propertiesMap'])->name('properties.map');
+    Route::get('/properties', [WebsiteController::class, 'properties'])->name('properties.index');
+    Route::get('/properties/{id}', [WebsiteController::class, 'propertyDetail'])->where('id', '[^/]+')->name('properties.show');
+    Route::get('/agents', [WebsiteController::class, 'agents'])->name('agents.index');
+    Route::get('/agents/{id}', [WebsiteController::class, 'agentDetail'])->where('id', '[^/]+')->name('agents.show');
+    Route::get('/about', [WebsiteController::class, 'about'])->name('about');
+    Route::get('/contact', [WebsiteController::class, 'contact'])->name('contact');
+    Route::get('/blog', [WebsiteController::class, 'blog'])->name('blog.index');
+    Route::get('/blog/{id}', [WebsiteController::class, 'blogDetail'])->where('id', '[^/]+')->name('blog.show');
+});
 Route::post('/contact', [WebsiteLeadController::class, 'contact'])->middleware('throttle:5,1')->name('contact.store');
 Route::post('/newsletter', [WebsiteLeadController::class, 'newsletter'])->middleware('throttle:5,1')->name('newsletter.store');
 Route::post('/property-inquiry', [WebsiteLeadController::class, 'contact'])->middleware('throttle:5,1')->name('property.inquiry.store');
@@ -32,9 +37,6 @@ Route::post('/properties/{id}/inquiries', [PortalActionController::class, 'store
     ->where('id', '[^/]+')
     ->middleware('throttle:5,1')
     ->name('buyer.inquiry.store');
-Route::get('/blog', [WebsiteController::class, 'blog'])->name('blog.index');
-Route::get('/blog/{id}', [WebsiteController::class, 'blogDetail'])->where('id', '[^/]+')->name('blog.show');
-
 foreach ([
     'privacy-policy' => 'privacy-policy.html',
     'privacy' => 'privacy-policy.html',

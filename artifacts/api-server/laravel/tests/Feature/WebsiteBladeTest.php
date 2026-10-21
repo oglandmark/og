@@ -60,6 +60,19 @@ class WebsiteBladeTest extends TestCase
         $this->assertFileExists(public_path('images/mobile-banners/homes.jpg'));
     }
 
+    public function test_api_domain_does_not_serve_the_marketing_frontend(): void
+    {
+        $this->get('https://api.oglandmark.com/')
+            ->assertOk()
+            ->assertJsonPath('message', 'OG Landmark API server is running.')
+            ->assertJsonPath('website', 'https://oglandmark.com')
+            ->assertDontSee('Find a place');
+
+        $this->get('https://api.oglandmark.com/about')
+            ->assertNotFound()
+            ->assertJsonPath('website', 'https://oglandmark.com');
+    }
+
     public function test_buyer_can_register_sign_in_and_open_the_portal_without_a_404(): void
     {
         $this->seedData(['users' => [], 'properties' => []]);

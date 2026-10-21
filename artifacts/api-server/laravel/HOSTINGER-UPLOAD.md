@@ -10,6 +10,19 @@ subdomain such as `api.oglandmark.com`.
 - `artisan` and `composer.json` stay one level above `public/`
 - `vendor/` is included; run Composer only if Hostinger asks for it
 
+## Keep the API host separate from the public website
+
+The public website is `https://oglandmark.com`; `https://api.oglandmark.com` is
+the Laravel API host. For the API-host homepage cleanup, upload the updated
+`routes/web.php` and the new
+`app/Http/Middleware/HideWebsiteMarketingOnApiHost.php` to the matching paths
+under the Laravel project root, then run `php artisan optimize:clear`.
+
+No database migration is needed. The API host root returns a JSON status,
+marketing pages return JSON 404 responses on that host, and `/api/*`, login,
+and legal routes remain unchanged. Do not upload or replace the public website
+files for this change.
+
 ## Restore the existing live Hostinger MySQL database
 
 The existing Hostinger MySQL database is the source of truth for live users and

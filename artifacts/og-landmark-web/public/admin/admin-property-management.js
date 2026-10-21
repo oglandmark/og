@@ -208,7 +208,7 @@
         description: values.description.trim(),
         images: values.images.split(/\r?\n/).map((url) => url.trim()).filter(Boolean),
         assignedAgent: name || phone || profile ? {
-          id: profile?.id || null, name, phone, profileType: profile?.kind || 'manual',
+          id: profile ? String(profile.id) : null, name, phone, profileType: profile?.kind || 'manual',
         } : null,
       };
       payload.coverImage = payload.images[0] || null;

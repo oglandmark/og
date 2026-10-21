@@ -140,11 +140,53 @@ class DashboardAuthCompatibilityTest extends TestCase
             ->assertUnauthorized();
     }
 
-    public function test_admin_can_create_update_suspend_and_delete_users_through_the_admin_dashboard_api(): void
+    public function test_admin_listing_and_user_actions_match_the_dashboard_contract(): void
     {
         $this->seedDashboardFixture();
         $adminToken = $this->login('dashboard-admin@example.test');
         $adminHeaders = ['Authorization' => "Bearer {$adminToken}"];
+
+        $this->patchJson('/api/admin/properties/991', [
+            'title' => 'Updated seller listing',
+            'price' => 2750000,
+            'bedrooms' => 3,
+            'images' => ['/images/uploads/front.jpg', '/images/uploads/lounge.jpg'],
+            'assignedAgent' => [
+                'id' => 'agent-profile-1',
+                'name' => 'Assigned Agent',
+                'phone' => '03001234567',
+                'profileType' => 'profile',
+            ],
+        ], $adminHeaders)
+            ->assertOk()
+            ->assertJsonPath('title', 'Updated seller listing')
+            ->assertJsonPath('price', 2750000)
+            ->assertJsonPath('bedrooms', 3)
+            ->assertJsonPath('images.1', '/images/uploads/lounge.jpg')
+            ->assertJsonPath('coverImage', '/images/uploads/front.jpg')
+            ->assertJsonPath('assignedAgentId', 'agent-profile-1');
+
+        $this->getJson('/api/admin/properties', $adminHeaders)
+            ->assertOk()
+            ->assertJsonCount(2)
+            ->assertJsonPath('0.title', 'Updated seller listing');
+        $this->getJson('/api/admin/properties/991/review', $adminHeaders)
+            ->assertOk()
+            ->assertJsonPath('property.id', 991)
+            ->assertJsonPath('property.images.0', '/images/uploads/front.jpg');
+
+        $this->patchJson('/api/admin/properties/991', ['bedrooms' => -1], $adminHeaders)
+            ->assertStatus(422)
+            ->assertJsonStructure(['error', 'errors']);
+        $this->patchJson('/api/admin/properties/991', ['title' => 'Unauthenticated edit'])
+            ->assertUnauthorized();
+        $this->patchJson('/api/admin/properties/991', ['title' => 'Seller edit'], [
+            'Authorization' => 'Bearer ' . $this->login('dashboard-seller@example.test'),
+        ])->assertForbidden();
+
+        $this->deleteJson('/api/admin/properties/992', [], $adminHeaders)->assertNoContent();
+        $this->getJson('/api/admin/properties', $adminHeaders)->assertOk()->assertJsonCount(1);
+        $this->deleteJson('/api/admin/properties/992', [], $adminHeaders)->assertNotFound();
 
         $created = $this->postJson('/api/users', [
             'name' => 'Admin-created User',
@@ -160,6 +202,10 @@ class DashboardAuthCompatibilityTest extends TestCase
             ->assertJsonPath('status', 'Active')
             ->assertJsonMissingPath('password');
         $newUserId = $created->json('id');
+        $this->getJson('/api/users', $adminHeaders)
+            ->assertOk()
+            ->assertJsonFragment(['id' => $newUserId, 'name' => 'Admin-created User'])
+            ->assertJsonMissingPath('0.password');
 
         $this->putJson("/api/users/{$newUserId}", [
             'name' => 'Updated User',
@@ -191,6 +237,7 @@ class DashboardAuthCompatibilityTest extends TestCase
         $this->putJson('/api/users/903', ['status' => 'Suspended'], $sellerHeaders)->assertForbidden();
 
         $this->deleteJson("/api/users/{$newUserId}", [], $adminHeaders)->assertNoContent();
+        $this->getJson('/api/users', $adminHeaders)->assertOk()->assertJsonMissing(['id' => $newUserId]);
     }
 
     public function test_admin_promoted_agent_can_sign_in_and_read_only_their_dashboard_data(): void
@@ -292,7 +339,7 @@ class DashboardAuthCompatibilityTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_admin_otp_exchange_creates_a_valid_session_but_dashboard_expects_a_different_login_response(): void
+    public function test_admin_login_uses_laravels_two_step_verification_and_returns_a_recoverable_session(): void
     {
         $this->seedDashboardFixture();
         config([
@@ -301,6 +348,15 @@ class DashboardAuthCompatibilityTest extends TestCase
             'mail.mailers.smtp.username' => 'dashboard-test-smtp-user',
             'mail.mailers.smtp.password' => 'dashboard-test-smtp-password',
         ]);
+
+        $this->postJson('/api/auth/admin-verify', [
+            'email' => 'dashboard-seller@example.test',
+            'password' => self::PASSWORD,
+        ])->assertUnauthorized();
+        $this->postJson('/api/auth/admin-verify', [
+            'email' => 'dashboard-admin@example.test',
+            'password' => 'incorrect-password',
+        ])->assertUnauthorized();
 
         $verification = $this->postJson('/api/auth/admin-verify', [
             'email' => 'dashboard-admin@example.test',
@@ -338,6 +394,13 @@ class DashboardAuthCompatibilityTest extends TestCase
             ->getJson('/api/admin/stats')
             ->assertOk()
             ->assertJsonPath('totalProperties', 2);
+        $this->withToken((string) $otpLogin->json('token'))
+            ->postJson('/api/auth/logout')
+            ->assertOk()
+            ->assertJsonPath('success', true);
+        $this->withToken((string) $otpLogin->json('token'))
+            ->getJson('/api/auth/me')
+            ->assertUnauthorized();
 
         $this->postJson('/api/auth/admin-otp', [
             'email' => 'dashboard-admin@example.test',

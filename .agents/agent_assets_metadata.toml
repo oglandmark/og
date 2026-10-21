@@ -154,3 +154,17 @@ mtime_ms = 1792600331893
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/a828a351-6b82-4dc1-a7cb-03ac903720a8/a9df755d-95dc-49f8-917d-a049142b1166"
 storage_version_token = "1792600346490175"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "4Tr-QEUzX5EgnMgMj785l"
+uri = "file://generated-artifacts/OG-Landmark-Mobile-Laravel-Backend-New-DB-2026-10-21.zip"
+type = "unspecified"
+title = "OG Landmark — Laravel Mobile Backend + New MySQL DB"
+description = "Fresh-install Laravel API bundle with Composer vendor dependencies, complete MySQL schema/migrations, and an empty canonical app_data row. Excludes live records, credentials, local SQLite, and runtime logs."
+logical_id = "7908cfeb-3c22-4955-b113-0792d3305e69"
+content_hash = "sha256:3368fe7f4f7562383089f4f6872be7c100a28ccb2d806fb785399e357c7e041c"
+size = 37873021
+mtime_ms = 1792601563268
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/7908cfeb-3c22-4955-b113-0792d3305e69/a598abe4-a8b2-4624-892c-2ba2e55ce8c8"
+storage_version_token = "1792601583185710"
+content_type = "application/octet-stream"

@@ -719,6 +719,71 @@ class ApiController extends Controller
         if ($resource === 'properties' && $id !== null && ($parts[2] ?? '') === 'verify' && $method === 'PATCH') {
             return $this->properties($request, [$id, 'verify'], 'PATCH');
         }
+        if ($resource === 'properties' && $id !== null && in_array($method, ['PUT', 'PATCH'], true)) {
+            $index = $this->indexById($data['properties'] ?? [], $id);
+            if ($index === null) return $this->json(['error' => 'Property not found'], 404);
+
+            $validator = Validator::make($request->all(), [
+                'title' => ['sometimes', 'required', 'string', 'max:180'],
+                'type' => ['sometimes', 'nullable', 'string', 'max:80'],
+                'purpose' => ['sometimes', 'nullable', 'string', 'max:40'],
+                'city' => ['sometimes', 'required', 'string', 'max:120'],
+                'address' => ['sometimes', 'nullable', 'string', 'max:240'],
+                'price' => ['sometimes', 'nullable', 'numeric', 'min:0'],
+                'area' => ['sometimes', 'nullable', 'string', 'max:80'],
+                'bedrooms' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:50'],
+                'bathrooms' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:50'],
+                'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
+                'images' => ['sometimes', 'array', 'max:30'],
+                'images.*' => ['string', 'max:2000'],
+                'assignedAgent' => ['sometimes', 'nullable', 'array'],
+                'assignedAgent.id' => ['nullable', 'string', 'max:100'],
+                'assignedAgent.name' => ['nullable', 'string', 'max:120'],
+                'assignedAgent.phone' => ['nullable', 'string', 'max:40'],
+                'assignedAgent.profileType' => ['nullable', 'string', 'max:40'],
+            ]);
+            if ($validator->fails()) {
+                return $this->json(['error' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
+            }
+
+            $editable = [
+                'title', 'type', 'purpose', 'city', 'address', 'price', 'area',
+                'bedrooms', 'bathrooms', 'description', 'images', 'assignedAgent',
+            ];
+            $before = $data['properties'][$index];
+            $changes = array_intersect_key($validator->validated(), array_flip($editable));
+            $data['properties'][$index] = array_merge($before, $changes, ['updatedAt' => now()->toISOString()]);
+            if (array_key_exists('images', $changes)) {
+                $images = array_values($changes['images']);
+                $oldCover = $before['coverImage'] ?? null;
+                $data['properties'][$index]['coverImage'] = $oldCover && in_array($oldCover, $images, true)
+                    ? $oldCover
+                    : ($images[0] ?? null);
+                $media = is_array($before['media'] ?? null) ? $before['media'] : [];
+                $media['images'] = array_map(
+                    fn ($url) => ['url' => $url, 'propertyId' => $data['properties'][$index]['id'], 'type' => 'image'],
+                    $images,
+                );
+                $data['properties'][$index]['media'] = $media;
+            }
+            if (array_key_exists('assignedAgent', $changes)) {
+                $agent = $changes['assignedAgent'];
+                $data['properties'][$index]['assignedAgentId'] = is_array($agent) ? ($agent['id'] ?? null) : null;
+                $data['properties'][$index]['assignedAgentName'] = is_array($agent) ? ($agent['name'] ?? null) : null;
+                $data['properties'][$index]['assignedAgentPhone'] = is_array($agent) ? ($agent['phone'] ?? null) : null;
+            }
+            $data['properties'][$index]['managementHistory'] = is_array($before['managementHistory'] ?? null)
+                ? $before['managementHistory']
+                : [];
+            $data['properties'][$index]['managementHistory'][] = [
+                'action' => 'admin_updated',
+                'by' => $admin['id'],
+                'createdAt' => now()->toISOString(),
+                'fields' => array_keys($changes),
+            ];
+            JsonStore::write($data);
+            return $this->json($data['properties'][$index]);
+        }
         if ($resource === 'properties' && $id !== null && $method === 'DELETE') {
             return $this->properties($request, [$id], 'DELETE');
         }

@@ -146,6 +146,54 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonPath('accountType', 'User');
     }
 
+    public function test_admin_can_edit_a_pending_mobile_listing_and_assign_an_agent_referral(): void
+    {
+        $this->seedData([
+            'users' => [
+                $this->user(1, 'admin-property-edit@example.test', 'Admin'),
+                $this->user(2, 'seller-property-edit@example.test', 'User'),
+            ],
+            'properties' => [[
+                'id' => 41,
+                'title' => 'Old listing title',
+                'city' => 'Lahore',
+                'sellerId' => 2,
+                'approvalStatus' => 'Pending',
+                'listingStatus' => 'Pending',
+                'images' => ['https://example.test/old.jpg'],
+            ]],
+        ]);
+        $adminToken = $this->token('admin-property-edit@example.test');
+        $headers = ['Authorization' => "Bearer {$adminToken}"];
+
+        $this->getJson('/api/admin/properties?status=Pending', $headers)
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.approvalStatus', 'Pending');
+
+        $this->patchJson('/api/admin/properties/41', [
+            'title' => 'Updated mobile listing',
+            'city' => 'Karachi',
+            'images' => ['https://example.test/new.jpg'],
+            'assignedAgent' => [
+                'id' => 'agent-profile-7',
+                'name' => 'Referral Agent',
+                'phone' => '03001234567',
+                'profileType' => 'profile',
+            ],
+        ], $headers)
+            ->assertOk()
+            ->assertJsonPath('title', 'Updated mobile listing')
+            ->assertJsonPath('city', 'Karachi')
+            ->assertJsonPath('approvalStatus', 'Pending')
+            ->assertJsonPath('assignedAgent.name', 'Referral Agent')
+            ->assertJsonPath('assignedAgentPhone', '03001234567')
+            ->assertJsonPath('managementHistory.0.action', 'admin_updated');
+
+        $this->patchJson('/api/admin/properties/41', ['price' => -1], $headers)
+            ->assertUnprocessable();
+    }
+
     public function test_mobile_facebook_signup_verifies_provider_and_returns_session(): void
     {
         $this->seedData(['users' => []]);

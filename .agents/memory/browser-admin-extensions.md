@@ -5,6 +5,8 @@ description: How to add maintainable features to the static browser admin when i
 
 When the browser admin exists only as a compiled bundle with no recoverable source map or matching source in repository history, keep focused enhancements in a readable, separately loaded source module. Avoid hand-editing the compiled bundle or replacing unrelated admin flows.
 
-**Why:** The existing admin bundle contains unrelated working routes; an isolated source module is easier to inspect and test without risking those flows.
+For admin and listing work in this project, update the website admin dashboard and keep its local Replit preview synchronized and verified with each change.
 
-**How to apply:** Load the module from the admin entry page, reuse the admin's existing authenticated API session, and cover its DOM behavior with browser checks. Reconsider full source restoration if future changes need to replace or substantially restructure the admin.
+**Why:** The existing admin bundle contains unrelated working routes, and the user clarified that these updates belong on the website admin dashboard and should stay current locally.
+
+**How to apply:** Load focused modules from the admin entry page, reuse the admin's existing authenticated API session, and verify the local web preview after changes. Reconsider full source restoration if future changes need to replace or substantially restructure the admin.

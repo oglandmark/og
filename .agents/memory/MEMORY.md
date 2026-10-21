@@ -19,6 +19,7 @@
 - [Expo dependency alignment](expo-dependency-alignment.md) — package fixes can trigger mid-install Metro resolution errors; verify module resolution and the final bundle after installation finishes.
 - [Expo preview bundle resolver](expo-preview-bundle-resolver.md) — a proxied Expo web bundle can fail resolving expo-router when the artifact path is treated as a Metro module path; diagnose before changing workflows.
 - [Native splash provider order](native-splash-provider-order.md) — native-only startup overlays must render inside every context provider they consume; web previews may hide this class of crash.
+- [Color-only native splash](native-splash-color-only.md) — keep the native pre-JS splash logo-free; Android still needs transparent splash drawables for resource linking.
 - [Expo startup hydration](expo-startup-hydration.md) — cached auth plus a bounded startup watchdog prevents slow session checks from trapping Expo Go on the splash screen.
 - [Android video compositing](android-video-compositing.md) — stacked Expo video surfaces can blank sibling content; use texture views and mount only the active banner video.
 - [GitHub connector write fallback](github-connector-write-fallback.md) — use Git data API on write blocks; stage large Base64 batches to disk and verify hashes.

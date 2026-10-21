@@ -196,3 +196,17 @@ mtime_ms = 1792521286531
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/d76d7453-da72-4d20-9508-a3de4637e980/e9d14113-d353-4578-9b0d-f65996eb1f68"
 storage_version_token = "1792521354017379"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "rKVcGaNhWhPngan6Catds"
+uri = "file://generated-artifacts/OG-Landmark-Frontend-Complete-2026-10-21.zip"
+type = "unspecified"
+title = "OG Landmark — Complete Frontend ZIP"
+description = "Current website frontend only: homepage, assets, official logos, legal pages, and admin/user portal screens. Backend, database, and secrets are excluded."
+logical_id = "a828a351-6b82-4dc1-a7cb-03ac903720a8"
+content_hash = "sha256:6951e37fedcc573e230256210b65be5375aad4babc28d0f857f1f0853d77ad35"
+size = 9880185
+mtime_ms = 1792600331893
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/a828a351-6b82-4dc1-a7cb-03ac903720a8/a9df755d-95dc-49f8-917d-a049142b1166"
+storage_version_token = "1792600346490175"
+content_type = "application/octet-stream"

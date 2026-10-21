@@ -211,6 +211,7 @@
           id: profile?.id || null, name, phone, profileType: profile?.kind || 'manual',
         } : null,
       };
+      payload.coverImage = payload.images[0] || null;
       await request(`/admin/properties/${encodeURIComponent(property.id)}`, { method: 'PATCH', body: JSON.stringify(payload) });
       closeModal();
       window.location.reload();

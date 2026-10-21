@@ -174,6 +174,9 @@ class BackendGapClosureTest extends TestCase
         $this->patchJson('/api/admin/properties/41', [
             'title' => 'Updated mobile listing',
             'city' => 'Karachi',
+            'district' => 'Central',
+            'areaUnit' => 'Marla',
+            'amenities' => ['parking', 'garden'],
             'images' => ['https://example.test/new.jpg'],
             'assignedAgent' => [
                 'id' => 'agent-profile-7',
@@ -185,6 +188,9 @@ class BackendGapClosureTest extends TestCase
             ->assertOk()
             ->assertJsonPath('title', 'Updated mobile listing')
             ->assertJsonPath('city', 'Karachi')
+            ->assertJsonPath('district', 'Central')
+            ->assertJsonPath('areaUnit', 'Marla')
+            ->assertJsonPath('amenities.0', 'parking')
             ->assertJsonPath('approvalStatus', 'Pending')
             ->assertJsonPath('assignedAgent.name', 'Referral Agent')
             ->assertJsonPath('assignedAgentPhone', '03001234567')

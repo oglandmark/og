@@ -5753,7 +5753,12 @@ const noCache = (res) => {
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
 };
-app.get('/portal/admin',  (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/admin.html')); });
+const redirectLegacyAdmin = (_req, res) => res.redirect(302, '/admin/');
+app.get('/portal/admin', redirectLegacyAdmin);
+app.get('/portal/admin/', redirectLegacyAdmin);
+app.get('/portal/admin.html', redirectLegacyAdmin);
+app.get('/portal/admin-dashboard', redirectLegacyAdmin);
+app.get('/portal/admin-dashboard.html', redirectLegacyAdmin);
 app.get('/portal/seller', (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/seller.html')); });
 app.get('/portal/buyer',  (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/buyer.html')); });
 app.get('/portal/agent',  (req, res) => { noCache(res); res.sendFile(path.join(publicDir, 'portal/agent.html')); });
@@ -5815,7 +5820,7 @@ app.get('/agent', redirectToDashboard('agent'));
 app.get('/agent/*', redirectToDashboard('agent'));
 app.get('/buyer', redirectToDashboard('buyer'));
 app.get('/buyer/*', redirectToDashboard('buyer'));
-app.get('/admin-dashboard', (_req, res) => res.redirect(302, '/admin/'));
+app.get('/admin-dashboard', redirectLegacyAdmin);
 const buyerDashboard = (req, res) => {
   noCache(res);
   res.sendFile(path.join(publicDir, 'portal/buyer-dashboard.html'));

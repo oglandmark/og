@@ -727,13 +727,25 @@ class ApiController extends Controller
                 'title' => ['sometimes', 'required', 'string', 'max:180'],
                 'type' => ['sometimes', 'nullable', 'string', 'max:80'],
                 'purpose' => ['sometimes', 'nullable', 'string', 'max:40'],
+                'status' => ['sometimes', 'nullable', 'string', 'max:40'],
                 'city' => ['sometimes', 'required', 'string', 'max:120'],
+                'district' => ['sometimes', 'nullable', 'string', 'max:120'],
+                'tehsil' => ['sometimes', 'nullable', 'string', 'max:120'],
+                'locality' => ['sometimes', 'nullable', 'string', 'max:120'],
+                'society' => ['sometimes', 'nullable', 'string', 'max:160'],
                 'address' => ['sometimes', 'nullable', 'string', 'max:240'],
                 'price' => ['sometimes', 'nullable', 'numeric', 'min:0'],
                 'area' => ['sometimes', 'nullable', 'string', 'max:80'],
+                'areaUnit' => ['sometimes', 'nullable', 'string', 'max:40'],
                 'bedrooms' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:50'],
                 'bathrooms' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:50'],
+                'yearBuilt' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:3000'],
+                'furnishing' => ['sometimes', 'nullable', 'string', 'max:80'],
+                'availability' => ['sometimes', 'nullable', 'string', 'max:80'],
+                'videoUrl' => ['sometimes', 'nullable', 'string', 'max:2000'],
                 'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
+                'amenities' => ['sometimes', 'array', 'max:50'],
+                'amenities.*' => ['string', 'max:120'],
                 'images' => ['sometimes', 'array', 'max:30'],
                 'images.*' => ['string', 'max:2000'],
                 'assignedAgent' => ['sometimes', 'nullable', 'array'],
@@ -747,8 +759,10 @@ class ApiController extends Controller
             }
 
             $editable = [
-                'title', 'type', 'purpose', 'city', 'address', 'price', 'area',
-                'bedrooms', 'bathrooms', 'description', 'images', 'assignedAgent',
+                'title', 'type', 'purpose', 'status', 'city', 'district', 'tehsil',
+                'locality', 'society', 'address', 'price', 'area', 'areaUnit',
+                'bedrooms', 'bathrooms', 'yearBuilt', 'furnishing', 'availability',
+                'videoUrl', 'description', 'amenities', 'images', 'assignedAgent',
             ];
             $before = $data['properties'][$index];
             $changes = array_intersect_key($validator->validated(), array_flip($editable));

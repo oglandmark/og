@@ -46,6 +46,6 @@
 - [Normalized core storage](normalized-core-storage.md) — keep app accounts in `app_users`, preserve full payloads, and dual-write `app_data` for rollback.
 - [Play Store metadata claims](play-store-metadata.md) — keep OG Landmark store copy factual; Google rejected the “trusted” short and full description claims.
 - [Public contacts and listing pins](public-contact-and-listing-pins.md) — public property/agent call and WhatsApp use 03011484303; preserve account phones and selected coordinates.
-- [Browser admin extensions](browser-admin-extensions.md) — update the website admin dashboard and keep the local preview in sync; isolate changes from its compiled bundle.
+- [Browser admin extensions](browser-admin-extensions.md) — limit work to the website dashboard and necessary Laravel integration; sync and verify local preview.
 - [User-controlled app builds](build-approval.md) — do not start a new mobile build until the user explicitly authorizes it.
 - [Single public account model](single-user-account-model.md) — public accounts are User; keep staff permissions separate so listing moderation remains available.

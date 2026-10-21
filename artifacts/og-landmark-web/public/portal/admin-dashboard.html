@@ -1308,6 +1308,11 @@ tr:hover td{background:#f8fafc}
             <div class="pr-edit-field full"><label>Description</label><textarea id="pe-description" rows="4"></textarea></div>
             <div class="pr-edit-field full"><label>Amenities (comma separated)</label><input id="pe-amenities" type="text" placeholder="Pool, Gym, Garden..."/></div>
             <div class="pr-edit-field full"><label>Images (comma separated URLs)</label><textarea id="pe-images" rows="3" placeholder="/images/photo1.jpg, /images/photo2.jpg"></textarea></div>
+            <div class="pr-edit-field full" style="border-top:1px solid var(--border);padding-top:14px"><strong>Agent referral</strong></div>
+            <div class="pr-edit-field full"><label>Agent profile</label><select id="pe-agent-profile"><option value="">Manual contact / no profile</option></select></div>
+            <div class="pr-edit-field"><label>Referral contact name</label><input id="pe-agent-name" type="text" maxlength="120"/></div>
+            <div class="pr-edit-field"><label>Referral phone</label><input id="pe-agent-phone" type="tel" maxlength="40"/></div>
+            <div class="pr-edit-field full"><small style="color:var(--muted)">This assignment does not change the listing review status.</small></div>
           </div>
           <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
             <button class="btn btn-outline" onclick="togglePropEdit()">Cancel</button>
@@ -2014,7 +2019,7 @@ async function api(method,path,body){
 
 async function loadAll(){
   const sources=[
-    ['properties',()=>api('GET','/api/properties?limit=1000')],
+    ['properties',()=>api('GET','/api/admin/properties?limit=500')],
     ['users',()=>api('GET','/api/users')],
     ['agents',()=>api('GET','/api/agents')],
     ['inquiries',()=>api('GET','/api/inquiries')],
@@ -2341,7 +2346,7 @@ function renderPropertiesPage(){
     <td>${p.city||'—'}</td>
     <td>PKR ${fmtPrice(p.price)}</td>
     <td>${p.sellerName||'—'}</td>
-    <td>${p.agentId||'—'}</td>
+     <td>${p.assignedAgent?.name||p.assignedAgentName||p.agentName||p.agentId||'—'}</td>
     <td>${statusBadge(p.approvalStatus)}</td>
     <td>
       ${p.priority?'<span class="badge" style="background:#f5f3ff;color:#5b21b6"> Priority</span>':p.featured?'<span class="badge badge-yellow">⭐ Featured</span>':'<span class="badge badge-gray">—</span>'}
@@ -2988,6 +2993,7 @@ async function openPropReview(id, fromPage){
   document.getElementById('pe-description').value=p.description||'';
   document.getElementById('pe-amenities').value=(p.amenities||[]).join(', ');
   document.getElementById('pe-images').value=(p.images||[]).join(', ');
+  populatePropertyAgentOptions(p);
 
   showPage('prop-review');
 }
@@ -3135,6 +3141,55 @@ function openPropEdit(id, fromPage){
   }, 150);
 }
 
+function populatePropertyAgentOptions(property){
+  const select=document.getElementById('pe-agent-profile');
+  if(!select) return;
+  const current=property.assignedAgent||{};
+  const candidates=[
+    ...allMobileAgents.map(agent=>({...agent,profileType:'mobile-profile',profileName:agent.displayName||agent.name})),
+    ...allUsers.filter(user=>String(user.role||'').toLowerCase()==='agent').map(agent=>({...agent,profileType:'agent-account',profileName:agent.name})),
+    ...allAgents.map(agent=>({...agent,profileType:'city-agent',profileName:agent.displayName||agent.name})),
+  ];
+  const seen=new Set();
+  select.innerHTML='<option value="">Manual contact / no profile</option>';
+  candidates.forEach(agent=>{
+    const id=String(agent.id??agent.userId??'');
+    if(!id||seen.has(`${agent.profileType}:${id}`)) return;
+    seen.add(`${agent.profileType}:${id}`);
+    const option=document.createElement('option');
+    option.value=`${agent.profileType}:${id}`;
+    option.textContent=`${agent.profileName||'Agent'}${agent.phone?` · ${agent.phone}`:''}`;
+    option.dataset.name=agent.profileName||'';
+    option.dataset.phone=agent.phone||'';
+    select.appendChild(option);
+  });
+  const selectedId=String(current.id||property.assignedAgentId||property.agentId||'');
+  const selectedType=current.profileType||'';
+  const selected=candidates.find(agent=>
+    String(agent.id??agent.userId??'')===selectedId&&(!selectedType||agent.profileType===selectedType)
+  );
+  if(selected) select.value=`${selected.profileType}:${selected.id??selected.userId}`;
+  document.getElementById('pe-agent-name').value=current.name||property.assignedAgentName||property.agentName||selected?.profileName||'';
+  document.getElementById('pe-agent-phone').value=current.phone||property.assignedAgentPhone||property.agentPhone||selected?.phone||'';
+  select.onchange=()=>{
+    const option=select.selectedOptions[0];
+    if(select.value){
+      document.getElementById('pe-agent-name').value=option.dataset.name||'';
+      document.getElementById('pe-agent-phone').value=option.dataset.phone||'';
+    }
+  };
+}
+
+function buildPropertyAgentAssignment(){
+  const select=document.getElementById('pe-agent-profile');
+  const option=select?.selectedOptions?.[0];
+  const [profileType,id]=String(select?.value||'').split(':');
+  const name=document.getElementById('pe-agent-name').value.trim();
+  const phone=document.getElementById('pe-agent-phone').value.trim();
+  if(!name&&!phone&&!id) return null;
+  return {id:id||null,name,phone,profileType:profileType||'manual'};
+}
+
 async function savePropEdit(){
   const p=allProps.find(x=>x.id===prCurrentId); if(!p) return;
   const body={
@@ -3160,10 +3215,12 @@ async function savePropEdit(){
     description:document.getElementById('pe-description').value.trim(),
     amenities:document.getElementById('pe-amenities').value.split(',').map(s=>s.trim()).filter(Boolean),
     images:document.getElementById('pe-images').value.split(',').map(s=>s.trim()).filter(Boolean),
+    assignedAgent:buildPropertyAgentAssignment(),
   };
+  body.coverImage=body.images[0]||null;
   if(!body.title){showToast('Title is required','error');return;}
   try{
-    await api('PUT',`/api/properties/${prCurrentId}`,body);
+    await api('PATCH',`/api/admin/properties/${prCurrentId}`,body);
     showToast('Property updated successfully!','success');
     await loadAll();
     openPropReview(prCurrentId, prFromPage);

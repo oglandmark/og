@@ -70,6 +70,13 @@ packages = ["glib", "nspr", "nss", "dbus", "atk", "at-spi2-atk", "cups", "gtk3",
 FACEBOOK_APP_ID = "2260207684544121"
 EXPO_PUBLIC_FACEBOOK_APP_ID = "2260207684544121"
 EXPO_PUBLIC_FACEBOOK_REDIRECT_URI = "2260207684544121"
+MAIL_HOST = "smtp.hostinger.com"
+MAIL_MAILER = "smtp"
+MAIL_PORT = "465"
+MAIL_SCHEME = "smtps"
+SMTP_HOST = "smtp.hostinger.com"
+SMTP_PORT = "465"
+SMTP_SECURE = "true"
 
 [userenv.development]
 LARAVEL_API_URL = "https://api.oglandmark.com"

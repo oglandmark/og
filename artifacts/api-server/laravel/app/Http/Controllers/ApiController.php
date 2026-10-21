@@ -147,7 +147,6 @@ class ApiController extends Controller
         $normalizedStorage = $this->normalizedCoreStorageStatus();
         $productionNormalizedReady = !app()->environment('production') || $normalizedStorage === 'ready';
         $ready = $database === 'connected' && $productionMediaReady && $productionNormalizedReady;
-
         return $this->json([
             'status' => $ready ? 'ok' : 'degraded',
             'database' => $database,

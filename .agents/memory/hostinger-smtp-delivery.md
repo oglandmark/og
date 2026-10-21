@@ -15,6 +15,12 @@ A successful Laravel CLI config check does not prove the managed API workflow ha
 
 **How to apply:** Verify `/api/healthz` through the running API workflow after a restart before attempting an inbox-delivery test. If CLI and workflow results disagree, refresh the credentials through the Secrets flow and recheck the workflow.
 
+In the Laravel API workflow, Replit secrets may exist in the process environment while Laravel's `env()` helper resolves local `.env` null entries instead. SMTP credential config must fall back to `getenv()` so the managed workflow can read the injected mailbox secrets.
+
+**Why:** The API health endpoint reported SMTP as unconfigured even though a CLI process saw the credentials; a boolean-only probe showed `getenv()` present while Laravel `env()` and config were empty.
+
+**How to apply:** For mail credentials only, prefer Laravel `env()` values and fall back to `getenv()`; verify configuration and the SMTP handshake through the running API workflow.
+
 The secure Secrets form itself can fail before submission with `Channel closed before secrets service was ready`. Replit guidance describes form/channel closures as transient and recommends restarting compute from the command palette, then retrying; if it persists, check the browser or network.
 
 **Why:** A failed secure-form channel is separate from Laravel configuration and must not be mistaken for a user declining to provide credentials.

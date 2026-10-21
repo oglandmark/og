@@ -1,7 +1,13 @@
 <?php
 
-$smtpUsername = env('MAIL_USERNAME') ?: env('SMTP_USER');
-$smtpPassword = env('MAIL_PASSWORD') ?: env('SMTP_PASS');
+$smtpUsername = env('MAIL_USERNAME')
+    ?: env('SMTP_USER')
+    ?: getenv('MAIL_USERNAME')
+    ?: getenv('SMTP_USER');
+$smtpPassword = env('MAIL_PASSWORD')
+    ?: env('SMTP_PASS')
+    ?: getenv('MAIL_PASSWORD')
+    ?: getenv('SMTP_PASS');
 $hasSmtpCredentials = (bool) ($smtpUsername && $smtpPassword);
 $configuredMailer = env('MAIL_MAILER');
 $rawMailHost = trim((string) (env('MAIL_HOST') ?: ''));

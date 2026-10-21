@@ -6,10 +6,6 @@
   RewriteEngine On
   RewriteBase /
 
-  # Account deletion and specific data-deletion requests use one public page.
-  RewriteRule ^account-deletion/?$ pages/account-deletion.html [L,NC]
-  RewriteRule ^data-deletion/?$ pages/account-deletion.html [L,NC]
-
   # Prefer existing files and directories
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d

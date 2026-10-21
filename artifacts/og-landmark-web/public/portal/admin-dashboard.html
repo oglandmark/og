@@ -1140,10 +1140,10 @@ tr:hover td{background:#f8fafc}
       <div class="form-group"><label>Full Name *</label><input id="user-name" type="text" required/></div>
       <div class="form-group"><label>Email *</label><input id="user-email" type="email" required/></div>
       <div class="form-group"><label>Phone</label><input id="user-phone" type="tel" placeholder="+92 3XX XXXXXXX"/></div>
-      <div class="form-group"><label>Internal access *</label>
+      <div class="form-group"><label>Role *</label>
         <select id="user-role" required>
-          <option value="User">User</option><option value="Agent">Agent access</option>
-          <option value="Developer">Developer access</option><option value="Admin">Admin access</option>
+          <option value="Buyer">Buyer</option><option value="Seller">Seller</option>
+          <option value="Agent">Agent</option><option value="Admin">Admin</option>
         </select>
       </div>
       <div class="form-group"><label>Password</label><input id="user-password" type="password" placeholder="Leave blank to keep unchanged"/></div>
@@ -1308,11 +1308,6 @@ tr:hover td{background:#f8fafc}
             <div class="pr-edit-field full"><label>Description</label><textarea id="pe-description" rows="4"></textarea></div>
             <div class="pr-edit-field full"><label>Amenities (comma separated)</label><input id="pe-amenities" type="text" placeholder="Pool, Gym, Garden..."/></div>
             <div class="pr-edit-field full"><label>Images (comma separated URLs)</label><textarea id="pe-images" rows="3" placeholder="/images/photo1.jpg, /images/photo2.jpg"></textarea></div>
-            <div class="pr-edit-field full" style="border-top:1px solid var(--border);padding-top:14px"><strong>Agent referral</strong></div>
-            <div class="pr-edit-field full"><label>Agent profile</label><select id="pe-agent-profile"><option value="">Manual contact / no profile</option></select></div>
-            <div class="pr-edit-field"><label>Referral contact name</label><input id="pe-agent-name" type="text" maxlength="120"/></div>
-            <div class="pr-edit-field"><label>Referral phone</label><input id="pe-agent-phone" type="tel" maxlength="40"/></div>
-            <div class="pr-edit-field full"><small style="color:var(--muted)">This assignment does not change the listing review status.</small></div>
           </div>
           <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
             <button class="btn btn-outline" onclick="togglePropEdit()">Cancel</button>
@@ -2019,13 +2014,13 @@ async function api(method,path,body){
 
 async function loadAll(){
   const sources=[
-    ['properties',()=>api('GET','/api/admin/properties?limit=500')],
+    ['properties',()=>api('GET','/api/properties?limit=1000')],
     ['users',()=>api('GET','/api/users')],
     ['agents',()=>api('GET','/api/agents')],
     ['inquiries',()=>api('GET','/api/inquiries')],
     ['blog',()=>api('GET','/api/blog')],
     ['hidden website agents',()=>api('GET','/api/settings/hidden-react-agents')],
-    ['city agents',()=>api('GET','/api/admin/city-agents')],
+    ['city agents',()=>api('GET','/api/city-agents')],
     ['mobile agents',()=>api('GET','/api/admin/mobile-agents')],
   ];
   const results=await Promise.all(sources.map(async ([label,request])=>{
@@ -2346,7 +2341,7 @@ function renderPropertiesPage(){
     <td>${p.city||'—'}</td>
     <td>PKR ${fmtPrice(p.price)}</td>
     <td>${p.sellerName||'—'}</td>
-     <td>${p.assignedAgent?.name||p.assignedAgentName||p.agentName||p.agentId||'—'}</td>
+    <td>${p.agentId||'—'}</td>
     <td>${statusBadge(p.approvalStatus)}</td>
     <td>
       ${p.priority?'<span class="badge" style="background:#f5f3ff;color:#5b21b6"> Priority</span>':p.featured?'<span class="badge badge-yellow">⭐ Featured</span>':'<span class="badge badge-gray">—</span>'}
@@ -2664,10 +2659,10 @@ function renderSettings(){
     {l:'Pending Review',v:allProps.filter(p=>p.approvalStatus==='Pending').length},
     {l:'Priority Listings (Home Page)',v:allProps.filter(p=>p.priority).length},
     {l:'Featured Properties',v:allProps.filter(p=>p.featured).length},
-    {l:'User Accounts',v:allUsers.length},
-    {l:'Agent Access',v:allUsers.filter(u=>u.permissions?.includes('agent')||u.role==='Agent').length},
-    {l:'Developer Access',v:allUsers.filter(u=>u.permissions?.includes('developer')||u.role==='Developer').length},
-    {l:'Admin Access',v:allUsers.filter(u=>u.permissions?.includes('admin')||u.role==='Admin').length},
+    {l:'Total Users',v:allUsers.length},
+    {l:'Sellers',v:allUsers.filter(u=>u.role==='Seller').length},
+    {l:'Agents',v:allUsers.filter(u=>u.role==='Agent').length},
+    {l:'Buyers',v:allUsers.filter(u=>u.role==='Buyer').length},
     {l:'Total Inquiries',v:allInqs.length},
     {l:'Blog Posts',v:allBlog.length},
   ].map(s=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">${s.l}</span><span style="font-weight:700">${s.v}</span></div>`).join('');
@@ -2839,9 +2834,9 @@ async function openPropReview(id, fromPage){
 
   // ── CANONICAL LOCATION ──
   const loc=p.location||{};
-  const lat=Number(p.lat ?? loc.latitude), lng=Number(p.lng ?? loc.longitude);
+  const lat=Number(loc.latitude ?? p.lat), lng=Number(loc.longitude ?? p.lng);
   const locationRows=[
-    ['Coordinates',Number.isFinite(lat)&&Number.isFinite(lng)?`${lat.toFixed(7)}, ${lng.toFixed(7)}`:'Not set'],
+    ['Coordinates',Number.isFinite(lat)&&Number.isFinite(lng)?`${lat.toFixed(6)}, ${lng.toFixed(6)}`:'Not set'],
     ['Source',loc.source||p.locationSource||'—'],
     ['Accuracy',loc.accuracy!=null?`${loc.accuracy} m`:'—'],
     ['Address',loc.address||p.address||'—'],
@@ -2993,7 +2988,6 @@ async function openPropReview(id, fromPage){
   document.getElementById('pe-description').value=p.description||'';
   document.getElementById('pe-amenities').value=(p.amenities||[]).join(', ');
   document.getElementById('pe-images').value=(p.images||[]).join(', ');
-  populatePropertyAgentOptions(p);
 
   showPage('prop-review');
 }
@@ -3141,55 +3135,6 @@ function openPropEdit(id, fromPage){
   }, 150);
 }
 
-function populatePropertyAgentOptions(property){
-  const select=document.getElementById('pe-agent-profile');
-  if(!select) return;
-  const current=property.assignedAgent||{};
-  const candidates=[
-    ...allMobileAgents.map(agent=>({...agent,profileType:'mobile-profile',profileName:agent.displayName||agent.name})),
-    ...allUsers.filter(user=>String(user.role||'').toLowerCase()==='agent').map(agent=>({...agent,profileType:'agent-account',profileName:agent.name})),
-    ...allAgents.map(agent=>({...agent,profileType:'city-agent',profileName:agent.displayName||agent.name})),
-  ];
-  const seen=new Set();
-  select.innerHTML='<option value="">Manual contact / no profile</option>';
-  candidates.forEach(agent=>{
-    const id=String(agent.id??agent.userId??'');
-    if(!id||seen.has(`${agent.profileType}:${id}`)) return;
-    seen.add(`${agent.profileType}:${id}`);
-    const option=document.createElement('option');
-    option.value=`${agent.profileType}:${id}`;
-    option.textContent=`${agent.profileName||'Agent'}${agent.phone?` · ${agent.phone}`:''}`;
-    option.dataset.name=agent.profileName||'';
-    option.dataset.phone=agent.phone||'';
-    select.appendChild(option);
-  });
-  const selectedId=String(current.id||property.assignedAgentId||property.agentId||'');
-  const selectedType=current.profileType||'';
-  const selected=candidates.find(agent=>
-    String(agent.id??agent.userId??'')===selectedId&&(!selectedType||agent.profileType===selectedType)
-  );
-  if(selected) select.value=`${selected.profileType}:${selected.id??selected.userId}`;
-  document.getElementById('pe-agent-name').value=current.name||property.assignedAgentName||property.agentName||selected?.profileName||'';
-  document.getElementById('pe-agent-phone').value=current.phone||property.assignedAgentPhone||property.agentPhone||selected?.phone||'';
-  select.onchange=()=>{
-    const option=select.selectedOptions[0];
-    if(select.value){
-      document.getElementById('pe-agent-name').value=option.dataset.name||'';
-      document.getElementById('pe-agent-phone').value=option.dataset.phone||'';
-    }
-  };
-}
-
-function buildPropertyAgentAssignment(){
-  const select=document.getElementById('pe-agent-profile');
-  const option=select?.selectedOptions?.[0];
-  const [profileType,id]=String(select?.value||'').split(':');
-  const name=document.getElementById('pe-agent-name').value.trim();
-  const phone=document.getElementById('pe-agent-phone').value.trim();
-  if(!name&&!phone&&!id) return null;
-  return {id:id||null,name,phone,profileType:profileType||'manual'};
-}
-
 async function savePropEdit(){
   const p=allProps.find(x=>x.id===prCurrentId); if(!p) return;
   const body={
@@ -3215,12 +3160,10 @@ async function savePropEdit(){
     description:document.getElementById('pe-description').value.trim(),
     amenities:document.getElementById('pe-amenities').value.split(',').map(s=>s.trim()).filter(Boolean),
     images:document.getElementById('pe-images').value.split(',').map(s=>s.trim()).filter(Boolean),
-    assignedAgent:buildPropertyAgentAssignment(),
   };
-  body.coverImage=body.images[0]||null;
   if(!body.title){showToast('Title is required','error');return;}
   try{
-    await api('PATCH',`/api/admin/properties/${prCurrentId}`,body);
+    await api('PUT',`/api/properties/${prCurrentId}`,body);
     showToast('Property updated successfully!','success');
     await loadAll();
     openPropReview(prCurrentId, prFromPage);
@@ -3231,7 +3174,7 @@ async function savePropEdit(){
 let allCityAgents = [];
 
 async function loadCityAgents(){
-  try{ allCityAgents = await api('GET','/api/admin/city-agents'); } catch(e){ allCityAgents=[]; }
+  try{ allCityAgents = await api('GET','/api/city-agents'); } catch(e){ allCityAgents=[]; }
 }
 
 function prPopulateAgentCard(p){
@@ -3380,10 +3323,10 @@ async function saveCityAgent(){
   if(!city||!name||!phone){ showToast('City, name and phone are required','error'); return; }
   try{
     if(editCityAgentId){
-      await api('PUT',`/api/admin/city-agents/${editCityAgentId}`,{city,name,phone,whatsapp,active});
+      await api('PUT',`/api/city-agents/${editCityAgentId}`,{city,name,phone,whatsapp,active});
       showToast('Agent updated!','success');
     } else {
-      await api('POST','/api/admin/city-agents',{city,name,phone,whatsapp,active});
+      await api('POST','/api/city-agents',{city,name,phone,whatsapp,active});
       showToast('City agent added!','success');
     }
     document.getElementById('ca-modal').classList.remove('open');
@@ -3395,7 +3338,7 @@ async function deleteCityAgent(id){
   const a=allCityAgents.find(x=>x.id===id);
   if(!confirm(`Delete agent "${a?.name}" for ${a?.city}?`)) return;
   try{
-    await api('DELETE',`/api/admin/city-agents/${id}`);
+    await api('DELETE',`/api/city-agents/${id}`);
     showToast('Agent deleted','success');
     await loadAll();
   }catch(e){ showToast(e.message,'error'); }
@@ -3494,7 +3437,7 @@ async function prDeleteProperty(){
 }
 
 // ── USER ACTIONS ──
-function openAddUserModal(){ editUserId=null; document.getElementById('user-modal-title').textContent='Add New User'; document.getElementById('edit-user-id').value=''; document.getElementById('user-name').value=''; document.getElementById('user-email').value=''; document.getElementById('user-phone').value=''; document.getElementById('user-role').value='User'; document.getElementById('user-password').value=''; document.getElementById('add-user-modal').classList.add('open'); }
+function openAddUserModal(){ editUserId=null; document.getElementById('user-modal-title').textContent='Add New User'; document.getElementById('edit-user-id').value=''; document.getElementById('user-name').value=''; document.getElementById('user-email').value=''; document.getElementById('user-phone').value=''; document.getElementById('user-role').value='Buyer'; document.getElementById('user-password').value=''; document.getElementById('add-user-modal').classList.add('open'); }
 function openEditUserModal(id){
   const u=allUsers.find(x=>x.id===id); if(!u) return;
   editUserId=id;
@@ -3503,7 +3446,7 @@ function openEditUserModal(id){
   document.getElementById('user-name').value=u.name||'';
   document.getElementById('user-email').value=u.email||'';
   document.getElementById('user-phone').value=u.phone||'';
-  document.getElementById('user-role').value=u.role||'User';
+  document.getElementById('user-role').value=u.role||'Buyer';
   document.getElementById('user-status').value=u.status||'Active';
   document.getElementById('user-password').value='';
   document.getElementById('add-user-modal').classList.add('open');
@@ -3514,19 +3457,8 @@ async function saveUser(){
   const pw=document.getElementById('user-password').value;
   if(pw) body.password=pw;
   try{
-    if(editUserId){
-      const existing=allUsers.find(user=>String(user.id)===String(editUserId));
-      const profile={name:body.name,email:body.email,phone:body.phone,status:body.status};
-      if(pw) profile.password=pw;
-      await api('PUT',`/api/users/${editUserId}`,profile);
-      if(existing&&existing.role!==body.role) await api('PATCH',`/api/admin/users/${editUserId}/role`,{role:body.role});
-      showToast('User updated','success');
-    }
-    else{
-      if(!pw){ showToast('Password is required for a new account','error'); return; }
-      await api('POST','/api/users',body);
-      showToast('User added','success');
-    }
+    if(editUserId){ await api('PUT',`/api/users/${editUserId}`,body); showToast('User updated','success'); }
+    else{ await api('POST','/api/users',{...body,joinedDate:new Date().toISOString().split('T')[0]}); showToast('User added','success'); }
     closeAddUserModal(); await loadAll();
   } catch(e){ showToast(e.message,'error'); }
 }
@@ -3713,7 +3645,7 @@ function showPage(name){
 }
 
 function statusBadge(s){ const m={Active:'badge-green',Pending:'badge-yellow',Rejected:'badge-red'}; return `<span class="badge ${m[s]||'badge-gray'}">${s||'—'}</span>`; }
-function roleBadge(r){ const m={Admin:'badge-red',Agent:'badge-purple',User:'badge-green',Developer:'badge-yellow'}; const label=r==='Admin'?'Admin access':r==='Agent'?'Agent access':r==='Developer'?'Developer access':'User'; return `<span class="badge ${m[r]||'badge-gray'}">${label}</span>`; }
+function roleBadge(r){ const m={Admin:'badge-red',Seller:'badge-blue',Agent:'badge-purple',Buyer:'badge-green',Developer:'badge-yellow'}; return `<span class="badge ${m[r]||'badge-gray'}">${r}</span>`; }
 function fmtPrice(p){ if(!p) return '0'; if(p>=10000000) return (p/10000000).toFixed(1)+' Cr'; if(p>=100000) return (p/100000).toFixed(0)+' L'; return p.toLocaleString(); }
 function fmtDate(d){ if(!d) return '—'; return new Date(d).toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'}); }
 function showToast(msg,type='success'){

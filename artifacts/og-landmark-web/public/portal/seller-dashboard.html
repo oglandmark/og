@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>User Dashboard – OG Landmark</title>
+<title>Seller Dashboard – OG Landmark</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -354,7 +354,7 @@ tr:hover td{background:#fafaf8}
 <aside id="sidebar">
   <div class="sb-logo">
     <img src="/images/og-logo.png" alt="OG Landmark"/>
-    <div><span>OG Landmark</span><small>User Portal</small></div>
+    <div><span>OG Landmark</span><small>Seller Portal</small></div>
   </div>
   <nav>
     <a onclick="showPage('dashboard')" id="nav-dashboard" class="active">
@@ -1254,11 +1254,11 @@ const PLOT_TYPES = ['Residential Plot','Commercial Plot'];
 function init(){
   token = localStorage.getItem('og_token')||'';
   const u = localStorage.getItem('og_user');
-  if(!token||!u){ logout(); return; }
-  try { currentUser = JSON.parse(u); } catch(e){ logout(); return; }
-  if(!currentUser||!['User','Seller','Agent','Admin','Developer'].includes(currentUser.role)){ logout(); return; }
+  if(!token||!u){ window.location.href='/portal/seller.html'; return; }
+  currentUser = JSON.parse(u);
+  if(!['Seller','Agent','Admin'].includes(currentUser.role)){ window.location.href='/portal/seller.html'; return; }
   const av = (currentUser.name||'S')[0].toUpperCase();
-  document.getElementById('sb-uname').textContent = currentUser.name||'User';
+  document.getElementById('sb-uname').textContent = currentUser.name||'Seller';
   document.getElementById('sb-uemail').textContent = currentUser.email||'';
   document.getElementById('sb-avatar').textContent = av;
   document.getElementById('top-avatar').textContent = av;
@@ -1273,19 +1273,12 @@ function init(){
     setTimeout(()=>{ showPage('add-property'); gotoStep(1); }, 300);
   }
 }
-function logout(){
-  token = '';
-  currentUser = null;
-  localStorage.removeItem('og_token');
-  localStorage.removeItem('og_user');
-  window.location.href='/portal/seller.html';
-}
+function logout(){ localStorage.removeItem('og_token'); localStorage.removeItem('og_user'); window.location.href='/portal/seller.html'; }
 
 async function api(method,path,body){
   const opts={method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}};
   if(body) opts.body=JSON.stringify(body);
   const r=await fetch(API+path,opts);
-  if(r.status===401){ if(token) logout(); return null; }
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||r.statusText);}
   return r.json();
 }
@@ -1299,7 +1292,6 @@ async function loadAll(){
       api('GET',`/api/offers?seller_id=${currentUser.id}`).catch(()=>[]),
       api('GET',`/api/appointments?seller_id=${currentUser.id}`).catch(()=>[]),
     ]);
-    if(!token||!currentUser) return;
     myProps=props.properties||props||[];
     myInq=Array.isArray(inqs)?inqs:inqs.inquiries||[];
     myOffers=Array.isArray(offs)?offs:offs.offers||[];

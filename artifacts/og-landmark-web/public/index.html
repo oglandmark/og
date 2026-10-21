@@ -12,75 +12,12 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="OG Landmark — Real Estate Platform" />
     <meta name="twitter:description" content="OG Landmark — Real Estate Platform — built on Replit. Update this description to reflect the app." />
-    <link rel="icon" type="image/png" href="/og-landmark-logo-square.png" />
+    <link rel="icon" type="image/png" href="/og-logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Live API: rewrites /api/* to Laravel (api.oglandmark.com). Override: ?api= or localStorage og_api_base -->
     <script src="/og-api-base.js"></script>
-    <script>
-      (function () {
-        const routes = [
-          { suffix: '/privacy-policy', file: '/pages/privacy-policy.html' },
-          { suffix: '/privacy', file: '/pages/privacy-policy.html' },
-          { suffix: '/account-deletion', file: '/pages/account-deletion.html' },
-          { suffix: '/data-deletion', file: '/pages/data-deletion.html' }
-        ];
-        function redirectPolicyRoute() {
-          const pathname = window.location.pathname.replace(/\/+$/, '');
-          const route = routes.find(item => pathname.endsWith(item.suffix));
-          if (!route) return false;
-          const base = pathname.slice(0, -route.suffix.length).replace(/\/$/, '');
-          window.location.replace(base + route.file + window.location.hash);
-          return true;
-        }
-        if (redirectPolicyRoute()) return;
-        ['pushState', 'replaceState'].forEach(name => {
-          const original = history[name].bind(history);
-          history[name] = function (state, title, url) {
-            original(state, title, url);
-            redirectPolicyRoute();
-          };
-        });
-        window.addEventListener('popstate', redirectPolicyRoute);
-        document.addEventListener('click', event => {
-          const target = event.target instanceof Element ? event.target : null;
-          const link = target && target.closest('a');
-          if (!link || link.getAttribute('href') !== '#') return;
-          const label = (link.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
-          const destination = label === 'privacy policy'
-            ? '/privacy-policy'
-            : label === 'terms of service' ? '/terms' : null;
-          if (!destination) return;
-          event.preventDefault();
-          event.stopPropagation();
-          event.stopImmediatePropagation();
-          window.location.assign(destination);
-        }, true);
-      })();
-      (function () {
-        const previousLogos = [
-          '/assets/IMG_0329_1784919532811-CnY08-QX.PNG',
-          '/og-logo.png',
-          '/images/og-logo.png'
-        ];
-        const replaceLogo = () => {
-          document.querySelectorAll('img').forEach(image => {
-            const src = image.getAttribute('src') || '';
-            if (previousLogos.some(previous => src.includes(previous))) {
-              image.setAttribute('src', '/og-landmark-logo.png');
-            }
-          });
-        };
-        replaceLogo();
-        new MutationObserver(replaceLogo).observe(document.documentElement, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-          attributeFilter: ['src']
-        });
-      })();
-    </script>
     <!-- Clear demo persist + overlay properties from MySQL via /api/properties -->
     <script src="/og-force-db.js"></script>
     <!-- Default UI language: English (og_lang=ur opts into Urdu/RTL before React hydrates) -->
@@ -97,7 +34,7 @@
         }
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-CXxrK7KP.js?v=oglandmark-contact-legal-20261008"></script>
+    <script type="module" crossorigin src="/assets/index-CXxrK7KP.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-cXzZ8FaN.css">
     <style>
       /* Hide Developer and Agent options from registration dropdown */
@@ -345,32 +282,24 @@
         }
       }
 
-      // ── HIDE ACCOUNT-TYPE SELECTOR FROM PUBLIC REGISTRATION ──
+      // ── HIDE DEVELOPER & AGENT OPTIONS FROM REGISTRATION ──
       function hideDeveloperOption() {
         // Radix UI select items: role="option" or data-radix-select-item
         document.querySelectorAll('[role="option"], [data-radix-select-item]').forEach(el => {
           const txt = el.textContent.trim();
           if (
             txt === 'Property Developer' || txt === '🏗 Property Developer' || txt === 'Developer' ||
-            txt === 'Agent' || txt === '🏢 Agent' || txt === 'Real Estate Agent' ||
-            txt === 'Buyer' || txt === 'Seller'
+            txt === 'Agent' || txt === '🏢 Agent' || txt === 'Real Estate Agent'
           ) {
             el.style.display = 'none';
             el.setAttribute('data-og-hidden', '1');
           }
         });
         document.querySelectorAll(
-          '[data-value="developer"], [value="developer"], [data-value="agent"], [value="agent"], [data-value="buyer"], [value="buyer"], [data-value="seller"], [value="seller"]'
+          '[data-value="developer"], [value="developer"], [data-value="agent"], [value="agent"]'
         ).forEach(el => {
           el.style.display = 'none';
           el.setAttribute('data-og-hidden', '1');
-        });
-        document.querySelectorAll('label').forEach(label => {
-          const text = (label.textContent || '').trim().toLowerCase();
-          if (!['i’m here as a', "i'm here as a", 'i am a', 'account type', 'account role', 'role'].includes(text)) return;
-          const field = label.parentElement;
-          if (field && field.tagName !== 'FORM') field.style.display = 'none';
-          else label.style.display = 'none';
         });
       }
 
@@ -388,60 +317,6 @@
       applyTextReplacements();
       hideDeveloperOption();
 
-      // ── PUBLIC USER AUTH NAV ──
-      // Replace the role-specific Buy/Sell actions with one User register/login pair.
-      (function(){
-        const style = document.createElement('style');
-        style.textContent = `
-          a[href*="auth?role=buyer"], a[href*="auth?role=seller"] { display:none!important; }
-          .og-guest-auth{display:flex!important;align-items:center;gap:8px;white-space:nowrap}
-          .og-guest-auth a{display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;transition:.2s}
-          .og-guest-register{color:#C8A45A;border:1.5px solid #C8A45A;background:transparent}
-          .og-guest-register:hover{background:#C8A45A;color:#0B1F3A}
-          .og-guest-login{color:#fff;border:1.5px solid #0B1F3A;background:#0B1F3A}
-          .og-guest-login:hover{background:#122C4B;border-color:#122C4B}
-          @media(max-width:640px){.og-guest-auth{gap:6px}.og-guest-auth a{padding:7px 10px;font-size:12px}}
-        `;
-        document.head.appendChild(style);
-
-        function isLoggedIn(){
-          return Boolean(localStorage.getItem('og_token') && localStorage.getItem('og_user'));
-        }
-
-        function addGuestLinks(){
-          if(isLoggedIn()){
-            document.querySelectorAll('.og-guest-auth').forEach(node => node.remove());
-            return;
-          }
-
-          const roleLinks = Array.from(document.querySelectorAll(
-            'a[href*="auth?role=buyer"], a[href*="auth?role=seller"]'
-          ));
-          const parents = new Set(roleLinks.map(link => link.parentElement).filter(Boolean));
-          parents.forEach(parent => {
-            if(parent.querySelector('.og-guest-auth')) return;
-            const wrapper = document.createElement('div');
-            wrapper.className = 'og-guest-auth';
-
-            const register = document.createElement('a');
-            register.className = 'og-guest-register';
-            register.href = '/register';
-            register.textContent = 'Register';
-
-            const login = document.createElement('a');
-            login.className = 'og-guest-login';
-            login.href = '/login';
-            login.textContent = 'Login';
-
-            wrapper.append(register, login);
-            parent.insertBefore(wrapper, roleLinks.find(link => link.parentElement === parent));
-          });
-        }
-
-        addGuestLinks();
-        new MutationObserver(addGuestLinks).observe(document.body, {childList:true, subtree:true});
-      })();
-
       // ── AUTH-AWARE NAVBAR ──
       // When logged in: replace Buy/Sell buttons with profile dropdown + Dashboard link
       (function(){
@@ -449,23 +324,11 @@
         const uStr  = localStorage.getItem('og_user');
         if (!token || !uStr) return;
         let user; try { user = JSON.parse(uStr); } catch(e){ return; }
-        const permissions = Array.isArray(user.permissions)
-          ? user.permissions.map(permission => String(permission).toLowerCase())
-          : [];
-        const access = ['admin', 'agent', 'developer'].find(permission => permissions.includes(permission))
-          || String(user.role || '').toLowerCase();
-        const staffRole = ['admin', 'agent', 'developer'].includes(access);
-        const role = staffRole ? access[0].toUpperCase() + access.slice(1) : 'User';
-        const dashboardAccess = staffRole ? access : 'user';
-        const dashMap = {
-          admin:'/admin/',
-          agent:'/portal/agent-dashboard.html',
-          developer:'/portal/seller-dashboard.html',
-          user:'/portal/seller-dashboard.html'
-        };
-        const dashUrl = dashMap[dashboardAccess] || dashMap.user;
+        const role = user.role || 'Buyer';
+        const dashMap = { Admin:'/admin/', Agent:'/user/', Seller:'/user/', Buyer:'/user/' };
+        const dashUrl = dashMap[role] || '/user/';
         const initials = (user.name||role).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-        const roleColor = { Admin:'#dc2626', Agent:'#7c3aed', Developer:'#0e7490', Seller:'#16a34a', Buyer:'#2563eb', User:'#C8A45A' }[role] || '#C8A45A';
+        const roleColor = { Admin:'#dc2626', Agent:'#7c3aed', Seller:'#16a34a', Buyer:'#2563eb' }[role] || '#C8A45A';
 
         const sty = document.createElement('style');
         sty.textContent = `
@@ -564,7 +427,7 @@
       })();
     </script>
 
-    <!-- ── Post-login/register redirect to the existing role dashboards ── -->
+    <!-- ── Post-login/register redirect → React /admin or /user portals ── -->
     <script>
       (function () {
         var pending = null;
@@ -578,52 +441,22 @@
               if (!token || !uStr) return;
               var user = JSON.parse(uStr);
               var role = String(user.role || '').toLowerCase();
-              var permissions = Array.isArray(user.permissions)
-                ? user.permissions.map(function (permission) { return String(permission).toLowerCase(); })
-                : [];
-              var access = ['admin', 'agent', 'developer'].find(function (permission) {
-                return permissions.includes(permission);
-              }) || role;
-              var dashboardAccess = ['admin', 'agent', 'developer'].includes(access) ? access : 'user';
-              var dashboardByRole = {
-                admin: '/admin/',
-                agent: '/portal/agent-dashboard.html',
-                developer: '/portal/seller-dashboard.html',
-                user: '/portal/seller-dashboard.html'
-              };
-              var dest = dashboardByRole[dashboardAccess] || dashboardByRole.user;
-              if (dashboardAccess === 'admin') {
+              var dest = role === 'admin' ? '/admin/' : '/user/';
+              if (role === 'admin') {
                 try { localStorage.setItem('adminAuth', 'true'); } catch (e) {}
               }
-              // Avoid redirect loops when already on the target dashboard.
+              // Avoid redirect loops when already on the target portal
               var path = window.location.pathname || '';
-              if (path === dest || path === dest.replace(/\/$/, '')) return;
+              if (path.indexOf('/admin') === 0 || path.indexOf('/user') === 0) return;
               window.location.href = dest;
             } catch (e) {}
           }, 100);
         }
         var _origSet = localStorage.setItem.bind(localStorage);
-        function syncPersistedAuth() {
-          try {
-            var persisted = JSON.parse(localStorage.getItem('og-landmark-store') || 'null');
-            var state = persisted && persisted.state;
-            if (!state || !state.token || !state.currentUser) return false;
-            _origSet('og_token', state.token);
-            _origSet('og_user', JSON.stringify(state.currentUser));
-            return true;
-          } catch (e) {
-            return false;
-          }
-        }
         localStorage.setItem = function (key, value) {
           _origSet(key, value);
           if (key === 'og_token' || key === 'og_user') scheduleAuthRedirect();
         };
-        var path = (window.location.pathname || '').replace(/\/+$/, '') || '/';
-        if (path === '/user') {
-          syncPersistedAuth();
-          scheduleAuthRedirect();
-        }
       })();
     </script>
 
@@ -850,11 +683,12 @@
         var stars='';
         for(var i=0;i<5;i++){ stars+='<span style="color:'+(i<Math.round(rating)?'#f59e0b':'#d1d5db')+'">★</span>'; }
 
-        var phoneHtml='<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#475569;margin-bottom:6px"><span style="color:#0B1F3A">📞</span><a href="tel:+923011484303" style="color:#475569;text-decoration:none">03011484303</a></div>';
+        var phoneHtml=a.phone?'<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#475569;margin-bottom:6px"><span style="color:#0B1F3A">📞</span><a href="tel:'+esc(a.phone)+'" style="color:#475569;text-decoration:none">'+esc(a.phone)+'</a></div>':'';
         var emailHtml=a.email?'<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#475569;margin-bottom:12px"><span style="color:#0B1F3A">✉</span><a href="mailto:'+esc(a.email)+'" style="color:#475569;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">'+esc(a.email)+'</a></div>':'';
         var profileUrl='/agents/'+a.id;
         var waMsg=encodeURIComponent('Hi, I would like to connect with agent '+a.name+' from OG Landmark.');
-        var contactPhone='923011484303';
+        var contactPhone=(a.phone||'').replace(/\D/g,'');
+        if(contactPhone&&contactPhone.length>=10&&contactPhone[0]!=='9') contactPhone='92'+contactPhone.slice(contactPhone.startsWith('0')?1:0);
         var btnStyle='display:block;width:100%;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-align:center;font-family:inherit;transition:.2s;text-decoration:none;box-sizing:border-box';
         var listingsLabel=a.propertiesCount?a.propertiesCount+' Listings':'';
 
@@ -871,7 +705,7 @@
             '</div>'+
           '</div>'+
           '<div style="padding:0 20px 16px">'+
-            '<div style="border-top:1px solid #f1f5f9;padding-top:12px;margin-bottom:12px">'+phoneHtml+emailHtml+'</div>'+
+            (a.phone||a.email?'<div style="border-top:1px solid #f1f5f9;padding-top:12px;margin-bottom:12px">'+phoneHtml+emailHtml+'</div>':'')+
             '<div style="display:flex;flex-direction:column;gap:8px">'+
               '<a href="'+profileUrl+'" style="'+btnStyle+';background:#0B1F3A;color:#fff" onmouseover="this.style.background=\'#172e52\'" onmouseout="this.style.background=\'#0B1F3A\'">View Profile</a>'+
               (contactPhone

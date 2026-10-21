@@ -114,6 +114,8 @@
       .og-admin-otp [data-error]{margin:0 0 9px;color:#b91c1c;font-size:12px}
       .og-admin-otp [data-actions]{display:flex;gap:8px;flex-wrap:wrap}
       .og-admin-otp [data-resend],.og-admin-otp [data-back]{background:#e9edf2;color:#334155}
+      .og-admin-login-error{margin:12px 0 0;padding:10px 12px;border:1px solid #fecdd3;border-radius:10px;background:#fff1f2;color:#b91c1c;font:500 12px/1.45 DM Sans,system-ui,sans-serif}
+      .og-admin-login-error[hidden]{display:none}
     `;
     documentRef.head.appendChild(style);
 
@@ -140,6 +142,7 @@
     let verifyButton;
     let resendButton;
     let backButton;
+    let credentialErrorNode;
 
     function findForm() {
       const form = documentRef.querySelector('#root form');
@@ -179,9 +182,31 @@
     }
 
     function showError(message) {
-      if (!errorNode) return;
-      errorNode.textContent = message;
-      errorNode.hidden = !message;
+      if (mode === 'otp' && container && !container.hidden) {
+        if (!errorNode) return;
+        errorNode.textContent = message;
+        errorNode.hidden = !message;
+        if (credentialErrorNode) credentialErrorNode.hidden = true;
+        return;
+      }
+
+      const form = findForm();
+      if (!credentialErrorNode) {
+        credentialErrorNode = documentRef.createElement('p');
+        credentialErrorNode.className = 'og-admin-login-error';
+        credentialErrorNode.setAttribute('role', 'alert');
+        credentialErrorNode.setAttribute('aria-live', 'polite');
+        credentialErrorNode.hidden = true;
+      }
+      if (form && !credentialErrorNode.isConnected) {
+        form.insertAdjacentElement('afterend', credentialErrorNode);
+      }
+      credentialErrorNode.textContent = message;
+      credentialErrorNode.hidden = !message;
+      if (errorNode) {
+        errorNode.textContent = '';
+        errorNode.hidden = true;
+      }
     }
 
     function setBusy(value) {

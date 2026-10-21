@@ -49,3 +49,4 @@
 - [Browser admin extensions](browser-admin-extensions.md) — limit work to the website dashboard and necessary Laravel integration; sync and verify local preview.
 - [User-controlled app builds](build-approval.md) — do not start a new mobile build until the user explicitly authorizes it.
 - [Single public account model](single-user-account-model.md) — public accounts are User; keep staff permissions separate so listing moderation remains available.
+- [Admin login feedback](admin-login-feedback.md) — show credential-stage failures beside the login form; errors inside a collapsed OTP panel make Continue appear inert.

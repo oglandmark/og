@@ -118,6 +118,10 @@ class WebsiteAuthController extends Controller
                     ->withErrors(['login' => $result['data']['error'] ?? 'Admin sign-in could not be completed.']);
             }
 
+            if (!empty($result['data']['token'])) {
+                return $this->startSession($request, $result['data']);
+            }
+
             $request->session()->put('admin_otp_email', strtolower(trim((string) $validated['identifier'])));
             return redirect()->route('auth.login', ['role' => 'admin'])
                 ->with('success', 'A verification code has been sent to your admin email.');

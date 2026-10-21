@@ -154,4 +154,48 @@ class AdminPasswordResetTest extends TestCase
             'purpose' => 'password-reset',
         ]);
     }
+
+    public function test_local_admin_test_account_can_sign_in_without_email_otp(): void
+    {
+        $this->seedAccounts();
+        config(['app.env' => 'local']);
+
+        $password = 'Test@123';
+        $salt = 'local-preview-admin';
+        $hash = hash_pbkdf2('sha512', $password, $salt, 100000, 128, false);
+        $data = JsonStore::read();
+        $data['users'][] = [
+            'id' => 'local-admin-test',
+            'email' => 'admin@test.com',
+            'name' => 'Local Preview Admin',
+            'role' => 'Admin',
+            'status' => 'Active',
+            'password' => "pbkdf2:{$salt}:{$hash}",
+        ];
+        JsonStore::write($data);
+
+        $this->post('/login', [
+            'role' => 'admin',
+            'identifier' => 'admin@test.com',
+            'password' => $password,
+        ])->assertRedirect('/portal/admin/dashboard');
+
+        $this->get('/portal/admin/dashboard')->assertOk();
+        $this->assertDatabaseMissing('auth_challenges', [
+            'email' => 'admin@test.com',
+            'purpose' => 'admin-login',
+        ]);
+
+        config(['app.env' => 'production']);
+        $this->postJson('/api/auth/admin-verify', [
+            'email' => 'admin@test.com',
+            'password' => $password,
+        ])->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonMissingPath('token');
+        $this->assertDatabaseHas('auth_challenges', [
+            'email' => 'admin@test.com',
+            'purpose' => 'admin-login',
+        ]);
+    }
 }

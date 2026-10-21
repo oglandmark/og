@@ -50,6 +50,12 @@
         {
           "backgroundColor": "#F5F4F0",
           "resizeMode": "contain",
+          "android": {
+            "drawable": {
+              "icon": "./plugins/splash-transparent.xml",
+              "darkIcon": "./plugins/splash-transparent.xml"
+            }
+          },
           "dark": {
             "backgroundColor": "#F5F4F0"
           }

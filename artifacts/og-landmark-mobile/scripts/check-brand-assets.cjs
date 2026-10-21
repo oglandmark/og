@@ -228,6 +228,20 @@ if (!splashOptions) {
 if (splashOptions.image || splashOptions.dark?.image) {
   fail("Native splash screens must not show a static logo; branding belongs to the animated in-app splash.");
 }
+const transparentSplashDrawable = "./plugins/splash-transparent.xml";
+if (
+  splashOptions.android?.drawable?.icon !== transparentSplashDrawable ||
+  splashOptions.android?.drawable?.darkIcon !== transparentSplashDrawable
+) {
+  fail("Android native splash must use a transparent icon drawable before the animated splash.");
+}
+const transparentSplashPath = resolveAsset(
+  "Transparent Android splash drawable",
+  splashOptions.android.drawable.icon
+);
+if (!fs.readFileSync(transparentSplashPath, "utf8").includes('android:fillColor="#00000000"')) {
+  fail("Android native splash drawable must remain fully transparent.");
+}
 if (!splashOptions?.backgroundColor || !splashOptions?.dark?.backgroundColor) {
   fail("Light and dark native splash screens must define matching brand backgrounds.");
 }

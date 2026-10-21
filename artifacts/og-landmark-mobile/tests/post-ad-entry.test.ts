@@ -42,13 +42,15 @@ test('signed-in Post an Ad tab taps open the listing route without selecting the
   );
 });
 
-test('Android tab background avoids BlurView GPU compositing', () => {
+test('Android tab background uses the premium glass blur treatment', () => {
   const androidBackground = tabLayoutSource.match(
     /if \(Platform\.OS === 'android'\) \{([\s\S]*?)\n            \}/,
   );
   assert.ok(androidBackground, 'Android must have a dedicated tab background');
-  assert.match(androidBackground[1], /backgroundColor: colors\.background/);
-  assert.doesNotMatch(androidBackground[1], /<BlurView/);
+  assert.match(androidBackground[1], /<BlurView/);
+  assert.match(androidBackground[1], /blurMethod="dimezisBlurView"/);
+  assert.match(androidBackground[1], /backgroundColor: colors\.glassOverlay/);
+  assert.match(androidBackground[1], /colors\.actionGlassHighlight/);
 });
 
 test('the listing form does not mount its native map until the user opens the location picker', () => {

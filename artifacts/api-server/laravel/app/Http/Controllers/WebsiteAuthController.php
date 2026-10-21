@@ -34,6 +34,12 @@ class WebsiteAuthController extends Controller
         $validated = $request->validate(['email' => ['required', 'email', 'max:320']]);
         $result = $this->api('auth/admin-forgot-password', 'POST', $validated);
 
+        if (!empty($result['data']['smtpOff'])) {
+            return back()->withInput()->withErrors([
+                'reset' => 'The reset email could not be delivered right now. Please try again later or contact support.',
+            ]);
+        }
+
         if ($result['status'] < 200 || $result['status'] >= 300) {
             return back()->withInput()->withErrors([
                 'reset' => $result['data']['error'] ?? 'Password reset is temporarily unavailable. Please try again.',

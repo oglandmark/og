@@ -359,6 +359,13 @@ class ApiController extends Controller
                 Log::error('Password reset email could not be sent.', ['error' => $exception->getMessage()]);
             }
 
+            if ($smtpOff) {
+                DB::table('auth_challenges')
+                    ->where('email', $email)
+                    ->where('purpose', 'password-reset')
+                    ->delete();
+            }
+
             return $this->json([
                 'success' => true,
                 'smtpOff' => $smtpOff,

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Services\JsonStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class AdminPasswordResetTest extends TestCase
@@ -122,6 +123,31 @@ class AdminPasswordResetTest extends TestCase
             'identifier' => 'admin-reset@example.test',
             'password' => $newPassword,
         ])->assertOk();
+
+        $this->assertDatabaseMissing('auth_challenges', [
+            'email' => 'admin-reset@example.test',
+            'purpose' => 'password-reset',
+        ]);
+    }
+
+    public function test_forgot_password_shows_delivery_failure_instead_of_claiming_code_was_sent(): void
+    {
+        $this->seedAccounts();
+        config([
+            'mail.mailers.smtp.username' => 'preview@example.test',
+            'mail.mailers.smtp.password' => 'test-password',
+        ]);
+        Mail::shouldReceive('raw')
+            ->once()
+            ->andThrow(new \RuntimeException('SMTP connection failed'));
+
+        $this->from(route('admin.password.request'))
+            ->post(route('admin.password.email'), ['email' => 'admin-reset@example.test'])
+            ->assertRedirect(route('admin.password.request'))
+            ->assertSessionHasErrors('reset')
+            ->assertSessionHas('errors', function ($errors): bool {
+                return str_contains($errors->first('reset'), 'could not be delivered');
+            });
 
         $this->assertDatabaseMissing('auth_challenges', [
             'email' => 'admin-reset@example.test',

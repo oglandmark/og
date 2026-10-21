@@ -9,6 +9,12 @@ For admin and listing work in this project, update the website admin dashboard a
 
 Only change the website Admin Dashboard and the minimum Laravel integration needed for its requested functions. Do not change the mobile app UI or unrelated website sections.
 
+When replacing a website logo, use a new asset URL instead of relying on overwriting an existing static path; the preview can keep serving the cached prior image. Precompiled admin/user bundles still reference `/og-logo.png`, so route those image elements to the new official inverse mark with the website compatibility script.
+
+**Why:** Website static assets are cached as immutable, and the old compiled bundle hardcodes the previous logo path.
+
+**How to apply:** Add versioned official navy/white logo assets, update HTML and favicon references, and keep the bundle compatibility shim scoped to image URLs only.
+
 **Why:** The user explicitly asked to keep and update the older React Admin Dashboard rather than replace it with a separate React Native Web dashboard; only the website dashboard may change.
 
 **How to apply:** Preserve the existing React bundle and make maintainable additions through separately loaded admin modules; route legacy admin entry points to `/admin/`, reuse Laravel authentication/APIs, preserve mobile API compatibility, and verify the local web preview. Do not alter the mobile client UI.

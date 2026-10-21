@@ -43,7 +43,7 @@
   function replaceLogo() {
     const logo = document.querySelector('img[src="/og-logo.png"]');
     if (!logo || logo.dataset.ogCurrentLogo) return;
-    logo.src = '/og-landmark-logo-white.png?v=20261020';
+    logo.src = '/og-logo-official-white.png';
     logo.alt = 'OG Landmark';
     logo.dataset.ogCurrentLogo = 'true';
   }

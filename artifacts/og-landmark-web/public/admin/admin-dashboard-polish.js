@@ -63,11 +63,56 @@
     }
   }
 
+  function installDashboardOverview() {
+    const main = root.querySelector('main');
+    const dashboard = main?.querySelector(':scope > div.space-y-6');
+    if (!main || !dashboard || main.querySelector(':scope > [data-og-dashboard-intro]')) return;
+
+    const intro = document.createElement('div');
+    intro.className = 'og-dashboard-intro';
+    intro.dataset.ogDashboardIntro = 'true';
+    intro.setAttribute('role', 'region');
+    intro.setAttribute('aria-label', 'Dashboard overview and shortcuts');
+
+    const copy = document.createElement('div');
+    copy.className = 'og-dashboard-intro-copy';
+    const eyebrow = document.createElement('div');
+    eyebrow.className = 'og-dashboard-intro-eyebrow';
+    eyebrow.textContent = 'ADMIN OVERVIEW';
+    const heading = document.createElement('h2');
+    heading.textContent = 'Marketplace overview';
+    const description = document.createElement('p');
+    description.textContent = 'Review listings, users and inquiries from one place.';
+    copy.append(eyebrow, heading, description);
+
+    const actions = document.createElement('div');
+    actions.className = 'og-dashboard-intro-actions';
+    for (const action of [
+      { label: 'Review properties', href: '/admin/properties', primary: true },
+      { label: 'Manage users', href: '/admin/users' },
+      { label: 'View inquiries', href: '/admin/inquiries' },
+    ]) {
+      const link = document.createElement('a');
+      link.className = action.primary ? 'og-dashboard-quick-action primary' : 'og-dashboard-quick-action';
+      link.href = action.href;
+      link.textContent = action.label;
+      actions.appendChild(link);
+    }
+
+    intro.append(copy, actions);
+    main.insertBefore(intro, dashboard);
+  }
+
   function markDashboard() {
     const headings = Array.from(root.querySelectorAll('h3'), heading => heading.textContent.trim());
-    const isDashboard = headings.includes('Recent Users') && headings.includes('Recent Properties');
-    root.classList.toggle('og-admin-dashboard', isDashboard);
+    const hasDashboardShell = headings.includes('Recent Users') && headings.includes('Recent Properties');
+    const isDashboardHome = hasDashboardShell
+      && !root.classList.contains('og-admin-content-page')
+      && !root.querySelector('.og-mm-page');
+    root.classList.toggle('og-admin-dashboard', hasDashboardShell);
     installResponsiveNavigation();
+    if (isDashboardHome) installDashboardOverview();
+    else root.querySelector('[data-og-dashboard-intro]')?.remove();
   }
 
   const observer = new MutationObserver(markDashboard);

@@ -83,6 +83,11 @@
   letter-spacing: 0;
 }
 
+#root.og-admin-content-page header h1::after {
+  display: none !important;
+  content: none !important;
+}
+
 #root.og-admin-dashboard header > div {
   color: #607086 !important;
   font-size: 12px !important;
@@ -102,14 +107,107 @@
   gap: 22px !important;
 }
 
-#root.og-admin-dashboard main > div.space-y-6::before {
-  display: block;
-  margin-bottom: -8px;
-  color: #8a6b2c;
-  content: "PLATFORM OVERVIEW";
+#root.og-admin-dashboard main > .og-dashboard-intro {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  min-height: 142px;
+  overflow: hidden;
+  margin-bottom: 22px;
+  padding: 26px clamp(22px, 3vw, 34px);
+  border: 1px solid rgba(200, 164, 90, 0.23);
+  border-radius: 20px;
+  background: linear-gradient(112deg, #102541 0%, #18395f 72%, #214873 100%);
+  box-shadow: 0 16px 34px rgba(16, 37, 65, 0.13);
+}
+
+#root.og-admin-dashboard main > .og-dashboard-intro::after {
+  position: absolute;
+  top: -88px;
+  right: 24%;
+  width: 250px;
+  height: 250px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 50%;
+  box-shadow: 0 0 0 28px rgba(255, 255, 255, 0.025), 0 0 0 58px rgba(255, 255, 255, 0.018);
+  content: "";
+  pointer-events: none;
+}
+
+#root.og-admin-dashboard .og-dashboard-intro-copy,
+#root.og-admin-dashboard .og-dashboard-intro-actions {
+  position: relative;
+  z-index: 1;
+}
+
+#root.og-admin-dashboard .og-dashboard-intro-eyebrow {
+  color: #e4c77f;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.16em;
+}
+
+#root.og-admin-dashboard .og-dashboard-intro h2 {
+  margin: 8px 0 0;
+  color: #fff;
+  font-size: clamp(22px, 2.5vw, 29px);
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  line-height: 1.1;
+}
+
+#root.og-admin-dashboard .og-dashboard-intro p {
+  margin: 8px 0 0;
+  color: #c6d3e2;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+#root.og-admin-dashboard .og-dashboard-intro-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#root.og-admin-dashboard .og-dashboard-quick-action {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 255, 255, 0.23);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.075);
+  color: #f7f9fc;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+
+#root.og-admin-dashboard .og-dashboard-quick-action.primary {
+  border-color: #d7b96f;
+  background: #d7b96f;
+  color: #102541;
+}
+
+#root.og-admin-dashboard .og-dashboard-quick-action:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.48);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+#root.og-admin-dashboard .og-dashboard-quick-action.primary:hover {
+  border-color: #e7cc8b;
+  background: #e7cc8b;
+}
+
+#root.og-admin-dashboard .og-dashboard-quick-action:focus-visible {
+  outline: 3px solid #f3d98f;
+  outline-offset: 3px;
 }
 
 #root.og-admin-dashboard main > div.space-y-6 > div:first-child {
@@ -273,6 +371,16 @@
 }
 
 @media (max-width: 900px) {
+  #root.og-admin-dashboard main > .og-dashboard-intro {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  #root.og-admin-dashboard .og-dashboard-intro-actions {
+    justify-content: flex-start;
+  }
+
   #root.og-admin-shell aside {
     position: fixed !important;
     z-index: 60 !important;
@@ -340,9 +448,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 
-  .og-mm-page {
-    inset: 0 !important;
-  }
 }
 
 @media (max-width: 560px) {
@@ -374,6 +479,26 @@
 
   #root.og-admin-dashboard main {
     padding: 18px 12px !important;
+  }
+
+  #root.og-admin-dashboard main > .og-dashboard-intro {
+    min-height: 0;
+    gap: 16px;
+    margin-bottom: 18px;
+    padding: 21px 18px;
+    border-radius: 16px;
+  }
+
+  #root.og-admin-dashboard .og-dashboard-intro-actions {
+    width: 100%;
+    gap: 7px;
+  }
+
+  #root.og-admin-dashboard .og-dashboard-quick-action {
+    min-height: 38px;
+    flex: 1 1 auto;
+    padding-inline: 10px;
+    font-size: 10px;
   }
 
   #root.og-admin-dashboard main > div.space-y-6 > div:first-child {

@@ -5,6 +5,12 @@ description: How to add maintainable features to the static browser admin when i
 
 The website must have one Admin Dashboard at `/admin/`, using the existing compiled React dashboard to manage the Laravel-backed website and mobile platform. Keep legacy admin URLs routed to that same dashboard.
 
+All custom management pages must stay inside this shared dashboard shell. Do not mount fixed full-screen page overlays that replace its header and navigation; render the routed page content within the existing main area.
+
+**Why:** The user wants a single Admin Dashboard, not separate-looking dashboards for different sections.
+
+**How to apply:** Reuse the existing React sidebar and top bar for every admin destination, and replace only the main content area when a custom page is opened.
+
 For admin and listing work in this project, update the website admin dashboard and keep its local Replit preview synchronized and verified with each change.
 
 Only change the website Admin Dashboard and the minimum Laravel integration needed for its requested functions. Do not change the mobile app UI or unrelated website sections.

@@ -9,6 +9,9 @@
   })[char]);
   const money = (value) => `PKR ${Number(value || 0).toLocaleString('en-PK')}`;
   let modal;
+  let pageHost;
+  let originalPageTitle = null;
+  let hiddenMainChildren = [];
   let agents = [];
   const sectionData = {};
   const mobileSections = [
@@ -101,13 +104,11 @@
       .og-mm-nav-details[open]>summary:after{content:'⌃'}
       .og-mm-nav-details>summary:hover{background:#ffffff10;color:#fff}
       .og-mm-nav-children{margin-left:8px;padding-left:5px;border-left:1px solid #ffffff24}
-      .og-mm-page{position:fixed;inset:0 0 0 var(--og-mm-sidebar-width,240px);z-index:30;overflow:auto;background:#f0f4f8}
-      .og-mm-box{min-height:100%;background:#fff;color:#0b1f3a;font:14px system-ui}
-      .og-mm-head{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:17px 22px;background:white;border-bottom:1px solid #e2e8f0}
-      .og-mm-head h2{font-size:19px;margin:0}.og-mm-head p{font-size:12px;color:#64748b;margin:4px 0 0}
+      .og-mm-page{width:100%;min-height:calc(100vh - 150px);background:transparent}
+      .og-mm-box{min-height:100%;background:transparent;color:#0b1f3a;font:14px system-ui}
       .og-mm-action{border:1px solid #dbe2ea;border-radius:8px;padding:8px 12px;background:#fff;color:#334155;font:600 12px system-ui;cursor:pointer}
       .og-mm-action.primary{background:#c8a45a;border-color:#c8a45a;color:#0b1f3a}
-      .og-mm-content{padding:16px 22px 22px}.og-mm-note{padding:10px 12px;margin-bottom:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;color:#64748b;font-size:12px}
+      .og-mm-content{padding:0 0 22px}.og-mm-note{padding:10px 12px;margin-bottom:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;color:#64748b;font-size:12px}
       .og-mm-table{width:100%;border-collapse:collapse}.og-mm-table th,.og-mm-table td{text-align:left;padding:11px 10px;border-bottom:1px solid #edf1f5;font-size:12px;vertical-align:top}.og-mm-table th{color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
       .og-mm-pill{display:inline-flex;padding:4px 8px;border-radius:999px;background:#dcfce7;color:#166534;font-size:10px;font-weight:700}.og-mm-pill.off{background:#f1f5f9;color:#64748b}
       .og-mm-row-actions{display:flex;gap:6px;white-space:nowrap}.og-mm-action.danger{color:#b91c1c;border-color:#fecaca}
@@ -125,7 +126,7 @@
       .og-mm-stat{padding:13px;border:1px solid #e2e8f0;border-radius:10px;background:#fff}.og-mm-stat span{display:block;color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}.og-mm-stat strong{display:block;margin-top:5px;font-size:21px}
       .og-mm-toolbar{display:flex;align-items:end;flex-wrap:wrap;gap:9px;margin-bottom:12px}.og-mm-toolbar .og-mm-field{min-width:130px}.og-mm-status{padding:9px 11px;border-radius:8px;background:#f8fafc;color:#475569;font-size:12px}.og-mm-status.ok{background:#dcfce7;color:#166534}.og-mm-status.degraded{background:#fee2e2;color:#991b1b}
       .og-mm-permissions{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:5px 12px;margin:9px 0}.og-mm-permissions label{font-size:11px;color:#475569}.og-mm-system-card{padding:14px;border:1px solid #e2e8f0;border-radius:10px;background:#fff}
-      @media(max-width:700px){.og-mm-page{inset:0}.og-mm-grid{grid-template-columns:1fr 1fr}.og-mm-content{padding:14px}.og-mm-table th,.og-mm-table td{padding:8px 6px}}
+      @media(max-width:700px){.og-mm-grid{grid-template-columns:1fr 1fr}.og-mm-table th,.og-mm-table td{padding:8px 6px}}
     `;
     document.head.appendChild(style);
   }
@@ -159,28 +160,44 @@
     agents = Array.from(merged.values());
   }
 
+  function setAdminPageTitle(title) {
+    const root = document.querySelector('#root');
+    const heading = root?.querySelector('header h1');
+    if (!root || !heading) return;
+    if (originalPageTitle === null) originalPageTitle = heading.textContent.trim();
+    if (heading.textContent.trim() !== title) heading.textContent = title;
+    root.classList.add('og-admin-content-page');
+  }
+
   function openPanel(tab) {
     installStyles();
+    const activeSection = mobileSections.find((section) => section.id === tab) || sidebarPageBySlug[tab] || { label: 'Admin section' };
     if (modal?.dataset.section === tab) {
+      setAdminPageTitle(activeSection.label);
       if (tab === 'agents' && new URLSearchParams(window.location.search).get('create') === 'agent' && !modal.querySelector('#og-mm-agent-form')) showAgentForm();
       return;
     }
-    if (modal) modal.remove();
-    const activeSection = mobileSections.find((section) => section.id === tab) || sidebarPageBySlug[tab] || { label: 'Admin section' };
-    const sidebarWidth = document.querySelector('aside')?.getBoundingClientRect().width || 240;
-    document.documentElement.style.setProperty('--og-mm-sidebar-width', `${sidebarWidth}px`);
+    if (modal) close();
+
+    pageHost = document.querySelector('#root main');
+    if (!pageHost) return;
     modal = document.createElement('div');
     modal.className = 'og-mm-page';
-    modal.dataset.section = activeSection.id;
+    modal.dataset.section = tab;
     modal.innerHTML = `<section class="og-mm-box" aria-label="${esc(activeSection.label)}">
-      <header class="og-mm-head"><div><h2>${esc(activeSection.label)}</h2><p>${mobileSections.some((section) => section.id === tab) ? 'Manage the shared Admin data used by the website and mobile app.' : 'This menu is ready; its data workflow has not been connected yet.'}</p></div></header>
-      <main class="og-mm-content"><div class="og-mm-loading">Loading mobile app data…</div></main>
+      <div class="og-mm-content"><div class="og-mm-loading">Loading page data…</div></div>
     </section>`;
     modal.addEventListener('click', (event) => {
       const action = event.target.closest('[data-action]');
       if (action) handleAction(action);
     });
-    document.body.appendChild(modal);
+    pageHost.appendChild(modal);
+    hiddenMainChildren = Array.from(pageHost.children)
+      .filter((child) => child !== modal)
+      .map((node) => ({ node, wasHidden: node.hidden }));
+    hiddenMainChildren.forEach(({ node }) => { node.hidden = true; });
+    setAdminPageTitle(activeSection.label);
+
     const page = modal;
     if (mobileSections.some((section) => section.id === tab)) {
       loadData().then(() => {
@@ -199,6 +216,18 @@
   function close() {
     modal?.remove();
     modal = null;
+    hiddenMainChildren.forEach(({ node, wasHidden }) => {
+      if (node.isConnected) node.hidden = wasHidden;
+    });
+    hiddenMainChildren = [];
+    pageHost = null;
+    const root = document.querySelector('#root');
+    root?.classList.remove('og-admin-content-page');
+    if (originalPageTitle !== null) {
+      const heading = root?.querySelector('header h1');
+      if (heading) heading.textContent = originalPageTitle;
+      originalPageTitle = null;
+    }
   }
 
   function render(tab) {
@@ -707,9 +736,10 @@
       return link;
     };
 
-    for (const page of sidebarPages) {
-      const section = mobileSections.find((item) => item.id === page.path.split('/').pop());
-      group.appendChild(pageLink(page.label, page.path, section?.id || page.slug));
+    for (const item of sidebarItems) {
+      const slug = item.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const section = mobileSections.find((page) => page.id === item.path.split('/').pop());
+      group.appendChild(pageLink(item.label, item.path, section?.id || slug));
     }
 
     nav.appendChild(group);

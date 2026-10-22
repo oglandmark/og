@@ -65,7 +65,24 @@ test('mobile management module is loaded by the existing website admin', () => {
   assert.match(styles, /@media \(max-width: 900px\)/);
   assert.match(styles, /og-admin-shell\.og-mobile-nav-open aside/);
   assert.match(styles, /og-admin-nav-overlay/);
-  assert.match(html, /admin-dashboard-polish\.css\?v=20261022-mobile-nav/);
+  assert.match(html, /admin-dashboard-polish\.css\?v=main-overview-20261022/);
+});
+
+test('main dashboard adds real management shortcuts above the existing data-backed overview', () => {
+  const script = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.css'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'public/admin/index.html'), 'utf8');
+
+  assert.match(script, /function installDashboardOverview\(\)/);
+  assert.match(script, /main\.insertBefore\(intro, dashboard\)/);
+  assert.match(script, /label: 'Review properties', href: '\/admin\/properties'/);
+  assert.match(script, /label: 'Manage users', href: '\/admin\/users'/);
+  assert.match(script, /label: 'View inquiries', href: '\/admin\/inquiries'/);
+  assert.match(script, /!root\.classList\.contains\('og-admin-content-page'\)/);
+  assert.match(script, /root\.classList\.toggle\('og-admin-dashboard', hasDashboardShell\)/);
+  assert.match(styles, /\.og-dashboard-intro-actions/);
+  assert.match(styles, /@media \(max-width: 560px\)/);
+  assert.match(html, /admin-dashboard-polish\.js\?v=main-overview-20261022/);
 });
 
 test('admin banner editor can replace uploaded images and videos and confirm deletion', () => {
@@ -84,6 +101,7 @@ test('Agent table shows profile thumbnails with bounded missing and broken-photo
   const destinations = ['Main', 'Property listed', 'Property in progress', 'Property closed', 'User management', 'Agent Management', 'App banners management', 'App notifications management'];
   assert.equal((navBlock.match(/\{ label:/g) || []).length, destinations.length, 'sidebar should contain only eight links');
   for (const item of destinations) assert.ok(navBlock.includes(`label: '${item}'`), `sidebar should include ${item}`);
+  assert.match(source, /for \(const item of sidebarItems\)/);
   assert.match(source, /function attachNavigation\(\)\s*\{\s*const nav = document\.querySelector\('aside nav'\);\s*if \(!nav\) return;\s*installStyles\(\);/);
   assert.doesNotMatch(navBlock, /Projects Management|Leads & Inquiries|Locations Management|Staff & Permissions|System Settings/);
   assert.match(source, /data-og-admin-nav/);
@@ -97,6 +115,18 @@ test('Agent table shows profile thumbnails with bounded missing and broken-photo
   assert.doesNotMatch(source, /Demo properties/);
   assert.doesNotMatch(source, /Manage mobile app/);
   assert.doesNotMatch(source, /og-mm-tabs/);
+});
+
+test('mobile management pages use the existing Admin shell instead of a second fixed dashboard', () => {
+  const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.css'), 'utf8');
+  assert.match(source, /pageHost = document\.querySelector\('#root main'\)/);
+  assert.match(source, /pageHost\.appendChild\(modal\)/);
+  assert.match(source, /hiddenMainChildren\.forEach/);
+  assert.match(source, /setAdminPageTitle\(activeSection\.label\)/);
+  assert.doesNotMatch(source, /document\.body\.appendChild\(modal\)/);
+  assert.match(source, /\.og-mm-page\{width:100%;min-height:/);
+  assert.match(styles, /#root\.og-admin-content-page header h1::after/);
 });
 
 test('property menu destinations open the corresponding live status filters', () => {
@@ -125,7 +155,7 @@ test('admin dashboard has an accessible off-canvas navigation on tablet and mobi
   assert.match(styles, /@media \(max-width: 900px\)/);
   assert.match(styles, /og-admin-shell\.og-mobile-nav-open aside/);
   assert.match(styles, /og-admin-nav-overlay/);
-  assert.match(html, /admin-dashboard-polish\.css\?v=20261022-mobile-nav/);
+  assert.match(html, /admin-dashboard-polish\.css\?v=main-overview-20261022/);
 });
 
 test('admin banner editor can replace uploaded images and videos and confirm deletion', () => {

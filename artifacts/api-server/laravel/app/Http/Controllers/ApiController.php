@@ -967,13 +967,24 @@ class ApiController extends Controller
         if ($resource === 'users' && $id !== null && $method === 'DELETE') {
             $index = $this->indexById($data['users'] ?? [], $id);
             if ($index === null) return $this->json(['error' => 'User not found'], 404);
-            if (strtolower((string) ($data['users'][$index]['role'] ?? '')) === 'admin') {
+            $target = $data['users'][$index];
+            if (strtolower((string) ($target['role'] ?? '')) === 'admin') {
                 $adminCount = collect($data['users'] ?? [])->filter(fn ($user) => strtolower((string) ($user['role'] ?? '')) === 'admin')->count();
-                if ((string) $data['users'][$index]['id'] === (string) $admin['id'] || $adminCount <= 1) {
+                if ((string) $target['id'] === (string) $admin['id'] || $adminCount <= 1) {
                     return $this->json(['error' => 'The signed-in or final admin account cannot be deleted.'], 409);
                 }
             }
-            array_splice($data['users'], $index, 1); JsonStore::write($data); return response()->noContent();
+            $updatedData = app(AccountDataDeletionService::class)
+                ->removeFromDocument($data, (string) $target['id']);
+            $mediaStorage = app(MediaStorage::class);
+            $removedMediaPaths = array_values(array_diff(
+                $mediaStorage->referencedPaths($data),
+                $mediaStorage->referencedPaths($updatedData),
+            ));
+            JsonStore::write($updatedData);
+            $mediaStorage->deleteUnreferencedPaths($removedMediaPaths, $updatedData);
+            $this->invalidateSessions($target['id'], $target['email'] ?? null);
+            return response()->noContent();
         }
         if ($resource === 'reports') {
             if ($method === 'GET' && $id === null && $request->filled('status')) {
@@ -1273,14 +1284,23 @@ class ApiController extends Controller
         }
         if ($method === 'DELETE') {
             if (!$this->isAdmin($user)) return $this->json(['error' => 'Forbidden'], 403);
-            if (strtolower((string) ($data['users'][$index]['role'] ?? '')) === 'admin') {
+            $target = $data['users'][$index];
+            if (strtolower((string) ($target['role'] ?? '')) === 'admin') {
                 $adminCount = collect($data['users'] ?? [])->filter(fn ($account) => strtolower((string) ($account['role'] ?? '')) === 'admin')->count();
-                if ((string) $data['users'][$index]['id'] === (string) $user['id'] || $adminCount <= 1) {
+                if ((string) $target['id'] === (string) $user['id'] || $adminCount <= 1) {
                     return $this->json(['error' => 'The signed-in or final admin account cannot be deleted.'], 409);
                 }
             }
-            array_splice($data['users'], $index, 1);
-            JsonStore::write($data);
+            $updatedData = app(AccountDataDeletionService::class)
+                ->removeFromDocument($data, (string) $target['id']);
+            $mediaStorage = app(MediaStorage::class);
+            $removedMediaPaths = array_values(array_diff(
+                $mediaStorage->referencedPaths($data),
+                $mediaStorage->referencedPaths($updatedData),
+            ));
+            JsonStore::write($updatedData);
+            $mediaStorage->deleteUnreferencedPaths($removedMediaPaths, $updatedData);
+            $this->invalidateSessions($target['id'], $target['email'] ?? null);
             return response()->noContent();
         }
         return $this->json($this->safeUser($data['users'][$index]));

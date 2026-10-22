@@ -780,6 +780,46 @@ class BackendGapClosureTest extends TestCase
         $this->assertSame(2, $saved['users'][1]['id'], 'removing a directory profile must not remove its login account');
     }
 
+    public function test_admin_user_delete_removes_only_the_target_accounts_linked_data(): void
+    {
+        $this->seedData([
+            'users' => [
+                $this->user(1, 'delete-admin@example.test', 'Admin'),
+                $this->user(2, 'delete-target@example.test', 'Buyer'),
+                $this->user(3, 'unrelated@example.test', 'Seller'),
+                $this->user(4, 'legacy-delete@example.test', 'Buyer'),
+            ],
+            'properties' => [
+                ['id' => 20, 'title' => 'Target owned listing', 'sellerId' => 2],
+                ['id' => 21, 'title' => 'Unrelated listing', 'sellerId' => 3, 'agentId' => 2, 'agentName' => 'Target buyer'],
+                ['id' => 22, 'title' => 'Second target listing', 'sellerId' => 4],
+            ],
+            'mobileAgents' => [
+                ['id' => 31, 'authUserId' => 2, 'name' => 'Target agent profile'],
+            ],
+            'notifications' => [
+                ['id' => 41, 'recipientUserId' => 2, 'title' => 'Target notice'],
+                ['id' => 42, 'recipientUserId' => 3, 'title' => 'Other notice'],
+            ],
+            'nextId' => 50,
+        ]);
+
+        $this->withToken($this->token('delete-admin@example.test'))
+            ->deleteJson('/api/admin/users/2')
+            ->assertNoContent();
+        $this->withToken($this->token('delete-admin@example.test'))
+            ->deleteJson('/api/users/4')
+            ->assertNoContent();
+
+        $saved = JsonStore::read();
+        $this->assertSame([1, 3], array_column($saved['users'], 'id'));
+        $this->assertSame([21], array_column($saved['properties'], 'id'));
+        $this->assertSame(3, $saved['properties'][0]['sellerId']);
+        $this->assertArrayNotHasKey('agentId', $saved['properties'][0]);
+        $this->assertSame([], $saved['mobileAgents']);
+        $this->assertSame([42], array_column($saved['notifications'], 'id'));
+    }
+
     public function test_mobile_broadcast_creates_notifications_and_sends_push_requests(): void
     {
         Http::fake();

@@ -8,10 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
-    <script src="/og-api-base.js?v=preview-local-only-20261022"></script>
+    <script src="/og-api-base.js?v=live-admin-proxy-20261022"></script>
     <script>
-      if (/\.(replit\.dev|replit\.app|repl\.co)$/i.test(window.location.hostname) && window.__OG_LIVE_API_BASE__) {
-        window.__OG_API_BASE__ = window.__OG_LIVE_API_BASE__;
+      if (/\.(replit\.dev|replit\.app|repl\.co)$/i.test(window.location.hostname)) {
+        window.__OG_API_BASE__ = '/admin-live-api';
       }
     </script>
     <script src="/brand-logo-compatibility.js?v=official-logo-20261021"></script>

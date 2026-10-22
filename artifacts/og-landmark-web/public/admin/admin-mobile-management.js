@@ -195,6 +195,7 @@
       sectionData[key] = items;
       const colspan = key === 'properties' || key === 'users' ? 5 : 5;
       const rows = items.map((item) => `<tr>${config.row(item)}<td><div class="og-mm-row-actions">
+        ${key === 'notifications' && item.status !== 'sent' ? `<button class="og-mm-action primary" data-action="send-announcement" data-section="${key}" data-id="${esc(item.id)}">Send</button>` : ''}
         <button class="og-mm-action" data-action="edit-record" data-section="${key}" data-id="${esc(item.id)}">Edit</button>
         <button class="og-mm-action danger" data-action="delete-record" data-section="${key}" data-id="${esc(item.id)}">Delete</button>
       </div></td></tr>`).join('');
@@ -217,7 +218,11 @@
     const wrap = modal.querySelector('#og-mm-record-form');
     if (!wrap) return;
     const editing = item.id !== undefined && item.id !== null;
-    const fields = config.fields.filter(([name]) => !(name === 'status' && key === 'notifications' && editing));
+    const fields = config.fields.filter(([name, , type]) => (
+      !(name === 'status' && key === 'notifications' && editing)
+      && !(name === 'sendNow' && key === 'notifications' && editing)
+      && !(type === 'file' && key === 'banners' && editing)
+    ));
     wrap.innerHTML = `<form class="og-mm-form" id="og-mm-record-form-inner"><h3 style="margin:0 0 12px">${editing ? 'Edit' : 'Add'} ${esc(config.title)}</h3><div class="og-mm-grid">
       ${fields.map(([name, label, type = 'text', options = [], accept]) => {
         let value = item[name] ?? '';
@@ -375,11 +380,17 @@
         if (!item) return;
         const label = item.title || item.name || item.email || `record ${id}`;
         const warning = section === 'users'
-          ? `Permanently delete account ${label}? This removes access to the mobile app.`
+          ? `Permanently delete account ${label}? This removes mobile app access. Review linked records first; the action cannot be undone.`
           : `Permanently delete ${label} from the live mobile app?`;
         if (!window.confirm(warning)) return;
         await api(config.deletePath(item), { method: 'DELETE' });
         await renderSection(section, modal.querySelector('.og-mm-content'));
+      }
+      if (button.dataset.action === 'send-announcement') {
+        const item = (sectionData.notifications || []).find((record) => String(record.id) === String(id));
+        if (!item || !window.confirm(`Send “${item.title || 'this notification'}” to its selected audience now? This cannot be recalled.`)) return;
+        await api(`/admin/announcements/${encodeURIComponent(id)}/send`, { method: 'POST' });
+        await renderSection('notifications', modal.querySelector('.og-mm-content'));
       }
     } catch (error) {
       window.alert(error.message || 'Could not update mobile app data.');

@@ -39,7 +39,7 @@ test('admin mobile demo catalog mirrors the bundled mobile demo records', () => 
 test('mobile management module is loaded by the existing website admin', () => {
   const html = fs.readFileSync(path.join(root, 'public/admin/index.html'), 'utf8');
   assert.match(html, /admin-mobile-management\.js/);
-  assert.match(html, /__OG_API_BASE__\s*=\s*window\.__OG_LIVE_API_BASE__/);
+  assert.match(html, /window\.__OG_API_BASE__\s*=\s*'\/admin-live-api'/);
   assert.match(html, /replit\\\.dev\|replit\\\.app\|repl\\\.co/);
 });
 
@@ -54,4 +54,5 @@ test('live mobile manager uses the production-backed API collections requested',
   ]) assert.ok(source.includes(endpoint), `expected API endpoint ${endpoint}`);
   assert.match(source, /Permanently delete account/);
   assert.match(source, /Send this notification to the selected live users now/);
+  assert.match(source, /\/admin\/announcements\/\$\{encodeURIComponent\(id\)\}\/send/);
 });

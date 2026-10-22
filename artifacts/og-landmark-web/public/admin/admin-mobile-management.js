@@ -240,8 +240,15 @@
     const fields = config.fields.filter(([name, , type]) => (
       !(name === 'status' && key === 'notifications' && editing)
       && !(name === 'sendNow' && key === 'notifications' && editing)
-      && !(type === 'file' && key === 'banners' && editing)
+      && !(name === 'type' && key === 'banners' && editing)
     ));
+    const currentMediaUrl = item.type === 'video' ? item.videoUrl : item.imageUrl;
+    const currentMediaPreview = key === 'banners' && editing && currentMediaUrl
+      ? `<div class="og-mm-note"><strong>Current ${item.type === 'video' ? 'video' : 'image'}</strong><div style="margin-top:8px">${item.type === 'video'
+        ? `<video src="${esc(currentMediaUrl)}" controls preload="metadata" style="display:block;width:min(100%,420px);max-height:220px;border-radius:8px;background:#0b1f3a"></video>`
+        : `<img src="${esc(currentMediaUrl)}" alt="${esc(item.title || 'Current banner')}" style="display:block;width:min(100%,420px);max-height:220px;object-fit:cover;border-radius:8px">`
+      }</div><small>Choose a replacement file to change the media, or leave it empty to keep the current one.</small></div>`
+      : '';
     wrap.innerHTML = `<form class="og-mm-form" id="og-mm-record-form-inner"><h3 style="margin:0 0 12px">${editing ? 'Edit' : 'Add'} ${esc(config.title)}</h3><div class="og-mm-grid">
       ${fields.map(([name, label, type = 'text', options = [], accept]) => {
         let value = item[name] ?? '';
@@ -250,11 +257,17 @@
         const full = type === 'textarea' ? ' full' : '';
         if (type === 'readonly') return `<div class="og-mm-field"><label>${esc(label)}</label><input disabled value="${esc(value)}"></div>`;
         if (type === 'checkbox') return `<div class="og-mm-field${full}"><label><input type="checkbox" name="${esc(name)}" ${(name === 'sendNow' ? Boolean(value) : value !== false) ? 'checked' : ''}> ${esc(label)}</label></div>`;
-        if (type === 'file') return `<div class="og-mm-field"><label>${esc(label)}</label><input name="${esc(name)}" type="file" accept="${esc(accept || '')}"><small>Image: JPG/PNG/WebP up to 20 MiB; video: MP4/MOV up to 300 MiB.</small></div>`;
+        if (type === 'file') {
+          const bannerAccept = key === 'banners' && editing
+            ? (item.type === 'video' ? '.mp4,.mov' : '.jpg,.jpeg,.png,.webp')
+            : accept;
+          const fileLabel = key === 'banners' && editing ? 'Replace media file (optional)' : label;
+          return `<div class="og-mm-field"><label>${esc(fileLabel)}</label><input name="${esc(name)}" type="file" accept="${esc(bannerAccept || '')}"><small>Image: JPG/PNG/WebP up to 20 MiB; video: MP4/MOV up to 300 MiB.</small></div>`;
+        }
         if (type === 'select') return `<div class="og-mm-field"><label>${esc(label)}</label><select name="${esc(name)}">${options.map((option) => `<option value="${esc(option)}" ${String(value).toLowerCase() === option.toLowerCase() ? 'selected' : ''}>${esc(option)}</option>`).join('')}</select></div>`;
         if (type === 'textarea') return `<div class="og-mm-field full"><label>${esc(label)}</label><textarea name="${esc(name)}" maxlength="6000">${esc(value)}</textarea></div>`;
         return `<div class="og-mm-field"><label>${esc(label)}</label><input name="${esc(name)}" type="${esc(type)}" ${type === 'number' ? 'step="any"' : ''} value="${esc(value)}"></div>`;
-      }).join('')}
+      }).join('')}${currentMediaPreview}
     </div><div class="og-mm-form-actions"><button type="button" class="og-mm-action" data-action="cancel-record" data-section="${key}">Cancel</button><button class="og-mm-action primary" type="submit">Save</button></div></form>`;
     wrap.querySelector('form').addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -288,6 +301,7 @@
                 if (value !== undefined && value !== null) formData.append(name, String(value));
               });
               formData.append('media', bannerFile);
+              if (editing && key === 'banners') formData.append('_method', 'PUT');
               return formData;
             })()
           : JSON.stringify(payload);
@@ -299,7 +313,10 @@
             await api(`/users/${encodeURIComponent(item.id)}`, { method: 'PUT', body: JSON.stringify(payload) });
             if (nextRole !== previous) await api(`/admin/users/${encodeURIComponent(item.id)}/role`, { method: 'PATCH', body: JSON.stringify({ role: nextRole }) });
           } else {
-            await api(`${config.createPath || config.list}/${encodeURIComponent(item.id)}`, { method: key === 'properties' ? 'PATCH' : 'PUT', body });
+            await api(`${config.createPath || config.list}/${encodeURIComponent(item.id)}`, {
+              method: key === 'properties' ? 'PATCH' : key === 'banners' && bannerFile ? 'POST' : 'PUT',
+              body,
+            });
           }
         } else {
           await api(config.createPath, { method: 'POST', body });
@@ -474,7 +491,9 @@
         const item = (sectionData[section] || []).find((record) => String(record.id) === String(id));
         if (!item) return;
         const label = item.title || item.name || item.email || `record ${id}`;
-        const warning = section === 'users'
+        const warning = section === 'banners'
+          ? `Permanently delete the ${item.type === 'video' ? 'video' : 'image'} banner “${label}” from the mobile app?`
+          : section === 'users'
           ? `Permanently delete account ${label}? This removes mobile app access. Review linked records first; the action cannot be undone.`
           : `Permanently delete ${label} from the live mobile app?`;
         if (!window.confirm(warning)) return;

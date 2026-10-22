@@ -1223,6 +1223,57 @@ class BackendGapClosureTest extends TestCase
             ->count());
     }
 
+    public function test_admin_can_replace_uploaded_mobile_image_and_video_banner_media(): void
+    {
+        $this->useTemporaryMediaStorage();
+        $this->seedData(['users' => [$this->user(1, 'admin@example.com', 'Admin')]]);
+        $adminToken = $this->token('admin@example.com');
+        $headers = ['Authorization' => "Bearer {$adminToken}"];
+
+        $imageBanner = $this->post('/api/mobile/banners', [
+            'media' => UploadedFile::fake()->image('homes-old.jpg')->size(40),
+            'type' => 'image',
+            'category' => 'homes',
+            'title' => 'Homes banner',
+        ], $headers)->assertCreated()->json('banner');
+        $oldImagePath = $this->mediaStorageDirectory . '/' . basename($imageBanner['imageUrl']);
+        $this->assertFileExists($oldImagePath);
+
+        $updatedImage = $this->post('/api/mobile/banners/' . $imageBanner['id'], [
+            '_method' => 'PUT',
+            'media' => UploadedFile::fake()->image('homes-new.webp')->size(40),
+            'title' => 'Updated homes banner',
+        ], $headers)->assertOk()->json('banner');
+        $newImagePath = $this->mediaStorageDirectory . '/' . basename($updatedImage['imageUrl']);
+        $this->assertSame('Updated homes banner', $updatedImage['title']);
+        $this->assertSame('image', $updatedImage['type']);
+        $this->assertArrayNotHasKey('_method', $updatedImage);
+        $this->assertNotSame($imageBanner['imageUrl'], $updatedImage['imageUrl']);
+        $this->assertFileDoesNotExist($oldImagePath);
+        $this->assertFileExists($newImagePath);
+
+        $videoBanner = $this->post('/api/mobile/banners', [
+            'media' => UploadedFile::fake()->create('tour-old.mp4', 512, 'video/mp4'),
+            'type' => 'video',
+            'category' => 'video',
+            'title' => 'Property tour',
+        ], $headers)->assertCreated()->json('banner');
+        $oldVideoPath = $this->mediaStorageDirectory . '/' . basename($videoBanner['videoUrl']);
+        $this->assertFileExists($oldVideoPath);
+
+        $updatedVideo = $this->post('/api/mobile/banners/' . $videoBanner['id'], [
+            '_method' => 'PUT',
+            'media' => UploadedFile::fake()->create('tour-new.mov', 512, 'video/quicktime'),
+            'title' => 'Updated property tour',
+        ], $headers)->assertOk()->json('banner');
+        $newVideoPath = $this->mediaStorageDirectory . '/' . basename($updatedVideo['videoUrl']);
+        $this->assertSame('Updated property tour', $updatedVideo['title']);
+        $this->assertSame('video', $updatedVideo['type']);
+        $this->assertNotSame($videoBanner['videoUrl'], $updatedVideo['videoUrl']);
+        $this->assertFileDoesNotExist($oldVideoPath);
+        $this->assertFileExists($newVideoPath);
+    }
+
     public function test_banner_delete_keeps_referenced_uploads_and_removes_unreferenced_uploads(): void
     {
         $this->useTemporaryMediaStorage();

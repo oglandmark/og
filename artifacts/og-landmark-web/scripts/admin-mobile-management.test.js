@@ -71,6 +71,16 @@ test('mobile manager uses the existing API collections requested', () => {
   assert.match(source, /photoUploadInProgress/);
 });
 
+test('admin banner editor can replace uploaded images and videos and confirm deletion', () => {
+  const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
+  assert.match(source, /Current \$\{item\.type === 'video' \? 'video' : 'image'\}/);
+  assert.match(source, /Replace media file \(optional\)/);
+  assert.match(source, /item\.type === 'video' \? '\.mp4,\.mov' : '\.jpg,\.jpeg,\.png,\.webp'/);
+  assert.match(source, /formData\.append\('_method', 'PUT'\)/);
+  assert.match(source, /key === 'banners' && bannerFile \? 'POST' : 'PUT'/);
+  assert.match(source, /Permanently delete the \$\{item\.type === 'video' \? 'video' : 'image'\} banner/);
+});
+
 test('Agent table shows profile thumbnails with bounded missing and broken-photo states', () => {
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   assert.match(source, /const photo = agent\.photo \|\| agent\.profilePhoto/);

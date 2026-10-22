@@ -1704,7 +1704,7 @@ class ApiController extends Controller
         }
 
         if ($method === 'PUT' || ($method === 'PATCH' && ($parts[2] ?? '') === '')) {
-            $changes = $request->except(['media', 'id', 'type']);
+            $changes = $request->except(['media', 'id', 'type', '_method']);
             if (array_key_exists('ctaParams', $changes) && is_string($changes['ctaParams'])) {
                 $decodedParams = json_decode($changes['ctaParams'], true);
                 if (json_last_error() !== JSON_ERROR_NONE || !is_array($decodedParams)) {
@@ -1722,8 +1722,54 @@ class ApiController extends Controller
                     return $this->json(['error' => 'An image banner already exists for this category.'], 409);
                 }
             }
+            $type = strtolower((string) ($banner['type'] ?? 'image'));
+            $mediaField = $type === 'video' ? 'videoUrl' : 'imageUrl';
+            $otherMediaField = $type === 'video' ? 'imageUrl' : 'videoUrl';
+            unset($changes[$otherMediaField]);
+
+            $upload = $request->file('media');
+            if ($upload) {
+                $extension = strtolower($upload->getClientOriginalExtension());
+                $allowed = $type === 'video' ? ['mp4', 'mov'] : ['jpg', 'jpeg', 'png', 'webp'];
+                $maxBytes = $type === 'video' ? 300 * 1024 * 1024 : 20 * 1024 * 1024;
+                if (!$upload->isValid() || !in_array($extension, $allowed, true) || (int) $upload->getSize() > $maxBytes) {
+                    return $this->json([
+                        'error' => $type === 'video'
+                            ? 'Video uploads must be MP4 or MOV and no larger than 300 MiB.'
+                            : 'Image uploads must be JPG, PNG or WebP and no larger than 20 MiB.',
+                    ], 422);
+                }
+
+                $storage = app(MediaStorage::class);
+                try {
+                    $storage->ensureReady();
+                    $filename = now()->format('YmdHis') . '-' . Str::random(32) . '.' . $extension;
+                    $upload->move($storage->directory(), $filename);
+                    $path = $storage->publicPath($filename);
+                    $mediaUrl = $storage->url($path);
+                    $filePath = $storage->fileForPublicPath($path);
+                    $changes[$mediaField] = $mediaUrl;
+                    $changes['media'] = [
+                        'url' => $mediaUrl,
+                        'path' => $path,
+                        'mimeType' => $upload->getMimeType(),
+                        'bytes' => $filePath && is_file($filePath) ? (filesize($filePath) ?: 0) : 0,
+                        'kind' => $type,
+                    ];
+                } catch (\Throwable $exception) {
+                    Log::error('Banner media storage is not ready for replacement.', ['error' => $exception->getMessage()]);
+                    return $this->json(['error' => 'Media storage is not available. Contact the administrator.', 'code' => 'MEDIA_STORAGE_NOT_READY'], 503);
+                }
+            }
+
+            $mediaChanged = $upload !== null
+                || (array_key_exists($mediaField, $changes)
+                    && ($changes[$mediaField] ?? null) !== ($banner[$mediaField] ?? null));
+            if (!$upload && $mediaChanged) $changes['media'] = null;
+            $previousBanner = $banner;
             $data['mobileBanners'][$index] = array_merge($banner, $changes);
             JsonStore::write($data);
+            if ($mediaChanged) $this->deleteUnreferencedBannerMedia($previousBanner, $data);
             return $this->json(['success' => true, 'banner' => $data['mobileBanners'][$index]]);
         }
 

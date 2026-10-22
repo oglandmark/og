@@ -151,14 +151,12 @@
         return [];
       }
     };
-    const [websiteAgents, mobileAgents, agentAccounts] = await Promise.all([
-      readAgentSource('/admin/city-agents', 'Website directory'),
+    const [mobileAgents, agentAccounts] = await Promise.all([
       readAgentSource('/admin/mobile-agents', 'Mobile directory'),
       readAgentSource('/admin/users?role=agent', 'Agent accounts'),
     ]);
     const merged = new Map();
     const sources = [
-      ['city-agents', Array.isArray(websiteAgents) ? websiteAgents : []],
       ['mobile-agents', Array.isArray(mobileAgents) ? mobileAgents : []],
       ['agent-accounts', Array.isArray(agentAccounts) ? agentAccounts.filter((record) => String(record.role || '').toLowerCase() === 'agent') : []],
     ];
@@ -185,11 +183,12 @@
         const userId = String(record.userId || record.accountId || record.authUserId || record.agentUserId
           || (collection === 'agent-accounts' ? record.id : '')).trim();
         const nameKey = String(record.displayName || record.name || '').trim().toLowerCase().replace(/\s+/g, ' ');
-        const sharedPhone = normalizedPhone && ['city-agents', 'mobile-agents', 'agent-accounts'].some((source) =>
+        const sharedPhone = normalizedPhone && ['mobile-agents', 'agent-accounts'].some((source) =>
           (phoneCounts.get(`${source}:${normalizedPhone}`) || 0) > 1);
         const phoneIdentity = sharedPhone ? `phone-name:${normalizedPhone}:${nameKey}` : `phone:${normalizedPhone}`;
         const identity = userId ? `user:${userId}` : email ? `email:${email}` : normalizedPhone ? phoneIdentity : `${collection}:${record.id}`;
         const existing = merged.get(identity);
+        if (collection === 'agent-accounts' && !existing) continue;
         if (existing) {
           for (const [key, value] of Object.entries(record)) {
             if (value !== null && value !== '' && (existing[key] === undefined || existing[key] === null || existing[key] === '')) {
@@ -740,7 +739,7 @@
             method: 'PUT', body: JSON.stringify(payload),
           })));
         } else {
-          await api('/admin/city-agents', { method: 'POST', body: JSON.stringify(payload) });
+          await api('/admin/mobile-agents', { method: 'POST', body: JSON.stringify(payload) });
         }
         await loadData();
         renderAgents(modal.querySelector('.og-mm-content'));

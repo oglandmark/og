@@ -410,6 +410,27 @@ class DashboardAuthCompatibilityTest extends TestCase
         $this->assertSame(200, $verification->status());
     }
 
+    public function test_local_admin_login_bypass_is_explicit_and_still_requires_the_password(): void
+    {
+        $this->seedDashboardFixture();
+        config([
+            'app.env' => 'local',
+            'app.admin_local_login_bypass' => true,
+        ]);
+
+        $this->postJson('/api/auth/admin-verify', [
+            'email' => 'dashboard-admin@example.test',
+            'password' => self::PASSWORD,
+        ])->assertOk()->assertJsonStructure(['token', 'user']);
+
+        $this->postJson('/api/auth/admin-verify', [
+            'email' => 'dashboard-admin@example.test',
+            'password' => 'incorrect-password',
+        ])->assertUnauthorized();
+
+        $this->assertSame(0, DB::table('auth_challenges')->where('purpose', 'admin-login')->count());
+    }
+
     public function test_admin_can_trust_this_device_after_otp_but_other_devices_still_need_otp(): void
     {
         $this->seedDashboardFixture();

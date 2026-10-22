@@ -446,6 +446,13 @@ class ApiController extends Controller
                     'token' => $this->createSession($user),
                 ]);
             }
+            if (config('app.env') === 'local' && config('app.admin_local_login_bypass') === true) {
+                return $this->json([
+                    'success' => true,
+                    'user' => $this->safeUser($user),
+                    'token' => $this->createSession($user),
+                ]);
+            }
             $trustedDeviceToken = (string) $request->cookie(self::ADMIN_TRUSTED_DEVICE_COOKIE, '');
             if ($this->isTrustedAdminDevice($user, $trustedDeviceToken)) {
                 return $this->json([

@@ -53,7 +53,7 @@ test('mobile management module is loaded by the existing website admin', () => {
   const script = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.js'), 'utf8');
   const styles = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.css'), 'utf8');
 
-  assert.match(html, /admin-mobile-management\.js\?v=mobile-agents-full-management-20261022/);
+  assert.match(html, /admin-mobile-management\.js\?v=mobile-agents-collision-fix-20261022/);
   assert.match(script, /aria-label', 'Open navigation'/);
   assert.match(script, /aria-controls/);
   assert.match(script, /aria-expanded/);
@@ -186,6 +186,7 @@ test('Agent table shows profile thumbnails with bounded missing and broken-photo
   assert.match(source, /readAgentSource\('\/admin\/mobile-agents'/);
   assert.match(source, /readAgentSource\('\/admin\/users\?role=agent'/);
   assert.match(source, /record\.role \|\| ''\)\.toLowerCase\(\) === 'agent'/);
+  assert.match(source, /phone-name:\$\{normalizedPhone\}:\$\{nameKey\}/);
   assert.match(source, /Showing \$\{agents\.length\} unique Agents/);
   assert.match(source, /Manage in Users/);
   assert.match(source, /Some Agent sources could not be loaded/);

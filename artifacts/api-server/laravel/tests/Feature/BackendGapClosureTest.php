@@ -861,6 +861,24 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonPath('0.name', 'Mobile-only Agent');
     }
 
+    public function test_mobile_agent_profiles_with_a_shared_public_contact_phone_are_not_collapsed(): void
+    {
+        $profiles = [];
+        foreach (['Ahmed Property Consultants', 'Malik Properties', 'Ch. Property Services', 'Baig Property Advisors', 'Raza Industrial & Commercial'] as $index => $name) {
+            $profiles[] = [
+                'id' => $index + 1,
+                'name' => $name,
+                'displayName' => $name,
+                'phone' => '03011484303',
+            ];
+        }
+        $this->seedData(['mobileAgents' => $profiles]);
+
+        $this->getJson('/api/mobile-agents')
+            ->assertOk()
+            ->assertJsonCount(5);
+    }
+
     public function test_admin_imports_legacy_mobile_sample_agents_once_for_full_management(): void
     {
         $this->seedData([
@@ -889,7 +907,7 @@ class BackendGapClosureTest extends TestCase
             ->getJson('/api/admin/mobile-agents')
             ->assertOk()
             ->assertExactJson([]);
-        $this->assertTrue(JsonStore::read()['legacySampleAgentProfilesImported']);
+        $this->assertTrue(JsonStore::read()['legacySampleAgentProfilesImportedV2']);
     }
 
     public function test_admin_can_manage_mobile_agent_profiles_without_deleting_linked_accounts(): void

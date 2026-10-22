@@ -157,20 +157,38 @@
       readAgentSource('/admin/users?role=agent', 'Agent accounts'),
     ]);
     const merged = new Map();
-    for (const [collection, records] of [
+    const sources = [
       ['city-agents', Array.isArray(websiteAgents) ? websiteAgents : []],
       ['mobile-agents', Array.isArray(mobileAgents) ? mobileAgents : []],
       ['agent-accounts', Array.isArray(agentAccounts) ? agentAccounts.filter((record) => String(record.role || '').toLowerCase() === 'agent') : []],
-    ]) {
+    ];
+    const phoneCounts = new Map();
+    const normalizedPhoneFor = (record) => {
+      const phone = String(record.phone || record.mobile || '').replace(/\D/g, '');
+      return phone.length === 12 && phone.startsWith('92') ? `0${phone.slice(2)}`
+        : phone.length === 10 && phone.startsWith('3') ? `0${phone}` : phone;
+    };
+    for (const [collection, records] of sources) {
+      for (const record of records) {
+        const phone = normalizedPhoneFor(record);
+        if (phone) {
+          const key = `${collection}:${phone}`;
+          phoneCounts.set(key, (phoneCounts.get(key) || 0) + 1);
+        }
+      }
+    }
+    for (const [collection, records] of sources) {
       for (const record of records) {
         if (!record || typeof record !== 'object') continue;
-        const phone = String(record.phone || record.mobile || '').replace(/\D/g, '');
-        const normalizedPhone = phone.length === 12 && phone.startsWith('92') ? `0${phone.slice(2)}`
-          : phone.length === 10 && phone.startsWith('3') ? `0${phone}` : phone;
+        const normalizedPhone = normalizedPhoneFor(record);
         const email = String(record.email || record.loginEmail || '').trim().toLowerCase();
         const userId = String(record.userId || record.accountId || record.authUserId || record.agentUserId
           || (collection === 'agent-accounts' ? record.id : '')).trim();
-        const identity = userId ? `user:${userId}` : email ? `email:${email}` : normalizedPhone ? `phone:${normalizedPhone}` : `${collection}:${record.id}`;
+        const nameKey = String(record.displayName || record.name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        const sharedPhone = normalizedPhone && ['city-agents', 'mobile-agents', 'agent-accounts'].some((source) =>
+          (phoneCounts.get(`${source}:${normalizedPhone}`) || 0) > 1);
+        const phoneIdentity = sharedPhone ? `phone-name:${normalizedPhone}:${nameKey}` : `phone:${normalizedPhone}`;
+        const identity = userId ? `user:${userId}` : email ? `email:${email}` : normalizedPhone ? phoneIdentity : `${collection}:${record.id}`;
         const existing = merged.get(identity);
         if (existing) {
           for (const [key, value] of Object.entries(record)) {

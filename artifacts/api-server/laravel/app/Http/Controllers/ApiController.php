@@ -2552,10 +2552,20 @@ class ApiController extends Controller
     {
         $data = JsonStore::read();
         $itemsByIdentity = [];
-        foreach ([
+        $sourceDirectories = [
             'website' => $data['cityAgents'] ?? [],
             'mobile' => $data['mobileAgents'] ?? [],
-        ] as $source => $sourceItems) {
+        ];
+        $phoneCounts = [];
+        foreach ($sourceDirectories as $source => $sourceItems) {
+            foreach ($sourceItems as $agent) {
+                $phone = preg_replace('/\D+/', '', (string) ($agent['phone'] ?? $agent['mobile'] ?? ''));
+                if (strlen($phone) === 12 && str_starts_with($phone, '92')) $phone = '0' . substr($phone, 2);
+                elseif (strlen($phone) === 10 && str_starts_with($phone, '3')) $phone = '0' . $phone;
+                if ($phone !== '') $phoneCounts[$source][$phone] = ($phoneCounts[$source][$phone] ?? 0) + 1;
+            }
+        }
+        foreach ($sourceDirectories as $source => $sourceItems) {
             foreach ($sourceItems as $agent) {
                 if (!is_array($agent)) continue;
                 $email = strtolower(trim((string) ($agent['email'] ?? $agent['loginEmail'] ?? '')));
@@ -2563,9 +2573,11 @@ class ApiController extends Controller
                 if (strlen($phone) === 12 && str_starts_with($phone, '92')) $phone = '0' . substr($phone, 2);
                 elseif (strlen($phone) === 10 && str_starts_with($phone, '3')) $phone = '0' . $phone;
                 $userId = trim((string) ($agent['userId'] ?? $agent['accountId'] ?? ''));
+                $nameKey = strtolower(trim((string) ($agent['displayName'] ?? $agent['name'] ?? '')));
+                $sharedPhone = $phone !== '' && (($phoneCounts['website'][$phone] ?? 0) > 1 || ($phoneCounts['mobile'][$phone] ?? 0) > 1);
                 $identity = $userId !== '' ? "user:{$userId}"
                     : ($email !== '' ? "email:{$email}"
-                    : ($phone !== '' ? "phone:{$phone}" : "{$source}:" . (string) ($agent['id'] ?? count($itemsByIdentity))));
+                    : ($phone !== '' ? ($sharedPhone ? "phone-name:{$phone}:{$nameKey}" : "phone:{$phone}") : "{$source}:" . (string) ($agent['id'] ?? count($itemsByIdentity))));
 
                 if (isset($itemsByIdentity[$identity])) {
                     $existing = $itemsByIdentity[$identity];
@@ -3025,27 +3037,33 @@ class ApiController extends Controller
         $originalData = $data;
         $data[$key] ??= [];
         if ($key === 'mobileAgents' && $method === 'GET' && $id === null && $user && $this->isAdmin($user)
-            && !array_key_exists('legacySampleAgentProfilesImported', $data)) {
-            if (empty($data['mobileAgents']) && empty($data['cityAgents'])) {
-                $legacyAgents = [
-                    ['name' => 'Ahmed Property Consultants', 'initials' => 'AC', 'agency' => 'Ahmed Real Estate', 'verified' => true, 'rating' => 4.9, 'reviewCount' => 126, 'years' => 12, 'listings' => 48, 'areas' => ['Okara City', 'Depalpur'], 'color' => '#183B60', 'phone' => '03011484303', 'specialties' => ['Residential', 'Agricultural Land', 'Plots'], 'about' => 'Residential plots, houses, and agricultural land in Okara City and Depalpur.', 'photo' => '/images/agent-1.jpg'],
-                    ['name' => 'Malik Properties', 'initials' => 'MP', 'agency' => 'Malik & Sons Real Estate', 'verified' => true, 'rating' => 4.8, 'reviewCount' => 94, 'years' => 8, 'listings' => 32, 'areas' => ['Renala Khurd', 'Okara City'], 'color' => '#0B1F3A', 'phone' => '03011484303', 'specialties' => ['Commercial', 'Residential', 'Rentals'], 'about' => 'Commercial and residential properties, including rentals, in Renala Khurd and Okara City.', 'photo' => '/images/agent-2.jpg'],
-                    ['name' => 'Ch. Property Services', 'initials' => 'CS', 'agency' => 'Chaudhry Property Group', 'verified' => true, 'rating' => 4.9, 'reviewCount' => 173, 'years' => 15, 'listings' => 61, 'areas' => ['Depalpur', 'Hujra Shah Muqeem'], 'color' => '#8b6c2a', 'phone' => '03011484303', 'specialties' => ['Agricultural Land', 'Plots', 'Commercial', 'Investment'], 'about' => 'Agricultural land, plots, and commercial properties in Depalpur and Hujra Shah Muqeem.', 'photo' => '/images/agent-3.jpg'],
-                    ['name' => 'Baig Property Advisors', 'initials' => 'BA', 'agency' => 'Baig & Associates', 'verified' => true, 'rating' => 4.7, 'reviewCount' => 68, 'years' => 5, 'listings' => 21, 'areas' => ['Okara City', 'Renala Khurd'], 'color' => '#4a2d6b', 'phone' => '03011484303', 'specialties' => ['Residential', 'Rentals', 'Plots'], 'about' => 'Residential rentals and plots in Okara City and Renala Khurd.'],
-                    ['name' => 'Raza Industrial & Commercial', 'initials' => 'RI', 'agency' => 'Raza Enterprises Real Estate', 'verified' => true, 'rating' => 4.8, 'reviewCount' => 82, 'years' => 9, 'listings' => 27, 'areas' => ['Okara City', 'Depalpur', 'Renala Khurd'], 'color' => '#374151', 'phone' => '03011484303', 'specialties' => ['Commercial', 'Industrial', 'Investment'], 'about' => 'Commercial shops, offices, warehouses, and industrial plots across Okara District.'],
-                ];
-                foreach ($legacyAgents as $agent) {
-                    $agent['id'] = JsonStore::nextId($data);
-                    $agent['displayName'] = $agent['name'];
-                    $agent['profilePhoto'] = $agent['photo'] ?? null;
-                    $agent['status'] = 'Active';
-                    $agent['approvalStatus'] = 'Approved';
-                    $agent['visible'] = true;
-                    $agent['createdAt'] = now()->toISOString();
-                    $data['mobileAgents'][] = $agent;
-                }
+            && empty($data['legacySampleAgentProfilesImportedV2'])) {
+            $legacyAgents = [
+                ['legacySampleKey' => 'sa1', 'name' => 'Ahmed Property Consultants', 'initials' => 'AC', 'agency' => 'Ahmed Real Estate', 'verified' => true, 'rating' => 4.9, 'reviewCount' => 126, 'years' => 12, 'listings' => 48, 'areas' => ['Okara City', 'Depalpur'], 'color' => '#183B60', 'phone' => '03011484303', 'specialties' => ['Residential', 'Agricultural Land', 'Plots'], 'about' => 'Residential plots, houses, and agricultural land in Okara City and Depalpur.', 'photo' => '/images/agent-1.jpg'],
+                ['legacySampleKey' => 'sa2', 'name' => 'Malik Properties', 'initials' => 'MP', 'agency' => 'Malik & Sons Real Estate', 'verified' => true, 'rating' => 4.8, 'reviewCount' => 94, 'years' => 8, 'listings' => 32, 'areas' => ['Renala Khurd', 'Okara City'], 'color' => '#0B1F3A', 'phone' => '03011484303', 'specialties' => ['Commercial', 'Residential', 'Rentals'], 'about' => 'Commercial and residential properties, including rentals, in Renala Khurd and Okara City.', 'photo' => '/images/agent-2.jpg'],
+                ['legacySampleKey' => 'sa3', 'name' => 'Ch. Property Services', 'initials' => 'CS', 'agency' => 'Chaudhry Property Group', 'verified' => true, 'rating' => 4.9, 'reviewCount' => 173, 'years' => 15, 'listings' => 61, 'areas' => ['Depalpur', 'Hujra Shah Muqeem'], 'color' => '#8b6c2a', 'phone' => '03011484303', 'specialties' => ['Agricultural Land', 'Plots', 'Commercial', 'Investment'], 'about' => 'Agricultural land, plots, and commercial properties in Depalpur and Hujra Shah Muqeem.', 'photo' => '/images/agent-3.jpg'],
+                ['legacySampleKey' => 'sa4', 'name' => 'Baig Property Advisors', 'initials' => 'BA', 'agency' => 'Baig & Associates', 'verified' => true, 'rating' => 4.7, 'reviewCount' => 68, 'years' => 5, 'listings' => 21, 'areas' => ['Okara City', 'Renala Khurd'], 'color' => '#4a2d6b', 'phone' => '03011484303', 'specialties' => ['Residential', 'Rentals', 'Plots'], 'about' => 'Residential rentals and plots in Okara City and Renala Khurd.'],
+                ['legacySampleKey' => 'sa5', 'name' => 'Raza Industrial & Commercial', 'initials' => 'RI', 'agency' => 'Raza Enterprises Real Estate', 'verified' => true, 'rating' => 4.8, 'reviewCount' => 82, 'years' => 9, 'listings' => 27, 'areas' => ['Okara City', 'Depalpur', 'Renala Khurd'], 'color' => '#374151', 'phone' => '03011484303', 'specialties' => ['Commercial', 'Industrial', 'Investment'], 'about' => 'Commercial shops, offices, warehouses, and industrial plots across Okara District.'],
+            ];
+            $existingNames = [];
+            foreach ([...($data['mobileAgents'] ?? []), ...($data['cityAgents'] ?? [])] as $existingAgent) {
+                $existingName = strtolower(trim((string) ($existingAgent['displayName'] ?? $existingAgent['name'] ?? '')));
+                if ($existingName !== '') $existingNames[$existingName] = true;
             }
-            $data['legacySampleAgentProfilesImported'] = true;
+            foreach ($legacyAgents as $agent) {
+                $nameKey = strtolower($agent['name']);
+                if (isset($existingNames[$nameKey])) continue;
+                $agent['id'] = JsonStore::nextId($data);
+                $agent['displayName'] = $agent['name'];
+                $agent['profilePhoto'] = $agent['photo'] ?? null;
+                $agent['status'] = 'Active';
+                $agent['approvalStatus'] = 'Approved';
+                $agent['visible'] = true;
+                $agent['createdAt'] = now()->toISOString();
+                $data['mobileAgents'][] = $agent;
+                $existingNames[$nameKey] = true;
+            }
+            $data['legacySampleAgentProfilesImportedV2'] = true;
             $data = JsonStore::write($data);
         }
         $mediaFields = in_array($key, ['mobileAgents', 'cityAgents'], true)

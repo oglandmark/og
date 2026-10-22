@@ -13,23 +13,18 @@ const agentProfileScreen = readFileSync(
   'utf8',
 );
 
-test('Home sample-agent cards resolve to their sample profiles', () => {
+test('Home and profile screens only show Agents from the managed directory', () => {
   assert.match(
     homeScreen,
-    /const visibleAgents = !agentDirectoryLoaded \|\| agentDirectoryFailed \? SAMPLE_AGENTS : managedAgents;/,
+    /const visibleAgents = managedAgents;/,
   );
+  assert.match(homeScreen, /\{visibleAgents\.length > 0 && <AnimatedReveal delay=\{260\}>/);
+  assert.doesNotMatch(homeScreen, /SAMPLE_AGENTS/);
   assert.match(
     homeScreen,
     /onAgentPress=\{\(agentId\) => router\.push\(`\/agent\/\$\{agentId\}` as any\)\}/,
   );
-  assert.match(
-    agentProfileScreen,
-    /const sampleAgent = SAMPLE_AGENTS\.find\(\(item\) => String\(item\.id\) === String\(id\)\);/,
-  );
-  assert.match(
-    agentProfileScreen,
-    /:\s*sampleAgent\s*\?\s*toProfile\(sampleAgent,\s*true\)/,
-  );
+  assert.doesNotMatch(agentProfileScreen, /SAMPLE_AGENTS/);
 });
 
 test('Agent details refresh managed profiles whenever the route regains focus', () => {

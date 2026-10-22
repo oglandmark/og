@@ -151,12 +151,14 @@
         return [];
       }
     };
-    const [mobileAgents, agentAccounts] = await Promise.all([
+    const [websiteAgents, mobileAgents, agentAccounts] = await Promise.all([
+      readAgentSource('/admin/city-agents', 'Website directory'),
       readAgentSource('/admin/mobile-agents', 'Mobile directory'),
       readAgentSource('/admin/users?role=agent', 'Agent accounts'),
     ]);
     const merged = new Map();
     const sources = [
+      ['city-agents', Array.isArray(websiteAgents) ? websiteAgents : []],
       ['mobile-agents', Array.isArray(mobileAgents) ? mobileAgents : []],
       ['agent-accounts', Array.isArray(agentAccounts) ? agentAccounts.filter((record) => String(record.role || '').toLowerCase() === 'agent') : []],
     ];
@@ -183,7 +185,7 @@
         const userId = String(record.userId || record.accountId || record.authUserId || record.agentUserId
           || (collection === 'agent-accounts' ? record.id : '')).trim();
         const nameKey = String(record.displayName || record.name || '').trim().toLowerCase().replace(/\s+/g, ' ');
-        const sharedPhone = normalizedPhone && ['mobile-agents', 'agent-accounts'].some((source) =>
+        const sharedPhone = normalizedPhone && ['city-agents', 'mobile-agents', 'agent-accounts'].some((source) =>
           (phoneCounts.get(`${source}:${normalizedPhone}`) || 0) > 1);
         const phoneIdentity = sharedPhone ? `phone-name:${normalizedPhone}:${nameKey}` : `phone:${normalizedPhone}`;
         const identity = userId ? `user:${userId}` : email ? `email:${email}` : normalizedPhone ? phoneIdentity : `${collection}:${record.id}`;
@@ -330,7 +332,7 @@
     const warning = agentLoadWarnings.length
       ? `<div class="og-mm-error">Some Agent sources could not be loaded: ${esc(agentLoadWarnings.join(' · '))}</div>`
       : '';
-    content.innerHTML = `${warning}<div class="og-mm-note">Showing ${agents.length} unique Agents from the website directory, mobile app directory, and Agent sign-in accounts. Linked records are combined; account-only Agents are listed separately.</div>
+    content.innerHTML = `${warning}<div class="og-mm-note">Showing ${agents.length} unique Agents from the website and mobile directories. Matching profiles are combined; new Agents are added to the mobile directory and also appear on the website.</div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="og-mm-action primary" data-action="add-agent">Add mobile Agent</button></div>
       <div id="og-mm-agent-form-wrap"></div>
       <div style="overflow:auto"><table class="og-mm-table"><thead><tr><th>Photo</th><th>Agent</th><th>City / phone</th><th>Email</th><th>Directory status</th><th>Actions</th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="og-mm-empty">No Agent profiles or Agent accounts found.</td></tr>'}</tbody></table></div>`;

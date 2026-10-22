@@ -41,7 +41,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { getDevProjects, DeveloperProject } from '@/lib/developerStore';
 import { projects } from '@/lib/projects';
-import { apiAgentToSample, SAMPLE_AGENTS, SampleAgent } from '@/lib/agentsData';
+import { apiAgentToSample, SampleAgent } from '@/lib/agentsData';
 import { useSaved } from '@/context/SavedContext';
 import {
   CalcCorners as SharedCalcCorners,
@@ -1454,8 +1454,6 @@ export default function HomeScreen() {
   const [userListings,     setUserListings]     = useState<Property[]>([]);
   const [devProjects,      setDevProjects]      = useState<DeveloperProject[]>([]);
   const [managedAgents,    setManagedAgents]    = useState<SampleAgent[]>([]);
-  const [agentDirectoryLoaded, setAgentDirectoryLoaded] = useState(false);
-  const [agentDirectoryFailed, setAgentDirectoryFailed] = useState(false);
   const [mobileContent,    setMobileContent]    = useState<MobileContent | null>(null);
   const homeContent = mobileContent?.homepage;
   const homeSections = homeContent?.sections ?? {};
@@ -1533,13 +1531,9 @@ export default function HomeScreen() {
         const records = await getAgents();
         if (!active) return;
         setManagedAgents(records.map(apiAgentToSample));
-        setAgentDirectoryLoaded(true);
-        setAgentDirectoryFailed(false);
       } catch {
         if (!active) return;
         setManagedAgents([]);
-        setAgentDirectoryLoaded(true);
-        setAgentDirectoryFailed(true);
       } finally {
         loading = false;
       }
@@ -1601,7 +1595,7 @@ export default function HomeScreen() {
   const recommendedProps = allProps
     .filter((p) => transaction === 'Rent' ? p.status === 'For Rent' : p.status === 'For Sale')
     .slice(0, 8);
-  const visibleAgents = !agentDirectoryLoaded || agentDirectoryFailed ? SAMPLE_AGENTS : managedAgents;
+  const visibleAgents = managedAgents;
 
   const ctaContent = role === 'agent'
     ? { eyebrow: 'AGENT PORTAL', title: 'Manage your\nlistings', desc: 'Add new properties or track your existing listings.', btn1: 'Add Property', btn1Route: '/(tabs)/post-ad', btn2: 'My Listings', btn2Route: '/(tabs)/listings' }
@@ -1852,7 +1846,7 @@ export default function HomeScreen() {
       )}
 
       {/* ─── VERIFIED AGENTS ─────────────────────────────────────────────── */}
-      <AnimatedReveal delay={260}>
+      {visibleAgents.length > 0 && <AnimatedReveal delay={260}>
         {/* Section header with inline See All */}
         <View style={s.agentSectionRow}>
           <View>
@@ -1871,7 +1865,7 @@ export default function HomeScreen() {
           colors={colors}
           onAgentPress={(agentId) => router.push(`/agent/${agentId}` as any)}
         />
-      </AnimatedReveal>
+      </AnimatedReveal>}
 
       {/* ─── TOOLS & CALCULATORS ─────────────────────────────────────────── */}
       <AnimatedReveal delay={290}>

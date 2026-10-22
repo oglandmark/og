@@ -12,7 +12,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
-import { apiAgentToSample, SAMPLE_AGENTS, SampleAgent } from '@/lib/agentsData';
+import { apiAgentToSample, SampleAgent } from '@/lib/agentsData';
 import { getAgents } from '@/lib/api';
 import { addInquiry } from '@/lib/inquiriesStore';
 import { getMyListings, UserListing } from '@/lib/listingsStore';
@@ -185,7 +185,6 @@ export default function AgentProfileScreen() {
   const insets  = useSafeAreaInsets();
   const { user } = useAuth();
   const { id }  = useLocalSearchParams<{ id: string }>();
-  const sampleAgent = SAMPLE_AGENTS.find((item) => String(item.id) === String(id));
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
   const [contactOpen,   setContactOpen]   = useState(false);
@@ -227,8 +226,6 @@ export default function AgentProfileScreen() {
   // agent's private profile route as before.
   const agent: AgentProfile | null = managedAgent
     ? toProfile(managedAgent)
-    : sampleAgent
-    ? toProfile(sampleAgent, true)
     : user?.role === 'agent'
     ? {
         id: user.id,

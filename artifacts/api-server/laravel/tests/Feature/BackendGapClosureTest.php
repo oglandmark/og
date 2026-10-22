@@ -909,7 +909,7 @@ class BackendGapClosureTest extends TestCase
             ->getJson('/api/admin/mobile-agents')
             ->assertOk()
             ->assertExactJson([]);
-        $this->assertTrue(JsonStore::read()['legacySampleAgentProfilesImportedV2']);
+        $this->assertTrue(JsonStore::read()['legacySampleAgentProfilesImportedV3']);
     }
 
     public function test_admin_backfills_missing_legacy_samples_when_one_profile_already_exists(): void
@@ -939,7 +939,7 @@ class BackendGapClosureTest extends TestCase
         $names = array_column($profiles->json(), 'name');
         $this->assertCount(5, array_unique($names));
         $this->assertContains('Raza Industrial & Commercial', $names);
-        $this->assertTrue(JsonStore::read()['legacySampleAgentProfilesImportedV2']);
+        $this->assertTrue(JsonStore::read()['legacySampleAgentProfilesImportedV3']);
     }
 
     public function test_admin_can_manage_mobile_agent_profiles_without_deleting_linked_accounts(): void

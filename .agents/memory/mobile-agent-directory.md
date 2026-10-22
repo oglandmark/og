@@ -3,10 +3,10 @@ name: Mobile Agent directory
 description: Keep the bundled mobile Agent fallback and Admin-managed Agent directory consistent.
 ---
 
-The mobile app may display bundled Agent profiles when its API directory is unavailable or has not loaded. Import those legacy profiles into the managed API directory only once; after a successful API response, an empty directory must remain empty so an Admin deletion does not reveal deleted bundled profiles again.
+The Admin dashboard is the source of truth for public Agent visibility. Import bundled legacy profiles into the managed directory once so Admin can edit or remove them; never show unmanaged bundled Agents as a fallback after the API directory is empty or unavailable.
 
 Agent cards can share a public contact phone. Do not use that phone alone as a unique profile key when it appears multiple times; keep distinct Agent IDs/names and only merge when an account or email links them, or when phone plus name identifies the same profile.
 
-**Why:** Mobile and website Agent records are separate sources. Mixing website-only records into the mobile endpoint or creating mobile profiles in the website collection makes the wrong Agents appear in the app and disconnects Admin edits from the app's directory.
+**Why:** Agents visible in the app or website must be manageable from Admin. Unmanaged bundled profiles can reappear after deletion, and website-only records otherwise remain invisible to the Agent dashboard.
 
-**How to apply:** Keep `mobileAgents` canonical for Admin mobile management and `/api/mobile-agents`; the website should display both website-only and mobile directory records. Create Admin mobile profiles in `mobileAgents`. Bypass HTTP caching and refresh while Home/profile screens are focused. Preserve the one-time import marker and distinguish API failure from a successful empty list.
+**How to apply:** Load both `cityAgents` and `mobileAgents` in Admin; create new shared profiles in `mobileAgents`, and update/delete every linked source. Keep `/api/mobile-agents` restricted to mobile records and `/api/agents` inclusive of both sources. Use a one-time sample-import marker; never re-import deleted profiles. Refresh app data on focus, and treat API failure or an empty directory as no public Agents.

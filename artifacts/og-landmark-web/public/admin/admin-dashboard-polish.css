@@ -254,76 +254,120 @@
   color: #8794a6 !important;
 }
 
+.og-admin-menu-toggle,
+.og-admin-nav-overlay {
+  display: none;
+}
+
+#root.og-admin-dashboard :is(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid rgba(200, 164, 90, 0.65);
+  outline-offset: 2px;
+}
+
+#root.og-admin-dashboard main section tbody tr:nth-child(even) {
+  background: #fcfdff;
+}
+
+#root.og-admin-dashboard main section tbody tr:hover {
+  background: #f4f7fb;
+}
+
 @media (max-width: 900px) {
-  #root.og-admin-dashboard aside {
-    width: 76px !important;
+  #root.og-admin-shell aside {
+    position: fixed !important;
+    z-index: 60 !important;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(86vw, 300px) !important;
+    max-width: 300px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition: transform 220ms ease, visibility 0s linear 220ms;
+    box-shadow: 18px 0 44px rgba(8, 24, 45, 0.24);
   }
 
-  #root.og-admin-dashboard aside + div {
-    margin-left: 76px !important;
+  #root.og-admin-shell.og-mobile-nav-open aside {
+    transform: translateX(0);
+    visibility: visible;
+    transition: transform 220ms ease;
   }
 
-  #root.og-admin-dashboard aside > div:first-child {
+  #root.og-admin-shell aside + div {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  #root.og-admin-shell .og-admin-menu-toggle {
+    display: inline-flex;
+    flex: 0 0 40px;
+    align-items: center;
     justify-content: center;
-    padding-inline: 10px !important;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    color: #102541;
+    cursor: pointer;
   }
 
-  #root.og-admin-dashboard aside > div:first-child > div,
-  #root.og-admin-dashboard aside > div:nth-child(2) > div:last-child {
+  #root.og-admin-shell .og-admin-menu-toggle svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  #root.og-admin-shell .og-admin-nav-overlay {
+    position: fixed;
+    z-index: 50;
+    inset: 0;
     display: none;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: rgba(8, 24, 45, 0.48);
+    backdrop-filter: blur(2px);
   }
 
-  #root.og-admin-dashboard aside > div:nth-child(2) {
-    justify-content: center;
-    padding-inline: 8px !important;
-  }
-
-  #root.og-admin-dashboard aside nav {
-    padding-inline: 8px !important;
-  }
-
-  #root.og-admin-dashboard aside nav a {
-    justify-content: center;
-    padding-inline: 6px !important;
-    font-size: 0 !important;
-  }
-
-  #root.og-admin-dashboard aside > div:last-child a,
-  #root.og-admin-dashboard aside > div:last-child button {
-    justify-content: center;
-    padding-inline: 6px !important;
-    font-size: 0 !important;
+  #root.og-admin-shell.og-mobile-nav-open .og-admin-nav-overlay {
+    display: block;
   }
 
   #root.og-admin-dashboard main > div.space-y-6 > div:first-child {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
+
+  .og-mm-page {
+    inset: 0 !important;
+  }
 }
 
 @media (max-width: 560px) {
-  #root.og-admin-dashboard aside {
-    width: 62px !important;
-  }
-
-  #root.og-admin-dashboard aside + div {
-    margin-left: 62px !important;
-  }
-
   #root.og-admin-dashboard header {
-    height: 64px !important;
+    height: 66px !important;
+    gap: 10px;
     padding-inline: 14px !important;
   }
 
   #root.og-admin-dashboard header h1 {
+    min-width: 0;
     font-size: 16px !important;
+    line-height: 1.2;
   }
 
   #root.og-admin-dashboard header h1::after {
+    max-width: 190px;
+    overflow: hidden;
     font-size: 9px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   #root.og-admin-dashboard header > div {
-    max-width: 120px;
+    max-width: 112px;
     text-align: right;
     font-size: 10px !important;
   }

@@ -88,6 +88,21 @@ test('mobile app sections are separate Admin sidebar pages instead of a modal', 
   assert.doesNotMatch(source, /og-mm-tabs/);
 });
 
+test('admin dashboard has an accessible off-canvas navigation on tablet and mobile', () => {
+  const script = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.css'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'public/admin/index.html'), 'utf8');
+
+  assert.match(script, /aria-label', 'Open navigation'/);
+  assert.match(script, /aria-controls/);
+  assert.match(script, /aria-expanded/);
+  assert.match(script, /event\.key === 'Escape'/);
+  assert.match(styles, /@media \(max-width: 900px\)/);
+  assert.match(styles, /og-admin-shell\.og-mobile-nav-open aside/);
+  assert.match(styles, /og-admin-nav-overlay/);
+  assert.match(html, /admin-dashboard-polish\.css\?v=20261022-mobile-nav/);
+});
+
 test('admin banner editor can replace uploaded images and videos and confirm deletion', () => {
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   assert.match(source, /Current \$\{item\.type === 'video' \? 'video' : 'image'\}/);

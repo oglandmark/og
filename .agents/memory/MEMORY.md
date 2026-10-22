@@ -51,4 +51,4 @@
 - [User-controlled app builds](build-approval.md) — do not start a new mobile build until the user explicitly authorizes it.
 - [Single public account model](single-user-account-model.md) — public accounts are User; keep staff permissions separate so listing moderation remains available.
 - [Admin login feedback](admin-login-feedback.md) — show credential-stage failures beside the login form; errors inside a collapsed OTP panel make Continue appear inert.
-- [Admin trusted-device policy](admin-trusted-device.md) — only remember a device after successful OTP, for a limited time; keep OTP on new or expired devices.
+- [Admin trusted-device policy](admin-trusted-device.md) — keep OTP on non-local environments; the local Replit preview may use password-only admin login.

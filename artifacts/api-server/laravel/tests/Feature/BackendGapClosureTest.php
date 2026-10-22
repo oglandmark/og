@@ -201,6 +201,74 @@ class BackendGapClosureTest extends TestCase
             ->assertUnprocessable();
     }
 
+    public function test_admin_property_editor_replaces_and_removes_uploaded_photos_and_video(): void
+    {
+        $this->useTemporaryMediaStorage();
+        $this->seedData([
+            'users' => [$this->user(1, 'admin-property-media@example.test', 'Admin')],
+            'properties' => [[
+                'id' => 72,
+                'title' => 'Media management listing',
+                'city' => 'Okara',
+                'images' => [],
+                'coverImage' => null,
+                'videoUrl' => null,
+                'media' => ['images' => []],
+            ]],
+        ]);
+        $headers = ['Authorization' => 'Bearer ' . $this->token('admin-property-media@example.test')];
+
+        $oldImage = $this->post('/api/upload/multiple', [
+            'images' => [UploadedFile::fake()->image('old-property.jpg')->size(40)],
+        ], $headers)->assertOk()->json('url');
+        $oldVideo = $this->post('/api/upload/video', [
+            'video' => UploadedFile::fake()->create('old-property.mp4', 512, 'video/mp4'),
+        ], $headers)->assertOk()->json('url');
+
+        JsonStore::reset();
+        $data = JsonStore::read();
+        $data['properties'][0]['images'] = [$oldImage];
+        $data['properties'][0]['coverImage'] = $oldImage;
+        $data['properties'][0]['videoUrl'] = $oldVideo;
+        $data['properties'][0]['media'] = [
+            'images' => [['url' => $oldImage]],
+            'video' => ['url' => $oldVideo],
+        ];
+        JsonStore::write($data);
+
+        $oldImageFile = $this->mediaStorageDirectory . '/' . basename($oldImage);
+        $oldVideoFile = $this->mediaStorageDirectory . '/' . basename($oldVideo);
+        $newImage = $this->post('/api/upload/multiple', [
+            'images' => [UploadedFile::fake()->image('new-property.webp')->size(40)],
+        ], $headers)->assertOk()->json('url');
+        $newVideo = $this->post('/api/upload/video', [
+            'video' => UploadedFile::fake()->create('new-property.mov', 512, 'video/quicktime'),
+        ], $headers)->assertOk()->json('url');
+        $newImageFile = $this->mediaStorageDirectory . '/' . basename($newImage);
+        $newVideoFile = $this->mediaStorageDirectory . '/' . basename($newVideo);
+
+        $this->patchJson('/api/admin/properties/72', [
+            'images' => [$newImage],
+            'videoUrl' => $newVideo,
+        ], $headers)
+            ->assertOk()
+            ->assertJsonPath('images.0', $newImage)
+            ->assertJsonPath('coverImage', $newImage)
+            ->assertJsonPath('videoUrl', $newVideo)
+            ->assertJsonPath('media.video.url', $newVideo);
+        $this->assertFileDoesNotExist($oldImageFile);
+        $this->assertFileDoesNotExist($oldVideoFile);
+        $this->assertFileExists($newImageFile);
+        $this->assertFileExists($newVideoFile);
+
+        $this->patchJson('/api/admin/properties/72', ['images' => [], 'videoUrl' => null], $headers)
+            ->assertOk()
+            ->assertJsonPath('coverImage', null)
+            ->assertJsonPath('videoUrl', null);
+        $this->assertFileDoesNotExist($newImageFile);
+        $this->assertFileDoesNotExist($newVideoFile);
+    }
+
     public function test_mobile_facebook_signup_verifies_provider_and_returns_session(): void
     {
         $this->seedData(['users' => []]);

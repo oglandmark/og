@@ -809,6 +809,7 @@ class ApiController extends Controller
                 'bedrooms', 'bathrooms', 'yearBuilt', 'furnishing', 'availability',
                 'videoUrl', 'description', 'amenities', 'images', 'assignedAgent',
             ];
+            $beforeData = $data;
             $before = $data['properties'][$index];
             $changes = array_intersect_key($validator->validated(), array_flip($editable));
             $previousAgentId = trim((string) ($before['agentId'] ?? ''));
@@ -834,6 +835,21 @@ class ApiController extends Controller
                     fn ($url) => ['url' => $url, 'propertyId' => $data['properties'][$index]['id'], 'type' => 'image'],
                     $images,
                 );
+                $data['properties'][$index]['media'] = $media;
+            }
+            if (array_key_exists('videoUrl', $changes)) {
+                $media = is_array($data['properties'][$index]['media'] ?? null)
+                    ? $data['properties'][$index]['media']
+                    : [];
+                if (!empty($changes['videoUrl'])) {
+                    $media['video'] = [
+                        'url' => $changes['videoUrl'],
+                        'propertyId' => $data['properties'][$index]['id'],
+                        'type' => 'video',
+                    ];
+                } else {
+                    unset($media['video']);
+                }
                 $data['properties'][$index]['media'] = $media;
             }
             if (array_key_exists('assignedAgent', $changes)) {
@@ -875,7 +891,13 @@ class ApiController extends Controller
                 'createdAt' => now()->toISOString(),
                 'fields' => array_keys($changes),
             ];
-            JsonStore::write($data);
+            $this->writeWithMediaCleanup(
+                $beforeData,
+                $data,
+                $before,
+                $data['properties'][$index],
+                ['images', 'videoUrl', 'coverImage', 'media'],
+            );
             return $this->json($data['properties'][$index]);
         }
         if ($resource === 'properties' && $id !== null && $method === 'DELETE') {

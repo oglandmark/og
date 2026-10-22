@@ -232,6 +232,46 @@
       button.__ogListingProperty = property;
     }
 
+    function ensureManageAction(table, row, property) {
+      const headerRow = table.querySelector('thead tr');
+      if (headerRow && !headerRow.querySelector('[data-og-pm-header]')) {
+        const exists = [...headerRow.querySelectorAll('th')]
+          .some((header) => header.textContent.trim().toLowerCase() === 'manage');
+        if (!exists) {
+          const header = documentRef.createElement('th');
+          header.dataset.ogPmHeader = 'true';
+          header.className = 'text-left px-4 py-3 font-semibold';
+          header.textContent = 'Manage';
+          headerRow.appendChild(header);
+        }
+      }
+
+      let cell = row.querySelector('[data-og-pm-cell]');
+      if (!cell) {
+        cell = documentRef.createElement('td');
+        cell.dataset.ogPmCell = 'true';
+        cell.className = 'px-4 py-3';
+        row.appendChild(cell);
+      }
+      let button = cell.querySelector('[data-og-pm-edit]');
+      if (!button) {
+        button = cell.querySelector('.og-pm-manage') || documentRef.createElement('button');
+        button.dataset.ogPmEdit = 'true';
+        button.className = 'og-pm-manage';
+        button.type = 'button';
+        button.addEventListener('click', () => {
+          const current = button.__ogListingProperty;
+          if (current && typeof windowRef.__ogOpenPropertyEditor === 'function') {
+            void windowRef.__ogOpenPropertyEditor(current, button);
+          }
+        });
+        if (!button.parentElement) cell.appendChild(button);
+      }
+      button.textContent = 'Edit listing';
+      button.setAttribute('aria-label', `Edit listing: ${property.title || 'Property'}`);
+      button.__ogListingProperty = property;
+    }
+
     function enhanceTables() {
       const tables = [...documentRef.querySelectorAll('table')];
       for (const table of tables) {
@@ -249,6 +289,7 @@
           const columnOffset = photoCell ? 1 : 0;
           const property = matchingProperty(row, columns, columnOffset, usedIds);
           if (!property) continue;
+          ensureManageAction(table, row, property);
 
           if (!photoCell) {
             const newPhotoCell = makePhotoCell(property);

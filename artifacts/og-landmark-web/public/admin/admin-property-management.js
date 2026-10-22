@@ -723,6 +723,30 @@
     agentsLoaded = true;
   }
 
+  async function openPropertyEditor(property, trigger) {
+    if (!property?.id) {
+      window.alert('This property could not be identified. Refresh the listings and try again.');
+      return;
+    }
+    if (trigger) trigger.disabled = true;
+    try {
+      await loadAgents();
+      const review = await request(`/admin/properties/${encodeURIComponent(property.id)}/review`);
+      const fullProperty = { ...property, ...(review?.property || {}) };
+      if (!properties.some((item) => String(item.id) === String(fullProperty.id))) {
+        properties = [...properties, fullProperty];
+      } else {
+        properties = properties.map((item) => String(item.id) === String(fullProperty.id) ? fullProperty : item);
+      }
+      openModal(fullProperty, review || {});
+    } catch (error) {
+      window.alert(error.message || 'Could not open this property for editing.');
+    } finally {
+      if (trigger) trigger.disabled = false;
+    }
+  }
+  window.__ogOpenPropertyEditor = openPropertyEditor;
+
   function addFilters(root) {
     const table = root.querySelector('table');
     if (!table || root.querySelector('.og-pm-filters')) return;
@@ -793,24 +817,17 @@
       let button = cell.querySelector('button');
       if (!button) {
         button = document.createElement('button'); button.className = 'og-pm-manage'; button.type = 'button';
-        button.addEventListener('click', async () => {
-          const current = properties.find((item) => String(item.id) === button.dataset.propertyId);
-          if (!current) return;
-          button.disabled = true;
-          try {
-            await loadAgents();
-            const review = await request(`/admin/properties/${encodeURIComponent(current.id)}/review`);
-            const fullProperty = { ...current, ...(review?.property || {}) };
-            properties = properties.map((item) => String(item.id) === String(fullProperty.id) ? fullProperty : item);
-            openModal(fullProperty, review || {});
-          }
-          catch (error) { window.alert(error.message || 'Could not load agent profiles.'); }
-          finally { button.disabled = false; }
+        button.addEventListener('click', () => {
+          const current = button.__ogListingProperty
+            || properties.find((item) => String(item.id) === button.dataset.propertyId);
+          if (current) void openPropertyEditor(current, button);
         });
         cell.appendChild(button);
       }
       if (button.textContent !== 'Edit listing') button.textContent = 'Edit listing';
       button.dataset.propertyId = String(property.id);
+      button.dataset.ogPmEdit = 'true';
+      button.__ogListingProperty = property;
       const rowStatus = row.dataset.ogPropertyStatus;
       row.hidden = !matchesFilter(property, filter);
       let agentCell = row.querySelector('[data-og-agent-cell]');

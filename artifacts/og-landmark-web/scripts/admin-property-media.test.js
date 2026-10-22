@@ -44,12 +44,17 @@ test('Admin property editor supports a draggable Map/Satellite pin and saves coo
   assert.match(source, /marker\.on\('dragend'/);
   assert.match(source, /lat, lng, latitude: lat, longitude: lng/);
   assert.match(html, /admin-property-management\.js\?v=property-edit-live-data-20261022/);
+  assert.match(html, /admin-listing-media\.js\?v=admin-properties-manage-actions-20261022/);
 });
 
 test('property table edit action matches the listing title anywhere in the row', () => {
   assert.match(source, /const rowText = normalize\(row\.innerText\)/);
   assert.match(source, /rowText\.includes\(propertyTitle\)/);
   assert.match(source, /button\.textContent !== 'Edit listing'/);
+  assert.match(source, /window\.__ogOpenPropertyEditor = openPropertyEditor/);
+  assert.match(listingMediaSource, /function ensureManageAction\(table, row, property\)/);
+  assert.match(listingMediaSource, /button\.textContent = 'Edit listing'/);
+  assert.match(listingMediaSource, /__ogOpenPropertyEditor\(current, button\)/);
 });
 
 test('property editor loads admin listings directly instead of depending on the dashboard fetch implementation', () => {

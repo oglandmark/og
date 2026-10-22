@@ -70,3 +70,15 @@ test('mobile manager uses the existing API collections requested', () => {
   assert.match(source, /catch \(error\) \{\s*showPhotoPreview\(previousPhotoUrl\)/);
   assert.match(source, /photoUploadInProgress/);
 });
+
+test('Agent table shows profile thumbnails with bounded missing and broken-photo states', () => {
+  const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
+  assert.match(source, /const photo = agent\.photo \|\| agent\.profilePhoto/);
+  assert.match(source, /data-agent-list-photo src="\$\{esc\(photo\)\}"/);
+  assert.match(source, /og-mm-agent-list-photo og-mm-agent-list-photo-fallback">No photo/);
+  assert.match(source, /data-agent-photo-fallback hidden>Photo unavailable/);
+  assert.match(source, /image\.addEventListener\('error', \(\) => \{\s*image\.hidden = true;/);
+  assert.match(source, /\.og-mm-agent-list-photo\{[^}]*width:40px;height:40px;overflow:hidden/);
+  assert.match(source, /<th>Photo<\/th><th>Agent<\/th>/);
+  assert.match(source, /agents = await api\('\/admin\/mobile-agents'\);\s*renderAgents\(modal\.querySelector\('\.og-mm-content'\)\);/);
+});

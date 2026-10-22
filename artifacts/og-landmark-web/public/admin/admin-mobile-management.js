@@ -54,6 +54,8 @@
       .og-mm-field input,.og-mm-field textarea,.og-mm-field select{box-sizing:border-box;width:100%;border:1px solid #cbd5e1;border-radius:7px;padding:8px;background:#fff;color:#0f172a;font:12px system-ui}
       .og-mm-field textarea{min-height:66px;resize:vertical}.og-mm-form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
       .og-mm-agent-photo-preview{display:flex;align-items:center;gap:10px;margin-top:8px}.og-mm-agent-photo-preview img{width:72px;height:72px;object-fit:cover;border:1px solid #cbd5e1;border-radius:50%;background:#f1f5f9}.og-mm-agent-photo-preview span{color:#64748b;font-size:11px}
+      .og-mm-agent-list-photo{display:flex;align-items:center;justify-content:center;width:40px;height:40px;overflow:hidden;border:1px solid #e2e8f0;border-radius:50%;background:#f8fafc;color:#64748b;font-size:9px;text-align:center;line-height:1.15}
+      .og-mm-agent-list-photo img{display:block;width:100%;height:100%;object-fit:cover}.og-mm-agent-list-photo-fallback{padding:3px}
       .og-mm-agent-photo-status{display:block;min-height:16px;margin-top:4px;color:#64748b;font-size:11px}.og-mm-agent-photo-status.error{color:#b91c1c}.og-mm-agent-photo-status.success{color:#166534}
       @media(max-width:700px){.og-mm-grid{grid-template-columns:1fr 1fr}.og-mm-content{padding:14px}.og-mm-table th,.og-mm-table td{padding:8px 6px}.og-mm-box{max-height:96vh}}
     `;
@@ -130,16 +132,31 @@
   }
 
   function renderAgents(content) {
-    const rows = agents.map((agent) => `<tr>
-      <td><strong>${esc(agent.displayName || agent.name || 'Unnamed agent')}</strong><div>${esc(agent.agency || agent.specialization || 'Independent')}</div></td>
+    const rows = agents.map((agent) => {
+      const name = agent.displayName || agent.name || 'Unnamed agent';
+      const photo = agent.photo || agent.profilePhoto;
+      const photoCell = photo
+        ? `<span class="og-mm-agent-list-photo"><img data-agent-list-photo src="${esc(photo)}" alt="${esc(`${name} profile photo`)}" loading="lazy" decoding="async"><span class="og-mm-agent-list-photo-fallback" data-agent-photo-fallback hidden>Photo unavailable</span></span>`
+        : '<span class="og-mm-agent-list-photo og-mm-agent-list-photo-fallback">No photo</span>';
+      return `<tr>
+      <td>${photoCell}</td>
+      <td><strong>${esc(name)}</strong><div>${esc(agent.agency || agent.specialization || 'Independent')}</div></td>
       <td>${esc(agent.city || '—')}<div>${esc(agent.phone || '')}</div></td>
       <td>${esc(agent.email || agent.loginEmail || '—')}</td>
       <td><span class="og-mm-pill ${agent.status === 'Suspended' || agent.visible === false ? 'off' : ''}">${esc(agent.status || 'Active')}${agent.visible === false ? ' · Hidden' : ''}</span></td>
-      <td><div class="og-mm-row-actions"><button class="og-mm-action" data-action="edit-agent" data-id="${esc(agent.id)}">Edit</button><button class="og-mm-action danger" data-action="delete-agent" data-id="${esc(agent.id)}">Remove</button></div></td></tr>`).join('');
+      <td><div class="og-mm-row-actions"><button class="og-mm-action" data-action="edit-agent" data-id="${esc(agent.id)}">Edit</button><button class="og-mm-action danger" data-action="delete-agent" data-id="${esc(agent.id)}">Remove</button></div></td></tr>`;
+    }).join('');
     content.innerHTML = `<div class="og-mm-note">Agent directory profiles shown in the mobile app. Adding or removing a profile does not create or delete its separate sign-in account.</div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="og-mm-action primary" data-action="add-agent">Add mobile Agent</button></div>
       <div id="og-mm-agent-form-wrap"></div>
-      <div style="overflow:auto"><table class="og-mm-table"><thead><tr><th>Agent</th><th>City / phone</th><th>Email</th><th>App status</th><th>Actions</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="og-mm-empty">No mobile Agent profiles yet.</td></tr>'}</tbody></table></div>`;
+      <div style="overflow:auto"><table class="og-mm-table"><thead><tr><th>Photo</th><th>Agent</th><th>City / phone</th><th>Email</th><th>App status</th><th>Actions</th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="og-mm-empty">No mobile Agent profiles yet.</td></tr>'}</tbody></table></div>`;
+    content.querySelectorAll('[data-agent-list-photo]').forEach((image) => {
+      image.addEventListener('error', () => {
+        image.hidden = true;
+        const fallback = image.parentElement.querySelector('[data-agent-photo-fallback]');
+        if (fallback) fallback.hidden = false;
+      }, { once: true });
+    });
   }
 
   const sectionConfig = {

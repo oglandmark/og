@@ -2552,10 +2552,13 @@ class ApiController extends Controller
     {
         $data = JsonStore::read();
         $itemsByIdentity = [];
-        $sourceDirectories = [
-            'website' => $data['cityAgents'] ?? [],
-            'mobile' => $data['mobileAgents'] ?? [],
-        ];
+        $mobileOnly = ($segments[0] ?? '') === 'mobile-agents';
+        $sourceDirectories = $mobileOnly
+            ? ['mobile' => $data['mobileAgents'] ?? []]
+            : [
+                'website' => $data['cityAgents'] ?? [],
+                'mobile' => $data['mobileAgents'] ?? [],
+            ];
         $phoneCounts = [];
         foreach ($sourceDirectories as $source => $sourceItems) {
             foreach ($sourceItems as $agent) {

@@ -850,10 +850,12 @@ class BackendGapClosureTest extends TestCase
         $mobileDirectory = $this->getJson('/api/mobile-agents')->assertOk();
 
         $this->assertCount(2, $websiteDirectory->json());
-        $this->assertSame($websiteDirectory->json(), $mobileDirectory->json());
+        $this->assertCount(2, $mobileDirectory->json());
         $this->assertSame('Shared Agent', $websiteDirectory->json('0.name'));
         $this->assertSame('Shared Realty', $websiteDirectory->json('0.agency'));
         $this->assertSame('/media/shared-agent.jpg', $websiteDirectory->json('0.photo'));
+        $this->assertSame('Shared Agent Mobile', $mobileDirectory->json('0.displayName'));
+        $this->assertSame('Mobile-only Agent', $mobileDirectory->json('1.name'));
         $this->assertSame('Mobile-only Agent', $websiteDirectory->json('1.name'));
         $this->getJson('/api/agents?city=Depalpur')
             ->assertOk()

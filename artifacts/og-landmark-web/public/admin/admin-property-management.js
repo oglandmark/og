@@ -5,7 +5,7 @@
   const originalFetch = window.fetch.bind(window);
   let properties = [];
   let agents = [];
-  let filter = 'pending';
+  let filter = 'all';
   let observer;
   let enhancementQueued = false;
   let modal;
@@ -192,13 +192,15 @@
       const option = document.createElement('option');
       option.value = `${agent.kind}:${agent.id}`;
       const city = agent.city || agent.cityName || agent.location?.city || agent.officeCity || '';
-      option.textContent = `${agent.name || 'Agent'}${city ? ` · ${city}` : ''}${agent.phone ? ` · ${agent.phone}` : ''}`;
+      option.textContent = `${agent.name || 'Agent'}${city ? ` · ${city}` : ''}${agent.phone ? ` · ${agent.phone}` : ''}${agent.userId ? '' : ' · contact only'}`;
+      option.disabled = !agent.userId;
       option.dataset.name = agent.name || '';
       option.dataset.phone = agent.phone || '';
+      option.dataset.userId = agent.userId || '';
       select.appendChild(option);
     }
     const directoryNote = form.querySelector('[data-agent-directory-note]');
-    directoryNote.textContent = agentDirectoryMessage || 'Agent directory includes all cities. Assigning a referral does not change the listing review status.';
+    directoryNote.textContent = agentDirectoryMessage || 'Agent accounts from all cities are available. A referral appears in the Agent portal and does not change listing status; unlinked contacts are shown as contact-only.';
     const selectedAgentId = String(assigned.id || property.assignedAgentId || '');
     const selectedAgent = agents.find((agent) => agent.id === selectedAgentId && (!assigned.profileType || agent.kind === assigned.profileType));
     if (selectedAgent) select.value = `${selectedAgent.kind}:${selectedAgent.id}`;
@@ -370,7 +372,10 @@
         images: values.images.split(/\r?\n/).map((url) => url.trim()).filter(Boolean),
         videoUrl: values.videoUrl.trim() || null,
         assignedAgent: name || phone || profile ? {
-          id: profile ? String(profile.id) : null, name, phone, profileType: profile?.kind || 'manual',
+          id: profile ? String(profile.id) : null,
+          userId: profile?.userId || null,
+          city: profile?.city || '',
+          name, phone, profileType: profile?.kind || 'manual',
         } : null,
       };
       payload.coverImage = payload.images[0] || null;
@@ -407,21 +412,44 @@
       request('/admin/mobile-agents').catch(() => []),
       request('/admin/users?role=agent').catch(() => []),
     ]);
-    const seen = new Set();
-    agents = [
-      ...(Array.isArray(cityAgents) ? cityAgents.map((item) => ({ ...item, kind: 'city' })) : []),
-      ...(Array.isArray(profiles) ? profiles.map((item) => ({ ...item, kind: 'profile' })) : []),
-      ...(Array.isArray(users) ? users.map((item) => ({ ...item, kind: 'account' })) : []),
-    ].filter((agent) => {
+    const normalizeAgent = (agent, kind) => {
       const id = String(agent.id ?? agent.userId ?? '');
-      if (!id || seen.has(`${agent.kind}:${id}`)) return false;
-      seen.add(`${agent.kind}:${id}`);
-      agent.id = id;
-      agent.name = agent.name || agent.fullName || agent.agentName || 'Agent';
-      agent.phone = agent.phone || agent.phoneNumber || agent.mobile || '';
-      agent.city = agent.city || agent.cityName || agent.officeCity || agent.location?.city || '';
-      return true;
-    });
+      if (!id) return null;
+      return {
+        ...agent,
+        id,
+        kind,
+        name: agent.name || agent.fullName || agent.agentName || 'Agent',
+        phone: agent.phone || agent.phoneNumber || agent.mobile || '',
+        city: agent.city || agent.cityName || agent.officeCity || agent.location?.city || '',
+        userId: String(agent.userId || agent.authUserId || agent.agentUserId || (kind === 'account' ? id : '')),
+      };
+    };
+    const accounts = (Array.isArray(users) ? users : [])
+      .map((item) => normalizeAgent(item, 'account'))
+      .filter(Boolean)
+      .map((agent) => ({ ...agent, userId: agent.id }));
+    const byUserId = new Map(accounts.map((agent) => [agent.userId, agent]));
+    const byEmail = new Map(accounts.map((agent) => [normalize(agent.email), agent]).filter(([email]) => email));
+    const byPhone = new Map(accounts.map((agent) => [String(agent.phone).replace(/\D/g, ''), agent]).filter(([phone]) => phone));
+    const unlinkedProfiles = [
+      ...(Array.isArray(cityAgents) ? cityAgents.map((item) => normalizeAgent(item, 'city')) : []),
+      ...(Array.isArray(profiles) ? profiles.map((item) => normalizeAgent(item, 'profile')) : []),
+    ].filter(Boolean);
+    const contacts = [];
+    for (const profile of unlinkedProfiles) {
+      const linked = byUserId.get(profile.userId)
+        || byEmail.get(normalize(profile.email))
+        || byPhone.get(String(profile.phone).replace(/\D/g, ''));
+      if (linked) {
+        linked.city ||= profile.city;
+        linked.phone ||= profile.phone;
+        linked.name = linked.name === 'Agent' ? profile.name : linked.name;
+      } else {
+        contacts.push({ ...profile, userId: '' });
+      }
+    }
+    agents = [...accounts, ...contacts];
     if (!agents.length && !agentDirectoryMessage) agentDirectoryMessage = 'No agents are currently available in the referral directory.';
     agentsLoaded = true;
   }
@@ -466,6 +494,11 @@
       th.dataset.ogPmHeader = 'true'; th.className = 'text-left px-4 py-3 font-semibold'; th.textContent = 'Manage';
       headers.appendChild(th);
     }
+    if (headers && !headers.querySelector('[data-og-agent-header]')) {
+      const th = document.createElement('th');
+      th.dataset.ogAgentHeader = 'true'; th.className = 'text-left px-4 py-3 font-semibold'; th.textContent = 'Referred agent';
+      headers.insertBefore(th, headers.querySelector('[data-og-pm-header]') || null);
+    }
     const used = new Set();
     const rows = [...table.querySelectorAll('tbody tr')].filter((row) => !row.querySelector('[colspan]'));
     for (const row of rows) {
@@ -500,6 +533,17 @@
       button.dataset.propertyId = String(property.id);
       const rowStatus = row.dataset.ogPropertyStatus;
       row.hidden = filter !== 'all' && rowStatus !== filter;
+      let agentCell = row.querySelector('[data-og-agent-cell]');
+      if (!agentCell) {
+        agentCell = document.createElement('td');
+        agentCell.dataset.ogAgentCell = 'true';
+        agentCell.className = 'px-4 py-3 text-xs text-slate-500';
+        row.insertBefore(agentCell, cell);
+      }
+      const assigned = property.assignedAgent || {};
+      const assignedName = assigned.name || property.assignedAgentName || '';
+      const assignedCity = assigned.city || property.assignedAgentCity || '';
+      agentCell.textContent = assignedName ? `${assignedName}${assignedCity ? ` · ${assignedCity}` : ''}` : 'Not assigned';
     }
     const chips = root.querySelectorAll('.og-pm-filter');
     chips.forEach((button) => {

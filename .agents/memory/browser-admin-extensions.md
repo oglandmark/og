@@ -19,8 +19,8 @@ When replacing a website logo, use a new asset URL instead of relying on overwri
 
 **How to apply:** Preserve the existing React bundle and make maintainable additions through separately loaded admin modules; route legacy admin entry points to `/admin/`, reuse Laravel authentication/APIs, preserve mobile API compatibility, and verify the local web preview. Do not alter the mobile client UI.
 
-The admin dashboard must prioritize pending mobile property submissions, expose the complete listing record for review and editing, and allow referral to agents across cities without filtering by the listing's city.
+The admin dashboard must show all mobile property listings by default across statuses, with status filters, full edit/delete controls, and cross-city agent referrals. A referral must target a linked active Agent account so it appears in the Agent portal.
 
-**Why:** The user requested this property-review workflow for the website admin.
+**Why:** The user clarified that all currently live mobile listings—not only pending submissions—must be visible and manageable from the website admin.
 
-**How to apply:** Keep the queue pending-first, retrieve the authenticated review-detail response, and load the complete agent directory without a city constraint.
+**How to apply:** Load the complete authenticated admin property collection without silently limiting the default result set; keep pending and other status filters available; validate Agent accounts server-side, persist their account ID as `agentId`, and notify the assigned agent.

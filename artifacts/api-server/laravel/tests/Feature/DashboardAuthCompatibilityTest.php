@@ -143,6 +143,9 @@ class DashboardAuthCompatibilityTest extends TestCase
     public function test_admin_listing_and_user_actions_match_the_dashboard_contract(): void
     {
         $this->seedDashboardFixture();
+        $data = JsonStore::read();
+        $data['users'][] = $this->fixtureUser(905, 'referral-agent@example.test', 'Agent');
+        JsonStore::write($data);
         $adminToken = $this->login('dashboard-admin@example.test');
         $adminHeaders = ['Authorization' => "Bearer {$adminToken}"];
 
@@ -163,8 +166,10 @@ class DashboardAuthCompatibilityTest extends TestCase
             'images' => ['/images/uploads/front.jpg', '/images/uploads/lounge.jpg'],
             'assignedAgent' => [
                 'id' => 'agent-profile-1',
+                'userId' => '905',
                 'name' => 'Assigned Agent',
                 'phone' => '03001234567',
+                'city' => 'Lahore',
                 'profileType' => 'city',
             ],
         ], $adminHeaders)
@@ -180,7 +185,33 @@ class DashboardAuthCompatibilityTest extends TestCase
             ->assertJsonPath('videoUrl', 'https://example.test/property-tour.mp4')
             ->assertJsonPath('images.1', '/images/uploads/lounge.jpg')
             ->assertJsonPath('coverImage', '/images/uploads/front.jpg')
-            ->assertJsonPath('assignedAgentId', 'agent-profile-1');
+            ->assertJsonPath('assignedAgentId', 'agent-profile-1')
+            ->assertJsonPath('agentId', '905')
+            ->assertJsonPath('assignedAgentCity', 'Lahore');
+
+        $stored = JsonStore::read();
+        $referralNotification = collect($stored['notifications'] ?? [])
+            ->first(fn ($item) => (int) ($item['recipientUserId'] ?? 0) === 905);
+        $this->assertNotNull($referralNotification);
+        $this->assertSame('PROPERTY_LISTING_ASSIGNED', $referralNotification['type']);
+        $this->assertSame('/property/991', $referralNotification['deepLink']);
+
+        $this->patchJson('/api/admin/properties/991', [
+            'assignedAgent' => [
+                'id' => 'agent-profile-1',
+                'userId' => '905',
+                'name' => 'Assigned Agent',
+                'phone' => '03001234567',
+                'city' => 'Lahore',
+                'profileType' => 'city',
+            ],
+        ], $adminHeaders)->assertOk();
+        $this->assertCount(1, collect(JsonStore::read()['notifications'] ?? [])
+            ->filter(fn ($item) => (int) ($item['recipientUserId'] ?? 0) === 905));
+
+        $this->patchJson('/api/admin/properties/991', [
+            'assignedAgent' => ['userId' => '904', 'name' => 'Buyer account'],
+        ], $adminHeaders)->assertStatus(422);
 
         $this->getJson('/api/admin/properties', $adminHeaders)
             ->assertOk()
@@ -254,6 +285,25 @@ class DashboardAuthCompatibilityTest extends TestCase
 
         $this->deleteJson("/api/users/{$newUserId}", [], $adminHeaders)->assertNoContent();
         $this->getJson('/api/users', $adminHeaders)->assertOk()->assertJsonMissing(['id' => $newUserId]);
+    }
+
+    public function test_admin_property_list_returns_all_records_by_default(): void
+    {
+        $this->seedDashboardFixture();
+        $data = JsonStore::read();
+        for ($i = 0; $i < 510; $i++) {
+            $data['properties'][] = [
+                'id' => 2000 + $i,
+                'title' => "Bulk listing {$i}",
+                'approvalStatus' => $i % 2 === 0 ? 'Active' : 'Pending',
+            ];
+        }
+        JsonStore::write($data);
+
+        $adminToken = $this->login('dashboard-admin@example.test');
+        $this->getJson('/api/admin/properties', ['Authorization' => "Bearer {$adminToken}"])
+            ->assertOk()
+            ->assertJsonCount(512);
     }
 
     public function test_admin_promoted_agent_can_sign_in_and_read_only_their_dashboard_data(): void

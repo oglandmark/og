@@ -793,8 +793,10 @@ class ApiController extends Controller
                 'images.*' => ['string', 'max:2000'],
                 'assignedAgent' => ['sometimes', 'nullable', 'array'],
                 'assignedAgent.id' => ['nullable', 'string', 'max:100'],
+                'assignedAgent.userId' => ['nullable', 'string', 'max:100'],
                 'assignedAgent.name' => ['nullable', 'string', 'max:120'],
                 'assignedAgent.phone' => ['nullable', 'string', 'max:40'],
+                'assignedAgent.city' => ['nullable', 'string', 'max:120'],
                 'assignedAgent.profileType' => ['nullable', 'string', 'max:40'],
             ]);
             if ($validator->fails()) {
@@ -809,6 +811,17 @@ class ApiController extends Controller
             ];
             $before = $data['properties'][$index];
             $changes = array_intersect_key($validator->validated(), array_flip($editable));
+            $previousAgentId = trim((string) ($before['agentId'] ?? ''));
+            $assignedAgent = $changes['assignedAgent'] ?? null;
+            $targetAgentId = is_array($assignedAgent) ? trim((string) ($assignedAgent['userId'] ?? '')) : '';
+            if ($targetAgentId !== '') {
+                $targetAgent = $this->findById($data['users'] ?? [], $targetAgentId);
+                if (!$targetAgent
+                    || strtolower((string) ($targetAgent['role'] ?? '')) !== 'agent'
+                    || strtolower((string) ($targetAgent['status'] ?? 'active')) !== 'active') {
+                    return $this->json(['error' => 'Select an active Agent account for referral.'], 422);
+                }
+            }
             $data['properties'][$index] = array_merge($before, $changes, ['updatedAt' => now()->toISOString()]);
             if (array_key_exists('images', $changes)) {
                 $images = array_values($changes['images']);
@@ -828,6 +841,30 @@ class ApiController extends Controller
                 $data['properties'][$index]['assignedAgentId'] = is_array($agent) ? ($agent['id'] ?? null) : null;
                 $data['properties'][$index]['assignedAgentName'] = is_array($agent) ? ($agent['name'] ?? null) : null;
                 $data['properties'][$index]['assignedAgentPhone'] = is_array($agent) ? ($agent['phone'] ?? null) : null;
+                $data['properties'][$index]['assignedAgentCity'] = is_array($agent) ? ($agent['city'] ?? null) : null;
+                $data['properties'][$index]['agentId'] = $targetAgentId !== '' ? $targetAgentId : null;
+                if ($targetAgentId !== '' && $targetAgentId !== $previousAgentId) {
+                    $property = $data['properties'][$index];
+                    $propertyTitle = trim((string) ($property['title'] ?? ''));
+                    $city = trim((string) ($property['city'] ?? ''));
+                    $message = ($propertyTitle !== '' ? $propertyTitle : 'A property listing')
+                        . ($city !== '' ? " in {$city}" : '')
+                        . ' has been referred to you for follow-up.';
+                    app(NotificationDeliveryService::class)->deliver($data, [(int) $targetAgentId], [
+                        'type' => 'PROPERTY_LISTING_ASSIGNED',
+                        'category' => 'properties',
+                        'title' => 'New property referral',
+                        'message' => $message,
+                        'body' => $message,
+                        'imageUrl' => $property['coverImage'] ?? ($property['images'][0] ?? null),
+                        'entityType' => 'property',
+                        'entityId' => $property['id'] ?? null,
+                        'propertyId' => $property['id'] ?? null,
+                        'deepLink' => '/property/' . ($property['id'] ?? ''),
+                        'eventKey' => 'property:' . ($property['id'] ?? 'unknown') . ':agent-referral:' . $targetAgentId . ':' . Str::uuid(),
+                        'metadata' => ['propertyCity' => $city],
+                    ]);
+                }
             }
             $data['properties'][$index]['managementHistory'] = is_array($before['managementHistory'] ?? null)
                 ? $before['managementHistory']
@@ -852,8 +889,11 @@ class ApiController extends Controller
                     strtolower((string) ($property['approvalStatus'] ?? $property['listingStatus'] ?? '')) === $status
                 );
             }
-            $limit = max(1, min(500, (int) $request->input('limit', 500)));
-            return $this->json($properties->take($limit)->values());
+            if ($request->filled('limit')) {
+                $limit = max(1, min(5000, (int) $request->input('limit')));
+                $properties = $properties->take($limit);
+            }
+            return $this->json($properties->values());
         }
         if ($resource === 'properties' && $id !== null && ($parts[2] ?? '') === 'review' && $method === 'GET') {
             $property = $this->findById($data['properties'] ?? [], $id);

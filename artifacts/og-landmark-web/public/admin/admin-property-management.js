@@ -79,13 +79,15 @@
 
   function rowProperty(row, used) {
     const cells = [...row.cells].map((cell) => normalize(cell.innerText));
-    const title = normalize(row.querySelector('td .font-medium')?.textContent || row.cells[0]?.innerText?.split('\n')[0]);
-    if (!title) return null;
+    const rowText = normalize(row.innerText);
+    const title = normalize(row.querySelector('td .font-medium')?.textContent || '');
+    if (!rowText) return null;
     let best = null;
     let bestScore = -1;
     for (const property of properties) {
-      if (used.has(String(property.id)) || normalize(property.title) !== title) continue;
-      let score = 1;
+      const propertyTitle = normalize(property.title);
+      if (used.has(String(property.id)) || !propertyTitle || !rowText.includes(propertyTitle)) continue;
+      let score = title === propertyTitle ? 100 : 50;
       const city = normalize(property.city);
       const seller = normalize(property.sellerName);
       const price = property.price == null ? '' : normalize(`PKR ${Number(property.price).toLocaleString()}`);
@@ -772,7 +774,7 @@
         });
         cell.appendChild(button);
       }
-      if (button.textContent !== 'Review / edit / refer') button.textContent = 'Review / edit / refer';
+      if (button.textContent !== 'Edit listing') button.textContent = 'Edit listing';
       button.dataset.propertyId = String(property.id);
       const rowStatus = row.dataset.ogPropertyStatus;
       row.hidden = !matchesFilter(property, filter);

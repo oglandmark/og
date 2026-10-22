@@ -39,7 +39,13 @@ test('Admin property editor supports a draggable Map/Satellite pin and saves coo
   assert.match(source, /map\.on\('click', \(event\) => setPin\(event\.latlng\)\)/);
   assert.match(source, /marker\.on\('dragend'/);
   assert.match(source, /lat, lng, latitude: lat, longitude: lng/);
-  assert.match(html, /admin-property-management\.js\?v=property-edit-map-20261022/);
+  assert.match(html, /admin-property-management\.js\?v=property-edit-map-rows-20261022/);
+});
+
+test('property table edit action matches the listing title anywhere in the row', () => {
+  assert.match(source, /const rowText = normalize\(row\.innerText\)/);
+  assert.match(source, /rowText\.includes\(propertyTitle\)/);
+  assert.match(source, /button\.textContent !== 'Edit listing'/);
 });
 
 test('Admin property deletion requires confirmation and uses the authenticated delete endpoint', () => {

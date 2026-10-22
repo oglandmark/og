@@ -1761,7 +1761,10 @@ app.get('/api/properties', async (req, res) => {
     // A listing lifecycle status is separate from the sale/rent purpose in
     // `status`. Keep paused/sold/rented listings out of the public catalogue
     // while preserving them in the owner's dashboard.
-    props = props.filter(p => !p.listingStatus || p.listingStatus === 'Active');
+    const lifecycleCallerId = Number(caller?.id);
+    props = props.filter(p => !p.listingStatus || p.listingStatus === 'Active' ||
+      (Number.isSafeInteger(lifecycleCallerId) &&
+        (Number(p.sellerId) === lifecycleCallerId || Number(p.agentId) === lifecycleCallerId)));
     if (type) {
       const types = type.split(',').map(t => t.trim());
       props = props.filter(p => types.includes(p.type));

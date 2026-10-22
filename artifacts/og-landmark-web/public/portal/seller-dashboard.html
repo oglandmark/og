@@ -2273,8 +2273,11 @@ function showPage(name){
   document.getElementById('nav-'+name)?.classList.add('active');
   const titles={dashboard:'Dashboard',properties:'My Listings','add-property':'Add Property',inquiries:'Leads',offers:'Offers',appointments:'Appointments',profile:'My Profile'};
   document.getElementById('page-title').textContent=titles[name]||'Dashboard';
-  if(name==='add-property') history.replaceState({},'','/seller/add-property');
-  else if(window.location.pathname.includes('/add-property')) history.replaceState({},'','/seller');
+  const isListingWorkspace=new URLSearchParams(window.location.search).get('workflow')==='listings'
+    || document.body.classList.contains('listing-workspace');
+  if(isListingWorkspace&&name==='add-property') history.replaceState({},'','/portal/seller-dashboard.html?workflow=listings&mode=add');
+  else if(isListingWorkspace&&name==='properties') history.replaceState({},'','/portal/seller-dashboard.html?workflow=listings&mode=manage');
+  else if(isListingWorkspace&&name==='dashboard') history.replaceState({},'','/portal/seller-dashboard.html?workflow=listings');
 }
 
 // ═══════════ HELPERS ═══════════

@@ -6,7 +6,6 @@ const vm = require('node:vm');
 
 const patchDashboardAuth = require('./patch-dashboard-auth');
 const bundlePath = path.join(__dirname, '..', 'public', 'assets', 'index-CXxrK7KP.js');
-const websiteHtmlPath = path.join(__dirname, '..', 'public', 'index.html');
 const userHtmlPath = path.join(__dirname, '..', 'public', 'user', 'index.html');
 
 function createLocalStorage(seed = {}) {
@@ -24,15 +23,11 @@ function createLocalStorage(seed = {}) {
   };
 }
 
-function extractMarkedInlineScript(htmlPath, marker) {
-  const html = fs.readFileSync(htmlPath, 'utf8');
-  const markerIndex = html.indexOf(marker);
-  assert.notEqual(markerIndex, -1, `Could not find script marker: ${marker}`);
-  const scriptStart = html.indexOf('<script>', markerIndex);
-  const scriptEnd = html.indexOf('</script>', scriptStart);
-  assert.notEqual(scriptStart, -1, 'Could not find inline script start');
-  assert.notEqual(scriptEnd, -1, 'Could not find inline script end');
-  return html.slice(scriptStart + '<script>'.length, scriptEnd);
+function extractUserBootstrapScript() {
+  const html = fs.readFileSync(userHtmlPath, 'utf8');
+  const match = html.match(/<script>([\s\S]*?)<\/script>/);
+  assert.ok(match, 'Could not find the User portal bootstrap script');
+  return match[1];
 }
 
 test('login and registration save the API session for the legacy dashboard and API clients', () => {
@@ -58,84 +53,76 @@ test('fails explicitly if the expected dashboard bundle changes', () => {
   );
 });
 
-test('a saved legacy Buyer session on /user is restored and sent to the User dashboard', () => {
-  const storage = createLocalStorage({
-    'og-landmark-store': JSON.stringify({
-      state: {
-        currentUser: { id: 123, name: 'Dashboard Buyer', role: 'Buyer' },
-        token: 'buyer-session-test',
-      },
-      version: 0,
-    }),
-  });
-  const location = { pathname: '/user', href: '/user' };
-  const timers = [];
-  const script = extractMarkedInlineScript(
-    websiteHtmlPath,
-    '<!-- ── Post-login/register redirect to the existing role dashboards ── -->',
-  );
+test('legacy Buyer and Seller sessions stay on the shared User portal', () => {
+  const script = extractUserBootstrapScript();
+  for (const role of ['Buyer', 'Seller']) {
+    const storage = createLocalStorage({
+      og_token: `${role.toLowerCase()}-session-test`,
+      og_user: JSON.stringify({ id: 123, name: `Dashboard ${role}`, role }),
+    });
+    const classes = [];
+    let destination = '';
 
-  vm.runInNewContext(script, {
-    localStorage: storage,
-    window: { location },
-    setTimeout(callback) {
-      timers.push(callback);
-      return timers.length;
-    },
-  });
-  timers.forEach((callback) => callback());
+    vm.runInNewContext(script, {
+      localStorage: storage,
+      document: { documentElement: { classList: { add(value) { classes.push(value); } } } },
+      window: { location: { replace(value) { destination = value; } } },
+    });
 
-  assert.equal(storage.getItem('og_token'), 'buyer-session-test');
-  assert.equal(JSON.parse(storage.getItem('og_user')).id, 123);
-  assert.equal(location.href, '/portal/seller-dashboard.html');
+    assert.equal(destination, '');
+    assert.ok(classes.includes('public-account'));
+    assert.equal(storage.getItem('og_token'), `${role.toLowerCase()}-session-test`);
+    assert.equal(JSON.parse(storage.getItem('og_user')).id, 123);
+  }
 });
 
-test('the standalone /user entry can recover a persisted session before redirecting', () => {
-  const storage = createLocalStorage({
-    'og-landmark-store': JSON.stringify({
-      state: {
-        currentUser: { id: 456, name: 'Dashboard Seller', role: 'Seller' },
-        token: 'seller-session-test',
-      },
-      version: 0,
-    }),
+test('Agent and Developer sessions keep loading the compiled staff portal', () => {
+  const script = extractUserBootstrapScript();
+  for (const role of ['Agent', 'Developer']) {
+    const storage = createLocalStorage({
+      og_token: `${role.toLowerCase()}-session-test`,
+      og_user: JSON.stringify({ id: 456, name: `Dashboard ${role}`, role }),
+    });
+    const elements = [];
+    let destination = '';
+    const window = { location: { replace(value) { destination = value; } } };
+    const document = {
+      documentElement: { classList: { add() {} } },
+      head: { appendChild(element) { elements.push(element); } },
+      createElement(tagName) { return { tagName }; },
+    };
+
+    vm.runInNewContext(script, { localStorage: storage, document, window });
+
+    assert.equal(destination, '');
+    assert.equal(window.__OG_USE_COMPILED_PORTAL__, true);
+    assert.ok(elements.some(element => element.href === '/user/assets/user-Dqdqrl3U.css'));
+    assert.ok(elements.some(element => element.src === '/user/assets/user-6XP8lI2T.js'));
+  }
+});
+
+test('Admin sessions retain the Admin dashboard and missing sessions go to sign-in', () => {
+  const script = extractUserBootstrapScript();
+  const adminStorage = createLocalStorage({
+    og_token: 'admin-session-test',
+    og_user: JSON.stringify({ id: 789, role: 'Admin' }),
   });
   let destination = '';
-  const html = fs.readFileSync(userHtmlPath, 'utf8');
-  const match = html.match(/<script>([\s\S]*?)<\/script>/);
-  assert.ok(match, 'Could not find the /user redirect script');
-
-  vm.runInNewContext(match[1], {
-    localStorage: storage,
-    window: { location: { replace(value) { destination = value; } } },
-  });
-
-  assert.equal(destination, '/portal/seller-dashboard.html');
-  assert.equal(storage.getItem('og_token'), 'seller-session-test');
-  assert.equal(JSON.parse(storage.getItem('og_user')).id, 456);
-});
-
-test('legacy Seller sessions without canonical permissions also open the User dashboard', () => {
-  const storage = createLocalStorage({
-    'og_token': 'seller-session-test',
-    'og_user': JSON.stringify({ id: 789, role: 'Seller' }),
-  });
-  const location = { pathname: '/user', href: '/user' };
-  const timers = [];
-  const script = extractMarkedInlineScript(
-    websiteHtmlPath,
-    '<!-- ── Post-login/register redirect to the existing role dashboards ── -->',
-  );
+  const document = { documentElement: { classList: { add() {} } } };
 
   vm.runInNewContext(script, {
-    localStorage: storage,
-    window: { location },
-    setTimeout(callback) {
-      timers.push(callback);
-      return timers.length;
-    },
+    localStorage: adminStorage,
+    document,
+    window: { location: { replace(value) { destination = value; } } },
   });
-  timers.forEach(callback => callback());
+  assert.equal(destination, '/admin/');
 
-  assert.equal(location.href, '/portal/seller-dashboard.html');
+  destination = '';
+  const emptyStorage = createLocalStorage();
+  vm.runInNewContext(script, {
+    localStorage: emptyStorage,
+    document,
+    window: { location: { replace(value) { destination = value; } } },
+  });
+  assert.equal(destination, '/auth?mode=login');
 });

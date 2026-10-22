@@ -46,8 +46,10 @@
     return { email: String(email || '').trim(), password: String(password || '') };
   }
 
-  function otpRequest(email, otp) {
-    return { email: String(email || '').trim().toLowerCase(), otp: String(otp || '').trim() };
+  function otpRequest(email, otp, rememberDevice = false) {
+    const payload = { email: String(email || '').trim().toLowerCase(), otp: String(otp || '').trim() };
+    if (rememberDevice) payload.rememberDevice = true;
+    return payload;
   }
 
   function requiresOtp(payload) {
@@ -78,6 +80,7 @@
     const response = await windowRef.fetch(url, {
       method,
       headers,
+      credentials: 'same-origin',
       ...(method === 'GET' ? {} : { body: JSON.stringify(body) }),
     });
     const payload = await readJson(response);
@@ -114,6 +117,8 @@
       .og-admin-otp [data-error]{margin:0 0 9px;color:#b91c1c;font-size:12px}
       .og-admin-otp [data-actions]{display:flex;gap:8px;flex-wrap:wrap}
       .og-admin-otp [data-resend],.og-admin-otp [data-back]{background:#e9edf2;color:#334155}
+      .og-admin-otp [data-remember-label]{display:flex;align-items:flex-start;gap:8px;margin:0 0 12px;color:#475569;font:500 12px/1.45 DM Sans,system-ui,sans-serif}
+      .og-admin-otp [data-remember-device]{margin:2px 0 0;accent-color:#0B1F3A}
       .og-admin-login-error{margin:12px 0 0;padding:10px 12px;border:1px solid #fecdd3;border-radius:10px;background:#fff1f2;color:#b91c1c;font:500 12px/1.45 DM Sans,system-ui,sans-serif}
       .og-admin-login-error[hidden]{display:none}
     `;
@@ -142,6 +147,7 @@
     let verifyButton;
     let resendButton;
     let backButton;
+    let rememberDeviceCheckbox;
     let credentialErrorNode;
 
     function findForm() {
@@ -159,6 +165,7 @@
         <p data-instructions>Enter the six-digit sign-in code sent to your admin email.</p>
         <p data-error role="alert" hidden></p>
         <input data-code inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="Six-digit verification code">
+        <label data-remember-label><input data-remember-device type="checkbox">Remember this device for 30 days. Only select this on a private device.</label>
         <div data-actions>
           <button type="button" data-verify>Verify code</button>
           <button type="button" data-resend>Send another code</button>
@@ -170,6 +177,7 @@
       verifyButton = container.querySelector('[data-verify]');
       resendButton = container.querySelector('[data-resend]');
       backButton = container.querySelector('[data-back]');
+      rememberDeviceCheckbox = container.querySelector('[data-remember-device]');
       verifyButton.addEventListener('click', verifyCode);
       resendButton.addEventListener('click', resendCode);
       backButton.addEventListener('click', returnToCredentials);
@@ -218,6 +226,7 @@
       if (verifyButton) verifyButton.disabled = value;
       if (resendButton) resendButton.disabled = value;
       if (backButton) backButton.disabled = value;
+      if (rememberDeviceCheckbox) rememberDeviceCheckbox.disabled = value;
     }
 
     function acceptSession(payload) {
@@ -278,7 +287,7 @@
       showError('');
       setBusy(true);
       try {
-        const payload = await request(windowRef, endpointsForWindow.otp, otpRequest(pendingEmail, otp));
+        const payload = await request(windowRef, endpointsForWindow.otp, otpRequest(pendingEmail, otp, rememberDeviceCheckbox.checked));
         if (!acceptSession(payload)) return;
       } catch (error) {
         showError(error instanceof Error ? error.message : 'Could not verify this code. Try again.');

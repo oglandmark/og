@@ -18,6 +18,9 @@ use Illuminate\Support\Str;
 
 class ApiController extends Controller
 {
+    private const ADMIN_TRUSTED_DEVICE_COOKIE = 'og_admin_trusted_device';
+    private const ADMIN_TRUSTED_DEVICE_TTL_DAYS = 30;
+
     public function handle(Request $request, ?string $path = null)
     {
         $path = trim((string) ($path ?? ''), '/');
@@ -415,6 +418,7 @@ class ApiController extends Controller
             $index = $this->indexById($data['users'] ?? [], $user['id']);
             if ($index === null) return $this->json(['error' => 'Invalid or expired reset code'], 400);
             $data['users'][$index]['password'] = $this->hashLegacyPassword($newPassword);
+            unset($data['users'][$index]['trustedDevices']);
             $this->notifyAccountUpdate(
                 $data,
                 (int) $user['id'],
@@ -436,6 +440,14 @@ class ApiController extends Controller
                 return $this->json(['error' => 'Invalid admin credentials.'], 401);
             }
             if ($email === 'admin@test.com' && config('app.env') === 'local') {
+                return $this->json([
+                    'success' => true,
+                    'user' => $this->safeUser($user),
+                    'token' => $this->createSession($user),
+                ]);
+            }
+            $trustedDeviceToken = (string) $request->cookie(self::ADMIN_TRUSTED_DEVICE_COOKIE, '');
+            if ($this->isTrustedAdminDevice($user, $trustedDeviceToken)) {
                 return $this->json([
                     'success' => true,
                     'user' => $this->safeUser($user),
@@ -486,11 +498,32 @@ class ApiController extends Controller
                         : 'Incorrect admin verification code.',
                 ], 400);
             }
-            return $this->json([
+            $response = $this->json([
                 'success' => true,
                 'user' => $this->safeUser($user),
                 'token' => $this->createSession($user),
             ]);
+            if ($request->boolean('rememberDevice')) {
+                $trustedDeviceToken = bin2hex(random_bytes(32));
+                try {
+                    if ($this->storeTrustedAdminDevice((int) $user['id'], $trustedDeviceToken)) {
+                        $response->withCookie(cookie(
+                            self::ADMIN_TRUSTED_DEVICE_COOKIE,
+                            $trustedDeviceToken,
+                            self::ADMIN_TRUSTED_DEVICE_TTL_DAYS * 24 * 60,
+                            '/api/auth',
+                            null,
+                            app()->environment('production') || $request->isSecure(),
+                            true,
+                            false,
+                            'strict',
+                        ));
+                    }
+                } catch (\Throwable $exception) {
+                    Log::warning('Trusted admin device could not be saved.', ['error' => $exception->getMessage()]);
+                }
+            }
+            return $response;
         }
 
         return $this->json(['error' => 'Not found'], 404);
@@ -2345,6 +2378,48 @@ class ApiController extends Controller
         return null;
     }
 
+    private function isTrustedAdminDevice(array $user, string $token): bool
+    {
+        if (!$this->isAdmin($user) || $token === '') return false;
+        $tokenHash = hash('sha256', $token);
+        foreach ((array) ($user['trustedDevices'] ?? []) as $device) {
+            if (!is_array($device) || empty($device['tokenHash']) || empty($device['expiresAt'])) continue;
+            try {
+                if (\Illuminate\Support\Carbon::parse($device['expiresAt'])->isFuture()
+                    && hash_equals((string) $device['tokenHash'], $tokenHash)) {
+                    return true;
+                }
+            } catch (\Throwable) {
+                continue;
+            }
+        }
+        return false;
+    }
+
+    private function storeTrustedAdminDevice(int $userId, string $token): bool
+    {
+        $data = JsonStore::read();
+        $index = $this->indexById($data['users'] ?? [], $userId);
+        if ($index === null || !$this->isAdmin($data['users'][$index])) return false;
+
+        $validDevices = array_values(array_filter(
+            (array) ($data['users'][$index]['trustedDevices'] ?? []),
+            function ($device): bool {
+                if (!is_array($device) || empty($device['tokenHash']) || empty($device['expiresAt'])) return false;
+                try { return \Illuminate\Support\Carbon::parse($device['expiresAt'])->isFuture(); }
+                catch (\Throwable) { return false; }
+            },
+        ));
+        $validDevices[] = [
+            'tokenHash' => hash('sha256', $token),
+            'createdAt' => now()->toISOString(),
+            'expiresAt' => now()->addDays(self::ADMIN_TRUSTED_DEVICE_TTL_DAYS)->toISOString(),
+        ];
+        $data['users'][$index]['trustedDevices'] = array_slice($validDevices, -10);
+        JsonStore::write($data);
+        return true;
+    }
+
     private function createSession(array $user): string
     {
         $token = rtrim(strtr(base64_encode(random_bytes(48)), '+/', '-_'), '=');
@@ -2673,6 +2748,7 @@ class ApiController extends Controller
     private function safeUser(array $user): array
     {
         unset($user['password']);
+        unset($user['trustedDevices']);
         $legacyRole = strtolower((string) ($user['role'] ?? 'user'));
         $permissions = array_values(array_unique(array_filter(
             (array) ($user['permissions'] ?? []),

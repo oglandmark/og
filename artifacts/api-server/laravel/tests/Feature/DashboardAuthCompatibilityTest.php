@@ -410,6 +410,62 @@ class DashboardAuthCompatibilityTest extends TestCase
         $this->assertSame(200, $verification->status());
     }
 
+    public function test_admin_can_trust_this_device_after_otp_but_other_devices_still_need_otp(): void
+    {
+        $this->seedDashboardFixture();
+        config([
+            'mail.default' => 'array',
+            'mail.mailers.array' => ['transport' => 'array'],
+            'mail.mailers.smtp.username' => 'dashboard-test-smtp-user',
+            'mail.mailers.smtp.password' => 'dashboard-test-smtp-password',
+        ]);
+
+        $this->postJson('/api/auth/admin-verify', [
+            'email' => 'dashboard-admin@example.test',
+            'password' => self::PASSWORD,
+        ])->assertOk()->assertJsonMissingPath('token');
+
+        $sent = app('mail.manager')->mailer()->getSymfonyTransport()->messages();
+        $message = $sent->first()->getOriginalMessage();
+        preg_match('/\b(\d{6})\b/', (string) $message->getTextBody(), $matches);
+
+        $otpResponse = $this->postJson('/api/auth/admin-otp', [
+            'email' => 'dashboard-admin@example.test',
+            'otp' => $matches[1],
+            'rememberDevice' => true,
+        ])->assertOk()->assertJsonStructure(['token', 'user']);
+
+        $cookie = $otpResponse->getCookie('og_admin_trusted_device', false);
+        $this->assertNotNull($cookie);
+        $this->assertTrue($cookie->isHttpOnly());
+        $this->assertSame('/api/auth', $cookie->getPath());
+        $deviceToken = $cookie->getValue();
+
+        $storedAdmin = collect(JsonStore::read()['users'])->firstWhere('email', 'dashboard-admin@example.test');
+        $storedDevice = $storedAdmin['trustedDevices'][0] ?? null;
+        $this->assertNotNull($storedDevice);
+        $this->assertSame(hash('sha256', $deviceToken), $storedDevice['tokenHash']);
+        $this->assertArrayNotHasKey('trustedDevices', $otpResponse->json('user'));
+
+        $trustedLogin = $this->withUnencryptedCookie('og_admin_trusted_device', $deviceToken)
+            ->postJson('/api/auth/admin-verify', [
+                'email' => 'dashboard-admin@example.test',
+                'password' => self::PASSWORD,
+            ]);
+        fwrite(STDERR, "trusted login response: " . $trustedLogin->getContent() . "\n");
+        $trustedLogin->assertOk()->assertJsonStructure(['token', 'user']);
+
+        $this->withUnencryptedCookie('og_admin_trusted_device', 'unrecognized-device-token')
+            ->postJson('/api/auth/admin-verify', [
+                'email' => 'dashboard-admin@example.test',
+                'password' => self::PASSWORD,
+            ])
+            ->assertOk()
+            ->assertJsonMissingPath('token');
+
+        $this->assertCount(2, app('mail.manager')->mailer()->getSymfonyTransport()->messages());
+    }
+
     public function test_agent_admin_messages_and_progress_reports_notify_both_sides(): void
     {
         $this->seedDashboardFixture();

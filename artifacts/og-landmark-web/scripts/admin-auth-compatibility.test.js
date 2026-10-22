@@ -47,6 +47,11 @@ test('admin login and OTP requests match Laravel input fields and OTP response c
     email: 'admin@example.test',
     otp: '123456',
   });
+  assert.deepEqual(otpRequest(' ADMIN@example.test ', ' 123456 ', true), {
+    email: 'admin@example.test',
+    otp: '123456',
+    rememberDevice: true,
+  });
   assert.equal(requiresOtp({ success: true, message: 'Verification code sent.' }), true);
   assert.equal(requiresOtp({ success: true, user: { role: 'Admin' }, token: 'session' }), false);
   assert.equal(requiresOtp({ error: 'Invalid admin credentials.' }), false);

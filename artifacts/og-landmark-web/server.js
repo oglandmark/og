@@ -388,43 +388,6 @@ if (laravelWebUrl) {
   });
 }
 
-// The admin-only fixed-origin bridge lets the website preview call the live
-// Laravel API without relying on the production CORS allowlist.
-const liveAdminApiRoot = 'https://api.oglandmark.com/api';
-const allowedAdminApiPath = /^\/(?:auth\/(?:me|logout|admin-verify|admin-otp|admin-forgot-password|admin-request-reset|admin-reset-password|admin-confirm-reset)|admin(?:\/|$)|users(?:\/|$)|mobile\/(?:settings|banners)(?:\/|$)|upload(?:\/|$))/;
-app.use('/admin-live-api', async (req, res) => {
-  const apiPath = req.url.split('?')[0] || '/';
-  if (!allowedAdminApiPath.test(apiPath)) {
-    return res.status(404).json({ error: 'This proxy only exposes approved admin API routes.' });
-  }
-
-  const hasBody = !['GET', 'HEAD'].includes(req.method);
-  const target = `${liveAdminApiRoot}${req.url}`;
-  try {
-    const headers = { ...req.headers };
-    for (const header of ['host', 'connection', 'origin', 'referer', 'content-length']) delete headers[header];
-    const upstream = await fetch(target, {
-      method: req.method,
-      headers,
-      body: hasBody ? req : undefined,
-      duplex: hasBody ? 'half' : undefined,
-      redirect: 'manual',
-    });
-    res.status(upstream.status);
-    upstream.headers.forEach((value, key) => {
-      if (!['connection', 'content-encoding', 'content-length', 'transfer-encoding', 'set-cookie'].includes(key)) {
-        res.setHeader(key, value);
-      }
-    });
-    res.setHeader('Cache-Control', 'no-store');
-    if (upstream.body) Readable.fromWeb(upstream.body).pipe(res);
-    else res.end();
-  } catch (error) {
-    console.error(`Live admin API proxy failed: ${error.message}`);
-    res.status(502).json({ error: 'Live production API is unavailable.' });
-  }
-});
-
 // Keep the public website on this Node process while allowing its existing
 // /api/* origin to be switched to Laravel with one environment change. The
 // proxy is opt-in so removing LARAVEL_API_URL is an immediate rollback to the

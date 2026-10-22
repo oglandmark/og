@@ -39,11 +39,12 @@ test('admin mobile demo catalog mirrors the bundled mobile demo records', () => 
 test('mobile management module is loaded by the existing website admin', () => {
   const html = fs.readFileSync(path.join(root, 'public/admin/index.html'), 'utf8');
   assert.match(html, /admin-mobile-management\.js/);
-  assert.match(html, /window\.__OG_API_BASE__\s*=\s*'\/admin-live-api'/);
+  assert.match(html, /window\.__OG_API_BASE__\s*=\s*'\/api'/);
   assert.match(html, /replit\\\.dev\|replit\\\.app\|repl\\\.co/);
+  assert.doesNotMatch(html, /admin-live-api/);
 });
 
-test('live mobile manager uses the production-backed API collections requested', () => {
+test('mobile manager uses the existing API collections requested', () => {
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   for (const endpoint of [
     '/admin/properties',

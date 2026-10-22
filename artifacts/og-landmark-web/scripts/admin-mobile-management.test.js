@@ -62,10 +62,14 @@ test('mobile management module is loaded by the existing website admin', () => {
   assert.match(script, /aria-controls/);
   assert.match(script, /aria-expanded/);
   assert.match(script, /event\.key === 'Escape'/);
+  assert.match(script, /root\.classList\.add\('og-admin-shell'\)/);
+  assert.match(styles, /^#root\.og-admin-shell aside \{/m);
+  assert.match(styles, /^#root\.og-admin-shell aside \+ div \{/m);
+  assert.doesNotMatch(styles, /^#root\.og-admin-dashboard aside \{/m);
   assert.match(styles, /@media \(max-width: 900px\)/);
   assert.match(styles, /og-admin-shell\.og-mobile-nav-open aside/);
   assert.match(styles, /og-admin-nav-overlay/);
-  assert.match(html, /admin-dashboard-polish\.css\?v=main-overview-20261022/);
+  assert.match(html, /admin-dashboard-polish\.css\?v=stable-admin-menu-20261022/);
 });
 
 test('main dashboard adds real management shortcuts above the existing data-backed overview', () => {
@@ -155,7 +159,7 @@ test('admin dashboard has an accessible off-canvas navigation on tablet and mobi
   assert.match(styles, /@media \(max-width: 900px\)/);
   assert.match(styles, /og-admin-shell\.og-mobile-nav-open aside/);
   assert.match(styles, /og-admin-nav-overlay/);
-  assert.match(html, /admin-dashboard-polish\.css\?v=main-overview-20261022/);
+  assert.match(html, /admin-dashboard-polish\.css\?v=stable-admin-menu-20261022/);
 });
 
 test('admin banner editor can replace uploaded images and videos and confirm deletion', () => {

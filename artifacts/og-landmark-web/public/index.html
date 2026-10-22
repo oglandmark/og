@@ -325,11 +325,12 @@
         const uStr  = localStorage.getItem('og_user');
         if (!token || !uStr) return;
         let user; try { user = JSON.parse(uStr); } catch(e){ return; }
-        const role = user.role || 'Buyer';
-        const dashMap = { Admin:'/admin/', Agent:'/user/', Seller:'/user/', Buyer:'/user/' };
-        const dashUrl = dashMap[role] || '/user/';
+        const role = user.role || 'User';
+        const roleKey = String(role).toLowerCase();
+        const dashMap = { admin:'/admin/', user:'/portal/buyer-dashboard.html', buyer:'/portal/buyer-dashboard.html', seller:'/portal/buyer-dashboard.html', agent:'/user/', developer:'/user/' };
+        const dashUrl = dashMap[roleKey] || '/user/';
         const initials = (user.name||role).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-        const roleColor = { Admin:'#dc2626', Agent:'#7c3aed', Seller:'#16a34a', Buyer:'#2563eb' }[role] || '#C8A45A';
+        const roleColor = { admin:'#dc2626', agent:'#7c3aed', developer:'#7c3aed', seller:'#16a34a', buyer:'#2563eb', user:'#2563eb' }[roleKey] || '#C8A45A';
 
         const sty = document.createElement('style');
         sty.textContent = `
@@ -428,6 +429,46 @@
       })();
     </script>
 
+    <!-- ── Public account actions: one shared User account for login and registration ── -->
+    <script>
+      (function () {
+        if (localStorage.getItem('og_token') && localStorage.getItem('og_user')) return;
+
+        const style = document.createElement('style');
+        style.textContent = `
+          a.og-nav-login,a.og-nav-register{display:inline-flex!important;align-items:center;justify-content:center;min-height:38px;padding:8px 15px!important;border-radius:9px!important;font-size:13px!important;font-weight:700!important;line-height:1!important;text-decoration:none!important;white-space:nowrap;transition:background .18s ease,color .18s ease,border-color .18s ease!important}
+          a.og-nav-login{background:#fff!important;color:#0B1F3A!important;border:1.5px solid #C8A45A!important}
+          a.og-nav-login:hover{background:#fbf8f0!important;border-color:#b8943a!important}
+          a.og-nav-register{background:#C8A45A!important;color:#0B1F3A!important;border:1.5px solid #C8A45A!important;box-shadow:0 2px 7px rgba(11,31,58,.12)}
+          a.og-nav-register:hover{background:#b8943a!important;border-color:#b8943a!important}
+          @media(max-width:640px){a.og-nav-login,a.og-nav-register{min-height:36px;padding:7px 11px!important;font-size:12px!important}}
+        `;
+        document.head.appendChild(style);
+
+        function applyAccountActions() {
+          const login = document.querySelector('a.og-nav-login,a[href*="auth?role=buyer"]');
+          const register = document.querySelector('a.og-nav-register,a[href*="auth?role=seller"]');
+          if (login && login.dataset.ogAuthCta !== 'login') {
+            login.href = '/auth?mode=login';
+            login.textContent = 'Log In';
+            login.setAttribute('aria-label', 'Log in to your account');
+            login.dataset.ogAuthCta = 'login';
+            login.classList.add('og-nav-login');
+          }
+          if (register && register.dataset.ogAuthCta !== 'register') {
+            register.href = '/auth?mode=register';
+            register.textContent = 'Register';
+            register.setAttribute('aria-label', 'Register for an account');
+            register.dataset.ogAuthCta = 'register';
+            register.classList.add('og-nav-register');
+          }
+        }
+
+        applyAccountActions();
+        new MutationObserver(applyAccountActions).observe(document.body, { childList: true, subtree: true });
+      })();
+    </script>
+
     <!-- ── Post-login/register redirect → React /admin or /user portals ── -->
     <script>
       (function () {
@@ -442,7 +483,7 @@
               if (!token || !uStr) return;
               var user = JSON.parse(uStr);
               var role = String(user.role || '').toLowerCase();
-              var dest = role === 'admin' ? '/admin/' : '/user/';
+              var dest = role === 'admin' ? '/admin/' : (role === 'agent' || role === 'developer' ? '/user/' : '/portal/buyer-dashboard.html');
               if (role === 'admin') {
                 try { localStorage.setItem('adminAuth', 'true'); } catch (e) {}
               }
@@ -945,6 +986,6 @@
         window.addEventListener('popstate',function(){ if(_cms) setTimeout(function(){ applyCms(_cms); },500); });
       })();
     </script>
-    <script src="/user-auth-compatibility.js"></script>
+    <script src="/user-auth-compatibility.js?v=shared-user-login-20261022"></script>
   </body>
 </html>

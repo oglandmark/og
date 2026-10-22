@@ -11,6 +11,21 @@
     var root = document.getElementById('root');
     if (!root) return;
 
+    if (new URLSearchParams(window.location.search).get('mode') === 'login' && !root.dataset.ogLoginModeSelected) {
+      var loginTab = Array.from(root.querySelectorAll('button,[role="tab"],[role="button"]')).find(function (button) {
+        return /^(sign in|log in)$/i.test((button.textContent || '').trim());
+      });
+      if (loginTab && !root.dataset.ogLoginModePending) {
+        root.dataset.ogLoginModePending = 'true';
+        window.setTimeout(function () {
+          if (!root.isConnected || root.dataset.ogLoginModeSelected) return;
+          loginTab.click();
+          root.dataset.ogLoginModeSelected = 'true';
+          delete root.dataset.ogLoginModePending;
+        }, 80);
+      }
+    }
+
     root.querySelectorAll('h3').forEach(function (heading) {
       var text = (heading.textContent || '').trim();
       if (text === 'Join as a Buyer' || text === 'Start Selling Today') {

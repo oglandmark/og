@@ -10,6 +10,57 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
     <script src="/og-api-base.js"></script>
     <script src="/brand-logo-compatibility.js?v=official-logo-20261021"></script>
+    <script>
+      (function () {
+        function selectLoginTab() {
+          if (new URLSearchParams(window.location.search).get('mode') !== 'login') return false;
+          const root = document.getElementById('root');
+          if (!root) return false;
+          const loginButton = [...root.querySelectorAll('button,[role="tab"]')].find((button) => /^sign in$/i.test(button.textContent.trim()));
+          if (!loginButton) return false;
+          loginButton.click();
+          return true;
+        }
+
+        function watchLoginTab() {
+          if (selectLoginTab()) return;
+          const root = document.getElementById('root');
+          if (!root) return;
+          const observer = new MutationObserver(() => {
+            if (selectLoginTab()) observer.disconnect();
+          });
+          observer.observe(root, { childList: true, subtree: true });
+          window.setTimeout(() => observer.disconnect(), 10000);
+        }
+
+        function routeAuthenticatedUser() {
+          if (!window.location.pathname.startsWith('/user')) return;
+          try {
+            const token = localStorage.getItem('og_token');
+            const rawUser = localStorage.getItem('og_user');
+            if (!token || !rawUser) return;
+            const role = String(JSON.parse(rawUser).role || '').toLowerCase();
+            const destination = role === 'admin'
+              ? '/admin/'
+              : role === 'agent' || role === 'developer'
+                ? null
+                : '/portal/buyer-dashboard.html';
+            if (destination) window.location.replace(destination);
+          } catch (_) {}
+        }
+        const originalSetItem = Storage.prototype.setItem;
+        Storage.prototype.setItem = function (key, value) {
+          originalSetItem.call(this, key, value);
+          if (key === 'og_token' || key === 'og_user') routeAuthenticatedUser();
+        };
+        routeAuthenticatedUser();
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', watchLoginTab, { once: true });
+        } else {
+          watchLoginTab();
+        }
+      })();
+    </script>
     <script type="module" crossorigin src="/user/assets/user-6XP8lI2T.js"></script>
     <link rel="stylesheet" crossorigin href="/user/assets/user-Dqdqrl3U.css">
   </head>

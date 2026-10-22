@@ -275,11 +275,11 @@ async function doLogin() {
     });
     const d = await r.json();
     if (!r.ok) { setLoading('login-btn', false, 'Sign In'); return showErr('login-err', d.error || 'Login failed.'); }
-    if (d.user.role !== 'Buyer') { setLoading('login-btn', false, 'Sign In'); return showErr('login-err', 'This account is not registered as a Buyer.'); }
+    if (!['User', 'Buyer'].includes(d.user.role)) { setLoading('login-btn', false, 'Sign In'); return showErr('login-err', 'This account is not a public User account.'); }
 
     localStorage.setItem('og_token', d.token);
     localStorage.setItem('og_user', JSON.stringify(d.user));
-    window.location.href = '/portal/buyer-dashboard.html';
+    window.location.href = '/user/';
   } catch(e) {
     showErr('login-err', 'Connection error. Please try again.');
     setLoading('login-btn', false, 'Sign In');
@@ -356,14 +356,14 @@ async function doRegister() {
       setLoading('reg-btn', false, 'Create Account');
       return showErr('reg-err', d.error || 'Registration failed. Please try again.');
     }
-    if (d.user.role !== 'Buyer') {
+    if (!['User', 'Buyer'].includes(d.user.role)) {
       setLoading('reg-btn', false, 'Create Account');
       return showErr('reg-err', 'Registration error. Please contact support.');
     }
     // Save auth and redirect to dashboard
     localStorage.setItem('og_user', JSON.stringify(d.user));
     localStorage.setItem('og_token', d.token);
-    window.location.href = '/portal/buyer-dashboard.html';
+    window.location.href = '/user/';
   } catch(e) {
     showErr('reg-err', 'Connection error. Please try again.');
     setLoading('reg-btn', false, 'Create Account');

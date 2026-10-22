@@ -327,7 +327,7 @@
         let user; try { user = JSON.parse(uStr); } catch(e){ return; }
         const role = user.role || 'User';
         const roleKey = String(role).toLowerCase();
-        const dashMap = { admin:'/admin/', user:'/portal/buyer-dashboard.html', buyer:'/portal/buyer-dashboard.html', seller:'/portal/buyer-dashboard.html', agent:'/user/', developer:'/user/' };
+        const dashMap = { admin:'/admin/', user:'/user/', buyer:'/user/', seller:'/user/', agent:'/user/', developer:'/user/' };
         const dashUrl = dashMap[roleKey] || '/user/';
         const initials = (user.name||role).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
         const roleColor = { admin:'#dc2626', agent:'#7c3aed', developer:'#7c3aed', seller:'#16a34a', buyer:'#2563eb', user:'#2563eb' }[roleKey] || '#C8A45A';
@@ -483,7 +483,7 @@
               if (!token || !uStr) return;
               var user = JSON.parse(uStr);
               var role = String(user.role || '').toLowerCase();
-              var dest = role === 'admin' ? '/admin/' : (role === 'agent' || role === 'developer' ? '/user/' : '/portal/buyer-dashboard.html');
+              var dest = role === 'admin' ? '/admin/' : '/user/';
               if (role === 'admin') {
                 try { localStorage.setItem('adminAuth', 'true'); } catch (e) {}
               }

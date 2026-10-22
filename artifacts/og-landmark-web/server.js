@@ -5823,9 +5823,10 @@ app.get('/buyer/*', redirectToDashboard('buyer'));
 app.get('/admin-dashboard', redirectLegacyAdmin);
 const buyerDashboard = (req, res) => {
   noCache(res);
-  res.sendFile(path.join(publicDir, 'portal/buyer-dashboard.html'));
+  res.redirect(302, '/user/');
 };
-// Keep legacy static portal dashboard URLs available alongside the React portals.
+// Send old User dashboard URLs to the current shared-account portal.
+app.get('/portal/buyer-dashboard.html', buyerDashboard);
 app.get('/portal/buyer-dashboard',  buyerDashboard);
 app.get('/portal/buyer-dashboard/*', buyerDashboard);
 

@@ -40,12 +40,9 @@
             const rawUser = localStorage.getItem('og_user');
             if (!token || !rawUser) return;
             const role = String(JSON.parse(rawUser).role || '').toLowerCase();
-            const destination = role === 'admin'
-              ? '/admin/'
-              : role === 'agent' || role === 'developer'
-                ? null
-                : '/portal/buyer-dashboard.html';
-            if (destination) window.location.replace(destination);
+            if (role === 'admin' && window.location.pathname !== '/admin/') {
+              window.location.replace('/admin/');
+            }
           } catch (_) {}
         }
         const originalSetItem = Storage.prototype.setItem;

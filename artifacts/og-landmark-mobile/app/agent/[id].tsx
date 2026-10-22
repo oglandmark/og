@@ -1,14 +1,14 @@
 /**
  * Agent Professional Profile — public buyer-facing view of a verified agent.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert, Image, Linking, Modal, Platform, Pressable,
   ScrollView, Share, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
@@ -194,20 +194,22 @@ export default function AgentProfileScreen() {
   const [activeTab,     setActiveTab]     = useState<'For Sale' | 'For Rent' | 'Featured'>('For Sale');
   const [managedAgent, setManagedAgent] = useState<SampleAgent | null>(null);
   const [agentLoading, setAgentLoading] = useState(true);
+  const [profilePhotoFailed, setProfilePhotoFailed] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
+  useFocusEffect(useCallback(() => {
+    let active = true;
     setAgentLoading(true);
     getAgents()
       .then((records) => {
-        if (!mounted) return;
+        if (!active) return;
         const record = records.find((item) => String(item.id) === String(id));
         setManagedAgent(record ? apiAgentToSample(record) : null);
+        setProfilePhotoFailed(false);
       })
-      .catch(() => { if (mounted) setManagedAgent(null); })
-      .finally(() => { if (mounted) setAgentLoading(false); });
-    return () => { mounted = false; };
-  }, [id]);
+      .catch(() => { if (active) setManagedAgent(null); })
+      .finally(() => { if (active) setAgentLoading(false); });
+    return () => { active = false; };
+  }, [id]));
 
   // Resolve from the admin-managed directory first, then support the logged-in
   // agent's private profile route as before.
@@ -296,8 +298,13 @@ export default function AgentProfileScreen() {
         {/* avatar */}
         <View style={styles.avatarWrap}>
           <View style={[styles.avatar, { backgroundColor: agent.color }]}>
-            {agent.profileImage ? (
-              <Image source={agent.profileImage} style={styles.avatarImage} />
+            {agent.profileImage && !profilePhotoFailed ? (
+              <Image
+                key={JSON.stringify(agent.profileImage)}
+                source={agent.profileImage}
+                style={styles.avatarImage}
+                onError={() => setProfilePhotoFailed(true)}
+              />
             ) : (
               <Text style={styles.avatarInitials}>{agent.initials}</Text>
             )}

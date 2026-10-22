@@ -16,7 +16,7 @@ const agentProfileScreen = readFileSync(
 test('Home sample-agent cards resolve to their sample profiles', () => {
   assert.match(
     homeScreen,
-    /const visibleAgents = managedAgents\.length > 0 \? managedAgents : SAMPLE_AGENTS;/,
+    /const visibleAgents = !agentDirectoryLoaded \|\| agentDirectoryFailed \? SAMPLE_AGENTS : managedAgents;/,
   );
   assert.match(
     homeScreen,
@@ -30,4 +30,13 @@ test('Home sample-agent cards resolve to their sample profiles', () => {
     agentProfileScreen,
     /:\s*sampleAgent\s*\?\s*toProfile\(sampleAgent,\s*true\)/,
   );
+});
+
+test('Agent details refresh managed profiles whenever the route regains focus', () => {
+  assert.match(agentProfileScreen, /useFocusEffect\(useCallback\(/);
+  assert.match(agentProfileScreen, /getAgents\(\)/);
+  assert.match(agentProfileScreen, /setProfilePhotoFailed\(false\)/);
+  assert.match(agentProfileScreen, /key=\{JSON\.stringify\(agent\.profileImage\)\}/);
+  assert.match(agentProfileScreen, /onError=\{\(\) => setProfilePhotoFailed\(true\)\}/);
+  assert.match(agentProfileScreen, /agent\.profileImage && !profilePhotoFailed/);
 });

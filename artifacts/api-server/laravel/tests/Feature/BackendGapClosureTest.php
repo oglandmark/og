@@ -739,6 +739,47 @@ class BackendGapClosureTest extends TestCase
         $this->assertSame([2], $saved['mobileSettings']['hiddenDemoPropertyIds']);
     }
 
+    public function test_admin_can_manage_mobile_agent_profiles_without_deleting_linked_accounts(): void
+    {
+        $this->seedData([
+            'users' => [
+                $this->user(1, 'mobile-admin@example.test', 'Admin'),
+                $this->user(2, 'agent-account@example.test', 'Agent'),
+            ],
+            'mobileAgents' => [
+                ['id' => 10, 'userId' => 2, 'name' => 'Existing Agent', 'displayName' => 'Existing Agent', 'status' => 'Active'],
+            ],
+            'nextId' => 11,
+        ]);
+        $adminToken = $this->token('mobile-admin@example.test');
+
+        $created = $this->withToken($adminToken)
+            ->postJson('/api/admin/mobile-agents', [
+                'name' => 'New Directory Agent',
+                'displayName' => 'New Directory Agent',
+                'city' => 'Okara',
+                'visible' => true,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('name', 'New Directory Agent');
+        $createdId = $created->json('id');
+
+        $this->withToken($adminToken)
+            ->putJson("/api/admin/mobile-agents/{$createdId}", ['city' => 'Depalpur'])
+            ->assertOk()
+            ->assertJsonPath('city', 'Depalpur');
+
+        $this->withToken($adminToken)
+            ->deleteJson('/api/admin/mobile-agents/10')
+            ->assertNoContent();
+
+        $saved = JsonStore::read();
+        $this->assertCount(1, $saved['mobileAgents']);
+        $this->assertSame($createdId, $saved['mobileAgents'][0]['id']);
+        $this->assertSame('Depalpur', $saved['mobileAgents'][0]['city']);
+        $this->assertSame(2, $saved['users'][1]['id'], 'removing a directory profile must not remove its login account');
+    }
+
     public function test_mobile_broadcast_creates_notifications_and_sends_push_requests(): void
     {
         Http::fake();

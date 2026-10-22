@@ -18,15 +18,19 @@
     .test(window.location.hostname);
   var previewBase = isPreviewHost ? '/api' : LIVE;
   window.__OG_LIVE_API_BASE__ = LIVE;
-  // A production API URL saved during an earlier preview session should not
-  // bypass the local Laravel proxy when this site is opened on Replit.
-  if (isPreviewHost && !fromQuery && fromStorage === LIVE) fromStorage = null;
-  var base = (fromQuery || fromStorage || previewBase).replace(/\/+$/, '');
+  // Replit previews stay on the local Laravel proxy even if an earlier URL
+  // override was saved. Production hosts continue using the live API.
+  var base = (isPreviewHost ? '/api' : (fromQuery || fromStorage || previewBase)).replace(/\/+$/, '');
   window.__OG_API_BASE__ = base;
   // Persist ?api= so /admin and /user navigations keep the same API origin.
-  if (fromQuery) {
+  if (fromQuery && !isPreviewHost) {
     try {
       localStorage.setItem('og_api_base', base);
+    } catch (e) {}
+  }
+  if (isPreviewHost) {
+    try {
+      localStorage.removeItem('og_api_base');
     } catch (e) {}
   }
 

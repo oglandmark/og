@@ -989,24 +989,65 @@ class BackendGapClosureTest extends TestCase
 
         $this->withToken($adminToken)
             ->putJson("/api/admin/mobile-agents/{$createdId}", [
+                'agency' => 'Updated Realty',
                 'city' => 'Depalpur',
                 'name' => 'Updated Directory Agent',
                 'displayName' => 'Updated Directory Agent',
+                'phone' => '03001234567',
+                'email' => 'updated-directory-agent@example.test',
+                'years' => 7,
+                'rating' => 4.6,
+                'reviewCount' => 21,
+                'listings' => 8,
+                'color' => '#123456',
+                'verified' => true,
                 'photo' => $updatedPhotoUrl,
                 'profilePhoto' => $updatedPhotoUrl,
+                'areas' => ['Depalpur', 'Okara'],
+                'specialties' => ['Residential', 'Commercial'],
+                'about' => 'Updated profile details.',
+                'status' => 'Active',
+                'approvalStatus' => 'Approved',
+                'visible' => true,
             ])
             ->assertOk()
+            ->assertJsonPath('agency', 'Updated Realty')
             ->assertJsonPath('city', 'Depalpur')
             ->assertJsonPath('name', 'Updated Directory Agent')
             ->assertJsonPath('displayName', 'Updated Directory Agent')
+            ->assertJsonPath('phone', '03001234567')
+            ->assertJsonPath('email', 'updated-directory-agent@example.test')
+            ->assertJsonPath('years', 7)
+            ->assertJsonPath('rating', 4.6)
+            ->assertJsonPath('reviewCount', 21)
+            ->assertJsonPath('listings', 8)
+            ->assertJsonPath('color', '#123456')
+            ->assertJsonPath('verified', true)
             ->assertJsonPath('photo', $updatedPhotoUrl)
-            ->assertJsonPath('profilePhoto', $updatedPhotoUrl);
+            ->assertJsonPath('profilePhoto', $updatedPhotoUrl)
+            ->assertJsonPath('areas.0', 'Depalpur')
+            ->assertJsonPath('specialties.0', 'Residential')
+            ->assertJsonPath('about', 'Updated profile details.')
+            ->assertJsonPath('status', 'Active')
+            ->assertJsonPath('approvalStatus', 'Approved')
+            ->assertJsonPath('visible', true);
         $this->getJson('/api/mobile-agents')
             ->assertOk()
             ->assertJsonPath('1.name', 'Updated Directory Agent')
             ->assertJsonPath('1.displayName', 'Updated Directory Agent')
+            ->assertJsonPath('1.agency', 'Updated Realty')
+            ->assertJsonPath('1.city', 'Depalpur')
             ->assertJsonPath('1.photo', $updatedPhotoUrl)
-            ->assertJsonPath('1.profilePhoto', $updatedPhotoUrl);
+            ->assertJsonPath('1.profilePhoto', $updatedPhotoUrl)
+            ->assertJsonPath('1.rating', 4.6)
+            ->assertJsonPath('1.areas.1', 'Okara')
+            ->assertJsonPath('1.specialties.1', 'Commercial')
+            ->assertJsonPath('1.about', 'Updated profile details.');
+        $this->getJson('/api/agents')
+            ->assertOk()
+            ->assertJsonPath('1.name', 'Updated Directory Agent')
+            ->assertJsonPath('1.photo', $updatedPhotoUrl)
+            ->assertJsonPath('1.agency', 'Updated Realty');
 
         $this->withToken($adminToken)
             ->deleteJson('/api/admin/mobile-agents/10')
@@ -1017,6 +1058,7 @@ class BackendGapClosureTest extends TestCase
         $this->assertSame($createdId, $saved['mobileAgents'][0]['id']);
         $this->assertSame('Depalpur', $saved['mobileAgents'][0]['city']);
         $this->assertSame('Updated Directory Agent', $saved['mobileAgents'][0]['name']);
+        $this->assertSame($updatedPhotoUrl, $saved['mobileAgents'][0]['profilePhoto']);
         $this->assertSame($updatedPhotoUrl, $saved['mobileAgents'][0]['photo']);
         $this->getJson('/api/mobile-agents')
             ->assertOk()

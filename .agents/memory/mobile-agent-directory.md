@@ -9,4 +9,4 @@ Agent cards can share a public contact phone. Do not use that phone alone as a u
 
 **Why:** Mobile and website Agent records are separate sources. Mixing website-only records into the mobile endpoint or creating mobile profiles in the website collection makes the wrong Agents appear in the app and disconnects Admin edits from the app's directory.
 
-**How to apply:** Keep `mobileAgents` canonical for Admin mobile management and `/api/mobile-agents`; let `/api/agents` include mobile records for the website. Create Admin mobile profiles in `mobileAgents`. Bypass HTTP caching and refresh while Home/profile screens are focused. Preserve the one-time import marker and distinguish API failure from a successful empty list.
+**How to apply:** Keep `mobileAgents` canonical for Admin mobile management and `/api/mobile-agents`; the website should display both website-only and mobile directory records. Create Admin mobile profiles in `mobileAgents`. Bypass HTTP caching and refresh while Home/profile screens are focused. Preserve the one-time import marker and distinguish API failure from a successful empty list.

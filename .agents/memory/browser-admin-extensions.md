@@ -24,3 +24,9 @@ The admin dashboard must show all mobile property listings by default across sta
 **Why:** The user clarified that all currently live mobile listings—not only pending submissions—must be visible and manageable from the website admin.
 
 **How to apply:** Load the complete authenticated admin property collection without silently limiting the default result set; keep pending and other status filters available; validate Agent accounts server-side, persist their account ID as `agentId`, and notify the assigned agent.
+
+The user wants the website Admin Dashboard to show the live mobile app's current Properties, Agent profiles/accounts, Users, Homepage banners, and Notifications, with edit/update/delete controls. Replit preview should use the production API only when the user explicitly requests that live connection; never substitute bundled demo records for live listings.
+
+**Why:** The user explicitly requested production-backed management of these mobile app records from the website dashboard.
+
+**How to apply:** Use the existing Laravel admin APIs and preserve their auth and notification-delivery rules. Keep Agent directory profiles distinct from Agent login accounts, and confirm account/data deletion behavior before adding irreversible production controls.

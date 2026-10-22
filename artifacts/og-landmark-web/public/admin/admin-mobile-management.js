@@ -12,14 +12,16 @@
   let demos = [];
   let agents = [];
   let hiddenDemos = [];
+  const sectionData = {};
 
   async function api(path, options = {}) {
+    const multipart = typeof FormData !== 'undefined' && options.body instanceof FormData;
     const response = await fetch(`${base()}${path}`, {
       ...options,
       headers: {
         Accept: 'application/json',
         ...(token() ? { Authorization: `Bearer ${token()}` } : {}),
-        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(options.body && !multipart ? { 'Content-Type': 'application/json' } : {}),
         ...(options.headers || {}),
       },
     });
@@ -39,7 +41,7 @@
       .og-mm-head{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:17px 22px;background:white;border-bottom:1px solid #e2e8f0}
       .og-mm-head h2{font-size:19px;margin:0}.og-mm-head p{font-size:12px;color:#64748b;margin:4px 0 0}
       .og-mm-close{width:34px;height:34px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-size:20px;cursor:pointer}
-      .og-mm-tabs{display:flex;gap:8px;padding:14px 22px 0}.og-mm-tab,.og-mm-action{border:1px solid #dbe2ea;border-radius:8px;padding:8px 12px;background:#fff;color:#334155;font:600 12px system-ui;cursor:pointer}
+      .og-mm-tabs{display:flex;gap:8px;padding:14px 22px 0;overflow-x:auto;white-space:nowrap}.og-mm-tab,.og-mm-action{border:1px solid #dbe2ea;border-radius:8px;padding:8px 12px;background:#fff;color:#334155;font:600 12px system-ui;cursor:pointer}
       .og-mm-tab.active{background:#0b1f3a;border-color:#0b1f3a;color:white}.og-mm-action.primary{background:#c8a45a;border-color:#c8a45a;color:#0b1f3a}
       .og-mm-content{padding:16px 22px 22px}.og-mm-note{padding:10px 12px;margin-bottom:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;color:#64748b;font-size:12px}
       .og-mm-table{width:100%;border-collapse:collapse}.og-mm-table th,.og-mm-table td{text-align:left;padding:11px 10px;border-bottom:1px solid #edf1f5;font-size:12px;vertical-align:top}.og-mm-table th{color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
@@ -76,8 +78,8 @@
     modal = document.createElement('div');
     modal.className = 'og-mm-shade';
     modal.innerHTML = `<section class="og-mm-box" role="dialog" aria-modal="true" aria-label="Mobile app management">
-      <header class="og-mm-head"><div><h2>Mobile app management</h2><p>Demo fallback listings and mobile Agent directory</p></div><button class="og-mm-close" aria-label="Close">&times;</button></header>
-      <nav class="og-mm-tabs"><button class="og-mm-tab active" data-tab="demos">Demo properties</button><button class="og-mm-tab" data-tab="agents">Mobile Agents</button></nav>
+      <header class="og-mm-head"><div><h2>Mobile app management</h2><p>Live properties, Agent profiles, user accounts, banners and notifications</p></div><button class="og-mm-close" aria-label="Close">&times;</button></header>
+      <nav class="og-mm-tabs"><button class="og-mm-tab active" data-tab="demos">Demo properties</button><button class="og-mm-tab" data-tab="properties">Live properties</button><button class="og-mm-tab" data-tab="agents">Agents</button><button class="og-mm-tab" data-tab="users">Users</button><button class="og-mm-tab" data-tab="banners">Homepage banners</button><button class="og-mm-tab" data-tab="notifications">Notifications</button></nav>
       <main class="og-mm-content"><div class="og-mm-loading">Loading mobile app data…</div></main>
     </section>`;
     modal.addEventListener('click', (event) => {
@@ -107,6 +109,8 @@
     if (!modal) return;
     const content = modal.querySelector('.og-mm-content');
     if (tab === 'agents') return renderAgents(content);
+    if (tab === 'users' || tab === 'banners' || tab === 'notifications') return renderSection(tab, content);
+    if (tab === 'properties') return renderProperties(content);
     renderDemos(content);
   }
 
@@ -134,6 +138,154 @@
       <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="og-mm-action primary" data-action="add-agent">Add mobile Agent</button></div>
       <div id="og-mm-agent-form-wrap"></div>
       <div style="overflow:auto"><table class="og-mm-table"><thead><tr><th>Agent</th><th>City / phone</th><th>Email</th><th>App status</th><th>Actions</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="og-mm-empty">No mobile Agent profiles yet.</td></tr>'}</tbody></table></div>`;
+  }
+
+  const sectionConfig = {
+    properties: {
+      title: 'Live mobile properties', list: '/admin/properties', deletePath: (item) => `/admin/properties/${encodeURIComponent(item.id)}`,
+      fields: [
+        ['title', 'Title'], ['type', 'Type'], ['city', 'City'], ['address', 'Address'],
+        ['price', 'Price (PKR)', 'number'], ['area', 'Area', 'number'],
+        ['status', 'Listing purpose'], ['approvalStatus', 'Approval status'],
+        ['description', 'Description', 'textarea'],
+      ],
+      row: (item) => `<td><strong>${esc(item.title)}</strong><div>${esc(item.type || '')}</div></td><td>${esc(item.city || '—')}</td><td>${money(item.price)}</td><td>${esc(item.approvalStatus || item.listingStatus || item.status || '—')}</td>`,
+    },
+    users: {
+      title: 'Mobile app accounts', list: '/users', deletePath: (item) => `/admin/users/${encodeURIComponent(item.id)}`,
+      fields: [
+        ['name', 'Full name'], ['email', 'Email', 'email'], ['phone', 'Phone'], ['city', 'City'],
+        ['role', 'Role', 'select', ['User', 'Agent', 'Developer', 'Admin']],
+        ['status', 'Account status', 'select', ['Active', 'Suspended']],
+        ['password', 'Initial password (new accounts only)', 'password'],
+      ],
+      row: (item) => `<td><strong>${esc(item.name)}</strong><div>${esc(item.email || '')}</div></td><td>${esc(item.phone || '—')}</td><td>${esc(item.role || 'User')}</td><td>${esc(item.status || 'Active')}</td>`,
+    },
+    banners: {
+      title: 'Mobile homepage banners', list: '/mobile/banners/all', createPath: '/mobile/banners',
+      deletePath: (item) => `/mobile/banners/${encodeURIComponent(item.id)}`,
+      fields: [
+        ['type', 'Media type', 'select', ['image', 'video']], ['title', 'Title'], ['subtitle', 'Subtitle'], ['category', 'Category', 'select', ['homes', 'commercial', 'agriculture', 'plots', 'projects', 'video']],
+        ['imageUrl', 'Image URL'], ['videoUrl', 'Video URL'], ['media', 'Upload image/video', 'file', [], '.jpg,.jpeg,.png,.webp,.mp4,.mov'], ['route', 'App route'], ['cta', 'Button text'],
+        ['order', 'Sort order', 'number'], ['active', 'Visible in app', 'checkbox'],
+      ],
+      row: (item) => `<td><strong>${esc(item.title || item.eyebrow || 'Untitled')}</strong><div>${esc(item.type || 'image')}</div></td><td>${esc(item.category || '—')}</td><td>${esc(item.order ?? '—')}</td><td>${item.active === false ? 'Hidden' : 'Live'}</td>`,
+    },
+    notifications: {
+      title: 'Mobile notifications', list: '/admin/announcements', createPath: '/admin/announcements',
+      deletePath: (item) => `/admin/announcements/${encodeURIComponent(item.id)}`,
+      fields: [
+        ['title', 'Notification title'], ['message', 'Message', 'textarea'],
+        ['audienceRole', 'Audience role', 'select', ['all', 'user', 'agent', 'developer']],
+        ['audienceCity', 'City (optional)'], ['status', 'Delivery status', 'readonly'],
+        ['sendNow', 'Send to matching users now', 'checkbox'],
+      ],
+      row: (item) => `<td><strong>${esc(item.title || '—')}</strong><div>${esc(item.message || '')}</div></td><td>${esc(item.status || 'draft')}</td><td>${esc(item.recipientCount ?? 0)}</td><td>${esc(item.createdAt || '—').slice(0, 10)}</td>`,
+    },
+  };
+
+  async function renderProperties(content) { return renderSection('properties', content); }
+
+  async function renderSection(key, content) {
+    const config = sectionConfig[key];
+    content.innerHTML = '<div class="og-mm-empty">Loading live production records…</div>';
+    try {
+      const result = await api(config.list);
+      const items = Array.isArray(result) ? result : (Array.isArray(result?.items) ? result.items : []);
+      sectionData[key] = items;
+      const colspan = key === 'properties' || key === 'users' ? 5 : 5;
+      const rows = items.map((item) => `<tr>${config.row(item)}<td><div class="og-mm-row-actions">
+        <button class="og-mm-action" data-action="edit-record" data-section="${key}" data-id="${esc(item.id)}">Edit</button>
+        <button class="og-mm-action danger" data-action="delete-record" data-section="${key}" data-id="${esc(item.id)}">Delete</button>
+      </div></td></tr>`).join('');
+      const addButton = config.createPath ? `<button class="og-mm-action primary" data-action="add-record" data-section="${key}">Add new</button>` : '';
+      const columns = key === 'properties' ? ['Property', 'City', 'Price', 'Status', 'Actions']
+        : key === 'users' ? ['Account', 'Phone', 'Role', 'Status', 'Actions']
+          : key === 'banners' ? ['Banner', 'Category', 'Order', 'Visibility', 'Actions']
+            : ['Notification', 'Status', 'Recipients', 'Created', 'Actions'];
+      content.innerHTML = `<div class="og-mm-note">${esc(config.title)} — live records loaded from the production API. Changes take effect in the mobile app.</div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">${addButton}</div><div id="og-mm-record-form"></div>
+        <div style="overflow:auto"><table class="og-mm-table"><thead><tr>${columns.map((name) => `<th>${name}</th>`).join('')}</tr></thead>
+        <tbody>${rows || `<tr><td colspan="${colspan}" class="og-mm-empty">No records found.</td></tr>`}</tbody></table></div>`;
+    } catch (error) {
+      content.innerHTML = `<div class="og-mm-error">Could not load live records: ${esc(error.message)}</div>`;
+    }
+  }
+
+  function showRecordForm(key, item = {}) {
+    const config = sectionConfig[key];
+    const wrap = modal.querySelector('#og-mm-record-form');
+    if (!wrap) return;
+    const editing = item.id !== undefined && item.id !== null;
+    const fields = config.fields.filter(([name]) => !(name === 'status' && key === 'notifications' && editing));
+    wrap.innerHTML = `<form class="og-mm-form" id="og-mm-record-form-inner"><h3 style="margin:0 0 12px">${editing ? 'Edit' : 'Add'} ${esc(config.title)}</h3><div class="og-mm-grid">
+      ${fields.map(([name, label, type = 'text', options = [], accept]) => {
+        let value = item[name] ?? '';
+        if (key === 'notifications' && name === 'audienceRole') value = item.audience?.role || 'all';
+        if (key === 'notifications' && name === 'audienceCity') value = item.audience?.city || '';
+        const full = type === 'textarea' ? ' full' : '';
+        if (type === 'readonly') return `<div class="og-mm-field"><label>${esc(label)}</label><input disabled value="${esc(value)}"></div>`;
+        if (type === 'checkbox') return `<div class="og-mm-field${full}"><label><input type="checkbox" name="${esc(name)}" ${(name === 'sendNow' ? Boolean(value) : value !== false) ? 'checked' : ''}> ${esc(label)}</label></div>`;
+        if (type === 'file') return `<div class="og-mm-field"><label>${esc(label)}</label><input name="${esc(name)}" type="file" accept="${esc(accept || '')}"><small>Image: JPG/PNG/WebP up to 20 MiB; video: MP4/MOV up to 300 MiB.</small></div>`;
+        if (type === 'select') return `<div class="og-mm-field"><label>${esc(label)}</label><select name="${esc(name)}">${options.map((option) => `<option value="${esc(option)}" ${String(value).toLowerCase() === option.toLowerCase() ? 'selected' : ''}>${esc(option)}</option>`).join('')}</select></div>`;
+        if (type === 'textarea') return `<div class="og-mm-field full"><label>${esc(label)}</label><textarea name="${esc(name)}" maxlength="6000">${esc(value)}</textarea></div>`;
+        return `<div class="og-mm-field"><label>${esc(label)}</label><input name="${esc(name)}" type="${esc(type)}" ${type === 'number' ? 'step="any"' : ''} value="${esc(value)}"></div>`;
+      }).join('')}
+    </div><div class="og-mm-form-actions"><button type="button" class="og-mm-action" data-action="cancel-record" data-section="${key}">Cancel</button><button class="og-mm-action primary" type="submit">Save</button></div></form>`;
+    wrap.querySelector('form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const submit = form.querySelector('[type="submit"]');
+      submit.disabled = true;
+      const data = Object.fromEntries(new FormData(form));
+      const payload = { ...data };
+      for (const [name, , type] of config.fields) {
+        if (type === 'checkbox') payload[name] = form.elements[name].checked;
+        if (type === 'number' && data[name] !== undefined && data[name] !== '') payload[name] = Number(data[name]);
+      }
+      if (key === 'notifications') {
+        payload.audience = { role: payload.audienceRole || 'all', city: payload.audienceCity || '' };
+        payload.sendNow = Boolean(payload.sendNow);
+        delete payload.audienceRole; delete payload.audienceCity;
+      }
+      if (key === 'banners' && !editing) payload.active = payload.active !== false;
+      if (key === 'users' && editing) delete payload.password;
+      delete payload.media;
+      try {
+        if (key === 'notifications' && payload.sendNow && !window.confirm('Send this notification to the selected live users now? This cannot be recalled.')) {
+          submit.disabled = false;
+          return;
+        }
+        const bannerFile = key === 'banners' ? form.elements.media?.files?.[0] : null;
+        const body = bannerFile
+          ? (() => {
+              const formData = new FormData();
+              Object.entries(payload).forEach(([name, value]) => {
+                if (value !== undefined && value !== null) formData.append(name, String(value));
+              });
+              formData.append('media', bannerFile);
+              return formData;
+            })()
+          : JSON.stringify(payload);
+        if (editing) {
+          if (key === 'users') {
+            const previous = item.role || 'User';
+            const nextRole = payload.role;
+            delete payload.role;
+            await api(`/users/${encodeURIComponent(item.id)}`, { method: 'PUT', body: JSON.stringify(payload) });
+            if (nextRole !== previous) await api(`/admin/users/${encodeURIComponent(item.id)}/role`, { method: 'PATCH', body: JSON.stringify({ role: nextRole }) });
+          } else {
+            await api(`${config.createPath || config.list}/${encodeURIComponent(item.id)}`, { method: key === 'properties' ? 'PATCH' : 'PUT', body });
+          }
+        } else {
+          await api(config.createPath, { method: 'POST', body });
+        }
+        await renderSection(key, modal.querySelector('.og-mm-content'));
+      } catch (error) {
+        const message = document.createElement('div'); message.className = 'og-mm-error'; message.textContent = error.message || 'Could not save record.';
+        form.prepend(message); submit.disabled = false;
+      }
+    });
   }
 
   function showAgentForm(agent = {}) {
@@ -210,6 +362,25 @@
         agents = await api('/admin/mobile-agents');
         renderAgents(modal.querySelector('.og-mm-content'));
       }
+      const section = button.dataset.section;
+      if (button.dataset.action === 'add-record') showRecordForm(section);
+      if (button.dataset.action === 'edit-record') {
+        const item = (sectionData[section] || []).find((record) => String(record.id) === String(id));
+        if (item) showRecordForm(section, item);
+      }
+      if (button.dataset.action === 'cancel-record') renderSection(section, modal.querySelector('.og-mm-content'));
+      if (button.dataset.action === 'delete-record') {
+        const config = sectionConfig[section];
+        const item = (sectionData[section] || []).find((record) => String(record.id) === String(id));
+        if (!item) return;
+        const label = item.title || item.name || item.email || `record ${id}`;
+        const warning = section === 'users'
+          ? `Permanently delete account ${label}? This removes access to the mobile app.`
+          : `Permanently delete ${label} from the live mobile app?`;
+        if (!window.confirm(warning)) return;
+        await api(config.deletePath(item), { method: 'DELETE' });
+        await renderSection(section, modal.querySelector('.og-mm-content'));
+      }
     } catch (error) {
       window.alert(error.message || 'Could not update mobile app data.');
     }
@@ -222,7 +393,7 @@
     const button = document.createElement('button');
     button.className = 'og-mm-launch';
     button.type = 'button';
-    button.textContent = 'Mobile app data';
+    button.textContent = 'Manage mobile app';
     button.addEventListener('click', openPanel);
     row.appendChild(button);
   }

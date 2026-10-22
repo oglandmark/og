@@ -15,6 +15,7 @@
   let leafletPromise;
   let agentsLoaded = false;
   let agentDirectoryMessage = '';
+  let propertyLoadError = '';
   const normalize = (value) => String(value ?? '').trim().toLowerCase();
   const statusOf = (property) => normalize(property.approvalStatus || property.listingStatus || 'pending');
   const statusesOf = (property) => [
@@ -40,6 +41,12 @@
     return statusOf(property) === value;
   };
   const apiBase = () => String(window.__OG_API_BASE__ || '/api').replace(/\/+$/, '');
+  const propertyList = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.properties)) return payload.properties;
+    if (Array.isArray(payload?.data)) return payload.data;
+    return [];
+  };
   const authHeaders = () => {
     const headers = { Accept: 'application/json' };
     const token = window.localStorage?.getItem('og_token');
@@ -54,8 +61,9 @@
       const url = new URL(requestUrl, window.location.href);
       if (/\/admin\/properties\/?$/.test(url.pathname) && response.ok) {
         const payload = await response.clone().json();
-        if (Array.isArray(payload)) {
-          properties = payload;
+        const list = propertyList(payload);
+        if (list.length || Array.isArray(payload) || Array.isArray(payload?.properties) || Array.isArray(payload?.data)) {
+          properties = list;
           queueEnhancement();
         }
       }
@@ -549,6 +557,19 @@
     return payload;
   }
 
+  async function loadPropertyData() {
+    try {
+      const payload = await request('/admin/properties?limit=500');
+      properties = propertyList(payload);
+      propertyLoadError = '';
+      queueEnhancement();
+    } catch (error) {
+      propertyLoadError = error instanceof Error ? error.message : 'Please refresh and sign in again.';
+      queueEnhancement();
+      console.error('Admin property edit controls could not load listing data.', error);
+    }
+  }
+
   async function saveProperty(event, property, container) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -729,7 +750,9 @@
     if (heading && headingLabels[filter]) heading.textContent = headingLabels[filter];
     const summary = heading?.parentElement?.querySelector('p');
     const visibleCount = properties.filter((property) => matchesFilter(property, filter)).length;
-    if (summary) summary.textContent = `${visibleCount} shown · ${properties.length} total properties`;
+    if (summary) summary.textContent = propertyLoadError
+      ? `Edit controls unavailable: ${propertyLoadError}`
+      : `${visibleCount} shown · ${properties.length} total properties`;
     const table = root.querySelector('table');
     if (!table) return;
     addFilters(root);
@@ -816,6 +839,7 @@
     ensureStyles();
     observer.observe(document.body, { childList: true, subtree: true });
     queueEnhancement();
+    void loadPropertyData();
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
   else start();

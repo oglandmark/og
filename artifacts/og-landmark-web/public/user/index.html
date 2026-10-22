@@ -70,8 +70,17 @@
         <button class="nav-item" data-page="offers"><span class="nav-icon" data-icon="offer"></span>Offers</button>
         <button class="nav-item" data-page="inquiries"><span class="nav-icon" data-icon="message"></span>Inquiries</button>
         <button class="nav-item" data-page="notifications"><span class="nav-icon" data-icon="bell"></span>Notifications<span class="nav-count" id="notification-count"></span></button>
+        <p class="nav-label nav-label-spaced">More tools</p>
+        <button class="nav-item" data-page="kyc"><span class="nav-icon" data-icon="shield"></span>KYC</button>
+        <button class="nav-item" data-page="wishlist"><span class="nav-icon" data-icon="heart"></span>Wishlist</button>
+        <button class="nav-item" data-page="compare"><span class="nav-icon" data-icon="compare"></span>Compare</button>
+        <button class="nav-item" data-page="documents"><span class="nav-icon" data-icon="document"></span>Documents</button>
+        <button class="nav-item" data-page="alerts"><span class="nav-icon" data-icon="bell"></span>Property Alerts</button>
+        <button class="nav-item" data-page="messages"><span class="nav-icon" data-icon="message"></span>Messages</button>
+        <button class="nav-item" data-page="tracking"><span class="nav-icon" data-icon="clock"></span>Property Tracking</button>
         <p class="nav-label nav-label-spaced">Selling</p>
         <button class="nav-item" data-page="listings"><span class="nav-icon" data-icon="building"></span>My Listings</button>
+        <button class="nav-item" data-page="settings"><span class="nav-icon" data-icon="settings"></span>Settings</button>
       </nav>
       <div class="side-bottom">
         <a class="back-link" href="/"><span data-icon="arrow"></span>Back to website</a>
@@ -164,6 +173,44 @@
           <div class="page-intro listings-intro"><div><p class="eyebrow">SELL WITH OG LANDMARK</p><h1>My Listings</h1><p>Manage the properties you have listed with us.</p></div><a class="button button-gold" href="/portal/seller-dashboard.html?workflow=listings&amp;mode=add"><span data-icon="plus"></span>Post a property</a></div>
           <div class="listing-notice"><span data-icon="info"></span><p>Listing creation and editing use the full property workflow. Open your listing workspace to continue or manage existing listings.</p><a href="/portal/seller-dashboard.html?workflow=listings&amp;mode=manage">Open listing workspace <span data-icon="arrow-right"></span></a></div>
           <div class="listing-grid" id="listing-grid"><div class="state-loading"><span class="skeleton-card"></span><span class="skeleton-card"></span></div></div>
+        </section>
+        <section class="page-view" id="page-kyc" data-title="KYC">
+          <div class="page-intro"><p class="eyebrow">IDENTITY CHECK</p><h1>KYC status</h1><p>Review the verification information currently linked to your account.</p></div>
+          <div class="tool-panel" id="kyc-content"></div>
+        </section>
+        <section class="page-view" id="page-wishlist" data-title="Wishlist">
+          <div class="page-intro"><p class="eyebrow">YOUR SHORTLIST</p><h1>Wishlist</h1><p>Your wishlist uses the same account-synced saved properties as the mobile app.</p></div>
+          <div class="property-grid" id="wishlist-grid"></div>
+        </section>
+        <section class="page-view" id="page-compare" data-title="Compare">
+          <div class="page-intro"><p class="eyebrow">PROPERTY COMPARISON</p><h1>Compare properties</h1><p>Review up to three properties saved to your account comparison list.</p></div>
+          <div class="tool-panel" id="compare-content"></div>
+        </section>
+        <section class="page-view" id="page-documents" data-title="Documents">
+          <div class="page-intro"><p class="eyebrow">YOUR FILES</p><h1>Documents</h1><p>Documents connected to your OG Landmark account.</p></div>
+          <div class="tool-panel" id="documents-content"></div>
+        </section>
+        <section class="page-view" id="page-alerts" data-title="Property Alerts">
+          <div class="page-intro"><p class="eyebrow">SAVED SEARCHES</p><h1>Property Alerts</h1><p>Manage search alerts synced with your mobile account.</p></div>
+          <div class="tool-panel" id="alerts-content"></div>
+        </section>
+        <section class="page-view" id="page-messages" data-title="Messages">
+          <div class="page-intro"><p class="eyebrow">ACCOUNT CONVERSATIONS</p><h1>Messages</h1><p>Read and reply to conversations already connected to your account.</p></div>
+          <div class="messages-layout">
+            <div class="tool-panel conversation-list" id="conversations-content"></div>
+            <div class="tool-panel conversation-thread" id="messages-content"></div>
+          </div>
+        </section>
+        <section class="page-view" id="page-tracking" data-title="Property Tracking">
+          <div class="page-intro"><p class="eyebrow">RECENTLY VIEWED</p><h1>Property Tracking</h1><p>Properties you recently viewed in the mobile app.</p></div>
+          <div class="tool-panel" id="tracking-content"></div>
+        </section>
+        <section class="page-view" id="page-settings" data-title="Settings">
+          <div class="page-intro"><p class="eyebrow">ACCOUNT PREFERENCES</p><h1>Settings</h1><p>Update your contact details and account notification preferences.</p></div>
+          <div class="settings-layout">
+            <form class="tool-panel settings-form" id="account-settings-form"></form>
+            <form class="tool-panel settings-form" id="notification-settings-form"></form>
+          </div>
         </section>
       </div>
       <footer class="portal-footer"><span>OG Landmark <i>·</i> Premium real estate</span><a href="/">Return to website</a></footer>

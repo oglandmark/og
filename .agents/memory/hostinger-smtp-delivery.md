@@ -21,6 +21,12 @@ In the Laravel API workflow, Replit secrets may exist in the process environment
 
 **How to apply:** For mail credentials only, prefer Laravel `env()` values and fall back to `getenv()`; verify configuration and the SMTP handshake through the running API workflow.
 
+SMTP credentials and network reachability do not guarantee a valid message `From` address; set a validated sender explicitly and fall back to the configured mailbox username.
+
+**Why:** A local reset request logged Symfony rejecting a null email address even though SMTP was configured and its port was reachable.
+
+**How to apply:** Before sending reset or admin OTP mail, choose a valid `mail.from.address` or SMTP username and set it with `from()` on the message.
+
 The secure Secrets form itself can fail before submission with `Channel closed before secrets service was ready`. Replit guidance describes form/channel closures as transient and recommends restarting compute from the command palette, then retrying; if it persists, check the browser or network.
 
 **Why:** A failed secure-form channel is separate from Laravel configuration and must not be mistaken for a user declining to provide credentials.

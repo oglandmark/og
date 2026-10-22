@@ -355,8 +355,13 @@ class ApiController extends Controller
                 ]);
             } else {
                 try {
-                    Mail::raw("Your OG Landmark password reset code is {$code}. It expires in 15 minutes. Do not share this code.", function ($message) use ($email) {
-                        $message->to($email)
+                    $fromAddress = $this->mailFromAddress();
+                    if ($fromAddress === null) {
+                        throw new \RuntimeException('No valid mail sender address is configured.');
+                    }
+                    Mail::raw("Your OG Landmark password reset code is {$code}. It expires in 15 minutes. Do not share this code.", function ($message) use ($email, $fromAddress) {
+                        $message->from($fromAddress)
+                            ->to($email)
                             ->subject('OG Landmark — Password Reset Code');
                     });
                 } catch (\Throwable $exception) {
@@ -450,8 +455,14 @@ class ApiController extends Controller
                         'expires_at' => now()->addMinutes(10),
                     ],
                 );
-                Mail::raw("Your OG Landmark admin sign-in code is {$code}. It expires in 10 minutes. Do not share this code.", function ($message) use ($email) {
-                    $message->to($email)->subject('OG Landmark — Admin Sign-in Code');
+                $fromAddress = $this->mailFromAddress();
+                if ($fromAddress === null) {
+                    throw new \RuntimeException('No valid mail sender address is configured.');
+                }
+                Mail::raw("Your OG Landmark admin sign-in code is {$code}. It expires in 10 minutes. Do not share this code.", function ($message) use ($email, $fromAddress) {
+                    $message->from($fromAddress)
+                        ->to($email)
+                        ->subject('OG Landmark — Admin Sign-in Code');
                 });
             } catch (\Throwable $exception) {
                 Log::error('Admin sign-in code could not be delivered.', ['error' => $exception->getMessage()]);
@@ -2677,6 +2688,22 @@ class ApiController extends Controller
         }
         return $user;
     }
+    private function mailFromAddress(): ?string
+    {
+        foreach ([config('mail.from.address'), config('mail.mailers.smtp.username')] as $candidate) {
+            if (!is_string($candidate)) {
+                continue;
+            }
+
+            $candidate = trim($candidate);
+            if ($candidate !== '' && filter_var($candidate, FILTER_VALIDATE_EMAIL) !== false) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
     private function findUserByEmail(string $email): ?array { return collect(JsonStore::read()['users'] ?? [])->first(fn ($u) => strtolower((string) ($u['email'] ?? '')) === strtolower(trim($email))); }
     private function isAdmin(?array $user): bool { return $user !== null && strtolower((string) ($user['role'] ?? '')) === 'admin'; }
     private function canManageAgentCover(array $user): bool

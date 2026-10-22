@@ -51,6 +51,11 @@ class AdminPasswordResetTest extends TestCase
     public function test_admin_login_has_a_forgot_password_path_and_reset_requests_are_admin_scoped(): void
     {
         $this->seedAccounts();
+        config([
+            'mail.mailers.smtp.username' => 'preview@example.test',
+            'mail.mailers.smtp.password' => 'test-password',
+        ]);
+        Mail::shouldReceive('raw')->once()->andReturn(null);
 
         $this->get('/login?role=admin')
             ->assertOk()
@@ -153,6 +158,33 @@ class AdminPasswordResetTest extends TestCase
             'email' => 'admin-reset@example.test',
             'purpose' => 'password-reset',
         ]);
+    }
+
+    public function test_reset_email_uses_smtp_mailbox_when_default_from_address_is_null(): void
+    {
+        $this->seedAccounts();
+        config([
+            'mail.from.address' => null,
+            'mail.mailers.smtp.username' => 'preview@example.test',
+            'mail.mailers.smtp.password' => 'test-password',
+        ]);
+
+        $message = \Mockery::mock(\Illuminate\Mail\Message::class);
+        $message->shouldReceive('from')->once()->with('preview@example.test')->andReturnSelf();
+        $message->shouldReceive('to')->once()->with('admin-reset@example.test')->andReturnSelf();
+        $message->shouldReceive('subject')->once()->with('OG Landmark — Password Reset Code')->andReturnSelf();
+        Mail::shouldReceive('raw')
+            ->once()
+            ->withArgs(function (string $body, callable $callback) use ($message): bool {
+                $callback($message);
+                return str_contains($body, 'password reset code');
+            })
+            ->andReturn(null);
+
+        $this->postJson('/api/auth/admin-forgot-password', ['email' => 'admin-reset@example.test'])
+            ->assertOk()
+            ->assertJsonPath('smtpOff', false)
+            ->assertJsonPath('message', 'Reset code sent. Check your email.');
     }
 
     public function test_local_admin_test_account_can_sign_in_without_email_otp(): void

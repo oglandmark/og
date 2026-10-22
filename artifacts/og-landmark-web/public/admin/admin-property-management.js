@@ -47,6 +47,16 @@
     if (Array.isArray(payload?.data)) return payload.data;
     return [];
   };
+  function setPropertyData(payload) {
+    const list = propertyList(payload);
+    properties = list;
+    propertyLoadError = '';
+    window.__ogAdminListingProperties = list;
+    queueEnhancement();
+  }
+  window.addEventListener('og-admin-properties-loaded', (event) => {
+    setPropertyData(event.detail);
+  });
   const authHeaders = () => {
     const headers = { Accept: 'application/json' };
     const token = window.localStorage?.getItem('og_token');
@@ -63,8 +73,7 @@
         const payload = await response.clone().json();
         const list = propertyList(payload);
         if (list.length || Array.isArray(payload) || Array.isArray(payload?.properties) || Array.isArray(payload?.data)) {
-          properties = list;
-          queueEnhancement();
+          setPropertyData(list);
         }
       }
     } catch {}
@@ -86,6 +95,11 @@
   }
 
   function rowProperty(row, used) {
+    const mediaProperty = row.querySelector('[data-og-listing-review]')?.__ogListingProperty;
+    if (mediaProperty && !used.has(String(mediaProperty.id))) {
+      used.add(String(mediaProperty.id));
+      return mediaProperty;
+    }
     const cells = [...row.cells].map((cell) => normalize(cell.innerText));
     const rowText = normalize(row.innerText);
     const title = normalize(row.querySelector('td .font-medium')?.textContent || '');
@@ -560,9 +574,7 @@
   async function loadPropertyData() {
     try {
       const payload = await request('/admin/properties?limit=500');
-      properties = propertyList(payload);
-      propertyLoadError = '';
-      queueEnhancement();
+      setPropertyData(payload);
     } catch (error) {
       propertyLoadError = error instanceof Error ? error.message : 'Please refresh and sign in again.';
       queueEnhancement();
@@ -837,9 +849,14 @@
   observer = new MutationObserver(queueEnhancement);
   const start = () => {
     ensureStyles();
+    if (Array.isArray(window.__ogAdminListingProperties)) {
+      setPropertyData(window.__ogAdminListingProperties);
+    }
     observer.observe(document.body, { childList: true, subtree: true });
     queueEnhancement();
-    void loadPropertyData();
+    if (/\/admin\/properties\/?$/.test(window.location.pathname) && window.localStorage?.getItem('og_token')) {
+      void loadPropertyData();
+    }
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
   else start();

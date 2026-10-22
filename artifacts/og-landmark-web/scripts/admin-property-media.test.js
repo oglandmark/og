@@ -7,6 +7,10 @@ const source = fs.readFileSync(
   path.join(__dirname, '..', 'public', 'admin', 'admin-property-management.js'),
   'utf8',
 );
+const listingMediaSource = fs.readFileSync(
+  path.join(__dirname, '..', 'public', 'admin', 'admin-listing-media.js'),
+  'utf8',
+);
 
 test('Admin property editor can remove existing photos and upload replacements', () => {
   assert.match(source, /data-edit-images/);
@@ -50,12 +54,14 @@ test('property table edit action matches the listing title anywhere in the row',
 
 test('property editor loads admin listings directly instead of depending on the dashboard fetch implementation', () => {
   assert.match(source, /request\('\/admin\/properties\?limit=500'\)/);
-  assert.match(source, /properties = propertyList\(payload\)/);
+  assert.match(source, /setPropertyData\(payload\)/);
   assert.match(source, /void loadPropertyData\(\)/);
   assert.match(source, /Edit controls unavailable:/);
   assert.match(source, /og-admin-properties-loaded/);
   assert.match(source, /__ogAdminListingProperties/);
   assert.match(source, /__ogListingProperty/);
+  assert.match(listingMediaSource, /__ogAdminListingProperties = properties/);
+  assert.match(listingMediaSource, /dispatchEvent\(new windowRef\.CustomEvent\('og-admin-properties-loaded'/);
 });
 
 test('Admin property deletion requires confirmation and uses the authenticated delete endpoint', () => {

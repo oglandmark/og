@@ -27,10 +27,6 @@ return [
     */
 
     'env' => env('APP_ENV', 'production'),
-    'admin_local_login_bypass' => filter_var(
-        env('ADMIN_LOCAL_LOGIN_BYPASS', false),
-        FILTER_VALIDATE_BOOLEAN,
-    ),
 
     /*
     |--------------------------------------------------------------------------

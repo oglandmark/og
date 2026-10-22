@@ -410,13 +410,10 @@ class DashboardAuthCompatibilityTest extends TestCase
         $this->assertSame(200, $verification->status());
     }
 
-    public function test_local_admin_login_bypass_is_explicit_and_still_requires_the_password(): void
+    public function test_local_admin_login_bypasses_otp_and_still_requires_the_password(): void
     {
         $this->seedDashboardFixture();
-        config([
-            'app.env' => 'local',
-            'app.admin_local_login_bypass' => true,
-        ]);
+        config(['app.env' => 'local']);
 
         $this->postJson('/api/auth/admin-verify', [
             'email' => 'dashboard-admin@example.test',

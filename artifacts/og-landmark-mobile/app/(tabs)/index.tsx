@@ -1850,7 +1850,7 @@ export default function HomeScreen() {
       )}
 
       {/* ─── VERIFIED AGENTS ─────────────────────────────────────────────── */}
-      {visibleAgents.length > 0 && <AnimatedReveal delay={260}>
+      <AnimatedReveal delay={260}>
         {/* Section header with inline See All */}
         <View style={s.agentSectionRow}>
           <View>
@@ -1863,13 +1863,20 @@ export default function HomeScreen() {
             <Feather name="arrow-right" size={12} color={colors.action} />
           </Pressable>
         </View>
-        {/* Agent cards — 18-card slow marquee */}
-        <AgentCarousel
-          agents={visibleAgents}
-          colors={colors}
-          onAgentPress={(agentId) => router.push(`/agent/${agentId}` as any)}
-        />
-      </AnimatedReveal>}
+        {visibleAgents.length > 0 ? (
+          <AgentCarousel
+            agents={visibleAgents}
+            colors={colors}
+            onAgentPress={(agentId) => router.push(`/agent/${agentId}` as any)}
+          />
+        ) : (
+          <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingVertical: 24 }}>
+            <Text style={{ color: colors.mutedForeground, fontSize: 14, textAlign: 'center' }}>
+              No Agents are available right now.
+            </Text>
+          </View>
+        )}
+      </AnimatedReveal>
 
       {/* ─── TOOLS & CALCULATORS ─────────────────────────────────────────── */}
       <AnimatedReveal delay={290}>

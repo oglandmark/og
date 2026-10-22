@@ -792,12 +792,12 @@
       }
 
       function injectAgents(){
-        if(!_agents||!_agents.length) return;
         var grid=findAgentGrid();
         if(!grid) return;
 
         // Remove stale injected cards first
         grid.querySelectorAll('[data-og-live-agent]').forEach(function(el){el.remove();});
+        if(!_agents||!_agents.length) return;
 
         var shown=getShownAgentNames(grid);
         var added=0;
@@ -870,19 +870,27 @@
         });
       }
 
-      // Fetch agents + hidden list in parallel, then inject
-      Promise.all([
-        fetch((window.__OG_API_BASE__||'/api')+'/agents?approvalStatus=Approved').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
-        fetch((window.__OG_API_BASE__||'/api')+'/settings/hidden-react-agents').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
-      ]).then(function(results){
-        var agentsData=results[0], hiddenData=results[1];
-        if(Array.isArray(agentsData)) _agents=agentsData.filter(function(a){return a.status==='Active';});
-        if(Array.isArray(hiddenData)) _hiddenReactAgents=hiddenData;
-        setTimeout(function(){
-          injectAgents();
-          patchExistingCards();
-          removeHiddenReactAgents();
-        }, 800);
+      // Fetch agents + hidden list in parallel, then inject. Refresh while the
+      // public page stays open so Admin edits and deletions do not leave stale cards.
+      function refreshAgentDirectory(){
+        Promise.all([
+          fetch((window.__OG_API_BASE__||'/api')+'/agents?approvalStatus=Approved', { cache: 'no-store' }).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+          fetch((window.__OG_API_BASE__||'/api')+'/settings/hidden-react-agents', { cache: 'no-store' }).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+        ]).then(function(results){
+          var agentsData=results[0], hiddenData=results[1];
+          if(Array.isArray(agentsData)) _agents=agentsData.filter(function(a){return a.status==='Active';});
+          if(Array.isArray(hiddenData)) _hiddenReactAgents=hiddenData;
+          setTimeout(function(){
+            injectAgents();
+            patchExistingCards();
+            removeHiddenReactAgents();
+          }, 800);
+        });
+      }
+      refreshAgentDirectory();
+      setInterval(refreshAgentDirectory, 15_000);
+      document.addEventListener('visibilitychange', function(){
+        if(document.visibilityState==='visible') refreshAgentDirectory();
       });
 
       // Watch React route changes and re-run

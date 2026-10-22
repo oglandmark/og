@@ -22,7 +22,9 @@ test('Home and profile screens only show Agents from the managed directory', () 
     homeScreen,
     /const visibleAgents = managedAgents;/,
   );
-  assert.match(homeScreen, /\{visibleAgents\.length > 0 && <AnimatedReveal delay=\{260\}>/);
+  assert.match(homeScreen, /<AnimatedReveal delay=\{260\}>[\s\S]*?VERIFIED PROFESSIONALS/);
+  assert.match(homeScreen, /No Agents are available right now\./);
+  assert.doesNotMatch(homeScreen, /\{visibleAgents\.length > 0 && <AnimatedReveal/);
   assert.doesNotMatch(homeScreen, /SAMPLE_AGENTS/);
   assert.match(
     homeScreen,

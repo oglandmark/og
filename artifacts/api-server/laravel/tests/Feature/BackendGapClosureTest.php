@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Services\JsonStore;
+use App\Services\NormalizedCoreStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\DB;
@@ -799,6 +800,88 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonPath('0.photo', $photoUrl)
             ->assertJsonPath('0.profilePhoto', $photoUrl);
         $this->assertSame(2, $saved['users'][1]['id'], 'removing a directory profile must not remove its login account');
+    }
+
+    public function test_agent_profile_photo_replacement_and_deletion_preserve_shared_media(): void
+    {
+        $this->useTemporaryMediaStorage();
+        mkdir($this->mediaStorageDirectory, 0775, true);
+        $sharedUrl = '/images/uploads/shared-agent-photo.jpg';
+        $replacementUrl = '/images/uploads/replacement-agent-photo.jpg';
+        file_put_contents($this->mediaStorageDirectory . '/shared-agent-photo.jpg', 'shared agent photo');
+        file_put_contents($this->mediaStorageDirectory . '/replacement-agent-photo.jpg', 'replacement agent photo');
+        $this->seedData([
+            'users' => [
+                $this->user(1, 'media-admin@example.test', 'Admin'),
+                array_merge($this->user(2, 'media-agent@example.test', 'Agent'), ['profilePhoto' => $sharedUrl]),
+            ],
+            'mobileAgents' => [
+                ['id' => 31, 'authUserId' => 2, 'name' => 'Media Agent', 'photo' => $sharedUrl],
+            ],
+            'nextId' => 32,
+        ]);
+
+        $adminToken = $this->token('media-admin@example.test');
+        $agentToken = $this->token('media-agent@example.test');
+
+        $this->withToken($adminToken)
+            ->putJson('/api/admin/mobile-agents/31', ['photo' => $replacementUrl])
+            ->assertOk()
+            ->assertJsonPath('photo', $replacementUrl);
+        $this->assertFileExists($this->mediaStorageDirectory . '/shared-agent-photo.jpg');
+        $this->assertFileExists($this->mediaStorageDirectory . '/replacement-agent-photo.jpg');
+
+        $this->withToken($adminToken)
+            ->deleteJson('/api/admin/mobile-agents/31')
+            ->assertNoContent();
+        $this->assertFileDoesNotExist($this->mediaStorageDirectory . '/replacement-agent-photo.jpg');
+        $this->assertFileExists($this->mediaStorageDirectory . '/shared-agent-photo.jpg');
+
+        $this->withToken($agentToken)
+            ->deleteJson('/api/account/profile-photo')
+            ->assertNoContent();
+        $this->assertFileDoesNotExist($this->mediaStorageDirectory . '/shared-agent-photo.jpg');
+    }
+
+    public function test_failed_agent_profile_photo_save_removes_only_unreferenced_new_uploads(): void
+    {
+        $this->useTemporaryMediaStorage();
+        mkdir($this->mediaStorageDirectory, 0775, true);
+        $orphanUrl = '/images/uploads/failed-profile-photo.jpg';
+        $sharedUrl = '/images/uploads/shared-failed-profile-photo.jpg';
+        file_put_contents($this->mediaStorageDirectory . '/failed-profile-photo.jpg', 'failed upload');
+        file_put_contents($this->mediaStorageDirectory . '/shared-failed-profile-photo.jpg', 'shared failed upload');
+        $this->seedData([
+            'users' => [
+                $this->user(1, 'failed-save-agent@example.test', 'Agent'),
+            ],
+            'properties' => [
+                ['id' => 80, 'title' => 'Existing record reference', 'photo' => $sharedUrl],
+            ],
+            'nextId' => 81,
+        ]);
+        $agentToken = $this->token('failed-save-agent@example.test');
+
+        $store = \Mockery::mock(NormalizedCoreStore::class);
+        $store->shouldReceive('isActive')->twice()->andReturn(true);
+        $store->shouldReceive('sync')->twice()->andThrow(new \RuntimeException('Simulated normalized-store write failure.'));
+        $this->app->instance(NormalizedCoreStore::class, $store);
+        $this->app['env'] = 'production';
+
+        $this->withToken($agentToken)
+            ->putJson('/api/account', ['profilePhoto' => $orphanUrl])
+            ->assertServerError();
+        $this->assertFileDoesNotExist($this->mediaStorageDirectory . '/failed-profile-photo.jpg');
+        $this->assertSame(
+            null,
+            JsonStore::read()['users'][0]['profilePhoto'] ?? null,
+            'a failed save must leave the existing profile unchanged',
+        );
+
+        $this->withToken($agentToken)
+            ->putJson('/api/account', ['profilePhoto' => $sharedUrl])
+            ->assertServerError();
+        $this->assertFileExists($this->mediaStorageDirectory . '/shared-failed-profile-photo.jpg');
     }
 
     public function test_admin_user_delete_removes_only_the_target_accounts_linked_data(): void

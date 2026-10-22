@@ -1204,6 +1204,7 @@ class ApiController extends Controller
             if (!$this->isAdmin($user)) return $this->json(['error' => 'Forbidden'], 403);
         }
         $data = JsonStore::read();
+        $originalData = $data;
         $index = $this->indexById($data['users'] ?? [], $id);
         if ($index === null) return $this->json(['error' => 'User not found'], 404);
         if ($method === 'PUT') {
@@ -1276,7 +1277,14 @@ class ApiController extends Controller
                     'account:admin-update:' . Str::uuid(),
                 );
             }
-            JsonStore::write($data); return $this->json($this->safeUser($data['users'][$index]));
+            $this->writeWithMediaCleanup(
+                $originalData,
+                $data,
+                $originalAccount,
+                $data['users'][$index],
+                ['profilePhoto', 'coverPhoto'],
+            );
+            return $this->json($this->safeUser($data['users'][$index]));
         }
         if ($method === 'PATCH' && ($parts[1] ?? '') === 'push-token') {
             $data['users'][$index]['pushToken'] = $request->input('pushToken');
@@ -1310,6 +1318,7 @@ class ApiController extends Controller
     {
         $user = $this->currentUser($request, true);
         $data = JsonStore::read();
+        $originalData = $data;
         $index = $this->indexById($data['users'] ?? [], $user['id']);
         if ($index === null) return $this->json(['error' => 'Account not found'], 404);
         $photo = $parts[0] ?? null;
@@ -1319,8 +1328,18 @@ class ApiController extends Controller
             }
             $key = $photo === 'profile-photo' ? 'profilePhoto' : 'coverPhoto';
             if ($method === 'GET') return $this->json(['url' => $data['users'][$index][$key] ?? null]);
-            if ($method === 'DELETE') { $data['users'][$index][$key] = null; JsonStore::write($data); return response()->noContent(); }
-            if ($method === 'PUT') { $data['users'][$index][$key] = $request->input('url'); JsonStore::write($data); return $this->json(['url' => $data['users'][$index][$key]]); }
+            if ($method === 'DELETE') {
+                $originalUser = $data['users'][$index];
+                $data['users'][$index][$key] = null;
+                $this->writeWithMediaCleanup($originalData, $data, $originalUser, $data['users'][$index], [$key]);
+                return response()->noContent();
+            }
+            if ($method === 'PUT') {
+                $originalUser = $data['users'][$index];
+                $data['users'][$index][$key] = $request->input('url');
+                $this->writeWithMediaCleanup($originalData, $data, $originalUser, $data['users'][$index], [$key]);
+                return $this->json(['url' => $data['users'][$index][$key]]);
+            }
         }
         if ($method === 'GET') return $this->json($this->safeUser($data['users'][$index]));
         if ($method === 'DELETE') {
@@ -1345,8 +1364,10 @@ class ApiController extends Controller
             if ($request->has('coverPhoto') && !$this->canManageAgentCover($data['users'][$index])) {
                 return $this->json(['error' => 'Only admin-enabled Agent accounts can manage a cover photo.'], 403);
             }
+            $originalUser = $data['users'][$index];
             foreach (['name', 'phone', 'city', 'agencyName', 'companyName', 'profilePhoto', 'coverPhoto'] as $key) if ($request->has($key)) $data['users'][$index][$key] = $request->input($key);
-            JsonStore::write($data); return $this->json($this->safeUser($data['users'][$index]));
+            $this->writeWithMediaCleanup($originalData, $data, $originalUser, $data['users'][$index], ['profilePhoto', 'coverPhoto']);
+            return $this->json($this->safeUser($data['users'][$index]));
         }
         return $this->json(['error' => 'Method not allowed'], 405);
     }
@@ -1886,6 +1907,54 @@ class ApiController extends Controller
         }
     }
 
+    /**
+     * Persist a profile/media record before removing files that it no longer uses.
+     * On a failed write, only newly supplied paths are candidates for cleanup;
+     * both paths are checked against the canonical document before deletion.
+     */
+    private function writeWithMediaCleanup(
+        array $beforeData,
+        array $afterData,
+        array $beforeRecord,
+        array $afterRecord,
+        array $mediaFields,
+    ): void {
+        $storage = app(MediaStorage::class);
+        $removedPaths = [];
+        $addedPaths = [];
+
+        foreach ($mediaFields as $field) {
+            $beforeValue = $beforeRecord[$field] ?? null;
+            $afterValue = $afterRecord[$field] ?? null;
+            if ($beforeValue === $afterValue) {
+                continue;
+            }
+
+            $removedPaths = array_merge($removedPaths, $storage->referencedPaths($beforeValue));
+            $addedPaths = array_merge($addedPaths, $storage->referencedPaths($afterValue));
+        }
+
+        try {
+            JsonStore::write($afterData);
+        } catch (\Throwable $exception) {
+            $failedDeletes = $storage->deleteUnreferencedPaths($addedPaths, $beforeData);
+            if ($failedDeletes !== []) {
+                Log::warning('Failed profile save could not remove some unreferenced uploads.', [
+                    'count' => count($failedDeletes),
+                ]);
+            }
+
+            throw $exception;
+        }
+
+        $failedDeletes = $storage->deleteUnreferencedPaths($removedPaths, $afterData);
+        if ($failedDeletes !== []) {
+            Log::warning('Profile media update could not remove some unreferenced uploads.', [
+                'count' => count($failedDeletes),
+            ]);
+        }
+    }
+
     private function blog(Request $request, array $parts, string $method)
     {
         $posts = JsonStore::read()['blogPosts'] ?? [];
@@ -2309,7 +2378,11 @@ class ApiController extends Controller
 
     private function crudNamed(Request $request, array $data, string $key, ?string $id, string $method, ?array $user = null)
     {
+        $originalData = $data;
         $data[$key] ??= [];
+        $mediaFields = in_array($key, ['mobileAgents', 'cityAgents'], true)
+            ? ['photo', 'profilePhoto', 'coverPhoto', 'avatar']
+            : [];
         if ($method === 'GET' && $id === null) {
             if ($user && !$this->isAdmin($user)) {
                 return $this->json(collect($data[$key])
@@ -2334,13 +2407,28 @@ class ApiController extends Controller
                 'userId' => $this->isAdmin($user) ? ($payload['userId'] ?? $user['id']) : $user['id'],
                 'createdAt' => now()->toISOString(),
             ]);
-            $data[$key][] = $item; JsonStore::write($data); return $this->json($item, 201);
+            $data[$key][] = $item;
+            if ($mediaFields !== []) {
+                $this->writeWithMediaCleanup($originalData, $data, [], $item, $mediaFields);
+            } else {
+                JsonStore::write($data);
+            }
+            return $this->json($item, 201);
         }
         $index = $this->indexById($data[$key], $id); if ($index === null) return $this->json(['error' => 'Not found'], 404);
         if ($user && !$this->isAdmin($user) && !$this->collectionRecordBelongsToUser($key, $data[$key][$index], $user, $data)) {
             return $this->json(['error' => 'Not found'], 404);
         }
-        if ($method === 'DELETE') { array_splice($data[$key], $index, 1); JsonStore::write($data); return response()->noContent(); }
+        if ($method === 'DELETE') {
+            $removedRecord = $data[$key][$index];
+            array_splice($data[$key], $index, 1);
+            if ($mediaFields !== []) {
+                $this->writeWithMediaCleanup($originalData, $data, $removedRecord, [], $mediaFields);
+            } else {
+                JsonStore::write($data);
+            }
+            return response()->noContent();
+        }
         if (in_array($method, ['PUT', 'PATCH'], true)) {
             $patch = $request->all();
             if ($user && !$this->isAdmin($user)) {
@@ -2350,8 +2438,13 @@ class ApiController extends Controller
                     unset($patch[$protectedKey]);
                 }
             }
-            $data[$key][$index] = array_merge($data[$key][$index], $patch, ['updatedAt' => now()->toISOString()]);
-            JsonStore::write($data);
+            $originalRecord = $data[$key][$index];
+            $data[$key][$index] = array_merge($originalRecord, $patch, ['updatedAt' => now()->toISOString()]);
+            if ($mediaFields !== []) {
+                $this->writeWithMediaCleanup($originalData, $data, $originalRecord, $data[$key][$index], $mediaFields);
+            } else {
+                JsonStore::write($data);
+            }
             return $this->json($data[$key][$index]);
         }
         return $this->json($data[$key][$index]);

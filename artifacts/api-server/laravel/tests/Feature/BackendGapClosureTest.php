@@ -464,6 +464,9 @@ class BackendGapClosureTest extends TestCase
         $this->withoutHeader('Authorization')
             ->getJson("/api/properties/{$propertyId}")
             ->assertNotFound();
+        $this->getJson('/api/properties')
+            ->assertOk()
+            ->assertJsonMissing(['id' => $propertyId]);
 
         $this->patchJson(
             "/api/properties/{$propertyId}/approve",
@@ -477,6 +480,13 @@ class BackendGapClosureTest extends TestCase
             ->assertOk()
             ->assertJsonPath('approvalStatus', 'Active')
             ->assertJsonPath('listingStatus', 'Active');
+        $this->getJson('/api/properties')
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => $propertyId,
+                'approvalStatus' => 'Active',
+                'listingStatus' => 'Active',
+            ]);
         $this->withToken($buyerToken)
             ->getJson('/api/notifications?category=properties')
             ->assertOk()

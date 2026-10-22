@@ -252,9 +252,10 @@
   function closePropertyDetail() { document.getElementById('property-modal').hidden = true; }
   function notificationDestination(item) {
     const isPropertyNotification = /property|listing/i.test(`${item.type || ''} ${item.category || ''}`);
-    const propertyId = item.propertyId || item.data?.propertyId || (isPropertyNotification ? item.entityId : null);
-    if (propertyId) return { propertyId };
     const path = String(item.link || '').split('?')[0].toLowerCase();
+    const routePropertyId = path.match(/\/properties\/(\d+)(?:\/|$)/)?.[1];
+    const propertyId = item.propertyId || item.data?.propertyId || routePropertyId || (isPropertyNotification ? item.entityId : null);
+    if (propertyId) return { propertyId };
     if (path.includes('appointment')) return { page: 'appointments' };
     if (path.includes('offer')) return { page: 'offers' };
     if (path.includes('message') || path.includes('inquir')) return { page: 'inquiries' };

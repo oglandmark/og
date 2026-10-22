@@ -10,6 +10,10 @@ test('native media uploads use Expo File parts and Expo fetch', () => {
   assert.match(api, /import \{ manipulateAsync, SaveFormat \} from 'expo-image-manipulator'/);
   assert.match(api, /async function apiUpload[\s\S]*?const res = await expoFetch/);
   assert.match(api, /async function imageUploadFile[\s\S]*?format: SaveFormat\.JPEG/);
+  assert.match(api, /maxEdge: 1600, quality: 0\.68/);
+  assert.match(api, /maxEdge: 1280, quality: 0\.5/);
+  assert.match(api, /uploadFile\.size <= maxUploadBytes/);
+  assert.match(api, /uploadFile\.size > 1\.5 \* 1024 \* 1024/);
   assert.match(api, /new File\(normalized\.uri\)/);
   assert.match(api, /form\.append\('image', uploadFile\.file, uploadFile\.filename\)/);
   assert.match(api, /form\.append\('video', new File\(uri\), filename\)/);

@@ -157,25 +157,44 @@ function getImageDimensions(uri: string): Promise<{ width: number; height: numbe
 }
 
 async function imageUploadFile(uri: string, filename = 'photo.jpg'): Promise<{ file: File; filename: string }> {
-  let normalized: Awaited<ReturnType<typeof manipulateAsync>>;
+  let uploadFile: File | undefined;
   try {
     const { width, height } = await getImageDimensions(uri);
-    const maxEdge = 2048;
-    const scale = Math.min(1, maxEdge / Math.max(width, height));
-    const actions = scale < 1
-      ? [{ resize: { width: Math.round(width * scale), height: Math.round(height * scale) } }]
-      : [];
-    // Re-encode gallery photos as JPEG so HEIC/HEIF/AVIF and camera-specific
-    // extensions do not reach the API as unsupported raw upload types.
-    normalized = await manipulateAsync(uri, actions, {
-      compress: 0.82,
-      format: SaveFormat.JPEG,
-    });
+    // Hostinger/PHP deployments can have a lower request-size limit than the
+    // API's nominal 20 MiB cap. Keep ordinary property photos small enough for
+    // shared-host multipart limits, with one lower-size retry for detailed
+    // camera images that still exceed the target.
+    const variants = [
+      { maxEdge: 1600, quality: 0.68 },
+      { maxEdge: 1280, quality: 0.5 },
+    ];
+    const maxUploadBytes = 1.5 * 1024 * 1024;
+
+    for (const variant of variants) {
+      const scale = Math.min(1, variant.maxEdge / Math.max(width, height));
+      const actions = scale < 1
+        ? [{ resize: { width: Math.round(width * scale), height: Math.round(height * scale) } }]
+        : [];
+      // Re-encode gallery photos as JPEG so HEIC/HEIF/AVIF and camera-specific
+      // extensions never reach the API as unsupported raw upload types.
+      const normalized = await manipulateAsync(uri, actions, {
+        compress: variant.quality,
+        format: SaveFormat.JPEG,
+      });
+      uploadFile = new File(normalized.uri);
+      if (uploadFile.size == null || uploadFile.size <= maxUploadBytes) break;
+    }
   } catch {
     throw new Error('This photo could not be converted. Try choosing a JPG, PNG, or another photo from your gallery.');
   }
+  if (!uploadFile) {
+    throw new Error('This photo could not be prepared for upload. Please choose it again.');
+  }
+  if (uploadFile.size != null && uploadFile.size > 1.5 * 1024 * 1024) {
+    throw new Error('This photo is too large to upload. Choose a smaller photo and try again.');
+  }
   const baseName = filename.replace(/\.[^.]*$/, '').replace(/[^a-z0-9_-]/gi, '_') || 'photo';
-  return { file: new File(normalized.uri), filename: `${baseName}.jpg` };
+  return { file: uploadFile, filename: `${baseName}.jpg` };
 }
 
 // ─── Inquiry & Appointment submission ─────────────────────────────────────────

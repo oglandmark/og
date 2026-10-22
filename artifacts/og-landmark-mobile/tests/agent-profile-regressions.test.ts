@@ -35,8 +35,9 @@ test('Home sample-agent cards resolve to their sample profiles', () => {
 test('Agent details refresh managed profiles whenever the route regains focus', () => {
   assert.match(agentProfileScreen, /useFocusEffect\(useCallback\(/);
   assert.match(agentProfileScreen, /getAgents\(\)/);
-  assert.match(agentProfileScreen, /setProfilePhotoFailed\(false\)/);
+  assert.match(agentProfileScreen, /setInterval\(\(\) => void refreshAgent\(\), 15_000\)/);
   assert.match(agentProfileScreen, /key=\{JSON\.stringify\(agent\.profileImage\)\}/);
-  assert.match(agentProfileScreen, /onError=\{\(\) => setProfilePhotoFailed\(true\)\}/);
-  assert.match(agentProfileScreen, /agent\.profileImage && !profilePhotoFailed/);
+  assert.match(agentProfileScreen, /onError=\{\(\) => setFailedPhotoSourceKey\(JSON\.stringify\(agent\.profileImage\)\)\}/);
+  assert.match(agentProfileScreen, /agent\.profileImage && failedPhotoSourceKey !== JSON\.stringify\(agent\.profileImage\)/);
+  assert.match(homeScreen, /setInterval\(\(\) => void refreshAgents\(\), 15_000\)/);
 });

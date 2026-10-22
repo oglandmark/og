@@ -1524,17 +1524,32 @@ export default function HomeScreen() {
   }, []));
 
   useFocusEffect(useCallback(() => {
-    getAgents()
-      .then((records) => {
+    let active = true;
+    let loading = false;
+    const refreshAgents = async () => {
+      if (!active || loading) return;
+      loading = true;
+      try {
+        const records = await getAgents();
+        if (!active) return;
         setManagedAgents(records.map(apiAgentToSample));
         setAgentDirectoryLoaded(true);
         setAgentDirectoryFailed(false);
-      })
-      .catch(() => {
+      } catch {
+        if (!active) return;
         setManagedAgents([]);
         setAgentDirectoryLoaded(true);
         setAgentDirectoryFailed(true);
-      });
+      } finally {
+        loading = false;
+      }
+    };
+    void refreshAgents();
+    const interval = setInterval(() => void refreshAgents(), 15_000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, []));
 
   // Fetch live properties on focus; bundled examples remain the offline fallback

@@ -1158,7 +1158,7 @@ export async function getAgents(
   if (params.limit) qs.set('limit', String(params.limit));
   const agents = await apiFetch<ApiAgent[]>(
     `/api/mobile-agents${qs.toString() ? `?${qs}` : ''}`,
-    {},
+    { cache: 'no-store' },
     false,
   );
   return agents.map((agent) => ({

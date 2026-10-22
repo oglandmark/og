@@ -988,15 +988,21 @@ class BackendGapClosureTest extends TestCase
         $this->withToken($adminToken)
             ->putJson("/api/admin/mobile-agents/{$createdId}", [
                 'city' => 'Depalpur',
+                'name' => 'Updated Directory Agent',
+                'displayName' => 'Updated Directory Agent',
                 'photo' => $updatedPhotoUrl,
                 'profilePhoto' => $updatedPhotoUrl,
             ])
             ->assertOk()
             ->assertJsonPath('city', 'Depalpur')
+            ->assertJsonPath('name', 'Updated Directory Agent')
+            ->assertJsonPath('displayName', 'Updated Directory Agent')
             ->assertJsonPath('photo', $updatedPhotoUrl)
             ->assertJsonPath('profilePhoto', $updatedPhotoUrl);
         $this->getJson('/api/mobile-agents')
             ->assertOk()
+            ->assertJsonPath('1.name', 'Updated Directory Agent')
+            ->assertJsonPath('1.displayName', 'Updated Directory Agent')
             ->assertJsonPath('1.photo', $updatedPhotoUrl)
             ->assertJsonPath('1.profilePhoto', $updatedPhotoUrl);
 
@@ -1008,6 +1014,7 @@ class BackendGapClosureTest extends TestCase
         $this->assertCount(1, $saved['mobileAgents']);
         $this->assertSame($createdId, $saved['mobileAgents'][0]['id']);
         $this->assertSame('Depalpur', $saved['mobileAgents'][0]['city']);
+        $this->assertSame('Updated Directory Agent', $saved['mobileAgents'][0]['name']);
         $this->assertSame($updatedPhotoUrl, $saved['mobileAgents'][0]['photo']);
         $this->getJson('/api/mobile-agents')
             ->assertOk()

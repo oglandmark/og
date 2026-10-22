@@ -194,21 +194,33 @@ export default function AgentProfileScreen() {
   const [activeTab,     setActiveTab]     = useState<'For Sale' | 'For Rent' | 'Featured'>('For Sale');
   const [managedAgent, setManagedAgent] = useState<SampleAgent | null>(null);
   const [agentLoading, setAgentLoading] = useState(true);
-  const [profilePhotoFailed, setProfilePhotoFailed] = useState(false);
+  const [failedPhotoSourceKey, setFailedPhotoSourceKey] = useState('');
 
   useFocusEffect(useCallback(() => {
     let active = true;
+    let loading = false;
     setAgentLoading(true);
-    getAgents()
-      .then((records) => {
+    const refreshAgent = async () => {
+      if (!active || loading) return;
+      loading = true;
+      try {
+        const records = await getAgents();
         if (!active) return;
         const record = records.find((item) => String(item.id) === String(id));
         setManagedAgent(record ? apiAgentToSample(record) : null);
-        setProfilePhotoFailed(false);
-      })
-      .catch(() => { if (active) setManagedAgent(null); })
-      .finally(() => { if (active) setAgentLoading(false); });
-    return () => { active = false; };
+      } catch {
+        // Keep the last successful profile visible if a background refresh fails.
+      } finally {
+        loading = false;
+        if (active) setAgentLoading(false);
+      }
+    };
+    void refreshAgent();
+    const interval = setInterval(() => void refreshAgent(), 15_000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, [id]));
 
   // Resolve from the admin-managed directory first, then support the logged-in
@@ -298,12 +310,12 @@ export default function AgentProfileScreen() {
         {/* avatar */}
         <View style={styles.avatarWrap}>
           <View style={[styles.avatar, { backgroundColor: agent.color }]}>
-            {agent.profileImage && !profilePhotoFailed ? (
+            {agent.profileImage && failedPhotoSourceKey !== JSON.stringify(agent.profileImage) ? (
               <Image
                 key={JSON.stringify(agent.profileImage)}
                 source={agent.profileImage}
                 style={styles.avatarImage}
-                onError={() => setProfilePhotoFailed(true)}
+                onError={() => setFailedPhotoSourceKey(JSON.stringify(agent.profileImage))}
               />
             ) : (
               <Text style={styles.avatarInitials}>{agent.initials}</Text>

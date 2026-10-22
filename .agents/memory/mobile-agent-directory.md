@@ -7,6 +7,6 @@ The mobile app may display bundled Agent profiles when its API directory is unav
 
 Agent cards can share a public contact phone. Do not use that phone alone as a unique profile key when it appears multiple times; keep distinct Agent IDs/names and only merge when an account or email links them, or when phone plus name identifies the same profile.
 
-**Why:** Admin-managed Agent profiles can change while the mobile app remains open, and Expo Router may keep detail screens mounted when navigating away and back. A one-time mount fetch can leave photo and profile details stale after an Admin save.
+**Why:** Admin-managed Agent profiles can change while the mobile app remains open, and Expo Router may keep Home or detail screens mounted. A single focus fetch or cached GET can leave names and photos stale after an Admin save.
 
-**How to apply:** Refresh managed Agent details when the profile screen regains focus. When changing directory sync, preserve a durable one-time import marker and distinguish API load failure from a successful empty list in the mobile UI.
+**How to apply:** Bypass HTTP caching and refresh managed Agent data while Home or profile screens are focused, as well as when they regain focus. When changing directory sync, preserve a durable one-time import marker and distinguish API load failure from a successful empty list in the mobile UI.

@@ -847,7 +847,7 @@ class BackendGapClosureTest extends TestCase
         ]);
 
         $websiteDirectory = $this->getJson('/api/agents?approvalStatus=Approved')->assertOk();
-        $mobileDirectory = $this->getJson('/api/mobile/agents')->assertOk();
+        $mobileDirectory = $this->getJson('/api/mobile-agents')->assertOk();
 
         $this->assertCount(2, $websiteDirectory->json());
         $this->assertSame($websiteDirectory->json(), $mobileDirectory->json());

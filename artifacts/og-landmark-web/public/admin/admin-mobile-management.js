@@ -42,7 +42,7 @@
     'All Users': '/admin/users',
     'All Leads': '/admin/inquiries',
     'All Agents': '/admin/mobile/agents',
-    'Add Agent': '/admin/mobile/agents',
+    'Add Agent': '/admin/mobile/agents?create=agent',
     'Homepage Banners': '/admin/mobile/banners',
     'Notifications Overview': '/admin/mobile/notifications',
     'Push Notification History': '/admin/mobile/notifications',
@@ -81,6 +81,13 @@
       .og-mm-nav-link{display:flex;align-items:center;gap:10px;margin:2px 4px;padding:9px 10px;border-radius:8px;color:#cbd5e1;text-decoration:none;font:500 12px system-ui;transition:background .15s,color .15s}
       .og-mm-nav-link:hover,.og-mm-nav-link.active{background:#ffffff14;color:#fff}
       .og-mm-nav-link.active{box-shadow:inset 2px 0 #c8a45a}
+      .og-mm-nav-details{margin:3px 4px 0;color:#cbd5e1}
+      .og-mm-nav-details>summary{padding:9px 10px;border-radius:8px;cursor:pointer;list-style:none;font:600 11px system-ui}
+      .og-mm-nav-details>summary::-webkit-details-marker{display:none}
+      .og-mm-nav-details>summary:after{content:'⌄';float:right;color:#94a3b8}
+      .og-mm-nav-details[open]>summary:after{content:'⌃'}
+      .og-mm-nav-details>summary:hover{background:#ffffff10;color:#fff}
+      .og-mm-nav-children{margin-left:8px;padding-left:5px;border-left:1px solid #ffffff24}
       .og-mm-page{position:fixed;inset:0 0 0 var(--og-mm-sidebar-width,240px);z-index:30;overflow:auto;background:#f0f4f8}
       .og-mm-box{min-height:100%;background:#fff;color:#0b1f3a;font:14px system-ui}
       .og-mm-head{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:17px 22px;background:white;border-bottom:1px solid #e2e8f0}
@@ -107,13 +114,40 @@
   }
 
   async function loadData() {
-    const agentData = await api('/admin/mobile-agents');
-    agents = Array.isArray(agentData) ? agentData : [];
+    const [websiteAgents, mobileAgents] = await Promise.all([
+      api('/admin/city-agents'),
+      api('/admin/mobile-agents'),
+    ]);
+    const merged = new Map();
+    for (const [collection, records] of [
+      ['city-agents', Array.isArray(websiteAgents) ? websiteAgents : []],
+      ['mobile-agents', Array.isArray(mobileAgents) ? mobileAgents : []],
+    ]) {
+      for (const record of records) {
+        const phone = String(record.phone || record.mobile || '').replace(/\D/g, '');
+        const normalizedPhone = phone.length === 12 && phone.startsWith('92') ? `0${phone.slice(2)}`
+          : phone.length === 10 && phone.startsWith('3') ? `0${phone}` : phone;
+        const email = String(record.email || record.loginEmail || '').trim().toLowerCase();
+        const userId = String(record.userId || record.accountId || '').trim();
+        const identity = userId ? `user:${userId}` : email ? `email:${email}` : normalizedPhone ? `phone:${normalizedPhone}` : `${collection}:${record.id}`;
+        const existing = merged.get(identity);
+        if (existing) {
+          Object.assign(existing, Object.fromEntries(Object.entries(record).filter(([, value]) => value !== null && value !== '')));
+          existing.directorySources.push({ collection, id: record.id });
+        } else {
+          merged.set(identity, { ...record, directorySources: [{ collection, id: record.id }] });
+        }
+      }
+    }
+    agents = Array.from(merged.values());
   }
 
   function openPanel(tab) {
     installStyles();
-    if (modal?.dataset.section === tab) return;
+    if (modal?.dataset.section === tab) {
+      if (tab === 'agents' && new URLSearchParams(window.location.search).get('create') === 'agent' && !modal.querySelector('#og-mm-agent-form')) showAgentForm();
+      return;
+    }
     if (modal) modal.remove();
     const activeSection = mobileSections.find((section) => section.id === tab) || sidebarPageBySlug[tab] || { label: 'Admin section' };
     const sidebarWidth = document.querySelector('aside')?.getBoundingClientRect().width || 240;
@@ -133,7 +167,10 @@
     const page = modal;
     if (mobileSections.some((section) => section.id === tab)) {
       loadData().then(() => {
-        if (modal === page) render(activeSection.id);
+        if (modal === page) {
+          render(activeSection.id);
+          if (activeSection.id === 'agents' && new URLSearchParams(window.location.search).get('create') === 'agent') showAgentForm();
+        }
       }).catch((error) => {
         if (modal === page) page.querySelector('.og-mm-content').innerHTML = `<div class="og-mm-error">${esc(error.message)}</div>`;
       });
@@ -154,7 +191,10 @@
     if (tab === 'users' || tab === 'banners' || tab === 'notifications') return renderSection(tab, content);
     if (tab === 'properties') return renderProperties(content);
     const page = sidebarPageBySlug[tab];
-    content.innerHTML = `<div class="og-mm-empty"><h3>${esc(page?.label || 'Page not found')}</h3><p>This navigation item does not have a connected management workflow yet.</p></div>`;
+    const serviceAreas = page?.label === 'Cities'
+      ? '<p>Service areas: Okara, Depalpur, Renala Khurd, Hujra Shah Muqeem, Basir Pur, and Haveli Lakha.</p>'
+      : '';
+    content.innerHTML = `<div class="og-mm-empty"><h3>${esc(page?.label || 'Page not found')}</h3><p>This navigation item does not have a connected management workflow yet.</p>${serviceAreas}</div>`;
   }
 
   function renderAgents(content) {
@@ -164,18 +204,19 @@
       const photoCell = photo
         ? `<span class="og-mm-agent-list-photo"><img data-agent-list-photo src="${esc(photo)}" alt="${esc(`${name} profile photo`)}" loading="lazy" decoding="async"><span class="og-mm-agent-list-photo-fallback" data-agent-photo-fallback hidden>Photo unavailable</span></span>`
         : '<span class="og-mm-agent-list-photo og-mm-agent-list-photo-fallback">No photo</span>';
+      const sourceLabel = agent.directorySources?.length > 1 ? 'Website + Mobile' : agent.directorySources?.[0]?.collection === 'city-agents' ? 'Website' : 'Mobile';
       return `<tr>
       <td>${photoCell}</td>
-      <td><strong>${esc(name)}</strong><div>${esc(agent.agency || agent.specialization || 'Independent')}</div></td>
+      <td><strong>${esc(name)}</strong><div>${esc(agent.agency || agent.specialization || 'Independent')} · ${esc(sourceLabel)}</div></td>
       <td>${esc(agent.city || '—')}<div>${esc(agent.phone || '')}</div></td>
       <td>${esc(agent.email || agent.loginEmail || '—')}</td>
       <td><span class="og-mm-pill ${agent.status === 'Suspended' || agent.visible === false ? 'off' : ''}">${esc(agent.status || 'Active')}${agent.visible === false ? ' · Hidden' : ''}</span></td>
-      <td><div class="og-mm-row-actions"><button class="og-mm-action" data-action="edit-agent" data-id="${esc(agent.id)}">Edit</button><button class="og-mm-action danger" data-action="delete-agent" data-id="${esc(agent.id)}">Remove</button></div></td></tr>`;
+      <td><div class="og-mm-row-actions"><button class="og-mm-action" data-action="edit-agent" data-index="${agents.indexOf(agent)}">Edit</button><button class="og-mm-action danger" data-action="delete-agent" data-index="${agents.indexOf(agent)}">Remove</button></div></td></tr>`;
     }).join('');
     content.innerHTML = `<div class="og-mm-note">Agent directory profiles shown in the mobile app. Adding or removing a profile does not create or delete its separate sign-in account.</div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="og-mm-action primary" data-action="add-agent">Add mobile Agent</button></div>
       <div id="og-mm-agent-form-wrap"></div>
-      <div style="overflow:auto"><table class="og-mm-table"><thead><tr><th>Photo</th><th>Agent</th><th>City / phone</th><th>Email</th><th>App status</th><th>Actions</th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="og-mm-empty">No mobile Agent profiles yet.</td></tr>'}</tbody></table></div>`;
+      <div style="overflow:auto"><table class="og-mm-table"><thead><tr><th>Photo</th><th>Agent</th><th>City / phone</th><th>Email</th><th>Directory status</th><th>Actions</th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="og-mm-empty">No Agent profiles found in either directory.</td></tr>'}</tbody></table></div>`;
     content.querySelectorAll('[data-agent-list-photo]').forEach((image) => {
       image.addEventListener('error', () => {
         image.hidden = true;
@@ -469,10 +510,15 @@
         approvalStatus: data.approvalStatus, visible: form.elements.visible.checked,
       };
       try {
-        await api(agent.id ? `/admin/mobile-agents/${encodeURIComponent(agent.id)}` : '/admin/mobile-agents', {
-          method: agent.id ? 'PUT' : 'POST', body: JSON.stringify(payload),
-        });
-        agents = await api('/admin/mobile-agents');
+        const sources = agent?.directorySources || [];
+        if (sources.length) {
+          await Promise.all(sources.map(({ collection, id }) => api(`/admin/${collection}/${encodeURIComponent(id)}`, {
+            method: 'PUT', body: JSON.stringify(payload),
+          })));
+        } else {
+          await api('/admin/city-agents', { method: 'POST', body: JSON.stringify(payload) });
+        }
+        await loadData();
         renderAgents(modal.querySelector('.og-mm-content'));
       } catch (error) {
         const message = document.createElement('div');
@@ -483,26 +529,20 @@
   }
 
   async function handleAction(button) {
-    const id = button.dataset.id;
     try {
-      if (button.dataset.action === 'demo') {
-        const hide = !hiddenDemos.includes(Number(id));
-        if (!window.confirm(`${hide ? 'Hide' : 'Restore'} this demo property in the mobile offline fallback? Customer listings will not be affected.`)) return;
-        const result = await api('/admin/demo-properties', { method: 'PATCH', body: JSON.stringify({ ids: [Number(id)], hidden: hide }) });
-        hiddenDemos = result.hiddenDemoPropertyIds || [];
-        renderDemos(modal.querySelector('.og-mm-content'));
-      }
       if (button.dataset.action === 'add-agent') showAgentForm();
       if (button.dataset.action === 'edit-agent') {
-        const agent = agents.find((item) => String(item.id) === String(id));
+        const agent = agents[Number(button.dataset.index)];
         if (agent) showAgentForm(agent);
       }
       if (button.dataset.action === 'cancel-form') renderAgents(modal.querySelector('.og-mm-content'));
       if (button.dataset.action === 'delete-agent') {
-        const agent = agents.find((item) => String(item.id) === String(id));
-        if (!agent || !window.confirm(`Remove “${agent.displayName || agent.name || 'this Agent'}” from the mobile app directory? Its separate login account will remain.`)) return;
-        await api(`/admin/mobile-agents/${encodeURIComponent(id)}`, { method: 'DELETE' });
-        agents = await api('/admin/mobile-agents');
+        const agent = agents[Number(button.dataset.index)];
+        if (!agent || !window.confirm(`Remove “${agent.displayName || agent.name || 'this Agent'}” from the website and mobile Agent directory? Its login account will remain.`)) return;
+        await Promise.all((agent.directorySources || []).map(({ collection, id }) =>
+          api(`/admin/${collection}/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+        ));
+        await loadData();
         renderAgents(modal.querySelector('.og-mm-content'));
       }
       const section = button.dataset.section;
@@ -538,16 +578,26 @@
   }
 
   function sectionFromPath() {
-    const match = window.location.pathname.match(/\/admin\/mobile\/([^/]+)\/?$/);
-    return mobileSections.some((section) => section.id === match?.[1]) ? match[1] : null;
+    const pathname = window.location.pathname;
+    const mobileMatch = pathname.match(/\/admin\/mobile\/([^/]+)\/?$/);
+    if (mobileSections.some((section) => section.id === mobileMatch?.[1])) return mobileMatch[1];
+    const pageMatch = pathname.match(/\/admin\/management\/([^/]+)\/?$/);
+    return sidebarPageBySlug[pageMatch?.[1]] ? pageMatch[1] : null;
   }
 
   function syncPage() {
     const section = sectionFromPath();
-    document.querySelectorAll('[data-mobile-section]').forEach((link) => {
-      link.classList.toggle('active', link.dataset.mobileSection === section);
-      if (link.dataset.mobileSection === section) link.setAttribute('aria-current', 'page');
+    const currentUrl = window.location.pathname + window.location.search;
+    document.querySelectorAll('[data-admin-page-link]').forEach((link) => {
+      const active = link.pathname + link.search === currentUrl
+        || (link.dataset.adminPageLink === section && !link.search);
+      link.classList.toggle('active', active);
+      if (active) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
+      if (active) {
+        const details = link.closest('details');
+        if (details) details.open = true;
+      }
     });
     if (section) openPanel(section);
     else if (modal) close();
@@ -555,27 +605,66 @@
 
   function attachNavigation() {
     const nav = document.querySelector('aside nav');
-    if (!nav || nav.querySelector('[data-og-mobile-nav]')) return;
+    if (!nav) return;
+    nav.querySelectorAll(':scope > a').forEach((link) => { link.hidden = true; });
+    if (nav.querySelector('[data-og-admin-nav]')) return;
 
     const group = document.createElement('div');
-    group.dataset.ogMobileNav = 'true';
-    const title = document.createElement('div');
-    title.className = 'og-mm-nav-title';
-    title.textContent = 'Mobile app';
-    group.appendChild(title);
+    group.dataset.ogAdminNav = 'true';
 
-    for (const section of mobileSections) {
+    const pageLink = (label, href, slug = '') => {
       const link = document.createElement('a');
       link.className = 'og-mm-nav-link';
-      link.href = `/admin/mobile/${section.id}`;
-      link.dataset.mobileSection = section.id;
-      link.innerHTML = `<span aria-hidden="true">›</span><span>${esc(section.label)}</span>`;
-      link.addEventListener('click', (event) => {
-        event.preventDefault();
-        if (window.location.pathname !== link.pathname) history.pushState({}, '', link.pathname);
-        syncPage();
-      });
-      group.appendChild(link);
+      link.href = href;
+      link.textContent = label;
+      link.dataset.adminPageLink = slug;
+      if (href.startsWith('/admin/mobile/') || href.startsWith('/admin/management/')) {
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          if (window.location.pathname + window.location.search !== link.pathname + link.search) history.pushState({}, '', link.pathname + link.search);
+          syncPage();
+        });
+      }
+      return link;
+    };
+
+    const dashboard = sidebarPages.find((page) => page.label === 'Dashboard Overview');
+    group.appendChild(pageLink(dashboard.label, dashboard.path, dashboard.slug));
+
+    for (const sidebarGroup of sidebarGroups) {
+      if (sidebarGroup.label === 'Dashboard') continue;
+      const details = document.createElement('details');
+      details.className = 'og-mm-nav-details';
+      const summary = document.createElement('summary');
+      summary.textContent = sidebarGroup.label;
+      details.appendChild(summary);
+      const children = document.createElement('div');
+      children.className = 'og-mm-nav-children';
+
+      for (const label of sidebarGroup.items) {
+        if (sidebarGroup.label === 'Dashboard' && label === 'Dashboard Overview') continue;
+        const page = sidebarPages.find((item) => item.group === sidebarGroup.label && item.label === label);
+        if (!page) continue;
+        let href = page.path;
+        let slug = page.slug;
+        if (label === 'All Agents') {
+          href = '/admin/mobile/agents';
+          slug = 'agents';
+        } else if (label === 'Add Agent') {
+          href = '/admin/mobile/agents?create=agent';
+          slug = 'agents';
+        } else if (label === 'Homepage Banners') {
+          href = '/admin/mobile/banners';
+          slug = 'banners';
+        } else if (label === 'Notifications Overview' || label === 'Push Notification History') {
+          href = '/admin/mobile/notifications';
+          slug = 'notifications';
+        }
+        children.appendChild(pageLink(label, href, slug));
+      }
+      details.appendChild(children);
+      details.dataset.sidebarGroup = sidebarGroup.label;
+      group.appendChild(details);
     }
 
     nav.appendChild(group);

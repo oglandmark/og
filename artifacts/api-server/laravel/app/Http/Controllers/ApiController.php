@@ -2043,15 +2043,23 @@ class ApiController extends Controller
         ] as $source => $sourceItems) {
             foreach ($sourceItems as $agent) {
                 if (!is_array($agent)) continue;
-                $email = strtolower(trim((string) ($agent['email'] ?? '')));
+                $email = strtolower(trim((string) ($agent['email'] ?? $agent['loginEmail'] ?? '')));
                 $phone = preg_replace('/\D+/', '', (string) ($agent['phone'] ?? $agent['mobile'] ?? ''));
+                if (strlen($phone) === 12 && str_starts_with($phone, '92')) $phone = '0' . substr($phone, 2);
+                elseif (strlen($phone) === 10 && str_starts_with($phone, '3')) $phone = '0' . $phone;
                 $userId = trim((string) ($agent['userId'] ?? $agent['accountId'] ?? ''));
                 $identity = $userId !== '' ? "user:{$userId}"
                     : ($email !== '' ? "email:{$email}"
                     : ($phone !== '' ? "phone:{$phone}" : "{$source}:" . (string) ($agent['id'] ?? count($itemsByIdentity))));
 
                 if (isset($itemsByIdentity[$identity])) {
-                    $itemsByIdentity[$identity] = array_merge($agent, $itemsByIdentity[$identity]);
+                    $existing = $itemsByIdentity[$identity];
+                    foreach ($agent as $field => $value) {
+                        if (!array_key_exists($field, $existing) || $existing[$field] === null || $existing[$field] === '' || $existing[$field] === []) {
+                            $existing[$field] = $value;
+                        }
+                    }
+                    $itemsByIdentity[$identity] = $existing;
                     continue;
                 }
                 $name = trim((string) ($agent['displayName'] ?? $agent['name'] ?? ''));

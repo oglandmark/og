@@ -73,13 +73,17 @@ test('mobile manager uses the existing API collections requested', () => {
 
 test('mobile app sections are separate Admin sidebar pages instead of a modal', () => {
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
-  for (const section of ['demos', 'properties', 'agents', 'users', 'banners', 'notifications']) {
-    assert.match(source, new RegExp(`id: '${section}'`));
-    assert.match(source, new RegExp(`\\/admin\\/mobile\\/\\$\\{section\\.id\\}`));
+  for (const section of ['Property Management', 'Projects Management', 'Users Management', 'Agents Management', 'Leads & Inquiries', 'Locations Management', 'Site Visits & Appointments', 'Marketing & Content', 'Reviews & Complaints', 'Notifications', 'Support Management', 'Reports & Analytics', 'Staff & Permissions', 'System Settings']) {
+    assert.ok(source.includes(`label: '${section}'`), `sidebar should include ${section}`);
   }
-  assert.match(source, /data-og-mobile-nav/);
+  for (const item of ['All Properties', 'Pending Approvals', 'All Projects', 'All Users', 'All Agents', 'Add Agent', 'All Leads', 'Housing Societies', 'All Appointments', 'Homepage Banners', 'Support Tickets', 'Roles Management', 'API Status']) {
+    assert.ok(source.includes(`'${item}'`), `sidebar should include ${item}`);
+  }
+  assert.match(source, /data-og-admin-nav/);
+  assert.match(source, /createElement\('details'\)/);
   assert.match(source, /function sectionFromPath\(\)/);
-  assert.match(source, /shared Admin API used by the website and mobile app/);
+  assert.match(source, /This navigation item does not have a connected management workflow yet/);
+  assert.doesNotMatch(source, /Demo properties/);
   assert.doesNotMatch(source, /Manage mobile app/);
   assert.doesNotMatch(source, /og-mm-tabs/);
 });
@@ -103,5 +107,6 @@ test('Agent table shows profile thumbnails with bounded missing and broken-photo
   assert.match(source, /image\.addEventListener\('error', \(\) => \{\s*image\.hidden = true;/);
   assert.match(source, /\.og-mm-agent-list-photo\{[^}]*width:40px;height:40px;overflow:hidden/);
   assert.match(source, /<th>Photo<\/th><th>Agent<\/th>/);
-  assert.match(source, /agents = await api\('\/admin\/mobile-agents'\);\s*renderAgents\(modal\.querySelector\('\.og-mm-content'\)\);/);
+  assert.match(source, /api\('\/admin\/city-agents'\)[\s\S]*api\('\/admin\/mobile-agents'\)/);
+  assert.match(source, /directorySources\.push/);
 });

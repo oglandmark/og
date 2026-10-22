@@ -1,30 +1,24 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
-const vm = require('node:vm');
+const {
+  assertCatalogMatches,
+  buildAdminCatalog,
+  checkCatalog,
+  readBundledDemos,
+} = require('./sync-admin-demo-properties');
 
 const root = path.resolve(__dirname, '..');
-const mobileRoot = path.resolve(root, '..', 'og-landmark-mobile');
-
-function readBundledDemos() {
-  const source = fs.readFileSync(path.join(mobileRoot, 'lib/properties.ts'), 'utf8');
-  const declaration = source.indexOf('const bundledDemoProperties: Property[] = [');
-  assert.notEqual(declaration, -1, 'bundled demo source should remain discoverable');
-  const end = source.indexOf('\n];', declaration) + 2;
-  assert.ok(end > declaration, 'bundled demo array should be closed');
-  const literal = source.slice(source.indexOf('[', declaration), end).replace(
-    /require\((['"])(.*?)\1\)(?:\s+as\s+unknown\s+as\s+number)?/g,
-    (_match, _quote, assetPath) => JSON.stringify(assetPath),
-  );
-  return vm.runInNewContext(literal, {});
-}
 
 test('admin mobile demo catalog mirrors the bundled mobile demo records', () => {
   const catalog = JSON.parse(fs.readFileSync(path.join(root, 'public/admin/demo-properties.json'), 'utf8'));
   const bundled = readBundledDemos();
+  const generated = buildAdminCatalog();
   const fields = ['id', 'title', 'type', 'status', 'price', 'area', 'areaUnit', 'city', 'address', 'agent'];
 
+  assert.deepEqual(catalog, generated, 'admin catalog should be generated from the mobile records');
   assert.equal(catalog.length, bundled.length);
   assert.equal(new Set(catalog.map((item) => item.id)).size, catalog.length, 'demo IDs must be unique');
   for (const property of bundled) {
@@ -33,6 +27,28 @@ test('admin mobile demo catalog mirrors the bundled mobile demo records', () => 
     for (const field of fields) assert.equal(adminRecord[field], property[field], `demo ${property.id} ${field}`);
     assert.equal(adminRecord.phone, property.agentPhone || '');
     assert.equal(adminRecord.featured, Boolean(property.featured));
+  }
+});
+
+test('admin demo catalog check reports stale records clearly', () => {
+  const expected = buildAdminCatalog();
+  const stale = structuredClone(expected);
+  stale[0].price += 1;
+  const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'admin-demo-catalog-'));
+  const staleCatalogPath = path.join(temporaryDirectory, 'demo-properties.json');
+
+  try {
+    fs.writeFileSync(staleCatalogPath, JSON.stringify(stale));
+    assert.throws(
+      () => checkCatalog(staleCatalogPath),
+      /Admin demo catalog is out of sync.*changed records: 1.*sync:admin-demos/,
+    );
+    assert.throws(
+      () => assertCatalogMatches(stale, expected),
+      /Admin demo catalog is out of sync.*changed records: 1.*sync:admin-demos/,
+    );
+  } finally {
+    fs.rmSync(temporaryDirectory, { recursive: true, force: true });
   }
 });
 

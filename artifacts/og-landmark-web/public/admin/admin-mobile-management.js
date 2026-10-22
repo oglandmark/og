@@ -595,6 +595,7 @@
   function attachNavigation() {
     const nav = document.querySelector('aside nav');
     if (!nav) return;
+    installStyles();
     nav.querySelectorAll(':scope > a').forEach((link) => { link.hidden = true; });
     if (nav.querySelector('[data-og-admin-nav]')) return;
 

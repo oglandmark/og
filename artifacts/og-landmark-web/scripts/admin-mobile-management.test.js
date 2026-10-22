@@ -77,6 +77,7 @@ test('Admin sidebar contains only the eight requested destinations', () => {
   const destinations = ['Main', 'Property listed', 'Property in progress', 'Property closed', 'User management', 'Agent Management', 'App banners management', 'App notifications management'];
   assert.equal((navBlock.match(/\{ label:/g) || []).length, destinations.length, 'sidebar should contain only eight links');
   for (const item of destinations) assert.ok(navBlock.includes(`label: '${item}'`), `sidebar should include ${item}`);
+  assert.match(source, /function attachNavigation\(\)\s*\{\s*const nav = document\.querySelector\('aside nav'\);\s*if \(!nav\) return;\s*installStyles\(\);/);
   assert.doesNotMatch(navBlock, /Projects Management|Leads & Inquiries|Locations Management|Staff & Permissions|System Settings/);
   assert.match(source, /data-og-admin-nav/);
   assert.match(source, /const iconPaths = \{/);

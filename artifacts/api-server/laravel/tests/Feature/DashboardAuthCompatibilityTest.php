@@ -445,18 +445,18 @@ class DashboardAuthCompatibilityTest extends TestCase
         $storedDevice = $storedAdmin['trustedDevices'][0] ?? null;
         $this->assertNotNull($storedDevice);
         $this->assertSame(hash('sha256', $deviceToken), $storedDevice['tokenHash']);
+        $this->assertTrue(\Illuminate\Support\Carbon::parse($storedDevice['expiresAt'])->isFuture());
         $this->assertArrayNotHasKey('trustedDevices', $otpResponse->json('user'));
 
         $trustedLogin = $this->withUnencryptedCookie('og_admin_trusted_device', $deviceToken)
-            ->postJson('/api/auth/admin-verify', [
+            ->post('/api/auth/admin-verify', [
                 'email' => 'dashboard-admin@example.test',
                 'password' => self::PASSWORD,
             ]);
-        fwrite(STDERR, "trusted login response: " . $trustedLogin->getContent() . "\n");
         $trustedLogin->assertOk()->assertJsonStructure(['token', 'user']);
 
         $this->withUnencryptedCookie('og_admin_trusted_device', 'unrecognized-device-token')
-            ->postJson('/api/auth/admin-verify', [
+            ->post('/api/auth/admin-verify', [
                 'email' => 'dashboard-admin@example.test',
                 'password' => self::PASSWORD,
             ])

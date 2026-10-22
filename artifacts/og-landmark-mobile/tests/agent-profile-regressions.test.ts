@@ -12,6 +12,10 @@ const agentProfileScreen = readFileSync(
   resolve(mobileRoot, 'app', 'agent', '[id].tsx'),
   'utf8',
 );
+const findAgentScreen = readFileSync(
+  resolve(mobileRoot, 'app', 'agent', 'find.tsx'),
+  'utf8',
+);
 
 test('Home and profile screens only show Agents from the managed directory', () => {
   assert.match(
@@ -35,4 +39,13 @@ test('Agent details refresh managed profiles whenever the route regains focus', 
   assert.match(agentProfileScreen, /onError=\{\(\) => setFailedPhotoSourceKey\(JSON\.stringify\(agent\.profileImage\)\)\}/);
   assert.match(agentProfileScreen, /agent\.profileImage && failedPhotoSourceKey !== JSON\.stringify\(agent\.profileImage\)/);
   assert.match(homeScreen, /setInterval\(\(\) => void refreshAgents\(\), 15_000\)/);
+  assert.match(homeScreen, /AppState\.addEventListener\('change', \(nextState\) => \{\s*if \(nextState === 'active'\) void refreshAgents\(\);/);
+  assert.match(homeScreen, /appStateSubscription\.remove\(\)/);
+});
+
+test('Find Agents refreshes after Admin changes while open or when the app resumes', () => {
+  assert.match(findAgentScreen, /useFocusEffect\(useCallback\(/);
+  assert.match(findAgentScreen, /setInterval\(\(\) => void loadAgents\(false\), 15_000\)/);
+  assert.match(findAgentScreen, /AppState\.addEventListener\('change', \(nextState\) => \{\s*if \(nextState === 'active'\) void loadAgents\(false\);/);
+  assert.match(findAgentScreen, /appStateSubscription\.remove\(\)/);
 });

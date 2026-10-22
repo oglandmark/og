@@ -3040,7 +3040,7 @@ class ApiController extends Controller
         $originalData = $data;
         $data[$key] ??= [];
         if ($key === 'mobileAgents' && $method === 'GET' && $id === null && $user && $this->isAdmin($user)
-            && empty($data['legacySampleAgentProfilesImportedV3'])) {
+            && empty($data['legacySampleAgentProfilesImportedV4'])) {
             $legacyAgents = [
                 ['legacySampleKey' => 'sa1', 'name' => 'Ahmed Property Consultants', 'initials' => 'AC', 'agency' => 'Ahmed Real Estate', 'verified' => true, 'rating' => 4.9, 'reviewCount' => 126, 'years' => 12, 'listings' => 48, 'areas' => ['Okara City', 'Depalpur'], 'color' => '#183B60', 'phone' => '03011484303', 'specialties' => ['Residential', 'Agricultural Land', 'Plots'], 'about' => 'Residential plots, houses, and agricultural land in Okara City and Depalpur.', 'photo' => '/images/agent-1.jpg'],
                 ['legacySampleKey' => 'sa2', 'name' => 'Malik Properties', 'initials' => 'MP', 'agency' => 'Malik & Sons Real Estate', 'verified' => true, 'rating' => 4.8, 'reviewCount' => 94, 'years' => 8, 'listings' => 32, 'areas' => ['Renala Khurd', 'Okara City'], 'color' => '#0B1F3A', 'phone' => '03011484303', 'specialties' => ['Commercial', 'Residential', 'Rentals'], 'about' => 'Commercial and residential properties, including rentals, in Renala Khurd and Okara City.', 'photo' => '/images/agent-2.jpg'],
@@ -3066,7 +3066,7 @@ class ApiController extends Controller
                 $data['mobileAgents'][] = $agent;
                 $existingNames[$nameKey] = true;
             }
-            $data['legacySampleAgentProfilesImportedV3'] = true;
+            $data['legacySampleAgentProfilesImportedV4'] = true;
             $data = JsonStore::write($data);
         }
         $mediaFields = in_array($key, ['mobileAgents', 'cityAgents'], true)

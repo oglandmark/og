@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Image, Linking, Platform, Pressable, ScrollView,
+  ActivityIndicator, AppState, Image, Linking, Platform, Pressable, ScrollView,
   StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
@@ -48,20 +48,36 @@ export default function FindAgentScreen() {
   const [agents, setAgents] = useState<SampleAgent[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const requestInFlight = useRef(false);
 
-  const loadAgents = () => {
-    setLoading(true);
+  const loadAgents = useCallback(async (showLoading = true) => {
+    if (requestInFlight.current) return;
+    requestInFlight.current = true;
+    if (showLoading) setLoading(true);
     setLoadError('');
-    getAgents()
-      .then((records) => setAgents(records.map(apiAgentToSample)))
-      .catch((error: unknown) => {
+    try {
+      const records = await getAgents();
+      setAgents(records.map(apiAgentToSample));
+    } catch (error: unknown) {
         setAgents([]);
         setLoadError(error instanceof Error ? error.message : 'Could not load agents.');
-      })
-      .finally(() => setLoading(false));
-  };
+    } finally {
+      requestInFlight.current = false;
+      setLoading(false);
+    }
+  }, []);
 
-  useEffect(() => { loadAgents(); }, []);
+  useFocusEffect(useCallback(() => {
+    void loadAgents();
+    const interval = setInterval(() => void loadAgents(false), 15_000);
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') void loadAgents(false);
+    });
+    return () => {
+      clearInterval(interval);
+      appStateSubscription.remove();
+    };
+  }, [loadAgents]));
 
   const allLocations = useMemo(() => Array.from(
     new Set(agents.flatMap((agent) => agent.areas)),
@@ -256,7 +272,7 @@ export default function FindAgentScreen() {
           </View>
           <Text style={[st.emptyTitle, { color: colors.foreground }]}>Could not load agents</Text>
           <Text style={[st.emptyText, { color: colors.mutedForeground }]}>{loadError}</Text>
-          <Pressable onPress={loadAgents} style={[st.emptyBtn, { backgroundColor: colors.action }]}>
+          <Pressable onPress={() => void loadAgents()} style={[st.emptyBtn, { backgroundColor: colors.action }]}>
             <Text style={[st.emptyBtnText, { color: colors.actionForeground }]}>Try again</Text>
           </Pressable>
         </GlassCard>

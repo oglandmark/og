@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Image, ImageBackground,
+  ActivityIndicator, AppState, Image, ImageBackground,
   Modal, PanResponder, Platform, Pressable, ScrollView, StatusBar,
   StyleSheet, View, useWindowDimensions,
 } from 'react-native';
@@ -1540,9 +1540,13 @@ export default function HomeScreen() {
     };
     void refreshAgents();
     const interval = setInterval(() => void refreshAgents(), 15_000);
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') void refreshAgents();
+    });
     return () => {
       active = false;
       clearInterval(interval);
+      appStateSubscription.remove();
     };
   }, []));
 

@@ -887,6 +887,8 @@ class BackendGapClosureTest extends TestCase
             'users' => [$this->user(1, 'agent-bootstrap-admin@example.test', 'Admin')],
             'mobileAgents' => [],
             'cityAgents' => [],
+            'legacySampleAgentProfilesImportedV2' => true,
+            'legacySampleAgentProfilesImportedV3' => true,
             'nextId' => 1,
         ]);
         $adminToken = $this->token('agent-bootstrap-admin@example.test');
@@ -909,7 +911,7 @@ class BackendGapClosureTest extends TestCase
             ->getJson('/api/admin/mobile-agents')
             ->assertOk()
             ->assertExactJson([]);
-        $this->assertTrue(JsonStore::read()['legacySampleAgentProfilesImportedV3']);
+        $this->assertTrue(JsonStore::read()['legacySampleAgentProfilesImportedV4']);
     }
 
     public function test_admin_backfills_missing_legacy_samples_when_one_profile_already_exists(): void
@@ -939,7 +941,7 @@ class BackendGapClosureTest extends TestCase
         $names = array_column($profiles->json(), 'name');
         $this->assertCount(5, array_unique($names));
         $this->assertContains('Raza Industrial & Commercial', $names);
-        $this->assertTrue(JsonStore::read()['legacySampleAgentProfilesImportedV3']);
+        $this->assertTrue(JsonStore::read()['legacySampleAgentProfilesImportedV4']);
     }
 
     public function test_admin_can_manage_mobile_agent_profiles_without_deleting_linked_accounts(): void
@@ -1059,12 +1061,19 @@ class BackendGapClosureTest extends TestCase
         $this->assertSame('Depalpur', $saved['mobileAgents'][0]['city']);
         $this->assertSame('Updated Directory Agent', $saved['mobileAgents'][0]['name']);
         $this->assertSame($updatedPhotoUrl, $saved['mobileAgents'][0]['profilePhoto']);
+
         $this->assertSame($updatedPhotoUrl, $saved['mobileAgents'][0]['photo']);
         $this->getJson('/api/mobile-agents')
             ->assertOk()
             ->assertJsonPath('0.photo', $updatedPhotoUrl)
             ->assertJsonPath('0.profilePhoto', $updatedPhotoUrl);
         $this->assertSame(2, $saved['users'][1]['id'], 'removing a directory profile must not remove its login account');
+
+        $this->withToken($adminToken)
+            ->deleteJson("/api/admin/mobile-agents/{$createdId}")
+            ->assertNoContent();
+        $this->getJson('/api/mobile-agents')->assertOk()->assertExactJson([]);
+        $this->getJson('/api/agents')->assertOk()->assertExactJson([]);
     }
 
     public function test_agent_profile_photo_replacement_and_deletion_preserve_shared_media(): void

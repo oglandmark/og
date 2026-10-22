@@ -599,13 +599,17 @@
         <div class="og-mm-field"><label>Phone</label><input name="phone" maxlength="40" value="${esc(agent.phone || '')}"></div>
         <div class="og-mm-field"><label>Email</label><input name="email" type="email" maxlength="160" value="${esc(agent.email || agent.loginEmail || '')}"></div>
         <div class="og-mm-field"><label>Years of experience</label><input name="years" type="number" min="0" max="80" value="${esc(agent.years || 0)}"></div>
-        <div class="og-mm-field"><label>Profile photo URL</label><input name="photo" type="url" maxlength="2000" value="${esc(agent.photo || agent.profilePhoto || '')}"><div class="og-mm-agent-photo-preview"><img data-agent-photo-preview alt="Agent profile photo preview" hidden><span data-agent-photo-empty>${agent.photo || agent.profilePhoto ? '' : 'No profile photo selected.'}</span></div><label for="og-mm-agent-photo-upload">Upload photo</label><input id="og-mm-agent-photo-upload" name="photoUpload" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"><small>JPG, PNG or WebP up to 20 MiB.</small><span class="og-mm-agent-photo-status" data-agent-photo-status aria-live="polite"></span></div>
+        <div class="og-mm-field"><label>Rating</label><input name="rating" type="number" min="0" max="5" step="0.1" value="${esc(agent.rating || 0)}"></div>
+        <div class="og-mm-field"><label>Reviews</label><input name="reviewCount" type="number" min="0" value="${esc(agent.reviewCount || 0)}"></div>
+        <div class="og-mm-field"><label>Listings</label><input name="listings" type="number" min="0" value="${esc(agent.listings || 0)}"></div>
+        <div class="og-mm-field"><label>Brand color</label><input name="color" type="color" value="${esc(/^#[0-9a-f]{6}$/i.test(agent.color || '') ? agent.color : '#0b1f3a')}"></div>
+        <div class="og-mm-field full"><label>Profile photo URL</label><input name="photo" type="url" maxlength="2000" value="${esc(agent.photo || agent.profilePhoto || '')}"><div class="og-mm-agent-photo-preview"><img data-agent-photo-preview alt="Agent profile photo preview" hidden><span data-agent-photo-empty>${agent.photo || agent.profilePhoto ? '' : 'No profile photo selected.'}</span></div><label for="og-mm-agent-photo-upload">Upload photo</label><input id="og-mm-agent-photo-upload" name="photoUpload" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"><button type="button" class="og-mm-action danger" data-remove-agent-photo>Remove current photo</button><small>JPG, PNG or WebP up to 20 MiB.</small><span class="og-mm-agent-photo-status" data-agent-photo-status aria-live="polite"></span></div>
         <div class="og-mm-field"><label>Profile status</label><select name="status"><option ${agent.status !== 'Suspended' ? 'selected' : ''}>Active</option><option ${agent.status === 'Suspended' ? 'selected' : ''}>Suspended</option></select></div>
         <div class="og-mm-field"><label>Approval</label><select name="approvalStatus"><option ${agent.approvalStatus !== 'Pending' && agent.approvalStatus !== 'Rejected' ? 'selected' : ''}>Approved</option><option ${agent.approvalStatus === 'Pending' ? 'selected' : ''}>Pending</option><option ${agent.approvalStatus === 'Rejected' ? 'selected' : ''}>Rejected</option></select></div>
         <div class="og-mm-field full"><label>Service areas (comma separated)</label><input name="areas" value="${esc((agent.areas || []).join(', '))}"></div>
         <div class="og-mm-field full"><label>Specialties (comma separated)</label><input name="specialties" value="${esc((agent.specialties || []).join(', '))}"></div>
         <div class="og-mm-field full"><label>About</label><textarea name="about" maxlength="2000">${esc(agent.about || '')}</textarea></div>
-        <div class="og-mm-field"><label><input type="checkbox" name="visible" ${agent.visible !== false ? 'checked' : ''}> Visible in mobile app</label></div>
+        <div class="og-mm-field"><label><input type="checkbox" name="visible" ${agent.visible !== false ? 'checked' : ''}> Visible in mobile app</label><label><input type="checkbox" name="verified" ${agent.verified !== false ? 'checked' : ''}> Verified Agent</label></div>
       </div><div class="og-mm-form-actions"><button type="button" class="og-mm-action" data-action="cancel-form">Cancel</button><button class="og-mm-action primary" type="submit">Save Agent</button></div>
     </form>`;
     const form = wrap.querySelector('form');
@@ -629,6 +633,13 @@
     };
     showPhotoPreview(photoUrlInput.value);
     photoUrlInput.addEventListener('input', () => showPhotoPreview(photoUrlInput.value.trim()));
+    form.querySelector('[data-remove-agent-photo]').addEventListener('click', () => {
+      photoUrlInput.value = '';
+      photoUploadInput.value = '';
+      showPhotoPreview('');
+      photoStatus.className = 'og-mm-agent-photo-status';
+      photoStatus.textContent = 'Photo will be removed when you save.';
+    });
     photoPreview.addEventListener('error', () => {
       photoPreview.hidden = true;
       photoEmpty.hidden = false;
@@ -694,7 +705,10 @@
         name: String(data.name || '').trim(), displayName: String(data.name || '').trim(),
         agency: String(data.agency || '').trim(), city: String(data.city || '').trim(),
         phone: String(data.phone || '').trim(), email: String(data.email || '').trim(),
-        years: Number(data.years) || 0, photo: String(data.photo || '').trim() || null,
+        years: Number(data.years) || 0, rating: Number(data.rating) || 0,
+        reviewCount: Number(data.reviewCount) || 0, listings: Number(data.listings) || 0,
+        color: String(data.color || '#0b1f3a'), verified: form.elements.verified.checked,
+        photo: String(data.photo || '').trim() || null,
         profilePhoto: String(data.photo || '').trim() || null,
         areas: String(data.areas || '').split(',').map((item) => item.trim()).filter(Boolean),
         specialties: String(data.specialties || '').split(',').map((item) => item.trim()).filter(Boolean),

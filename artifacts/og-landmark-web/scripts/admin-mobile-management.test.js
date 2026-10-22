@@ -53,7 +53,7 @@ test('mobile management module is loaded by the existing website admin', () => {
   const script = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.js'), 'utf8');
   const styles = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.css'), 'utf8');
 
-  assert.match(html, /admin-mobile-management\.js/);
+  assert.match(html, /admin-mobile-management\.js\?v=mobile-agents-full-management-20261022/);
   assert.match(script, /aria-label', 'Open navigation'/);
   assert.match(script, /aria-controls/);
   assert.match(script, /aria-expanded/);
@@ -175,6 +175,13 @@ test('Agent table shows profile thumbnails with bounded missing and broken-photo
   assert.match(source, /image\.addEventListener\('error', \(\) => \{\s*image\.hidden = true;/);
   assert.match(source, /\.og-mm-agent-list-photo\{[^}]*width:40px;height:40px;overflow:hidden/);
   assert.match(source, /<th>Photo<\/th><th>Agent<\/th>/);
+  assert.match(source, /data-remove-agent-photo/);
+  assert.match(source, /name="rating" type="number"/);
+  assert.match(source, /name="reviewCount" type="number"/);
+  assert.match(source, /name="listings" type="number"/);
+  assert.match(source, /name="verified" \$\{agent\.verified !== false \? 'checked' : ''\}/);
+  assert.match(source, /data-action="delete-agent"/);
+  assert.match(source, /showAgentForm\(agent\)/);
   assert.match(source, /readAgentSource\('\/admin\/city-agents'/);
   assert.match(source, /readAgentSource\('\/admin\/mobile-agents'/);
   assert.match(source, /readAgentSource\('\/admin\/users\?role=agent'/);

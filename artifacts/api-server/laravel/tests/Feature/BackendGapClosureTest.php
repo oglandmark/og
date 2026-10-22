@@ -861,6 +861,37 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonPath('0.name', 'Mobile-only Agent');
     }
 
+    public function test_admin_imports_legacy_mobile_sample_agents_once_for_full_management(): void
+    {
+        $this->seedData([
+            'users' => [$this->user(1, 'agent-bootstrap-admin@example.test', 'Admin')],
+            'mobileAgents' => [],
+            'cityAgents' => [],
+            'nextId' => 1,
+        ]);
+        $adminToken = $this->token('agent-bootstrap-admin@example.test');
+
+        $profiles = $this->withToken($adminToken)
+            ->getJson('/api/admin/mobile-agents')
+            ->assertOk()
+            ->assertJsonCount(5)
+            ->assertJsonPath('0.name', 'Ahmed Property Consultants')
+            ->assertJsonPath('0.photo', '/images/agent-1.jpg')
+            ->assertJsonPath('4.name', 'Raza Industrial & Commercial');
+
+        foreach ($profiles->json() as $profile) {
+            $this->withToken($adminToken)
+                ->deleteJson('/api/admin/mobile-agents/' . $profile['id'])
+                ->assertNoContent();
+        }
+
+        $this->withToken($adminToken)
+            ->getJson('/api/admin/mobile-agents')
+            ->assertOk()
+            ->assertExactJson([]);
+        $this->assertTrue(JsonStore::read()['legacySampleAgentProfilesImported']);
+    }
+
     public function test_admin_can_manage_mobile_agent_profiles_without_deleting_linked_accounts(): void
     {
         $this->seedData([

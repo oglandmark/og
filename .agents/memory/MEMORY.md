@@ -53,3 +53,4 @@
 - [Admin login feedback](admin-login-feedback.md) — show credential-stage failures beside the login form; errors inside a collapsed OTP panel make Continue appear inert.
 - [Admin trusted-device policy](admin-trusted-device.md) — keep OTP on non-local environments; the local Replit preview may use password-only admin login.
 - [Admin project lifecycle](admin-project-lifecycle.md) — project admin edits should stay in the admin audit pipeline and archive projects to preserve linked inventory.
+- [Mobile Agent directory](mobile-agent-directory.md) — bundled Agent samples need a one-time move into the managed API directory; a successful empty API response must stay empty after removals.

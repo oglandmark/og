@@ -1454,6 +1454,8 @@ export default function HomeScreen() {
   const [userListings,     setUserListings]     = useState<Property[]>([]);
   const [devProjects,      setDevProjects]      = useState<DeveloperProject[]>([]);
   const [managedAgents,    setManagedAgents]    = useState<SampleAgent[]>([]);
+  const [agentDirectoryLoaded, setAgentDirectoryLoaded] = useState(false);
+  const [agentDirectoryFailed, setAgentDirectoryFailed] = useState(false);
   const [mobileContent,    setMobileContent]    = useState<MobileContent | null>(null);
   const homeContent = mobileContent?.homepage;
   const homeSections = homeContent?.sections ?? {};
@@ -1523,8 +1525,16 @@ export default function HomeScreen() {
 
   useFocusEffect(useCallback(() => {
     getAgents()
-      .then((records) => setManagedAgents(records.map(apiAgentToSample)))
-      .catch(() => setManagedAgents([]));
+      .then((records) => {
+        setManagedAgents(records.map(apiAgentToSample));
+        setAgentDirectoryLoaded(true);
+        setAgentDirectoryFailed(false);
+      })
+      .catch(() => {
+        setManagedAgents([]);
+        setAgentDirectoryLoaded(true);
+        setAgentDirectoryFailed(true);
+      });
   }, []));
 
   // Fetch live properties on focus; bundled examples remain the offline fallback
@@ -1576,7 +1586,7 @@ export default function HomeScreen() {
   const recommendedProps = allProps
     .filter((p) => transaction === 'Rent' ? p.status === 'For Rent' : p.status === 'For Sale')
     .slice(0, 8);
-  const visibleAgents = managedAgents.length > 0 ? managedAgents : SAMPLE_AGENTS;
+  const visibleAgents = !agentDirectoryLoaded || agentDirectoryFailed ? SAMPLE_AGENTS : managedAgents;
 
   const ctaContent = role === 'agent'
     ? { eyebrow: 'AGENT PORTAL', title: 'Manage your\nlistings', desc: 'Add new properties or track your existing listings.', btn1: 'Add Property', btn1Route: '/(tabs)/post-ad', btn2: 'My Listings', btn2Route: '/(tabs)/listings' }

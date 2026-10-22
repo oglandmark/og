@@ -75,6 +75,10 @@
       return result.then((response) => {
         response.clone().json().then((payload) => {
           properties = propertyList(payload);
+          windowRef.__ogAdminListingProperties = properties;
+          windowRef.dispatchEvent(new windowRef.CustomEvent('og-admin-properties-loaded', {
+            detail: properties,
+          }));
           scheduleEnhancement();
         }).catch(() => {});
         return response;

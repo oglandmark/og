@@ -53,6 +53,9 @@ test('property editor loads admin listings directly instead of depending on the 
   assert.match(source, /properties = propertyList\(payload\)/);
   assert.match(source, /void loadPropertyData\(\)/);
   assert.match(source, /Edit controls unavailable:/);
+  assert.match(source, /og-admin-properties-loaded/);
+  assert.match(source, /__ogAdminListingProperties/);
+  assert.match(source, /__ogListingProperty/);
 });
 
 test('Admin property deletion requires confirmation and uses the authenticated delete endpoint', () => {

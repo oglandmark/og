@@ -1,7 +1,7 @@
 /**
  * OG Landmark — Centralized API Client
  * -------------------------------------
- * All environments: https://www.oglandmark.com
+ * Replit preview uses its workspace API; published builds use the live website.
  *
  * All requests include the auth token stored in AsyncStorage.
  */
@@ -18,8 +18,7 @@ import {
 } from './propertyMedia';
 
 // ─── Base URL ──────────────────────────────────────────────────────────────────
-// Use the live website backend directly in development and production.
-// Mobile API requests do not go through a Replit API proxy or server.
+// API base is selected once so every request and media URL uses the same data source.
 export const API_BASE = resolveApiBase();
 
 export function resolveMediaUrl(value?: string | null): string | undefined {

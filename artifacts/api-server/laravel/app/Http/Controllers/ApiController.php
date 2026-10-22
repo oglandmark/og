@@ -841,6 +841,8 @@ class ApiController extends Controller
                 'locality' => ['sometimes', 'nullable', 'string', 'max:120'],
                 'society' => ['sometimes', 'nullable', 'string', 'max:160'],
                 'address' => ['sometimes', 'nullable', 'string', 'max:240'],
+                'lat' => ['sometimes', 'nullable', 'numeric', 'between:-90,90'],
+                'lng' => ['sometimes', 'nullable', 'numeric', 'between:-180,180'],
                 'price' => ['sometimes', 'nullable', 'numeric', 'min:0'],
                 'area' => ['sometimes', 'nullable', 'string', 'max:80'],
                 'areaUnit' => ['sometimes', 'nullable', 'string', 'max:40'],
@@ -870,7 +872,7 @@ class ApiController extends Controller
             $editable = [
                 'title', 'type', 'purpose', 'status', 'city', 'district', 'tehsil',
                 'locality', 'society', 'address', 'price', 'area', 'areaUnit',
-                'bedrooms', 'bathrooms', 'yearBuilt', 'furnishing', 'availability',
+                'lat', 'lng', 'bedrooms', 'bathrooms', 'yearBuilt', 'furnishing', 'availability',
                 'videoUrl', 'description', 'amenities', 'images', 'assignedAgent',
             ];
             $beforeData = $data;
@@ -888,6 +890,36 @@ class ApiController extends Controller
                 }
             }
             $data['properties'][$index] = array_merge($before, $changes, ['updatedAt' => now()->toISOString()]);
+            $location = is_array($before['location'] ?? null) ? $before['location'] : [];
+            $locationChanged = false;
+            foreach ([
+                'address' => 'address',
+                'city' => 'city',
+                'district' => 'district',
+                'tehsil' => 'tehsil',
+                'locality' => 'locality',
+            ] as $propertyField => $locationField) {
+                if (array_key_exists($propertyField, $changes)) {
+                    $location[$locationField] = $changes[$propertyField];
+                    $locationChanged = true;
+                }
+            }
+            if (array_key_exists('lat', $changes) || array_key_exists('lng', $changes)) {
+                $lat = array_key_exists('lat', $changes)
+                    ? ($changes['lat'] === null ? null : (float) $changes['lat'])
+                    : $this->propertyLat($before);
+                $lng = array_key_exists('lng', $changes)
+                    ? ($changes['lng'] === null ? null : (float) $changes['lng'])
+                    : $this->propertyLng($before);
+                $data['properties'][$index]['lat'] = $lat;
+                $data['properties'][$index]['lng'] = $lng;
+                $data['properties'][$index]['latitude'] = $lat;
+                $data['properties'][$index]['longitude'] = $lng;
+                $location['latitude'] = $lat;
+                $location['longitude'] = $lng;
+                $locationChanged = true;
+            }
+            if ($locationChanged) $data['properties'][$index]['location'] = $location;
             if (array_key_exists('images', $changes)) {
                 $images = array_values($changes['images']);
                 $oldCover = $before['coverImage'] ?? null;

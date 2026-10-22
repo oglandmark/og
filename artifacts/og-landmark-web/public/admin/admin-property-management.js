@@ -11,6 +11,8 @@
   let observer;
   let enhancementQueued = false;
   let modal;
+  let propertyMap;
+  let leafletPromise;
   let agentsLoaded = false;
   let agentDirectoryMessage = '';
   const normalize = (value) => String(value ?? '').trim().toLowerCase();
@@ -116,6 +118,12 @@
       .og-pm-field label{font-size:12px;font-weight:700;color:#334155}
       .og-pm-field input,.og-pm-field textarea,.og-pm-field select{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:8px;padding:9px 10px;background:#fff;color:#0f172a;font:13px system-ui}
       .og-pm-field textarea{min-height:84px;resize:vertical}
+      .og-pm-map-toolbar{display:flex;justify-content:flex-end;gap:6px;margin:5px 0 8px}
+      .og-pm-map-mode{padding:7px 11px;border:1px solid #dbe2ea;border-radius:8px;background:#fff;color:#334155;font:600 11px system-ui;cursor:pointer}
+      .og-pm-map-mode[aria-pressed="true"]{border-color:#c8a45a;background:#fbf7ed;color:#805b12}
+      .og-pm-map{height:290px;overflow:hidden;border:1px solid #dbe2ea;border-radius:10px;background:#eaf0f5}
+      .og-pm-map-status{margin:6px 0 0;color:#64748b;font-size:11px}
+      .og-pm-map-status.error{color:#b91c1c}
       .og-pm-section{grid-column:1/-1;margin:7px 0 -4px;padding-bottom:7px;border-bottom:1px solid #e2e8f0;font-size:13px;font-weight:700}
       .og-pm-note{color:#64748b;font-size:11px}.og-pm-error{margin:12px 0;color:#b91c1c;font-size:13px}
       .og-pm-footer{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
@@ -149,7 +157,11 @@
 
   function openModal(property, review = {}) {
     ensureStyles();
-    if (modal) modal.remove();
+    if (modal) {
+      propertyMap?.remove();
+      propertyMap = null;
+      modal.remove();
+    }
     modal = document.createElement('div');
     modal.className = 'og-pm-backdrop';
     const assigned = property.assignedAgent || {};
@@ -175,6 +187,13 @@
             <div class="og-pm-field"><label>Locality</label><input name="locality" maxlength="120"></div>
             <div class="og-pm-field"><label>Society / project</label><input name="society" maxlength="160"></div>
             <div class="og-pm-field"><label>Address</label><input name="address" maxlength="240"></div>
+            <div class="og-pm-section">Map location</div>
+            <div class="og-pm-field"><label>Latitude</label><input name="lat" type="number" min="-90" max="90" step="any" placeholder="Click or drag the map pin"></div>
+            <div class="og-pm-field"><label>Longitude</label><input name="lng" type="number" min="-180" max="180" step="any" placeholder="Click or drag the map pin"></div>
+            <div class="og-pm-field full"><div class="og-pm-map-toolbar" role="group" aria-label="Map style">
+              <button class="og-pm-map-mode" type="button" data-map-mode="map" aria-pressed="true">Map</button>
+              <button class="og-pm-map-mode" type="button" data-map-mode="satellite" aria-pressed="false">Satellite</button>
+            </div><div class="og-pm-map" data-property-map aria-label="Property location map"></div><p class="og-pm-map-status" data-map-status>Choose a pin location on the map, or drag the marker.</p></div>
             <div class="og-pm-field"><label>Price (PKR)</label><input name="price" type="number" min="0" step="any"></div>
             <div class="og-pm-field"><label>Area</label><input name="area" maxlength="80"></div>
             <div class="og-pm-field"><label>Area unit</label><input name="areaUnit" maxlength="40"></div>
@@ -194,7 +213,7 @@
             <div class="og-pm-field full"><span class="og-pm-note" data-agent-directory-note></span></div>
           </div>
           <div class="og-pm-error" role="alert" hidden></div>
-          <div class="og-pm-footer"><button class="og-pm-button danger" type="button" data-delete>Delete listing</button><div class="og-pm-actions"><button class="og-pm-button secondary" type="button" data-cancel>Cancel</button><button class="og-pm-button" type="submit">Save listing</button></div></div>
+          <div class="og-pm-footer"><button class="og-pm-button danger" type="button" data-delete>Delete property</button><div class="og-pm-actions"><button class="og-pm-button secondary" type="button" data-cancel>Cancel</button><button class="og-pm-button" type="submit">Save listing</button></div></div>
         </form>
       </section>`;
     const form = modal.querySelector('form');
@@ -204,6 +223,8 @@
     set('title', property.title); set('type', property.type); set('purpose', property.purpose || 'For Sale');
     set('city', property.city); set('district', property.district); set('tehsil', property.tehsil);
     set('locality', property.locality); set('society', property.society); set('address', property.address);
+    set('lat', property.lat ?? property.latitude ?? property.location?.latitude);
+    set('lng', property.lng ?? property.longitude ?? property.location?.longitude);
     set('price', property.price); set('area', property.area); set('areaUnit', property.areaUnit);
     set('bedrooms', property.bedrooms); set('bathrooms', property.bathrooms);
     set('yearBuilt', property.yearBuilt); set('furnishing', property.furnishing); set('availability', property.availability);
@@ -288,11 +309,124 @@
     form.addEventListener('submit', (event) => saveProperty(event, property, modal));
     document.body.appendChild(modal);
     document.body.style.overflow = 'hidden';
+    initializePropertyMap(form, modal);
     form.elements.title.focus();
   }
 
+  function loadLeaflet() {
+    if (window.L) return Promise.resolve(window.L);
+    if (leafletPromise) return leafletPromise;
+    if (!document.getElementById('og-pm-leaflet-css')) {
+      const stylesheet = document.createElement('link');
+      stylesheet.id = 'og-pm-leaflet-css';
+      stylesheet.rel = 'stylesheet';
+      stylesheet.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(stylesheet);
+    }
+    leafletPromise = new Promise((resolve, reject) => {
+      const loadScript = (src, fallback) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.onload = () => window.L ? resolve(window.L) : reject(new Error('Map library did not initialize.'));
+        script.onerror = () => {
+          script.remove();
+          if (fallback) loadScript('https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js', false);
+          else reject(new Error('Map tiles could not be loaded.'));
+        };
+        document.head.appendChild(script);
+      };
+      loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', true);
+    }).catch((error) => {
+      leafletPromise = null;
+      throw error;
+    });
+    return leafletPromise;
+  }
+
+  function initializePropertyMap(form, activeModal) {
+    const mapContainer = form.querySelector('[data-property-map]');
+    const status = form.querySelector('[data-map-status]');
+    const latitudeInput = form.elements.lat;
+    const longitudeInput = form.elements.lng;
+    const parseCoordinate = (value, min, max) => {
+      if (String(value).trim() === '') return null;
+      const number = Number(value);
+      return Number.isFinite(number) && number >= min && number <= max ? number : null;
+    };
+
+    loadLeaflet().then((L) => {
+      if (modal !== activeModal || !mapContainer?.isConnected) return;
+      const latitude = parseCoordinate(latitudeInput.value, -90, 90);
+      const longitude = parseCoordinate(longitudeInput.value, -180, 180);
+      const hasLocation = latitude !== null && longitude !== null;
+      const center = hasLocation ? [latitude, longitude] : [33.6844, 73.0479];
+      const map = L.map(mapContainer, { scrollWheelZoom: false, attributionControl: true })
+        .setView(center, hasLocation ? 15 : 11);
+      const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors',
+      });
+      const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Tiles © Esri',
+      });
+      let activeLayer = streetLayer;
+      streetLayer.addTo(map);
+      const marker = L.marker(center, { draggable: true }).addTo(map);
+      propertyMap = map;
+
+      const setPin = (point, recenter = false) => {
+        const lat = Number(point.lat);
+        const lng = Number(point.lng);
+        latitudeInput.value = lat.toFixed(6);
+        longitudeInput.value = lng.toFixed(6);
+        marker.setLatLng([lat, lng]);
+        if (recenter) map.panTo([lat, lng]);
+      };
+      map.on('click', (event) => setPin(event.latlng));
+      marker.on('dragend', () => setPin(marker.getLatLng()));
+      const updateFromInputs = () => {
+        const lat = parseCoordinate(latitudeInput.value, -90, 90);
+        const lng = parseCoordinate(longitudeInput.value, -180, 180);
+        if (lat !== null && lng !== null) setPin({ lat, lng }, true);
+      };
+      latitudeInput.addEventListener('change', updateFromInputs);
+      longitudeInput.addEventListener('change', updateFromInputs);
+
+      form.querySelectorAll('[data-map-mode]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const layer = button.dataset.mapMode === 'satellite' ? satelliteLayer : streetLayer;
+          if (layer !== activeLayer) {
+            map.removeLayer(activeLayer);
+            activeLayer = layer;
+            activeLayer.addTo(map);
+          }
+          form.querySelectorAll('[data-map-mode]').forEach((option) => {
+            option.setAttribute('aria-pressed', String(option === button));
+          });
+          requestAnimationFrame(() => map.invalidateSize());
+        });
+      });
+      if (status) status.textContent = hasLocation
+        ? 'Drag the pin or click the map to adjust the property location.'
+        : 'Map starts near Islamabad. Click the property location or drag the pin before saving.';
+      requestAnimationFrame(() => map.invalidateSize());
+    }).catch(() => {
+      if (modal !== activeModal || !status) return;
+      status.classList.add('error');
+      status.textContent = 'Map could not load. You can still enter latitude and longitude above.';
+    });
+  }
+
   function escapeClose(event) { if (event.key === 'Escape') closeModal(); }
-  function closeModal() { modal?.remove(); modal = null; document.body.style.overflow = ''; }
+  function closeModal() {
+    propertyMap?.remove();
+    propertyMap = null;
+    modal?.remove();
+    modal = null;
+    document.body.style.overflow = '';
+  }
   function showError(container, message) { const error = container.querySelector('.og-pm-error'); error.textContent = message; error.hidden = false; }
 
   function renderReviewOverview(target, property, review) {
@@ -423,6 +557,17 @@
       const profile = agents.find((agent) => `${agent.kind}:${agent.id}` === values.agentProfile);
       const name = String(values.agentName || '').trim();
       const phone = String(values.agentPhone || '').trim();
+      const parseCoordinate = (value, label, min, max) => {
+        if (String(value).trim() === '') return null;
+        const number = Number(value);
+        if (!Number.isFinite(number) || number < min || number > max) {
+          throw new Error(`${label} must be between ${min} and ${max}.`);
+        }
+        return number;
+      };
+      const lat = parseCoordinate(values.lat, 'Latitude', -90, 90);
+      const lng = parseCoordinate(values.lng, 'Longitude', -180, 180);
+      if ((lat === null) !== (lng === null)) throw new Error('Enter both latitude and longitude, or leave both blank.');
       let images = values.images.split(/\r?\n/).map((url) => url.trim()).filter(Boolean);
       const photoFiles = Array.from(form.elements.photoUploads.files || []);
       if (images.length + photoFiles.length > 30) throw new Error('A listing can have up to 30 photos.');
@@ -449,6 +594,7 @@
         title: values.title.trim(), type: values.type.trim(), purpose: values.purpose,
         city: values.city.trim(), district: values.district.trim(), tehsil: values.tehsil.trim(),
         locality: values.locality.trim(), society: values.society.trim(), address: values.address.trim(),
+        lat, lng, latitude: lat, longitude: lng,
         price: values.price === '' ? null : Number(values.price), area: values.area.trim(),
         areaUnit: values.areaUnit.trim(),
         bedrooms: values.bedrooms === '' ? null : Number(values.bedrooms),

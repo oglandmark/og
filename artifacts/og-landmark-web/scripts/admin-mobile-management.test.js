@@ -16,13 +16,17 @@ test('admin mobile demo catalog mirrors the bundled mobile demo records', () => 
   const catalog = JSON.parse(fs.readFileSync(path.join(root, 'public/admin/demo-properties.json'), 'utf8'));
   const bundled = readBundledDemos();
   const generated = buildAdminCatalog();
-  const fields = ['id', 'title', 'type', 'status', 'price', 'area', 'areaUnit', 'city', 'address', 'agent'];
 
   assert.deepEqual(catalog, generated, 'admin catalog should be generated from the mobile records');
   assert.equal(catalog.length, bundled.length);
   assert.equal(new Set(catalog.map((item) => item.id)).size, catalog.length, 'demo IDs must be unique');
   for (const property of bundled) {
     const adminRecord = catalog.find((item) => item.id === property.id);
+    assert.ok(adminRecord, `admin catalog should include bundled property ${property.id}`);
+  }
+});
+
+test('detects stale generated admin demo catalog records', () => {
   const expected = buildAdminCatalog();
   const stale = structuredClone(expected);
   stale[0].price += 1;

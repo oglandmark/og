@@ -27,3 +27,34 @@ test('Property media uploads use multipart requests without a JSON content type'
   assert.match(source, /const multipart = typeof FormData !== 'undefined' && options\.body instanceof FormData/);
   assert.match(source, /options\.body && !multipart \? \{ 'Content-Type': 'application\/json' \}/);
 });
+
+test('Admin property editor supports a draggable Map/Satellite pin and saves coordinates', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'admin', 'index.html'), 'utf8');
+  assert.match(source, /name="lat" type="number"/);
+  assert.match(source, /name="lng" type="number"/);
+  assert.match(source, /data-map-mode="map"/);
+  assert.match(source, /data-map-mode="satellite"/);
+  assert.match(source, /tile\.openstreetmap\.org/);
+  assert.match(source, /ArcGIS\/rest\/services\/World_Imagery/);
+  assert.match(source, /map\.on\('click', \(event\) => setPin\(event\.latlng\)\)/);
+  assert.match(source, /marker\.on\('dragend'/);
+  assert.match(source, /lat, lng, latitude: lat, longitude: lng/);
+  assert.match(html, /admin-property-management\.js\?v=property-edit-map-20261022/);
+});
+
+test('Admin property deletion requires confirmation and uses the authenticated delete endpoint', () => {
+  assert.match(source, /data-delete>Delete property/);
+  assert.match(source, /Permanently delete/);
+  assert.match(source, /request\(`\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}`, \{ method: 'DELETE' \}\)/);
+});
+
+test('Laravel validates and persists admin-edited map coordinates in both property location shapes', () => {
+  const apiController = fs.readFileSync(
+    path.join(__dirname, '..', '..', 'api-server', 'laravel', 'app', 'Http', 'Controllers', 'ApiController.php'),
+    'utf8',
+  );
+  assert.match(apiController, /'lat' => \['sometimes', 'nullable', 'numeric', 'between:-90,90'\]/);
+  assert.match(apiController, /'lng' => \['sometimes', 'nullable', 'numeric', 'between:-180,180'\]/);
+  assert.match(apiController, /\$location\['latitude'\] = \$lat/);
+  assert.match(apiController, /\$location\['longitude'\] = \$lng/);
+});

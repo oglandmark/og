@@ -149,19 +149,35 @@ class DashboardAuthCompatibilityTest extends TestCase
         $this->patchJson('/api/admin/properties/991', [
             'title' => 'Updated seller listing',
             'price' => 2750000,
+            'district' => 'Okara',
+            'tehsil' => 'Okara',
+            'locality' => 'Model Town',
+            'society' => 'Test Enclave',
+            'areaUnit' => 'Marla',
             'bedrooms' => 3,
+            'yearBuilt' => 2018,
+            'furnishing' => 'Semi-furnished',
+            'availability' => 'Ready',
+            'amenities' => ['Parking', 'Security'],
+            'videoUrl' => 'https://example.test/property-tour.mp4',
             'images' => ['/images/uploads/front.jpg', '/images/uploads/lounge.jpg'],
             'assignedAgent' => [
                 'id' => 'agent-profile-1',
                 'name' => 'Assigned Agent',
                 'phone' => '03001234567',
-                'profileType' => 'profile',
+                'profileType' => 'city',
             ],
         ], $adminHeaders)
             ->assertOk()
             ->assertJsonPath('title', 'Updated seller listing')
             ->assertJsonPath('price', 2750000)
+            ->assertJsonPath('district', 'Okara')
+            ->assertJsonPath('locality', 'Model Town')
+            ->assertJsonPath('areaUnit', 'Marla')
             ->assertJsonPath('bedrooms', 3)
+            ->assertJsonPath('yearBuilt', 2018)
+            ->assertJsonPath('amenities.0', 'Parking')
+            ->assertJsonPath('videoUrl', 'https://example.test/property-tour.mp4')
             ->assertJsonPath('images.1', '/images/uploads/lounge.jpg')
             ->assertJsonPath('coverImage', '/images/uploads/front.jpg')
             ->assertJsonPath('assignedAgentId', 'agent-profile-1');

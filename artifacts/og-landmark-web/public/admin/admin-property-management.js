@@ -5,10 +5,12 @@
   const originalFetch = window.fetch.bind(window);
   let properties = [];
   let agents = [];
-  let filter = 'all';
+  let filter = 'pending';
   let observer;
   let enhancementQueued = false;
   let modal;
+  let agentsLoaded = false;
+  let agentDirectoryMessage = '';
   const normalize = (value) => String(value ?? '').trim().toLowerCase();
   const statusOf = (property) => normalize(property.approvalStatus || property.listingStatus || 'pending');
   const apiBase = () => String(window.__OG_API_BASE__ || '/api').replace(/\/+$/, '');
@@ -45,7 +47,7 @@
   }
 
   function findRoot() {
-    const heading = [...document.querySelectorAll('h2')].find((node) => node.textContent.trim() === 'All Properties');
+    const heading = [...document.querySelectorAll('h2')].find((node) => ['All Properties', 'Property review queue'].includes(node.textContent.trim()));
     return heading?.closest('.space-y-4') || null;
   }
 
@@ -96,25 +98,46 @@
       .og-pm-actions{display:flex;gap:8px}.og-pm-button{border:0;border-radius:8px;padding:9px 13px;background:#0B1F3A;color:white;font:600 13px system-ui;cursor:pointer}
       .og-pm-button:disabled{opacity:.55;cursor:wait}.og-pm-button.secondary{background:#eef2f7;color:#334155}
       .og-pm-button.danger{background:#b91c1c}
-      @media(max-width:600px){.og-pm-grid{grid-template-columns:1fr}.og-pm-field.full,.og-pm-section{grid-column:auto}.og-pm-form{padding:16px}.og-pm-footer{flex-direction:column-reverse}.og-pm-actions{justify-content:flex-end}}
+      .og-pm-review-overview{padding:18px 22px 0}
+      .og-pm-review-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+      .og-pm-status{display:inline-flex;align-items:center;border-radius:999px;padding:5px 10px;background:#fff7e5;color:#805b12;font-size:11px;font-weight:800}
+      .og-pm-source{color:#64748b;font-size:11px}
+      .og-pm-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+      .og-pm-fact{min-width:0;border:1px solid #e7edf4;border-radius:10px;padding:10px 12px;background:#f8fafc}
+      .og-pm-fact dt{margin-bottom:4px;color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+      .og-pm-fact dd{margin:0;color:#0f172a;font-size:12px;font-weight:600;overflow-wrap:anywhere}
+      .og-pm-media{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px}
+      .og-pm-media img{width:104px;height:76px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0}
+      .og-pm-review-overview details{margin:8px 0 0;border-top:1px solid #e2e8f0;padding:10px 0;color:#334155}
+      .og-pm-review-overview summary{cursor:pointer;font-size:12px;font-weight:700}
+      .og-pm-all-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 18px;margin-top:10px}
+      .og-pm-all-fields div{min-width:0;font-size:11px;overflow-wrap:anywhere}
+      .og-pm-all-fields strong{display:block;color:#64748b;font-size:9px;text-transform:uppercase;letter-spacing:.05em}
+      .og-pm-audit{margin:10px 0 0;padding:0;list-style:none}
+      .og-pm-audit li{padding:7px 0;border-top:1px solid #edf1f5;font-size:11px}
+      .og-pm-agent-search{margin-bottom:7px}
+      .og-pm-manage{border:1px solid #c8a45a;border-radius:7px;background:#fff;color:#0B1F3A;padding:6px 9px;font:600 12px system-ui;white-space:nowrap;cursor:pointer}
+      @media(max-width:600px){.og-pm-grid{grid-template-columns:1fr}.og-pm-field.full,.og-pm-section{grid-column:auto}.og-pm-form{padding:16px}.og-pm-review-overview{padding:14px 16px 0}.og-pm-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.og-pm-all-fields{grid-template-columns:1fr}.og-pm-footer{flex-direction:column-reverse}.og-pm-actions{justify-content:flex-end}}
     `;
     document.head.appendChild(style);
   }
 
-  function openModal(property) {
+  function openModal(property, review = {}) {
     ensureStyles();
     if (modal) modal.remove();
     modal = document.createElement('div');
     modal.className = 'og-pm-backdrop';
     const assigned = property.assignedAgent || {};
-    const media = Array.isArray(property.images)
+    const listedImages = Array.isArray(property.images)
       ? property.images.map((item) => typeof item === 'string' ? item : item?.url).filter(Boolean)
-      : Array.isArray(property.media?.images)
-        ? property.media.images.map((item) => typeof item === 'string' ? item : item?.url).filter(Boolean)
-        : [];
+      : [];
+    const media = listedImages.length ? listedImages : Array.isArray(property.media?.images)
+      ? property.media.images.map((item) => typeof item === 'string' ? item : item?.url).filter(Boolean)
+      : [];
     modal.innerHTML = `
       <section class="og-pm-dialog" role="dialog" aria-modal="true" aria-labelledby="og-pm-title">
         <header class="og-pm-head"><div><h2 id="og-pm-title"></h2><p></p></div><button class="og-pm-close" type="button" aria-label="Close">&times;</button></header>
+        <div class="og-pm-review-overview"></div>
         <form class="og-pm-form">
           <div class="og-pm-grid">
             <div class="og-pm-section">Listing details</div>
@@ -122,18 +145,28 @@
             <div class="og-pm-field"><label>Property type</label><input name="type" maxlength="80"></div>
             <div class="og-pm-field"><label>Purpose</label><select name="purpose"><option>For Sale</option><option>For Rent</option></select></div>
             <div class="og-pm-field"><label>City</label><input name="city" required maxlength="120"></div>
+            <div class="og-pm-field"><label>District</label><input name="district" maxlength="120"></div>
+            <div class="og-pm-field"><label>Tehsil</label><input name="tehsil" maxlength="120"></div>
+            <div class="og-pm-field"><label>Locality</label><input name="locality" maxlength="120"></div>
+            <div class="og-pm-field"><label>Society / project</label><input name="society" maxlength="160"></div>
             <div class="og-pm-field"><label>Address</label><input name="address" maxlength="240"></div>
             <div class="og-pm-field"><label>Price (PKR)</label><input name="price" type="number" min="0" step="any"></div>
             <div class="og-pm-field"><label>Area</label><input name="area" maxlength="80"></div>
+            <div class="og-pm-field"><label>Area unit</label><input name="areaUnit" maxlength="40"></div>
             <div class="og-pm-field"><label>Bedrooms</label><input name="bedrooms" type="number" min="0" max="50"></div>
             <div class="og-pm-field"><label>Bathrooms</label><input name="bathrooms" type="number" min="0" max="50"></div>
+            <div class="og-pm-field"><label>Year built</label><input name="yearBuilt" type="number" min="0" max="3000"></div>
+            <div class="og-pm-field"><label>Furnishing</label><input name="furnishing" maxlength="80"></div>
+            <div class="og-pm-field"><label>Availability</label><input name="availability" maxlength="80"></div>
             <div class="og-pm-field full"><label>Description</label><textarea name="description" maxlength="5000"></textarea></div>
+            <div class="og-pm-field full"><label>Amenities (one per line)</label><textarea name="amenities"></textarea></div>
             <div class="og-pm-field full"><label>Listing photo URLs</label><textarea name="images"></textarea><span class="og-pm-note">One URL per line. Existing photos stay unchanged unless you edit this list.</span></div>
+            <div class="og-pm-field full"><label>Video URL</label><input name="videoUrl" type="url" maxlength="2000"></div>
             <div class="og-pm-section">Agent referral</div>
-            <div class="og-pm-field full"><label>Choose an agent profile</label><select name="agentProfile"><option value="">Manual referral contact / no profile</option></select></div>
+            <div class="og-pm-field full"><label>Find an agent in any city</label><input class="og-pm-agent-search" name="agentSearch" type="search" placeholder="Search agent name, city or phone"><select name="agentProfile"><option value="">Manual referral contact / no profile</option></select></div>
             <div class="og-pm-field"><label>Referral contact name</label><input name="agentName" maxlength="120"></div>
             <div class="og-pm-field"><label>Referral phone</label><input name="agentPhone" maxlength="40"></div>
-            <div class="og-pm-field full"><span class="og-pm-note">This assigns a referral contact to this listing. It does not change the listing review status.</span></div>
+            <div class="og-pm-field full"><span class="og-pm-note" data-agent-directory-note></span></div>
           </div>
           <div class="og-pm-error" role="alert" hidden></div>
           <div class="og-pm-footer"><button class="og-pm-button danger" type="button" data-delete>Delete listing</button><div class="og-pm-actions"><button class="og-pm-button secondary" type="button" data-cancel>Cancel</button><button class="og-pm-button" type="submit">Save listing</button></div></div>
@@ -144,23 +177,39 @@
     modal.querySelector('h2').textContent = property.title || 'Manage listing';
     modal.querySelector('.og-pm-head p').textContent = `ID ${property.id} · ${property.approvalStatus || property.listingStatus || 'Pending review'}`;
     set('title', property.title); set('type', property.type); set('purpose', property.purpose || 'For Sale');
-    set('city', property.city); set('address', property.address); set('price', property.price);
-    set('area', property.area); set('bedrooms', property.bedrooms); set('bathrooms', property.bathrooms);
-    set('description', property.description); set('images', media.join('\n'));
+    set('city', property.city); set('district', property.district); set('tehsil', property.tehsil);
+    set('locality', property.locality); set('society', property.society); set('address', property.address);
+    set('price', property.price); set('area', property.area); set('areaUnit', property.areaUnit);
+    set('bedrooms', property.bedrooms); set('bathrooms', property.bathrooms);
+    set('yearBuilt', property.yearBuilt); set('furnishing', property.furnishing); set('availability', property.availability);
+    set('description', property.description); set('amenities', Array.isArray(property.amenities) ? property.amenities.join('\n') : property.amenities);
+    set('images', media.join('\n')); set('videoUrl', property.videoUrl);
+    renderReviewOverview(modal.querySelector('.og-pm-review-overview'), property, review);
     set('agentName', assigned.name || property.assignedAgentName);
     set('agentPhone', assigned.phone || property.assignedAgentPhone);
     const select = form.elements.agentProfile;
     for (const agent of agents) {
       const option = document.createElement('option');
       option.value = `${agent.kind}:${agent.id}`;
-      option.textContent = `${agent.name || 'Agent'}${agent.phone ? ` · ${agent.phone}` : ''}`;
+      const city = agent.city || agent.cityName || agent.location?.city || agent.officeCity || '';
+      option.textContent = `${agent.name || 'Agent'}${city ? ` · ${city}` : ''}${agent.phone ? ` · ${agent.phone}` : ''}`;
       option.dataset.name = agent.name || '';
       option.dataset.phone = agent.phone || '';
       select.appendChild(option);
     }
+    const directoryNote = form.querySelector('[data-agent-directory-note]');
+    directoryNote.textContent = agentDirectoryMessage || 'Agent directory includes all cities. Assigning a referral does not change the listing review status.';
     const selectedAgentId = String(assigned.id || property.assignedAgentId || '');
-    const selectedAgent = agents.find((agent) => agent.id === selectedAgentId);
+    const selectedAgent = agents.find((agent) => agent.id === selectedAgentId && (!assigned.profileType || agent.kind === assigned.profileType));
     if (selectedAgent) select.value = `${selectedAgent.kind}:${selectedAgent.id}`;
+    const agentSearch = form.elements.agentSearch;
+    agentSearch.addEventListener('input', () => {
+      const query = normalize(agentSearch.value);
+      for (const option of select.options) {
+        if (!option.value) continue;
+        option.hidden = Boolean(query) && !normalize(option.textContent).includes(query);
+      }
+    });
     select.addEventListener('change', () => {
       const option = select.selectedOptions[0];
       if (select.value) { set('agentName', option.dataset.name); set('agentPhone', option.dataset.phone); }
@@ -178,6 +227,113 @@
   function escapeClose(event) { if (event.key === 'Escape') closeModal(); }
   function closeModal() { modal?.remove(); modal = null; document.body.style.overflow = ''; }
   function showError(container, message) { const error = container.querySelector('.og-pm-error'); error.textContent = message; error.hidden = false; }
+
+  function renderReviewOverview(target, property, review) {
+    const make = (tag, className, text) => {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = String(text);
+      return node;
+    };
+    const seller = review?.seller || {};
+    const location = property.location || {};
+    const listedImages = Array.isArray(property.images)
+      ? property.images.map((item) => typeof item === 'string' ? item : item?.url).filter(Boolean)
+      : [];
+    const images = listedImages.length ? listedImages : Array.isArray(property.media?.images)
+      ? property.media.images.map((item) => typeof item === 'string' ? item : item?.url).filter(Boolean)
+      : [];
+    const status = property.approvalStatus || property.listingStatus || 'Pending';
+    const latitude = property.lat ?? location.latitude ?? location.lat;
+    const longitude = property.lng ?? location.longitude ?? location.lng;
+    const format = (value) => {
+      if (value === null || value === undefined || value === '') return '—';
+      if (Array.isArray(value)) return value.map((item) => typeof item === 'object' ? JSON.stringify(item) : String(item)).join(', ');
+      if (typeof value === 'object') return JSON.stringify(value);
+      return String(value);
+    };
+    const facts = [
+      ['Seller', seller.name || property.sellerName || property.ownerName],
+      ['Seller phone', seller.phone || property.sellerPhone || property.ownerPhone || property.phone],
+      ['Seller email', seller.email || property.sellerEmail || property.ownerEmail],
+      ['Location', [property.address, property.society, property.locality, property.tehsil, property.district, property.city].filter(Boolean).join(', ')],
+      ['Map pin', latitude != null && longitude != null ? `${latitude}, ${longitude}` : null],
+      ['Submitted', property.createdAt ? new Date(property.createdAt).toLocaleString() : null],
+      ['Source', property.source || property.submissionSource || property.createdFrom || property.platform],
+      ['Assigned agent', property.assignedAgent?.name || property.assignedAgentName],
+      ['Agent phone', property.assignedAgent?.phone || property.assignedAgentPhone],
+    ];
+
+    target.replaceChildren();
+    const top = make('div', 'og-pm-review-top');
+    top.append(
+      make('span', 'og-pm-status', `Review status: ${status}`),
+      make('span', 'og-pm-source', `Submission source: ${format(facts[6][1] || 'Not specified')}`),
+    );
+    target.appendChild(top);
+
+    const factGrid = make('dl', 'og-pm-facts');
+    for (const [label, value] of facts) {
+      const item = make('div', 'og-pm-fact');
+      item.append(make('dt', '', label), make('dd', '', format(value)));
+      factGrid.appendChild(item);
+    }
+    target.appendChild(factGrid);
+
+    if (images.length) {
+      const gallery = make('div', 'og-pm-media');
+      for (const source of images) {
+        let url;
+        try { url = new URL(source, window.location.href); } catch { continue; }
+        if (!['http:', 'https:'].includes(url.protocol)) continue;
+        const image = make('img');
+        image.src = url.href;
+        image.alt = property.title ? `${property.title} photo` : 'Property photo';
+        image.loading = 'lazy';
+        gallery.appendChild(image);
+      }
+      if (gallery.childElementCount) target.appendChild(gallery);
+    }
+    if (property.videoUrl) {
+      try {
+        const video = new URL(property.videoUrl, window.location.href);
+        if (['http:', 'https:'].includes(video.protocol)) {
+          const link = make('a', 'og-pm-source', 'Open property video');
+          link.href = video.href;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          target.appendChild(link);
+        }
+      } catch {}
+    }
+
+    const allData = make('details');
+    allData.appendChild(make('summary', '', 'Full submitted property details'));
+    const fields = make('div', 'og-pm-all-fields');
+    const hiddenKeys = new Set(['images', 'media', 'coverImage']);
+    for (const [key, value] of Object.entries(property)) {
+      if (hiddenKeys.has(key) || /password|token|secret|credential/i.test(key)) continue;
+      const item = make('div');
+      item.append(make('strong', '', key.replace(/([A-Z])/g, ' $1')), make('span', '', format(value)));
+      fields.appendChild(item);
+    }
+    allData.appendChild(fields);
+    target.appendChild(allData);
+
+    const audit = Array.isArray(review?.audit) ? review.audit : [];
+    if (audit.length) {
+      const heading = make('div', 'og-pm-section', 'Review history');
+      const list = make('ul', 'og-pm-audit');
+      for (const entry of audit) {
+        list.appendChild(make('li', '', [
+          entry.action || 'Review update',
+          entry.fromStatus ? `${entry.fromStatus} → ${entry.toStatus || '—'}` : entry.toStatus || '',
+          entry.createdAt || entry.at || '',
+        ].filter(Boolean).join(' · ')));
+      }
+      target.append(heading, list);
+    }
+  }
 
   async function request(path, options = {}) {
     const response = await originalFetch(`${apiBase()}${path}`, {
@@ -201,12 +357,18 @@
       const phone = String(values.agentPhone || '').trim();
       const payload = {
         title: values.title.trim(), type: values.type.trim(), purpose: values.purpose,
-        city: values.city.trim(), address: values.address.trim(),
+        city: values.city.trim(), district: values.district.trim(), tehsil: values.tehsil.trim(),
+        locality: values.locality.trim(), society: values.society.trim(), address: values.address.trim(),
         price: values.price === '' ? null : Number(values.price), area: values.area.trim(),
+        areaUnit: values.areaUnit.trim(),
         bedrooms: values.bedrooms === '' ? null : Number(values.bedrooms),
         bathrooms: values.bathrooms === '' ? null : Number(values.bathrooms),
+        yearBuilt: values.yearBuilt === '' ? null : Number(values.yearBuilt),
+        furnishing: values.furnishing.trim(), availability: values.availability.trim(),
         description: values.description.trim(),
+        amenities: values.amenities.split(/\r?\n/).map((item) => item.trim()).filter(Boolean),
         images: values.images.split(/\r?\n/).map((url) => url.trim()).filter(Boolean),
+        videoUrl: values.videoUrl.trim() || null,
         assignedAgent: name || phone || profile ? {
           id: profile ? String(profile.id) : null, name, phone, profileType: profile?.kind || 'manual',
         } : null,
@@ -236,13 +398,18 @@
   }
 
   async function loadAgents() {
-    if (agents.length) return;
+    if (agentsLoaded) return;
+    const cityAgents = await request('/admin/city-agents').catch((error) => {
+      agentDirectoryMessage = `City agent directory did not load: ${error.message}`;
+      return [];
+    });
     const [profiles, users] = await Promise.all([
       request('/admin/mobile-agents').catch(() => []),
       request('/admin/users?role=agent').catch(() => []),
     ]);
     const seen = new Set();
     agents = [
+      ...(Array.isArray(cityAgents) ? cityAgents.map((item) => ({ ...item, kind: 'city' })) : []),
       ...(Array.isArray(profiles) ? profiles.map((item) => ({ ...item, kind: 'profile' })) : []),
       ...(Array.isArray(users) ? users.map((item) => ({ ...item, kind: 'account' })) : []),
     ].filter((agent) => {
@@ -251,8 +418,12 @@
       seen.add(`${agent.kind}:${id}`);
       agent.id = id;
       agent.name = agent.name || agent.fullName || agent.agentName || 'Agent';
+      agent.phone = agent.phone || agent.phoneNumber || agent.mobile || '';
+      agent.city = agent.city || agent.cityName || agent.officeCity || agent.location?.city || '';
       return true;
     });
+    if (!agents.length && !agentDirectoryMessage) agentDirectoryMessage = 'No agents are currently available in the referral directory.';
+    agentsLoaded = true;
   }
 
   function addFilters(root) {
@@ -281,6 +452,11 @@
   function enhance() {
     const root = findRoot();
     if (!root) return;
+    const heading = root.querySelector('h2');
+    if (heading && heading.textContent.trim() !== 'Property review queue') heading.textContent = 'Property review queue';
+    const summary = heading?.parentElement?.querySelector('p');
+    const pendingCount = properties.filter((property) => statusOf(property) === 'pending').length;
+    if (summary) summary.textContent = `${pendingCount} pending review · ${properties.length} total listings`;
     const table = root.querySelector('table');
     if (!table) return;
     addFilters(root);
@@ -308,13 +484,19 @@
           const current = properties.find((item) => String(item.id) === button.dataset.propertyId);
           if (!current) return;
           button.disabled = true;
-          try { await loadAgents(); openModal(current); }
+          try {
+            await loadAgents();
+            const review = await request(`/admin/properties/${encodeURIComponent(current.id)}/review`);
+            const fullProperty = { ...current, ...(review?.property || {}) };
+            properties = properties.map((item) => String(item.id) === String(fullProperty.id) ? fullProperty : item);
+            openModal(fullProperty, review || {});
+          }
           catch (error) { window.alert(error.message || 'Could not load agent profiles.'); }
           finally { button.disabled = false; }
         });
         cell.appendChild(button);
       }
-      if (button.textContent !== 'Edit / assign') button.textContent = 'Edit / assign';
+      if (button.textContent !== 'Review / edit / refer') button.textContent = 'Review / edit / refer';
       button.dataset.propertyId = String(property.id);
       const rowStatus = row.dataset.ogPropertyStatus;
       row.hidden = filter !== 'all' && rowStatus !== filter;

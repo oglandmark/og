@@ -18,3 +18,9 @@ When replacing a website logo, use a new asset URL instead of relying on overwri
 **Why:** The user explicitly asked to keep and update the older React Admin Dashboard rather than replace it with a separate React Native Web dashboard; only the website dashboard may change.
 
 **How to apply:** Preserve the existing React bundle and make maintainable additions through separately loaded admin modules; route legacy admin entry points to `/admin/`, reuse Laravel authentication/APIs, preserve mobile API compatibility, and verify the local web preview. Do not alter the mobile client UI.
+
+The admin dashboard must prioritize pending mobile property submissions, expose the complete listing record for review and editing, and allow referral to agents across cities without filtering by the listing's city.
+
+**Why:** The user requested this property-review workflow for the website admin.
+
+**How to apply:** Keep the queue pending-first, retrieve the authenticated review-detail response, and load the complete agent directory without a city constraint.

@@ -1,0 +1,368 @@
+#root.og-admin-dashboard {
+  --og-navy: #102541;
+  --og-ink: #14243b;
+  --og-muted: #708096;
+  --og-line: #e5ebf2;
+  --og-canvas: #f4f7fb;
+  --og-gold: #c8a45a;
+  min-height: 100vh;
+  color: var(--og-ink);
+  background: var(--og-canvas);
+  font-family: "DM Sans", Inter, system-ui, sans-serif;
+}
+
+#root.og-admin-dashboard aside {
+  width: 252px !important;
+  background: linear-gradient(180deg, #102541 0%, #0b1b31 100%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 10px 0 32px rgba(16, 37, 65, 0.08);
+}
+
+#root.og-admin-dashboard aside + div {
+  margin-left: 252px !important;
+  min-width: 0;
+}
+
+#root.og-admin-dashboard aside > div:first-child {
+  min-height: 76px;
+  padding: 18px 20px !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+#root.og-admin-dashboard aside > div:nth-child(2) {
+  padding: 18px 18px !important;
+}
+
+#root.og-admin-dashboard aside nav {
+  padding: 18px 12px !important;
+}
+
+#root.og-admin-dashboard aside nav a {
+  min-height: 44px;
+  margin: 4px 0;
+  border: 1px solid transparent;
+  border-radius: 12px !important;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+#root.og-admin-dashboard aside nav a:hover {
+  transform: translateX(2px);
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+
+#root.og-admin-dashboard aside nav a[class*="bg-[#C8A45A]"] {
+  color: #f4d58f !important;
+  border-color: rgba(200, 164, 90, 0.28);
+  background: rgba(200, 164, 90, 0.13) !important;
+  box-shadow: inset 3px 0 #d6b66f;
+}
+
+#root.og-admin-dashboard header {
+  height: 72px !important;
+  padding-inline: clamp(20px, 3vw, 42px) !important;
+  border-bottom: 1px solid var(--og-line) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  box-shadow: 0 4px 18px rgba(16, 37, 65, 0.035);
+  backdrop-filter: blur(12px);
+}
+
+#root.og-admin-dashboard header h1 {
+  color: var(--og-ink) !important;
+  font-size: 19px !important;
+  font-weight: 750 !important;
+  letter-spacing: -0.035em;
+}
+
+#root.og-admin-dashboard header h1::after {
+  display: block;
+  margin-top: 3px;
+  color: var(--og-muted);
+  content: "A clear view of your marketplace activity";
+  font-size: 11px;
+  font-weight: 450;
+  letter-spacing: 0;
+}
+
+#root.og-admin-dashboard header > div {
+  color: #607086 !important;
+  font-size: 12px !important;
+  font-weight: 600;
+}
+
+#root.og-admin-dashboard main {
+  width: 100%;
+  max-width: 1680px;
+  margin-inline: auto;
+  padding: clamp(20px, 3vw, 42px) !important;
+}
+
+#root.og-admin-dashboard main > div.space-y-6 {
+  display: flex;
+  flex-direction: column;
+  gap: 22px !important;
+}
+
+#root.og-admin-dashboard main > div.space-y-6::before {
+  display: block;
+  margin-bottom: -8px;
+  color: #8a6b2c;
+  content: "PLATFORM OVERVIEW";
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+#root.og-admin-dashboard main > div.space-y-6 > div:first-child {
+  gap: 16px !important;
+}
+
+#root.og-admin-dashboard main > div.space-y-6 > div:first-child > div {
+  position: relative;
+  min-height: 118px;
+  overflow: hidden;
+  padding: 22px !important;
+  border: 1px solid var(--og-line) !important;
+  border-radius: 18px !important;
+  background: linear-gradient(145deg, #fff 0%, #fbfcfe 100%) !important;
+  box-shadow: 0 8px 24px rgba(16, 37, 65, 0.045);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+#root.og-admin-dashboard main > div.space-y-6 > div:first-child > div:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(16, 37, 65, 0.085);
+}
+
+#root.og-admin-dashboard main > div.space-y-6 > div:first-child > div::after {
+  position: absolute;
+  right: -26px;
+  bottom: -48px;
+  width: 116px;
+  height: 116px;
+  border: 1px solid rgba(16, 37, 65, 0.045);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+#root.og-admin-dashboard main > div.space-y-6 > div:first-child > div > div:first-child {
+  width: 46px !important;
+  height: 46px !important;
+  border: 1px solid rgba(16, 37, 65, 0.055);
+  border-radius: 14px !important;
+}
+
+#root.og-admin-dashboard main > div.space-y-6 > div:first-child > div > div:last-child > div:first-child {
+  color: #718096 !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.025em;
+}
+
+#root.og-admin-dashboard main > div.space-y-6 > div:first-child > div > div:last-child > div:last-child {
+  margin-top: 3px;
+  color: var(--og-ink) !important;
+  font-size: 30px !important;
+  font-weight: 750 !important;
+  letter-spacing: -0.055em;
+  line-height: 1.05;
+}
+
+#root.og-admin-dashboard main > div.space-y-6 > div:last-child {
+  gap: 18px !important;
+  align-items: start;
+}
+
+#root.og-admin-dashboard main section {
+  border: 1px solid var(--og-line) !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  box-shadow: 0 8px 24px rgba(16, 37, 65, 0.045);
+}
+
+#root.og-admin-dashboard main section > div:first-child {
+  min-height: 58px;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid #edf1f5 !important;
+  background: linear-gradient(180deg, #fff 0%, #fcfdff 100%);
+}
+
+#root.og-admin-dashboard main section h3 {
+  color: var(--og-ink) !important;
+  font-size: 14px !important;
+  font-weight: 750 !important;
+  letter-spacing: -0.015em;
+}
+
+#root.og-admin-dashboard main section > div:first-child a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #9a762e !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+  text-decoration: none;
+}
+
+#root.og-admin-dashboard main section > div:first-child a:hover {
+  color: #6e521d !important;
+  text-decoration: underline;
+}
+
+#root.og-admin-dashboard main section table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+#root.og-admin-dashboard main section thead {
+  background: #f7f9fc !important;
+}
+
+#root.og-admin-dashboard main section th {
+  padding-block: 12px !important;
+  color: #7b899c !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.1em;
+}
+
+#root.og-admin-dashboard main section tbody tr {
+  transition: background-color 140ms ease;
+}
+
+#root.og-admin-dashboard main section tbody tr:hover {
+  background: #f8fafc;
+}
+
+#root.og-admin-dashboard main section tbody td {
+  padding-block: 15px !important;
+  border-top: 1px solid #f0f3f7 !important;
+  color: #304157;
+  font-size: 12px !important;
+}
+
+#root.og-admin-dashboard main section tbody td:first-child {
+  padding-left: 20px !important;
+}
+
+#root.og-admin-dashboard main section tbody td:last-child {
+  padding-right: 20px !important;
+}
+
+#root.og-admin-dashboard main section tbody td .text-xs {
+  margin-top: 3px;
+  color: #8794a6 !important;
+}
+
+@media (max-width: 900px) {
+  #root.og-admin-dashboard aside {
+    width: 76px !important;
+  }
+
+  #root.og-admin-dashboard aside + div {
+    margin-left: 76px !important;
+  }
+
+  #root.og-admin-dashboard aside > div:first-child {
+    justify-content: center;
+    padding-inline: 10px !important;
+  }
+
+  #root.og-admin-dashboard aside > div:first-child > div,
+  #root.og-admin-dashboard aside > div:nth-child(2) > div:last-child {
+    display: none;
+  }
+
+  #root.og-admin-dashboard aside > div:nth-child(2) {
+    justify-content: center;
+    padding-inline: 8px !important;
+  }
+
+  #root.og-admin-dashboard aside nav {
+    padding-inline: 8px !important;
+  }
+
+  #root.og-admin-dashboard aside nav a {
+    justify-content: center;
+    padding-inline: 6px !important;
+    font-size: 0 !important;
+  }
+
+  #root.og-admin-dashboard aside > div:last-child a,
+  #root.og-admin-dashboard aside > div:last-child button {
+    justify-content: center;
+    padding-inline: 6px !important;
+    font-size: 0 !important;
+  }
+
+  #root.og-admin-dashboard main > div.space-y-6 > div:first-child {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 560px) {
+  #root.og-admin-dashboard aside {
+    width: 62px !important;
+  }
+
+  #root.og-admin-dashboard aside + div {
+    margin-left: 62px !important;
+  }
+
+  #root.og-admin-dashboard header {
+    height: 64px !important;
+    padding-inline: 14px !important;
+  }
+
+  #root.og-admin-dashboard header h1 {
+    font-size: 16px !important;
+  }
+
+  #root.og-admin-dashboard header h1::after {
+    font-size: 9px;
+  }
+
+  #root.og-admin-dashboard header > div {
+    max-width: 120px;
+    text-align: right;
+    font-size: 10px !important;
+  }
+
+  #root.og-admin-dashboard main {
+    padding: 18px 12px !important;
+  }
+
+  #root.og-admin-dashboard main > div.space-y-6 > div:first-child {
+    gap: 10px !important;
+  }
+
+  #root.og-admin-dashboard main > div.space-y-6 > div:first-child > div {
+    min-height: 100px;
+    gap: 10px !important;
+    padding: 14px !important;
+    border-radius: 14px !important;
+  }
+
+  #root.og-admin-dashboard main > div.space-y-6 > div:first-child > div > div:first-child {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 11px !important;
+  }
+
+  #root.og-admin-dashboard main > div.space-y-6 > div:first-child > div > div:last-child > div:last-child {
+    font-size: 24px !important;
+  }
+
+  #root.og-admin-dashboard main > div.space-y-6 > div:last-child {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root.og-admin-dashboard *,
+  #root.og-admin-dashboard *::before,
+  #root.og-admin-dashboard *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

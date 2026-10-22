@@ -13,6 +13,9 @@ export type SampleAgent = {
   profileImage?: ImageSourcePropType;
   photo?: string;
   coverPhoto?: string;
+  profilePhone?: string;
+  email?: string;
+  city?: string;
   agency: string;
   verified: boolean;
   rating: number;
@@ -40,6 +43,11 @@ export type ManagedAgentRecord = {
   areas?: string[];
   color?: string;
   phone?: string;
+  email?: string;
+  city?: string;
+  title?: string;
+  specialization?: string;
+  propertiesCount?: number;
   specialties?: string[];
   about?: string;
   photo?: string | null;
@@ -51,6 +59,10 @@ export function apiAgentToSample(agent: ManagedAgentRecord): SampleAgent {
   const displayName = agent.displayName || agent.name || 'Property Agent';
   const initials = agent.initials || displayName.split(/\s+/).map((part) => part[0]).join('').slice(0, 2);
   const photo = agent.photo || agent.profilePhoto || undefined;
+  const city = agent.city || '';
+  const areas = Array.isArray(agent.areas) && agent.areas.length > 0
+    ? agent.areas
+    : city ? [city] : [];
   return {
     id: String(agent.id),
     name: displayName,
@@ -59,13 +71,16 @@ export function apiAgentToSample(agent: ManagedAgentRecord): SampleAgent {
     profileImage: photo ? { uri: photo } : undefined,
     photo,
     coverPhoto: agent.coverPhoto || undefined,
-    agency: agent.agency || 'OG Landmark Agent',
+    profilePhone: agent.phone || undefined,
+    email: agent.email || undefined,
+    city,
+    agency: agent.agency || agent.title || agent.specialization || 'OG Landmark Agent',
     verified: agent.verified !== false,
     rating: Number(agent.rating || 0),
     reviewCount: Number(agent.reviewCount || 0),
     years: Number(agent.years || 0),
     listings: Number(agent.listings || 0),
-    areas: Array.isArray(agent.areas) ? agent.areas : [],
+    areas,
     color: agent.color || '#0B1F3A',
     phone: PUBLIC_CONTACT_PHONE,
     specialties: Array.isArray(agent.specialties) ? agent.specialties : [],

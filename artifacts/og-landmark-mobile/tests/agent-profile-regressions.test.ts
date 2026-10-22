@@ -16,6 +16,10 @@ const findAgentScreen = readFileSync(
   resolve(mobileRoot, 'app', 'agent', 'find.tsx'),
   'utf8',
 );
+const agentData = readFileSync(
+  resolve(mobileRoot, 'lib', 'agentsData.ts'),
+  'utf8',
+);
 
 test('Home and profile screens only show Agents from the managed directory', () => {
   assert.match(
@@ -50,4 +54,15 @@ test('Find Agents refreshes after Admin changes while open or when the app resum
   assert.match(findAgentScreen, /setInterval\(\(\) => void loadAgents\(false\), 15_000\)/);
   assert.match(findAgentScreen, /AppState\.addEventListener\('change', \(nextState\) => \{\s*if \(nextState === 'active'\) void loadAgents\(false\);/);
   assert.match(findAgentScreen, /appStateSubscription\.remove\(\)/);
+});
+
+test('Mobile profiles retain Admin-edited profile details without changing official contact actions', () => {
+  assert.match(agentData, /profilePhone: agent\.phone \|\| undefined/);
+  assert.match(agentData, /email: agent\.email \|\| undefined/);
+  assert.match(agentData, /city,/);
+  assert.match(agentData, /coverPhoto: agent\.coverPhoto \|\| undefined/);
+  assert.match(agentData, /phone: PUBLIC_CONTACT_PHONE/);
+  assert.match(agentProfileScreen, /Profile details/);
+  assert.match(agentProfileScreen, /agent\.profilePhone/);
+  assert.match(agentProfileScreen, /agent\.email/);
 });

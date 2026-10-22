@@ -2600,11 +2600,31 @@ class ApiController extends Controller
                     $agent['photo'] = $photo;
                     $agent['profilePhoto'] = $agent['profilePhoto'] ?? $photo;
                 }
+                if ($source === 'website') {
+                    $directoryIsActive = ($agent['active'] ?? true) !== false;
+                    $agent['status'] = $agent['status'] ?? ($directoryIsActive ? 'Active' : 'Suspended');
+                    $agent['approvalStatus'] = $agent['approvalStatus'] ?? ($directoryIsActive ? 'Approved' : 'Rejected');
+                    $agent['visible'] = $agent['visible'] ?? $directoryIsActive;
+                }
+                $agent['approvalStatus'] = $agent['approvalStatus'] ?? 'Approved';
+                $agent['title'] = $agent['title'] ?? $agent['agency'] ?? 'Property Consultant';
+                $agent['specialization'] = $agent['specialization']
+                    ?? (isset($agent['specialties']) && is_array($agent['specialties']) ? implode(', ', $agent['specialties']) : '');
+                $agent['propertiesCount'] = (int) ($agent['propertiesCount'] ?? $agent['listings'] ?? 0);
                 $itemsByIdentity[$identity] = $agent;
             }
         }
         $items = array_values($itemsByIdentity);
-        if ($method === 'GET') return $this->json(collect($items)->filter(fn ($a) => !$request->filled('city') || strtolower((string) ($a['city'] ?? '')) === strtolower((string) $request->input('city')))->values());
+        if ($method === 'GET') {
+            if ($request->filled('approvalStatus')) {
+                $approvalStatus = (string) $request->input('approvalStatus');
+                $items = array_values(array_filter($items, fn ($agent) =>
+                    ($agent['approvalStatus'] ?? null) === $approvalStatus
+                    && ($approvalStatus !== 'Approved' || (($agent['status'] ?? 'Active') === 'Active' && ($agent['visible'] ?? true) !== false))
+                ));
+            }
+            return $this->json(collect($items)->filter(fn ($a) => !$request->filled('city') || strtolower((string) ($a['city'] ?? '')) === strtolower((string) $request->input('city')))->values());
+        }
         return $this->json(['error' => 'Method not allowed'], 405);
     }
 

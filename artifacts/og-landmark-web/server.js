@@ -755,6 +755,9 @@ function safeMobileAgent(agent, includePrivate = false) {
     displayName: safe.displayName || safe.name || '',
     profilePhoto: safe.photo || safe.profilePhoto || null,
     coverPhoto: safe.coverPhoto || null,
+    title: safe.title || safe.agency || safe.specialization || 'Property Consultant',
+    specialization: safe.specialization || (Array.isArray(safe.specialties) ? safe.specialties.join(', ') : ''),
+    propertiesCount: Number(safe.propertiesCount ?? safe.listings ?? 0),
     ...(agent.role === 'Agent' && agent.email ? { email: agent.email } : {}),
     ...(includePrivate ? {
       loginEmail: agent.email || '',

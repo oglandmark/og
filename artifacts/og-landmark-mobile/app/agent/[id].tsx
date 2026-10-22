@@ -160,6 +160,9 @@ type AgentProfile = {
   initials: string;
   profileImage?: SampleAgent['profileImage'];
   coverPhoto?: string;
+  profilePhone?: string;
+  email?: string;
+  city?: string;
   agency: string;
   verified: boolean;
   years: number;
@@ -340,6 +343,15 @@ export default function AgentProfileScreen() {
           </View>
         )}
       </View>
+
+      {(agent.city || agent.profilePhone || agent.email) ? (
+        <View style={[styles.section, { paddingTop: 14 }]}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Profile details</Text>
+          {agent.city ? <Text style={[styles.aboutText, { color: colors.mutedForeground }]}>{agent.city}</Text> : null}
+          {agent.profilePhone ? <Text style={[styles.aboutText, { color: colors.mutedForeground }]}>{agent.profilePhone}</Text> : null}
+          {agent.email ? <Text style={[styles.aboutText, { color: colors.mutedForeground }]}>{agent.email}</Text> : null}
+        </View>
+      ) : null}
 
       {/* ── ACTION BUTTONS ─────────────────────────────────────────────── */}
       <View style={[styles.actionsRow, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>

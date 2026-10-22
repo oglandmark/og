@@ -1005,6 +1005,7 @@ class BackendGapClosureTest extends TestCase
                 'verified' => true,
                 'photo' => $updatedPhotoUrl,
                 'profilePhoto' => $updatedPhotoUrl,
+                'coverPhoto' => 'https://cdn.example.test/agent-cover.jpg',
                 'areas' => ['Depalpur', 'Okara'],
                 'specialties' => ['Residential', 'Commercial'],
                 'about' => 'Updated profile details.',
@@ -1041,6 +1042,9 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonPath('1.city', 'Depalpur')
             ->assertJsonPath('1.photo', $updatedPhotoUrl)
             ->assertJsonPath('1.profilePhoto', $updatedPhotoUrl)
+            ->assertJsonPath('1.coverPhoto', 'https://cdn.example.test/agent-cover.jpg')
+            ->assertJsonPath('1.phone', '03001234567')
+            ->assertJsonPath('1.email', 'updated-directory-agent@example.test')
             ->assertJsonPath('1.rating', 4.6)
             ->assertJsonPath('1.areas.1', 'Okara')
             ->assertJsonPath('1.specialties.1', 'Commercial')
@@ -1050,6 +1054,13 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonPath('1.name', 'Updated Directory Agent')
             ->assertJsonPath('1.photo', $updatedPhotoUrl)
             ->assertJsonPath('1.agency', 'Updated Realty');
+        $this->getJson('/api/agents?approvalStatus=Approved')
+            ->assertOk()
+            ->assertJsonPath('1.name', 'Updated Directory Agent')
+            ->assertJsonPath('1.title', 'Updated Realty')
+            ->assertJsonPath('1.propertiesCount', 8)
+            ->assertJsonPath('1.phone', '03001234567')
+            ->assertJsonPath('1.email', 'updated-directory-agent@example.test');
 
         $this->withToken($adminToken)
             ->deleteJson('/api/admin/mobile-agents/10')

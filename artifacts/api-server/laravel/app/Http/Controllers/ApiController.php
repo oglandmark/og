@@ -823,6 +823,9 @@ class ApiController extends Controller
         if ($resource === 'properties' && $id !== null && ($parts[2] ?? '') === 'verify' && $method === 'PATCH') {
             return $this->properties($request, [$id, 'verify'], 'PATCH');
         }
+        if ($resource === 'properties' && $id !== null && in_array($parts[2] ?? '', ['approve', 'reject', 'request-changes'], true) && $method === 'PATCH') {
+            return $this->properties($request, [$id, $parts[2]], 'PATCH');
+        }
         if ($resource === 'properties' && $id !== null && in_array($method, ['PUT', 'PATCH'], true)) {
             $index = $this->indexById($data['properties'] ?? [], $id);
             if ($index === null) return $this->json(['error' => 'Property not found'], 404);
@@ -1083,9 +1086,19 @@ class ApiController extends Controller
             }
             return $this->crudNamed($request, $data, 'reports', $id, $method, $admin);
         }
+        if ($resource === 'locations') {
+            return $this->adminLocations($request, $data, $id, $method);
+        }
         if ($resource === 'announcements') return $this->adminAnnouncements($request, $data, $parts, $method, $admin);
+        if ($resource === 'developer-projects') {
+            return app(DeveloperApiService::class)->handle(
+                $request,
+                array_merge(['projects'], array_slice($parts, 1)),
+                $method,
+                $admin,
+            );
+        }
         $adminCollections = [
-            'developer-projects' => 'developerProjects',
             'developer-blocks' => 'inventoryBlocks',
             'developer-units' => 'inventoryUnits',
             'developer-leads' => 'developerLeads',
@@ -1139,6 +1152,70 @@ class ApiController extends Controller
         ];
     }
 
+    private function adminLocations(Request $request, array $data, ?string $id, string $method)
+    {
+        $serviceAreas = ['Okara', 'Depalpur', 'Renala Khurd', 'Hujra Shah Muqeem', 'Basir Pur', 'Haveli Lakha'];
+        if (!array_key_exists('locations', $data)) {
+            $data['locations'] = collect($serviceAreas)->map(fn ($name) => [
+                'id' => 'service-area-' . Str::slug($name),
+                'name' => $name,
+                'status' => 'Active',
+            ])->all();
+            JsonStore::write($data);
+        }
+        $data['locations'] = is_array($data['locations']) ? $data['locations'] : [];
+
+        if ($method === 'GET' && $id === null) return $this->json($data['locations']);
+        if ($method === 'POST' && $id === null) {
+            $validator = Validator::make($request->all(), [
+                'name' => ['required', 'string', 'max:120'],
+                'status' => ['sometimes', 'required', 'in:Active,Inactive'],
+            ]);
+            if ($validator->fails()) return $this->json(['error' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
+            $name = $validator->validated()['name'];
+            if (collect($data['locations'])->contains(fn ($item) => strcasecmp((string) ($item['name'] ?? ''), $name) === 0)) {
+                return $this->json(['error' => 'This service location already exists.'], 409);
+            }
+            $location = [
+                'id' => JsonStore::nextId($data, 'location'),
+                'name' => $name,
+                'status' => $validator->validated()['status'] ?? 'Active',
+                'createdAt' => now()->toISOString(),
+                'updatedAt' => now()->toISOString(),
+            ];
+            $data['locations'][] = $location;
+            JsonStore::write($data);
+            return $this->json($location, 201);
+        }
+
+        $index = $this->indexById($data['locations'], $id);
+        if ($index === null) return $this->json(['error' => 'Location not found'], 404);
+        if ($method === 'GET') return $this->json($data['locations'][$index]);
+        if ($method === 'DELETE') {
+            array_splice($data['locations'], $index, 1);
+            JsonStore::write($data);
+            return response()->noContent();
+        }
+        if (in_array($method, ['PUT', 'PATCH'], true)) {
+            $validator = Validator::make($request->all(), [
+                'name' => ['sometimes', 'required', 'string', 'max:120'],
+                'status' => ['sometimes', 'required', 'in:Active,Inactive'],
+            ]);
+            if ($validator->fails()) return $this->json(['error' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
+            $changes = $validator->validated();
+            $name = $changes['name'] ?? null;
+            if ($name !== null && collect($data['locations'])->contains(
+                fn ($item, $candidateIndex) => $candidateIndex !== $index && strcasecmp((string) ($item['name'] ?? ''), $name) === 0,
+            )) {
+                return $this->json(['error' => 'This service location already exists.'], 409);
+            }
+            $data['locations'][$index] = array_merge($data['locations'][$index], $changes, ['updatedAt' => now()->toISOString()]);
+            JsonStore::write($data);
+            return $this->json($data['locations'][$index]);
+        }
+        return $this->json(['error' => 'Method not allowed'], 405);
+    }
+
     private function adminPermissionForRequest(string $resource, array $parts, string $method): ?string
     {
         if ($resource === 'analytics' || $resource === 'stats') return 'reports.view';
@@ -1149,6 +1226,7 @@ class ApiController extends Controller
         if ($resource === 'properties') return in_array($method, ['GET', 'HEAD'], true) ? 'property.view' : 'property.manage';
         if ($resource === 'users') return in_array($method, ['GET', 'HEAD'], true) ? 'users.view' : 'users.manage';
         if ($resource === 'reports') return 'support.manage';
+        if ($resource === 'locations') return 'content.manage';
         if (in_array($resource, ['announcements', 'notifications'], true)) return 'notifications.manage';
         if (in_array($resource, ['mobile-agents', 'city-agents', 'developer-projects', 'developer-blocks', 'developer-units', 'developer-payment-plans'], true)) return 'content.manage';
         if (in_array($resource, ['conversations', 'agent-leads', 'agent-visits', 'verification-requests', 'buyer-requests'], true)) return 'support.manage';

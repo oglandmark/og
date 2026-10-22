@@ -14,6 +14,8 @@
   let hiddenMainChildren = [];
   let agents = [];
   const sectionData = {};
+
+  const serviceAreas = ['Okara', 'Depalpur', 'Renala Khurd', 'Hujra Shah Muqeem', 'Basir Pur', 'Haveli Lakha'];
   const mobileSections = [
     { id: 'properties', label: 'Live properties' },
     { id: 'agents', label: 'Agents' },
@@ -54,6 +56,11 @@
       slug: 'system-settings',
       path: '/admin/management/system-settings',
     },
+    { label: 'Developer Projects', slug: 'developer-projects', section: 'projects', path: '/admin/management/developer-projects' },
+    { label: 'Locations', slug: 'locations', section: 'locations', path: '/admin/management/locations' },
+    { label: 'Appointments', slug: 'appointments', section: 'appointments', path: '/admin/management/appointments' },
+    { label: 'Support', slug: 'support', section: 'support', path: '/admin/management/support' },
+    { label: 'Reviews', slug: 'reviews', section: 'reviews', path: '/admin/management/reviews' },
   ];
   const sidebarPages = [
     ...sidebarItems.map((item) => ({
@@ -185,7 +192,7 @@
     modal.className = 'og-mm-page';
     modal.dataset.section = tab;
     modal.innerHTML = `<section class="og-mm-box" aria-label="${esc(activeSection.label)}">
-      <div class="og-mm-content"><div class="og-mm-loading">Loading page data…</div></div>
+      <div class="og-mm-content"><div class="og-mm-loading">Loading live records…</div></div>
     </section>`;
     modal.addEventListener('click', (event) => {
       const action = event.target.closest('[data-action]');
@@ -240,10 +247,9 @@
     if (page?.group === 'Reports & Analytics') return renderReports(content, page.label);
     if (page?.group === 'Staff & Permissions') return renderStaff(content);
     if (page?.group === 'System Settings') return renderSystem(content, page.label);
-    const serviceAreas = page?.label === 'Cities'
-      ? '<p>Service areas: Okara, Depalpur, Renala Khurd, Hujra Shah Muqeem, Basir Pur, and Haveli Lakha.</p>'
-      : '';
-    content.innerHTML = `<div class="og-mm-empty"><h3>${esc(page?.label || 'Page not found')}</h3><p>This navigation item does not have a connected management workflow yet.</p>${serviceAreas}</div>`;
+    if (page?.section === 'reviews') return renderReviews(content);
+    if (page?.section && sectionConfig[page.section]) return renderSection(page.section, content);
+    content.innerHTML = `<div class="og-mm-empty"><h3>${esc(page?.label || 'Page not found')}</h3><p>This navigation item does not have a connected management workflow yet.</p></div>`;
   }
 
   const reportColumns = {
@@ -325,6 +331,47 @@
       ],
       row: (item) => `<td><strong>${esc(item.title || '—')}</strong><div>${esc(item.message || '')}</div></td><td>${esc(item.status || 'draft')}</td><td>${esc(item.recipientCount ?? 0)}</td><td>${esc(item.createdAt || '—').slice(0, 10)}</td>`,
     },
+    projects: {
+      title: 'Developer projects', list: '/admin/developer-projects', createPath: '/admin/developer-projects',
+      deletePath: (item) => `/admin/developer-projects/${encodeURIComponent(item.id)}`,
+      fields: [
+        ['title', 'Project name'], ['developer', 'Developer'], ['city', 'City', 'city'],
+        ['status', 'Project status', 'select', ['Draft', 'Pending', 'Live', 'Archived']],
+        ['completionDate', 'Completion date', 'date'], ['description', 'Description', 'textarea'],
+      ],
+      row: (item) => `<td><strong>${esc(item.title || item.name || 'Untitled project')}</strong><div>${esc(item.developer || '—')}</div></td><td>${esc(item.city || (typeof item.location === 'object' ? item.location?.city : item.location) || '—')}</td><td>${esc(item.completionDate || '—')}</td><td>${esc(item.status || item.approvalStatus || '—')}</td>`,
+    },
+    locations: {
+      title: 'Service locations', list: '/admin/locations', createPath: '/admin/locations',
+      deletePath: (item) => `/admin/locations/${encodeURIComponent(item.id)}`,
+      fields: [
+        ['name', 'Location', 'location'], ['status', 'Service status', 'select', ['Active', 'Inactive']],
+      ],
+      row: (item) => `<td><strong>${esc(item.name || 'Unnamed location')}</strong></td><td>${esc(item.status || 'Active')}</td><td>${esc(item.updatedAt || item.createdAt || '—').slice(0, 10) || '—'}</td>`,
+    },
+    appointments: {
+      title: 'Appointments', list: '/appointments', createPath: '/appointments',
+      deletePath: (item) => `/appointments/${encodeURIComponent(item.id)}`,
+      fields: [
+        ['buyerName', 'Buyer name'], ['propertyTitle', 'Property'], ['propertyAddress', 'Property address'],
+        ['city', 'City', 'city'], ['date', 'Appointment date', 'date'], ['time', 'Appointment time'],
+        ['type', 'Visit type', 'select', ['Site Visit', 'Meeting', 'Call']],
+        ['status', 'Appointment status', 'select', ['Upcoming', 'Confirmed', 'Completed', 'Cancelled']],
+        ['notes', 'Notes', 'textarea'],
+      ],
+      row: (item) => `<td><strong>${esc(item.buyerName || item.name || 'Buyer')}</strong><div>${esc(item.type || 'Appointment')}</div></td><td><strong>${esc(item.propertyTitle || 'Property')}</strong><div>${esc(item.propertyAddress || '')}</div></td><td>${esc(item.city || item.location || '—')}</td><td>${esc([item.date, item.time].filter(Boolean).join(' ') || item.createdAt || '—')}</td><td>${esc(item.status || '—')}</td>`,
+    },
+    support: {
+      title: 'Support reports', list: '/admin/reports', createPath: '/admin/reports',
+      deletePath: (item) => `/admin/reports/${encodeURIComponent(item.id)}`,
+      fields: [
+        ['propertyId', 'Related property ID'], ['reason', 'Issue'], ['description', 'Details', 'textarea'],
+        ['city', 'City', 'city'],
+        ['status', 'Status', 'select', ['Pending', 'In Review', 'Resolved', 'Dismissed']],
+        ['adminNote', 'Admin note', 'textarea'],
+      ],
+      row: (item) => `<td><strong>${esc(item.reason || item.title || 'Support report')}</strong><div>${esc(item.reporterName || item.name || '—')}</div></td><td>${esc(item.propertyId || '—')}</td><td>${esc(item.description || item.message || '—')}</td><td>${esc(item.status || 'Pending')}</td>`,
+    },
   };
 
   async function renderProperties(content) { return renderSection('properties', content); }
@@ -336,26 +383,62 @@
       const result = await api(config.list);
       const items = Array.isArray(result) ? result : (Array.isArray(result?.items) ? result.items : []);
       sectionData[key] = items;
-      const colspan = key === 'properties' || key === 'users' ? 5 : 5;
+      const columnsBySection = {
+        properties: ['Property', 'City', 'Price', 'Status', 'Actions'],
+        users: ['Account', 'Phone', 'Role', 'Status', 'Actions'],
+        banners: ['Banner', 'Category', 'Order', 'Visibility', 'Actions'],
+        notifications: ['Notification', 'Status', 'Recipients', 'Created', 'Actions'],
+        projects: ['Project', 'City', 'Completion', 'Status', 'Actions'],
+        locations: ['Location', 'Status', 'Updated', 'Actions'],
+        appointments: ['Buyer', 'Property', 'City', 'Date / time', 'Status', 'Actions'],
+        support: ['Report', 'Property', 'Details', 'Status', 'Actions'],
+      };
+      const columns = columnsBySection[key] || ['Record', 'Status', 'Actions'];
+      const colspan = columns.length;
       const rows = items.map((item) => `<tr>${config.row(item)}<td><div class="og-mm-row-actions">
         ${key === 'notifications' && item.status !== 'sent' ? `<button class="og-mm-action primary" data-action="send-announcement" data-section="${key}" data-id="${esc(item.id)}">Send</button>` : ''}
         <button class="og-mm-action" data-action="edit-record" data-section="${key}" data-id="${esc(item.id)}">Edit</button>
         <button class="og-mm-action danger" data-action="delete-record" data-section="${key}" data-id="${esc(item.id)}">Delete</button>
       </div></td></tr>`).join('');
       const addButton = config.createPath ? `<button class="og-mm-action primary" data-action="add-record" data-section="${key}">Add new</button>` : '';
-      const columns = key === 'properties' ? ['Property', 'City', 'Price', 'Status', 'Actions']
-        : key === 'users' ? ['Account', 'Phone', 'Role', 'Status', 'Actions']
-          : key === 'banners' ? ['Banner', 'Category', 'Order', 'Visibility', 'Actions']
-            : ['Notification', 'Status', 'Recipients', 'Created', 'Actions'];
       content.innerHTML = `<div class="og-mm-note">${esc(config.title)} — live records loaded from the shared Admin API used by the website and mobile app.</div>
         <div style="display:flex;justify-content:flex-end;margin-bottom:12px">${addButton}</div><div id="og-mm-record-form"></div>
-        <div style="overflow:auto"><table class="og-mm-table"><thead><tr>${columns.map((name) => `<th>${name}</th>`).join('')}</tr></thead>
+        <div style="overflow:auto"><table class="og-mm-table"><thead><tr>${columns.map((name) => `<th>${esc(name)}</th>`).join('')}</tr></thead>
         <tbody>${rows || `<tr><td colspan="${colspan}" class="og-mm-empty">No records found.</td></tr>`}</tbody></table></div>`;
     } catch (error) {
       content.innerHTML = `<div class="og-mm-error">Could not load live records: ${esc(error.message)}</div>`;
     }
   }
 
+  async function renderReviews(content) {
+    content.innerHTML = '<div class="og-mm-empty">Loading live property review records…</div>';
+    try {
+      const records = await api('/admin/properties');
+      const items = Array.isArray(records) ? records : [];
+      sectionData.reviews = items;
+      const rows = items.map((item) => {
+        const history = Array.isArray(item.reviewHistory) ? item.reviewHistory : [];
+        const status = item.approvalStatus || item.listingStatus || 'Pending';
+        const audit = history.map((entry) => `<li><strong>${esc(entry.action || 'Review')}</strong> · ${esc(entry.fromStatus || '—')} → ${esc(entry.toStatus || '—')} · ${esc(entry.createdAt || '—')}${entry.reason ? `<div>${esc(entry.reason)}</div>` : ''}</li>`).join('');
+        return `<tr>
+          <td><strong>${esc(item.title || 'Untitled property')}</strong><div>${esc(item.city || '—')} · ID ${esc(item.id)}</div></td>
+          <td>${esc(item.sellerName || item.ownerName || '—')}</td>
+          <td><span class="og-mm-pill ${/pending|changes requested|rejected/i.test(status) ? 'off' : ''}">${esc(status)}</span><div>${esc(item.reviewedAt || 'Not reviewed')}</div></td>
+          <td><details><summary>${history.length} review ${history.length === 1 ? 'action' : 'actions'}</summary><ul>${audit || '<li>No review actions yet.</li>'}</ul></details></td>
+          <td><div class="og-mm-row-actions">
+            <button class="og-mm-action primary" data-action="review-property" data-operation="approve" data-id="${esc(item.id)}">Approve</button>
+            <button class="og-mm-action" data-action="review-property" data-operation="request-changes" data-id="${esc(item.id)}">Request changes</button>
+            <button class="og-mm-action danger" data-action="review-property" data-operation="reject" data-id="${esc(item.id)}">Reject</button>
+          </div></td>
+        </tr>`;
+      }).join('');
+      content.innerHTML = `<div class="og-mm-note">Property moderation decisions and review history use the existing Laravel property-review workflow. Changes notify listing owners through the established API flow.</div>
+        <div style="overflow:auto"><table class="og-mm-table"><thead><tr><th>Property</th><th>Owner</th><th>Status</th><th>Review history</th><th>Actions</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="5" class="og-mm-empty">No property records found.</td></tr>'}</tbody></table></div>`;
+    } catch (error) {
+      content.innerHTML = `<div class="og-mm-error">Could not load property reviews: ${esc(error.message)}</div>`;
+    }
+  }
   function showRecordForm(key, item = {}) {
     const config = sectionConfig[key];
     const wrap = modal.querySelector('#og-mm-record-form');
@@ -376,6 +459,10 @@
     wrap.innerHTML = `<form class="og-mm-form" id="og-mm-record-form-inner"><h3 style="margin:0 0 12px">${editing ? 'Edit' : 'Add'} ${esc(config.title)}</h3><div class="og-mm-grid">
       ${fields.map(([name, label, type = 'text', options = [], accept]) => {
         let value = item[name] ?? '';
+        if (key === 'projects' && name === 'title' && !value) value = item.name || '';
+        if (key === 'projects' && name === 'city' && !value) {
+          value = typeof item.location === 'object' ? item.location?.city || '' : item.location || '';
+        }
         if (key === 'notifications' && name === 'audienceRole') value = item.audience?.role || 'all';
         if (key === 'notifications' && name === 'audienceCity') value = item.audience?.city || '';
         const full = type === 'textarea' ? ' full' : '';
@@ -388,7 +475,18 @@
           const fileLabel = key === 'banners' && editing ? 'Replace media file (optional)' : label;
           return `<div class="og-mm-field"><label>${esc(fileLabel)}</label><input name="${esc(name)}" type="file" accept="${esc(bannerAccept || '')}"><small>Image: JPG/PNG/WebP up to 20 MiB; video: MP4/MOV up to 300 MiB.</small></div>`;
         }
-        if (type === 'select') return `<div class="og-mm-field"><label>${esc(label)}</label><select name="${esc(name)}">${options.map((option) => `<option value="${esc(option)}" ${String(value).toLowerCase() === option.toLowerCase() ? 'selected' : ''}>${esc(option)}</option>`).join('')}</select></div>`;
+        if (type === 'city') {
+          const cityOptions = [...new Set([...serviceAreas, ...(value && !serviceAreas.includes(value) ? [value] : [])])];
+          return `<div class="og-mm-field"><label>${esc(label)}</label><select name="${esc(name)}"><option value="">Choose a location</option>${cityOptions.map((option) => `<option value="${esc(option)}" ${value === option ? 'selected' : ''}>${esc(option)}</option>`).join('')}</select></div>`;
+        }
+        if (type === 'location') {
+          const locationOptions = [...new Set([...serviceAreas, ...(sectionData.locations || []).map((location) => location.name), ...(value ? [value] : [])])];
+          return `<div class="og-mm-field"><label>${esc(label)}</label><input name="${esc(name)}" list="og-mm-location-options" maxlength="120" required value="${esc(value)}"><datalist id="og-mm-location-options">${locationOptions.map((option) => `<option value="${esc(option)}"></option>`).join('')}</datalist></div>`;
+        }
+        if (type === 'select') {
+          const selectOptions = [...new Set([...options, ...(value && !options.includes(value) ? [value] : [])])];
+          return `<div class="og-mm-field"><label>${esc(label)}</label><select name="${esc(name)}">${selectOptions.map((option) => `<option value="${esc(option)}" ${String(value).toLowerCase() === option.toLowerCase() ? 'selected' : ''}>${esc(option)}</option>`).join('')}</select></div>`;
+        }
         if (type === 'textarea') return `<div class="og-mm-field full"><label>${esc(label)}</label><textarea name="${esc(name)}" maxlength="6000">${esc(value)}</textarea></div>`;
         return `<div class="og-mm-field"><label>${esc(label)}</label><input name="${esc(name)}" type="${esc(type)}" ${type === 'number' ? 'step="any"' : ''} value="${esc(value)}"></div>`;
       }).join('')}${currentMediaPreview}
@@ -610,12 +708,26 @@
         if (item) showRecordForm(section, item);
       }
       if (button.dataset.action === 'cancel-record') renderSection(section, modal.querySelector('.og-mm-content'));
+      if (button.dataset.action === 'review-property') {
+        const operation = button.dataset.operation;
+        const reason = ['reject', 'request-changes'].includes(operation)
+          ? window.prompt(operation === 'reject' ? 'Why is this listing being rejected?' : 'What changes are needed?')
+          : '';
+        if (['reject', 'request-changes'].includes(operation) && reason === null) return;
+        await api(`/admin/properties/${encodeURIComponent(id)}/${operation}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ reason: reason || '' }),
+        });
+        await renderReviews(modal.querySelector('.og-mm-content'));
+      }
       if (button.dataset.action === 'delete-record') {
         const config = sectionConfig[section];
         const item = (sectionData[section] || []).find((record) => String(record.id) === String(id));
         if (!item) return;
         const label = item.title || item.name || item.email || `record ${id}`;
-        const warning = section === 'banners'
+        const warning = section === 'projects'
+          ? `Archive project “${label}”? It will no longer appear in the live project list, but its project and inventory records will be preserved.`
+          : section === 'banners'
           ? `Permanently delete the ${item.type === 'video' ? 'video' : 'image'} banner “${label}” from the mobile app?`
           : section === 'users'
           ? `Permanently delete account ${label}? This removes mobile app access. Review linked records first; the action cannot be undone.`

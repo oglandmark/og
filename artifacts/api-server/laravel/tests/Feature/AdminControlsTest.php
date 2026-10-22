@@ -93,6 +93,113 @@ class AdminControlsTest extends TestCase
             ->assertUnprocessable();
     }
 
+    public function test_connected_admin_menus_read_and_manage_live_collections_with_role_checks(): void
+    {
+        $this->seedFixtures();
+        $ownerToken = $this->login('owner@example.test');
+        $this->withToken($ownerToken)
+            ->patchJson('/api/admin/staff/902/permissions', ['role' => 'analyst'])
+            ->assertOk();
+        $analystToken = $this->login('analyst@example.test');
+
+        $locations = $this->withToken($ownerToken)->getJson('/api/admin/locations')
+            ->assertOk()
+            ->assertJsonCount(6)
+            ->json();
+        $this->assertSame(
+            ['Okara', 'Depalpur', 'Renala Khurd', 'Hujra Shah Muqeem', 'Basir Pur', 'Haveli Lakha'],
+            array_column($locations, 'name'),
+        );
+        $this->withToken($ownerToken)
+            ->postJson('/api/admin/locations', ['name' => 'Okara'])
+            ->assertStatus(409);
+        $this->withToken($ownerToken)
+            ->patchJson('/api/admin/locations/service-area-okara', ['status' => 'Inactive'])
+            ->assertOk()
+            ->assertJsonPath('status', 'Inactive');
+        $customLocation = $this->withToken($ownerToken)
+            ->postJson('/api/admin/locations', ['name' => 'Lahore', 'status' => 'Active'])
+            ->assertCreated()
+            ->assertJsonPath('name', 'Lahore')
+            ->json();
+        $this->withToken($ownerToken)->deleteJson('/api/admin/locations/' . $customLocation['id'])->assertNoContent();
+        $this->withToken($analystToken)->getJson('/api/admin/locations')->assertForbidden();
+
+        $project = $this->withToken($ownerToken)
+            ->postJson('/api/admin/developer-projects', [
+                'title' => 'Okara Heights',
+                'city' => 'Okara',
+                'status' => 'Draft',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('title', 'Okara Heights')
+            ->json();
+        $this->withToken($ownerToken)
+            ->putJson('/api/admin/developer-projects/' . $project['id'], ['status' => 'Live'])
+            ->assertOk()
+            ->assertJsonPath('status', 'Live');
+        $this->withToken($analystToken)->getJson('/api/admin/developer-projects')->assertForbidden();
+        $this->withToken($ownerToken)
+            ->deleteJson('/api/admin/developer-projects/' . $project['id'])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+        $this->withToken($ownerToken)->getJson('/api/admin/developer-projects')->assertOk()->assertJsonMissing(['id' => $project['id']]);
+        $archivedProject = collect(JsonStore::read()['developerProjects'])->firstWhere('id', $project['id']);
+        $this->assertSame('Archived', $archivedProject['status']);
+        $this->assertNotEmpty($archivedProject['deletedAt']);
+        $this->assertTrue(collect(JsonStore::read()['adminActivity'] ?? [])->contains(
+            fn ($activity) => ($activity['action'] ?? '') === 'admin.delete.developer-projects'
+                && (string) ($activity['details']['resourceId'] ?? '') === (string) $project['id'],
+        ));
+
+        $appointment = $this->withToken($ownerToken)
+            ->postJson('/api/appointments', [
+                'buyerName' => 'Test buyer',
+                'propertyTitle' => 'Okara Home',
+                'city' => 'Okara',
+                'status' => 'Upcoming',
+            ])
+            ->assertCreated()
+            ->json();
+        $this->withToken($ownerToken)
+            ->patchJson('/api/appointments/' . $appointment['id'], ['status' => 'Completed'])
+            ->assertOk()
+            ->assertJsonPath('status', 'Completed');
+        $this->withToken($analystToken)->getJson('/api/appointments')->assertForbidden();
+        $this->withToken($ownerToken)->deleteJson('/api/appointments/' . $appointment['id'])->assertNoContent();
+
+        $report = $this->withToken($ownerToken)
+            ->postJson('/api/admin/reports', [
+                'reason' => 'Incorrect address',
+                'description' => 'Please verify the property address.',
+                'status' => 'Pending',
+            ])
+            ->assertCreated()
+            ->json();
+        $this->withToken($ownerToken)
+            ->patchJson('/api/admin/reports/' . $report['id'], ['status' => 'Resolved'])
+            ->assertOk()
+            ->assertJsonPath('status', 'Resolved');
+        $this->withToken($analystToken)->getJson('/api/admin/reports')->assertForbidden();
+        $this->withToken($ownerToken)->deleteJson('/api/admin/reports/' . $report['id'])->assertNoContent();
+
+        $this->withToken($ownerToken)
+            ->getJson('/api/admin/properties/1/review')
+            ->assertOk()
+            ->assertJsonPath('property.id', 1)
+            ->assertJsonCount(0, 'audit');
+        $this->withToken($ownerToken)
+            ->patchJson('/api/admin/properties/1/request-changes', ['reason' => 'Add clearer photos'])
+            ->assertOk()
+            ->assertJsonPath('approvalStatus', 'Changes Requested');
+        $this->withToken($ownerToken)
+            ->getJson('/api/admin/properties/1/review')
+            ->assertOk()
+            ->assertJsonCount(1, 'audit')
+            ->assertJsonPath('audit.0.action', 'request-changes');
+        $this->withToken($analystToken)->patchJson('/api/admin/properties/1/approve')->assertForbidden();
+    }
+
     public function test_staff_roles_are_enforced_by_the_api_and_owner_access_cannot_be_removed(): void
     {
         $this->seedFixtures();

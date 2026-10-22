@@ -9,18 +9,52 @@
   })[char]);
   const money = (value) => `PKR ${Number(value || 0).toLocaleString('en-PK')}`;
   let modal;
-  let demos = [];
   let agents = [];
-  let hiddenDemos = [];
   const sectionData = {};
   const mobileSections = [
-    { id: 'demos', label: 'Demo properties' },
     { id: 'properties', label: 'Live properties' },
     { id: 'agents', label: 'Agents' },
     { id: 'users', label: 'Users' },
     { id: 'banners', label: 'Homepage banners' },
     { id: 'notifications', label: 'Notifications' },
   ];
+  const sidebarGroups = [
+    { label: 'Dashboard', items: ['Dashboard Overview'] },
+    { label: 'Property Management', items: ['All Properties', 'Add Property', 'Pending Approvals', 'Active Properties', 'Featured Properties', 'Expired Listings', 'Archived Properties', 'Sold Properties', 'Rented Properties', 'Property Categories', 'Property Types', 'Property Amenities', 'Property Verification'] },
+    { label: 'Projects Management', items: ['All Projects', 'Add New Project', 'Project Approvals', 'Featured Projects', 'Project Categories', 'Project Status'] },
+    { label: 'Users Management', items: ['All Users', 'Active Users', 'Suspended Users', 'Blocked Users', 'User Verification', 'User Activity'] },
+    { label: 'Agents Management', items: ['All Agents', 'Add Agent', 'Pending Agent Approvals', 'Agent Verification', 'Agent Properties', 'Agent Performance', 'Agent Reviews'] },
+    { label: 'Leads & Inquiries', items: ['All Leads', 'New Inquiries', 'Property Inquiries', 'Buyer Leads', 'Seller Leads', 'Rental Inquiries', 'Assign Leads', 'Follow-ups', 'Converted Leads', 'Lost Leads'] },
+    { label: 'Locations Management', items: ['Provinces', 'Districts', 'Cities', 'Tehsils', 'Areas', 'Housing Societies', 'Blocks & Sectors'] },
+    { label: 'Site Visits & Appointments', items: ['All Appointments', 'Pending Requests', 'Confirmed Visits', 'Completed Visits', 'Cancelled Appointments'] },
+    { label: 'Marketing & Content', items: ['Homepage Banners', 'Featured Properties', 'Featured Projects', 'Blog & News', 'FAQs', 'Static Pages', 'SEO Settings'] },
+    { label: 'Reviews & Complaints', items: ['All Reviews', 'Property Reviews', 'Agent Reviews', 'Reported Listings', 'User Complaints'] },
+    { label: 'Notifications', items: ['Notifications Overview', 'Push Notification History', 'Email Notification Logs', 'SMS Notification Logs'] },
+    { label: 'Support Management', items: ['Support Tickets', 'Open Tickets', 'In-Progress Tickets', 'Resolved Tickets', 'Closed Tickets'] },
+    { label: 'Reports & Analytics', items: ['Dashboard Statistics', 'Property Reports', 'User Reports', 'Agent Reports', 'Lead Reports', 'City-wise Reports', 'Activity Reports', 'Export Reports'] },
+    { label: 'Staff & Permissions', items: ['Admin Users', 'Staff Accounts', 'Roles Management', 'Permissions Management', 'Access Control'] },
+    { label: 'System Settings', items: ['Admin Profile', 'General Settings', 'File Storage Status', 'API Status', 'Application Logs', 'Failed Jobs', 'Activity Logs'] },
+  ];
+  const slugify = (value) => value.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const existingPagePaths = {
+    'Dashboard Overview': '/admin/',
+    'All Properties': '/admin/properties',
+    'All Users': '/admin/users',
+    'All Leads': '/admin/inquiries',
+    'All Agents': '/admin/mobile/agents',
+    'Add Agent': '/admin/mobile/agents',
+    'Homepage Banners': '/admin/mobile/banners',
+    'Notifications Overview': '/admin/mobile/notifications',
+    'Push Notification History': '/admin/mobile/notifications',
+    'Dashboard Statistics': '/admin/',
+  };
+  const sidebarPages = sidebarGroups.flatMap((group) => group.items.map((label) => ({
+    group: group.label,
+    label,
+    slug: `${slugify(group.label)}-${slugify(label)}`,
+    path: existingPagePaths[label] || `/admin/management/${slugify(group.label)}-${slugify(label)}`,
+  })));
+  const sidebarPageBySlug = Object.fromEntries(sidebarPages.map((page) => [page.slug, page]));
 
   async function api(path, options = {}) {
     const multipart = typeof FormData !== 'undefined' && options.body instanceof FormData;
@@ -73,16 +107,7 @@
   }
 
   async function loadData() {
-    const [demoData, settings, agentData] = await Promise.all([
-      fetch('/admin/demo-properties.json?v=mobile-demo-catalog-20261022').then((response) => {
-        if (!response.ok) throw new Error('Mobile demo catalog could not be loaded.');
-        return response.json();
-      }),
-      api('/mobile/settings'),
-      api('/admin/mobile-agents'),
-    ]);
-    demos = Array.isArray(demoData) ? demoData : [];
-    hiddenDemos = Array.isArray(settings?.hiddenDemoPropertyIds) ? settings.hiddenDemoPropertyIds.map(Number) : [];
+    const agentData = await api('/admin/mobile-agents');
     agents = Array.isArray(agentData) ? agentData : [];
   }
 
@@ -90,14 +115,14 @@
     installStyles();
     if (modal?.dataset.section === tab) return;
     if (modal) modal.remove();
-    const activeSection = mobileSections.find((section) => section.id === tab) || mobileSections[0];
+    const activeSection = mobileSections.find((section) => section.id === tab) || sidebarPageBySlug[tab] || { label: 'Admin section' };
     const sidebarWidth = document.querySelector('aside')?.getBoundingClientRect().width || 240;
     document.documentElement.style.setProperty('--og-mm-sidebar-width', `${sidebarWidth}px`);
     modal = document.createElement('div');
     modal.className = 'og-mm-page';
     modal.dataset.section = activeSection.id;
     modal.innerHTML = `<section class="og-mm-box" aria-label="${esc(activeSection.label)}">
-      <header class="og-mm-head"><div><h2>${esc(activeSection.label)}</h2><p>Manage the shared Admin data used by the website and mobile app.</p></div></header>
+      <header class="og-mm-head"><div><h2>${esc(activeSection.label)}</h2><p>${mobileSections.some((section) => section.id === tab) ? 'Manage the shared Admin data used by the website and mobile app.' : 'This menu is ready; its data workflow has not been connected yet.'}</p></div></header>
       <main class="og-mm-content"><div class="og-mm-loading">Loading mobile app data…</div></main>
     </section>`;
     modal.addEventListener('click', (event) => {
@@ -106,11 +131,15 @@
     });
     document.body.appendChild(modal);
     const page = modal;
-    loadData().then(() => {
-      if (modal === page) render(activeSection.id);
-    }).catch((error) => {
-      if (modal === page) page.querySelector('.og-mm-content').innerHTML = `<div class="og-mm-error">${esc(error.message)}</div>`;
-    });
+    if (mobileSections.some((section) => section.id === tab)) {
+      loadData().then(() => {
+        if (modal === page) render(activeSection.id);
+      }).catch((error) => {
+        if (modal === page) page.querySelector('.og-mm-content').innerHTML = `<div class="og-mm-error">${esc(error.message)}</div>`;
+      });
+    } else {
+      render(tab);
+    }
   }
 
   function close() {
@@ -124,20 +153,8 @@
     if (tab === 'agents') return renderAgents(content);
     if (tab === 'users' || tab === 'banners' || tab === 'notifications') return renderSection(tab, content);
     if (tab === 'properties') return renderProperties(content);
-    renderDemos(content);
-  }
-
-  function renderDemos(content) {
-    const rows = demos.map((demo) => {
-      const hidden = hiddenDemos.includes(Number(demo.id));
-      return `<tr><td><strong>${esc(demo.title)}</strong><div class="og-mm-muted">Demo #${demo.id} · ${esc(demo.type)}</div></td>
-        <td>${esc(demo.city)}<div>${esc(demo.address)}</div></td><td>${money(demo.price)}<div>${demo.area} ${esc(demo.areaUnit)}</div></td>
-        <td>${esc(demo.agent)}${demo.phone ? `<div>${esc(demo.phone)}</div>` : ''}</td>
-        <td><span class="og-mm-pill ${hidden ? 'off' : ''}">${hidden ? 'Hidden in app fallback' : 'Offline fallback'}</span></td>
-        <td><button class="og-mm-action ${hidden ? 'primary' : 'danger'}" data-action="demo" data-id="${demo.id}">${hidden ? 'Restore' : 'Hide'}</button></td></tr>`;
-    }).join('');
-    content.innerHTML = `<div class="og-mm-note"><strong>${demos.length} bundled demo listings.</strong> These are mobile offline-fallback examples, not customer listings. Hide/restore uses the same visibility setting as the mobile Admin Demos tab; demo content itself stays bundled in the app.</div>
-      <div style="overflow:auto"><table class="og-mm-table"><thead><tr><th>Property</th><th>Location</th><th>Price / area</th><th>Demo agent</th><th>Mobile visibility</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    const page = sidebarPageBySlug[tab];
+    content.innerHTML = `<div class="og-mm-empty"><h3>${esc(page?.label || 'Page not found')}</h3><p>This navigation item does not have a connected management workflow yet.</p></div>`;
   }
 
   function renderAgents(content) {

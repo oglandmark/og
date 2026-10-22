@@ -2036,7 +2036,36 @@ class ApiController extends Controller
     private function agents(Request $request, array $segments, string $method)
     {
         $data = JsonStore::read();
-        $items = $segments[0] === 'agents' ? ($data['cityAgents'] ?? []) : ($data['mobileAgents'] ?? []);
+        $itemsByIdentity = [];
+        foreach ([
+            'website' => $data['cityAgents'] ?? [],
+            'mobile' => $data['mobileAgents'] ?? [],
+        ] as $source => $sourceItems) {
+            foreach ($sourceItems as $agent) {
+                if (!is_array($agent)) continue;
+                $email = strtolower(trim((string) ($agent['email'] ?? '')));
+                $phone = preg_replace('/\D+/', '', (string) ($agent['phone'] ?? $agent['mobile'] ?? ''));
+                $userId = trim((string) ($agent['userId'] ?? $agent['accountId'] ?? ''));
+                $identity = $userId !== '' ? "user:{$userId}"
+                    : ($email !== '' ? "email:{$email}"
+                    : ($phone !== '' ? "phone:{$phone}" : "{$source}:" . (string) ($agent['id'] ?? count($itemsByIdentity))));
+
+                if (isset($itemsByIdentity[$identity])) {
+                    $itemsByIdentity[$identity] = array_merge($agent, $itemsByIdentity[$identity]);
+                    continue;
+                }
+                $name = trim((string) ($agent['displayName'] ?? $agent['name'] ?? ''));
+                $photo = $agent['photo'] ?? $agent['profilePhoto'] ?? null;
+                $agent['name'] = $name;
+                $agent['displayName'] = trim((string) ($agent['displayName'] ?? $name));
+                if ($photo !== null && $photo !== '') {
+                    $agent['photo'] = $photo;
+                    $agent['profilePhoto'] = $agent['profilePhoto'] ?? $photo;
+                }
+                $itemsByIdentity[$identity] = $agent;
+            }
+        }
+        $items = array_values($itemsByIdentity);
         if ($method === 'GET') return $this->json(collect($items)->filter(fn ($a) => !$request->filled('city') || strtolower((string) ($a['city'] ?? '')) === strtolower((string) $request->input('city')))->values());
         return $this->json(['error' => 'Method not allowed'], 405);
     }

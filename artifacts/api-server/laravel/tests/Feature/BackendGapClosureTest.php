@@ -818,6 +818,49 @@ class BackendGapClosureTest extends TestCase
         $this->assertSame([2], $saved['mobileSettings']['hiddenDemoPropertyIds']);
     }
 
+    public function test_website_and_mobile_agent_directories_merge_and_deduplicate_profiles(): void
+    {
+        $this->seedData([
+            'cityAgents' => [[
+                'id' => 11,
+                'name' => 'Shared Agent',
+                'phone' => '03001234567',
+                'city' => 'Okara',
+                'photo' => '/media/shared-agent.jpg',
+            ]],
+            'mobileAgents' => [
+                [
+                    'id' => 91,
+                    'displayName' => 'Shared Agent Mobile',
+                    'phone' => '+92 300 1234567',
+                    'city' => 'Okara',
+                    'agency' => 'Shared Realty',
+                ],
+                [
+                    'id' => 92,
+                    'name' => 'Mobile-only Agent',
+                    'phone' => '03007654321',
+                    'city' => 'Depalpur',
+                    'visible' => true,
+                ],
+            ],
+        ]);
+
+        $websiteDirectory = $this->getJson('/api/agents?approvalStatus=Approved')->assertOk();
+        $mobileDirectory = $this->getJson('/api/mobile/agents')->assertOk();
+
+        $this->assertCount(2, $websiteDirectory->json());
+        $this->assertSame($websiteDirectory->json(), $mobileDirectory->json());
+        $this->assertSame('Shared Agent', $websiteDirectory->json('0.name'));
+        $this->assertSame('Shared Realty', $websiteDirectory->json('0.agency'));
+        $this->assertSame('/media/shared-agent.jpg', $websiteDirectory->json('0.photo'));
+        $this->assertSame('Mobile-only Agent', $websiteDirectory->json('1.name'));
+        $this->getJson('/api/agents?city=Depalpur')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.name', 'Mobile-only Agent');
+    }
+
     public function test_admin_can_manage_mobile_agent_profiles_without_deleting_linked_accounts(): void
     {
         $this->seedData([

@@ -621,7 +621,7 @@
         <div class="og-mm-field"><label>Reviews</label><input name="reviewCount" type="number" min="0" value="${esc(agent.reviewCount || 0)}"></div>
         <div class="og-mm-field"><label>Listings</label><input name="listings" type="number" min="0" value="${esc(agent.listings || 0)}"></div>
         <div class="og-mm-field"><label>Brand color</label><input name="color" type="color" value="${esc(/^#[0-9a-f]{6}$/i.test(agent.color || '') ? agent.color : '#0b1f3a')}"></div>
-        <div class="og-mm-field full"><label>Profile photo URL</label><input name="photo" type="url" maxlength="2000" value="${esc(agent.photo || agent.profilePhoto || '')}"><div class="og-mm-agent-photo-preview"><img data-agent-photo-preview alt="Agent profile photo preview" hidden><span data-agent-photo-empty>${agent.photo || agent.profilePhoto ? '' : 'No profile photo selected.'}</span></div><label for="og-mm-agent-photo-upload">Upload photo</label><input id="og-mm-agent-photo-upload" name="photoUpload" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"><button type="button" class="og-mm-action danger" data-remove-agent-photo>Remove current photo</button><small>JPG, PNG or WebP up to 20 MiB.</small><span class="og-mm-agent-photo-status" data-agent-photo-status aria-live="polite"></span></div>
+        <div class="og-mm-field full"><label>Agent photo</label><div class="og-mm-agent-photo-preview"><img data-agent-photo-preview alt="Agent profile photo preview" hidden><span data-agent-photo-empty>${agent.photo || agent.profilePhoto ? '' : 'No profile photo selected.'}</span></div><label for="og-mm-agent-photo-upload">Upload profile photo</label><input id="og-mm-agent-photo-upload" name="photoUpload" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"><button type="button" class="og-mm-action danger" data-remove-agent-photo>Remove current photo</button><small>JPG, PNG or WebP up to 20 MiB.</small><span class="og-mm-agent-photo-status" data-agent-photo-status aria-live="polite"></span></div>
         <div class="og-mm-field"><label>Profile status</label><select name="status"><option ${agent.status !== 'Suspended' ? 'selected' : ''}>Active</option><option ${agent.status === 'Suspended' ? 'selected' : ''}>Suspended</option></select></div>
         <div class="og-mm-field"><label>Approval</label><select name="approvalStatus"><option ${agent.approvalStatus !== 'Pending' && agent.approvalStatus !== 'Rejected' ? 'selected' : ''}>Approved</option><option ${agent.approvalStatus === 'Pending' ? 'selected' : ''}>Pending</option><option ${agent.approvalStatus === 'Rejected' ? 'selected' : ''}>Rejected</option></select></div>
         <div class="og-mm-field full"><label>Service areas (comma separated)</label><input name="areas" value="${esc((agent.areas || []).join(', '))}"></div>
@@ -631,11 +631,11 @@
       </div><div class="og-mm-form-actions"><button type="button" class="og-mm-action" data-action="cancel-form">Cancel</button><button class="og-mm-action primary" type="submit">Save Agent</button></div>
     </form>`;
     const form = wrap.querySelector('form');
-    const photoUrlInput = form.elements.photo;
     const photoUploadInput = form.elements.photoUpload;
     const photoPreview = form.querySelector('[data-agent-photo-preview]');
     const photoEmpty = form.querySelector('[data-agent-photo-empty]');
     const photoStatus = form.querySelector('[data-agent-photo-status]');
+    let photoUrl = String(agent.photo || agent.profilePhoto || '').trim();
     let photoUploadInProgress = false;
     const showPhotoPreview = (url) => {
       if (url) {
@@ -649,10 +649,9 @@
         photoEmpty.textContent = 'No profile photo selected.';
       }
     };
-    showPhotoPreview(photoUrlInput.value);
-    photoUrlInput.addEventListener('input', () => showPhotoPreview(photoUrlInput.value.trim()));
+    showPhotoPreview(photoUrl);
     form.querySelector('[data-remove-agent-photo]').addEventListener('click', () => {
-      photoUrlInput.value = '';
+      photoUrl = '';
       photoUploadInput.value = '';
       showPhotoPreview('');
       photoStatus.className = 'og-mm-agent-photo-status';
@@ -666,7 +665,7 @@
     photoUploadInput.addEventListener('change', async () => {
       const file = photoUploadInput.files?.[0];
       if (!file) return;
-      const previousPhotoUrl = photoUrlInput.value;
+      const previousPhotoUrl = photoUrl;
       if (file.size > 20 * 1024 * 1024) {
         photoStatus.className = 'og-mm-agent-photo-status error';
         photoStatus.textContent = 'Choose an image no larger than 20 MiB.';
@@ -693,8 +692,8 @@
         if (typeof uploaded?.url !== 'string' || !uploaded.url.trim()) {
           throw new Error('The server did not return an uploaded photo URL.');
         }
-        photoUrlInput.value = uploaded.url.trim();
-        showPhotoPreview(photoUrlInput.value);
+        photoUrl = uploaded.url.trim();
+        showPhotoPreview(photoUrl);
         photoStatus.className = 'og-mm-agent-photo-status success';
         photoStatus.textContent = 'Photo uploaded. Save the profile to apply it.';
       } catch (error) {
@@ -726,8 +725,8 @@
         years: Number(data.years) || 0, rating: Number(data.rating) || 0,
         reviewCount: Number(data.reviewCount) || 0, listings: Number(data.listings) || 0,
         color: String(data.color || '#0b1f3a'), verified: form.elements.verified.checked,
-        photo: String(data.photo || '').trim() || null,
-        profilePhoto: String(data.photo || '').trim() || null,
+        photo: photoUrl || null,
+        profilePhoto: photoUrl || null,
         areas: String(data.areas || '').split(',').map((item) => item.trim()).filter(Boolean),
         specialties: String(data.specialties || '').split(',').map((item) => item.trim()).filter(Boolean),
         about: String(data.about || '').trim(), status: data.status,

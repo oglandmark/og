@@ -30,12 +30,36 @@
   ];
   const existingPagePaths = {
     ...Object.fromEntries(sidebarItems.map((item) => [item.label, item.path])),
+    'Dashboard Statistics': '/admin/management/reports-and-analytics-dashboard-statistics',
   };
-  const sidebarPages = sidebarItems.map((item) => ({
-    label: item.label,
-    slug: item.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
-    path: existingPagePaths[item.label],
-  }));
+  const managementPages = [
+    {
+      label: 'Dashboard Statistics',
+      group: 'Reports & Analytics',
+      slug: 'reports-and-analytics-dashboard-statistics',
+      path: existingPagePaths['Dashboard Statistics'],
+    },
+    {
+      label: 'Staff & Permissions',
+      group: 'Staff & Permissions',
+      slug: 'staff-and-permissions',
+      path: '/admin/management/staff-and-permissions',
+    },
+    {
+      label: 'System Settings',
+      group: 'System Settings',
+      slug: 'system-settings',
+      path: '/admin/management/system-settings',
+    },
+  ];
+  const sidebarPages = [
+    ...sidebarItems.map((item) => ({
+      label: item.label,
+      slug: item.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+      path: existingPagePaths[item.label],
+    })),
+    ...managementPages,
+  ];
   const sidebarPageBySlug = Object.fromEntries(sidebarPages.map((page) => [page.slug, page]));
 
   async function api(path, options = {}) {
@@ -97,6 +121,10 @@
       .og-mm-agent-list-photo{display:flex;align-items:center;justify-content:center;width:40px;height:40px;overflow:hidden;border:1px solid #e2e8f0;border-radius:50%;background:#f8fafc;color:#64748b;font-size:9px;text-align:center;line-height:1.15}
       .og-mm-agent-list-photo img{display:block;width:100%;height:100%;object-fit:cover}.og-mm-agent-list-photo-fallback{padding:3px}
       .og-mm-agent-photo-status{display:block;min-height:16px;margin-top:4px;color:#64748b;font-size:11px}.og-mm-agent-photo-status.error{color:#b91c1c}.og-mm-agent-photo-status.success{color:#166534}
+      .og-mm-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:12px 0 16px}
+      .og-mm-stat{padding:13px;border:1px solid #e2e8f0;border-radius:10px;background:#fff}.og-mm-stat span{display:block;color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}.og-mm-stat strong{display:block;margin-top:5px;font-size:21px}
+      .og-mm-toolbar{display:flex;align-items:end;flex-wrap:wrap;gap:9px;margin-bottom:12px}.og-mm-toolbar .og-mm-field{min-width:130px}.og-mm-status{padding:9px 11px;border-radius:8px;background:#f8fafc;color:#475569;font-size:12px}.og-mm-status.ok{background:#dcfce7;color:#166534}.og-mm-status.degraded{background:#fee2e2;color:#991b1b}
+      .og-mm-permissions{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:5px 12px;margin:9px 0}.og-mm-permissions label{font-size:11px;color:#475569}.og-mm-system-card{padding:14px;border:1px solid #e2e8f0;border-radius:10px;background:#fff}
       @media(max-width:700px){.og-mm-page{inset:0}.og-mm-grid{grid-template-columns:1fr 1fr}.og-mm-content{padding:14px}.og-mm-table th,.og-mm-table td{padding:8px 6px}}
     `;
     document.head.appendChild(style);
@@ -180,12 +208,23 @@
     if (tab === 'users' || tab === 'banners' || tab === 'notifications') return renderSection(tab, content);
     if (tab === 'properties') return renderProperties(content);
     const page = sidebarPageBySlug[tab];
+    if (page?.group === 'Reports & Analytics') return renderReports(content, page.label);
+    if (page?.group === 'Staff & Permissions') return renderStaff(content);
+    if (page?.group === 'System Settings') return renderSystem(content, page.label);
     const serviceAreas = page?.label === 'Cities'
       ? '<p>Service areas: Okara, Depalpur, Renala Khurd, Hujra Shah Muqeem, Basir Pur, and Haveli Lakha.</p>'
       : '';
     content.innerHTML = `<div class="og-mm-empty"><h3>${esc(page?.label || 'Page not found')}</h3><p>This navigation item does not have a connected management workflow yet.</p>${serviceAreas}</div>`;
   }
 
+  const reportColumns = {
+    properties: ['id', 'title', 'city', 'price', 'approvalStatus', 'listingStatus', 'views', 'createdAt'],
+    users: ['id', 'name', 'email', 'phone', 'role', 'status', 'city', 'joinedDate'],
+    agents: ['id', 'name', 'email', 'phone', 'status', 'city', 'joinedDate'],
+    leads: ['id', 'name', 'buyerName', 'propertyTitle', 'email', 'phone', 'status', 'city', 'createdAt'],
+    appointments: ['id', 'name', 'propertyTitle', 'city', 'status', 'date', 'createdAt'],
+    activity: ['timestamp', 'actorName', 'action', 'entity', 'details'],
+  };
   function renderAgents(content) {
     const rows = agents.map((agent) => {
       const name = agent.displayName || agent.name || 'Unnamed agent';
@@ -519,6 +558,7 @@
 
   async function handleAction(button) {
     try {
+      const id = button.dataset.id;
       if (button.dataset.action === 'add-agent') showAgentForm();
       if (button.dataset.action === 'edit-agent') {
         const agent = agents[Number(button.dataset.index)];
@@ -561,6 +601,26 @@
         await api(`/admin/announcements/${encodeURIComponent(id)}/send`, { method: 'POST' });
         await renderSection('notifications', modal.querySelector('.og-mm-content'));
       }
+      if (button.dataset.action === 'save-staff') {
+        const row = button.closest('[data-staff-row]');
+        const role = row.querySelector('[data-staff-role]').value;
+        const permissions = Array.from(row.querySelectorAll('[data-custom-permission]:checked')).map((input) => input.value);
+        button.disabled = true;
+        await api(`/admin/staff/${encodeURIComponent(id)}/permissions`, {
+          method: 'PATCH',
+          body: JSON.stringify({ role, permissions }),
+        });
+        await renderStaff(modal.querySelector('.og-mm-content'));
+      }
+      if (button.dataset.action === 'report-page' && lastReport) {
+        await loadReport(
+          modal.querySelector('.og-mm-content'),
+          lastReport.type,
+          lastReport.filters || {},
+          Number(button.dataset.offset || 0),
+        );
+      }
+      if (button.dataset.action === 'export-report') await exportReport();
     } catch (error) {
       window.alert(error.message || 'Could not update mobile app data.');
     }
@@ -666,6 +726,225 @@
     const link = event.target.closest('a');
     if (link && !link.hasAttribute('data-mobile-section')) setTimeout(syncPage, 0);
   });
+
+  async function renderReports(content, label) {
+    const type = reportTypeForLabel(label);
+    content.innerHTML = '<div class="og-mm-empty">Loading live report data…</div>';
+    try {
+      await loadReport(content, type);
+    } catch (error) {
+      content.innerHTML = `<div class="og-mm-error">Could not load report: ${esc(error.message)}</div>`;
+    }
+  }
+
+  async function exportReport() {
+    if (!lastReport || !Array.isArray(lastReport.records)) {
+      window.alert('Load a report before exporting it.');
+      return;
+    }
+    const columns = reportColumns[lastReport.type] || Object.keys(lastReport.records[0] || {});
+    const csvValue = (value) => {
+      let text = value && typeof value === 'object' ? JSON.stringify(value) : String(value ?? '');
+      if (/^[\s]*[=+\-@]/.test(text)) text = `'${text}`;
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+    const records = [];
+    const filters = lastReport.filters || {};
+    const total = Number(lastReport.summary?.total || 0);
+    for (let offset = 0; offset < total; offset += 5000) {
+      const query = new URLSearchParams({
+        type: lastReport.type,
+        offset: String(offset),
+        limit: '5000',
+        ...Object.fromEntries(Object.entries(filters).filter(([, value]) => Boolean(value))),
+      });
+      const page = await api(`/admin/analytics?${query}`);
+      records.push(...(Array.isArray(page.records) ? page.records : []));
+      if (!page.records?.length) break;
+    }
+    if (records.length !== total) throw new Error(`Export stopped after ${records.length} of ${total} records. Retry the export.`);
+    const csv = [columns, ...records.map((record) => columns.map((key) => record[key]))]
+      .map((row) => row.map(csvValue).join(',')).join('\r\n');
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `og-landmark-${lastReport.type}-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  async function renderStaff(content) {
+    content.innerHTML = '<div class="og-mm-empty">Loading staff accounts and permissions…</div>';
+    try {
+      const payload = await api('/admin/staff');
+      const staff = Array.isArray(payload.staff) ? payload.staff : [];
+      const roles = payload.roles || {};
+      const permissionLabels = Object.fromEntries(Object.keys(roles).flatMap((role) =>
+        (roles[role].permissions || []).map((permission) => [permission, permission.replaceAll('.', ' · ')])
+      ));
+      const roleOptions = Object.entries(roles).map(([key, role]) => `<option value="${esc(key)}">${esc(role.label)}</option>`).join('');
+      const permissionOptions = Object.entries(permissionLabels).map(([key, label]) => `<label><input type="checkbox" data-custom-permission value="${esc(key)}"> ${esc(label)}</label>`).join('');
+      const rows = staff.map((member) => `<tr data-staff-row="${esc(member.id)}">
+        <td><strong>${esc(member.name)}</strong><div>${esc(member.email)}</div></td>
+        <td>${esc(member.status || 'Active')}</td>
+        <td><select data-staff-role>${roleOptions}</select><div class="og-mm-permissions" data-custom-permissions hidden>${permissionOptions}</div></td>
+        <td><div class="og-mm-row-actions"><button class="og-mm-action primary" data-action="save-staff" data-id="${esc(member.id)}">Save access</button></div></td>
+      </tr>`).join('');
+      content.innerHTML = `<div class="og-mm-note">Permissions are checked by the API on every protected request. Older admin accounts keep Owner access until you assign a role. Keep at least one staff account with staff-management access.</div>
+        <div style="overflow:auto"><table class="og-mm-table"><thead><tr><th>Admin account</th><th>Status</th><th>Staff role and permissions</th><th>Action</th></tr></thead><tbody>${rows || '<tr><td colspan="4" class="og-mm-empty">No admin staff accounts were returned.</td></tr>'}</tbody></table></div>`;
+      for (const row of content.querySelectorAll('[data-staff-row]')) {
+        const member = staff.find((item) => String(item.id) === row.dataset.staffRow);
+        const selector = row.querySelector('[data-staff-role]');
+        const custom = row.querySelector('[data-custom-permissions]');
+        selector.value = member.staffRole || 'owner';
+        custom.hidden = selector.value !== 'custom';
+        row.querySelectorAll('[data-custom-permission]').forEach((checkbox) => {
+          checkbox.checked = (member.permissions || []).includes(checkbox.value);
+        });
+        selector.addEventListener('change', () => { custom.hidden = selector.value !== 'custom'; });
+      }
+    } catch (error) {
+      content.innerHTML = `<div class="og-mm-error">Could not load staff access: ${esc(error.message)}</div>`;
+    }
+  }
+
+  const reportTypeForLabel = (label) => ({
+    'User Reports': 'users',
+    'Agent Reports': 'agents',
+    'Lead Reports': 'leads',
+    'City-wise Reports': 'properties',
+    'Activity Reports': 'activity',
+  })[label] || 'properties';
+
+  async function renderSystem(content, label) {
+    content.innerHTML = '<div class="og-mm-empty">Checking live service status and operational records…</div>';
+    try {
+      const [settings, status, logs] = await Promise.all([
+        api('/admin/system/settings'),
+        api('/admin/system/status'),
+        api('/admin/system/logs?limit=100'),
+      ]);
+      const focus = ({
+        'Application Logs': 'applicationLogs',
+        'Activity Logs': 'activityLogs',
+        'Failed Jobs': 'failedJobs',
+      })[label] || 'applicationLogs';
+      const values = Object.entries(status).filter(([key]) => key !== 'mediaStorage')
+        .map(([key, value]) => `<div class="og-mm-system-card"><strong>${esc(key.replaceAll(/([A-Z])/g, ' $1'))}</strong><div>${esc(value)}</div></div>`).join('');
+      const settingFields = [
+        ['maintenanceMode', 'Maintenance mode', 'checkbox'],
+        ['pushNotificationsEnabled', 'Push notifications enabled', 'checkbox'],
+        ['verificationBadgeEnabled', 'Verification badges enabled', 'checkbox'],
+        ['darkModeEnabled', 'Dark mode enabled', 'checkbox'],
+        ['appVersion', 'Current app version', 'text'],
+        ['minAppVersion', 'Minimum app version', 'text'],
+        ['maintenanceMessage', 'Maintenance message', 'textarea'],
+      ];
+      const settingsForm = settingFields.map(([key, title, type]) => {
+        if (type === 'checkbox') return `<div class="og-mm-field"><label><input type="checkbox" name="${key}" ${settings[key] ? 'checked' : ''}> ${title}</label></div>`;
+        if (type === 'textarea') return `<div class="og-mm-field full"><label>${title}</label><textarea name="${key}" maxlength="500">${esc(settings[key] || '')}</textarea></div>`;
+        return `<div class="og-mm-field"><label>${title}</label><input name="${key}" value="${esc(settings[key] || '')}" maxlength="40"></div>`;
+      }).join('');
+      const entries = Array.isArray(logs[focus]) ? logs[focus] : [];
+      const columns = focus === 'applicationLogs' ? ['timestamp', 'level', 'message']
+        : focus === 'activityLogs' ? ['timestamp', 'actorName', 'action', 'entity', 'details']
+          : ['id', 'connection', 'queue', 'failedAt'];
+      const logRows = entries.map((entry) => `<tr>${columns.map((key) => {
+        const value = entry[key];
+        return `<td>${esc(value && typeof value === 'object' ? JSON.stringify(value) : value ?? '—')}</td>`;
+      }).join('')}</tr>`).join('');
+      const failedNote = focus === 'failedJobs' && entries.length === 0
+        ? '<p class="og-mm-note">No failed jobs are currently recorded. This list is backed by Laravel’s failed_jobs table when queue failure tracking is configured.</p>'
+        : '';
+      content.innerHTML = `<div class="og-mm-note">System health and logs are read from the running Laravel service. Secret values and full stack traces are not shown.</div>
+        <h3>Live service health</h3><div class="og-mm-status ${status.status === 'ok' ? 'ok' : 'degraded'}">${esc(status.status || 'unknown')} · checked ${esc(status.checkedAt || 'just now')}</div>
+        <div class="og-mm-cards">${values}<div class="og-mm-system-card"><strong>Media storage</strong><div>${esc(status.mediaStorage?.status || 'unknown')} · ${esc(status.mediaStorage?.provider || 'provider not reported')}</div></div></div>
+        <form class="og-mm-form" id="og-mm-system-settings"><h3 style="margin:0 0 12px">Mobile app settings</h3><div class="og-mm-grid">${settingsForm}</div><div class="og-mm-form-actions"><button class="og-mm-action primary" type="submit">Save settings</button></div></form>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h3>Operational logs</h3><select id="og-mm-log-source"><option value="applicationLogs">Application logs (${(logs.applicationLogs || []).length})</option><option value="activityLogs">Admin activity (${(logs.activityLogs || []).length})</option><option value="failedJobs">Failed jobs (${logs.failedJobs === null ? 'not configured' : (logs.failedJobs || []).length})</option></select></div>
+        ${failedNote}<div style="overflow:auto"><table class="og-mm-table"><thead><tr>${columns.map((column) => `<th>${esc(column)}</th>`).join('')}</tr></thead><tbody>${logRows || `<tr><td colspan="${columns.length}" class="og-mm-empty">No records are available for this log source.</td></tr>`}</tbody></table></div>`;
+      const sourceSelector = content.querySelector('#og-mm-log-source');
+      sourceSelector.value = focus;
+      sourceSelector.addEventListener('change', () => renderSystem(content, ({
+        applicationLogs: 'API Status',
+        activityLogs: 'Activity Logs',
+        failedJobs: 'Failed Jobs',
+      })[sourceSelector.value]));
+      content.querySelector('#og-mm-system-settings').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const submit = form.querySelector('[type="submit"]');
+        const payload = Object.fromEntries(new FormData(form));
+        for (const field of ['maintenanceMode', 'pushNotificationsEnabled', 'verificationBadgeEnabled', 'darkModeEnabled']) {
+          payload[field] = form.elements[field].checked;
+        }
+        submit.disabled = true;
+        try {
+          await api('/admin/system/settings', { method: 'PUT', body: JSON.stringify(payload) });
+          await renderSystem(content, label);
+        } catch (error) {
+          const message = document.createElement('div');
+          message.className = 'og-mm-error';
+          message.textContent = error.message;
+          form.prepend(message);
+          submit.disabled = false;
+        }
+      });
+    } catch (error) {
+      content.innerHTML = `<div class="og-mm-error">Could not load system status or settings: ${esc(error.message)}</div>`;
+    }
+  }
+
+  let lastReport = null;
+
+  async function loadReport(content, type, filters = {}, offset = 0) {
+    const query = new URLSearchParams({ type, ...filters, offset: String(offset), limit: '100' });
+    const payload = await api(`/admin/analytics?${query}`);
+    lastReport = payload;
+    const summary = payload.summary || {};
+    const records = Array.isArray(payload.records) ? payload.records : [];
+    const columns = reportColumns[type] || Object.keys(records[0] || {});
+    const rows = records.map((record) => `<tr>${columns.map((key) => {
+      const value = record[key];
+      return `<td>${esc(value && typeof value === 'object' ? JSON.stringify(value) : value ?? '—')}</td>`;
+    }).join('')}</tr>`).join('');
+    const startRecord = records.length ? Number(payload.offset || 0) + 1 : 0;
+    const endRecord = Number(payload.offset || 0) + records.length;
+    content.innerHTML = `<div class="og-mm-note">This report is generated from current API records at ${esc(payload.generatedAt || 'now')} and includes all matching records across pages.</div>
+      <form class="og-mm-toolbar" id="og-mm-report-filter">
+        <div class="og-mm-field"><label>Report</label><select name="type">
+          ${Object.entries({ properties: 'Properties', users: 'Users', agents: 'Agents', leads: 'Leads', appointments: 'Appointments', activity: 'Admin activity' }).map(([value, label]) => `<option value="${value}" ${type === value ? 'selected' : ''}>${label}</option>`).join('')}
+        </select></div>
+        <div class="og-mm-field"><label>From</label><input type="date" name="dateFrom" value="${esc(filters.dateFrom || '')}"></div>
+        <div class="og-mm-field"><label>To</label><input type="date" name="dateTo" value="${esc(filters.dateTo || '')}"></div>
+        <div class="og-mm-field"><label>City</label><input name="city" placeholder="Any city" value="${esc(filters.city || '')}"></div>
+        <div class="og-mm-field"><label>Status</label><input name="status" placeholder="Any status" value="${esc(filters.status || '')}"></div>
+        <button class="og-mm-action primary" type="submit">Apply filters</button>
+        <button class="og-mm-action" type="button" data-action="export-report">Export CSV</button>
+      </form>
+      <div class="og-mm-cards">
+        <div class="og-mm-stat"><span>Matching records</span><strong>${Number(summary.total || 0).toLocaleString()}</strong></div>
+        <div class="og-mm-stat"><span>Active</span><strong>${Number(summary.active || 0).toLocaleString()}</strong></div>
+        <div class="og-mm-stat"><span>Pending</span><strong>${Number(summary.pending || 0).toLocaleString()}</strong></div>
+        <div class="og-mm-stat"><span>Cities represented</span><strong>${Number(summary.cities || 0).toLocaleString()}</strong></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px;color:#64748b;font-size:11px"><span>Showing ${startRecord.toLocaleString()}–${endRecord.toLocaleString()} of ${Number(summary.total || 0).toLocaleString()}</span><div class="og-mm-row-actions"><button class="og-mm-action" data-action="report-page" data-offset="${Math.max(0, Number(payload.offset || 0) - 100)}" ${Number(payload.offset || 0) <= 0 ? 'disabled' : ''}>Previous</button><button class="og-mm-action" data-action="report-page" data-offset="${Number(payload.offset || 0) + 100}" ${!payload.hasMore ? 'disabled' : ''}>Next</button></div></div>
+      <div style="overflow:auto"><table class="og-mm-table"><thead><tr>${columns.map((column) => `<th>${esc(column)}</th>`).join('')}</tr></thead><tbody>${rows || `<tr><td colspan="${Math.max(columns.length, 1)}" class="og-mm-empty">No live records match these filters.</td></tr>`}</tbody></table></div>`;
+    content.querySelector('#og-mm-report-filter').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const values = Object.fromEntries(new FormData(event.currentTarget));
+      const nextType = values.type;
+      delete values.type;
+      Object.keys(values).forEach((key) => { if (!values[key]) delete values[key]; });
+      content.innerHTML = '<div class="og-mm-empty">Refreshing report from live records…</div>';
+      try {
+        await loadReport(content, nextType, values, 0);
+      } catch (error) {
+        content.innerHTML = `<div class="og-mm-error">Could not load report: ${esc(error.message)}</div>`;
+      }
+    });
+  }
+
   attachNavigation();
   syncPage();
 })();

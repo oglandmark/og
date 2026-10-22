@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -52,6 +53,14 @@ class ApiController extends Controller
 
         if (($segments[0] ?? '') === 'developer') {
             $user = $this->currentUser($request, true);
+            if ($this->isAdmin($user)) {
+                $permission = ($segments[1] ?? '') === 'analytics' && $method === 'GET'
+                    ? 'reports.view'
+                    : 'content.manage';
+                if (!$this->adminHasPermission($user, $permission, JsonStore::read())) {
+                    return $this->json(['error' => 'Your staff role does not allow this action.', 'permission' => $permission], 403);
+                }
+            }
             return app(DeveloperApiService::class)->handle($request, array_slice($segments, 1), $method, $user);
         }
 
@@ -184,7 +193,9 @@ class ApiController extends Controller
         if ($method !== 'POST') return $this->json(['error' => 'Method not allowed'], 405);
 
         $user = $this->currentUser($request, true);
-        if (!$this->isAdmin($user)) return $this->json(['error' => 'Admin access required.'], 403);
+        if (!$this->isAdmin($user) || !$this->adminHasPermission($user, 'settings.manage', $data)) {
+            return $this->json(['error' => 'Admin settings access required.'], 403);
+        }
 
         $name = trim((string) $request->input('name', ''));
         if ($name === '') return $this->json(['error' => 'name required'], 400);
@@ -535,6 +546,12 @@ class ApiController extends Controller
         $action = $parts[1] ?? null;
         $user = $this->currentUser($request);
         $data = JsonStore::read();
+        if ($this->isAdmin($user)) {
+            $permission = $method === 'GET' ? 'property.view' : ($action === 'views' ? null : 'property.manage');
+            if ($permission !== null && !$this->adminHasPermission($user, $permission, $data)) {
+                return $this->json(['error' => 'Your staff role does not allow this action.', 'permission' => $permission], 403);
+            }
+        }
 
         if ($method === 'GET' && $id === null) {
             $items = collect($data['properties'] ?? [])
@@ -704,9 +721,53 @@ class ApiController extends Controller
     {
         $admin = $this->currentUser($request, true);
         if (!$this->isAdmin($admin)) return $this->json(['error' => 'Forbidden'], 403);
+        $response = $this->adminRequest($request, $parts, $method, $admin);
+        if (!in_array($method, ['GET', 'HEAD'], true) && $response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
+            $data = JsonStore::read();
+            $resource = $parts[0] ?? 'data';
+            $action = match ($resource) {
+                'system' => 'system.settings.updated',
+                'staff' => 'staff.permissions.updated',
+                default => 'admin.' . strtolower($method) . '.' . $resource,
+            };
+            $this->recordAdminActivity($data, $admin, $action, $resource, [
+                'resourceId' => $parts[1] ?? null,
+            ]);
+            JsonStore::write($data);
+        }
+        return $response;
+    }
+
+    private function adminRequest(Request $request, array $parts, string $method, array $admin)
+    {
         $data = JsonStore::read();
         $resource = $parts[0] ?? '';
         $id = $parts[1] ?? null;
+        if ($resource === 'users' && ($parts[2] ?? '') === 'role' && $method === 'PATCH') {
+            $target = $this->findById($data['users'] ?? [], $id);
+            if (strtolower((string) ($target['role'] ?? '')) === 'admin'
+                || strtolower((string) $request->input('role', '')) === 'admin') {
+                if (!$this->adminHasPermission($admin, 'staff.manage', $data)) {
+                    return $this->json(['error' => 'Only staff managers can grant or remove admin access.'], 403);
+                }
+            }
+        }
+        $requiredPermission = $this->adminPermissionForRequest($resource, $parts, $method);
+        if ($requiredPermission !== null && !$this->adminHasPermission($admin, $requiredPermission, $data)) {
+            return $this->json(['error' => 'Your staff role does not allow this action.', 'permission' => $requiredPermission], 403);
+        }
+        if ($resource === 'analytics' && $method === 'GET') {
+            return $this->adminAnalytics($request, $data);
+        }
+        if ($resource === 'staff') {
+            return $this->adminStaff($request, $data, $parts, $method, $admin);
+        }
+        if ($resource === 'permissions' && $method === 'GET') {
+            return $this->json($this->staffRoleCatalog());
+        }
+        if ($resource === 'system') {
+            return $this->adminSystem($request, $data, $parts, $method, $admin);
+        }
         if ($resource === 'stats' && $method === 'GET') {
             $properties = $data['properties'] ?? [];
             return $this->json([
@@ -969,6 +1030,12 @@ class ApiController extends Controller
             $data['users'][$index]['permissions'] = in_array($requestedRole, ['agent', 'developer', 'admin'], true)
                 ? [$requestedRole]
                 : [];
+            if ($requestedRole === 'admin' && $previousRole !== 'admin') {
+                $data['users'][$index]['staffRole'] = 'custom';
+                $data['users'][$index]['staffPermissions'] = [];
+            } elseif ($previousRole === 'admin' && $requestedRole !== 'admin') {
+                unset($data['users'][$index]['staffRole'], $data['users'][$index]['staffPermissions']);
+            }
             if ($requestedRole !== 'agent' || $previousRole !== 'agent') {
                 $data['users'][$index]['agentCoverUploadEnabled'] = false;
             }
@@ -1040,6 +1107,306 @@ class ApiController extends Controller
             return $this->crudNamed($request, $data, $adminCollections[$resource], $id, $method, $admin);
         }
         return $this->json(['error' => 'Not found'], 404);
+    }
+
+    private function staffRoleCatalog(): array
+    {
+        return [
+            'owner' => [
+                'label' => 'Owner',
+                'permissions' => ['reports.view', 'property.view', 'property.manage', 'users.view', 'users.manage', 'content.manage', 'notifications.manage', 'support.manage', 'settings.view', 'settings.manage', 'system.view', 'staff.manage', 'operations.manage'],
+            ],
+            'analyst' => [
+                'label' => 'Reports analyst',
+                'permissions' => ['reports.view', 'property.view', 'users.view', 'system.view'],
+            ],
+            'content_manager' => [
+                'label' => 'Content manager',
+                'permissions' => ['content.manage', 'notifications.manage', 'settings.view'],
+            ],
+            'operations' => [
+                'label' => 'Operations',
+                'permissions' => ['property.view', 'property.manage', 'users.view', 'users.manage', 'content.manage', 'notifications.manage', 'support.manage', 'settings.view', 'system.view'],
+            ],
+            'support' => [
+                'label' => 'Support',
+                'permissions' => ['users.view', 'support.manage', 'system.view'],
+            ],
+            'custom' => [
+                'label' => 'Custom',
+                'permissions' => [],
+            ],
+        ];
+    }
+
+    private function adminPermissionForRequest(string $resource, array $parts, string $method): ?string
+    {
+        if ($resource === 'analytics' || $resource === 'stats') return 'reports.view';
+        if (in_array($resource, ['staff', 'permissions'], true)) return 'staff.manage';
+        if ($resource === 'system') {
+            return in_array($method, ['PUT', 'PATCH', 'POST', 'DELETE'], true) ? 'settings.manage' : 'system.view';
+        }
+        if ($resource === 'properties') return in_array($method, ['GET', 'HEAD'], true) ? 'property.view' : 'property.manage';
+        if ($resource === 'users') return in_array($method, ['GET', 'HEAD'], true) ? 'users.view' : 'users.manage';
+        if ($resource === 'reports') return 'support.manage';
+        if (in_array($resource, ['announcements', 'notifications'], true)) return 'notifications.manage';
+        if (in_array($resource, ['mobile-agents', 'city-agents', 'developer-projects', 'developer-blocks', 'developer-units', 'developer-payment-plans'], true)) return 'content.manage';
+        if (in_array($resource, ['conversations', 'agent-leads', 'agent-visits', 'verification-requests', 'buyer-requests'], true)) return 'support.manage';
+        return 'operations.manage';
+    }
+
+    private function adminHasPermission(array $admin, string $permission, array $data): bool
+    {
+        $user = $this->findById($data['users'] ?? [], $admin['id'] ?? null) ?? $admin;
+        if (!array_key_exists('staffRole', $user) && !array_key_exists('staffPermissions', $user)) {
+            // Existing admin accounts retain their full access until an owner assigns a staff role.
+            return true;
+        }
+        $role = strtolower((string) ($user['staffRole'] ?? 'custom'));
+        $catalog = $this->staffRoleCatalog();
+        $permissions = $role === 'custom'
+            ? (array) ($user['staffPermissions'] ?? [])
+            : (array) ($catalog[$role]['permissions'] ?? []);
+        return in_array($permission, $permissions, true);
+    }
+
+    private function adminStaff(Request $request, array &$data, array $parts, string $method, array $admin)
+    {
+        $data['users'] = is_array($data['users'] ?? null) ? $data['users'] : [];
+        $id = $parts[1] ?? null;
+        if ($method === 'GET' && $id === null) {
+            $catalog = $this->staffRoleCatalog();
+            $staff = collect($data['users'])
+                ->filter(fn ($user) => is_array($user) && strtolower((string) ($user['role'] ?? '')) === 'admin')
+                ->map(function ($user) use ($catalog) {
+                    $role = strtolower((string) ($user['staffRole'] ?? 'owner'));
+                    return [
+                        'id' => $user['id'] ?? null,
+                        'name' => $user['name'] ?? 'Admin',
+                        'email' => $user['email'] ?? '',
+                        'status' => $user['status'] ?? 'Active',
+                        'staffRole' => isset($catalog[$role]) ? $role : 'custom',
+                        'permissions' => $role === 'custom'
+                            ? array_values((array) ($user['staffPermissions'] ?? []))
+                            : (array) ($catalog[$role]['permissions'] ?? []),
+                    ];
+                })->values();
+            return $this->json(['staff' => $staff, 'roles' => $catalog]);
+        }
+
+        if ($method !== 'PATCH' || $id === null || ($parts[2] ?? '') !== 'permissions') {
+            return $this->json(['error' => 'Method not allowed'], 405);
+        }
+        $index = $this->indexById($data['users'], $id);
+        if ($index === null || strtolower((string) ($data['users'][$index]['role'] ?? '')) !== 'admin') {
+            return $this->json(['error' => 'Admin staff account not found.'], 404);
+        }
+        $role = strtolower(trim((string) $request->input('role', '')));
+        $catalog = $this->staffRoleCatalog();
+        if (!isset($catalog[$role])) return $this->json(['error' => 'Choose a supported staff role.'], 422);
+        $permissions = $role === 'custom' ? $request->input('permissions', []) : $catalog[$role]['permissions'];
+        $allowed = collect($catalog)->flatMap(fn ($item) => $item['permissions'])->unique()->values()->all();
+        if (!is_array($permissions) || count($permissions) > count($allowed)
+            || collect($permissions)->contains(fn ($permission) => !is_string($permission) || !in_array($permission, $allowed, true))) {
+            return $this->json(['error' => 'The permission list contains unsupported values.'], 422);
+        }
+        $permissions = array_values(array_unique($permissions));
+        $target = &$data['users'][$index];
+        $target['staffRole'] = $role;
+        $target['staffPermissions'] = $permissions;
+
+        $remainingManagers = collect($data['users'])
+            ->filter(function ($user) use ($catalog) {
+                if (strtolower((string) ($user['role'] ?? '')) !== 'admin') return false;
+                if (!array_key_exists('staffRole', $user) && !array_key_exists('staffPermissions', $user)) return true;
+                $currentRole = strtolower((string) ($user['staffRole'] ?? 'custom'));
+                $currentPermissions = $currentRole === 'custom'
+                    ? (array) ($user['staffPermissions'] ?? [])
+                    : (array) ($catalog[$currentRole]['permissions'] ?? []);
+                return in_array('staff.manage', $currentPermissions, true);
+            })->count();
+        if ($remainingManagers < 1) {
+            return $this->json(['error' => 'At least one admin must retain staff-management access.'], 409);
+        }
+        unset($target);
+        JsonStore::write($data);
+        return $this->json([
+            'id' => $data['users'][$index]['id'],
+            'staffRole' => $role,
+            'permissions' => $permissions,
+        ]);
+    }
+
+    private function adminAnalytics(Request $request, array $data)
+    {
+        $type = strtolower((string) $request->query('type', 'properties'));
+        $sources = [
+            'properties' => $data['properties'] ?? [],
+            'users' => collect($data['users'] ?? [])->map(fn ($user) => $this->safeUser((array) $user))->all(),
+            'agents' => collect($data['users'] ?? [])
+                ->filter(fn ($user) => strtolower((string) ($user['role'] ?? '')) === 'agent')
+                ->map(fn ($user) => $this->safeUser((array) $user))->values()->all(),
+            'leads' => $data['inquiries'] ?? [],
+            'appointments' => $data['appointments'] ?? [],
+            'activity' => $data['adminActivity'] ?? [],
+        ];
+        if (!isset($sources[$type])) return $this->json(['error' => 'Choose a supported report type.'], 422);
+        $dateFrom = trim((string) $request->query('dateFrom', ''));
+        $dateTo = trim((string) $request->query('dateTo', ''));
+        $city = strtolower(trim((string) $request->query('city', '')));
+        $status = strtolower(trim((string) $request->query('status', '')));
+        $allRecords = collect($sources[$type])->filter(function ($record) use ($dateFrom, $dateTo, $city, $status, $type) {
+            if (!is_array($record)) return false;
+            $recordDate = (string) ($record['createdAt'] ?? $record['createdDate'] ?? $record['joinedDate'] ?? $record['timestamp'] ?? $record['date'] ?? $record['submittedAt'] ?? '');
+            if ($dateFrom !== '' && ($recordDate === '' || substr($recordDate, 0, 10) < $dateFrom)) return false;
+            if ($dateTo !== '' && ($recordDate === '' || substr($recordDate, 0, 10) > $dateTo)) return false;
+            if ($city !== '' && !str_contains(strtolower((string) ($record['city'] ?? $record['location'] ?? '')), $city)) return false;
+            if ($status !== '') {
+                $recordStatus = strtolower((string) ($record['status'] ?? $record['approvalStatus'] ?? $record['listingStatus'] ?? ''));
+                if ($recordStatus !== $status) return false;
+            }
+            return true;
+        })->values();
+        $total = $allRecords->count();
+        $limit = max(1, min(5000, (int) $request->query('limit', 100)));
+        $offset = max(0, min($total, (int) $request->query('offset', 0)));
+        $records = $allRecords->slice($offset, $limit)->values();
+        $summary = [
+            'total' => $total,
+            'active' => $allRecords->filter(fn ($record) => strtolower((string) ($record['status'] ?? $record['approvalStatus'] ?? $record['listingStatus'] ?? '')) === 'active')->count(),
+            'pending' => $allRecords->filter(fn ($record) => str_contains(strtolower((string) ($record['status'] ?? $record['approvalStatus'] ?? '')), 'pending'))->count(),
+            'cities' => $allRecords->pluck('city')->filter()->unique()->count(),
+        ];
+        return $this->json([
+            'type' => $type,
+            'generatedAt' => now()->toISOString(),
+            'filters' => ['dateFrom' => $dateFrom, 'dateTo' => $dateTo, 'city' => $city, 'status' => $status],
+            'summary' => $summary,
+            'offset' => $offset,
+            'limit' => $limit,
+            'hasMore' => $offset + $records->count() < $total,
+            'records' => $records,
+        ]);
+    }
+
+    private function adminSystem(Request $request, array &$data, array $parts, string $method, array $admin)
+    {
+        $view = $parts[1] ?? 'status';
+        if ($view === 'status' && $method === 'GET') {
+            $databaseReady = $this->databaseReady();
+            $media = app(MediaStorage::class)->health();
+            $normalized = $this->normalizedCoreStorageStatus();
+            $health = [
+                'status' => $databaseReady && $media['status'] === 'ready' && $normalized === 'ready' ? 'ok' : 'degraded',
+                'checkedAt' => now()->toISOString(),
+                'database' => $databaseReady ? 'connected' : 'not_connected',
+                'databaseProvider' => config('database.default'),
+                'framework' => 'laravel',
+                'normalizedCoreStorage' => $normalized,
+                'smtp' => config('mail.mailers.smtp.username') && config('mail.mailers.smtp.password') ? 'configured' : 'not_configured',
+                'mediaStorage' => $media,
+                'environment' => app()->environment(),
+                'phpVersion' => PHP_VERSION,
+                'laravelVersion' => app()->version(),
+            ];
+            return $this->json($health);
+        }
+        if ($view === 'settings') {
+            $defaults = [
+                'verificationBadgeEnabled' => true,
+                'pushNotificationsEnabled' => true,
+                'darkModeEnabled' => true,
+                'maintenanceMode' => false,
+                'maintenanceMessage' => '',
+                'appVersion' => '1.0.0',
+                'minAppVersion' => '1.0.0',
+                'content' => [],
+                'hiddenDemoPropertyIds' => [],
+            ];
+            $settings = array_merge($defaults, is_array($data['mobileSettings'] ?? null) ? $data['mobileSettings'] : []);
+            if ($method === 'GET') return $this->json($settings);
+            if (!in_array($method, ['PUT', 'PATCH'], true)) return $this->json(['error' => 'Method not allowed'], 405);
+            $allowed = array_intersect_key($request->all(), $defaults);
+            $validator = Validator::make($allowed, [
+                'verificationBadgeEnabled' => ['sometimes', 'boolean'],
+                'pushNotificationsEnabled' => ['sometimes', 'boolean'],
+                'darkModeEnabled' => ['sometimes', 'boolean'],
+                'maintenanceMode' => ['sometimes', 'boolean'],
+                'maintenanceMessage' => ['sometimes', 'nullable', 'string', 'max:500'],
+                'appVersion' => ['sometimes', 'string', 'max:40'],
+                'minAppVersion' => ['sometimes', 'string', 'max:40'],
+                'content' => ['sometimes', 'array'],
+            ]);
+            if ($validator->fails()) return $this->json(['error' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
+            $settings = array_merge($settings, $validator->validated());
+            $data['mobileSettings'] = $settings;
+            JsonStore::write($data);
+            return $this->json(['success' => true, 'settings' => $settings]);
+        }
+        if ($view === 'logs' && $method === 'GET') {
+            $limit = max(1, min(200, (int) $request->query('limit', 100)));
+            return $this->json([
+                'applicationLogs' => $this->recentApplicationLogs($limit),
+                'activityLogs' => collect($data['adminActivity'] ?? [])->reverse()->take($limit)->values(),
+                'failedJobs' => $this->recentFailedJobs($limit),
+                'checkedAt' => now()->toISOString(),
+            ]);
+        }
+        return $this->json(['error' => 'Not found'], 404);
+    }
+
+    private function recentApplicationLogs(int $limit): array
+    {
+        $path = config('logging.channels.single.path', storage_path('logs/laravel.log'));
+        if (!is_string($path) || !is_file($path) || !is_readable($path)) return [];
+        $lines = @file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($lines === false) return [];
+        $entries = [];
+        foreach (array_reverse($lines) as $line) {
+            if (preg_match('/^\[(.*?)\]\s+\w+\.(EMERGENCY|ALERT|CRITICAL|ERROR|WARNING|NOTICE|INFO|DEBUG):\s*(.*)$/', $line, $matches)) {
+                $message = preg_replace('/(password|token|secret|authorization|cookie|api[_-]?key)\s*["\']?\s*[:=]\s*["\']?[^"\s,;}]+/i', '$1=[redacted]', $matches[3]);
+                $entries[] = [
+                    'timestamp' => $matches[1],
+                    'level' => strtolower($matches[2]),
+                    'message' => mb_substr((string) $message, 0, 500),
+                ];
+                if (count($entries) >= $limit) break;
+            }
+        }
+        return $entries;
+    }
+
+    private function recentFailedJobs(int $limit): ?array
+    {
+        try {
+            if (!Schema::hasTable('failed_jobs')) return null;
+            return DB::table('failed_jobs')->orderByDesc('failed_at')->limit($limit)
+                ->get(['uuid', 'connection', 'queue', 'failed_at'])
+                ->map(fn ($job) => [
+                    'id' => $job->uuid,
+                    'connection' => $job->connection,
+                    'queue' => $job->queue,
+                    'failedAt' => $job->failed_at,
+                ])->all();
+        } catch (\Throwable $exception) {
+            Log::warning('Failed job status could not be read.', ['error' => $exception->getMessage()]);
+            return null;
+        }
+    }
+
+    private function recordAdminActivity(array &$data, array $admin, string $action, string $entity, array $details = []): void
+    {
+        $records = is_array($data['adminActivity'] ?? null) ? $data['adminActivity'] : [];
+        $records[] = [
+            'id' => (string) Str::uuid(),
+            'timestamp' => now()->toISOString(),
+            'actorId' => $admin['id'] ?? null,
+            'actorName' => $admin['name'] ?? $admin['email'] ?? 'Admin',
+            'action' => $action,
+            'entity' => $entity,
+            'details' => $details,
+        ];
+        $data['adminActivity'] = array_slice($records, -500);
     }
 
     private function adminAnnouncements(Request $request, array $data, array $parts, string $method, array $admin)
@@ -1165,10 +1532,27 @@ class ApiController extends Controller
     {
         $user = $this->currentUser($request, true);
         $id = $parts[0] ?? null;
+        $data = JsonStore::read();
+        if ($this->isAdmin($user)) {
+            $permission = $method === 'GET' ? 'users.view' : 'users.manage';
+            if ($id !== null && (string) $id === (string) $user['id'] && $method === 'PUT') {
+                $permission = null;
+            }
+            if ($permission !== null && !$this->adminHasPermission($user, $permission, $data)) {
+                return $this->json(['error' => 'Your staff role does not allow this action.', 'permission' => $permission], 403);
+            }
+            if ($id !== null && (string) $id !== (string) $user['id']) {
+                $target = $this->findById($data['users'] ?? [], $id);
+                if (strtolower((string) ($target['role'] ?? '')) === 'admin'
+                    && !$this->adminHasPermission($user, 'staff.manage', $data)) {
+                    return $this->json(['error' => 'Only staff managers can change another admin account.'], 403);
+                }
+            }
+        }
         if ($id === null && $method === 'GET') {
             if (!$this->isAdmin($user)) return $this->json(['error' => 'Forbidden'], 403);
             $limit = max(1, min(500, (int) $request->input('limit', 500)));
-            return $this->json(collect(JsonStore::read()['users'] ?? [])
+            return $this->json(collect($data['users'] ?? [])
                 ->take($limit)
                 ->map(fn ($account) => $this->safeUser($account))
                 ->values());
@@ -1186,7 +1570,9 @@ class ApiController extends Controller
             if ($validator->fails()) {
                 return $this->json(['error' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
             }
-            $data = JsonStore::read();
+            if ($request->input('role') === 'Admin' && !$this->adminHasPermission($user, 'staff.manage', $data)) {
+                return $this->json(['error' => 'Only staff managers can create admin accounts.'], 403);
+            }
             $email = strtolower(trim((string) $request->input('email')));
             if (collect($data['users'] ?? [])->contains(fn ($account) => strtolower((string) ($account['email'] ?? '')) === $email)) {
                 return $this->json(['error' => 'An account with this email already exists.'], 409);
@@ -1209,6 +1595,10 @@ class ApiController extends Controller
                 'joinedDate' => now()->toISOString(),
                 'createdByAdmin' => true,
             ];
+            if ($role === 'Admin') {
+                $newUser['staffRole'] = 'custom';
+                $newUser['staffPermissions'] = [];
+            }
             $data['users'][] = $newUser;
             $this->notifyAccountUpdate(
                 $data,
@@ -1225,7 +1615,6 @@ class ApiController extends Controller
         if ($id === null || (string) $id !== (string) $user['id']) {
             if (!$this->isAdmin($user)) return $this->json(['error' => 'Forbidden'], 403);
         }
-        $data = JsonStore::read();
         $originalData = $data;
         $index = $this->indexById($data['users'] ?? [], $id);
         if ($index === null) return $this->json(['error' => 'User not found'], 404);
@@ -1399,7 +1788,13 @@ class ApiController extends Controller
         $user = $this->currentUser($request, true);
         $data = JsonStore::read();
         $userId = $parts[0] ?? $user['id'];
-        if ((string) $userId !== (string) $user['id'] && !$this->isAdmin($user)) return $this->json(['error' => 'Forbidden'], 403);
+        if ((string) $userId !== (string) $user['id']) {
+            if (!$this->isAdmin($user)) return $this->json(['error' => 'Forbidden'], 403);
+            $permission = $method === 'GET' ? 'users.view' : 'users.manage';
+            if (!$this->adminHasPermission($user, $permission, $data)) {
+                return $this->json(['error' => 'Your staff role does not allow this action.', 'permission' => $permission], 403);
+            }
+        }
         $saved = $data['savedProperties'] ?? [];
         if (is_array($saved) && array_is_list($saved)) $saved = [$userId => $saved];
         $saved[(string) $userId] = array_values($saved[(string) $userId] ?? []);
@@ -1529,6 +1924,12 @@ class ApiController extends Controller
     private function upload(Request $request, array $parts)
     {
         $user = $this->currentUser($request, true);
+        if ($this->isAdmin($user)) {
+            $permission = ($parts[0] ?? '') === 'single' ? 'content.manage' : 'property.manage';
+            if (!$this->adminHasPermission($user, $permission, JsonStore::read())) {
+                return $this->json(['error' => 'Your staff role does not allow this action.', 'permission' => $permission], 403);
+            }
+        }
         $field = ($parts[0] ?? '') === 'video' ? 'video' : (($parts[0] ?? '') === 'single' ? 'image' : 'images');
         $files = $request->file($field);
         $files = is_array($files) ? $files : ($files ? [$files] : []);
@@ -1625,13 +2026,14 @@ class ApiController extends Controller
                 $settings['hiddenDemoPropertyIds'] = [];
             }
             if ($method === 'GET') return $this->json($settings);
-            $admin = $this->currentUser($request, true); if (!$this->isAdmin($admin)) return $this->json(['error' => 'Forbidden'], 403);
+            $admin = $this->currentUser($request, true);
+            if (!$this->isAdmin($admin) || !$this->adminHasPermission($admin, 'settings.manage', $data)) return $this->json(['error' => 'Forbidden'], 403);
             $settings = $this->deepMerge($settings, $request->all()); $data['mobileSettings'] = $settings; JsonStore::write($data);
             return $this->json(['success' => true, 'settings' => $settings]);
         }
         if ($resource === 'push' && $method === 'POST') {
             $admin = $this->currentUser($request, true);
-            if (!$this->isAdmin($admin)) return $this->json(['error' => 'Forbidden'], 403);
+            if (!$this->isAdmin($admin) || !$this->adminHasPermission($admin, 'notifications.manage', $data)) return $this->json(['error' => 'Forbidden'], 403);
             $title = trim((string) $request->input('title', ''));
             $body = trim((string) $request->input('body', ''));
             if ($title === '' || $body === '') return $this->json(['error' => 'Title and message are required.'], 422);
@@ -1674,7 +2076,10 @@ class ApiController extends Controller
         $adminRead = ($parts[1] ?? '') === 'all';
         if ($method !== 'GET' || $adminRead) {
             $admin = $this->currentUser($request, true);
-            if (!$this->isAdmin($admin)) return $this->json(['error' => 'Forbidden'], 403);
+            $data = JsonStore::read();
+            if (!$this->isAdmin($admin) || !$this->adminHasPermission($admin, 'content.manage', $data)) {
+                return $this->json(['error' => 'Your staff role does not allow this action.', 'permission' => 'content.manage'], 403);
+            }
         }
 
         $data = JsonStore::read();
@@ -2082,10 +2487,14 @@ class ApiController extends Controller
     {
         $key = match ($segments[0]) { 'inquiries' => 'inquiries', 'offers' => 'offers', default => 'appointments' };
         $user = $this->currentUser($request, true);
+        $data = JsonStore::read();
+        if ($this->isAdmin($user) && !$this->adminHasPermission($user, 'support.manage', $data)) {
+            return $this->json(['error' => 'Your staff role does not allow this action.', 'permission' => 'support.manage'], 403);
+        }
         if ($key === 'inquiries' && $method === 'POST') {
             return $this->createInquiry($request, $user);
         }
-        return $this->crudNamed($request, JsonStore::read(), $key, $segments[1] ?? null, $method, $user);
+        return $this->crudNamed($request, $data, $key, $segments[1] ?? null, $method, $user);
     }
 
     private function createInquiry(Request $request, array $user)
@@ -2181,6 +2590,9 @@ class ApiController extends Controller
         if (!$isAdmin && !$isAgent) return $this->json(['error' => 'Only Agents and Admins can use this inbox.'], 403);
 
         $data = JsonStore::read();
+        if ($isAdmin && !$this->adminHasPermission($user, 'support.manage', $data)) {
+            return $this->json(['error' => 'Your staff role does not allow this action.', 'permission' => 'support.manage'], 403);
+        }
         $data['agentAdminThreads'] = is_array($data['agentAdminThreads'] ?? null) ? $data['agentAdminThreads'] : [];
         $threadId = (string) ($parts[0] ?? '');
         if ($method === 'GET' && $threadId === '') {
@@ -2259,6 +2671,9 @@ class ApiController extends Controller
         if (!$isAdmin && !$isAgent) return $this->json(['error' => 'Only Agents and Admins can access progress reports.'], 403);
 
         $data = JsonStore::read();
+        if ($isAdmin && !$this->adminHasPermission($user, 'support.manage', $data)) {
+            return $this->json(['error' => 'Your staff role does not allow this action.', 'permission' => 'support.manage'], 403);
+        }
         $data['agentProgress'] = is_array($data['agentProgress'] ?? null) ? $data['agentProgress'] : [];
         $id = $parts[0] ?? null;
         if ($method === 'GET' && $id === null) {
@@ -2347,6 +2762,9 @@ class ApiController extends Controller
     {
         $user = $this->currentUser($request, true);
         $data = JsonStore::read(); $items = $data['conversations'] ?? []; $id = $parts[0] ?? null;
+        if ($this->isAdmin($user) && !$this->adminHasPermission($user, 'support.manage', $data)) {
+            return $this->json(['error' => 'Your staff role does not allow this action.', 'permission' => 'support.manage'], 403);
+        }
         if ($method === 'GET' && $id === null) {
             $conversations = collect($items)
                 ->filter(fn ($item) => $this->conversationBelongsToUser($item, $user))
@@ -2422,6 +2840,17 @@ class ApiController extends Controller
         if ($segments[0] === 'mobile' && isset($segments[1])) $key = Str::camel($segments[1]);
         if ($key === null) return $this->json(['error' => 'Not found'], 404);
         $user = $this->currentUser($request, true); $data = JsonStore::read(); $data[$key] ??= [];
+        if ($this->isAdmin($user)) {
+            $permission = match ($key) {
+                'promotions' => 'content.manage',
+                'buyerRequests', 'agentLeads', 'agentVisits', 'verificationRequests' => 'support.manage',
+                'recentSearches', 'comparisons', 'visitHistory', 'measurements' => 'users.view',
+                default => 'operations.manage',
+            };
+            if (!$this->adminHasPermission($user, $permission, $data)) {
+                return $this->json(['error' => 'Your staff role does not allow this action.', 'permission' => $permission], 403);
+            }
+        }
         $id = $segments[0] === 'mobile' ? ($segments[2] ?? null) : ($segments[1] ?? null);
         return $this->crudNamed($request, $data, $key, $id, $method, $user);
     }

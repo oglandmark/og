@@ -54,24 +54,31 @@ test('admin demo catalog check reports stale records clearly', () => {
 
 test('mobile management module is loaded by the existing website admin', () => {
   const html = fs.readFileSync(path.join(root, 'public/admin/index.html'), 'utf8');
+  const script = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.css'), 'utf8');
+
   assert.match(html, /admin-mobile-management\.js/);
-  assert.match(html, /window\.__OG_API_BASE__\s*=\s*'\/api'/);
-  assert.match(html, /replit\\\.dev\|replit\\\.app\|repl\\\.co/);
-  assert.doesNotMatch(html, /admin-live-api/);
+  assert.match(script, /aria-label', 'Open navigation'/);
+  assert.match(script, /aria-controls/);
+  assert.match(script, /aria-expanded/);
+  assert.match(script, /event\.key === 'Escape'/);
+  assert.match(styles, /@media \(max-width: 900px\)/);
+  assert.match(styles, /og-admin-shell\.og-mobile-nav-open aside/);
+  assert.match(styles, /og-admin-nav-overlay/);
+  assert.match(html, /admin-dashboard-polish\.css\?v=20261022-mobile-nav/);
 });
 
-test('mobile manager uses the existing API collections requested', () => {
+test('admin banner editor can replace uploaded images and videos and confirm deletion', () => {
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
-  assert.match(source, /name="photoUpload" type="file" accept="[^"]*image\/jpeg[^"]*image\/png[^"]*image\/webp/);
-  assert.match(source, /formData\.append\('image', file\)/);
-  assert.match(source, /api\('\/upload\/single', \{ method: 'POST', body: formData \}\)/);
-  assert.match(source, /if \(typeof uploaded\?\.url !== 'string' \|\| !uploaded\.url\.trim\(\)\)/);
-  assert.match(source, /photoUrlInput\.value = uploaded\.url\.trim\(\)/);
-  assert.match(source, /catch \(error\) \{\s*showPhotoPreview\(previousPhotoUrl\)/);
-  assert.match(source, /photoUploadInProgress/);
+  assert.match(source, /Current \$\{item\.type === 'video' \? 'video' : 'image'\}/);
+  assert.match(source, /Replace media file \(optional\)/);
+  assert.match(source, /item\.type === 'video' \? '\.mp4,\.mov' : '\.jpg,\.jpeg,\.png,\.webp'/);
+  assert.match(source, /formData\.append\('_method', 'PUT'\)/);
+  assert.match(source, /key === 'banners' && bannerFile \? 'POST' : 'PUT'/);
+  assert.match(source, /Permanently delete the \$\{item\.type === 'video' \? 'video' : 'image'\} banner/);
 });
 
-test('Admin sidebar contains only the eight requested destinations', () => {
+test('Agent table shows profile thumbnails with bounded missing and broken-photo states', () => {
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   const navBlock = source.match(/const sidebarItems = \[([\s\S]*?)\n  \];/)?.[1] || '';
   const destinations = ['Main', 'Property listed', 'Property in progress', 'Property closed', 'User management', 'Agent Management', 'App banners management', 'App notifications management'];

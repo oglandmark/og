@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Services\JsonStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class ApiCompatibilityTest extends TestCase
@@ -36,6 +37,13 @@ class ApiCompatibilityTest extends TestCase
 
     public function test_forgot_password_persists_a_bounded_challenge(): void
     {
+        JsonStore::reset();
+        Mail::fake();
+        config([
+            'mail.mailers.smtp.username' => 'test-mail-user',
+            'mail.mailers.smtp.password' => 'test-mail-password',
+            'mail.from.address' => 'no-reply@example.test',
+        ]);
         DB::table('app_data')->insert([
             'id' => 1,
             'data' => json_encode([
@@ -50,7 +58,8 @@ class ApiCompatibilityTest extends TestCase
 
         $this->postJson('/api/auth/forgot-password', ['email' => 'seller@example.com'])
             ->assertOk()
-            ->assertJsonPath('success', true);
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('smtpOff', false);
 
         $this->assertDatabaseHas('auth_challenges', [
             'email' => 'seller@example.com',

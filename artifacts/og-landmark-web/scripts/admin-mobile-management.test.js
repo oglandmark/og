@@ -53,7 +53,7 @@ test('mobile management module is loaded by the existing website admin', () => {
   const script = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.js'), 'utf8');
   const styles = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.css'), 'utf8');
 
-  assert.match(html, /admin-mobile-management\.js\?v=agent-photo-upload-only-20261022/);
+  assert.match(html, /admin-mobile-management\.js\?v=agent-photo-save-atomic-20261022/);
   assert.match(script, /aria-label', 'Open navigation'/);
   assert.match(script, /aria-controls/);
   assert.match(script, /aria-expanded/);
@@ -178,6 +178,9 @@ test('Agent table shows profile thumbnails with bounded missing and broken-photo
   assert.match(source, /data-remove-agent-photo/);
   assert.doesNotMatch(source, /Profile photo URL/);
   assert.match(source, /let photoUrl = String\(agent\.photo \|\| agent\.profilePhoto \|\| ''\)\.trim\(\)/);
+  assert.match(source, /Photo selected\. Save Agent to upload and apply it\./);
+  assert.match(source, /if \(selectedPhotoFile\) \{\s*photoStatus\.className = 'og-mm-agent-photo-status';\s*photoStatus\.textContent = 'Uploading photo and saving profile…';\s*const formData = new FormData\(\);\s*formData\.append\('image', selectedPhotoFile\)/);
+  assert.match(source, /const uploaded = await api\('\/upload\/single'/);
   assert.match(source, /photo: photoUrl \|\| null/);
   assert.match(source, /profilePhoto: photoUrl \|\| null/);
   assert.match(source, /name="rating" type="number"/);

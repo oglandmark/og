@@ -636,7 +636,13 @@
     const photoEmpty = form.querySelector('[data-agent-photo-empty]');
     const photoStatus = form.querySelector('[data-agent-photo-status]');
     let photoUrl = String(agent.photo || agent.profilePhoto || '').trim();
-    let photoUploadInProgress = false;
+    let selectedPhotoFile = null;
+    let localPreviewUrl = '';
+    const revokeLocalPreview = () => {
+      if (!localPreviewUrl) return;
+      URL.revokeObjectURL(localPreviewUrl);
+      localPreviewUrl = '';
+    };
     const showPhotoPreview = (url) => {
       if (url) {
         photoPreview.src = url;
@@ -652,6 +658,8 @@
     showPhotoPreview(photoUrl);
     form.querySelector('[data-remove-agent-photo]').addEventListener('click', () => {
       photoUrl = '';
+      selectedPhotoFile = null;
+      revokeLocalPreview();
       photoUploadInput.value = '';
       showPhotoPreview('');
       photoStatus.className = 'og-mm-agent-photo-status';
@@ -662,77 +670,70 @@
       photoEmpty.hidden = false;
       photoEmpty.textContent = 'Photo preview unavailable.';
     });
-    photoUploadInput.addEventListener('change', async () => {
+    photoUploadInput.addEventListener('change', () => {
       const file = photoUploadInput.files?.[0];
       if (!file) return;
-      const previousPhotoUrl = photoUrl;
       if (file.size > 20 * 1024 * 1024) {
+        selectedPhotoFile = null;
+        revokeLocalPreview();
+        showPhotoPreview(photoUrl);
         photoStatus.className = 'og-mm-agent-photo-status error';
         photoStatus.textContent = 'Choose an image no larger than 20 MiB.';
         photoUploadInput.value = '';
         return;
       }
       if (!/\.(jpe?g|png|webp)$/i.test(file.name || '')) {
+        selectedPhotoFile = null;
+        revokeLocalPreview();
+        showPhotoPreview(photoUrl);
         photoStatus.className = 'og-mm-agent-photo-status error';
         photoStatus.textContent = 'Choose a JPG, PNG or WebP image.';
         photoUploadInput.value = '';
         return;
       }
-      const localPreviewUrl = URL.createObjectURL(file);
+      selectedPhotoFile = file;
+      revokeLocalPreview();
+      localPreviewUrl = URL.createObjectURL(file);
       showPhotoPreview(localPreviewUrl);
       photoStatus.className = 'og-mm-agent-photo-status';
-      photoStatus.textContent = 'Uploading photo…';
-      photoUploadInProgress = true;
-      photoUploadInput.disabled = true;
-      form.querySelector('[type="submit"]').disabled = true;
-      try {
-        const formData = new FormData();
-        formData.append('image', file);
-        const uploaded = await api('/upload/single', { method: 'POST', body: formData });
-        if (typeof uploaded?.url !== 'string' || !uploaded.url.trim()) {
-          throw new Error('The server did not return an uploaded photo URL.');
-        }
-        photoUrl = uploaded.url.trim();
-        showPhotoPreview(photoUrl);
-        photoStatus.className = 'og-mm-agent-photo-status success';
-        photoStatus.textContent = 'Photo uploaded. Save the profile to apply it.';
-      } catch (error) {
-        showPhotoPreview(previousPhotoUrl);
-        photoStatus.className = 'og-mm-agent-photo-status error';
-        photoStatus.textContent = error.message || 'Could not upload photo.';
-        photoUploadInput.value = '';
-      } finally {
-        URL.revokeObjectURL(localPreviewUrl);
-        photoUploadInProgress = false;
-        photoUploadInput.disabled = false;
-        form.querySelector('[type="submit"]').disabled = false;
-      }
+      photoStatus.textContent = 'Photo selected. Save Agent to upload and apply it.';
     });
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       const submit = form.querySelector('[type="submit"]');
-      if (photoUploadInProgress) {
-        photoStatus.className = 'og-mm-agent-photo-status error';
-        photoStatus.textContent = 'Wait for the photo upload to finish before saving.';
-        return;
-      }
       submit.disabled = true;
+      photoUploadInput.disabled = true;
       const data = Object.fromEntries(new FormData(form));
-      const payload = {
-        name: String(data.name || '').trim(), displayName: String(data.name || '').trim(),
-        agency: String(data.agency || '').trim(), city: String(data.city || '').trim(),
-        phone: String(data.phone || '').trim(), email: String(data.email || '').trim(),
-        years: Number(data.years) || 0, rating: Number(data.rating) || 0,
-        reviewCount: Number(data.reviewCount) || 0, listings: Number(data.listings) || 0,
-        color: String(data.color || '#0b1f3a'), verified: form.elements.verified.checked,
-        photo: photoUrl || null,
-        profilePhoto: photoUrl || null,
-        areas: String(data.areas || '').split(',').map((item) => item.trim()).filter(Boolean),
-        specialties: String(data.specialties || '').split(',').map((item) => item.trim()).filter(Boolean),
-        about: String(data.about || '').trim(), status: data.status,
-        approvalStatus: data.approvalStatus, visible: form.elements.visible.checked,
-      };
       try {
+        if (selectedPhotoFile) {
+          photoStatus.className = 'og-mm-agent-photo-status';
+          photoStatus.textContent = 'Uploading photo and saving profile…';
+          const formData = new FormData();
+          formData.append('image', selectedPhotoFile);
+          const uploaded = await api('/upload/single', { method: 'POST', body: formData });
+          if (typeof uploaded?.url !== 'string' || !uploaded.url.trim()) {
+            throw new Error('The server did not return an uploaded photo URL.');
+          }
+          photoUrl = uploaded.url.trim();
+          selectedPhotoFile = null;
+          photoUploadInput.value = '';
+          revokeLocalPreview();
+          showPhotoPreview(photoUrl);
+        }
+        const payload = {
+          name: String(data.name || '').trim(), displayName: String(data.name || '').trim(),
+          agency: String(data.agency || '').trim(), city: String(data.city || '').trim(),
+          phone: String(data.phone || '').trim(), email: String(data.email || '').trim(),
+          years: Number(data.years) || 0, rating: Number(data.rating) || 0,
+          reviewCount: Number(data.reviewCount) || 0, listings: Number(data.listings) || 0,
+          color: String(data.color || '#0b1f3a'), verified: form.elements.verified.checked,
+          photo: photoUrl || null,
+          profilePhoto: photoUrl || null,
+          areas: String(data.areas || '').split(',').map((item) => item.trim()).filter(Boolean),
+          specialties: String(data.specialties || '').split(',').map((item) => item.trim()).filter(Boolean),
+          about: String(data.about || '').trim(), status: data.status,
+          approvalStatus: data.approvalStatus, visible: form.elements.visible.checked,
+        };
         const sources = agent?.directorySources || [];
         if (sources.length) {
           await Promise.all(sources.map(({ collection, id }) => api(`/admin/${collection}/${encodeURIComponent(id)}`, {
@@ -746,7 +747,9 @@
       } catch (error) {
         const message = document.createElement('div');
         message.className = 'og-mm-error'; message.textContent = error.message || 'Could not save Agent profile.';
-        form.prepend(message); submit.disabled = false;
+        form.prepend(message);
+        submit.disabled = false;
+        photoUploadInput.disabled = false;
       }
     });
   }

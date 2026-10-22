@@ -234,7 +234,9 @@
       event.preventDefault();
       event.stopImmediatePropagation();
       if (busy) return;
-      const form = event.currentTarget;
+      // This submit handler is delegated from document, so currentTarget is
+      // document rather than the form that initiated the event.
+      const form = event.target;
       const email = form.querySelector('#email').value.trim();
       const password = form.querySelector('#password').value;
       if (!email || !password) {

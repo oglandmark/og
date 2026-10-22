@@ -52,6 +52,17 @@ test('admin login and OTP requests match Laravel input fields and OTP response c
   assert.equal(requiresOtp({ error: 'Invalid admin credentials.' }), false);
 });
 
+test('delegated admin login submit reads its form from the event target', () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, '..', 'public', 'admin', 'admin-auth-compatibility.js'),
+    'utf8',
+  );
+  const beginSignIn = source.match(/async function beginSignIn\(event\) \{([\s\S]*?)\n    \}/)?.[1] ?? '';
+
+  assert.match(beginSignIn, /const form = event\.target;/);
+  assert.doesNotMatch(beginSignIn, /event\.currentTarget/);
+});
+
 test('only admin sessions are persisted and logout recovery clears all dashboard auth keys', () => {
   const storage = memoryStorage();
   assert.equal(persistSession(storage, 'buyer-token', { role: 'User' }), false);

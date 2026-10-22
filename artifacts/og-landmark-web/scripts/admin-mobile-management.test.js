@@ -79,6 +79,11 @@ test('Admin sidebar contains only the eight requested destinations', () => {
   for (const item of destinations) assert.ok(navBlock.includes(`label: '${item}'`), `sidebar should include ${item}`);
   assert.doesNotMatch(navBlock, /Projects Management|Leads & Inquiries|Locations Management|Staff & Permissions|System Settings/);
   assert.match(source, /data-og-admin-nav/);
+  assert.match(source, /const iconPaths = \{/);
+  assert.match(source, /og-mm-nav-icon/);
+  assert.match(source, /caption\.textContent = label/);
+  assert.match(source, /\.og-mm-nav-link\.active/);
+  assert.match(source, /\.og-mm-nav-link:focus-visible/);
   assert.doesNotMatch(source, /createElement\('details'\)/);
   assert.match(source, /function sectionFromPath\(\)/);
   assert.doesNotMatch(source, /Demo properties/);

@@ -59,10 +59,17 @@
     const style = document.createElement('style');
     style.id = 'og-mobile-management-css';
     style.textContent = `
-      .og-mm-nav-title{margin:14px 12px 6px;padding-top:13px;border-top:1px solid #ffffff24;color:#94a3b8;font:700 10px system-ui;letter-spacing:.1em;text-transform:uppercase}
-      .og-mm-nav-link{display:flex;align-items:center;gap:10px;margin:2px 4px;padding:9px 10px;border-radius:8px;color:#cbd5e1;text-decoration:none;font:500 12px system-ui;transition:background .15s,color .15s}
-      .og-mm-nav-link:hover,.og-mm-nav-link.active{background:#ffffff14;color:#fff}
-      .og-mm-nav-link.active{box-shadow:inset 2px 0 #c8a45a}
+      [data-og-admin-nav]{display:grid;gap:5px;padding:8px 2px}
+      .og-mm-nav-link{position:relative;display:flex;align-items:center;gap:12px;min-height:44px;margin:0 3px;padding:9px 12px;border:1px solid transparent;border-radius:11px;background:rgba(255,255,255,.025);color:#d2dbe7;text-decoration:none;font:600 12px/1.3 "DM Sans",system-ui,sans-serif;transition:background .16s,border-color .16s,color .16s,transform .16s,box-shadow .16s}
+      .og-mm-nav-link:hover{transform:translateX(2px);border-color:#ffffff20;background:#ffffff10;color:#fff}
+      .og-mm-nav-link.active{border-color:#c8a45a55;background:linear-gradient(100deg,#c8a45a28,#ffffff0b);box-shadow:inset 3px 0 #d8b76c,0 5px 14px #06142620;color:#fff}
+      .og-mm-nav-link:focus-visible{outline:3px solid #e2c77e;outline-offset:2px}
+      .og-mm-nav-icon{display:grid;flex:0 0 30px;width:30px;height:30px;place-items:center;border:1px solid #ffffff14;border-radius:9px;background:#ffffff09;color:#c8a45a;transition:background .16s,border-color .16s,color .16s}
+      .og-mm-nav-icon svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+      .og-mm-nav-link.active .og-mm-nav-icon{border-color:#c8a45a55;background:#c8a45a20;color:#f0d28a}
+      .og-mm-nav-label{flex:1;min-width:0}
+      .og-mm-nav-chevron{color:#8290a2;font-size:18px;line-height:1;opacity:.55;transition:opacity .16s,transform .16s}
+      .og-mm-nav-link:hover .og-mm-nav-chevron,.og-mm-nav-link.active .og-mm-nav-chevron{transform:translateX(2px);color:#e4c77f;opacity:1}
       .og-mm-nav-details{margin:3px 4px 0;color:#cbd5e1}
       .og-mm-nav-details>summary{padding:9px 10px;border-radius:8px;cursor:pointer;list-style:none;font:600 11px system-ui}
       .og-mm-nav-details>summary::-webkit-details-marker{display:none}
@@ -594,12 +601,41 @@
     const group = document.createElement('div');
     group.dataset.ogAdminNav = 'true';
 
+    const iconPaths = {
+      main: '<rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.5"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.5"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.5"/><rect x="14" y="14" width="6.5" height="6.5" rx="1.5"/>',
+      listed: '<circle cx="12" cy="12" r="8.5"/><path d="m8 12 2.5 2.5L16.5 9"/>',
+      progress: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/>',
+      closed: '<path d="M4 8h16v11H4z"/><path d="M3 5h18v3H3zm6 7h6"/>',
+      users: '<path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20"/><circle cx="10" cy="8" r="3.5"/><path d="M17 4.7a3.5 3.5 0 0 1 0 6.6M20 20v-1.5a3.5 3.5 0 0 0-2.5-3.35"/>',
+      agent: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1.5a7 7 0 0 1 14 0V20z"/><path d="m17 5 1 1 2-2"/>',
+      banner: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/>',
+      notifications: '<path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
+    };
     const pageLink = (label, href, slug = '') => {
       const link = document.createElement('a');
       link.className = 'og-mm-nav-link';
       link.href = href;
-      link.textContent = label;
       link.dataset.adminPageLink = slug;
+      link.title = label;
+      const iconKey = slug === 'main' ? 'main'
+        : slug === 'property-listed' ? 'listed'
+          : slug === 'property-in-progress' ? 'progress'
+            : slug === 'property-closed' ? 'closed'
+              : slug === 'users' ? 'users'
+                : slug === 'agents' ? 'agent'
+                  : slug === 'banners' ? 'banner' : 'notifications';
+      const icon = document.createElement('span');
+      icon.className = 'og-mm-nav-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.innerHTML = `<svg viewBox="0 0 24 24">${iconPaths[iconKey]}</svg>`;
+      const caption = document.createElement('span');
+      caption.className = 'og-mm-nav-label';
+      caption.textContent = label;
+      const chevron = document.createElement('span');
+      chevron.className = 'og-mm-nav-chevron';
+      chevron.setAttribute('aria-hidden', 'true');
+      chevron.textContent = '›';
+      link.append(icon, caption, chevron);
       if (href.startsWith('/admin/mobile/') || href.startsWith('/admin/management/')) {
         link.addEventListener('click', (event) => {
           event.preventDefault();

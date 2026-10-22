@@ -392,6 +392,12 @@ if (laravelWebUrl) {
 // /api/* origin to be switched to Laravel with one environment change. The
 // proxy is opt-in so removing LARAVEL_API_URL is an immediate rollback to the
 // legacy API.
+// Older open admin tabs may still hold the previous live-proxy base. Redirect
+// those requests to the local preview API; never send them to production.
+app.use('/admin-live-api', (req, res) => {
+  res.redirect(307, `/api${req.url}`);
+});
+
 if (laravelApiUrl) {
   // Handle browser preflight locally; the upstream API allowlist does not
   // include Replit preview origins.

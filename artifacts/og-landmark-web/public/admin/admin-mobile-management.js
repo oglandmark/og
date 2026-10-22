@@ -53,6 +53,8 @@
       .og-mm-field{display:flex;flex-direction:column;gap:5px}.og-mm-field.full{grid-column:1/-1}.og-mm-field label{font-size:11px;font-weight:700;color:#475569}
       .og-mm-field input,.og-mm-field textarea,.og-mm-field select{box-sizing:border-box;width:100%;border:1px solid #cbd5e1;border-radius:7px;padding:8px;background:#fff;color:#0f172a;font:12px system-ui}
       .og-mm-field textarea{min-height:66px;resize:vertical}.og-mm-form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+      .og-mm-agent-photo-preview{display:flex;align-items:center;gap:10px;margin-top:8px}.og-mm-agent-photo-preview img{width:72px;height:72px;object-fit:cover;border:1px solid #cbd5e1;border-radius:50%;background:#f1f5f9}.og-mm-agent-photo-preview span{color:#64748b;font-size:11px}
+      .og-mm-agent-photo-status{display:block;min-height:16px;margin-top:4px;color:#64748b;font-size:11px}.og-mm-agent-photo-status.error{color:#b91c1c}.og-mm-agent-photo-status.success{color:#166534}
       @media(max-width:700px){.og-mm-grid{grid-template-columns:1fr 1fr}.og-mm-content{padding:14px}.og-mm-table th,.og-mm-table td{padding:8px 6px}.og-mm-box{max-height:96vh}}
     `;
     document.head.appendChild(style);
@@ -304,7 +306,7 @@
         <div class="og-mm-field"><label>Phone</label><input name="phone" maxlength="40" value="${esc(agent.phone || '')}"></div>
         <div class="og-mm-field"><label>Email</label><input name="email" type="email" maxlength="160" value="${esc(agent.email || agent.loginEmail || '')}"></div>
         <div class="og-mm-field"><label>Years of experience</label><input name="years" type="number" min="0" max="80" value="${esc(agent.years || 0)}"></div>
-        <div class="og-mm-field"><label>Profile photo URL</label><input name="photo" type="url" maxlength="2000" value="${esc(agent.photo || agent.profilePhoto || '')}"></div>
+        <div class="og-mm-field"><label>Profile photo URL</label><input name="photo" type="url" maxlength="2000" value="${esc(agent.photo || agent.profilePhoto || '')}"><div class="og-mm-agent-photo-preview"><img data-agent-photo-preview alt="Agent profile photo preview" hidden><span data-agent-photo-empty>${agent.photo || agent.profilePhoto ? '' : 'No profile photo selected.'}</span></div><label for="og-mm-agent-photo-upload">Upload photo</label><input id="og-mm-agent-photo-upload" name="photoUpload" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"><small>JPG, PNG or WebP up to 20 MiB.</small><span class="og-mm-agent-photo-status" data-agent-photo-status aria-live="polite"></span></div>
         <div class="og-mm-field"><label>Profile status</label><select name="status"><option ${agent.status !== 'Suspended' ? 'selected' : ''}>Active</option><option ${agent.status === 'Suspended' ? 'selected' : ''}>Suspended</option></select></div>
         <div class="og-mm-field"><label>Approval</label><select name="approvalStatus"><option ${agent.approvalStatus !== 'Pending' && agent.approvalStatus !== 'Rejected' ? 'selected' : ''}>Approved</option><option ${agent.approvalStatus === 'Pending' ? 'selected' : ''}>Pending</option><option ${agent.approvalStatus === 'Rejected' ? 'selected' : ''}>Rejected</option></select></div>
         <div class="og-mm-field full"><label>Service areas (comma separated)</label><input name="areas" value="${esc((agent.areas || []).join(', '))}"></div>
@@ -314,9 +316,85 @@
       </div><div class="og-mm-form-actions"><button type="button" class="og-mm-action" data-action="cancel-form">Cancel</button><button class="og-mm-action primary" type="submit">Save Agent</button></div>
     </form>`;
     const form = wrap.querySelector('form');
+    const photoUrlInput = form.elements.photo;
+    const photoUploadInput = form.elements.photoUpload;
+    const photoPreview = form.querySelector('[data-agent-photo-preview]');
+    const photoEmpty = form.querySelector('[data-agent-photo-empty]');
+    const photoStatus = form.querySelector('[data-agent-photo-status]');
+    let photoUploadInProgress = false;
+    const showPhotoPreview = (url) => {
+      if (url) {
+        photoPreview.src = url;
+        photoPreview.hidden = false;
+        photoEmpty.hidden = true;
+      } else {
+        photoPreview.removeAttribute('src');
+        photoPreview.hidden = true;
+        photoEmpty.hidden = false;
+        photoEmpty.textContent = 'No profile photo selected.';
+      }
+    };
+    showPhotoPreview(photoUrlInput.value);
+    photoUrlInput.addEventListener('input', () => showPhotoPreview(photoUrlInput.value.trim()));
+    photoPreview.addEventListener('error', () => {
+      photoPreview.hidden = true;
+      photoEmpty.hidden = false;
+      photoEmpty.textContent = 'Photo preview unavailable.';
+    });
+    photoUploadInput.addEventListener('change', async () => {
+      const file = photoUploadInput.files?.[0];
+      if (!file) return;
+      const previousPhotoUrl = photoUrlInput.value;
+      if (file.size > 20 * 1024 * 1024) {
+        photoStatus.className = 'og-mm-agent-photo-status error';
+        photoStatus.textContent = 'Choose an image no larger than 20 MiB.';
+        photoUploadInput.value = '';
+        return;
+      }
+      if (!/\.(jpe?g|png|webp)$/i.test(file.name || '')) {
+        photoStatus.className = 'og-mm-agent-photo-status error';
+        photoStatus.textContent = 'Choose a JPG, PNG or WebP image.';
+        photoUploadInput.value = '';
+        return;
+      }
+      const localPreviewUrl = URL.createObjectURL(file);
+      showPhotoPreview(localPreviewUrl);
+      photoStatus.className = 'og-mm-agent-photo-status';
+      photoStatus.textContent = 'Uploading photo…';
+      photoUploadInProgress = true;
+      photoUploadInput.disabled = true;
+      form.querySelector('[type="submit"]').disabled = true;
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        const uploaded = await api('/upload/single', { method: 'POST', body: formData });
+        if (typeof uploaded?.url !== 'string' || !uploaded.url.trim()) {
+          throw new Error('The server did not return an uploaded photo URL.');
+        }
+        photoUrlInput.value = uploaded.url.trim();
+        showPhotoPreview(photoUrlInput.value);
+        photoStatus.className = 'og-mm-agent-photo-status success';
+        photoStatus.textContent = 'Photo uploaded. Save the profile to apply it.';
+      } catch (error) {
+        showPhotoPreview(previousPhotoUrl);
+        photoStatus.className = 'og-mm-agent-photo-status error';
+        photoStatus.textContent = error.message || 'Could not upload photo.';
+        photoUploadInput.value = '';
+      } finally {
+        URL.revokeObjectURL(localPreviewUrl);
+        photoUploadInProgress = false;
+        photoUploadInput.disabled = false;
+        form.querySelector('[type="submit"]').disabled = false;
+      }
+    });
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       const submit = form.querySelector('[type="submit"]');
+      if (photoUploadInProgress) {
+        photoStatus.className = 'og-mm-agent-photo-status error';
+        photoStatus.textContent = 'Wait for the photo upload to finish before saving.';
+        return;
+      }
       submit.disabled = true;
       const data = Object.fromEntries(new FormData(form));
       const payload = {

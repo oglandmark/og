@@ -752,22 +752,38 @@ class BackendGapClosureTest extends TestCase
             'nextId' => 11,
         ]);
         $adminToken = $this->token('mobile-admin@example.test');
+        $this->useTemporaryMediaStorage();
+        $photoUpload = $this->withToken($adminToken)
+            ->post('/api/upload/single', [
+                'image' => UploadedFile::fake()->image('mobile-agent-profile.jpg')->size(40),
+            ])
+            ->assertOk();
+        $photoUrl = (string) $photoUpload->json('url');
+        $this->assertNotSame('', $photoUrl);
 
         $created = $this->withToken($adminToken)
             ->postJson('/api/admin/mobile-agents', [
                 'name' => 'New Directory Agent',
                 'displayName' => 'New Directory Agent',
                 'city' => 'Okara',
+                'photo' => $photoUrl,
+                'profilePhoto' => $photoUrl,
                 'visible' => true,
             ])
             ->assertCreated()
-            ->assertJsonPath('name', 'New Directory Agent');
+            ->assertJsonPath('name', 'New Directory Agent')
+            ->assertJsonPath('photo', $photoUrl)
+            ->assertJsonPath('profilePhoto', $photoUrl);
         $createdId = $created->json('id');
 
         $this->withToken($adminToken)
             ->putJson("/api/admin/mobile-agents/{$createdId}", ['city' => 'Depalpur'])
             ->assertOk()
             ->assertJsonPath('city', 'Depalpur');
+        $this->getJson('/api/mobile-agents')
+            ->assertOk()
+            ->assertJsonPath('1.photo', $photoUrl)
+            ->assertJsonPath('1.profilePhoto', $photoUrl);
 
         $this->withToken($adminToken)
             ->deleteJson('/api/admin/mobile-agents/10')
@@ -777,6 +793,11 @@ class BackendGapClosureTest extends TestCase
         $this->assertCount(1, $saved['mobileAgents']);
         $this->assertSame($createdId, $saved['mobileAgents'][0]['id']);
         $this->assertSame('Depalpur', $saved['mobileAgents'][0]['city']);
+        $this->assertSame($photoUrl, $saved['mobileAgents'][0]['photo']);
+        $this->getJson('/api/mobile-agents')
+            ->assertOk()
+            ->assertJsonPath('0.photo', $photoUrl)
+            ->assertJsonPath('0.profilePhoto', $photoUrl);
         $this->assertSame(2, $saved['users'][1]['id'], 'removing a directory profile must not remove its login account');
     }
 

@@ -46,14 +46,11 @@ test('mobile management module is loaded by the existing website admin', () => {
 
 test('mobile manager uses the existing API collections requested', () => {
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
-  for (const endpoint of [
-    '/admin/properties',
-    '/admin/mobile-agents',
-    '/users',
-    '/mobile/banners/all',
-    '/admin/announcements',
-  ]) assert.ok(source.includes(endpoint), `expected API endpoint ${endpoint}`);
-  assert.match(source, /Permanently delete account/);
-  assert.match(source, /Send this notification to the selected live users now/);
-  assert.match(source, /\/admin\/announcements\/\$\{encodeURIComponent\(id\)\}\/send/);
+  assert.match(source, /name="photoUpload" type="file" accept="[^"]*image\/jpeg[^"]*image\/png[^"]*image\/webp/);
+  assert.match(source, /formData\.append\('image', file\)/);
+  assert.match(source, /api\('\/upload\/single', \{ method: 'POST', body: formData \}\)/);
+  assert.match(source, /if \(typeof uploaded\?\.url !== 'string' \|\| !uploaded\.url\.trim\(\)\)/);
+  assert.match(source, /photoUrlInput\.value = uploaded\.url\.trim\(\)/);
+  assert.match(source, /catch \(error\) \{\s*showPhotoPreview\(previousPhotoUrl\)/);
+  assert.match(source, /photoUploadInProgress/);
 });

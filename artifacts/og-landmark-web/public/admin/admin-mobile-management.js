@@ -13,6 +13,14 @@
   let agents = [];
   let hiddenDemos = [];
   const sectionData = {};
+  const mobileSections = [
+    { id: 'demos', label: 'Demo properties' },
+    { id: 'properties', label: 'Live properties' },
+    { id: 'agents', label: 'Agents' },
+    { id: 'users', label: 'Users' },
+    { id: 'banners', label: 'Homepage banners' },
+    { id: 'notifications', label: 'Notifications' },
+  ];
 
   async function api(path, options = {}) {
     const multipart = typeof FormData !== 'undefined' && options.body instanceof FormData;
@@ -35,14 +43,16 @@
     const style = document.createElement('style');
     style.id = 'og-mobile-management-css';
     style.textContent = `
-      .og-mm-launch{margin-left:auto;border:1px solid #c8a45a;border-radius:8px;background:#0b1f3a;color:#fff;padding:9px 13px;font:600 12px system-ui;cursor:pointer}
-      .og-mm-shade{position:fixed;inset:0;z-index:12000;background:#071526bb;display:flex;align-items:center;justify-content:center;padding:18px}
-      .og-mm-box{width:min(1100px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:16px;color:#0b1f3a;box-shadow:0 24px 70px #0004;font:14px system-ui}
+      .og-mm-nav-title{margin:14px 12px 6px;padding-top:13px;border-top:1px solid #ffffff24;color:#94a3b8;font:700 10px system-ui;letter-spacing:.1em;text-transform:uppercase}
+      .og-mm-nav-link{display:flex;align-items:center;gap:10px;margin:2px 4px;padding:9px 10px;border-radius:8px;color:#cbd5e1;text-decoration:none;font:500 12px system-ui;transition:background .15s,color .15s}
+      .og-mm-nav-link:hover,.og-mm-nav-link.active{background:#ffffff14;color:#fff}
+      .og-mm-nav-link.active{box-shadow:inset 2px 0 #c8a45a}
+      .og-mm-page{position:fixed;inset:0 0 0 var(--og-mm-sidebar-width,240px);z-index:30;overflow:auto;background:#f0f4f8}
+      .og-mm-box{min-height:100%;background:#fff;color:#0b1f3a;font:14px system-ui}
       .og-mm-head{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:17px 22px;background:white;border-bottom:1px solid #e2e8f0}
       .og-mm-head h2{font-size:19px;margin:0}.og-mm-head p{font-size:12px;color:#64748b;margin:4px 0 0}
-      .og-mm-close{width:34px;height:34px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-size:20px;cursor:pointer}
-      .og-mm-tabs{display:flex;gap:8px;padding:14px 22px 0;overflow-x:auto;white-space:nowrap}.og-mm-tab,.og-mm-action{border:1px solid #dbe2ea;border-radius:8px;padding:8px 12px;background:#fff;color:#334155;font:600 12px system-ui;cursor:pointer}
-      .og-mm-tab.active{background:#0b1f3a;border-color:#0b1f3a;color:white}.og-mm-action.primary{background:#c8a45a;border-color:#c8a45a;color:#0b1f3a}
+      .og-mm-action{border:1px solid #dbe2ea;border-radius:8px;padding:8px 12px;background:#fff;color:#334155;font:600 12px system-ui;cursor:pointer}
+      .og-mm-action.primary{background:#c8a45a;border-color:#c8a45a;color:#0b1f3a}
       .og-mm-content{padding:16px 22px 22px}.og-mm-note{padding:10px 12px;margin-bottom:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;color:#64748b;font-size:12px}
       .og-mm-table{width:100%;border-collapse:collapse}.og-mm-table th,.og-mm-table td{text-align:left;padding:11px 10px;border-bottom:1px solid #edf1f5;font-size:12px;vertical-align:top}.og-mm-table th{color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
       .og-mm-pill{display:inline-flex;padding:4px 8px;border-radius:999px;background:#dcfce7;color:#166534;font-size:10px;font-weight:700}.og-mm-pill.off{background:#f1f5f9;color:#64748b}
@@ -57,7 +67,7 @@
       .og-mm-agent-list-photo{display:flex;align-items:center;justify-content:center;width:40px;height:40px;overflow:hidden;border:1px solid #e2e8f0;border-radius:50%;background:#f8fafc;color:#64748b;font-size:9px;text-align:center;line-height:1.15}
       .og-mm-agent-list-photo img{display:block;width:100%;height:100%;object-fit:cover}.og-mm-agent-list-photo-fallback{padding:3px}
       .og-mm-agent-photo-status{display:block;min-height:16px;margin-top:4px;color:#64748b;font-size:11px}.og-mm-agent-photo-status.error{color:#b91c1c}.og-mm-agent-photo-status.success{color:#166534}
-      @media(max-width:700px){.og-mm-grid{grid-template-columns:1fr 1fr}.og-mm-content{padding:14px}.og-mm-table th,.og-mm-table td{padding:8px 6px}.og-mm-box{max-height:96vh}}
+      @media(max-width:700px){.og-mm-page{inset:0}.og-mm-grid{grid-template-columns:1fr 1fr}.og-mm-content{padding:14px}.og-mm-table th,.og-mm-table td{padding:8px 6px}}
     `;
     document.head.appendChild(style);
   }
@@ -76,37 +86,36 @@
     agents = Array.isArray(agentData) ? agentData : [];
   }
 
-  function openPanel() {
+  function openPanel(tab) {
     installStyles();
+    if (modal?.dataset.section === tab) return;
     if (modal) modal.remove();
+    const activeSection = mobileSections.find((section) => section.id === tab) || mobileSections[0];
+    const sidebarWidth = document.querySelector('aside')?.getBoundingClientRect().width || 240;
+    document.documentElement.style.setProperty('--og-mm-sidebar-width', `${sidebarWidth}px`);
     modal = document.createElement('div');
-    modal.className = 'og-mm-shade';
-    modal.innerHTML = `<section class="og-mm-box" role="dialog" aria-modal="true" aria-label="Mobile app management">
-      <header class="og-mm-head"><div><h2>Mobile app management</h2><p>Live properties, Agent profiles, user accounts, banners and notifications</p></div><button class="og-mm-close" aria-label="Close">&times;</button></header>
-      <nav class="og-mm-tabs"><button class="og-mm-tab active" data-tab="demos">Demo properties</button><button class="og-mm-tab" data-tab="properties">Live properties</button><button class="og-mm-tab" data-tab="agents">Agents</button><button class="og-mm-tab" data-tab="users">Users</button><button class="og-mm-tab" data-tab="banners">Homepage banners</button><button class="og-mm-tab" data-tab="notifications">Notifications</button></nav>
+    modal.className = 'og-mm-page';
+    modal.dataset.section = activeSection.id;
+    modal.innerHTML = `<section class="og-mm-box" aria-label="${esc(activeSection.label)}">
+      <header class="og-mm-head"><div><h2>${esc(activeSection.label)}</h2><p>Manage the shared Admin data used by the website and mobile app.</p></div></header>
       <main class="og-mm-content"><div class="og-mm-loading">Loading mobile app data…</div></main>
     </section>`;
     modal.addEventListener('click', (event) => {
-      if (event.target === modal || event.target.closest('.og-mm-close')) close();
-      const tab = event.target.closest('[data-tab]');
-      if (tab) {
-        modal.querySelectorAll('.og-mm-tab').forEach((item) => item.classList.toggle('active', item === tab));
-        render(tab.dataset.tab);
-      }
       const action = event.target.closest('[data-action]');
       if (action) handleAction(action);
     });
     document.body.appendChild(modal);
-    document.body.style.overflow = 'hidden';
-    loadData().then(() => render('demos')).catch((error) => {
-      modal.querySelector('.og-mm-content').innerHTML = `<div class="og-mm-error">${esc(error.message)}</div>`;
+    const page = modal;
+    loadData().then(() => {
+      if (modal === page) render(activeSection.id);
+    }).catch((error) => {
+      if (modal === page) page.querySelector('.og-mm-content').innerHTML = `<div class="og-mm-error">${esc(error.message)}</div>`;
     });
   }
 
   function close() {
     modal?.remove();
     modal = null;
-    document.body.style.overflow = '';
   }
 
   function render(tab) {
@@ -223,7 +232,7 @@
         : key === 'users' ? ['Account', 'Phone', 'Role', 'Status', 'Actions']
           : key === 'banners' ? ['Banner', 'Category', 'Order', 'Visibility', 'Actions']
             : ['Notification', 'Status', 'Recipients', 'Created', 'Actions'];
-      content.innerHTML = `<div class="og-mm-note">${esc(config.title)} — live records loaded from the production API. Changes take effect in the mobile app.</div>
+      content.innerHTML = `<div class="og-mm-note">${esc(config.title)} — live records loaded from the shared Admin API used by the website and mobile app.</div>
         <div style="display:flex;justify-content:flex-end;margin-bottom:12px">${addButton}</div><div id="og-mm-record-form"></div>
         <div style="overflow:auto"><table class="og-mm-table"><thead><tr>${columns.map((name) => `<th>${name}</th>`).join('')}</tr></thead>
         <tbody>${rows || `<tr><td colspan="${colspan}" class="og-mm-empty">No records found.</td></tr>`}</tbody></table></div>`;
@@ -511,19 +520,61 @@
     }
   }
 
-  function attachButton() {
-    const heading = [...document.querySelectorAll('h2')].find((node) => node.textContent.trim() === 'Property review queue');
-    const row = heading?.parentElement;
-    if (!row || row.querySelector('.og-mm-launch')) return;
-    const button = document.createElement('button');
-    button.className = 'og-mm-launch';
-    button.type = 'button';
-    button.textContent = 'Manage mobile app';
-    button.addEventListener('click', openPanel);
-    row.appendChild(button);
+  function sectionFromPath() {
+    const match = window.location.pathname.match(/\/admin\/mobile\/([^/]+)\/?$/);
+    return mobileSections.some((section) => section.id === match?.[1]) ? match[1] : null;
   }
 
-  const observer = new MutationObserver(attachButton);
+  function syncPage() {
+    const section = sectionFromPath();
+    document.querySelectorAll('[data-mobile-section]').forEach((link) => {
+      link.classList.toggle('active', link.dataset.mobileSection === section);
+      if (link.dataset.mobileSection === section) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    });
+    if (section) openPanel(section);
+    else if (modal) close();
+  }
+
+  function attachNavigation() {
+    const nav = document.querySelector('aside nav');
+    if (!nav || nav.querySelector('[data-og-mobile-nav]')) return;
+
+    const group = document.createElement('div');
+    group.dataset.ogMobileNav = 'true';
+    const title = document.createElement('div');
+    title.className = 'og-mm-nav-title';
+    title.textContent = 'Mobile app';
+    group.appendChild(title);
+
+    for (const section of mobileSections) {
+      const link = document.createElement('a');
+      link.className = 'og-mm-nav-link';
+      link.href = `/admin/mobile/${section.id}`;
+      link.dataset.mobileSection = section.id;
+      link.innerHTML = `<span aria-hidden="true">›</span><span>${esc(section.label)}</span>`;
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        if (window.location.pathname !== link.pathname) history.pushState({}, '', link.pathname);
+        syncPage();
+      });
+      group.appendChild(link);
+    }
+
+    nav.appendChild(group);
+    syncPage();
+  }
+
+  const observer = new MutationObserver(() => {
+    attachNavigation();
+    syncPage();
+  });
   observer.observe(document.documentElement, { childList: true, subtree: true });
-  attachButton();
+  window.addEventListener('popstate', syncPage);
+  document.addEventListener('click', (event) => {
+    const link = event.target.closest('a');
+    if (link && !link.hasAttribute('data-mobile-section')) setTimeout(syncPage, 0);
+  });
+  attachNavigation();
+  syncPage();
 })();

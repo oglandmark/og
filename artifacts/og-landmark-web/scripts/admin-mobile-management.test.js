@@ -71,6 +71,19 @@ test('mobile manager uses the existing API collections requested', () => {
   assert.match(source, /photoUploadInProgress/);
 });
 
+test('mobile app sections are separate Admin sidebar pages instead of a modal', () => {
+  const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
+  for (const section of ['demos', 'properties', 'agents', 'users', 'banners', 'notifications']) {
+    assert.match(source, new RegExp(`id: '${section}'`));
+    assert.match(source, new RegExp(`\\/admin\\/mobile\\/\\$\\{section\\.id\\}`));
+  }
+  assert.match(source, /data-og-mobile-nav/);
+  assert.match(source, /function sectionFromPath\(\)/);
+  assert.match(source, /shared Admin API used by the website and mobile app/);
+  assert.doesNotMatch(source, /Manage mobile app/);
+  assert.doesNotMatch(source, /og-mm-tabs/);
+});
+
 test('admin banner editor can replace uploaded images and videos and confirm deletion', () => {
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   assert.match(source, /Current \$\{item\.type === 'video' \? 'video' : 'image'\}/);

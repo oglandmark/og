@@ -910,6 +910,36 @@ class BackendGapClosureTest extends TestCase
         $this->assertTrue(JsonStore::read()['legacySampleAgentProfilesImportedV2']);
     }
 
+    public function test_admin_backfills_missing_legacy_samples_when_one_profile_already_exists(): void
+    {
+        $this->seedData([
+            'users' => [$this->user(1, 'agent-backfill-admin@example.test', 'Admin')],
+            'mobileAgents' => [[
+                'id' => 99,
+                'name' => 'Ahmed Property Consultants',
+                'displayName' => 'Ahmed Property Consultants',
+                'phone' => '03011484303',
+                'photo' => '/uploads/custom-ahmed.jpg',
+            ]],
+            'cityAgents' => [],
+            'legacySampleAgentProfilesImported' => true,
+            'nextId' => 100,
+        ]);
+        $adminToken = $this->token('agent-backfill-admin@example.test');
+
+        $profiles = $this->withToken($adminToken)
+            ->getJson('/api/admin/mobile-agents')
+            ->assertOk()
+            ->assertJsonCount(5)
+            ->assertJsonPath('0.id', 99)
+            ->assertJsonPath('0.photo', '/uploads/custom-ahmed.jpg');
+
+        $names = array_column($profiles->json(), 'name');
+        $this->assertCount(5, array_unique($names));
+        $this->assertContains('Raza Industrial & Commercial', $names);
+        $this->assertTrue(JsonStore::read()['legacySampleAgentProfilesImportedV2']);
+    }
+
     public function test_admin_can_manage_mobile_agent_profiles_without_deleting_linked_accounts(): void
     {
         $this->seedData([

@@ -175,6 +175,12 @@ test('Agent table shows profile thumbnails with bounded missing and broken-photo
   assert.match(source, /image\.addEventListener\('error', \(\) => \{\s*image\.hidden = true;/);
   assert.match(source, /\.og-mm-agent-list-photo\{[^}]*width:40px;height:40px;overflow:hidden/);
   assert.match(source, /<th>Photo<\/th><th>Agent<\/th>/);
-  assert.match(source, /api\('\/admin\/city-agents'\)[\s\S]*api\('\/admin\/mobile-agents'\)/);
+  assert.match(source, /readAgentSource\('\/admin\/city-agents'/);
+  assert.match(source, /readAgentSource\('\/admin\/mobile-agents'/);
+  assert.match(source, /readAgentSource\('\/admin\/users\?role=agent'/);
+  assert.match(source, /record\.role \|\| ''\)\.toLowerCase\(\) === 'agent'/);
+  assert.match(source, /Showing \$\{agents\.length\} unique Agents/);
+  assert.match(source, /Manage in Users/);
+  assert.match(source, /Some Agent sources could not be loaded/);
   assert.match(source, /directorySources\.push/);
 });

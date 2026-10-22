@@ -13,6 +13,7 @@
   let originalPageTitle = null;
   let hiddenMainChildren = [];
   let agents = [];
+  let agentLoadWarnings = [];
   const sectionData = {};
 
   const serviceAreas = ['Okara', 'Depalpur', 'Renala Khurd', 'Hujra Shah Muqeem', 'Basir Pur', 'Haveli Lakha'];
@@ -139,28 +140,55 @@
   }
 
   async function loadData() {
-    const [websiteAgents, mobileAgents] = await Promise.all([
-      api('/admin/city-agents'),
-      api('/admin/mobile-agents'),
+    agentLoadWarnings = [];
+    const readAgentSource = async (path, label) => {
+      try {
+        const records = await api(path);
+        if (!Array.isArray(records)) throw new Error('The response was not a list.');
+        return records;
+      } catch (error) {
+        agentLoadWarnings.push(`${label}: ${error.message || 'Could not load.'}`);
+        return [];
+      }
+    };
+    const [websiteAgents, mobileAgents, agentAccounts] = await Promise.all([
+      readAgentSource('/admin/city-agents', 'Website directory'),
+      readAgentSource('/admin/mobile-agents', 'Mobile directory'),
+      readAgentSource('/admin/users?role=agent', 'Agent accounts'),
     ]);
     const merged = new Map();
     for (const [collection, records] of [
       ['city-agents', Array.isArray(websiteAgents) ? websiteAgents : []],
       ['mobile-agents', Array.isArray(mobileAgents) ? mobileAgents : []],
+      ['agent-accounts', Array.isArray(agentAccounts) ? agentAccounts.filter((record) => String(record.role || '').toLowerCase() === 'agent') : []],
     ]) {
       for (const record of records) {
+        if (!record || typeof record !== 'object') continue;
         const phone = String(record.phone || record.mobile || '').replace(/\D/g, '');
         const normalizedPhone = phone.length === 12 && phone.startsWith('92') ? `0${phone.slice(2)}`
           : phone.length === 10 && phone.startsWith('3') ? `0${phone}` : phone;
         const email = String(record.email || record.loginEmail || '').trim().toLowerCase();
-        const userId = String(record.userId || record.accountId || '').trim();
+        const userId = String(record.userId || record.accountId || record.authUserId || record.agentUserId
+          || (collection === 'agent-accounts' ? record.id : '')).trim();
         const identity = userId ? `user:${userId}` : email ? `email:${email}` : normalizedPhone ? `phone:${normalizedPhone}` : `${collection}:${record.id}`;
         const existing = merged.get(identity);
         if (existing) {
-          Object.assign(existing, Object.fromEntries(Object.entries(record).filter(([, value]) => value !== null && value !== '')));
-          existing.directorySources.push({ collection, id: record.id });
+          for (const [key, value] of Object.entries(record)) {
+            if (value !== null && value !== '' && (existing[key] === undefined || existing[key] === null || existing[key] === '')) {
+              existing[key] = value;
+            }
+          }
+          if (collection === 'agent-accounts') existing.accountId ||= String(record.id);
+          else if (!existing.directorySources.some((source) => source.collection === collection && String(source.id) === String(record.id))) {
+            existing.directorySources.push({ collection, id: record.id });
+          }
         } else {
-          merged.set(identity, { ...record, directorySources: [{ collection, id: record.id }] });
+          merged.set(identity, {
+            ...record,
+            accountId: collection === 'agent-accounts' ? String(record.id) : '',
+            accountOnly: collection === 'agent-accounts',
+            directorySources: collection === 'agent-accounts' ? [] : [{ collection, id: record.id }],
+          });
         }
       }
     }
@@ -267,19 +295,28 @@
       const photoCell = photo
         ? `<span class="og-mm-agent-list-photo"><img data-agent-list-photo src="${esc(photo)}" alt="${esc(`${name} profile photo`)}" loading="lazy" decoding="async"><span class="og-mm-agent-list-photo-fallback" data-agent-photo-fallback hidden>Photo unavailable</span></span>`
         : '<span class="og-mm-agent-list-photo og-mm-agent-list-photo-fallback">No photo</span>';
-      const sourceLabel = agent.directorySources?.length > 1 ? 'Website + Mobile' : agent.directorySources?.[0]?.collection === 'city-agents' ? 'Website' : 'Mobile';
+      const sources = new Set((agent.directorySources || []).map(({ collection }) =>
+        collection === 'city-agents' ? 'Website' : collection === 'mobile-agents' ? 'Mobile app' : ''));
+      if (agent.accountId) sources.add('Agent account');
+      const sourceLabel = [...sources].filter(Boolean).join(' + ') || 'Agent account';
+      const actions = agent.directorySources?.length
+        ? `<button class="og-mm-action" data-action="edit-agent" data-index="${agents.indexOf(agent)}">Edit</button><button class="og-mm-action danger" data-action="delete-agent" data-index="${agents.indexOf(agent)}">Remove</button>`
+        : '<a class="og-mm-action" href="/admin/users?role=agent">Manage in Users</a>';
       return `<tr>
       <td>${photoCell}</td>
       <td><strong>${esc(name)}</strong><div>${esc(agent.agency || agent.specialization || 'Independent')} · ${esc(sourceLabel)}</div></td>
       <td>${esc(agent.city || '—')}<div>${esc(agent.phone || '')}</div></td>
       <td>${esc(agent.email || agent.loginEmail || '—')}</td>
       <td><span class="og-mm-pill ${agent.status === 'Suspended' || agent.visible === false ? 'off' : ''}">${esc(agent.status || 'Active')}${agent.visible === false ? ' · Hidden' : ''}</span></td>
-      <td><div class="og-mm-row-actions"><button class="og-mm-action" data-action="edit-agent" data-index="${agents.indexOf(agent)}">Edit</button><button class="og-mm-action danger" data-action="delete-agent" data-index="${agents.indexOf(agent)}">Remove</button></div></td></tr>`;
+      <td><div class="og-mm-row-actions">${actions}</div></td></tr>`;
     }).join('');
-    content.innerHTML = `<div class="og-mm-note">Agent directory profiles shown in the mobile app. Adding or removing a profile does not create or delete its separate sign-in account.</div>
+    const warning = agentLoadWarnings.length
+      ? `<div class="og-mm-error">Some Agent sources could not be loaded: ${esc(agentLoadWarnings.join(' · '))}</div>`
+      : '';
+    content.innerHTML = `${warning}<div class="og-mm-note">Showing ${agents.length} unique Agents from the website directory, mobile app directory, and Agent sign-in accounts. Linked records are combined; account-only Agents are listed separately.</div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="og-mm-action primary" data-action="add-agent">Add mobile Agent</button></div>
       <div id="og-mm-agent-form-wrap"></div>
-      <div style="overflow:auto"><table class="og-mm-table"><thead><tr><th>Photo</th><th>Agent</th><th>City / phone</th><th>Email</th><th>Directory status</th><th>Actions</th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="og-mm-empty">No Agent profiles found in either directory.</td></tr>'}</tbody></table></div>`;
+      <div style="overflow:auto"><table class="og-mm-table"><thead><tr><th>Photo</th><th>Agent</th><th>City / phone</th><th>Email</th><th>Directory status</th><th>Actions</th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="og-mm-empty">No Agent profiles or Agent accounts found.</td></tr>'}</tbody></table></div>`;
     content.querySelectorAll('[data-agent-list-photo]').forEach((image) => {
       image.addEventListener('error', () => {
         image.hidden = true;

@@ -5765,16 +5765,23 @@ app.get('/portal/agent',  (req, res) => { noCache(res); res.sendFile(path.join(p
 
 // ─── ROLE-SPECIFIC DASHBOARDS ─────────────────────────────────────────────────
 const dashboardUrlByRole = {
-  buyer: '/portal/seller-dashboard.html',
-  seller: '/portal/seller-dashboard.html',
-  user: '/portal/seller-dashboard.html',
+  buyer: '/user/',
+  seller: '/user/',
+  user: '/user/',
   agent: '/portal/agent-dashboard.html',
 };
 const redirectToDashboard = (role) => (req, res) => {
   noCache(res);
-  const addProperty = role === 'seller' && req.path.includes('/add-property');
-  res.redirect(302, `${dashboardUrlByRole[role]}${addProperty ? '#add' : ''}`);
+  res.redirect(302, dashboardUrlByRole[role] || '/user/');
 };
+app.get('/seller/add-property', (req, res) => {
+  noCache(res);
+  res.redirect(302, '/portal/seller-dashboard.html?workflow=listings&mode=add');
+});
+app.get('/seller/manage-listings', (req, res) => {
+  noCache(res);
+  res.redirect(302, '/portal/seller-dashboard.html?workflow=listings&mode=manage');
+});
 app.get('/seller',   redirectToDashboard('seller'));
 app.get('/seller/*', redirectToDashboard('seller'));
 
@@ -5825,10 +5832,20 @@ const buyerDashboard = (req, res) => {
   noCache(res);
   res.redirect(302, '/user/');
 };
+const sellerDashboard = (req, res) => {
+  noCache(res);
+  if (req.query.workflow === 'listings') {
+    return res.sendFile(path.join(publicDir, 'portal/seller-dashboard.html'));
+  }
+  res.redirect(302, '/user/');
+};
 // Send old User dashboard URLs to the current shared-account portal.
 app.get('/portal/buyer-dashboard.html', buyerDashboard);
 app.get('/portal/buyer-dashboard',  buyerDashboard);
 app.get('/portal/buyer-dashboard/*', buyerDashboard);
+app.get('/portal/seller-dashboard.html', sellerDashboard);
+app.get('/portal/seller-dashboard', sellerDashboard);
+app.get('/portal/seller-dashboard/*', sellerDashboard);
 
 // ─── STATIC FILES (React build) ────────────────────────────────────────────────
 // A custom MEDIA_STORAGE_DIR may live outside public/. Mount it separately so

@@ -1,5 +1,6 @@
 - [OG Landmark frontend preservation](frontend-preservation.md) — keep supplied public site assets unchanged; limit functional UI extensions to the existing admin style.
 - [Public legal-page SPA routing](public-legal-page-routing.md) — standalone policy links need handling for direct loads and SPA history navigation.
+- [Static legacy route guards](static-legacy-route-guards.md) — Express redirects may not cover static-hosted legacy HTML, so guard the file itself and preserve explicit workflow query routes.
 - [Account and data deletion](account-data-deletion.md) — keep the 14-day verified-request promise distinct from Google Play rules and preserve unrelated users' records.
 - [Expo Go native modules](expo-go-media.md) — use supported media packages and guard remote push code so Android Expo Go can start.
 - [Hostinger package portability](hostinger-package-portability.md) — omit Replit lockfiles, use the public npm registry, and validate regenerated ZIP contents against current source.

@@ -1,67 +1,183 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>OG Landmark — My Portal</title>
-    <link rel="icon" type="image/png" href="/og-logo-official.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
-    <script src="/og-api-base.js"></script>
-    <script src="/brand-logo-compatibility.js?v=official-logo-20261021"></script>
-    <script>
-      (function () {
-        function selectLoginTab() {
-          if (new URLSearchParams(window.location.search).get('mode') !== 'login') return false;
-          const root = document.getElementById('root');
-          if (!root) return false;
-          const loginButton = [...root.querySelectorAll('button,[role="tab"]')].find((button) => /^sign in$/i.test(button.textContent.trim()));
-          if (!loginButton) return false;
-          loginButton.click();
-          return true;
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10284b">
+  <title>My account — OG Landmark</title>
+  <link rel="icon" type="image/png" href="/og-logo-official.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <script src="/og-api-base.js"></script>
+  <script src="/brand-logo-compatibility.js?v=official-logo-20261021"></script>
+  <link rel="stylesheet" href="/user/portal.css">
+  <script>
+    (function () {
+      var token = localStorage.getItem('og_token');
+      var raw = localStorage.getItem('og_user');
+      if (!token || !raw) {
+        window.location.replace('/auth?mode=login');
+        return;
+      }
+      try {
+        var user = JSON.parse(raw) || {};
+        var role = String(user.role || '').trim().toLowerCase();
+        if (role === 'admin') {
+          window.location.replace('/admin/');
+          return;
         }
-
-        function watchLoginTab() {
-          if (selectLoginTab()) return;
-          const root = document.getElementById('root');
-          if (!root) return;
-          const observer = new MutationObserver(() => {
-            if (selectLoginTab()) observer.disconnect();
-          });
-          observer.observe(root, { childList: true, subtree: true });
-          window.setTimeout(() => observer.disconnect(), 10000);
-        }
-
-        function routeAuthenticatedUser() {
-          if (!window.location.pathname.startsWith('/user')) return;
-          try {
-            const token = localStorage.getItem('og_token');
-            const rawUser = localStorage.getItem('og_user');
-            if (!token || !rawUser) return;
-            const role = String(JSON.parse(rawUser).role || '').toLowerCase();
-            if (role === 'admin' && window.location.pathname !== '/admin/') {
-              window.location.replace('/admin/');
-            }
-          } catch (_) {}
-        }
-        const originalSetItem = Storage.prototype.setItem;
-        Storage.prototype.setItem = function (key, value) {
-          originalSetItem.call(this, key, value);
-          if (key === 'og_token' || key === 'og_user') routeAuthenticatedUser();
-        };
-        routeAuthenticatedUser();
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', watchLoginTab, { once: true });
+        if (role === 'agent' || role === 'developer') {
+          window.__OG_USE_COMPILED_PORTAL__ = true;
+          var css = document.createElement('link');
+          css.rel = 'stylesheet';
+          css.href = '/user/assets/user-Dqdqrl3U.css';
+          document.head.appendChild(css);
+          var script = document.createElement('script');
+          script.type = 'module';
+          script.src = '/user/assets/user-6XP8lI2T.js';
+          document.head.appendChild(script);
         } else {
-          watchLoginTab();
+          document.documentElement.classList.add('public-account');
         }
-      })();
-    </script>
-    <script type="module" crossorigin src="/user/assets/user-6XP8lI2T.js"></script>
-    <link rel="stylesheet" crossorigin href="/user/assets/user-Dqdqrl3U.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+      } catch (_) {
+        localStorage.removeItem('og_token');
+        localStorage.removeItem('og_user');
+        window.location.replace('/auth?mode=login');
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <div class="public-portal" id="public-portal" aria-live="polite">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="/" aria-label="OG Landmark home">
+        <img src="/og-logo-official-white.png" alt="">
+        <span class="brand-copy"><strong>OG Landmark</strong><small>USER PORTAL</small></span>
+      </a>
+      <div class="account-identity">
+        <div class="avatar" id="side-avatar">U</div>
+        <div class="identity-copy"><strong id="side-name">Account</strong><span id="side-role">User</span></div>
+      </div>
+      <nav class="side-nav" aria-label="Account navigation">
+        <p class="nav-label">Your account</p>
+        <button class="nav-item is-active" data-page="dashboard"><span class="nav-icon" data-icon="home"></span>Dashboard</button>
+        <button class="nav-item" data-page="profile"><span class="nav-icon" data-icon="user"></span>Profile</button>
+        <button class="nav-item" data-page="properties"><span class="nav-icon" data-icon="search"></span>Browse properties</button>
+        <button class="nav-item" data-page="saved"><span class="nav-icon" data-icon="heart"></span>Saved properties<span class="nav-count" id="saved-count"></span></button>
+        <button class="nav-item" data-page="appointments"><span class="nav-icon" data-icon="calendar"></span>Appointments</button>
+        <button class="nav-item" data-page="offers"><span class="nav-icon" data-icon="offer"></span>Offers</button>
+        <button class="nav-item" data-page="inquiries"><span class="nav-icon" data-icon="message"></span>Inquiries</button>
+        <button class="nav-item" data-page="notifications"><span class="nav-icon" data-icon="bell"></span>Notifications<span class="nav-count" id="notification-count"></span></button>
+        <p class="nav-label nav-label-spaced">Selling</p>
+        <button class="nav-item" data-page="listings"><span class="nav-icon" data-icon="building"></span>My Listings</button>
+      </nav>
+      <div class="side-bottom">
+        <a class="back-link" href="/"><span data-icon="arrow"></span>Back to website</a>
+        <button class="logout-button" id="logout"><span data-icon="logout"></span>Log out</button>
+      </div>
+    </aside>
+
+    <main class="main-shell">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobile-menu" aria-label="Open account navigation"><span></span><span></span></button>
+        <div class="crumb"><span>Account</span><i>/</i><strong id="page-heading">Dashboard</strong></div>
+        <div class="top-actions">
+          <button class="icon-button" data-go="notifications" aria-label="View notifications"><span data-icon="bell"></span><i id="top-notification-dot"></i></button>
+          <button class="top-profile" data-go="profile"><span class="avatar avatar-small" id="top-avatar">U</span><span id="top-name">My account</span><span class="chevron"></span></button>
+        </div>
+      </header>
+      <div class="content-wrap">
+        <section class="page-view is-current" id="page-dashboard" data-title="Dashboard">
+          <div class="welcome-panel">
+            <div class="welcome-content">
+              <p class="eyebrow">OG LANDMARK ACCOUNT</p>
+              <h1>Welcome back, <em id="welcome-name">there</em></h1>
+              <p class="welcome-sub">Your next move starts here. Pick up where you left off or find a place that feels right.</p>
+              <form class="property-search" id="hero-search">
+                <span data-icon="search"></span>
+                <input id="hero-search-input" type="search" placeholder="Search properties, cities, or property IDs" aria-label="Search properties">
+                <button type="submit">Search properties</button>
+              </form>
+            </div>
+            <div class="welcome-orbit" aria-hidden="true"></div>
+            <div class="welcome-mark" aria-hidden="true">OG</div>
+          </div>
+
+          <div class="metric-grid">
+            <button class="metric-card" data-go="saved"><span class="metric-top"><span>Saved properties</span><span class="metric-symbol gold-symbol" data-icon="heart"></span></span><strong id="metric-saved" class="metric-value is-loading">—</strong><span class="metric-link">View saved <span data-icon="arrow-right"></span></span></button>
+            <button class="metric-card" data-go="appointments"><span class="metric-top"><span>Upcoming visits</span><span class="metric-symbol amber-symbol" data-icon="calendar"></span></span><strong id="metric-appointments" class="metric-value is-loading">—</strong><span class="metric-link">View appointments <span data-icon="arrow-right"></span></span></button>
+            <button class="metric-card" data-go="offers"><span class="metric-top"><span>Pending offers</span><span class="metric-symbol blue-symbol" data-icon="offer"></span></span><strong id="metric-offers" class="metric-value is-loading">—</strong><span class="metric-link">Review offers <span data-icon="arrow-right"></span></span></button>
+            <button class="metric-card" data-go="notifications"><span class="metric-top"><span>Notifications</span><span class="metric-symbol violet-symbol" data-icon="bell"></span></span><strong id="metric-notifications" class="metric-value is-loading">—</strong><span class="metric-link">View updates <span data-icon="arrow-right"></span></span></button>
+          </div>
+
+          <div class="quick-row">
+            <button class="quick-action quick-primary" data-go="properties"><span data-icon="search"></span>Browse properties</button>
+            <button class="quick-action" data-go="appointments"><span data-icon="calendar"></span>Book a tour</button>
+            <button class="quick-action" data-go="listings"><span data-icon="plus"></span>Post property</button>
+            <button class="quick-action" data-go="saved"><span data-icon="compare"></span>Saved homes</button>
+          </div>
+
+          <div class="dashboard-columns">
+            <section class="panel-card">
+              <div class="panel-heading"><div><p class="eyebrow">YOUR ACCOUNT</p><h2>Recent activity</h2></div><button class="text-link" data-go="inquiries">All inquiries <span data-icon="arrow-right"></span></button></div>
+              <div id="activity-list" class="activity-list"><div class="state-loading"><span class="skeleton-line"></span><span class="skeleton-line short"></span><span class="skeleton-line"></span></div></div>
+            </section>
+            <section class="panel-card saved-preview">
+              <div class="panel-heading"><div><p class="eyebrow">SHORTLIST</p><h2>Recently saved</h2></div><button class="text-link" data-go="saved">View all <span data-icon="arrow-right"></span></button></div>
+              <div id="saved-preview" class="saved-preview-body"><div class="state-loading"><span class="skeleton-line"></span><span class="skeleton-line short"></span></div></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="page-view" id="page-profile" data-title="Profile">
+          <div class="page-intro"><p class="eyebrow">ACCOUNT DETAILS</p><h1>Your profile</h1><p>Review the information connected to your OG Landmark account.</p></div>
+          <div class="profile-panel" id="profile-panel"></div>
+        </section>
+        <section class="page-view" id="page-properties" data-title="Browse properties">
+          <div class="page-intro"><p class="eyebrow">FIND YOUR PLACE</p><h1>Browse properties</h1><p>Explore available properties from OG Landmark.</p></div>
+          <div class="filter-bar"><label class="filter-search"><span data-icon="search"></span><input id="property-filter" type="search" placeholder="Search by property, city, or type"></label><select id="purpose-filter" aria-label="Filter by purpose"><option value="">All purposes</option><option>For Sale</option><option>For Rent</option></select></div>
+          <div class="property-grid" id="property-grid"><div class="state-loading"><span class="skeleton-card"></span><span class="skeleton-card"></span><span class="skeleton-card"></span></div></div>
+        </section>
+        <section class="page-view" id="page-saved" data-title="Saved properties">
+          <div class="page-intro"><p class="eyebrow">YOUR SHORTLIST</p><h1>Saved properties</h1><p>Keep the places you love close at hand.</p></div>
+          <div class="property-grid" id="saved-grid"></div>
+        </section>
+        <section class="page-view" id="page-appointments" data-title="Appointments">
+          <div class="page-intro"><p class="eyebrow">PROPERTY VISITS</p><h1>Appointments</h1><p>All your scheduled visits in one place.</p></div>
+          <div class="table-panel" id="appointments-content"></div>
+        </section>
+        <section class="page-view" id="page-offers" data-title="Offers">
+          <div class="page-intro"><p class="eyebrow">YOUR NEGOTIATIONS</p><h1>Offers</h1><p>Track the offers you have submitted.</p></div>
+          <div class="table-panel" id="offers-content"></div>
+        </section>
+        <section class="page-view" id="page-inquiries" data-title="Inquiries">
+          <div class="page-intro"><p class="eyebrow">CONVERSATIONS</p><h1>My inquiries</h1><p>Follow up on the properties you have asked about.</p></div>
+          <div class="table-panel" id="inquiries-content"></div>
+        </section>
+        <section class="page-view" id="page-notifications" data-title="Notifications">
+          <div class="page-intro"><p class="eyebrow">ACCOUNT UPDATES</p><h1>Notifications</h1><p>Recent updates related to your account and properties.</p></div>
+          <div class="notification-list" id="notifications-content"></div>
+        </section>
+        <section class="page-view" id="page-listings" data-title="My Listings">
+          <div class="page-intro listings-intro"><div><p class="eyebrow">SELL WITH OG LANDMARK</p><h1>My Listings</h1><p>Manage the properties you have listed with us.</p></div><a class="button button-gold" href="/portal/seller-dashboard.html?workflow=listings&amp;mode=add"><span data-icon="plus"></span>Post a property</a></div>
+          <div class="listing-notice"><span data-icon="info"></span><p>Listing creation and editing use the full property workflow. Open your listing workspace to continue or manage existing listings.</p><a href="/portal/seller-dashboard.html?workflow=listings&amp;mode=manage">Open listing workspace <span data-icon="arrow-right"></span></a></div>
+          <div class="listing-grid" id="listing-grid"><div class="state-loading"><span class="skeleton-card"></span><span class="skeleton-card"></span></div></div>
+        </section>
+      </div>
+      <footer class="portal-footer"><span>OG Landmark <i>·</i> Premium real estate</span><a href="/">Return to website</a></footer>
+    </main>
+    <div class="mobile-shade" id="mobile-shade"></div>
+    <div class="toast" id="toast" role="status"></div>
+    <div class="property-modal" id="property-modal" hidden>
+      <button class="property-modal-backdrop" type="button" data-close-property aria-label="Close property details"></button>
+      <section class="property-modal-card" role="dialog" aria-modal="true" aria-labelledby="property-detail-title">
+        <button class="property-modal-close" type="button" data-close-property aria-label="Close">×</button>
+        <div id="property-detail-content"></div>
+      </section>
+    </div>
+  </div>
+  <script src="/user/portal.js"></script>
+</body>
 </html>

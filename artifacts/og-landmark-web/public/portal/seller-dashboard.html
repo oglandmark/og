@@ -345,8 +345,19 @@ tr:hover td{background:#fafaf8}
   .wiz-footer{padding:12px 16px}
 }
 .hidden{display:none!important}
+body.listing-workspace #nav-dashboard,
+body.listing-workspace #nav-inquiries,
+body.listing-workspace #nav-offers,
+body.listing-workspace #nav-appointments,
+body.listing-workspace #nav-profile{display:none!important}
 </style>
   <script src="/og-api-base.js"></script>
+  <script>
+    if (window.location.pathname === '/portal/seller-dashboard.html'
+      && new URLSearchParams(window.location.search).get('workflow') !== 'listings') {
+      window.location.replace('/user/');
+    }
+  </script>
 </head>
 <body>
 
@@ -1273,7 +1284,13 @@ function init(){
   // Auto-show add-property page if URL contains /add-property
   const path = window.location.pathname;
   const hash = window.location.hash;
-  if(path.includes('/add-property')||path.includes('/add')||hash==='#add'){
+  const workflow = new URLSearchParams(window.location.search);
+  if(path.includes('/manage-listings')||path.includes('/add-property')||workflow.get('workflow')==='listings'){
+    document.body.classList.add('listing-workspace');
+  }
+  if(path.includes('/manage-listings')||workflow.get('mode')==='manage'){
+    setTimeout(()=>showPage('properties'), 300);
+  } else if(path.includes('/add-property')||path.includes('/add')||hash==='#add'||workflow.get('mode')==='add'){
     setTimeout(()=>{ showPage('add-property'); gotoStep(1); }, 300);
   }
 }

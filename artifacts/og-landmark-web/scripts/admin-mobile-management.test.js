@@ -71,21 +71,33 @@ test('mobile manager uses the existing API collections requested', () => {
   assert.match(source, /photoUploadInProgress/);
 });
 
-test('mobile app sections are separate Admin sidebar pages instead of a modal', () => {
+test('Admin sidebar contains only the eight requested destinations', () => {
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
-  for (const section of ['Property Management', 'Projects Management', 'Users Management', 'Agents Management', 'Leads & Inquiries', 'Locations Management', 'Site Visits & Appointments', 'Marketing & Content', 'Reviews & Complaints', 'Notifications', 'Support Management', 'Reports & Analytics', 'Staff & Permissions', 'System Settings']) {
-    assert.ok(source.includes(`label: '${section}'`), `sidebar should include ${section}`);
-  }
-  for (const item of ['All Properties', 'Pending Approvals', 'All Projects', 'All Users', 'All Agents', 'Add Agent', 'All Leads', 'Housing Societies', 'All Appointments', 'Homepage Banners', 'Support Tickets', 'Roles Management', 'API Status']) {
-    assert.ok(source.includes(`'${item}'`), `sidebar should include ${item}`);
-  }
+  const navBlock = source.match(/const sidebarItems = \[([\s\S]*?)\n  \];/)?.[1] || '';
+  const destinations = ['Main', 'Property listed', 'Property in progress', 'Property closed', 'User management', 'Agent Management', 'App banners management', 'App notifications management'];
+  assert.equal((navBlock.match(/\{ label:/g) || []).length, destinations.length, 'sidebar should contain only eight links');
+  for (const item of destinations) assert.ok(navBlock.includes(`label: '${item}'`), `sidebar should include ${item}`);
+  assert.doesNotMatch(navBlock, /Projects Management|Leads & Inquiries|Locations Management|Staff & Permissions|System Settings/);
   assert.match(source, /data-og-admin-nav/);
-  assert.match(source, /createElement\('details'\)/);
+  assert.doesNotMatch(source, /createElement\('details'\)/);
   assert.match(source, /function sectionFromPath\(\)/);
-  assert.match(source, /This navigation item does not have a connected management workflow yet/);
   assert.doesNotMatch(source, /Demo properties/);
   assert.doesNotMatch(source, /Manage mobile app/);
   assert.doesNotMatch(source, /og-mm-tabs/);
+});
+
+test('property menu destinations open the corresponding live status filters', () => {
+  const navigation = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
+  const properties = fs.readFileSync(path.join(root, 'public/admin/admin-property-management.js'), 'utf8');
+  assert.match(navigation, /propertyView=listed/);
+  assert.match(navigation, /propertyView=in-progress/);
+  assert.match(navigation, /propertyView=closed/);
+  assert.match(properties, /new URLSearchParams\(window\.location\.search\)\.get\('propertyView'\)/);
+  assert.match(properties, /value === 'listed'/);
+  assert.match(properties, /value === 'in-progress'/);
+  assert.match(properties, /value === 'closed'/);
+  assert.match(properties, /if \(value === 'all'\) return true/);
+  assert.match(properties, /row\.hidden = !matchesFilter\(property, filter\)/);
 });
 
 test('admin dashboard has an accessible off-canvas navigation on tablet and mobile', () => {

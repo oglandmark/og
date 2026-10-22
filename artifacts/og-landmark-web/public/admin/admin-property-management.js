@@ -5,7 +5,9 @@
   const originalFetch = window.fetch.bind(window);
   let properties = [];
   let agents = [];
-  let filter = 'all';
+  const propertyViews = new Set(['listed', 'in-progress', 'closed']);
+  const requestedView = new URLSearchParams(window.location.search).get('propertyView');
+  let filter = propertyViews.has(requestedView) ? requestedView : 'all';
   let observer;
   let enhancementQueued = false;
   let modal;
@@ -13,6 +15,28 @@
   let agentDirectoryMessage = '';
   const normalize = (value) => String(value ?? '').trim().toLowerCase();
   const statusOf = (property) => normalize(property.approvalStatus || property.listingStatus || 'pending');
+  const statusesOf = (property) => [
+    normalize(property.approvalStatus),
+    normalize(property.listingStatus),
+    normalize(property.status),
+  ].filter(Boolean);
+  const matchesFilter = (property, value) => {
+    if (value === 'all') return true;
+    const statuses = statusesOf(property);
+    if (value === 'listed') {
+      const approval = normalize(property.approvalStatus || 'active');
+      const listing = normalize(property.listingStatus || property.status || 'active');
+      return ['active', 'approved', 'listed'].includes(approval)
+        && ['active', 'approved', 'listed'].includes(listing);
+    }
+    if (value === 'in-progress') {
+      return statuses.some((status) => ['pending', 'changes requested', 'in progress', 'under review'].includes(status));
+    }
+    if (value === 'closed') {
+      return statuses.some((status) => ['closed', 'sold', 'rented', 'expired', 'archived', 'rejected', 'inactive'].includes(status));
+    }
+    return statusOf(property) === value;
+  };
   const apiBase = () => String(window.__OG_API_BASE__ || '/api').replace(/\/+$/, '');
   const authHeaders = () => {
     const headers = { Accept: 'application/json' };
@@ -524,7 +548,10 @@
     const filters = document.createElement('div');
     filters.className = 'og-pm-filters';
     const options = [
-      ['all', 'All listings'],
+      ['all', 'All properties'],
+      ['listed', 'Property listed'],
+      ['in-progress', 'Property in progress'],
+      ['closed', 'Property closed'],
       ['pending', 'Pending review'],
       ['active', 'Active'],
       ['changes requested', 'Changes requested'],
@@ -545,10 +572,16 @@
     const root = findRoot();
     if (!root) return;
     const heading = root.querySelector('h2');
-    if (heading && heading.textContent.trim() !== 'Property review queue') heading.textContent = 'Property review queue';
+    const headingLabels = {
+      all: 'All properties',
+      listed: 'Property listed',
+      'in-progress': 'Property in progress',
+      closed: 'Property closed',
+    };
+    if (heading && headingLabels[filter]) heading.textContent = headingLabels[filter];
     const summary = heading?.parentElement?.querySelector('p');
-    const pendingCount = properties.filter((property) => statusOf(property) === 'pending').length;
-    if (summary) summary.textContent = `${pendingCount} pending review · ${properties.length} total listings`;
+    const visibleCount = properties.filter((property) => matchesFilter(property, filter)).length;
+    if (summary) summary.textContent = `${visibleCount} shown · ${properties.length} total properties`;
     const table = root.querySelector('table');
     if (!table) return;
     addFilters(root);
@@ -596,7 +629,7 @@
       if (button.textContent !== 'Review / edit / refer') button.textContent = 'Review / edit / refer';
       button.dataset.propertyId = String(property.id);
       const rowStatus = row.dataset.ogPropertyStatus;
-      row.hidden = filter !== 'all' && rowStatus !== filter;
+      row.hidden = !matchesFilter(property, filter);
       let agentCell = row.querySelector('[data-og-agent-cell]');
       if (!agentCell) {
         agentCell = document.createElement('td');
@@ -612,8 +645,18 @@
     const chips = root.querySelectorAll('.og-pm-filter');
     chips.forEach((button) => {
       const value = button.dataset.filter;
-      const count = value === 'all' ? properties.length : properties.filter((item) => statusOf(item) === value).length;
-      const label = `${value === 'all' ? 'All listings' : value === 'pending' ? 'Pending review' : value[0].toUpperCase() + value.slice(1)} · ${count}`;
+      const count = properties.filter((item) => matchesFilter(item, value)).length;
+      const labels = {
+        all: 'All properties',
+        listed: 'Property listed',
+        'in-progress': 'Property in progress',
+        closed: 'Property closed',
+        pending: 'Pending review',
+        active: 'Active',
+        'changes requested': 'Changes requested',
+        rejected: 'Rejected',
+      };
+      const label = `${labels[value] || value} · ${count}`;
       if (button.textContent !== label) button.textContent = label;
       button.classList.toggle('is-active', filter === value);
       button.setAttribute('aria-pressed', String(filter === value));

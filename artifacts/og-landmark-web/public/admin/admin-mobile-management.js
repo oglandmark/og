@@ -18,42 +18,24 @@
     { id: 'banners', label: 'Homepage banners' },
     { id: 'notifications', label: 'Notifications' },
   ];
-  const sidebarGroups = [
-    { label: 'Dashboard', items: ['Dashboard Overview'] },
-    { label: 'Property Management', items: ['All Properties', 'Add Property', 'Pending Approvals', 'Active Properties', 'Featured Properties', 'Expired Listings', 'Archived Properties', 'Sold Properties', 'Rented Properties', 'Property Categories', 'Property Types', 'Property Amenities', 'Property Verification'] },
-    { label: 'Projects Management', items: ['All Projects', 'Add New Project', 'Project Approvals', 'Featured Projects', 'Project Categories', 'Project Status'] },
-    { label: 'Users Management', items: ['All Users', 'Active Users', 'Suspended Users', 'Blocked Users', 'User Verification', 'User Activity'] },
-    { label: 'Agents Management', items: ['All Agents', 'Add Agent', 'Pending Agent Approvals', 'Agent Verification', 'Agent Properties', 'Agent Performance', 'Agent Reviews'] },
-    { label: 'Leads & Inquiries', items: ['All Leads', 'New Inquiries', 'Property Inquiries', 'Buyer Leads', 'Seller Leads', 'Rental Inquiries', 'Assign Leads', 'Follow-ups', 'Converted Leads', 'Lost Leads'] },
-    { label: 'Locations Management', items: ['Provinces', 'Districts', 'Cities', 'Tehsils', 'Areas', 'Housing Societies', 'Blocks & Sectors'] },
-    { label: 'Site Visits & Appointments', items: ['All Appointments', 'Pending Requests', 'Confirmed Visits', 'Completed Visits', 'Cancelled Appointments'] },
-    { label: 'Marketing & Content', items: ['Homepage Banners', 'Featured Properties', 'Featured Projects', 'Blog & News', 'FAQs', 'Static Pages', 'SEO Settings'] },
-    { label: 'Reviews & Complaints', items: ['All Reviews', 'Property Reviews', 'Agent Reviews', 'Reported Listings', 'User Complaints'] },
-    { label: 'Notifications', items: ['Notifications Overview', 'Push Notification History', 'Email Notification Logs', 'SMS Notification Logs'] },
-    { label: 'Support Management', items: ['Support Tickets', 'Open Tickets', 'In-Progress Tickets', 'Resolved Tickets', 'Closed Tickets'] },
-    { label: 'Reports & Analytics', items: ['Dashboard Statistics', 'Property Reports', 'User Reports', 'Agent Reports', 'Lead Reports', 'City-wise Reports', 'Activity Reports', 'Export Reports'] },
-    { label: 'Staff & Permissions', items: ['Admin Users', 'Staff Accounts', 'Roles Management', 'Permissions Management', 'Access Control'] },
-    { label: 'System Settings', items: ['Admin Profile', 'General Settings', 'File Storage Status', 'API Status', 'Application Logs', 'Failed Jobs', 'Activity Logs'] },
+  const sidebarItems = [
+    { label: 'Main', path: '/admin/' },
+    { label: 'Property listed', path: '/admin/properties?propertyView=listed' },
+    { label: 'Property in progress', path: '/admin/properties?propertyView=in-progress' },
+    { label: 'Property closed', path: '/admin/properties?propertyView=closed' },
+    { label: 'User management', path: '/admin/users' },
+    { label: 'Agent Management', path: '/admin/mobile/agents' },
+    { label: 'App banners management', path: '/admin/mobile/banners' },
+    { label: 'App notifications management', path: '/admin/mobile/notifications' },
   ];
-  const slugify = (value) => value.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const existingPagePaths = {
-    'Dashboard Overview': '/admin/',
-    'All Properties': '/admin/properties',
-    'All Users': '/admin/users',
-    'All Leads': '/admin/inquiries',
-    'All Agents': '/admin/mobile/agents',
-    'Add Agent': '/admin/mobile/agents?create=agent',
-    'Homepage Banners': '/admin/mobile/banners',
-    'Notifications Overview': '/admin/mobile/notifications',
-    'Push Notification History': '/admin/mobile/notifications',
-    'Dashboard Statistics': '/admin/',
+    ...Object.fromEntries(sidebarItems.map((item) => [item.label, item.path])),
   };
-  const sidebarPages = sidebarGroups.flatMap((group) => group.items.map((label) => ({
-    group: group.label,
-    label,
-    slug: `${slugify(group.label)}-${slugify(label)}`,
-    path: existingPagePaths[label] || `/admin/management/${slugify(group.label)}-${slugify(label)}`,
-  })));
+  const sidebarPages = sidebarItems.map((item) => ({
+    label: item.label,
+    slug: item.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+    path: existingPagePaths[item.label],
+  }));
   const sidebarPageBySlug = Object.fromEntries(sidebarPages.map((page) => [page.slug, page]));
 
   async function api(path, options = {}) {
@@ -628,43 +610,9 @@
       return link;
     };
 
-    const dashboard = sidebarPages.find((page) => page.label === 'Dashboard Overview');
-    group.appendChild(pageLink(dashboard.label, dashboard.path, dashboard.slug));
-
-    for (const sidebarGroup of sidebarGroups) {
-      if (sidebarGroup.label === 'Dashboard') continue;
-      const details = document.createElement('details');
-      details.className = 'og-mm-nav-details';
-      const summary = document.createElement('summary');
-      summary.textContent = sidebarGroup.label;
-      details.appendChild(summary);
-      const children = document.createElement('div');
-      children.className = 'og-mm-nav-children';
-
-      for (const label of sidebarGroup.items) {
-        if (sidebarGroup.label === 'Dashboard' && label === 'Dashboard Overview') continue;
-        const page = sidebarPages.find((item) => item.group === sidebarGroup.label && item.label === label);
-        if (!page) continue;
-        let href = page.path;
-        let slug = page.slug;
-        if (label === 'All Agents') {
-          href = '/admin/mobile/agents';
-          slug = 'agents';
-        } else if (label === 'Add Agent') {
-          href = '/admin/mobile/agents?create=agent';
-          slug = 'agents';
-        } else if (label === 'Homepage Banners') {
-          href = '/admin/mobile/banners';
-          slug = 'banners';
-        } else if (label === 'Notifications Overview' || label === 'Push Notification History') {
-          href = '/admin/mobile/notifications';
-          slug = 'notifications';
-        }
-        children.appendChild(pageLink(label, href, slug));
-      }
-      details.appendChild(children);
-      details.dataset.sidebarGroup = sidebarGroup.label;
-      group.appendChild(details);
+    for (const page of sidebarPages) {
+      const section = mobileSections.find((item) => item.id === page.path.split('/').pop());
+      group.appendChild(pageLink(page.label, page.path, section?.id || page.slug));
     }
 
     nav.appendChild(group);

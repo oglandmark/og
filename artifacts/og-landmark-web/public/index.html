@@ -701,10 +701,11 @@
     <script>
     (function(){
       'use strict';
-      var _agents=null, _injected=false;
+      var _agents=null;
 
-      // ── Hardcoded React bundle agent names — already rendered, skip duplicates
-      var REACT_AGENTS=['Ahmed Hassan','Fatima Khan','Bilal Rashid','Sara Ali','Imran Malik'];
+      // These are legacy profiles baked into the React bundle. The directory
+      // below removes them and renders only records returned by the Admin API.
+      var REACT_AGENTS=['Ahmed Hassan','Fatima Khan','Bilal Rashid','Sara Ali','Imran Malik','Ayesha Siddiqui'];
 
       function esc(s){ var d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
 
@@ -758,8 +759,11 @@
         return wrap;
       }
 
-      // Find the agent cards grid — the container of cards that contain h3 matching known agent names
+      // Find and retain the React-rendered grid so it stays available after its
+      // baked-in cards are removed.
       function findAgentGrid(){
+        var existing=document.querySelector('[data-og-agent-grid]');
+        if(existing) return existing;
         var allH3=document.querySelectorAll('h3');
         for(var i=0;i<allH3.length;i++){
           var name=allH3[i].textContent.trim();
@@ -775,13 +779,26 @@
                 for(var k=0;k<el.children.length;k++){
                   if(el.children[k].querySelector('h3')) agentCards++;
                 }
-                if(agentCards>=2) return el;
+                if(agentCards>=2){
+                  el.setAttribute('data-og-agent-grid','1');
+                  return el;
+                }
               }
               el=el.parentElement;
             }
           }
         }
         return null;
+      }
+
+      function removeReactAgentCards(grid){
+        if(!grid) return;
+        Array.from(grid.querySelectorAll('h3')).forEach(function(heading){
+          if(REACT_AGENTS.indexOf(heading.textContent.trim())===-1) return;
+          var card=heading;
+          while(card&&card.parentElement!==grid) card=card.parentElement;
+          if(card&&card.parentElement===grid) card.remove();
+        });
       }
 
       function getShownAgentNames(grid){
@@ -795,95 +812,32 @@
         var grid=findAgentGrid();
         if(!grid) return;
 
-        // Remove stale injected cards first
+        // Admin is the only source of truth: clear legacy bundle cards and
+        // stale managed cards before applying the latest directory response.
+        removeReactAgentCards(grid);
         grid.querySelectorAll('[data-og-live-agent]').forEach(function(el){el.remove();});
         if(!_agents||!_agents.length) return;
 
         var shown=getShownAgentNames(grid);
-        var added=0;
         _agents.forEach(function(a){
           if(!a.name) return;
           var nm=a.name.trim();
-          // Skip if already shown (either React hardcoded or already injected)
           if(shown.has(nm)) return;
           grid.appendChild(makeAgentCard(a));
-          added++;
-        });
-        if(added>0) _injected=true;
-      }
-
-      // Also patch photos of React hardcoded agents if we have a matching name
-      function patchExistingCards(){
-        if(!_agents) return;
-        document.querySelectorAll('h3').forEach(function(h3){
-          var nm=h3.textContent.trim();
-          var match=_agents.find(function(a){return a.name&&a.name.trim()===nm;});
-          if(!match||!match.photo) return;
-          var card=h3;
-          for(var i=0;i<5;i++){
-            if(!card) break;
-            var img=card.querySelector('img[alt="'+nm+'"],img');
-            if(img&&img.getAttribute('alt')===nm){
-              if(img.src!==location.origin+match.photo) img.src=match.photo;
-              break;
-            }
-            card=card.parentElement;
-          }
         });
       }
 
-      // Hidden React bundle agents list (set by admin)
-      var _hiddenReactAgents=['Ayesha Siddiqui'];
-
-      // Remove hidden hardcoded React agent cards from DOM
-      function removeHiddenReactAgents(){
-        if(!_hiddenReactAgents.length) return;
-        document.querySelectorAll('h3').forEach(function(h3){
-          var nm=h3.textContent.trim();
-          if(_hiddenReactAgents.indexOf(nm)===-1) return;
-          // Walk up to find the card wrapper and remove it
-          var el=h3;
-          for(var i=0;i<6;i++){
-            if(!el||!el.parentElement) break;
-            // Card wrapper typically has padding and is a direct child of the grid
-            if(el.parentElement.children.length>=2 && el.style.padding!==''){
-              el.remove(); return;
-            }
-            // Also check for common card class patterns
-            var cs=el.className||'';
-            if(cs.indexOf('card')>-1||cs.indexOf('Card')>-1||cs.indexOf('rounded')>-1){
-              el.remove(); return;
-            }
-            el=el.parentElement;
-          }
-          // Fallback: remove the closest block-level ancestor of h3
-          var fallback=h3;
-          for(var j=0;j<5;j++){
-            if(!fallback||!fallback.parentElement) break;
-            var tag=fallback.parentElement.tagName;
-            if(tag==='DIV'&&fallback.parentElement!==document.body){
-              // Remove if it contains the agent name and nothing else substantial
-              fallback.remove(); return;
-            }
-            fallback=fallback.parentElement;
-          }
-        });
-      }
-
-      // Fetch agents + hidden list in parallel, then inject. Refresh while the
-      // public page stays open so Admin edits and deletions do not leave stale cards.
+      // Refresh while the page stays open so Admin edits and deletions show up.
       function refreshAgentDirectory(){
-        Promise.all([
-          fetch((window.__OG_API_BASE__||'/api')+'/agents?approvalStatus=Approved', { cache: 'no-store' }).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
-          fetch((window.__OG_API_BASE__||'/api')+'/settings/hidden-react-agents', { cache: 'no-store' }).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
-        ]).then(function(results){
-          var agentsData=results[0], hiddenData=results[1];
-          if(Array.isArray(agentsData)) _agents=agentsData.filter(function(a){return a.status==='Active';});
-          if(Array.isArray(hiddenData)) _hiddenReactAgents=hiddenData;
+        fetch((window.__OG_API_BASE__||'/api')+'/agents?approvalStatus=Approved', { cache: 'no-store' })
+          .then(function(r){return r.ok?r.json():null;})
+          .catch(function(){return null;})
+          .then(function(agentsData){
+          _agents=Array.isArray(agentsData)
+            ? agentsData.filter(function(a){return a.status==='Active'&&a.visible!==false;})
+            : [];
           setTimeout(function(){
             injectAgents();
-            patchExistingCards();
-            removeHiddenReactAgents();
           }, 800);
         });
       }
@@ -899,13 +853,11 @@
         clearTimeout(_t);
         _t=setTimeout(function(){
           injectAgents();
-          patchExistingCards();
-          removeHiddenReactAgents();
         }, 600);
       });
       obs.observe(document.body,{childList:true,subtree:true});
       window.addEventListener('popstate',function(){
-        clearTimeout(_t); _t=setTimeout(function(){ injectAgents(); patchExistingCards(); removeHiddenReactAgents(); },700);
+        clearTimeout(_t); _t=setTimeout(injectAgents,700);
       });
     })();
 

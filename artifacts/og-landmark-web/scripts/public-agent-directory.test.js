@@ -7,13 +7,22 @@ const page = fs.readFileSync(path.resolve(__dirname, '../public/index.html'), 'u
 
 test('public Agent cards are replaced from the current managed directory, including an empty result', () => {
   const start = page.indexOf('function injectAgents(){');
-  const end = page.indexOf('// Also patch photos of React hardcoded agents', start);
+  const end = page.indexOf('// Refresh while the page stays open', start);
   assert.ok(start >= 0 && end > start, 'public Agent injection function should exist');
   const injector = page.slice(start, end);
+  const removeLegacyCards = injector.indexOf('removeReactAgentCards(grid)');
   const removeStaleCards = injector.indexOf("grid.querySelectorAll('[data-og-live-agent]')");
   const emptyDirectoryGuard = injector.indexOf('if(!_agents||!_agents.length) return;');
-  assert.ok(removeStaleCards >= 0, 'old injected cards should be removed on each refresh');
+  assert.ok(removeLegacyCards >= 0, 'hardcoded React Agent cards should be removed');
+  assert.ok(removeStaleCards > removeLegacyCards, 'old managed cards should be removed after legacy cards');
   assert.ok(emptyDirectoryGuard > removeStaleCards, 'an empty directory must still clear old injected cards');
+});
+
+test('only active, visible Admin-managed records are shown; React sample profiles are removed', () => {
+  assert.match(page, /var REACT_AGENTS=\['Ahmed Hassan','Fatima Khan','Bilal Rashid','Sara Ali','Imran Malik','Ayesha Siddiqui'\]/);
+  assert.match(page, /function removeReactAgentCards\(grid\)/);
+  assert.match(page, /_agents=Array\.isArray\(agentsData\)[\s\S]*?a\.status==='Active'&&a\.visible!==false/);
+  assert.match(page, /\/agents\?approvalStatus=Approved/);
 });
 
 test('public Agent directory refreshes while open and when the visitor returns', () => {

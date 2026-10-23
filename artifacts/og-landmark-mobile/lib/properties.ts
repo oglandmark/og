@@ -33,6 +33,8 @@ export type Property = {
   featured?: boolean;
   /** True only for the bundled sample listings shown when the API is unavailable. */
   isDemo?: boolean;
+  /** Original bundled demo ID when a demo is given a collision-safe display ID. */
+  demoId?: number;
   agent: string;
   agentTitle: string;
   score: number;

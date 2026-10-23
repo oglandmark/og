@@ -629,10 +629,13 @@ function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isSaved, toggleSaved } = useSaved();
   const numId = Number(id);
+  const localProperty = properties.find((item) => item.id === Math.abs(numId));
 
   // Start with local mock fallback; replace with API data when loaded
   const [property, setProperty] = useState(
-    properties.find((item) => item.id === numId) ?? properties[0]!,
+    localProperty
+      ? { ...localProperty, ...(numId < 0 ? { id: numId, demoId: localProperty.id } : {}) }
+      : properties[0]!,
   );
   const [sellerId,       setSellerId]       = useState<number | undefined>(undefined);
   const [agentId,        setAgentId]        = useState<number | undefined>(undefined);
@@ -647,7 +650,7 @@ function PropertyDetailScreen() {
 
   // Fetch live property from API + increment view count
   useEffect(() => {
-    if (!numId) return;
+    if (!numId || numId < 0 || localProperty?.isDemo) return;
     getProperty(numId)
       .then((ap: ApiProperty) => {
         setProperty(apiPropertyToProperty(ap));
@@ -656,7 +659,7 @@ function PropertyDetailScreen() {
       })
       .catch(() => undefined); // keep mock on failure
     incrementView(numId).catch(() => undefined);
-  }, [numId]);
+  }, [numId, localProperty?.isDemo]);
 
   // Record visit whenever this property is opened
   useEffect(() => {

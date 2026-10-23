@@ -1,11 +1,17 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const {
   galleryImages,
   isPropertyListRequest,
   propertyList,
   resolveMediaUrl,
 } = require('../public/admin/admin-listing-media.js');
+const propertyManagementSource = fs.readFileSync(
+  path.join(__dirname, '..', 'public', 'admin', 'admin-property-management.js'),
+  'utf8',
+);
 
 test('resolves relative listing media from the website origin and preserves external URLs', () => {
   assert.equal(
@@ -46,4 +52,15 @@ test('captures the property list endpoint but not the per-listing review endpoin
   assert.deepEqual(propertyList([{ id: 17 }]), [{ id: 17 }]);
   assert.deepEqual(propertyList({ properties: [{ id: 18 }] }), [{ id: 18 }]);
   assert.deepEqual(propertyList({ error: 'unavailable' }), []);
+});
+
+test('Admin property management provides requested category and Okara District city filters', () => {
+  for (const category of ['Houses', 'Plots & land', 'Commercial', 'Agricultural', 'Industrial', 'Projects']) {
+    assert.ok(propertyManagementSource.includes(`'${category}'`), `missing ${category} category`);
+  }
+  for (const city of ['Okara', 'Depalpur', 'Renala Khurd', 'Haveli Lakha', 'Basir Pur']) {
+    assert.ok(propertyManagementSource.includes(`'${city}'`), `missing ${city} city`);
+  }
+  assert.match(propertyManagementSource, /matchesPropertyFilters\(property\)/);
+  assert.match(propertyManagementSource, /row\.hidden = !matchesPropertyFilters\(property\)/);
 });

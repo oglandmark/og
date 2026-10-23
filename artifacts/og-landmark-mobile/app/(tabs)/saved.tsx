@@ -23,8 +23,12 @@ export default function SavedScreen() {
   const tabBarHeight = useTabBarHeight();
   const { savedIds } = useSaved();
   const onScroll = useTabBarScrollHandler();
+  const propertyChoices = [
+    ...properties,
+    ...properties.map((property) => ({ ...property, id: -Math.abs(property.id), demoId: property.id })),
+  ];
   const savedProperties = filterVisibleDemoProperties(
-    properties.filter((property) => savedIds.includes(property.id)),
+    propertyChoices.filter((property) => savedIds.includes(property.id)),
     hiddenDemoPropertyIds,
   );
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);

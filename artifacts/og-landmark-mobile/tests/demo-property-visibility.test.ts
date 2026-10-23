@@ -48,6 +48,25 @@ test('hidden demos stay out of demo-backed views when the property API is empty 
   }
 });
 
+test('live listings are kept and the full bundled demo catalogue is added with collision-safe IDs', () => {
+  const live = [{ id: 1, isDemo: false, title: 'Live listing' }];
+  const catalog = [
+    { id: 1, isDemo: true, title: 'Demo one' },
+    { id: 2, isDemo: true, title: 'Demo two' },
+  ];
+  const merged = selectHomePropertySource(live, catalog);
+
+  assert.deepEqual(merged.map(({ id }) => id), [1, -1, -2]);
+  assert.deepEqual(
+    filterVisibleDemoProperties(merged, [1]).map(({ title }) => title),
+    ['Live listing', 'Demo two'],
+  );
+  assert.deepEqual(
+    keepCachedPropertiesWhenRemoteIsEmpty(catalog, live).map(({ id }) => id),
+    [1, -1, -2],
+  );
+});
+
 test('restoring a demo makes it visible again in list views and property detail', () => {
   const restoredHiddenIds: number[] = [];
 
@@ -78,7 +97,7 @@ test('Home, Explore, saved, detail, and Agent views use the shared visibility ru
     {
       name: 'saved properties',
       source: readScreen('app', '(tabs)', 'saved.tsx'),
-      expected: /filterVisibleDemoProperties\(\s*properties\.filter\(\(property\) => savedIds\.includes\(property\.id\)\),\s*hiddenDemoPropertyIds/,
+      expected: /filterVisibleDemoProperties\(\s*propertyChoices\.filter\(\(property\) => savedIds\.includes\(property\.id\)\),\s*hiddenDemoPropertyIds/,
     },
     {
       name: 'property detail',

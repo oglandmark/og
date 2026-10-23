@@ -8,6 +8,8 @@
   const propertyViews = new Set(['listed', 'in-progress', 'closed']);
   const requestedView = new URLSearchParams(window.location.search).get('propertyView');
   let filter = propertyViews.has(requestedView) ? requestedView : 'all';
+  let categoryFilter = 'all';
+  let cityFilter = 'all';
   let observer;
   let enhancementQueued = false;
   let modal;
@@ -40,6 +42,30 @@
     }
     return statusOf(property) === value;
   };
+  const categoryOf = (property) => normalize([
+    property.category, property.propertyCategory, property.type, property.propertyType,
+    property.subType, property.projectName,
+  ].filter(Boolean).join(' '));
+  const matchesCategory = (property, value) => {
+    if (value === 'all') return true;
+    const category = categoryOf(property);
+    if (value === 'houses') return /house|home|villa|apartment|flat/.test(category);
+    if (value === 'plots') return /plot|land|farm/.test(category);
+    if (value === 'commercial') return /commercial|shop|office| plaza|retail/.test(category);
+    if (value === 'agricultural') return /agri|agriculture|farm|orchard/.test(category);
+    if (value === 'industrial') return /industrial|factory|warehouse/.test(category);
+    if (value === 'projects') return /project|development/.test(category)
+      || Boolean(property.projectId || property.developerProjectId || property.projectName);
+    return true;
+  };
+  const matchesCity = (property, value) => {
+    if (value === 'all') return true;
+    const city = normalize(property.city || property.location?.city || property.tehsil || '');
+    if (value === 'okara') return city.includes('okara');
+    return city === normalize(value);
+  };
+  const matchesPropertyFilters = (property, status = filter, category = categoryFilter, city = cityFilter) =>
+    matchesFilter(property, status) && matchesCategory(property, category) && matchesCity(property, city);
   const apiBase = () => String(window.__OG_API_BASE__ || '/api').replace(/\/+$/, '');
   const propertyList = (payload) => {
     if (Array.isArray(payload)) return payload;
@@ -128,6 +154,8 @@
     style.id = 'og-property-management-style';
     style.textContent = `
       .og-pm-filters{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid #e2e8f0;background:#fff}
+      .og-pm-filter-group{display:flex;flex-wrap:wrap;align-items:center;gap:7px;width:100%}
+      .og-pm-filter-label{min-width:74px;color:#64748b;font:700 10px/1.2 system-ui;text-transform:uppercase;letter-spacing:.06em}
       .og-pm-filter{border:1px solid #dbe2ea;border-radius:999px;background:#fff;color:#334155;padding:7px 12px;font:600 12px/1.2 system-ui;cursor:pointer}
       .og-pm-filter.is-active{background:#0B1F3A;color:#fff;border-color:#0B1F3A}
       .og-pm-manage{border:1px solid #c8a45a;border-radius:7px;background:#fff;color:#0B1F3A;padding:6px 9px;font:600 12px system-ui;white-space:nowrap;cursor:pointer}
@@ -752,23 +780,48 @@
     if (!table || root.querySelector('.og-pm-filters')) return;
     const filters = document.createElement('div');
     filters.className = 'og-pm-filters';
-    const options = [
+    const groups = [
+      { label: 'Status', key: 'filter', items: [
       ['all', 'All properties'],
       ['listed', 'Property listed'],
-      ['in-progress', 'Property in progress'],
-      ['closed', 'Property closed'],
       ['pending', 'Pending review'],
       ['active', 'Active'],
       ['changes requested', 'Changes requested'],
       ['rejected', 'Rejected'],
+      ] },
+      { label: 'Category', key: 'category', items: [
+        ['all', 'All categories'], ['houses', 'Houses'], ['plots', 'Plots & land'],
+        ['commercial', 'Commercial'], ['agricultural', 'Agricultural'],
+        ['industrial', 'Industrial'], ['projects', 'Projects'],
+      ] },
+      { label: 'City', key: 'city', items: [
+        ['all', 'Cities'], ['Okara', 'Okara'], ['Depalpur', 'Depalpur'],
+        ['Renala Khurd', 'Renala Khurd'], ['Haveli Lakha', 'Haveli Lakha'],
+        ['Basir Pur', 'Basir Pur'],
+      ] },
     ];
-    for (const [value, label] of options) {
-      const button = document.createElement('button');
-      button.className = 'og-pm-filter';
-      button.type = 'button';
-      button.dataset.filter = value;
-      button.addEventListener('click', () => { filter = value; queueEnhancement(); });
-      filters.appendChild(button);
+    for (const group of groups) {
+      const row = document.createElement('div');
+      row.className = 'og-pm-filter-group';
+      const label = document.createElement('span');
+      label.className = 'og-pm-filter-label';
+      label.textContent = group.label;
+      row.appendChild(label);
+      for (const [value, title] of group.items) {
+        const button = document.createElement('button');
+        button.className = 'og-pm-filter';
+        button.type = 'button';
+        button.dataset[group.key] = value;
+        button.addEventListener('click', () => {
+          if (group.key === 'filter') filter = value;
+          if (group.key === 'category') categoryFilter = value;
+          if (group.key === 'city') cityFilter = value;
+          queueEnhancement();
+        });
+        button.textContent = title;
+        row.appendChild(button);
+      }
+      filters.appendChild(row);
     }
     table.closest('.bg-white')?.prepend(filters);
   }
@@ -785,7 +838,7 @@
     };
     if (heading && headingLabels[filter]) heading.textContent = headingLabels[filter];
     const summary = heading?.parentElement?.querySelector('p');
-    const visibleCount = properties.filter((property) => matchesFilter(property, filter)).length;
+    const visibleCount = properties.filter((property) => matchesPropertyFilters(property)).length;
     if (summary) summary.textContent = propertyLoadError
       ? `Edit controls unavailable: ${propertyLoadError}`
       : `${visibleCount} shown · ${properties.length} total properties`;
@@ -829,7 +882,7 @@
       button.dataset.ogPmEdit = 'true';
       button.__ogListingProperty = property;
       const rowStatus = row.dataset.ogPropertyStatus;
-      row.hidden = !matchesFilter(property, filter);
+      row.hidden = !matchesPropertyFilters(property);
       let agentCell = row.querySelector('[data-og-agent-cell]');
       if (!agentCell) {
         agentCell = document.createElement('td');
@@ -842,24 +895,24 @@
       const assignedCity = assigned.city || property.assignedAgentCity || '';
       agentCell.textContent = assignedName ? `${assignedName}${assignedCity ? ` · ${assignedCity}` : ''}` : 'Not assigned';
     }
-    const chips = root.querySelectorAll('.og-pm-filter');
-    chips.forEach((button) => {
-      const value = button.dataset.filter;
-      const count = properties.filter((item) => matchesFilter(item, value)).length;
-      const labels = {
-        all: 'All properties',
-        listed: 'Property listed',
-        'in-progress': 'Property in progress',
-        closed: 'Property closed',
-        pending: 'Pending review',
-        active: 'Active',
-        'changes requested': 'Changes requested',
-        rejected: 'Rejected',
-      };
-      const label = `${labels[value] || value} · ${count}`;
+    root.querySelectorAll('.og-pm-filter').forEach((button) => {
+      const statusValue = button.dataset.filter;
+      const categoryValue = button.dataset.category;
+      const cityValue = button.dataset.city;
+      const value = statusValue ?? categoryValue ?? cityValue ?? 'all';
+      const count = properties.filter((item) => {
+        if (statusValue !== undefined) return matchesPropertyFilters(item, statusValue);
+        if (categoryValue !== undefined) return matchesPropertyFilters(item, filter, categoryValue);
+        return matchesPropertyFilters(item, filter, categoryFilter, cityValue);
+      }).length;
+      const active = statusValue !== undefined ? filter === statusValue
+        : categoryValue !== undefined ? categoryFilter === categoryValue
+          : cityFilter === cityValue;
+      const title = button.textContent.replace(/\s·\s\d+$/, '');
+      const label = `${title} · ${count}`;
       if (button.textContent !== label) button.textContent = label;
-      button.classList.toggle('is-active', filter === value);
-      button.setAttribute('aria-pressed', String(filter === value));
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', String(active));
     });
   }
 

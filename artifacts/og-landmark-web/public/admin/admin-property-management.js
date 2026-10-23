@@ -4,6 +4,10 @@
 
   const originalFetch = window.fetch.bind(window);
   let properties = [];
+  let apiProperties = [];
+  let mobileDemoProperties = [];
+  let mobileProjectProperties = [];
+  const observedProperties = new Map();
   let agents = [];
   const propertyViews = new Set(['listed', 'in-progress', 'closed']);
   const requestedView = new URLSearchParams(window.location.search).get('propertyView');
@@ -71,14 +75,85 @@
     if (Array.isArray(payload)) return payload;
     if (Array.isArray(payload?.properties)) return payload.properties;
     if (Array.isArray(payload?.data)) return payload.data;
+    if (Array.isArray(payload?.data?.data)) return payload.data.data;
+    if (Array.isArray(payload?.items)) return payload.items;
+    if (Array.isArray(payload?.results)) return payload.results;
     return [];
   };
+  function rebuildPropertyData() {
+    const unique = new Map();
+    for (const property of [
+      ...apiProperties,
+      ...observedProperties.values(),
+      ...mobileDemoProperties,
+      ...mobileProjectProperties,
+    ]) {
+      const key = property.id != null
+        ? String(property.id)
+        : `${normalize(property.title)}:${normalize(property.city)}`;
+      if (!unique.has(key)) unique.set(key, property);
+    }
+    properties = [...unique.values()];
+    window.__ogAdminListingProperties = properties;
+    queueEnhancement();
+  }
   function setPropertyData(payload) {
     const list = propertyList(payload);
-    properties = list;
+    apiProperties = list;
     propertyLoadError = '';
-    window.__ogAdminListingProperties = list;
-    queueEnhancement();
+    rebuildPropertyData();
+  }
+  function addObservedProperty(property) {
+    if (!property || property.id == null) return;
+    const id = String(property.id);
+    if (observedProperties.has(id)) return;
+    observedProperties.set(id, property);
+    rebuildPropertyData();
+  }
+  async function loadMobileDemoProperties() {
+    try {
+      const response = await originalFetch('/admin/demo-properties.json');
+      if (!response.ok) throw new Error(`Catalog request failed (${response.status})`);
+      const catalog = await response.json();
+      if (!Array.isArray(catalog)) throw new Error('Demo catalog is not a list');
+      mobileDemoProperties = catalog.map((property) => ({
+        ...property,
+        id: `mobile-demo:${property.id}`,
+        demoId: property.id,
+        isDemo: true,
+        approvalStatus: 'Active',
+        listingStatus: 'Active',
+        sellerName: property.agent || 'OG Landmark demo',
+      }));
+      rebuildPropertyData();
+    } catch (error) {
+      console.error('Mobile demo listings could not be loaded in Admin.', error);
+    }
+  }
+  async function loadMobileProjectProperties() {
+    try {
+      const catalog = propertyList(await request('/admin/developer-projects'));
+      mobileProjectProperties = catalog.map((project) => {
+        const sourceStatus = project.status || project.approvalStatus || 'Pending';
+        const isLive = ['live', 'approved', 'active'].includes(normalize(sourceStatus));
+        return {
+          ...project,
+          id: `mobile-project:${project.id}`,
+          title: project.title || project.name || 'Developer project',
+          type: 'Project',
+          category: 'Projects',
+          city: project.city || project.location?.city || project.location || '',
+          sellerName: project.developer || project.developerName || 'Developer',
+          status: sourceStatus,
+          approvalStatus: isLive ? 'Active' : sourceStatus,
+          listingStatus: isLive ? 'Active' : sourceStatus,
+          isProject: true,
+        };
+      });
+      rebuildPropertyData();
+    } catch (error) {
+      console.error('Mobile developer projects could not be loaded in Admin.', error);
+    }
   }
   window.addEventListener('og-admin-properties-loaded', (event) => {
     setPropertyData(event.detail);
@@ -98,7 +173,9 @@
       if (/\/admin\/properties\/?$/.test(url.pathname) && response.ok) {
         const payload = await response.clone().json();
         const list = propertyList(payload);
-        if (list.length || Array.isArray(payload) || Array.isArray(payload?.properties) || Array.isArray(payload?.data)) {
+        if (list.length || Array.isArray(payload) || Array.isArray(payload?.properties)
+          || Array.isArray(payload?.data) || Array.isArray(payload?.data?.data)
+          || Array.isArray(payload?.items) || Array.isArray(payload?.results)) {
           setPropertyData(list);
         }
       }
@@ -156,6 +233,9 @@
       .og-pm-filters{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid #e2e8f0;background:#fff}
       .og-pm-filter-group{display:flex;flex-wrap:wrap;align-items:center;gap:7px;width:100%}
       .og-pm-filter-label{min-width:74px;color:#64748b;font:700 10px/1.2 system-ui;text-transform:uppercase;letter-spacing:.06em}
+      .og-mobile-demo-tag{display:inline-flex;align-items:center;border:1px solid #e8d7aa;border-radius:999px;background:#fbf7ed;color:#805b12;padding:3px 7px;font:700 9px/1 system-ui;white-space:nowrap}
+      .og-mobile-demo-photo{display:flex;width:42px;height:32px;align-items:center;justify-content:center;border-radius:6px;background:#eef2f7;color:#0B1F3A;font:700 8px system-ui;letter-spacing:.06em}
+      .og-mobile-demo-subtitle{margin-top:3px;color:#64748b;font-size:11px}
       .og-pm-filter{border:1px solid #dbe2ea;border-radius:999px;background:#fff;color:#334155;padding:7px 12px;font:600 12px/1.2 system-ui;cursor:pointer}
       .og-pm-filter.is-active{background:#0B1F3A;color:#fff;border-color:#0B1F3A}
       .og-pm-manage{border:1px solid #c8a45a;border-radius:7px;background:#fff;color:#0B1F3A;padding:6px 9px;font:600 12px system-ui;white-space:nowrap;cursor:pointer}
@@ -481,6 +561,63 @@
   }
   function showError(container, message) { const error = container.querySelector('.og-pm-error'); error.textContent = message; error.hidden = false; }
 
+  function ensureMobileDemoRows(table) {
+    const body = table.querySelector('tbody');
+    const headers = [...(table.querySelectorAll('thead th') || [])];
+    const mobileCatalog = [...mobileDemoProperties, ...mobileProjectProperties];
+    if (!body || !headers.length || !mobileCatalog.length) return;
+    for (const property of mobileCatalog) {
+      const row = [...body.querySelectorAll('[data-og-mobile-demo-row]')]
+        .find((item) => item.dataset.ogMobileDemoRow === String(property.id));
+      if (row && row.cells.length === headers.length) continue;
+      row?.remove();
+      const next = document.createElement('tr');
+      next.dataset.ogMobileDemoRow = String(property.id);
+      next.className = 'border-t border-slate-100 hover:bg-slate-50/60';
+      for (const header of headers) {
+        const label = normalize(header.textContent);
+        const cell = document.createElement('td');
+        cell.className = 'px-4 py-3';
+        if (label.includes('photo')) {
+          const badge = document.createElement('span');
+          badge.className = 'og-mobile-demo-photo';
+          badge.textContent = property.isProject ? 'PROJECT' : 'DEMO';
+          cell.appendChild(badge);
+        } else if (label.includes('title') || label.includes('property')) {
+          const title = document.createElement('div');
+          title.className = 'font-medium text-[#0B1F3A]';
+          title.textContent = property.title || 'Mobile demo listing';
+          const detail = document.createElement('div');
+          detail.className = 'og-mobile-demo-subtitle';
+          detail.textContent = property.type || 'Property';
+          const tag = document.createElement('span');
+          tag.className = 'og-mobile-demo-tag';
+          tag.textContent = property.isProject ? 'Mobile app project' : 'Mobile app demo';
+          cell.append(title, detail, tag);
+        } else if (label === 'city') {
+          cell.textContent = property.city || '—';
+        } else if (label === 'seller') {
+          cell.textContent = property.sellerName || 'OG Landmark demo';
+        } else if (label === 'price') {
+          cell.textContent = property.price == null
+            ? '—'
+            : `PKR ${Number(property.price).toLocaleString()}`;
+        } else if (label === 'status') {
+          cell.textContent = property.isProject ? property.status : 'Active · Demo';
+        } else if (label.includes('referred agent')) {
+          cell.textContent = property.isProject ? 'Project record' : 'Demo listing';
+        } else if (label === 'manage') {
+          const badge = document.createElement('span');
+          badge.className = 'og-mobile-demo-tag';
+          badge.textContent = 'Read only';
+          cell.appendChild(badge);
+        }
+        next.appendChild(cell);
+      }
+      body.appendChild(next);
+    }
+  }
+
   function renderReviewOverview(target, property, review) {
     const make = (tag, className, text) => {
       const node = document.createElement(tag);
@@ -601,7 +738,7 @@
 
   async function loadPropertyData() {
     try {
-      const payload = await request('/admin/properties?limit=500');
+      const payload = await request('/admin/properties');
       setPropertyData(payload);
     } catch (error) {
       propertyLoadError = error instanceof Error ? error.message : 'Please refresh and sign in again.';
@@ -837,11 +974,6 @@
       closed: 'Property closed',
     };
     if (heading && headingLabels[filter]) heading.textContent = headingLabels[filter];
-    const summary = heading?.parentElement?.querySelector('p');
-    const visibleCount = properties.filter((property) => matchesPropertyFilters(property)).length;
-    if (summary) summary.textContent = propertyLoadError
-      ? `Edit controls unavailable: ${propertyLoadError}`
-      : `${visibleCount} shown · ${properties.length} total properties`;
     const table = root.querySelector('table');
     if (!table) return;
     addFilters(root);
@@ -856,11 +988,21 @@
       th.dataset.ogAgentHeader = 'true'; th.className = 'text-left px-4 py-3 font-semibold'; th.textContent = 'Referred agent';
       headers.insertBefore(th, headers.querySelector('[data-og-pm-header]') || null);
     }
+    ensureMobileDemoRows(table);
     const used = new Set();
     const rows = [...table.querySelectorAll('tbody tr')].filter((row) => !row.querySelector('[colspan]'));
     for (const row of rows) {
+      if (row.dataset.ogMobileDemoRow) {
+        const mobileRecord = [...mobileDemoProperties, ...mobileProjectProperties]
+          .find((item) => String(item.id) === row.dataset.ogMobileDemoRow);
+        if (mobileRecord) row.hidden = !matchesPropertyFilters(mobileRecord);
+        continue;
+      }
       const property = rowProperty(row, used);
       if (!property) continue;
+      if (!apiProperties.some((item) => String(item.id) === String(property.id))) {
+        addObservedProperty(property);
+      }
       row.dataset.ogPropertyStatus = statusOf(property);
       let cell = row.querySelector('[data-og-pm-cell]');
       if (!cell) {
@@ -895,6 +1037,11 @@
       const assignedCity = assigned.city || property.assignedAgentCity || '';
       agentCell.textContent = assignedName ? `${assignedName}${assignedCity ? ` · ${assignedCity}` : ''}` : 'Not assigned';
     }
+    const summary = heading?.parentElement?.querySelector('p');
+    const visibleCount = properties.filter((property) => matchesPropertyFilters(property)).length;
+    if (summary) summary.textContent = propertyLoadError
+      ? `Edit controls unavailable: ${propertyLoadError}`
+      : `${visibleCount} shown · ${properties.length} total properties`;
     root.querySelectorAll('.og-pm-filter').forEach((button) => {
       const statusValue = button.dataset.filter;
       const categoryValue = button.dataset.category;
@@ -922,6 +1069,8 @@
     if (Array.isArray(window.__ogAdminListingProperties)) {
       setPropertyData(window.__ogAdminListingProperties);
     }
+    void loadMobileDemoProperties();
+    void loadMobileProjectProperties();
     observer.observe(document.body, { childList: true, subtree: true });
     queueEnhancement();
     if (/\/admin\/properties\/?$/.test(window.location.pathname) && window.localStorage?.getItem('og_token')) {

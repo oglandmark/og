@@ -4296,18 +4296,21 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
 app.get('/api/admin/properties', requireAdmin, async (req, res) => {
   try {
     const data = await readData();
-    const { approvalStatus, status, page = '1', limit = '20' } = req.query;
+    const { approvalStatus, status } = req.query;
     let props = data.properties || [];
     const requestedStatus = approvalStatus || status;
     if (requestedStatus && requestedStatus !== 'all') {
       props = props.filter(p => p.approvalStatus === requestedStatus);
     }
     const total = props.length;
-    const p = parseInt(page, 10);
-    const l = parseInt(limit, 10);
-    const start = (p - 1) * l;
+    if (req.query.limit !== undefined) {
+      const p = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const l = Math.max(0, parseInt(req.query.limit, 10) || 0);
+      const start = (p - 1) * l;
+      props = props.slice(start, start + l);
+    }
     res.set('X-Total-Count', String(total));
-    res.json(props.slice(start, start + l).map(property => normalisePropertyPayload(property, null, property.id)));
+    res.json(props.map(property => normalisePropertyPayload(property, null, property.id)));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });

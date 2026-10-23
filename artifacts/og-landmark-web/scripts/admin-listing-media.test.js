@@ -12,6 +12,7 @@ const propertyManagementSource = fs.readFileSync(
   path.join(__dirname, '..', 'public', 'admin', 'admin-property-management.js'),
   'utf8',
 );
+const serverSource = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
 
 test('resolves relative listing media from the website origin and preserves external URLs', () => {
   assert.equal(
@@ -63,4 +64,23 @@ test('Admin property management provides requested category and Okara District c
   }
   assert.match(propertyManagementSource, /matchesPropertyFilters\(property\)/);
   assert.match(propertyManagementSource, /row\.hidden = !matchesPropertyFilters\(property\)/);
+});
+
+test('Admin counts properties visible in the table and includes the mobile demo catalogue as read-only rows', () => {
+  assert.match(propertyManagementSource, /addObservedProperty\(property\)/);
+  assert.match(propertyManagementSource, /originalFetch\('\/admin\/demo-properties\.json'\)/);
+  assert.match(propertyManagementSource, /ensureMobileDemoRows\(table\)/);
+  assert.match(propertyManagementSource, /Mobile app demo/);
+  assert.match(propertyManagementSource, /Mobile app project/);
+  assert.match(propertyManagementSource, /request\('\/admin\/developer-projects'\)/);
+  assert.match(propertyManagementSource, /request\('\/admin\/properties'\)/);
+  assert.match(propertyManagementSource, /Read only/);
+});
+
+test('Admin properties are unpaginated by default and honor an explicit page limit', () => {
+  const routeStart = serverSource.indexOf("app.get('/api/admin/properties'");
+  const routeEnd = serverSource.indexOf("app.get('/api/admin/properties/:id/review'", routeStart);
+  const route = serverSource.slice(routeStart, routeEnd);
+  assert.match(route, /if \(req\.query\.limit !== undefined\)/);
+  assert.doesNotMatch(route, /limit = '20'/);
 });

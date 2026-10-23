@@ -96,9 +96,10 @@ test('admin banner editor can replace uploaded images and videos and confirm del
 test('Agent table shows profile thumbnails with bounded missing and broken-photo states', () => {
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   const navBlock = source.match(/const sidebarItems = \[([\s\S]*?)\n  \];/)?.[1] || '';
-  const destinations = ['Main', 'Property listed', 'Property in progress', 'Property closed', 'User management', 'Agent Management', 'App banners management', 'App notifications management'];
-  assert.equal((navBlock.match(/\{ label:/g) || []).length, destinations.length, 'sidebar should contain only eight links');
+  const destinations = ['Main', 'Property listed', 'User management', 'Agent Management', 'App banners management', 'App notifications management'];
+  assert.equal((navBlock.match(/\{ label:/g) || []).length, destinations.length, 'sidebar should contain only six links');
   for (const item of destinations) assert.ok(navBlock.includes(`label: '${item}'`), `sidebar should include ${item}`);
+  assert.doesNotMatch(navBlock, /Property in progress|Property closed/);
   assert.match(source, /for \(const item of sidebarItems\)/);
   assert.match(source, /function attachNavigation\(\)\s*\{\s*const nav = document\.querySelector\('aside nav'\);\s*if \(!nav\) return;\s*installStyles\(\);/);
   assert.doesNotMatch(navBlock, /Projects Management|Leads & Inquiries|Locations Management|Staff & Permissions|System Settings/);
@@ -127,12 +128,12 @@ test('mobile management pages use the existing Admin shell instead of a second f
   assert.match(styles, /#root\.og-admin-content-page header h1::after/);
 });
 
-test('property menu destinations open the corresponding live status filters', () => {
+test('Admin sidebar only shows the listed shortcut while property status filters remain available', () => {
   const navigation = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   const properties = fs.readFileSync(path.join(root, 'public/admin/admin-property-management.js'), 'utf8');
-  assert.match(navigation, /propertyView=listed/);
-  assert.match(navigation, /propertyView=in-progress/);
-  assert.match(navigation, /propertyView=closed/);
+  const navBlock = navigation.match(/const sidebarItems = \[([\s\S]*?)\n  \];/)?.[1] || '';
+  assert.match(navBlock, /propertyView=listed/);
+  assert.doesNotMatch(navBlock, /propertyView=in-progress|propertyView=closed/);
   assert.match(properties, /new URLSearchParams\(window\.location\.search\)\.get\('propertyView'\)/);
   assert.match(properties, /value === 'listed'/);
   assert.match(properties, /value === 'in-progress'/);

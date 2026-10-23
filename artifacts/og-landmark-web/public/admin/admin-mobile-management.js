@@ -27,8 +27,6 @@
   const sidebarItems = [
     { label: 'Main', path: '/admin/' },
     { label: 'Property listed', path: '/admin/properties?propertyView=listed' },
-    { label: 'Property in progress', path: '/admin/properties?propertyView=in-progress' },
-    { label: 'Property closed', path: '/admin/properties?propertyView=closed' },
     { label: 'User management', path: '/admin/users' },
     { label: 'Agent Management', path: '/admin/mobile/agents' },
     { label: 'App banners management', path: '/admin/mobile/banners' },
@@ -880,8 +878,6 @@
     const iconPaths = {
       main: '<rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.5"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.5"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.5"/><rect x="14" y="14" width="6.5" height="6.5" rx="1.5"/>',
       listed: '<circle cx="12" cy="12" r="8.5"/><path d="m8 12 2.5 2.5L16.5 9"/>',
-      progress: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/>',
-      closed: '<path d="M4 8h16v11H4z"/><path d="M3 5h18v3H3zm6 7h6"/>',
       users: '<path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20"/><circle cx="10" cy="8" r="3.5"/><path d="M17 4.7a3.5 3.5 0 0 1 0 6.6M20 20v-1.5a3.5 3.5 0 0 0-2.5-3.35"/>',
       agent: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1.5a7 7 0 0 1 14 0V20z"/><path d="m17 5 1 1 2-2"/>',
       banner: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/>',
@@ -895,11 +891,9 @@
       link.title = label;
       const iconKey = slug === 'main' ? 'main'
         : slug === 'property-listed' ? 'listed'
-          : slug === 'property-in-progress' ? 'progress'
-            : slug === 'property-closed' ? 'closed'
-              : slug === 'users' ? 'users'
-                : slug === 'agents' ? 'agent'
-                  : slug === 'banners' ? 'banner' : 'notifications';
+          : slug === 'users' ? 'users'
+            : slug === 'agents' ? 'agent'
+              : slug === 'banners' ? 'banner' : 'notifications';
       const icon = document.createElement('span');
       icon.className = 'og-mm-nav-icon';
       icon.setAttribute('aria-hidden', 'true');

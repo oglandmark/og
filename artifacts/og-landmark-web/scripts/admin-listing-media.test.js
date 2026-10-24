@@ -93,6 +93,9 @@ test('Admin can filter and persist featured status for live mobile properties', 
   assert.match(propertyManagementSource, /JSON\.stringify\(\{ featured: nextFeatured \}\)/);
   assert.match(propertyManagementSource, /property\.isDemo \|\| property\.isProject/);
   assert.match(propertyManagementSource, /featuredFilter/);
+  assert.match(mobileManagementSource, /propertyView=featured/);
+  assert.match(propertyManagementSource, /isApprovedForPromotion/);
+  assert.match(propertyManagementSource, /Approve this listing before featuring it/);
 });
 
 test('Admin can select and filter persistent Recommended listings for mobile Home', () => {
@@ -103,10 +106,21 @@ test('Admin can select and filter persistent Recommended listings for mobile Hom
   assert.match(propertyManagementSource, /JSON\.stringify\(\{ recommended: nextRecommended \}\)/);
   assert.match(propertyManagementSource, /property\.isDemo \|\| property\.isProject/);
   assert.match(propertyManagementSource, /recommendedFilter/);
+  assert.match(mobileManagementSource, /propertyView=recommended/);
+  assert.match(propertyManagementSource, /Approve this listing before recommending it/);
   assert.ok(apiControllerSource.includes("'feature', 'recommend'"));
   assert.ok(apiControllerSource.includes("($parts[2] ?? '') === 'recommend'"));
   assert.ok(apiControllerSource.includes("$data['properties'][$index]['recommended']"));
   assert.ok(apiControllerSource.includes("'recommended' => false"));
+});
+
+test('Admin review inbox includes new submissions and has separate Featured, Recommended, and Projects pages', () => {
+  assert.match(mobileManagementSource, /label: 'Property listed', path: '\/admin\/properties\?propertyView=inbox'/);
+  assert.match(mobileManagementSource, /label: 'Featured', path: '\/admin\/properties\?propertyView=featured'/);
+  assert.match(mobileManagementSource, /label: 'Recommended', path: '\/admin\/properties\?propertyView=recommended'/);
+  assert.match(mobileManagementSource, /label: 'Projects', path: '\/admin\/properties\?propertyView=projects'/);
+  assert.match(propertyManagementSource, /listingInboxView \? 'Property listed'/);
+  assert.match(propertyManagementSource, /categoryFilter = agricultureView \? 'agricultural' : projectsView \? 'projects' : 'all'/);
 });
 
 test('Admin separates the automatic latest six live listings from the full property table', () => {
@@ -133,7 +147,7 @@ test('Admin project management supports app-shaped create/edit and safe archive 
 test('Agriculture Land has a separate Admin option with its own summary and category scope', () => {
   assert.match(mobileManagementSource, /label: 'Agriculture Land', path: '\/admin\/properties\?propertyView=agriculture'/);
   assert.match(propertyManagementSource, /const agricultureView = requestedView === 'agriculture'/);
-  assert.match(propertyManagementSource, /categoryFilter = agricultureView \? 'agricultural' : 'all'/);
+  assert.match(propertyManagementSource, /categoryFilter = agricultureView \? 'agricultural' : projectsView \? 'projects' : 'all'/);
   assert.match(propertyManagementSource, /function renderAgricultureOverview\(root\)/);
   assert.match(propertyManagementSource, /Land listings|agriculture land/i);
   assert.match(propertyManagementSource, /matchesCategory\(property, 'agricultural'\)/);

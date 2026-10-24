@@ -36,3 +36,9 @@ The user wants the website Admin Dashboard to show the live mobile app's current
 **Why:** The user explicitly requested production-backed management of these mobile app records from the website dashboard.
 
 **How to apply:** Use the existing Laravel admin APIs and preserve their auth and notification-delivery rules. Keep Agent directory profiles distinct from Agent login accounts, and confirm account/data deletion behavior before adding irreversible production controls.
+
+New property submissions should appear in the Property listed review inbox regardless of status. Featured and Recommended promotion controls must remain disabled until both approval and listing status are active or approved, and the API must reject attempts to promote an unapproved listing.
+
+**Why:** The user wants Admins to review new listings first, then feature them only after approval.
+
+**How to apply:** Keep the inbox unfiltered by status and enforce promotion eligibility in both the dashboard controls and the authenticated Admin API.

@@ -648,6 +648,19 @@ class ApiController extends Controller
             if (!$this->isAdmin($admin)) {
                 return $this->json(['error' => 'Forbidden'], 403);
             }
+            if (in_array($action, ['feature', 'recommend'], true)) {
+                $flag = $action === 'feature' ? 'featured' : 'recommended';
+                $turningOn = $request->has($flag)
+                    ? $request->boolean($flag)
+                    : !(bool) ($property[$flag] ?? false);
+                $approvalStatus = strtolower((string) ($property['approvalStatus'] ?? $property['listingStatus'] ?? ''));
+                $listingStatus = strtolower((string) ($property['listingStatus'] ?? $property['approvalStatus'] ?? ''));
+                if ($turningOn
+                    && (!in_array($approvalStatus, ['active', 'approved'], true)
+                        || !in_array($listingStatus, ['active', 'approved'], true))) {
+                    return $this->json(['error' => 'Approve the listing before featuring or recommending it.'], 422);
+                }
+            }
             $from = $property['approvalStatus'] ?? $property['listingStatus'] ?? null;
             $previousApprovalStatus = strtolower((string) ($property['approvalStatus'] ?? $property['listingStatus'] ?? ''));
             $previousListingStatus = strtolower((string) ($property['listingStatus'] ?? $property['approvalStatus'] ?? ''));

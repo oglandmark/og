@@ -26,7 +26,10 @@
   ];
   const sidebarItems = [
     { label: 'Main', path: '/admin/' },
-    { label: 'Property listed', path: '/admin/properties?propertyView=listed' },
+    { label: 'Property listed', path: '/admin/properties?propertyView=inbox' },
+    { label: 'Featured', path: '/admin/properties?propertyView=featured' },
+    { label: 'Recommended', path: '/admin/properties?propertyView=recommended' },
+    { label: 'Projects', path: '/admin/properties?propertyView=projects' },
     { label: 'Agriculture Land', path: '/admin/properties?propertyView=agriculture' },
     { label: 'User management', path: '/admin/users' },
     { label: 'Agent Management', path: '/admin/mobile/agents' },

@@ -11,12 +11,16 @@
   let agents = [];
   const propertyViews = new Set(['listed', 'in-progress', 'closed']);
   const requestedView = new URLSearchParams(window.location.search).get('propertyView');
+  const listingInboxView = requestedView === 'inbox';
+  const featuredView = requestedView === 'featured';
+  const recommendedView = requestedView === 'recommended';
+  const projectsView = requestedView === 'projects';
   const agricultureView = requestedView === 'agriculture';
   let filter = propertyViews.has(requestedView) ? requestedView : 'all';
-  let categoryFilter = agricultureView ? 'agricultural' : 'all';
+  let categoryFilter = agricultureView ? 'agricultural' : projectsView ? 'projects' : 'all';
   let cityFilter = 'all';
-  let featuredFilter = 'all';
-  let recommendedFilter = 'all';
+  let featuredFilter = featuredView ? 'featured' : 'all';
+  let recommendedFilter = recommendedView ? 'recommended' : 'all';
   let latestFilter = 'all';
   let latestMobileIds = new Set();
   let observer;
@@ -81,6 +85,11 @@
   const isRecommendedProperty = (property) => property?.recommended === true
     || property?.recommended === 1
     || ['true', '1', 'yes'].includes(normalize(property?.recommended));
+  const isApprovedForPromotion = (property) => {
+    const approval = normalize(property?.approvalStatus || property?.listingStatus || 'pending');
+    const listing = normalize(property?.listingStatus || property?.approvalStatus || 'pending');
+    return ['active', 'approved'].includes(approval) && ['active', 'approved'].includes(listing);
+  };
   const matchesRecommended = (property, value) => value === 'all'
     || (value === 'recommended' ? isRecommendedProperty(property) : !isRecommendedProperty(property));
   const matchesLatest = (property, value) => value === 'all' || latestMobileIds.has(String(property?.id));
@@ -820,7 +829,8 @@
   }
 
   async function toggleFeaturedProperty(property, button) {
-    if (!property || property.isDemo || property.isProject || property.id == null) return;
+    if (!property || property.isDemo || property.isProject || property.id == null
+      || (!isApprovedForPromotion(property) && !isFeaturedProperty(property))) return;
     const nextFeatured = !isFeaturedProperty(property);
     button.disabled = true;
     button.dataset.pending = 'true';
@@ -847,7 +857,8 @@
   }
 
   async function toggleRecommendedProperty(property, button) {
-    if (!property || property.isDemo || property.isProject || property.id == null) return;
+    if (!property || property.isDemo || property.isProject || property.id == null
+      || (!isApprovedForPromotion(property) && !isRecommendedProperty(property))) return;
     const nextRecommended = !isRecommendedProperty(property);
     button.disabled = true;
     button.dataset.pending = 'true';
@@ -1113,6 +1124,10 @@
   }
 
   function renderLatestPanel(root, table) {
+    if (featuredView || recommendedView || projectsView || agricultureView) {
+      table.closest('.bg-white')?.querySelector('[data-og-latest-panel]')?.remove();
+      return;
+    }
     const card = table.closest('.bg-white');
     if (!card) return;
     let panel = card.querySelector('[data-og-latest-panel]');
@@ -1219,7 +1234,12 @@
       'in-progress': 'Property in progress',
       closed: 'Property closed',
     };
-    if (heading && headingLabels[filter]) heading.textContent = headingLabels[filter];
+    const viewHeading = listingInboxView ? 'Property listed'
+      : featuredView ? 'Featured properties'
+        : recommendedView ? 'Recommended properties'
+          : projectsView ? 'Projects'
+            : agricultureView ? 'Agriculture Land' : headingLabels[filter];
+    if (heading && viewHeading) heading.textContent = viewHeading;
     const table = root.querySelector('table');
     if (!table) return;
     addFilters(root);
@@ -1309,11 +1329,13 @@
       }
       featureButton.__ogListingProperty = property;
       const isFeatured = isFeaturedProperty(property);
-      featureButton.textContent = isFeatured ? '★ Featured' : '☆ Feature listing';
+      const canPromote = isApprovedForPromotion(property);
+      featureButton.textContent = isFeatured ? '★ Featured' : canPromote ? '☆ Feature listing' : 'Approve first';
       featureButton.classList.toggle('is-featured', isFeatured);
       featureButton.setAttribute('aria-pressed', String(isFeatured));
       featureButton.setAttribute('aria-label', `${isFeatured ? 'Remove from' : 'Add to'} Featured properties: ${property.title || 'listing'}`);
-      featureButton.disabled = featureButton.dataset.pending === 'true';
+      featureButton.title = canPromote ? '' : 'Approve this listing before featuring it.';
+      featureButton.disabled = featureButton.dataset.pending === 'true' || (!canPromote && !isFeatured);
       let recommendedCell = row.querySelector('[data-og-recommended-cell]');
       if (!recommendedCell) {
         recommendedCell = document.createElement('td');
@@ -1336,11 +1358,12 @@
       }
       recommendedButton.__ogListingProperty = property;
       const isRecommended = isRecommendedProperty(property);
-      recommendedButton.textContent = isRecommended ? '✓ Recommended' : '+ Recommend';
+      recommendedButton.textContent = isRecommended ? '✓ Recommended' : canPromote ? '+ Recommend' : 'Approve first';
       recommendedButton.classList.toggle('is-recommended', isRecommended);
       recommendedButton.setAttribute('aria-pressed', String(isRecommended));
       recommendedButton.setAttribute('aria-label', `${isRecommended ? 'Remove from' : 'Add to'} Recommended properties: ${property.title || 'listing'}`);
-      recommendedButton.disabled = recommendedButton.dataset.pending === 'true';
+      recommendedButton.title = canPromote ? '' : 'Approve this listing before recommending it.';
+      recommendedButton.disabled = recommendedButton.dataset.pending === 'true' || (!canPromote && !isRecommended);
       let agentCell = row.querySelector('[data-og-agent-cell]');
       if (!agentCell) {
         agentCell = document.createElement('td');

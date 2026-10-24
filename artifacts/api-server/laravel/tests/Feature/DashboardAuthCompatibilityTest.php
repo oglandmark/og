@@ -143,6 +143,10 @@ class DashboardAuthCompatibilityTest extends TestCase
     public function test_admin_can_manage_mobile_recommended_properties_and_sellers_cannot_promote_their_own(): void
     {
         $this->seedDashboardFixture();
+        $data = JsonStore::read();
+        $data['properties'][0]['approvalStatus'] = 'Active';
+        $data['properties'][0]['listingStatus'] = 'Active';
+        JsonStore::write($data);
 
         $sellerToken = $this->login('dashboard-seller@example.test');
         $this->postJson('/api/properties', [
@@ -175,6 +179,28 @@ class DashboardAuthCompatibilityTest extends TestCase
             'recommended' => true,
         ], ['Authorization' => "Bearer {$sellerToken}"])
             ->assertForbidden();
+    }
+
+    public function test_featured_and_recommended_flags_require_an_approved_listing(): void
+    {
+        $this->seedDashboardFixture();
+        $data = JsonStore::read();
+        $data['properties'][0]['approvalStatus'] = 'Pending';
+        $data['properties'][0]['listingStatus'] = 'Pending';
+        JsonStore::write($data);
+        $adminToken = $this->login('dashboard-admin@example.test');
+        $adminHeaders = ['Authorization' => "Bearer {$adminToken}"];
+
+        $this->patchJson('/api/admin/properties/991/feature', ['featured' => true], $adminHeaders)
+            ->assertUnprocessable()
+            ->assertJsonPath('error', 'Approve the listing before featuring or recommending it.');
+        $this->patchJson('/api/admin/properties/991/recommend', ['recommended' => true], $adminHeaders)
+            ->assertUnprocessable();
+
+        $this->patchJson('/api/admin/properties/991/approve', [], $adminHeaders)->assertOk();
+        $this->patchJson('/api/admin/properties/991/feature', ['featured' => true], $adminHeaders)
+            ->assertOk()
+            ->assertJsonPath('featured', true);
     }
 
     public function test_latest_mobile_property_sort_uses_creation_time_then_id(): void

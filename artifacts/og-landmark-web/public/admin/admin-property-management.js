@@ -11,9 +11,14 @@
   let agents = [];
   const propertyViews = new Set(['listed', 'in-progress', 'closed']);
   const requestedView = new URLSearchParams(window.location.search).get('propertyView');
+  const agricultureView = requestedView === 'agriculture';
   let filter = propertyViews.has(requestedView) ? requestedView : 'all';
-  let categoryFilter = 'all';
+  let categoryFilter = agricultureView ? 'agricultural' : 'all';
   let cityFilter = 'all';
+  let featuredFilter = 'all';
+  let recommendedFilter = 'all';
+  let latestFilter = 'all';
+  let latestMobileIds = new Set();
   let observer;
   let enhancementQueued = false;
   let modal;
@@ -68,8 +73,45 @@
     if (value === 'okara') return city.includes('okara');
     return city === normalize(value);
   };
-  const matchesPropertyFilters = (property, status = filter, category = categoryFilter, city = cityFilter) =>
-    matchesFilter(property, status) && matchesCategory(property, category) && matchesCity(property, city);
+  const isFeaturedProperty = (property) => property?.featured === true
+    || property?.featured === 1
+    || ['true', '1', 'yes'].includes(normalize(property?.featured));
+  const matchesFeatured = (property, value) => value === 'all'
+    || (value === 'featured' ? isFeaturedProperty(property) : !isFeaturedProperty(property));
+  const isRecommendedProperty = (property) => property?.recommended === true
+    || property?.recommended === 1
+    || ['true', '1', 'yes'].includes(normalize(property?.recommended));
+  const matchesRecommended = (property, value) => value === 'all'
+    || (value === 'recommended' ? isRecommendedProperty(property) : !isRecommendedProperty(property));
+  const matchesLatest = (property, value) => value === 'all' || latestMobileIds.has(String(property?.id));
+  const compareLatest = (left, right) => {
+    const leftDate = Date.parse(left.createdAt || '');
+    const rightDate = Date.parse(right.createdAt || '');
+    const dateOrder = (Number.isFinite(rightDate) ? rightDate : 0)
+      - (Number.isFinite(leftDate) ? leftDate : 0);
+    return dateOrder || (Number(right.id) || 0) - (Number(left.id) || 0);
+  };
+  const isMobilePublicListing = (property) => ['active', 'approved'].includes(normalize(property.approvalStatus || 'active'))
+    && ['active', 'approved'].includes(normalize(property.listingStatus || 'active'));
+  const getLatestMobileProperties = () => apiProperties
+    .filter((property) => !property.isDemo && !property.isProject && isMobilePublicListing(property))
+    .slice()
+    .sort(compareLatest)
+    .slice(0, 6);
+  const matchesPropertyFilters = (
+    property,
+    status = filter,
+    category = categoryFilter,
+    city = cityFilter,
+    featured = featuredFilter,
+    recommended = recommendedFilter,
+    latest = latestFilter,
+  ) => matchesFilter(property, status)
+    && matchesCategory(property, category)
+    && matchesCity(property, city)
+    && matchesFeatured(property, featured)
+    && matchesRecommended(property, recommended)
+    && matchesLatest(property, latest);
   const apiBase = () => String(window.__OG_API_BASE__ || '/api').replace(/\/+$/, '');
   const propertyList = (payload) => {
     if (Array.isArray(payload)) return payload;
@@ -81,6 +123,7 @@
     return [];
   };
   function rebuildPropertyData() {
+    latestMobileIds = new Set(getLatestMobileProperties().map((property) => String(property.id)));
     const unique = new Map();
     for (const property of [
       ...apiProperties,
@@ -240,6 +283,34 @@
       .og-pm-filter.is-active{background:#0B1F3A;color:#fff;border-color:#0B1F3A}
       .og-pm-manage{border:1px solid #c8a45a;border-radius:7px;background:#fff;color:#0B1F3A;padding:6px 9px;font:600 12px system-ui;white-space:nowrap;cursor:pointer}
       .og-pm-manage:hover{background:#fbf7ed}
+      .og-pm-feature-toggle{min-width:112px;border:1px solid #dbe2ea;border-radius:999px;background:#fff;color:#475569;padding:7px 10px;font:700 11px/1.1 system-ui;white-space:nowrap;cursor:pointer}
+      .og-pm-feature-toggle.is-featured{border-color:#c8a45a;background:#fbf7ed;color:#805b12}
+      .og-pm-feature-toggle:disabled{opacity:.55;cursor:wait}
+      .og-pm-feature-badge{display:inline-flex;align-items:center;border:1px solid #dbe2ea;border-radius:999px;background:#f8fafc;color:#64748b;padding:4px 8px;font:700 10px/1 system-ui;white-space:nowrap}
+      .og-pm-feature-badge.is-featured{border-color:#e8d7aa;background:#fbf7ed;color:#805b12}
+      .og-pm-recommend-toggle{min-width:120px;border:1px solid #dbe2ea;border-radius:999px;background:#fff;color:#475569;padding:7px 10px;font:700 11px/1.1 system-ui;white-space:nowrap;cursor:pointer}
+      .og-pm-recommend-toggle.is-recommended{border-color:#b7d4c2;background:#f1f8f3;color:#21613a}
+      .og-pm-recommend-toggle:disabled{opacity:.55;cursor:wait}
+      .og-pm-latest-panel{margin:14px 16px 4px;padding:18px;border:1px solid #dbe4ee;border-radius:14px;background:linear-gradient(120deg,#f7fafc,#fff)}
+      .og-pm-latest-head{margin-bottom:14px}
+      .og-pm-latest-kicker{color:#9b762f;font:700 10px/1.2 system-ui;letter-spacing:.12em;text-transform:uppercase}
+      .og-pm-latest-title{margin:4px 0 0;color:#0B1F3A;font:700 18px/1.2 system-ui}
+      .og-pm-latest-subtitle{margin:4px 0 0;color:#64748b;font:400 12px/1.4 system-ui}
+      .og-pm-latest-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}
+      .og-pm-latest-item{display:flex;align-items:center;gap:10px;min-width:0;padding:10px;border:1px solid #e5eaf0;border-radius:10px;background:#fff}
+      .og-pm-latest-rank{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:9px;background:#0B1F3A;color:#fff;font:700 11px system-ui}
+      .og-pm-latest-info{flex:1;min-width:0}
+      .og-pm-latest-name{overflow:hidden;color:#0B1F3A;font:700 12px/1.3 system-ui;text-overflow:ellipsis;white-space:nowrap}
+      .og-pm-latest-meta{overflow:hidden;margin-top:3px;color:#64748b;font:400 10px/1.3 system-ui;text-overflow:ellipsis;white-space:nowrap}
+      .og-pm-latest-edit{border:1px solid #c8a45a;border-radius:7px;background:#fff;color:#0B1F3A;padding:6px 8px;font:700 10px system-ui;white-space:nowrap;cursor:pointer}
+      .og-pm-latest-empty{padding:12px;border:1px dashed #cbd5e1;border-radius:10px;color:#64748b;font:500 12px system-ui}
+      .og-pm-agriculture-overview{display:grid;grid-template-columns:minmax(220px,1.5fr) repeat(3,minmax(120px,1fr));gap:10px;margin:14px 16px 0;padding:16px;border:1px solid #dce7dc;border-radius:14px;background:linear-gradient(115deg,#f0f7f1,#fff)}
+      .og-pm-agriculture-intro{align-self:center}.og-pm-agriculture-kicker{color:#54755c;font:800 10px system-ui;letter-spacing:.12em;text-transform:uppercase}
+      .og-pm-agriculture-title{margin:4px 0;color:#153b25;font:700 18px/1.2 system-ui}.og-pm-agriculture-copy{margin:0;color:#64748b;font:400 11px/1.45 system-ui}
+      .og-pm-agriculture-stat{padding:10px 12px;border:1px solid #e3ebe3;border-radius:10px;background:#fff}
+      .og-pm-agriculture-stat span{display:block;color:#64748b;font:700 9px system-ui;letter-spacing:.06em;text-transform:uppercase}
+      .og-pm-agriculture-stat strong{display:block;margin-top:5px;color:#153b25;font:700 19px/1.2 system-ui}
+      @media(max-width:760px){.og-pm-agriculture-overview{grid-template-columns:repeat(3,minmax(0,1fr))}.og-pm-agriculture-intro{grid-column:1/-1}}
       .og-pm-backdrop{position:fixed;inset:0;z-index:11000;display:flex;align-items:center;justify-content:center;padding:16px;background:#071526b8}
       .og-pm-dialog{width:min(850px,100%);max-height:92vh;overflow:auto;border-radius:16px;background:#fff;color:#0B1F3A;box-shadow:0 24px 70px #0004;font:14px system-ui}
       .og-pm-head{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;gap:16px;padding:18px 22px;background:#fff;border-bottom:1px solid #e2e8f0}
@@ -604,6 +675,18 @@
             : `PKR ${Number(property.price).toLocaleString()}`;
         } else if (label === 'status') {
           cell.textContent = property.isProject ? property.status : 'Active · Demo';
+        } else if (label === 'featured') {
+          const badge = document.createElement('span');
+          badge.className = `og-pm-feature-badge${isFeaturedProperty(property) && !property.isProject ? ' is-featured' : ''}`;
+          badge.textContent = property.isProject
+            ? 'Not applicable'
+            : isFeaturedProperty(property) ? 'Featured · Demo' : 'Not featured';
+          cell.appendChild(badge);
+        } else if (label === 'recommended') {
+          const badge = document.createElement('span');
+          badge.className = 'og-pm-feature-badge';
+          badge.textContent = property.isProject ? 'Not applicable' : 'Demo fallback';
+          cell.appendChild(badge);
         } else if (label.includes('referred agent')) {
           cell.textContent = property.isProject ? 'Project record' : 'Demo listing';
         } else if (label === 'manage') {
@@ -734,6 +817,60 @@
     const payload = response.status === 204 ? null : await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload?.error || payload?.message || `Request failed (${response.status})`);
     return payload;
+  }
+
+  async function toggleFeaturedProperty(property, button) {
+    if (!property || property.isDemo || property.isProject || property.id == null) return;
+    const nextFeatured = !isFeaturedProperty(property);
+    button.disabled = true;
+    button.dataset.pending = 'true';
+    try {
+      const updated = await request(
+        `/admin/properties/${encodeURIComponent(property.id)}/feature`,
+        { method: 'PATCH', body: JSON.stringify({ featured: nextFeatured }) },
+      );
+      const savedProperty = updated?.property || updated;
+      const savedFeatured = typeof savedProperty?.featured === 'boolean'
+        ? savedProperty.featured
+        : nextFeatured;
+      const id = String(property.id);
+      const merged = { ...property, ...(savedProperty || {}), featured: savedFeatured };
+      button.dataset.pending = '';
+      apiProperties = apiProperties.map((item) => String(item.id) === id ? merged : item);
+      if (observedProperties.has(id)) observedProperties.set(id, merged);
+      rebuildPropertyData();
+    } catch (error) {
+      button.disabled = false;
+      button.dataset.pending = '';
+      window.alert(error.message || 'Could not update the Featured status.');
+    }
+  }
+
+  async function toggleRecommendedProperty(property, button) {
+    if (!property || property.isDemo || property.isProject || property.id == null) return;
+    const nextRecommended = !isRecommendedProperty(property);
+    button.disabled = true;
+    button.dataset.pending = 'true';
+    try {
+      const updated = await request(
+        `/admin/properties/${encodeURIComponent(property.id)}/recommend`,
+        { method: 'PATCH', body: JSON.stringify({ recommended: nextRecommended }) },
+      );
+      const savedProperty = updated?.property || updated;
+      const savedRecommended = typeof savedProperty?.recommended === 'boolean'
+        ? savedProperty.recommended
+        : nextRecommended;
+      const id = String(property.id);
+      const merged = { ...property, ...(savedProperty || {}), recommended: savedRecommended };
+      button.dataset.pending = '';
+      apiProperties = apiProperties.map((item) => String(item.id) === id ? merged : item);
+      if (observedProperties.has(id)) observedProperties.set(id, merged);
+      rebuildPropertyData();
+    } catch (error) {
+      button.disabled = false;
+      button.dataset.pending = '';
+      window.alert(error.message || 'Could not update the Recommended status.');
+    }
   }
 
   async function loadPropertyData() {
@@ -931,6 +1068,15 @@
         ['commercial', 'Commercial'], ['agricultural', 'Agricultural'],
         ['industrial', 'Industrial'], ['projects', 'Projects'],
       ] },
+      { label: 'Featured', key: 'featured', items: [
+        ['all', 'All'], ['featured', 'Featured only'], ['not-featured', 'Not featured'],
+      ] },
+      { label: 'Recommended', key: 'recommended', items: [
+        ['all', 'All'], ['recommended', 'Recommended only'], ['not-recommended', 'Not recommended'],
+      ] },
+      { label: 'Mobile Home', key: 'latest', items: [
+        ['all', 'All listings'], ['latest', 'Latest 6 on mobile'],
+      ] },
       { label: 'City', key: 'city', items: [
         ['all', 'Cities'], ['Okara', 'Okara'], ['Depalpur', 'Depalpur'],
         ['Renala Khurd', 'Renala Khurd'], ['Haveli Lakha', 'Haveli Lakha'],
@@ -952,6 +1098,9 @@
         button.addEventListener('click', () => {
           if (group.key === 'filter') filter = value;
           if (group.key === 'category') categoryFilter = value;
+          if (group.key === 'featured') featuredFilter = value;
+          if (group.key === 'recommended') recommendedFilter = value;
+          if (group.key === 'latest') latestFilter = value;
           if (group.key === 'city') cityFilter = value;
           queueEnhancement();
         });
@@ -961,6 +1110,103 @@
       filters.appendChild(row);
     }
     table.closest('.bg-white')?.prepend(filters);
+  }
+
+  function renderLatestPanel(root, table) {
+    const card = table.closest('.bg-white');
+    if (!card) return;
+    let panel = card.querySelector('[data-og-latest-panel]');
+    if (!panel) {
+      panel = document.createElement('section');
+      panel.dataset.ogLatestPanel = 'true';
+      panel.className = 'og-pm-latest-panel';
+      const filters = card.querySelector('.og-pm-filters');
+      if (filters) filters.after(panel);
+      else card.prepend(panel);
+    }
+
+    const latest = getLatestMobileProperties();
+    const signature = JSON.stringify(latest.map((property) => [
+      property.id, property.title, property.city, property.type, property.price, property.createdAt,
+    ]));
+    if (panel.dataset.signature === signature) return;
+    panel.dataset.signature = signature;
+    panel.replaceChildren();
+
+    const kicker = document.createElement('div');
+    kicker.className = 'og-pm-latest-kicker';
+    kicker.textContent = 'MOBILE HOME · LATEST 6';
+    const title = document.createElement('h3');
+    title.className = 'og-pm-latest-title';
+    title.textContent = 'Latest properties';
+    const subtitle = document.createElement('p');
+    subtitle.className = 'og-pm-latest-subtitle';
+    subtitle.textContent = 'Newest approved listings currently shown in the mobile app.';
+    const heading = document.createElement('div');
+    heading.className = 'og-pm-latest-head';
+    heading.append(kicker, title, subtitle);
+    panel.appendChild(heading);
+
+    if (!latest.length) {
+      const empty = document.createElement('div');
+      empty.className = 'og-pm-latest-empty';
+      empty.textContent = 'No approved live listings are available for the mobile Latest section.';
+      panel.appendChild(empty);
+      return;
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'og-pm-latest-grid';
+    latest.forEach((property, index) => {
+      const item = document.createElement('div');
+      item.className = 'og-pm-latest-item';
+      const rank = document.createElement('span');
+      rank.className = 'og-pm-latest-rank';
+      rank.textContent = String(index + 1).padStart(2, '0');
+      const info = document.createElement('div');
+      info.className = 'og-pm-latest-info';
+      const name = document.createElement('div');
+      name.className = 'og-pm-latest-name';
+      name.textContent = property.title || 'Untitled property';
+      const meta = document.createElement('div');
+      meta.className = 'og-pm-latest-meta';
+      const price = property.price == null ? '' : `PKR ${Number(property.price).toLocaleString()}`;
+      meta.textContent = [property.type, property.city, price].filter(Boolean).join(' · ');
+      info.append(name, meta);
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.className = 'og-pm-latest-edit';
+      edit.textContent = 'Edit';
+      edit.addEventListener('click', () => { void openPropertyEditor(property, edit); });
+      item.append(rank, info, edit);
+      grid.appendChild(item);
+    });
+    panel.appendChild(grid);
+  }
+
+  function renderAgricultureOverview(root) {
+    if (!agricultureView) return;
+    const card = root.querySelector('.bg-white');
+    if (!card) return;
+    let panel = card.querySelector('[data-og-agriculture-overview]');
+    if (!panel) {
+      panel = document.createElement('section');
+      panel.dataset.ogAgricultureOverview = 'true';
+      panel.className = 'og-pm-agriculture-overview';
+      const filters = card.querySelector('.og-pm-filters');
+      if (filters) filters.before(panel);
+      else card.prepend(panel);
+    }
+    const farms = apiProperties.filter((property) => !property.isDemo && !property.isProject && matchesCategory(property, 'agricultural'));
+    const liveCount = farms.filter((property) => matchesFilter(property, 'listed')).length;
+    const reviewCount = farms.filter((property) => matchesFilter(property, 'in-progress')).length;
+    const signature = `${farms.length}:${liveCount}:${reviewCount}`;
+    if (panel.dataset.signature === signature) return;
+    panel.dataset.signature = signature;
+    panel.innerHTML = `<div class="og-pm-agriculture-intro"><div class="og-pm-agriculture-kicker">Land management</div><h3 class="og-pm-agriculture-title">Agriculture land</h3><p class="og-pm-agriculture-copy">Farmland listings are separated here and remain connected to the existing review, map, media and listing editor.</p></div>
+      <div class="og-pm-agriculture-stat"><span>Land listings</span><strong>${farms.length}</strong></div>
+      <div class="og-pm-agriculture-stat"><span>Live / approved</span><strong>${liveCount}</strong></div>
+      <div class="og-pm-agriculture-stat"><span>Under review</span><strong>${reviewCount}</strong></div>`;
   }
 
   function enhance() {
@@ -977,6 +1223,8 @@
     const table = root.querySelector('table');
     if (!table) return;
     addFilters(root);
+    renderAgricultureOverview(root);
+    renderLatestPanel(root, table);
     const headers = table.querySelector('thead tr');
     if (headers && !headers.querySelector('[data-og-pm-header]')) {
       const th = document.createElement('th');
@@ -987,6 +1235,20 @@
       const th = document.createElement('th');
       th.dataset.ogAgentHeader = 'true'; th.className = 'text-left px-4 py-3 font-semibold'; th.textContent = 'Referred agent';
       headers.insertBefore(th, headers.querySelector('[data-og-pm-header]') || null);
+    }
+    if (headers && !headers.querySelector('[data-og-featured-header]')) {
+      const th = document.createElement('th');
+      th.dataset.ogFeaturedHeader = 'true';
+      th.className = 'text-left px-4 py-3 font-semibold';
+      th.textContent = 'Featured';
+      headers.insertBefore(th, headers.querySelector('[data-og-agent-header]') || headers.querySelector('[data-og-pm-header]') || null);
+    }
+    if (headers && !headers.querySelector('[data-og-recommended-header]')) {
+      const th = document.createElement('th');
+      th.dataset.ogRecommendedHeader = 'true';
+      th.className = 'text-left px-4 py-3 font-semibold';
+      th.textContent = 'Recommended';
+      headers.insertBefore(th, headers.querySelector('[data-og-agent-header]') || headers.querySelector('[data-og-pm-header]') || null);
     }
     ensureMobileDemoRows(table);
     const used = new Set();
@@ -1025,6 +1287,60 @@
       button.__ogListingProperty = property;
       const rowStatus = row.dataset.ogPropertyStatus;
       row.hidden = !matchesPropertyFilters(property);
+      let featuredCell = row.querySelector('[data-og-featured-cell]');
+      if (!featuredCell) {
+        featuredCell = document.createElement('td');
+        featuredCell.dataset.ogFeaturedCell = 'true';
+        featuredCell.className = 'px-4 py-3';
+        const featuredColumnIndex = [...headers.children]
+          .findIndex((header) => header.hasAttribute('data-og-featured-header'));
+        row.insertBefore(featuredCell, row.cells[featuredColumnIndex] || null);
+      }
+      let featureButton = featuredCell.querySelector('[data-og-feature-toggle]');
+      if (!featureButton) {
+        featureButton = document.createElement('button');
+        featureButton.dataset.ogFeatureToggle = 'true';
+        featureButton.type = 'button';
+        featureButton.className = 'og-pm-feature-toggle';
+        featureButton.addEventListener('click', () => {
+          void toggleFeaturedProperty(featureButton.__ogListingProperty, featureButton);
+        });
+        featuredCell.appendChild(featureButton);
+      }
+      featureButton.__ogListingProperty = property;
+      const isFeatured = isFeaturedProperty(property);
+      featureButton.textContent = isFeatured ? '★ Featured' : '☆ Feature listing';
+      featureButton.classList.toggle('is-featured', isFeatured);
+      featureButton.setAttribute('aria-pressed', String(isFeatured));
+      featureButton.setAttribute('aria-label', `${isFeatured ? 'Remove from' : 'Add to'} Featured properties: ${property.title || 'listing'}`);
+      featureButton.disabled = featureButton.dataset.pending === 'true';
+      let recommendedCell = row.querySelector('[data-og-recommended-cell]');
+      if (!recommendedCell) {
+        recommendedCell = document.createElement('td');
+        recommendedCell.dataset.ogRecommendedCell = 'true';
+        recommendedCell.className = 'px-4 py-3';
+        const recommendedColumnIndex = [...headers.children]
+          .findIndex((header) => header.hasAttribute('data-og-recommended-header'));
+        row.insertBefore(recommendedCell, row.cells[recommendedColumnIndex] || null);
+      }
+      let recommendedButton = recommendedCell.querySelector('[data-og-recommend-toggle]');
+      if (!recommendedButton) {
+        recommendedButton = document.createElement('button');
+        recommendedButton.dataset.ogRecommendToggle = 'true';
+        recommendedButton.type = 'button';
+        recommendedButton.className = 'og-pm-recommend-toggle';
+        recommendedButton.addEventListener('click', () => {
+          void toggleRecommendedProperty(recommendedButton.__ogListingProperty, recommendedButton);
+        });
+        recommendedCell.appendChild(recommendedButton);
+      }
+      recommendedButton.__ogListingProperty = property;
+      const isRecommended = isRecommendedProperty(property);
+      recommendedButton.textContent = isRecommended ? '✓ Recommended' : '+ Recommend';
+      recommendedButton.classList.toggle('is-recommended', isRecommended);
+      recommendedButton.setAttribute('aria-pressed', String(isRecommended));
+      recommendedButton.setAttribute('aria-label', `${isRecommended ? 'Remove from' : 'Add to'} Recommended properties: ${property.title || 'listing'}`);
+      recommendedButton.disabled = recommendedButton.dataset.pending === 'true';
       let agentCell = row.querySelector('[data-og-agent-cell]');
       if (!agentCell) {
         agentCell = document.createElement('td');
@@ -1045,16 +1361,25 @@
     root.querySelectorAll('.og-pm-filter').forEach((button) => {
       const statusValue = button.dataset.filter;
       const categoryValue = button.dataset.category;
+      const featuredValue = button.dataset.featured;
+      const recommendedValue = button.dataset.recommended;
+      const latestValue = button.dataset.latest;
       const cityValue = button.dataset.city;
-      const value = statusValue ?? categoryValue ?? cityValue ?? 'all';
+      const value = statusValue ?? categoryValue ?? featuredValue ?? recommendedValue ?? latestValue ?? cityValue ?? 'all';
       const count = properties.filter((item) => {
-        if (statusValue !== undefined) return matchesPropertyFilters(item, statusValue);
-        if (categoryValue !== undefined) return matchesPropertyFilters(item, filter, categoryValue);
-        return matchesPropertyFilters(item, filter, categoryFilter, cityValue);
+        if (statusValue !== undefined) return matchesPropertyFilters(item, statusValue, categoryFilter, cityFilter, featuredFilter);
+        if (categoryValue !== undefined) return matchesPropertyFilters(item, filter, categoryValue, cityFilter, featuredFilter);
+        if (featuredValue !== undefined) return matchesPropertyFilters(item, filter, categoryFilter, cityFilter, featuredValue);
+        if (recommendedValue !== undefined) return matchesPropertyFilters(item, filter, categoryFilter, cityFilter, featuredFilter, recommendedValue);
+        if (latestValue !== undefined) return matchesPropertyFilters(item, filter, categoryFilter, cityFilter, featuredFilter, recommendedFilter, latestValue);
+        return matchesPropertyFilters(item, filter, categoryFilter, cityValue, featuredFilter);
       }).length;
       const active = statusValue !== undefined ? filter === statusValue
         : categoryValue !== undefined ? categoryFilter === categoryValue
-          : cityFilter === cityValue;
+          : featuredValue !== undefined ? featuredFilter === featuredValue
+            : recommendedValue !== undefined ? recommendedFilter === recommendedValue
+                : latestValue !== undefined ? latestFilter === latestValue
+                  : cityFilter === cityValue;
       const title = button.textContent.replace(/\s·\s\d+$/, '');
       const label = `${title} · ${count}`;
       if (button.textContent !== label) button.textContent = label;

@@ -12,7 +12,15 @@ const propertyManagementSource = fs.readFileSync(
   path.join(__dirname, '..', 'public', 'admin', 'admin-property-management.js'),
   'utf8',
 );
+const mobileManagementSource = fs.readFileSync(
+  path.join(__dirname, '..', 'public', 'admin', 'admin-mobile-management.js'),
+  'utf8',
+);
 const serverSource = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+const apiControllerSource = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'api-server', 'laravel', 'app', 'Http', 'Controllers', 'ApiController.php'),
+  'utf8',
+);
 
 test('resolves relative listing media from the website origin and preserves external URLs', () => {
   assert.equal(
@@ -75,6 +83,60 @@ test('Admin counts properties visible in the table and includes the mobile demo 
   assert.match(propertyManagementSource, /request\('\/admin\/developer-projects'\)/);
   assert.match(propertyManagementSource, /request\('\/admin\/properties'\)/);
   assert.match(propertyManagementSource, /Read only/);
+});
+
+test('Admin can filter and persist featured status for live mobile properties', () => {
+  assert.match(propertyManagementSource, /Featured only/);
+  assert.match(propertyManagementSource, /Not featured/);
+  assert.match(propertyManagementSource, /data-og-featured-header/);
+  assert.match(propertyManagementSource, /\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}\/feature/);
+  assert.match(propertyManagementSource, /JSON\.stringify\(\{ featured: nextFeatured \}\)/);
+  assert.match(propertyManagementSource, /property\.isDemo \|\| property\.isProject/);
+  assert.match(propertyManagementSource, /featuredFilter/);
+});
+
+test('Admin can select and filter persistent Recommended listings for mobile Home', () => {
+  assert.match(propertyManagementSource, /Recommended only/);
+  assert.match(propertyManagementSource, /Not recommended/);
+  assert.match(propertyManagementSource, /data-og-recommended-header/);
+  assert.match(propertyManagementSource, /\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}\/recommend/);
+  assert.match(propertyManagementSource, /JSON\.stringify\(\{ recommended: nextRecommended \}\)/);
+  assert.match(propertyManagementSource, /property\.isDemo \|\| property\.isProject/);
+  assert.match(propertyManagementSource, /recommendedFilter/);
+  assert.ok(apiControllerSource.includes("'feature', 'recommend'"));
+  assert.ok(apiControllerSource.includes("($parts[2] ?? '') === 'recommend'"));
+  assert.ok(apiControllerSource.includes("$data['properties'][$index]['recommended']"));
+  assert.ok(apiControllerSource.includes("'recommended' => false"));
+});
+
+test('Admin separates the automatic latest six live listings from the full property table', () => {
+  assert.match(propertyManagementSource, /Latest 6 on mobile/);
+  assert.match(propertyManagementSource, /data-og-latest-panel/);
+  assert.match(propertyManagementSource, /Newest approved listings currently shown in the mobile app/);
+  assert.match(propertyManagementSource, /isMobilePublicListing/);
+  assert.match(propertyManagementSource, /createdAt/);
+});
+
+test('Admin project management supports app-shaped create/edit and safe archive flows', () => {
+  assert.match(mobileManagementSource, /title: 'Developer projects', list: '\/admin\/developer-projects', createPath: '\/admin\/developer-projects'/);
+  assert.match(mobileManagementSource, /deletePath: \(item\) => `\/admin\/developer-projects\/\$\{encodeURIComponent\(item\.id\)\}`/);
+  assert.match(mobileManagementSource, /'name', 'Project name \*'/);
+  assert.match(mobileManagementSource, /'fullDescription', 'Full project description', 'textarea'/);
+  assert.match(mobileManagementSource, /'photos', 'Gallery image URLs \(one per line\)', 'textarea'/);
+  assert.match(mobileManagementSource, /payload\.name = String\(payload\.name \|\| ''\)\.trim\(\)/);
+  assert.match(mobileManagementSource, /payload\.title = payload\.name/);
+  assert.match(mobileManagementSource, /payload\.developer = payload\.developerName/);
+  assert.match(mobileManagementSource, /status to Live or Approved to publish/);
+  assert.match(mobileManagementSource, /preserving linked blocks, units, and inventory/);
+});
+
+test('Agriculture Land has a separate Admin option with its own summary and category scope', () => {
+  assert.match(mobileManagementSource, /label: 'Agriculture Land', path: '\/admin\/properties\?propertyView=agriculture'/);
+  assert.match(propertyManagementSource, /const agricultureView = requestedView === 'agriculture'/);
+  assert.match(propertyManagementSource, /categoryFilter = agricultureView \? 'agricultural' : 'all'/);
+  assert.match(propertyManagementSource, /function renderAgricultureOverview\(root\)/);
+  assert.match(propertyManagementSource, /Land listings|agriculture land/i);
+  assert.match(propertyManagementSource, /matchesCategory\(property, 'agricultural'\)/);
 });
 
 test('Admin properties are unpaginated by default and honor an explicit page limit', () => {

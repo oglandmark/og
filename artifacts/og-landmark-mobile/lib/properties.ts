@@ -31,6 +31,8 @@ export type Property = {
   image: ImageSourcePropType;
   gallery: ImageSourcePropType[];
   featured?: boolean;
+  recommended?: boolean;
+  createdAt?: string;
   /** True only for the bundled sample listings shown when the API is unavailable. */
   isDemo?: boolean;
   /** Original bundled demo ID when a demo is given a collision-safe display ID. */
@@ -879,9 +881,10 @@ export function apiPropertyToProperty(ap: {
   bedrooms?: number | null; bathrooms?: number | null;
   city?: string | null; address?: string | null;
   description?: string | null; images?: string[] | null;
-  featured?: boolean | null; sellerName?: string | null;
+   featured?: boolean | null; recommended?: boolean | null;
+   sellerName?: string | null;
   sellerPhone?: string | null; amenities?: string[] | null;
-  createdAt?: string | null; tags?: string[] | null;
+   createdAt?: string | null; tags?: string[] | null;
   propertyScore?: { overall?: number | null } | null;
   lat?: number | null; lng?: number | null;
    location?: {
@@ -950,6 +953,8 @@ export function apiPropertyToProperty(ap: {
     image,
     gallery,
     featured:    ap.featured === true,
+    recommended: ap.recommended === true,
+    createdAt:   ap.createdAt || undefined,
     isDemo:      false,
     agent:       ap.sellerName?.trim() || 'OG Landmark',
     agentTitle:  'Property Consultant',

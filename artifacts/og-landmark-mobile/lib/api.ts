@@ -415,6 +415,7 @@ export type ApiProperty = {
   videoUrl?: string | null;
   amenities?: string[];
   featured?: boolean;
+  recommended?: boolean;
   views?: number;
   inquiryCount?: number;
   agentId?: number;
@@ -479,6 +480,7 @@ export type PropertiesFilter = {
   type?: string; city?: string; status?: string; purpose?: string;
   minPrice?: number; maxPrice?: number; minBeds?: number;
   featured?: boolean; search?: string; limit?: number; offset?: number;
+  sort?: 'latest';
   // ── Geographic filters (optional) ─────────────────────────────────────
   // Map bounds
   minLat?: number; maxLat?: number; minLng?: number; maxLng?: number;

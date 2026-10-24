@@ -33,10 +33,11 @@ import {
   filterVisibleDemoProperties,
   selectHomePropertySource,
 } from '@/lib/demoPropertyVisibility';
+import { selectRecommendedProperties } from '@/lib/recommendedProperties';
+import { selectLatestProperties } from '@/lib/latestProperties';
 import { ExploreMapView } from '@/components/ExploreMapView';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { formatPrice, properties, propertyImages, Property } from '@/lib/properties';
-import { getUserListings, UserListing } from '@/lib/listingsStore';
 import { useAuth } from '@/context/AuthContext';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { getDevProjects, DeveloperProject } from '@/lib/developerStore';
@@ -344,13 +345,6 @@ function mapApiBanner(slide: ApiBannerSlide): HomeCategoryBannerSlide | null {
 
 // ─── Static placeholder images ────────────────────────────────────────────────
 
-const HOME_PLACEHOLDERS = [
-  require('@/assets/images/property-3.jpg'),
-  require('@/assets/images/property-4.jpg'),
-  require('@/assets/images/property-5.jpg'),
-  require('@/assets/images/property-6.jpg'),
-];
-
 // ─── Location areas ───────────────────────────────────────────────────────────
 
 const LOCATION_AREAS = [
@@ -384,9 +378,9 @@ type Colors = ReturnType<typeof useColors>;
 function SectionHeader({ eyebrow, title, onViewAll, colors }: { eyebrow: string; title: string; onViewAll?: () => void; colors: Colors }) {
   return (
     <View style={s.sectionHeader}>
-      <View>
+      <View style={s.sectionHeaderContent}>
         <Text style={[s.sectionEyebrow, { color: colors.primary }]}>{eyebrow}</Text>
-        <Text style={[s.sectionTitle, { color: colors.foreground }]}>{title}</Text>
+        <Text numberOfLines={2} style={[s.sectionTitle, { color: colors.foreground }]}>{title}</Text>
       </View>
       {onViewAll && (
         <Pressable onPress={onViewAll} hitSlop={10}>
@@ -1451,12 +1445,15 @@ export default function HomeScreen() {
   const [selectedLocation, setSelectedLocation] = useState('Okara District');
   const [apiProps,         setApiProps]         = useState<Property[]>([]);
   const [apiLoading,       setApiLoading]       = useState(true);
-  const [userListings,     setUserListings]     = useState<Property[]>([]);
   const [devProjects,      setDevProjects]      = useState<DeveloperProject[]>([]);
   const [managedAgents,    setManagedAgents]    = useState<SampleAgent[]>([]);
   const [mobileContent,    setMobileContent]    = useState<MobileContent | null>(null);
   const homeContent = mobileContent?.homepage;
   const homeSections = homeContent?.sections ?? {};
+  const configuredFeaturedTitle = String(homeSections.featuredTitle || '').trim();
+  const featuredTitle = configuredFeaturedTitle.toLowerCase() === 'featured properti'
+    ? 'Featured Properties'
+    : configuredFeaturedTitle || 'Featured Properties';
   const colors = {
     ...baseColors,
     primary: homeContent?.theme?.primary || baseColors.primary,
@@ -1554,23 +1551,11 @@ export default function HomeScreen() {
   useFocusEffect(useCallback(() => {
     setApiLoading(true);
     setPropertyError('');
-    getProperties({ limit: 60 })
+    getProperties({ limit: 60, sort: 'latest' })
       .then((ps) => setApiProps(ps.map(apiPropertyToProperty)))
       .catch(() => setPropertyError('Live properties are temporarily unavailable. Showing curated examples instead.'))
       .finally(() => setApiLoading(false));
   }, []));
-
-  useFocusEffect(useCallback(() => {
-    if (!user || role !== 'agent') {
-      setUserListings([]);
-      return undefined;
-    }
-
-    getUserListings()
-      .then((ls) => setUserListings(ls.filter((l) => l.role === 'agent').map(userListingToProperty)))
-      .catch(() => undefined);
-    return undefined;
-  }, [role, user]));
 
   useEffect(() => {
     if (user && role === 'developer') {
@@ -1589,16 +1574,8 @@ export default function HomeScreen() {
   const featuredProps    = allProps.filter((p) => p.featured);
   const agriProps        = allProps.filter((p) => p.type === 'Agriculture Land').slice(0, 6);
   const commercialProps  = allProps.filter((p) => p.type === 'Commercial').slice(0, 6);
-  const latestCandidates = [...userListings, ...allProps.slice().sort((a, b) => b.id - a.id)];
-  const seenLatestIds = new Set<number>();
-  const latestProps = latestCandidates.filter((property) => {
-    if (seenLatestIds.has(property.id)) return false;
-    seenLatestIds.add(property.id);
-    return true;
-  }).slice(0, 6);
-  const recommendedProps = allProps
-    .filter((p) => transaction === 'Rent' ? p.status === 'For Rent' : p.status === 'For Sale')
-    .slice(0, 8);
+  const latestProps = selectLatestProperties(allProps, apiProps.length === 0);
+  const recommendedProps = selectRecommendedProperties(allProps, transaction, apiProps.length === 0);
   const visibleAgents = managedAgents;
 
   const ctaContent = role === 'agent'
@@ -1724,7 +1701,7 @@ export default function HomeScreen() {
 
       {/* ─── FEATURED PROPERTIES ────────────────────────────────────────── */}
       <View>
-        <SectionHeader eyebrow={homeSections.featuredEyebrow || 'HANDPICKED FOR YOU'} title={homeSections.featuredTitle || 'Featured properties'} onViewAll={() => router.push({ pathname: '/explore', params: { type: transaction } })} colors={colors} />
+        <SectionHeader eyebrow={homeSections.featuredEyebrow || 'HANDPICKED FOR YOU'} title={featuredTitle} onViewAll={() => router.push({ pathname: '/explore', params: { type: transaction } })} colors={colors} />
         {apiLoading ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.hRow}>
             {[1, 2, 3].map((i) => (
@@ -1749,7 +1726,7 @@ export default function HomeScreen() {
             title={propertyError ? 'Unable to load live properties' : 'No featured properties yet'}
             message={propertyError || 'Newly approved properties will appear here.'}
             actionLabel={propertyError ? 'Try again' : undefined}
-            onAction={propertyError ? () => { setApiLoading(true); getProperties({ limit: 60 }).then((ps) => setApiProps(ps.map(apiPropertyToProperty))).catch(() => setPropertyError('Please check your connection and try again.')).finally(() => setApiLoading(false)); } : undefined}
+            onAction={propertyError ? () => { setApiLoading(true); getProperties({ limit: 60, sort: 'latest' }).then((ps) => setApiProps(ps.map(apiPropertyToProperty))).catch(() => setPropertyError('Please check your connection and try again.')).finally(() => setApiLoading(false)); } : undefined}
             tone={propertyError ? 'error' : 'neutral'}
           />
         )}
@@ -1991,8 +1968,9 @@ const s = StyleSheet.create({
 
   // Section headers
   sectionHeader:    { paddingHorizontal: 18, paddingTop: 36, paddingBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
+  sectionHeaderContent: { flex: 1, minWidth: 0, paddingRight: 12 },
   sectionEyebrow:   { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.8, marginBottom: 6 },
-  sectionTitle:     { fontFamily: 'Inter_700Bold', fontSize: 22 },
+  sectionTitle:     { fontFamily: 'Inter_700Bold', fontSize: 22, flexShrink: 1 },
   viewAllBtn:       { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 4 },
   viewAllText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   hRow:             { paddingHorizontal: 18, paddingBottom: 4 },
@@ -2086,27 +2064,3 @@ const s = StyleSheet.create({
   infoButton:         { height: 40, borderRadius: 13, marginTop: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   infoButtonText:     { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 });
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const CITY_CENTRE: Record<string, { lat: number; lng: number }> = {
-  'Okara':             { lat: 30.8139, lng: 73.4467 },
-  'Depalpur':          { lat: 30.6647, lng: 73.9742 },
-  'Renala Khurd':      { lat: 30.8794, lng: 73.5975 },
-  'Hujra Shah Muqeem': { lat: 30.7389, lng: 73.8237 },
-  'Basirpur':          { lat: 30.5802, lng: 73.8317 },
-  'Haveli Lakha':      { lat: 30.4508, lng: 73.6936 },
-};
-
-function userListingToProperty(l: UserListing, index: number): Property {
-  const { lat, lng } = CITY_CENTRE[l.city] ?? CITY_CENTRE['Okara'];
-  return {
-    id: parseInt(l.id.replace(/\D/g, '').slice(-6), 10) || Date.now(),
-    title: l.title, type: l.type, status: l.status, price: l.price,
-    area: l.area, areaUnit: l.areaUnit, bedrooms: l.bedrooms, bathrooms: l.bathrooms,
-    city: l.city, lat, lng,
-    address: l.neighborhood ? `${l.neighborhood}, ${l.city}` : l.city,
-    description: l.description, image: HOME_PLACEHOLDERS[index % HOME_PLACEHOLDERS.length],
-    gallery: [], agent: l.agentName, agentTitle: 'Property Consultant', score: 4.0,
-  };
-}

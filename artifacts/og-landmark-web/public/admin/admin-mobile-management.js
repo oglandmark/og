@@ -27,6 +27,7 @@
   const sidebarItems = [
     { label: 'Main', path: '/admin/' },
     { label: 'Property listed', path: '/admin/properties?propertyView=listed' },
+    { label: 'Agriculture Land', path: '/admin/properties?propertyView=agriculture' },
     { label: 'User management', path: '/admin/users' },
     { label: 'Agent Management', path: '/admin/mobile/agents' },
     { label: 'App banners management', path: '/admin/mobile/banners' },
@@ -122,6 +123,7 @@
       .og-mm-form{border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px;background:#f8fafc}
       .og-mm-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
       .og-mm-field{display:flex;flex-direction:column;gap:5px}.og-mm-field.full{grid-column:1/-1}.og-mm-field label{font-size:11px;font-weight:700;color:#475569}
+      .og-mm-form-section{grid-column:1/-1;margin:8px 0 0;padding:0 0 8px;border-bottom:1px solid #dbe2ea;color:#0b1f3a;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
       .og-mm-field input,.og-mm-field textarea,.og-mm-field select{box-sizing:border-box;width:100%;border:1px solid #cbd5e1;border-radius:7px;padding:8px;background:#fff;color:#0f172a;font:12px system-ui}
       .og-mm-field textarea{min-height:66px;resize:vertical}.og-mm-form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
       .og-mm-agent-photo-preview{display:flex;align-items:center;gap:10px;margin-top:8px}.og-mm-agent-photo-preview img{width:72px;height:72px;object-fit:cover;border:1px solid #cbd5e1;border-radius:50%;background:#f1f5f9}.og-mm-agent-photo-preview span{color:#64748b;font-size:11px}
@@ -387,13 +389,45 @@
     },
     projects: {
       title: 'Developer projects', list: '/admin/developer-projects', createPath: '/admin/developer-projects',
+      addLabel: 'Add project',
+      note: 'Manage the project details shown in the mobile app. Set status to Live or Approved to publish. Archive removes it from live lists while preserving linked blocks, units, and inventory.',
       deletePath: (item) => `/admin/developer-projects/${encodeURIComponent(item.id)}`,
       fields: [
-        ['title', 'Project name'], ['developer', 'Developer'], ['city', 'City', 'city'],
-        ['status', 'Project status', 'select', ['Draft', 'Pending', 'Live', 'Archived']],
-        ['completionDate', 'Completion date', 'date'], ['description', 'Description', 'textarea'],
+        ['', 'Basic project details', 'section'],
+        ['name', 'Project name *'], ['developerName', 'Developer / company'],
+        ['developerId', 'Developer account ID (optional)'],
+        ['type', 'Project type', 'select', ['Housing Society', 'Residential', 'Apartments', 'Commercial', 'Plaza', 'Mixed Use', 'Industrial', 'Farmhouse', 'Other']],
+        ['tagline', 'Tagline'], ['shortDescription', 'Short description', 'textarea'],
+        ['fullDescription', 'Full project description', 'textarea'],
+        ['highlights', 'Key highlights (one per line)', 'textarea'],
+        ['', 'Location & contact', 'section'],
+        ['district', 'District'], ['city', 'City', 'city'], ['tehsil', 'Tehsil'],
+        ['area', 'Area / locality'], ['address', 'Street address'], ['nearbyLandmark', 'Nearby landmark'],
+        ['googleMapsLink', 'Google Maps link', 'url'], ['latitude', 'Latitude', 'number'],
+        ['longitude', 'Longitude', 'number'], ['projectOfficePhone', 'Project office phone'],
+        ['', 'Pricing & inventory', 'section'],
+        ['startingPrice', 'Starting price (PKR)', 'number'], ['maxPrice', 'Maximum price (PKR)', 'number'],
+        ['totalUnits', 'Total units', 'number'], ['availableUnits', 'Available units', 'number'],
+        ['reservedUnits', 'Reserved units', 'number'], ['soldUnits', 'Sold units', 'number'],
+        ['plotSizes', 'Plot / unit sizes (one per line)', 'textarea'],
+        ['paymentPlanAvailable', 'Payment plan available', 'checkbox'],
+        ['downPaymentPct', 'Down payment (%)', 'number'], ['installmentMonths', 'Installment duration (months)', 'number'],
+        ['totalArea', 'Total project area'], ['totalBlocks', 'Number of blocks', 'number'],
+        ['', 'Progress, approvals & media', 'section'],
+        ['developmentStatus', 'Development progress', 'select', ['Pre-Launch', 'Under Construction', 'Construction Ongoing', 'Near Completion', 'Ready for Possession', 'Completed']],
+        ['launchDate', 'Launch date', 'date'], ['expectedCompletion', 'Expected completion', 'date'],
+        ['possessionStatus', 'Possession status', 'select', ['Ready', 'Partial', 'Not Ready']],
+        ['nocStatus', 'NOC status', 'select', ['Not Applied', 'Applied', 'Pending', 'Approved']],
+        ['approvedBy', 'Approved by (one per line)', 'textarea'], ['registrationNumber', 'Registration number'],
+        ['status', 'Project status', 'select', ['Draft', 'Pending Review', 'Approved', 'Live', 'Coming Soon', 'Under Development', 'Completed', 'Paused']],
+        ['verificationStatus', 'Verification status', 'select', ['Unverified', 'Pending', 'Under Review', 'Verified']],
+        ['coverImageUri', 'Cover image URL', 'url'], ['photos', 'Gallery image URLs (one per line)', 'textarea'],
+        ['videoLinks', 'Video links (one per line)', 'textarea'], ['amenities', 'Amenities (one per line)', 'textarea'],
+        ['', 'Online presence', 'section'],
+        ['facebookPage', 'Facebook page URL', 'url'], ['website', 'Website URL', 'url'],
+        ['youtubeChannel', 'YouTube channel URL', 'url'],
       ],
-      row: (item) => `<td><strong>${esc(item.title || item.name || 'Untitled project')}</strong><div>${esc(item.developer || '—')}</div></td><td>${esc(item.city || (typeof item.location === 'object' ? item.location?.city : item.location) || '—')}</td><td>${esc(item.completionDate || '—')}</td><td>${esc(item.status || item.approvalStatus || '—')}</td>`,
+      row: (item) => `<td><strong>${esc(item.name || item.title || 'Untitled project')}</strong><div>${esc(item.developerName || item.developer || 'Developer')}</div></td><td>${esc(item.city || item.location?.city || item.location || '—')}</td><td>${esc(item.expectedCompletion || item.completionDate || '—')}</td><td><span class="og-mm-pill ${/draft|pending|paused/i.test(item.status || '') ? 'off' : ''}">${esc(item.status || item.approvalStatus || 'Draft')}</span><div>PKR ${money(item.startingPrice).replace(/^PKR /, '')}</div></td>`,
     },
     locations: {
       title: 'Service locations', list: '/admin/locations', createPath: '/admin/locations',
@@ -452,10 +486,10 @@
       const rows = items.map((item) => `<tr>${config.row(item)}<td><div class="og-mm-row-actions">
         ${key === 'notifications' && item.status !== 'sent' ? `<button class="og-mm-action primary" data-action="send-announcement" data-section="${key}" data-id="${esc(item.id)}">Send</button>` : ''}
         <button class="og-mm-action" data-action="edit-record" data-section="${key}" data-id="${esc(item.id)}">Edit</button>
-        <button class="og-mm-action danger" data-action="delete-record" data-section="${key}" data-id="${esc(item.id)}">Delete</button>
+        <button class="og-mm-action danger" data-action="delete-record" data-section="${key}" data-id="${esc(item.id)}">${key === 'projects' ? 'Archive' : 'Delete'}</button>
       </div></td></tr>`).join('');
-      const addButton = config.createPath ? `<button class="og-mm-action primary" data-action="add-record" data-section="${key}">Add new</button>` : '';
-      content.innerHTML = `<div class="og-mm-note">${esc(config.title)} — live records loaded from the shared Admin API used by the website and mobile app.</div>
+      const addButton = config.createPath ? `<button class="og-mm-action primary" data-action="add-record" data-section="${key}">${esc(config.addLabel || 'Add new')}</button>` : '';
+      content.innerHTML = `<div class="og-mm-note">${esc(config.note || `${config.title} — live records loaded from the shared Admin API used by the website and mobile app.`)}</div>
         <div style="display:flex;justify-content:flex-end;margin-bottom:12px">${addButton}</div><div id="og-mm-record-form"></div>
         <div style="overflow:auto"><table class="og-mm-table"><thead><tr>${columns.map((name) => `<th>${esc(name)}</th>`).join('')}</tr></thead>
         <tbody>${rows || `<tr><td colspan="${colspan}" class="og-mm-empty">No records found.</td></tr>`}</tbody></table></div>`;
@@ -510,18 +544,24 @@
         : `<img src="${esc(currentMediaUrl)}" alt="${esc(item.title || 'Current banner')}" style="display:block;width:min(100%,420px);max-height:220px;object-fit:cover;border-radius:8px">`
       }</div><small>Choose a replacement file to change the media, or leave it empty to keep the current one.</small></div>`
       : '';
-    wrap.innerHTML = `<form class="og-mm-form" id="og-mm-record-form-inner"><h3 style="margin:0 0 12px">${editing ? 'Edit' : 'Add'} ${esc(config.title)}</h3><div class="og-mm-grid">
+    const formTitle = key === 'projects' ? `${editing ? 'Edit' : 'Add'} project` : `${editing ? 'Edit' : 'Add'} ${config.title}`;
+    wrap.innerHTML = `<form class="og-mm-form" id="og-mm-record-form-inner"><h3 style="margin:0 0 12px">${esc(formTitle)}</h3><div class="og-mm-grid">
       ${fields.map(([name, label, type = 'text', options = [], accept]) => {
         let value = item[name] ?? '';
-        if (key === 'projects' && name === 'title' && !value) value = item.name || '';
+        if (type === 'section') return `<div class="og-mm-form-section">${esc(label)}</div>`;
+        if (key === 'projects' && name === 'name' && !value) value = item.title || '';
+        if (key === 'projects' && name === 'developerName' && !value) value = item.developer || '';
         if (key === 'projects' && name === 'city' && !value) {
           value = typeof item.location === 'object' ? item.location?.city || '' : item.location || '';
+        }
+        if (key === 'projects' && ['highlights', 'plotSizes', 'approvedBy', 'photos', 'videoLinks', 'amenities'].includes(name) && Array.isArray(value)) {
+          value = value.join('\n');
         }
         if (key === 'notifications' && name === 'audienceRole') value = item.audience?.role || 'all';
         if (key === 'notifications' && name === 'audienceCity') value = item.audience?.city || '';
         const full = type === 'textarea' ? ' full' : '';
         if (type === 'readonly') return `<div class="og-mm-field"><label>${esc(label)}</label><input disabled value="${esc(value)}"></div>`;
-        if (type === 'checkbox') return `<div class="og-mm-field${full}"><label><input type="checkbox" name="${esc(name)}" ${(name === 'sendNow' ? Boolean(value) : value !== false) ? 'checked' : ''}> ${esc(label)}</label></div>`;
+        if (type === 'checkbox') return `<div class="og-mm-field${full}"><label><input type="checkbox" name="${esc(name)}" ${(name === 'sendNow' || key === 'projects' ? Boolean(value) : value !== false) ? 'checked' : ''}> ${esc(label)}</label></div>`;
         if (type === 'file') {
           const bannerAccept = key === 'banners' && editing
             ? (item.type === 'video' ? '.mp4,.mov' : '.jpg,.jpeg,.png,.webp')
@@ -542,9 +582,10 @@
           return `<div class="og-mm-field"><label>${esc(label)}</label><select name="${esc(name)}">${selectOptions.map((option) => `<option value="${esc(option)}" ${String(value).toLowerCase() === option.toLowerCase() ? 'selected' : ''}>${esc(option)}</option>`).join('')}</select></div>`;
         }
         if (type === 'textarea') return `<div class="og-mm-field full"><label>${esc(label)}</label><textarea name="${esc(name)}" maxlength="6000">${esc(value)}</textarea></div>`;
-        return `<div class="og-mm-field"><label>${esc(label)}</label><input name="${esc(name)}" type="${esc(type)}" ${type === 'number' ? 'step="any"' : ''} value="${esc(value)}"></div>`;
+        const required = key === 'projects' && name === 'name' ? 'required maxlength="180"' : '';
+        return `<div class="og-mm-field"><label>${esc(label)}</label><input name="${esc(name)}" type="${esc(type)}" ${type === 'number' ? 'step="any"' : ''} ${required} value="${esc(value)}"></div>`;
       }).join('')}${currentMediaPreview}
-    </div><div class="og-mm-form-actions"><button type="button" class="og-mm-action" data-action="cancel-record" data-section="${key}">Cancel</button><button class="og-mm-action primary" type="submit">Save</button></div></form>`;
+    </div><div class="og-mm-form-actions"><button type="button" class="og-mm-action" data-action="cancel-record" data-section="${key}">Cancel</button><button class="og-mm-action primary" type="submit">${key === 'projects' ? 'Save project' : 'Save'}</button></div></form>`;
     wrap.querySelector('form').addEventListener('submit', async (event) => {
       event.preventDefault();
       const form = event.currentTarget;
@@ -555,6 +596,17 @@
       for (const [name, , type] of config.fields) {
         if (type === 'checkbox') payload[name] = form.elements[name].checked;
         if (type === 'number' && data[name] !== undefined && data[name] !== '') payload[name] = Number(data[name]);
+      }
+      if (key === 'projects') {
+        const splitLines = (value) => String(value || '').split(/\r?\n/).map((entry) => entry.trim()).filter(Boolean);
+        for (const name of ['highlights', 'plotSizes', 'approvedBy', 'photos', 'videoLinks', 'amenities']) {
+          payload[name] = splitLines(payload[name]);
+        }
+        payload.name = String(payload.name || '').trim();
+        payload.title = payload.name;
+        payload.developerName = String(payload.developerName || '').trim();
+        payload.developer = payload.developerName;
+        if (!payload.developerId) delete payload.developerId;
       }
       if (key === 'notifications') {
         payload.audience = { role: payload.audienceRole || 'all', city: payload.audienceCity || '' };

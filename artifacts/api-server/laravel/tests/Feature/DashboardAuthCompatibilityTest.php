@@ -140,6 +140,73 @@ class DashboardAuthCompatibilityTest extends TestCase
             ->assertUnauthorized();
     }
 
+    public function test_admin_can_manage_mobile_recommended_properties_and_sellers_cannot_promote_their_own(): void
+    {
+        $this->seedDashboardFixture();
+
+        $sellerToken = $this->login('dashboard-seller@example.test');
+        $this->postJson('/api/properties', [
+            'title' => 'Seller submitted recommendation flag',
+            'recommended' => true,
+        ], ['Authorization' => "Bearer {$sellerToken}"])
+            ->assertCreated()
+            ->assertJsonPath('recommended', false);
+
+        $adminToken = $this->login('dashboard-admin@example.test');
+        $adminHeaders = ['Authorization' => "Bearer {$adminToken}"];
+
+        $this->patchJson('/api/admin/properties/991/recommend', [
+            'recommended' => true,
+        ], $adminHeaders)
+            ->assertOk()
+            ->assertJsonPath('recommended', true);
+        $this->assertTrue(JsonStore::read()['properties'][0]['recommended']);
+
+        $this->patchJson('/api/admin/properties/991/recommend', [
+            'recommended' => false,
+        ], $adminHeaders)
+            ->assertOk()
+            ->assertJsonPath('recommended', false);
+        $stored = JsonStore::read()['properties'][0];
+        $this->assertFalse($stored['recommended']);
+        $this->assertSame('recommend', end($stored['reviewHistory'])['action']);
+
+        $this->patchJson('/api/admin/properties/991/recommend', [
+            'recommended' => true,
+        ], ['Authorization' => "Bearer {$sellerToken}"])
+            ->assertForbidden();
+    }
+
+    public function test_latest_mobile_property_sort_uses_creation_time_then_id(): void
+    {
+        $this->seedDashboardFixture();
+        $data = JsonStore::read();
+        $data['properties'][0] = array_merge($data['properties'][0], [
+            'approvalStatus' => 'Active',
+            'listingStatus' => 'Active',
+            'createdAt' => '2026-01-01T00:00:00Z',
+        ]);
+        $data['properties'][1] = array_merge($data['properties'][1], [
+            'approvalStatus' => 'Active',
+            'listingStatus' => 'Active',
+            'createdAt' => '2026-03-01T00:00:00Z',
+        ]);
+        $data['properties'][] = [
+            'id' => 993,
+            'title' => 'Pending listing with a newer date',
+            'sellerId' => 903,
+            'approvalStatus' => 'Pending',
+            'listingStatus' => 'Pending',
+            'createdAt' => '2026-04-01T00:00:00Z',
+        ];
+        JsonStore::write($data);
+
+        $this->getJson('/api/properties?sort=latest&limit=2')
+            ->assertOk()
+            ->assertJsonPath('0.id', 992)
+            ->assertJsonPath('1.id', 991);
+    }
+
     public function test_admin_listing_and_user_actions_match_the_dashboard_contract(): void
     {
         $this->seedDashboardFixture();

@@ -559,6 +559,21 @@ class ApiController extends Controller
                 ->filter(fn ($p) => $this->propertyMatches($p, $request))
                 ->values();
 
+            if ($request->input('sort') === 'latest') {
+                $items = $items
+                    ->filter(fn ($property) => in_array(strtolower((string) ($property['approvalStatus'] ?? 'active')), ['active', 'approved'], true)
+                        && in_array(strtolower((string) ($property['listingStatus'] ?? 'active')), ['active', 'approved'], true))
+                    ->sort(function ($left, $right) {
+                    $dateOrder = strcmp(
+                        (string) ($right['createdAt'] ?? ''),
+                        (string) ($left['createdAt'] ?? ''),
+                    );
+                    return $dateOrder !== 0
+                        ? $dateOrder
+                        : ((int) ($right['id'] ?? 0) <=> (int) ($left['id'] ?? 0));
+                    })->values();
+            }
+
             $nearby = $request->filled(['lat', 'lng', 'radiusKm']);
             if ($nearby) {
                 $lat = (float) $request->input('lat');
@@ -596,6 +611,7 @@ class ApiController extends Controller
                 'id' => JsonStore::nextId($data),
                 'sellerId' => $user['id'],
                 'sellerName' => $user['name'] ?? null,
+                'recommended' => false,
                 'createdAt' => now()->toISOString(),
                 'approvalStatus' => 'Pending',
                 'listingStatus' => ($payload['submissionState'] ?? 'submitted') === 'draft' ? 'Draft' : 'Pending',
@@ -626,7 +642,7 @@ class ApiController extends Controller
             return $this->json(['success' => true]);
         }
 
-        $adminAction = in_array($action, ['approve', 'reject', 'request-changes', 'verify', 'feature'], true);
+        $adminAction = in_array($action, ['approve', 'reject', 'request-changes', 'verify', 'feature', 'recommend'], true);
         if ($adminAction) {
             $admin = $this->currentUser($request, true);
             if (!$this->isAdmin($admin)) {
@@ -652,6 +668,10 @@ class ApiController extends Controller
                 if ($previousApprovalStatus !== 'changes requested') $reviewNotificationType = 'PROPERTY_CHANGES_REQUESTED';
             } elseif ($action === 'feature') {
                 $data['properties'][$index]['featured'] = $request->has('featured') ? $request->boolean('featured') : !(bool) ($property['featured'] ?? false);
+            } elseif ($action === 'recommend') {
+                $data['properties'][$index]['recommended'] = $request->has('recommended')
+                    ? $request->boolean('recommended')
+                    : !(bool) ($property['recommended'] ?? false);
             }
             $data['properties'][$index]['reviewedAt'] = now()->toISOString();
             $data['properties'][$index]['reviewHistory'][] = [
@@ -819,6 +839,9 @@ class ApiController extends Controller
         }
         if ($resource === 'properties' && $id !== null && ($parts[2] ?? '') === 'feature' && $method === 'PATCH') {
             return $this->properties($request, [$id, 'feature'], 'PATCH');
+        }
+        if ($resource === 'properties' && $id !== null && ($parts[2] ?? '') === 'recommend' && $method === 'PATCH') {
+            return $this->properties($request, [$id, 'recommend'], 'PATCH');
         }
         if ($resource === 'properties' && $id !== null && ($parts[2] ?? '') === 'verify' && $method === 'PATCH') {
             return $this->properties($request, [$id, 'verify'], 'PATCH');

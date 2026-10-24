@@ -63,10 +63,14 @@ test('captures the property list endpoint but not the per-listing review endpoin
   assert.deepEqual(propertyList({ error: 'unavailable' }), []);
 });
 
-test('Admin property management provides requested category and Okara District city filters', () => {
-  for (const category of ['Houses', 'Plots & land', 'Commercial', 'Agricultural', 'Industrial', 'Projects']) {
-    assert.ok(propertyManagementSource.includes(`'${category}'`), `missing ${category} category`);
-  }
+test('Admin property filters keep status and city controls while curated pages use the sidebar', () => {
+  const filterGroups = propertyManagementSource.slice(
+    propertyManagementSource.indexOf('const groups = ['),
+    propertyManagementSource.indexOf('for (const group of groups)'),
+  );
+  assert.match(filterGroups, /label: 'Status'/);
+  assert.match(filterGroups, /label: 'City'/);
+  assert.doesNotMatch(filterGroups, /label: '(Category|Featured|Recommended|Mobile Home)'/);
   for (const city of ['Okara', 'Depalpur', 'Renala Khurd', 'Haveli Lakha', 'Basir Pur']) {
     assert.ok(propertyManagementSource.includes(`'${city}'`), `missing ${city} city`);
   }
@@ -86,8 +90,6 @@ test('Admin counts properties visible in the table and includes the mobile demo 
 });
 
 test('Admin can filter and persist featured status for live mobile properties', () => {
-  assert.match(propertyManagementSource, /Featured only/);
-  assert.match(propertyManagementSource, /Not featured/);
   assert.match(propertyManagementSource, /data-og-featured-header/);
   assert.match(propertyManagementSource, /\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}\/feature/);
   assert.match(propertyManagementSource, /JSON\.stringify\(\{ featured: nextFeatured \}\)/);
@@ -99,8 +101,6 @@ test('Admin can filter and persist featured status for live mobile properties', 
 });
 
 test('Admin can select and filter persistent Recommended listings for mobile Home', () => {
-  assert.match(propertyManagementSource, /Recommended only/);
-  assert.match(propertyManagementSource, /Not recommended/);
   assert.match(propertyManagementSource, /data-og-recommended-header/);
   assert.match(propertyManagementSource, /\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}\/recommend/);
   assert.match(propertyManagementSource, /JSON\.stringify\(\{ recommended: nextRecommended \}\)/);
@@ -124,7 +124,7 @@ test('Admin review inbox includes new submissions and has separate Featured, Rec
 });
 
 test('Admin separates the automatic latest six live listings from the full property table', () => {
-  assert.match(propertyManagementSource, /Latest 6 on mobile/);
+  assert.match(propertyManagementSource, /MOBILE HOME · LATEST 6/);
   assert.match(propertyManagementSource, /data-og-latest-panel/);
   assert.match(propertyManagementSource, /Newest approved listings currently shown in the mobile app/);
   assert.match(propertyManagementSource, /isMobilePublicListing/);

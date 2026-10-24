@@ -42,3 +42,9 @@ New property submissions should appear in the Property listed review inbox regar
 **Why:** The user wants Admins to review new listings first, then feature them only after approval.
 
 **How to apply:** Keep the inbox unfiltered by status and enforce promotion eligibility in both the dashboard controls and the authenticated Admin API.
+
+The property-list filter bar should keep Status and City controls, but not the Category, Featured, Recommended, or Mobile Home chip groups; use the dedicated sidebar pages for those views.
+
+**Why:** The user asked to remove the extra filter-chip groups from the property list after adding dedicated navigation pages.
+
+**How to apply:** Keep route-based filters for the dedicated Featured, Recommended, Projects, and Agriculture Land pages, while omitting those groups from the visible filter bar.

@@ -1074,20 +1074,6 @@
       ['changes requested', 'Changes requested'],
       ['rejected', 'Rejected'],
       ] },
-      { label: 'Category', key: 'category', items: [
-        ['all', 'All categories'], ['houses', 'Houses'], ['plots', 'Plots & land'],
-        ['commercial', 'Commercial'], ['agricultural', 'Agricultural'],
-        ['industrial', 'Industrial'], ['projects', 'Projects'],
-      ] },
-      { label: 'Featured', key: 'featured', items: [
-        ['all', 'All'], ['featured', 'Featured only'], ['not-featured', 'Not featured'],
-      ] },
-      { label: 'Recommended', key: 'recommended', items: [
-        ['all', 'All'], ['recommended', 'Recommended only'], ['not-recommended', 'Not recommended'],
-      ] },
-      { label: 'Mobile Home', key: 'latest', items: [
-        ['all', 'All listings'], ['latest', 'Latest 6 on mobile'],
-      ] },
       { label: 'City', key: 'city', items: [
         ['all', 'Cities'], ['Okara', 'Okara'], ['Depalpur', 'Depalpur'],
         ['Renala Khurd', 'Renala Khurd'], ['Haveli Lakha', 'Haveli Lakha'],
@@ -1108,10 +1094,6 @@
         button.dataset[group.key] = value;
         button.addEventListener('click', () => {
           if (group.key === 'filter') filter = value;
-          if (group.key === 'category') categoryFilter = value;
-          if (group.key === 'featured') featuredFilter = value;
-          if (group.key === 'recommended') recommendedFilter = value;
-          if (group.key === 'latest') latestFilter = value;
           if (group.key === 'city') cityFilter = value;
           queueEnhancement();
         });

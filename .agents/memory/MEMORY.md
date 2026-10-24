@@ -19,6 +19,7 @@
 - [Expo preview native libraries](expo-preview-native-libraries.md) — Replit Expo preview needs the desktop libraries used by React Native DevTools; keep the root pnpm pin unset locally.
 - [Expo dependency alignment](expo-dependency-alignment.md) — package fixes can trigger mid-install Metro resolution errors; verify module resolution and the final bundle after installation finishes.
 - [Expo preview bundle resolver](expo-preview-bundle-resolver.md) — a proxied Expo web bundle can fail resolving expo-router when the artifact path is treated as a Metro module path; diagnose before changing workflows.
+- [Expo preview CLI prompt](expo-preview-cli-prompt.md) — a repeated Expo Go login prompt can coexist with a working web preview; verify `/status` and the artifact screenshot.
 - [Native splash provider order](native-splash-provider-order.md) — native-only startup overlays must render inside every context provider they consume; web previews may hide this class of crash.
 - [Color-only native splash](native-splash-color-only.md) — keep the native pre-JS splash logo-free; Android still needs transparent splash drawables for resource linking.
 - [Expo startup hydration](expo-startup-hydration.md) — cached auth plus a bounded startup watchdog prevents slow session checks from trapping Expo Go on the splash screen.

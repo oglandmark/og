@@ -5865,14 +5865,6 @@ app.get('/portal/seller-dashboard/*', sellerDashboard);
 // A custom MEDIA_STORAGE_DIR may live outside public/. Mount it separately so
 // the file volume remains directly streamable without passing through an API
 // handler. express.static supports byte ranges for video requests.
-app.get('/', (_req, res) => {
-  noCache(res);
-  res.sendFile(path.join(publicDir, 'portal-entry.html'));
-});
-app.get('/home', (_req, res) => {
-  noCache(res);
-  res.sendFile(path.join(publicDir, 'index.html'));
-});
 if (fs.existsSync(mediaStorageDir)) {
   app.use('/images/uploads', express.static(mediaStorageDir, {
     etag: true,

@@ -49,6 +49,7 @@
 - [Play Store metadata claims](play-store-metadata.md) — keep OG Landmark store copy factual; Google rejected the “trusted” short and full description claims.
 - [Public contacts and listing pins](public-contact-and-listing-pins.md) — public property/agent call and WhatsApp use 03011484303; preserve account phones and selected coordinates.
 - [Browser admin extensions](browser-admin-extensions.md) — limit work to the website dashboard and necessary Laravel integration; sync and verify local preview.
+- [Website portal direction](browser-portal-direction.md) — root should open the role-aware app portal; retain the old public homepage at `/home`.
 - [User-controlled app builds](build-approval.md) — do not start a new mobile build until the user explicitly authorizes it.
 - [Single public account model](single-user-account-model.md) — public accounts are User; keep staff permissions separate so listing moderation remains available.
 - [Admin login feedback](admin-login-feedback.md) — show credential-stage failures beside the login form; errors inside a collapsed OTP panel make Continue appear inert.

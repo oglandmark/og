@@ -78,12 +78,13 @@
         <button class="nav-item" data-page="alerts"><span class="nav-icon" data-icon="bell"></span>Property Alerts</button>
         <button class="nav-item" data-page="messages"><span class="nav-icon" data-icon="message"></span>Messages</button>
         <button class="nav-item" data-page="tracking"><span class="nav-icon" data-icon="clock"></span>Property Tracking</button>
+        <button class="nav-item" data-page="calculator"><span class="nav-icon" data-icon="compare"></span>Land Calculator</button>
         <p class="nav-label nav-label-spaced">Selling</p>
         <button class="nav-item" data-page="listings"><span class="nav-icon" data-icon="building"></span>My Listings</button>
         <button class="nav-item" data-page="settings"><span class="nav-icon" data-icon="settings"></span>Settings</button>
       </nav>
       <div class="side-bottom">
-        <a class="back-link" href="/"><span data-icon="arrow"></span>Back to website</a>
+          <a class="back-link" href="/home"><span data-icon="arrow"></span>Back to website</a>
         <button class="logout-button" id="logout"><span data-icon="logout"></span>Log out</button>
       </div>
     </aside>
@@ -190,6 +191,27 @@
           <div class="page-intro"><p class="eyebrow">YOUR FILES</p><h1>Documents</h1><p>Documents connected to your OG Landmark account.</p></div>
           <div class="tool-panel" id="documents-content"></div>
         </section>
+        <section class="page-view" id="page-calculator" data-title="Land Calculator">
+          <div class="page-intro"><p class="eyebrow">LAND TOOLS</p><h1>Land Calculator</h1><p>Convert common Pakistan land units or calculate a plot area from its measurements.</p></div>
+          <div class="settings-layout">
+            <form class="tool-panel settings-form" id="unit-converter-form">
+              <h2>Unit converter</h2><p>1 Marla = 272.25 sq ft · 1 Kanal = 20 Marla · 1 Acre = 8 Kanal</p>
+              <label>Convert from<select id="converter-unit"><option value="marla">Marla</option><option value="kanal">Kanal</option><option value="acre">Acre</option><option value="sqft">Square feet</option><option value="sqm">Square metres</option></select></label>
+              <label>Amount<input id="converter-value" type="number" min="0" step="any" placeholder="Enter an amount"></label>
+              <div id="converter-results" aria-live="polite"></div>
+            </form>
+            <form class="tool-panel settings-form" id="plot-calculator-form">
+              <h2>Plot area</h2>
+              <p>Irregular plots need diagonals for an exact result. Side-only results are clearly marked as estimates.</p>
+              <label>Plot corners<select id="plot-corners"><option value="3">Triangle (3 sides)</option><option value="4" selected>Quadrilateral (4 sides)</option><option value="5">5-sided plot</option><option value="6">6-sided plot</option><option value="7">7-sided plot</option><option value="8">8-sided plot</option></select></label>
+              <label>Measurement unit<select id="plot-unit"><option value="ft">Feet</option><option value="in">Inches</option><option value="m">Metres</option></select></label>
+              <label>Calculation mode<select id="plot-mode"><option value="accurate" selected>Accurate triangulation</option><option value="basic">Basic estimate</option></select></label>
+              <div id="plot-fields"></div>
+              <button class="button button-gold" type="submit">Calculate area</button>
+              <div id="plot-result" aria-live="polite"></div>
+            </form>
+          </div>
+        </section>
         <section class="page-view" id="page-alerts" data-title="Property Alerts">
           <div class="page-intro"><p class="eyebrow">SAVED SEARCHES</p><h1>Property Alerts</h1><p>Manage search alerts synced with your mobile account.</p></div>
           <div class="tool-panel" id="alerts-content"></div>
@@ -213,7 +235,7 @@
           </div>
         </section>
       </div>
-      <footer class="portal-footer"><span>OG Landmark <i>·</i> Premium real estate</span><a href="/">Return to website</a></footer>
+      <footer class="portal-footer"><span>OG Landmark <i>·</i> Premium real estate</span><a href="/home">Return to website</a></footer>
     </main>
     <div class="mobile-shade" id="mobile-shade"></div>
     <div class="toast" id="toast" role="status"></div>

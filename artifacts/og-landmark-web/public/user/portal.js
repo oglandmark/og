@@ -15,6 +15,7 @@
     conversations: [], activeConversation: null, tracking: [], verificationRequests: [], account: null,
     notificationPreferences: null, failures: {}
   };
+  let loadInProgress = false;
   const iconPaths = {
     home: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/>',
@@ -211,6 +212,117 @@
   function renderDocuments() {
     document.getElementById('documents-content').innerHTML = `<div class="tool-summary"><span class="tool-icon">${svg('document')}</span><div><small>Documents</small><strong>No web documents workspace</strong><p>The available document manager is limited to Developer project documents. Personal user documents are not available through an account API on web.</p></div></div>`;
   }
+  const CALC_MARLA_SQFT = 272.25;
+  const CALC_KANAL_SQFT = 5445;
+  const CALC_ACRE_SQFT = 43560;
+  const CALC_SQM_SQFT = 10.763910416709722;
+  function formatCalc(value, digits = 2) {
+    return new Intl.NumberFormat('en-PK', { maximumFractionDigits: digits }).format(value);
+  }
+  function renderPlotFields() {
+    const corners = Number(document.getElementById('plot-corners').value);
+    const mode = document.getElementById('plot-mode').value;
+    const sides = Array.from({ length: corners }, (_, index) => {
+      const letter = String.fromCharCode(65 + index);
+      const next = String.fromCharCode(65 + ((index + 1) % corners));
+      return { key: letter, label: `Side ${letter}–${next}` };
+    });
+    const diagonals = mode === 'accurate'
+      ? Array.from({ length: Math.max(0, corners - 3) }, (_, index) => {
+          const target = String.fromCharCode(67 + index);
+          return { key: `A${target}`, label: `Diagonal A–${target}` };
+        })
+      : [];
+    const fields = [...sides, ...diagonals];
+    document.getElementById('plot-fields').innerHTML = fields.map((field) =>
+      `<label>${safe(field.label)}<input name="measurement-${safe(field.key)}" data-measurement="${safe(field.key)}" type="number" min="0" step="any" required placeholder="Enter measurement"></label>`
+    ).join('');
+    document.getElementById('plot-result').innerHTML = '';
+  }
+  function triangleArea(a, b, c) {
+    const [longest, middle, shortest] = [a, b, c].sort((left, right) => right - left);
+    const term = shortest - (longest - middle);
+    if (!Number.isFinite(term) || term <= 0) return null;
+    const product = (longest + (middle + shortest)) * term
+      * (shortest + (longest - middle)) * (longest + (middle - shortest));
+    return Number.isFinite(product) && product > 0 ? Math.sqrt(product) / 4 : null;
+  }
+  function estimatedTriangleArea(a, b, c) {
+    const [base, sideA, sideB] = [a, b, c].sort((left, right) => right - left);
+    return (base * (sideA + sideB)) / 4;
+  }
+  function plotAreaResult(corners, raw, unit, mode) {
+    const factor = unit === 'in' ? 1 / 12 : unit === 'm' ? 3.280839895 : 1;
+    const keys = Array.from({ length: corners }, (_, index) => String.fromCharCode(65 + index));
+    const required = mode === 'accurate' && corners > 3
+      ? [...keys, ...Array.from({ length: corners - 3 }, (_, index) => `A${String.fromCharCode(67 + index)}`)]
+      : keys;
+    for (const key of required) {
+      const input = raw[key];
+      if (!input || !Number.isFinite(Number(input)) || Number(input) <= 0) {
+        return { error: `Enter a measurement greater than zero for ${key}.` };
+      }
+    }
+    const value = (key) => Number(raw[key]) * factor;
+    let sqft = 0;
+    let estimate = false;
+    if (corners === 3) {
+      const exact = triangleArea(value('A'), value('B'), value('C'));
+      sqft = exact ?? estimatedTriangleArea(value('A'), value('B'), value('C'));
+      estimate = exact === null;
+    } else if (mode === 'basic') {
+      if (corners !== 4) return { error: 'Side lengths alone cannot determine an irregular plot. Use accurate mode and enter the diagonals.' };
+      sqft = ((value('A') + value('C')) / 2) * ((value('B') + value('D')) / 2);
+      estimate = true;
+    } else {
+      const diagonalKeys = Array.from({ length: corners - 3 }, (_, index) => `A${String.fromCharCode(67 + index)}`);
+      const addTriangle = (a, b, c) => {
+        const exact = triangleArea(a, b, c);
+        sqft += exact ?? estimatedTriangleArea(a, b, c);
+        estimate ||= exact === null;
+      };
+      addTriangle(value('A'), value('B'), value(diagonalKeys[0]));
+      for (let index = 1; index < diagonalKeys.length; index += 1) {
+        addTriangle(value(diagonalKeys[index - 1]), value(keys[index + 1]), value(diagonalKeys[index]));
+      }
+      const lastDiagonal = diagonalKeys[diagonalKeys.length - 1];
+      addTriangle(value(lastDiagonal), value(keys[corners - 2]), value(keys[corners - 1]));
+    }
+    return { sqft, estimate };
+  }
+  function renderUnitConversion() {
+    const unit = document.getElementById('converter-unit').value;
+    const input = Number(document.getElementById('converter-value').value);
+    const output = document.getElementById('converter-results');
+    if (!Number.isFinite(input) || input <= 0) { output.innerHTML = ''; return; }
+    const toSqft = { marla: CALC_MARLA_SQFT, kanal: CALC_KANAL_SQFT, acre: CALC_ACRE_SQFT, sqft: 1, sqm: CALC_SQM_SQFT };
+    const sqft = input * toSqft[unit];
+    const conversions = [
+      ['Square feet', sqft, 'sqft'],
+      ['Square metres', sqft / CALC_SQM_SQFT, 'sqm'],
+      ['Marla', sqft / CALC_MARLA_SQFT, 'marla'],
+      ['Kanal', sqft / CALC_KANAL_SQFT, 'kanal'],
+      ['Acre', sqft / CALC_ACRE_SQFT, 'acre'],
+    ].filter(([, , key]) => key !== unit);
+    output.innerHTML = conversions.map(([label, value]) => `<div class="tool-row"><strong>${label}</strong><span>${formatCalc(value, 5)}</span></div>`).join('');
+  }
+  function renderPlotResult(result) {
+    const target = document.getElementById('plot-result');
+    if (result.error) {
+      target.innerHTML = `<div class="capability-note" role="alert"><strong>Check measurements</strong><p>${safe(result.error)}</p></div>`;
+      return;
+    }
+    const { sqft, estimate } = result;
+    const values = [
+      ['Square feet', sqft, 2],
+      ['Square yards', sqft / 9, 2],
+      ['Square metres', sqft / CALC_SQM_SQFT, 3],
+      ['Marla', sqft / CALC_MARLA_SQFT, 4],
+      ['Kanal', sqft / CALC_KANAL_SQFT, 4],
+      ['Acre', sqft / CALC_ACRE_SQFT, 5],
+    ];
+    target.innerHTML = `<div class="tool-summary"><span class="tool-icon">${svg('compare')}</span><div><small>${estimate ? 'Approximate estimate' : 'Accurate from entered measurements'}</small><strong>${formatCalc(sqft, 2)} sq ft</strong><p>${estimate ? 'This result is an estimate. Enter valid diagonals for exact irregular-plot triangulation.' : 'Area is triangulated from the entered boundary measurements.'}</p></div></div>${values.map(([label, value, digits]) => `<div class="tool-row"><strong>${label}</strong><span>${formatCalc(value, digits)}</span></div>`).join('')}`;
+  }
   const preferenceLabels = { properties: 'Property updates', projects: 'Project updates', announcements: 'Announcements', promotional: 'Promotional messages', account: 'Account updates', system: 'System updates' };
   function renderSettings() {
     const accountForm = document.getElementById('account-settings-form');
@@ -276,6 +388,8 @@
     }
   }
   async function loadAll() {
+    if (loadInProgress) return;
+    loadInProgress = true;
     state.failures = {};
     state.savedProperties = [];
     await Promise.all([
@@ -324,6 +438,7 @@
       state.messages = [];
     }
     renderAll();
+    loadInProgress = false;
   }
   function go(page) {
     const section = document.getElementById(`page-${page}`);
@@ -469,7 +584,21 @@
   document.addEventListener('submit', async (event) => {
     const form = event.target;
     if (!(form instanceof HTMLFormElement)) return;
-    if (form.id === 'save-alert-form') {
+    if (form.id === 'unit-converter-form') {
+      event.preventDefault();
+      renderUnitConversion();
+    } else if (form.id === 'plot-calculator-form') {
+      event.preventDefault();
+      const raw = Object.fromEntries(
+        [...form.querySelectorAll('[data-measurement]')].map((input) => [input.dataset.measurement, input.value]),
+      );
+      renderPlotResult(plotAreaResult(
+        Number(document.getElementById('plot-corners').value),
+        raw,
+        document.getElementById('plot-unit').value,
+        document.getElementById('plot-mode').value,
+      ));
+    } else if (form.id === 'save-alert-form') {
       event.preventDefault();
       const values = new FormData(form);
       const query = document.getElementById('property-filter').value.trim();
@@ -575,6 +704,11 @@
   });
   document.getElementById('property-filter').addEventListener('input', () => { document.getElementById('property-grid').innerHTML = cards(filteredProperties()); });
   document.getElementById('purpose-filter').addEventListener('change', () => { document.getElementById('property-grid').innerHTML = cards(filteredProperties()); });
+  document.getElementById('converter-unit').addEventListener('change', renderUnitConversion);
+  document.getElementById('converter-value').addEventListener('input', renderUnitConversion);
+  document.getElementById('plot-corners').addEventListener('change', renderPlotFields);
+  document.getElementById('plot-mode').addEventListener('change', renderPlotFields);
+  renderPlotFields();
   document.getElementById('mobile-menu').addEventListener('click', () => {
     document.getElementById('sidebar').classList.add('is-open');
     document.getElementById('mobile-shade').classList.add('is-open');
@@ -588,5 +722,11 @@
     localStorage.removeItem('og_user');
     window.location.replace('/auth?mode=login');
   });
+  const refreshIfIdle = () => {
+    const active = document.activeElement;
+    if (document.visibilityState === 'visible' && !active?.closest?.('form')) void loadAll();
+  };
+  window.addEventListener('focus', refreshIfIdle);
+  window.setInterval(refreshIfIdle, 15_000);
   loadAll();
 })();

@@ -988,6 +988,33 @@ class BackendGapClosureTest extends TestCase
         $this->assertSame(['okara-model-town'], $saved['mobileSettings']['deletedDemoProjectIds']);
     }
 
+    public function test_legacy_seed_demo_properties_are_not_public_but_remain_available_to_admin(): void
+    {
+        $this->seedData([
+            'users' => [
+                $this->user(1, 'legacy-demo-admin@example.test', 'Admin'),
+            ],
+            'properties' => [
+                ['id' => 23, 'title' => 'Modern Commercial Plaza in Clifton', 'approvalStatus' => 'Active', 'listingStatus' => 'Active'],
+                ['id' => 24, 'title' => 'Affordable 2-Bed Apartment in E-11', 'approvalStatus' => 'Active', 'listingStatus' => 'Active'],
+                ['id' => 25, 'title' => 'Admin approved real listing', 'approvalStatus' => 'Active', 'listingStatus' => 'Active'],
+            ],
+        ]);
+
+        $this->getJson('/api/properties?sort=latest')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.id', 25);
+
+        $this->getJson('/api/properties/23')->assertNotFound();
+
+        $adminToken = $this->token('legacy-demo-admin@example.test');
+        $this->withToken($adminToken)
+            ->getJson('/api/properties?sort=latest')
+            ->assertOk()
+            ->assertJsonCount(3);
+    }
+
     public function test_website_and_mobile_agent_directories_merge_and_deduplicate_profiles(): void
     {
         $this->seedData([

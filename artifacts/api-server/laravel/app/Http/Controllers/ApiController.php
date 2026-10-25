@@ -3953,7 +3953,38 @@ class ApiController extends Controller
     private function indexById(array $items, $id): ?int { foreach ($items as $index => $item) if ((string) ($item['id'] ?? '') === (string) $id) return $index; return null; }
     private function hashLegacyPassword(string $password): string { $salt = bin2hex(random_bytes(16)); return 'pbkdf2:' . $salt . ':' . hash_pbkdf2('sha512', $password, $salt, 100000, 128, false); }
     private function verifyLegacyPassword(string $plain, string $stored): bool { if (!str_starts_with($stored, 'pbkdf2:')) return Hash::check($plain, $stored); [, $salt, $hash] = array_pad(explode(':', $stored, 3), 3, ''); return $hash !== '' && hash_equals($hash, hash_pbkdf2('sha512', $plain, $salt, 100000, 128, false)); }
-    private function propertyVisible(array $property, ?array $user): bool { if ($this->isAdmin($user)) return true; $owner = $user && (string) ($property['sellerId'] ?? $property['userId'] ?? '') === (string) $user['id']; if ($owner) return true; return in_array(strtolower((string) ($property['approvalStatus'] ?? 'active')), ['active', 'approved'], true) && in_array(strtolower((string) ($property['listingStatus'] ?? 'active')), ['active', 'approved'], true); }
+    private function propertyVisible(array $property, ?array $user): bool
+    {
+        if ($this->isAdmin($user)) {
+            return true;
+        }
+
+        if ($this->isDemoProperty($property)) {
+            return false;
+        }
+
+        $owner = $user && (string) ($property['sellerId'] ?? $property['userId'] ?? '') === (string) $user['id'];
+        if ($owner) {
+            return true;
+        }
+
+        return in_array(strtolower((string) ($property['approvalStatus'] ?? 'active')), ['active', 'approved'], true)
+            && in_array(strtolower((string) ($property['listingStatus'] ?? 'active')), ['active', 'approved'], true);
+    }
+
+    private function isDemoProperty(array $property): bool
+    {
+        if (!empty($property['isDemo'])) {
+            return true;
+        }
+
+        // Older imported seed rows predate the isDemo flag. Keep these known
+        // sample listings out of public feeds without deleting their records.
+        return in_array(trim((string) ($property['title'] ?? '')), [
+            'Modern Commercial Plaza in Clifton',
+            'Affordable 2-Bed Apartment in E-11',
+        ], true);
+    }
     private function propertyMatches(array $p, Request $r): bool { $text = strtolower((string) ($r->input('search', $r->input('keyword', '')))); if ($text !== '' && !str_contains(strtolower(json_encode($p)), $text)) return false; foreach (['type', 'city', 'status', 'purpose', 'constructionAge', 'furnishing', 'availability'] as $key) if ($r->filled($key) && strtolower((string) ($p[$key] ?? '')) !== strtolower((string) $r->input($key))) return false; if ($r->filled('minPrice') && (float) ($p['price'] ?? 0) < (float) $r->input('minPrice')) return false; if ($r->filled('maxPrice') && (float) ($p['price'] ?? 0) > (float) $r->input('maxPrice')) return false; if ($r->filled('minBeds') && (float) ($p['bedrooms'] ?? 0) < (float) $r->input('minBeds')) return false; foreach (['minLat' => 0, 'maxLat' => 0, 'minLng' => 0, 'maxLng' => 0] as $key => $fallback) if ($r->filled($key)) { $value = str_contains($key, 'Lat') ? $this->propertyLat($p) : $this->propertyLng($p); if ($value === null || ($key === 'minLat' && $value < (float) $r->input($key)) || ($key === 'maxLat' && $value > (float) $r->input($key)) || ($key === 'minLng' && $value < (float) $r->input($key)) || ($key === 'maxLng' && $value > (float) $r->input($key))) return false; } return true; }
     private function propertyLat(array $p): ?float { return isset($p['lat']) ? (float) $p['lat'] : (isset($p['location']['latitude']) ? (float) $p['location']['latitude'] : null); }
     private function propertyLng(array $p): ?float { return isset($p['lng']) ? (float) $p['lng'] : (isset($p['location']['longitude']) ? (float) $p['location']['longitude'] : null); }

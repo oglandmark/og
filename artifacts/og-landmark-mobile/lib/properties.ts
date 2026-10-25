@@ -35,6 +35,8 @@ export type Property = {
   createdAt?: string;
   /** True only for the bundled sample listings shown when the API is unavailable. */
   isDemo?: boolean;
+  approvalStatus?: string;
+  listingStatus?: string;
   /** Original bundled demo ID when a demo is given a collision-safe display ID. */
   demoId?: number;
   agent: string;
@@ -876,7 +878,8 @@ const AGRICULTURE_PLACEHOLDER = AGRICULTURE_IMAGES;
  */
 export function apiPropertyToProperty(ap: {
   id?: number | null; title?: string | null; type?: string | null;
-  status?: string | null; price?: number | null;
+   status?: string | null; approvalStatus?: string | null; listingStatus?: string | null;
+   isDemo?: boolean | null; price?: number | null;
   area?: number | null; areaUnit?: string | null;
   bedrooms?: number | null; bathrooms?: number | null;
   city?: string | null; address?: string | null;
@@ -955,7 +958,9 @@ export function apiPropertyToProperty(ap: {
     featured:    ap.featured === true,
     recommended: ap.recommended === true,
     createdAt:   ap.createdAt || undefined,
-    isDemo:      false,
+    isDemo:      ap.isDemo === true,
+    approvalStatus: ap.approvalStatus || undefined,
+    listingStatus: ap.listingStatus || undefined,
     agent:       ap.sellerName?.trim() || 'OG Landmark',
     agentTitle:  'Property Consultant',
     agentPhone:  ap.sellerPhone?.trim() || undefined,

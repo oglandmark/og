@@ -437,7 +437,7 @@
     projects: {
       title: 'Developer projects', list: '/admin/developer-projects', createPath: '/admin/developer-projects',
       addLabel: 'Add project',
-      note: 'Manage the project details shown in the mobile app. Set status to Live or Approved to publish. Archive removes it from live lists while preserving linked blocks, units, and inventory.',
+      note: 'New projects default to Live and appear in the mobile app after saving. Choose Draft or Pending Review to keep a project private. Archive removes it from live lists while preserving linked blocks, units, and inventory.',
       deletePath: (item) => item.isBundledDemo
         ? `/admin/demo-projects/${encodeURIComponent(item.id)}`
         : `/admin/developer-projects/${encodeURIComponent(item.id)}`,
@@ -820,7 +820,7 @@
         if (type === 'section') return `<div class="og-mm-form-section">${esc(label)}</div>`;
         if (type === 'map') return `<div class="og-mm-field og-project-map-field"><label>${esc(label)}</label><div class="og-project-map-toolbar"><div class="og-project-map-modes" role="group" aria-label="Project map style"><button class="og-project-map-mode" type="button" data-project-map-mode="map" aria-pressed="true">Map</button><button class="og-project-map-mode" type="button" data-project-map-mode="satellite" aria-pressed="false">Satellite</button></div><span class="og-project-map-coords" data-project-map-coords>Pin not selected</span></div><div class="og-project-map" data-project-location-map role="application" aria-label="Project location map. Click to place a pin or drag the marker."></div><p class="og-project-map-status" data-project-map-status>Click the map to pin the project location, or drag the marker. You can switch to satellite view.</p></div>`;
         if (key === 'projects' && name === 'name' && !value) value = item.title || '';
-        if (key === 'projects' && name === 'status' && !value) value = 'Draft';
+        if (key === 'projects' && name === 'status' && !value) value = editing ? 'Draft' : 'Live';
         if (key === 'projects' && name === 'developerName' && !value) value = item.developer || '';
         if (key === 'projects' && name === 'city' && !value) {
           value = typeof item.location === 'object' ? item.location?.city || '' : item.location || '';

@@ -6,7 +6,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Alert, FlatList, Image, InteractionManager, Modal, Platform, Pressable,
+  ActivityIndicator, Alert, AppState, FlatList, Image, InteractionManager, Modal, Platform, Pressable,
   ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -491,6 +491,9 @@ export default function ExploreScreen() {
   const [savedSearchLabels, setSavedSearchLabels] = useState<string[]>([]);
   const [recentlyViewed, setRecentlyViewed]   = useState<VisitRecord[]>([]);
   const [devProjects, setDevProjects]         = useState<DeveloperProject[]>([]);
+  const [devProjectsLoading, setDevProjectsLoading] = useState(true);
+  const [devProjectsLoadError, setDevProjectsLoadError] = useState(false);
+  const [projectRetryKey, setProjectRetryKey] = useState(0);
   const [isProjectsMode, setIsProjectsMode]   = useState(
     params.category === 'Projects' || params.propertyType === 'Project',
   );
@@ -547,13 +550,63 @@ export default function ExploreScreen() {
       getVisitHistory()
         .then((h) => { if (!cancelled) setRecentlyViewed(h.slice(0, 6)); })
         .catch(() => {});
-      getAllPublicProjects().then((items) => { if (!cancelled) setDevProjects(items); }).catch(() => {});
     });
     return () => {
       cancelled = true;
       interactionTask.cancel();
     };
   }, []);
+
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    let loading = false;
+    const refreshProjects = async (showLoading: boolean) => {
+      if (!active || loading) return;
+      loading = true;
+      if (showLoading && devProjects.length === 0) setDevProjectsLoading(true);
+      try {
+        let lastRecords: DeveloperProject[] | null = null;
+        let lastError: unknown;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          if (!active) return;
+          try {
+            const records = await getAllPublicProjects();
+            lastRecords = records;
+            if (records.length > 0) {
+              if (!active) return;
+              setDevProjects(records);
+              setDevProjectsLoadError(false);
+              return;
+            }
+          } catch (error: unknown) {
+            lastError = error;
+          }
+          if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 700));
+        }
+        if (!active) return;
+        if (lastRecords) {
+          setDevProjects(lastRecords);
+          setDevProjectsLoadError(false);
+        } else if (lastError) {
+          setDevProjectsLoadError(true);
+        }
+      } finally {
+        if (active) setDevProjectsLoading(false);
+        loading = false;
+      }
+    };
+
+    void refreshProjects(true);
+    const interval = setInterval(() => void refreshProjects(false), 15_000);
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') void refreshProjects(false);
+    });
+    return () => {
+      active = false;
+      clearInterval(interval);
+      appStateSubscription.remove();
+    };
+  }, [devProjects.length, projectRetryKey]));
 
   useEffect(() => {
     if (!isExploreFocused) return;
@@ -1219,7 +1272,15 @@ export default function ExploreScreen() {
 
             {/* Projects mode */}
             {isProjectsMode && (
-              <ProjectsList staticProjects={filterDeletedDemoProjects(staticProjects, deletedDemoProjectIds)} devProjects={devProjects} router={router} colors={colors} />
+              <ProjectsList
+                staticProjects={filterDeletedDemoProjects(staticProjects, deletedDemoProjectIds)}
+                devProjects={devProjects}
+                loading={devProjectsLoading}
+                loadError={devProjectsLoadError}
+                onRetry={() => setProjectRetryKey((key) => key + 1)}
+                router={router}
+                colors={colors}
+              />
             )}
 
             {/* Recently Viewed */}
@@ -1806,8 +1867,30 @@ function RangeInput({ label, value, placeholder, onChangeText, colors }: { label
 // Projects list
 // ══════════════════════════════════════════════════════════════════════════════
 
-function ProjectsList({ staticProjects, devProjects, router, colors }: { staticProjects: any[]; devProjects: DeveloperProject[]; router: any; colors: any }) {
+function ProjectsList({ staticProjects, devProjects, loading, loadError, onRetry, router, colors }: {
+  staticProjects: any[];
+  devProjects: DeveloperProject[];
+  loading: boolean;
+  loadError: boolean;
+  onRetry: () => void;
+  router: any;
+  colors: any;
+}) {
   const all = [...staticProjects, ...devProjects];
+  if (all.length === 0 && loading) return (
+    <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingVertical: 32 }}>
+      <ActivityIndicator size="small" color={colors.action} />
+      <Text style={{ color: colors.mutedForeground, fontSize: 14, marginTop: 10 }}>Loading projects…</Text>
+    </View>
+  );
+  if (all.length === 0 && loadError) return (
+    <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingVertical: 32 }}>
+      <Text style={{ color: colors.mutedForeground, fontSize: 14, textAlign: 'center' }}>Projects could not be loaded right now.</Text>
+      <Pressable onPress={onRetry} style={{ paddingTop: 12 }}>
+        <Text style={{ color: colors.action, fontSize: 14 }}>Try again</Text>
+      </Pressable>
+    </View>
+  );
   if (all.length === 0) return (
     <NoResultsView colors={colors} message="No projects yet — check back soon." onAdjust={() => {}} onClear={() => {}} />
   );
@@ -1833,18 +1916,38 @@ function ProjectsList({ staticProjects, devProjects, router, colors }: { staticP
           </Pressable>
         </AnimatedReveal>
       ))}
+      {loading && devProjects.length === 0 && (
+        <View style={{ alignItems: 'center', paddingVertical: 18 }}>
+          <ActivityIndicator size="small" color={colors.action} />
+          <Text style={{ color: colors.mutedForeground, fontSize: 13, marginTop: 8 }}>Loading approved projects…</Text>
+        </View>
+      )}
+      {loadError && devProjects.length === 0 && (
+        <View style={{ alignItems: 'center', paddingVertical: 18 }}>
+          <Text style={{ color: colors.mutedForeground, fontSize: 13, textAlign: 'center' }}>Approved projects could not be loaded.</Text>
+          <Pressable onPress={onRetry} style={{ paddingTop: 10 }}>
+            <Text style={{ color: colors.action, fontSize: 13 }}>Try again</Text>
+          </Pressable>
+        </View>
+      )}
       {devProjects.map((dp) => (
         <AnimatedReveal key={`developer-${dp.id}`} distance={14}>
           <Pressable onPress={() => router.push(`/project/${dp.id}` as any)} style={[pj.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={[pj.imagePlaceholder, { backgroundColor: colors.secondary }]}>
-              <Feather name="layers" size={20} color={colors.mutedForeground} />
-            </View>
+            {dp.coverImageUri ? (
+              <Image source={{ uri: dp.coverImageUri }} style={pj.image} resizeMode="cover" />
+            ) : (
+              <View style={[pj.imagePlaceholder, { backgroundColor: colors.secondary }]}>
+                <Feather name="layers" size={20} color={colors.mutedForeground} />
+              </View>
+            )}
             <View style={pj.body}>
               <View style={[pj.badge, { backgroundColor: colors.accent, borderColor: colors.border }]}>
                 <Text style={[pj.badgeText, { color: colors.accentForeground }]}>{dp.type || 'Development'}</Text>
               </View>
               <Text style={[pj.name, { color: colors.foreground }]} numberOfLines={2}>{dp.name}</Text>
-              <Text style={[pj.dev, { color: colors.primary }]} numberOfLines={1}>Verified Developer</Text>
+              <Text style={[pj.dev, { color: colors.primary }]} numberOfLines={1}>
+                {dp.tagline || dp.shortDescription || 'OG Landmark Project'}
+              </Text>
               <View style={pj.meta}>
                 <Feather name="map-pin" size={11} color={colors.mutedForeground} />
                 <Text style={[pj.metaText, { color: colors.mutedForeground }]} numberOfLines={1}>{dp.city || 'Okara'}</Text>

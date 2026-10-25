@@ -103,7 +103,7 @@ test('Admin navigation keeps core destinations and exposes current property view
   const navBlock = source.match(/const sidebarItems = \[([\s\S]*?)\n  \];/)?.[1] || '';
   const destinations = [
     'Main', 'Property listed', 'Pending approvals', 'Approved properties', 'Rejected properties',
-    'Featured', 'Recommended', 'Projects', 'Agriculture Land', 'User management', 'Agent Management',
+    'Featured', 'Recommended', 'Projects', 'Project listings', 'Agriculture Land', 'User management', 'Agent Management',
     'App banners management', 'App notifications management',
   ];
   assert.equal((navBlock.match(/\{ label:/g) || []).length, destinations.length, 'sidebar destinations should match its configured navigation');
@@ -123,6 +123,12 @@ test('Admin navigation keeps core destinations and exposes current property view
   assert.doesNotMatch(source, /Demo properties/);
   assert.doesNotMatch(source, /Manage mobile app/);
   assert.doesNotMatch(source, /og-mm-tabs/);
+});
+
+test('new Admin projects default to mobile-visible Live status', () => {
+  const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
+  assert.match(source, /New projects default to Live and appear in the mobile app after saving/);
+  assert.match(source, /if \(key === 'projects' && name === 'status' && !value\) value = editing \? 'Draft' : 'Live';/);
 });
 
 test('mobile management pages use the existing Admin shell instead of a second fixed dashboard', () => {

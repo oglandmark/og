@@ -2896,6 +2896,8 @@ class ApiController extends Controller
                     $agent['approvalStatus'] = $agent['approvalStatus'] ?? ($directoryIsActive ? 'Approved' : 'Rejected');
                     $agent['visible'] = $agent['visible'] ?? $directoryIsActive;
                 }
+                $agent['status'] = $agent['status'] ?? 'Active';
+                $agent['visible'] = $agent['visible'] ?? true;
                 $agent['approvalStatus'] = $agent['approvalStatus'] ?? 'Approved';
                 $agent['title'] = $agent['title'] ?? $agent['agency'] ?? 'Property Consultant';
                 $agent['specialization'] = $agent['specialization']
@@ -2906,6 +2908,14 @@ class ApiController extends Controller
         }
         $items = array_values($itemsByIdentity);
         if ($method === 'GET') {
+            if ($mobileOnly) {
+                $items = array_values(array_filter($items, function ($agent) {
+                    $status = strtolower(trim((string) ($agent['status'] ?? 'active')));
+                    $approval = strtolower(trim((string) ($agent['approvalStatus'] ?? 'approved')));
+                    $visible = filter_var($agent['visible'] ?? true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                    return $status === 'active' && $approval === 'approved' && $visible !== false;
+                }));
+            }
             if ($request->filled('approvalStatus')) {
                 $approvalStatus = (string) $request->input('approvalStatus');
                 $items = array_values(array_filter($items, fn ($agent) =>

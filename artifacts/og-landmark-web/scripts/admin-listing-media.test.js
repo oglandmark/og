@@ -165,6 +165,16 @@ test('Admin projects page provides portfolio status, inventory, search and filte
   assert.match(mobileManagementSource, /Delete from app/);
 });
 
+test('Admin Agent creation saves a public mobile profile and refreshes the directory', () => {
+  assert.match(mobileManagementSource, /Add mobile Agent/);
+  assert.match(mobileManagementSource, /function showAgentForm\(agent = \{\}\)/);
+  assert.match(mobileManagementSource, /name="name" required/);
+  assert.match(mobileManagementSource, /name="visible"[^>]*checked/);
+  assert.match(mobileManagementSource, /name="approvalStatus"/);
+  assert.match(mobileManagementSource, /api\('\/admin\/mobile-agents', \{ method: 'POST', body: JSON\.stringify\(payload\) \}\)/);
+  assert.match(mobileManagementSource, /await loadData\(\);\s*renderAgents\(modal\.querySelector\('\.og-mm-content'\)\)/);
+});
+
 test('Projects sidebar opens project management and keeps property listings separately accessible', () => {
   assert.match(mobileManagementSource, /label: 'Projects', path: '\/admin\/management\/developer-projects'/);
   assert.match(mobileManagementSource, /label: 'Project listings', path: '\/admin\/properties\?propertyView=projects'/);

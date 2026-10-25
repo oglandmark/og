@@ -1150,6 +1150,16 @@ class BackendGapClosureTest extends TestCase
             ->assertJsonPath('photo', $photoUrl)
             ->assertJsonPath('profilePhoto', $photoUrl);
         $createdId = $created->json('id');
+        $this->getJson('/api/mobile-agents')
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => $createdId,
+                'name' => 'New Directory Agent',
+                'displayName' => 'New Directory Agent',
+                'city' => 'Okara',
+                'visible' => true,
+                'approvalStatus' => 'Approved',
+            ]);
 
         $updatedPhotoUpload = $this->withToken($adminToken)
             ->post('/api/upload/single', [
@@ -1255,6 +1265,51 @@ class BackendGapClosureTest extends TestCase
             ->assertNoContent();
         $this->getJson('/api/mobile-agents')->assertOk()->assertExactJson([]);
         $this->getJson('/api/agents')->assertOk()->assertExactJson([]);
+    }
+
+    public function test_admin_added_public_agent_appears_in_mobile_directory_but_unpublished_profiles_do_not(): void
+    {
+        $this->seedData([
+            'users' => [$this->user(1, 'agent-directory-admin@example.test', 'Admin')],
+            'mobileAgents' => [],
+            'nextId' => 1,
+        ]);
+        $adminToken = $this->token('agent-directory-admin@example.test');
+
+        $publicAgent = $this->withToken($adminToken)
+            ->postJson('/api/admin/mobile-agents', [
+                'name' => 'Admin Added Mobile Agent',
+                'displayName' => 'Admin Added Mobile Agent',
+                'agency' => 'OG Realty',
+                'city' => 'Okara',
+                'status' => 'Active',
+                'approvalStatus' => 'Approved',
+                'visible' => true,
+                'verified' => true,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('visible', true)
+            ->assertJsonPath('approvalStatus', 'Approved');
+
+        $this->withToken($adminToken)
+            ->postJson('/api/admin/mobile-agents', [
+                'name' => 'Hidden Mobile Agent',
+                'status' => 'Suspended',
+                'approvalStatus' => 'Pending',
+                'visible' => false,
+            ])
+            ->assertCreated();
+
+        $this->getJson('/api/mobile-agents')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonFragment([
+                'id' => $publicAgent->json('id'),
+                'name' => 'Admin Added Mobile Agent',
+                'agency' => 'OG Realty',
+                'city' => 'Okara',
+            ])
+            ->assertJsonMissing(['name' => 'Hidden Mobile Agent']);
     }
 
     public function test_agent_profile_photo_replacement_and_deletion_preserve_shared_media(): void

@@ -3974,16 +3974,7 @@ class ApiController extends Controller
 
     private function isDemoProperty(array $property): bool
     {
-        if (!empty($property['isDemo'])) {
-            return true;
-        }
-
-        // Older imported seed rows predate the isDemo flag. Keep these known
-        // sample listings out of public feeds without deleting their records.
-        return in_array(trim((string) ($property['title'] ?? '')), [
-            'Modern Commercial Plaza in Clifton',
-            'Affordable 2-Bed Apartment in E-11',
-        ], true);
+        return !empty($property['isDemo']);
     }
     private function propertyMatches(array $p, Request $r): bool { $text = strtolower((string) ($r->input('search', $r->input('keyword', '')))); if ($text !== '' && !str_contains(strtolower(json_encode($p)), $text)) return false; foreach (['type', 'city', 'status', 'purpose', 'constructionAge', 'furnishing', 'availability'] as $key) if ($r->filled($key) && strtolower((string) ($p[$key] ?? '')) !== strtolower((string) $r->input($key))) return false; if ($r->filled('minPrice') && (float) ($p['price'] ?? 0) < (float) $r->input('minPrice')) return false; if ($r->filled('maxPrice') && (float) ($p['price'] ?? 0) > (float) $r->input('maxPrice')) return false; if ($r->filled('minBeds') && (float) ($p['bedrooms'] ?? 0) < (float) $r->input('minBeds')) return false; foreach (['minLat' => 0, 'maxLat' => 0, 'minLng' => 0, 'maxLng' => 0] as $key => $fallback) if ($r->filled($key)) { $value = str_contains($key, 'Lat') ? $this->propertyLat($p) : $this->propertyLng($p); if ($value === null || ($key === 'minLat' && $value < (float) $r->input($key)) || ($key === 'maxLat' && $value > (float) $r->input($key)) || ($key === 'minLng' && $value < (float) $r->input($key)) || ($key === 'maxLng' && $value > (float) $r->input($key))) return false; } return true; }
     private function propertyLat(array $p): ?float { return isset($p['lat']) ? (float) $p['lat'] : (isset($p['location']['latitude']) ? (float) $p['location']['latitude'] : null); }

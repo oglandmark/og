@@ -26,6 +26,9 @@
   let propertySort = 'newest';
   let propertyPage = 1;
   let propertyPageSize = 25;
+  const selectedReviewPropertyIds = new Set();
+  let bulkReviewBusy = false;
+  let bulkReviewMessage = '';
   let latestMobileIds = new Set();
   let observer;
   let enhancementQueued = false;
@@ -334,6 +337,15 @@
       .og-pm-table-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;width:100%;padding-top:4px}
       .og-pm-table-tools input,.og-pm-table-tools select{min-height:36px;border:1px solid #dbe2ea;border-radius:8px;background:#fff;padding:7px 10px;color:#334155;font:500 12px system-ui}
       .og-pm-table-tools input{flex:1;min-width:220px}
+      .og-pm-bulk-review{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid #e2e8f0;background:#f8fafc;color:#475569;font:500 12px system-ui}
+      .og-pm-bulk-review button{border:1px solid #cbd5e1;border-radius:7px;background:#fff;color:#0B1F3A;padding:7px 10px;font:700 11px system-ui;cursor:pointer}
+      .og-pm-bulk-review button.primary{background:#0B1F3A;border-color:#0B1F3A;color:#fff}
+      .og-pm-bulk-review button.danger{color:#b91c1c;border-color:#fecaca}
+      .og-pm-bulk-review button:disabled{opacity:.45;cursor:not-allowed}
+      .og-pm-bulk-report{flex-basis:100%;white-space:pre-line;color:#166534;font-size:11px}
+      .og-pm-bulk-report.has-failures{color:#991b1b}
+      .og-pm-select-cell{width:38px;text-align:center}
+      .og-pm-select-cell input{width:15px;height:15px;accent-color:#0B1F3A}
       .og-pm-pagination{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:12px 16px;color:#64748b;font:500 12px system-ui}
       .og-pm-pagination button{border:1px solid #dbe2ea;border-radius:7px;background:#fff;padding:6px 10px;color:#0B1F3A;cursor:pointer}
       .og-pm-pagination button:disabled{opacity:.45;cursor:not-allowed}
@@ -876,6 +888,133 @@
     return payload;
   }
 
+  const isBulkReviewEligible = (property) => Boolean(property)
+    && !property.isDemo
+    && !property.isProject
+    && ['pending', 'changes requested', 'in progress', 'under review'].includes(
+      normalize(property.approvalStatus || property.listingStatus || property.status),
+    );
+
+  function updateBulkReviewToolbar(root) {
+    const toolbar = root?.querySelector('[data-og-bulk-review]');
+    if (!toolbar) return;
+    const count = selectedReviewPropertyIds.size;
+    toolbar.querySelector('[data-og-bulk-count]').textContent =
+      `${count} selected · select up to 100 eligible listings`;
+    toolbar.querySelectorAll('[data-og-bulk-operation]').forEach((button) => {
+      button.disabled = bulkReviewBusy || count === 0;
+    });
+    const report = toolbar.querySelector('[data-og-bulk-report]');
+    report.textContent = bulkReviewMessage;
+    report.classList.toggle('has-failures', /failed/i.test(bulkReviewMessage));
+  }
+
+  function ensureBulkReviewToolbar(root, table) {
+    let toolbar = root.querySelector('[data-og-bulk-review]');
+    if (!toolbar) {
+      toolbar = document.createElement('div');
+      toolbar.className = 'og-pm-bulk-review';
+      toolbar.dataset.ogBulkReview = 'true';
+      toolbar.innerHTML = `<strong data-og-bulk-count></strong>
+        <button class="primary" type="button" data-og-bulk-operation="approve">Approve selected</button>
+        <button class="danger" type="button" data-og-bulk-operation="reject">Reject selected</button>
+        <button type="button" data-og-bulk-clear>Clear selection</button>
+        <div class="og-pm-bulk-report" data-og-bulk-report aria-live="polite"></div>`;
+      toolbar.querySelectorAll('[data-og-bulk-operation]').forEach((button) => {
+        button.addEventListener('click', () => { void reviewSelectedProperties(button.dataset.ogBulkOperation, root); });
+      });
+      toolbar.querySelector('[data-og-bulk-clear]').addEventListener('click', () => {
+        selectedReviewPropertyIds.clear();
+        bulkReviewMessage = '';
+        root.querySelectorAll('[data-og-review-select]').forEach((checkbox) => { checkbox.checked = false; });
+        updateBulkReviewToolbar(root);
+      });
+      table.parentElement?.insertAdjacentElement('beforebegin', toolbar);
+    }
+    updateBulkReviewToolbar(root);
+  }
+
+  function ensureReviewSelectionCell(row, property, root) {
+    let cell = row.querySelector('[data-og-review-select-cell]');
+    if (!cell) {
+      cell = document.createElement('td');
+      cell.className = 'og-pm-select-cell px-2 py-3';
+      cell.dataset.ogReviewSelectCell = 'true';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.dataset.ogReviewSelect = 'true';
+      checkbox.setAttribute('aria-label', 'Select listing for bulk moderation');
+      checkbox.addEventListener('change', () => {
+        const id = checkbox.dataset.propertyId;
+        if (checkbox.checked) selectedReviewPropertyIds.add(id);
+        else selectedReviewPropertyIds.delete(id);
+        bulkReviewMessage = '';
+        updateBulkReviewToolbar(root);
+        root.querySelectorAll('[data-og-review-select]').forEach((input) => {
+          if (!input.checked && !selectedReviewPropertyIds.has(input.dataset.propertyId)
+            && selectedReviewPropertyIds.size >= 100) input.disabled = true;
+        });
+        queueEnhancement();
+      });
+      cell.appendChild(checkbox);
+      row.insertBefore(cell, row.firstChild);
+    }
+    const checkbox = cell.querySelector('[data-og-review-select]');
+    const id = property?.id == null ? '' : String(property.id);
+    const eligible = isBulkReviewEligible(property) && id !== '';
+    checkbox.dataset.propertyId = id;
+    checkbox.checked = selectedReviewPropertyIds.has(id);
+    checkbox.disabled = !eligible || (!checkbox.checked && selectedReviewPropertyIds.size >= 100);
+  }
+
+  async function reviewSelectedProperties(action, root) {
+    const ids = [...selectedReviewPropertyIds];
+    if (!ids.length || bulkReviewBusy) return;
+    const selectedProperties = ids.map((id) => properties.find((property) => String(property.id) === id)).filter(Boolean);
+    const titles = selectedProperties.slice(0, 3).map((property) => property.title || `listing ${property.id}`);
+    const examples = titles.length ? `\n\n${titles.join('\n')}${ids.length > titles.length ? '\n…' : ''}` : '';
+    const label = action === 'approve' ? 'Approve' : 'Reject';
+    if (!window.confirm(`${label} ${ids.length} selected listings? Listings that are no longer eligible will be reported as failures.${examples}`)) return;
+    let reason = '';
+    if (action === 'reject') {
+      const enteredReason = window.prompt('Optional reason for rejecting these listings:');
+      if (enteredReason === null) return;
+      reason = enteredReason.trim();
+    }
+
+    bulkReviewBusy = true;
+    bulkReviewMessage = 'Reviewing selected listings…';
+    updateBulkReviewToolbar(root);
+    try {
+      const payload = await request('/admin/properties/bulk-review', {
+        method: 'POST',
+        body: JSON.stringify({ ids, action, reason }),
+      });
+      const results = Array.isArray(payload?.results) ? payload.results : [];
+      const failed = results.filter((item) => !item.success);
+      for (const result of results) {
+        if (!result.success || !result.property) continue;
+        const id = String(result.id);
+        selectedReviewPropertyIds.delete(id);
+        apiProperties = apiProperties.map((item) => String(item.id) === id ? { ...item, ...result.property } : item);
+        if (observedProperties.has(id)) observedProperties.set(id, { ...observedProperties.get(id), ...result.property });
+        root.querySelectorAll('tbody tr').forEach((row) => {
+          const manageButton = row.querySelector('[data-og-pm-cell] button');
+          if (manageButton?.dataset.propertyId === id) manageButton.__ogListingProperty = result.property;
+        });
+      }
+      bulkReviewMessage = `${payload?.summary?.succeeded ?? results.length - failed.length} succeeded, ${payload?.summary?.failed ?? failed.length} failed.\n`
+        + results.map((item) => `${item.title || `Listing ${item.id}`} (ID ${item.id}): ${item.success ? (action === 'approve' ? 'Approved' : 'Rejected') : `Failed — ${item.error || 'Could not review listing.'}`}`).join('\n');
+      rebuildPropertyData();
+    } catch (error) {
+      bulkReviewMessage = `Batch review could not be completed: ${error.message || 'Please try again.'}`;
+    } finally {
+      bulkReviewBusy = false;
+      updateBulkReviewToolbar(root);
+      queueEnhancement();
+    }
+  }
+
   async function toggleFeaturedProperty(property, button) {
     if (!property || property.isDemo || property.isProject || property.id == null
       || (!isApprovedForPromotion(property) && !isFeaturedProperty(property))) return;
@@ -1388,9 +1527,17 @@
     const table = root.querySelector('table');
     if (!table) return;
     addFilters(root);
+    ensureBulkReviewToolbar(root, table);
     renderAgricultureOverview(root);
     renderLatestPanel(root, table);
     const headers = table.querySelector('thead tr');
+    if (headers && !headers.querySelector('[data-og-review-select-header]')) {
+      const th = document.createElement('th');
+      th.dataset.ogReviewSelectHeader = 'true';
+      th.className = 'og-pm-select-cell';
+      th.textContent = 'Select';
+      headers.insertBefore(th, headers.firstChild);
+    }
     if (headers && !headers.querySelector('[data-og-pm-header]')) {
       const th = document.createElement('th');
       th.dataset.ogPmHeader = 'true'; th.className = 'text-left px-4 py-3 font-semibold'; th.textContent = 'Manage';
@@ -1422,6 +1569,7 @@
       if (row.dataset.ogMobileDemoRow) {
         const mobileRecord = [...mobileDemoProperties, ...mobileProjectProperties]
           .find((item) => String(item.id) === row.dataset.ogMobileDemoRow);
+        ensureReviewSelectionCell(row, mobileRecord, root);
         if (mobileRecord) {
           const searchText = normalize([mobileRecord.title, mobileRecord.city, mobileRecord.sellerName, mobileRecord.address, row.innerText].join(' '));
           row.dataset.ogMatchesFilters = String(matchesPropertyFilters(mobileRecord) && (!propertySearch || searchText.includes(propertySearch)));
@@ -1434,10 +1582,12 @@
       }
       const property = rowProperty(row, used);
       if (!property) {
+        ensureReviewSelectionCell(row, null, root);
         row.dataset.ogMatchesFilters = String(!propertySearch || normalize(row.innerText).includes(propertySearch));
         row.hidden = row.dataset.ogMatchesFilters !== 'true';
         continue;
       }
+      ensureReviewSelectionCell(row, property, root);
       if (!apiProperties.some((item) => String(item.id) === String(property.id))) {
         addObservedProperty(property);
       }
@@ -1557,6 +1707,7 @@
     }
     const summary = heading?.parentElement?.querySelector('p');
     const visibleCount = updatePropertyTable(root, table);
+    updateBulkReviewToolbar(root);
     refreshCityFilterOptions(root);
     if (summary) summary.textContent = propertyLoadError
       ? `Edit controls unavailable: ${propertyLoadError}`

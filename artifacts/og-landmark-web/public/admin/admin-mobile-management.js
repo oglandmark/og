@@ -16,6 +16,9 @@
   let agentLoadWarnings = [];
   const sectionData = {};
   const projectViewState = { query: '', status: 'all', notice: '' };
+  const selectedReviewIds = new Set();
+  let reviewBulkBusy = false;
+  let reviewBulkReport = '';
 
   const serviceAreas = ['Okara', 'Depalpur', 'Renala Khurd', 'Hujra Shah Muqeem', 'Basir Pur', 'Haveli Lakha'];
   const mobileSections = [
@@ -146,6 +149,13 @@
       .og-mm-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:12px 0 16px}
       .og-mm-stat{padding:13px;border:1px solid #e2e8f0;border-radius:10px;background:#fff}.og-mm-stat span{display:block;color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}.og-mm-stat strong{display:block;margin-top:5px;font-size:21px}
       .og-mm-toolbar{display:flex;align-items:end;flex-wrap:wrap;gap:9px;margin-bottom:12px}.og-mm-toolbar .og-mm-field{min-width:130px}.og-mm-status{padding:9px 11px;border-radius:8px;background:#f8fafc;color:#475569;font-size:12px}.og-mm-status.ok{background:#dcfce7;color:#166534}.og-mm-status.degraded{background:#fee2e2;color:#991b1b}
+      .og-mm-review-bulk{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:9px;background:#f8fafc}
+      .og-mm-review-bulk-count{margin-right:auto;color:#475569;font-size:11px;font-weight:700}
+      .og-mm-review-report{margin:0 0 10px;padding:10px 12px;border-radius:8px;background:#f8fafc;color:#475569;font-size:11px;white-space:pre-line}
+      .og-mm-review-report.has-failures{background:#fff7ed;color:#9a3412}
+      .og-mm-review-select{text-align:center;width:36px}
+      .og-mm-review-select input{width:15px;height:15px;accent-color:#0b1f3a}
+      .og-mm-review-bulk button:disabled{opacity:.45;cursor:not-allowed}
       .og-mm-permissions{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:5px 12px;margin:9px 0}.og-mm-permissions label{font-size:11px;color:#475569}.og-mm-system-card{padding:14px;border:1px solid #e2e8f0;border-radius:10px;background:#fff}
       @media(max-width:700px){.og-mm-grid{grid-template-columns:1fr 1fr}.og-mm-table th,.og-mm-table td{padding:8px 6px}}
     `;
@@ -541,6 +551,13 @@
     }
   }
 
+  const isReviewEligible = (item) => Boolean(item)
+    && !item.isDemo
+    && !item.isProject
+    && ['pending', 'changes requested', 'in progress', 'under review'].includes(
+      String(item.approvalStatus || item.listingStatus || item.status || '').trim().toLowerCase(),
+    );
+
   function renderProjects(content, items) {
     const statusOf = (item) => String(item.status || item.approvalStatus || 'Draft').trim() || 'Draft';
     const statusClass = (status) => {
@@ -623,6 +640,59 @@
     applyFilters();
   }
 
+  function updateReviewBulkControls(content) {
+    const count = selectedReviewIds.size;
+    const countNode = content.querySelector('[data-review-bulk-count]');
+    if (countNode) countNode.textContent = `${count} selected · up to 100 listings`;
+    content.querySelectorAll('[data-review-bulk-select]').forEach((checkbox) => {
+      const item = (sectionData.reviews || []).find((record) => String(record.id) === String(checkbox.dataset.id));
+      checkbox.disabled = !isReviewEligible(item) || (!checkbox.checked && count >= 100);
+    });
+    content.querySelectorAll('[data-action="bulk-review-properties"]').forEach((button) => {
+      button.disabled = reviewBulkBusy || count === 0;
+    });
+    const report = content.querySelector('[data-review-bulk-report]');
+    if (report) {
+      report.textContent = reviewBulkReport;
+      report.classList.toggle('has-failures', /failed/i.test(reviewBulkReport));
+    }
+  }
+
+  async function submitReviewBulk(action, content) {
+    const ids = [...selectedReviewIds];
+    if (!ids.length || reviewBulkBusy) return;
+    const selected = ids.map((id) => (sectionData.reviews || []).find((item) => String(item.id) === id)).filter(Boolean);
+    const examples = selected.slice(0, 3).map((item) => item.title || `listing ${item.id}`);
+    const label = action === 'approve' ? 'Approve' : 'Reject';
+    if (!window.confirm(`${label} ${ids.length} selected listings? Listings that are no longer waiting for review will be reported as failures.${examples.length ? `\n\n${examples.join('\n')}${ids.length > examples.length ? '\n…' : ''}` : ''}`)) return;
+    let reason = '';
+    if (action === 'reject') {
+      const enteredReason = window.prompt('Optional reason for rejecting these listings:');
+      if (enteredReason === null) return;
+      reason = enteredReason.trim();
+    }
+
+    reviewBulkBusy = true;
+    reviewBulkReport = 'Reviewing selected listings…';
+    updateReviewBulkControls(content);
+    try {
+      const payload = await api('/admin/properties/bulk-review', {
+        method: 'POST',
+        body: JSON.stringify({ ids, action, reason }),
+      });
+      const results = Array.isArray(payload?.results) ? payload.results : [];
+      const failed = results.filter((item) => !item.success);
+      results.filter((item) => item.success).forEach((item) => selectedReviewIds.delete(String(item.id)));
+      reviewBulkReport = `${payload?.summary?.succeeded ?? results.length - failed.length} succeeded, ${payload?.summary?.failed ?? failed.length} failed.\n`
+        + results.map((item) => `${item.title || `Listing ${item.id}`} (ID ${item.id}): ${item.success ? (action === 'approve' ? 'Approved' : 'Rejected') : `Failed — ${item.error || 'Could not review listing.'}`}`).join('\n');
+    } catch (error) {
+      reviewBulkReport = `Batch review could not be completed: ${error.message || 'Please try again.'}`;
+    } finally {
+      reviewBulkBusy = false;
+      await renderReviews(content);
+    }
+  }
+
   async function renderReviews(content) {
     content.innerHTML = '<div class="og-mm-empty">Loading live property review records…</div>';
     try {
@@ -633,7 +703,9 @@
         const history = Array.isArray(item.reviewHistory) ? item.reviewHistory : [];
         const status = item.approvalStatus || item.listingStatus || 'Pending';
         const audit = history.map((entry) => `<li><strong>${esc(entry.action || 'Review')}</strong> · ${esc(entry.fromStatus || '—')} → ${esc(entry.toStatus || '—')} · ${esc(entry.createdAt || '—')}${entry.reason ? `<div>${esc(entry.reason)}</div>` : ''}</li>`).join('');
+        const eligible = isReviewEligible(item);
         return `<tr>
+          <td class="og-mm-review-select"><input type="checkbox" data-review-bulk-select data-id="${esc(item.id)}" aria-label="Select ${esc(item.title || `listing ${item.id}`)} for bulk moderation" ${selectedReviewIds.has(String(item.id)) ? 'checked' : ''} ${eligible ? '' : 'disabled'}></td>
           <td><strong>${esc(item.title || 'Untitled property')}</strong><div>${esc(item.city || '—')} · ID ${esc(item.id)}</div></td>
           <td>${esc(item.sellerName || item.ownerName || '—')}</td>
           <td><span class="og-mm-pill ${/pending|changes requested|rejected/i.test(status) ? 'off' : ''}">${esc(status)}</span><div>${esc(item.reviewedAt || 'Not reviewed')}</div></td>
@@ -646,8 +718,23 @@
         </tr>`;
       }).join('');
       content.innerHTML = `<div class="og-mm-note">Property moderation decisions and review history use the existing Laravel property-review workflow. Changes notify listing owners through the established API flow.</div>
-        <div style="overflow:auto"><table class="og-mm-table"><thead><tr><th>Property</th><th>Owner</th><th>Status</th><th>Review history</th><th>Actions</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="5" class="og-mm-empty">No property records found.</td></tr>'}</tbody></table></div>`;
+        ${reviewBulkReport ? `<div class="og-mm-review-report" data-review-bulk-report aria-live="polite">${esc(reviewBulkReport)}</div>` : '<div class="og-mm-review-report" data-review-bulk-report aria-live="polite" hidden></div>'}
+        <div class="og-mm-review-bulk"><strong class="og-mm-review-bulk-count" data-review-bulk-count></strong>
+          <button class="og-mm-action primary" data-action="bulk-review-properties" data-operation="approve" ${reviewBulkBusy || selectedReviewIds.size === 0 ? 'disabled' : ''}>Approve selected</button>
+          <button class="og-mm-action danger" data-action="bulk-review-properties" data-operation="reject" ${reviewBulkBusy || selectedReviewIds.size === 0 ? 'disabled' : ''}>Reject selected</button>
+          <button class="og-mm-action" type="button" data-action="clear-review-selection">Clear selection</button>
+        </div>
+        <div style="overflow:auto"><table class="og-mm-table"><thead><tr><th class="og-mm-review-select">Select</th><th>Property</th><th>Owner</th><th>Status</th><th>Review history</th><th>Actions</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="6" class="og-mm-empty">No property records found.</td></tr>'}</tbody></table></div>`;
+      content.querySelectorAll('[data-review-bulk-select]').forEach((checkbox) => {
+        checkbox.addEventListener('change', () => {
+          if (checkbox.checked) selectedReviewIds.add(String(checkbox.dataset.id));
+          else selectedReviewIds.delete(String(checkbox.dataset.id));
+          reviewBulkReport = '';
+          updateReviewBulkControls(content);
+        });
+      });
+      updateReviewBulkControls(content);
     } catch (error) {
       content.innerHTML = `<div class="og-mm-error">Could not load property reviews: ${esc(error.message)}</div>`;
     }
@@ -1101,6 +1188,14 @@
         if (item) showRecordForm(section, item);
       }
       if (button.dataset.action === 'cancel-record') renderSection(section, modal.querySelector('.og-mm-content'));
+      if (button.dataset.action === 'bulk-review-properties') {
+        await submitReviewBulk(button.dataset.operation, modal.querySelector('.og-mm-content'));
+      }
+      if (button.dataset.action === 'clear-review-selection') {
+        selectedReviewIds.clear();
+        reviewBulkReport = '';
+        await renderReviews(modal.querySelector('.og-mm-content'));
+      }
       if (button.dataset.action === 'review-property') {
         const operation = button.dataset.operation;
         if (operation === 'approve') {
@@ -1116,6 +1211,7 @@
           method: 'PATCH',
           body: JSON.stringify({ reason: reason || '' }),
         });
+        selectedReviewIds.delete(String(id));
         await renderReviews(modal.querySelector('.og-mm-content'));
       }
       if (button.dataset.action === 'delete-record') {

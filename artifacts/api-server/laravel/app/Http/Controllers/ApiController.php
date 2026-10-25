@@ -661,43 +661,14 @@ class ApiController extends Controller
                     return $this->json(['error' => 'Approve the listing before featuring or recommending it.'], 422);
                 }
             }
-            $from = $property['approvalStatus'] ?? $property['listingStatus'] ?? null;
-            $previousApprovalStatus = strtolower((string) ($property['approvalStatus'] ?? $property['listingStatus'] ?? ''));
-            $previousListingStatus = strtolower((string) ($property['listingStatus'] ?? $property['approvalStatus'] ?? ''));
-            $reviewNotificationType = null;
-            $wasPubliclyListed = in_array($previousApprovalStatus, ['active', 'approved'], true)
-                && in_array($previousListingStatus, ['active', 'approved'], true);
-            if ($action === 'approve' || $action === 'verify') {
-                $data['properties'][$index]['approvalStatus'] = 'Active';
-                $data['properties'][$index]['listingStatus'] = 'Active';
-                if (!$wasPubliclyListed) $reviewNotificationType = 'PROPERTY_LISTING_APPROVED';
-            } elseif ($action === 'reject') {
-                $data['properties'][$index]['approvalStatus'] = 'Rejected';
-                $data['properties'][$index]['rejectionReason'] = $request->input('reason');
-                if ($previousApprovalStatus !== 'rejected') $reviewNotificationType = 'PROPERTY_LISTING_REJECTED';
-            } elseif ($action === 'request-changes') {
-                $data['properties'][$index]['approvalStatus'] = 'Changes Requested';
-                $data['properties'][$index]['changeRequest'] = $request->input('reason');
-                if ($previousApprovalStatus !== 'changes requested') $reviewNotificationType = 'PROPERTY_CHANGES_REQUESTED';
-            } elseif ($action === 'feature') {
-                $data['properties'][$index]['featured'] = $request->has('featured') ? $request->boolean('featured') : !(bool) ($property['featured'] ?? false);
-            } elseif ($action === 'recommend') {
-                $data['properties'][$index]['recommended'] = $request->has('recommended')
-                    ? $request->boolean('recommended')
-                    : !(bool) ($property['recommended'] ?? false);
-            }
-            $data['properties'][$index]['reviewedAt'] = now()->toISOString();
-            $data['properties'][$index]['reviewHistory'][] = [
-                'action' => $action, 'reason' => $request->input('reason'), 'by' => $admin['id'],
-                'fromStatus' => $from, 'toStatus' => $data['properties'][$index]['approvalStatus'] ?? null,
-                'createdAt' => now()->toISOString(),
-            ];
-            if (in_array($action, ['approve', 'verify'], true) && !$wasPubliclyListed) {
-                $this->notifyUsersOfPublishedProperty($data, $data['properties'][$index]);
-            }
-            if ($reviewNotificationType !== null) {
-                $this->notifyPropertyOwnerOfReview($data, $data['properties'][$index], $reviewNotificationType, trim((string) $request->input('reason', '')));
-            }
+            $this->applyPropertyAdminAction(
+                $data,
+                $index,
+                $action,
+                $request->input('reason'),
+                $admin,
+                $request,
+            );
             JsonStore::write($data);
             return $this->json($data['properties'][$index]);
         }
@@ -742,6 +713,66 @@ class ApiController extends Controller
         }
 
         return $this->json(['error' => 'Method not allowed'], 405);
+    }
+
+    private function applyPropertyAdminAction(
+        array &$data,
+        int $index,
+        string $action,
+        mixed $reason,
+        array $admin,
+        Request $request,
+    ): array {
+        $property = $data['properties'][$index];
+        $reasonText = is_scalar($reason) ? trim((string) $reason) : '';
+        $from = $property['approvalStatus'] ?? $property['listingStatus'] ?? null;
+        $previousApprovalStatus = strtolower((string) ($property['approvalStatus'] ?? $property['listingStatus'] ?? ''));
+        $previousListingStatus = strtolower((string) ($property['listingStatus'] ?? $property['approvalStatus'] ?? ''));
+        $reviewNotificationType = null;
+        $wasPubliclyListed = in_array($previousApprovalStatus, ['active', 'approved'], true)
+            && in_array($previousListingStatus, ['active', 'approved'], true);
+        if ($action === 'approve' || $action === 'verify') {
+            $data['properties'][$index]['approvalStatus'] = 'Active';
+            $data['properties'][$index]['listingStatus'] = 'Active';
+            if (!$wasPubliclyListed) $reviewNotificationType = 'PROPERTY_LISTING_APPROVED';
+        } elseif ($action === 'reject') {
+            $data['properties'][$index]['approvalStatus'] = 'Rejected';
+            $data['properties'][$index]['rejectionReason'] = $reason;
+            if ($previousApprovalStatus !== 'rejected') $reviewNotificationType = 'PROPERTY_LISTING_REJECTED';
+        } elseif ($action === 'request-changes') {
+            $data['properties'][$index]['approvalStatus'] = 'Changes Requested';
+            $data['properties'][$index]['changeRequest'] = $reason;
+            if ($previousApprovalStatus !== 'changes requested') $reviewNotificationType = 'PROPERTY_CHANGES_REQUESTED';
+        } elseif ($action === 'feature') {
+            $data['properties'][$index]['featured'] = $request->has('featured')
+                ? $request->boolean('featured')
+                : !(bool) ($property['featured'] ?? false);
+        } elseif ($action === 'recommend') {
+            $data['properties'][$index]['recommended'] = $request->has('recommended')
+                ? $request->boolean('recommended')
+                : !(bool) ($property['recommended'] ?? false);
+        }
+        $data['properties'][$index]['reviewedAt'] = now()->toISOString();
+        $data['properties'][$index]['reviewHistory'][] = [
+            'action' => $action,
+            'reason' => $reason,
+            'by' => $admin['id'],
+            'fromStatus' => $from,
+            'toStatus' => $data['properties'][$index]['approvalStatus'] ?? null,
+            'createdAt' => now()->toISOString(),
+        ];
+        if (in_array($action, ['approve', 'verify'], true) && !$wasPubliclyListed) {
+            $this->notifyUsersOfPublishedProperty($data, $data['properties'][$index]);
+        }
+        if ($reviewNotificationType !== null) {
+            $this->notifyPropertyOwnerOfReview(
+                $data,
+                $data['properties'][$index],
+                $reviewNotificationType,
+                $reasonText,
+            );
+        }
+        return $data['properties'][$index];
     }
 
     private function myProperties(Request $request)
@@ -812,6 +843,96 @@ class ApiController extends Controller
                 'pendingReports' => count(array_filter($data['reports'] ?? [], fn ($report) => strtolower((string) ($report['status'] ?? 'pending')) === 'pending')),
                 'totalReports' => count($data['reports'] ?? []),
                 'totalViews' => array_sum(array_map(fn ($p) => (int) ($p['views'] ?? 0), $properties)),
+            ]);
+        }
+        if ($resource === 'properties' && $id === 'bulk-review' && $method === 'POST') {
+            $validator = Validator::make($request->all(), [
+                'ids' => ['required', 'array', 'min:1', 'max:100'],
+                'ids.*' => ['required', 'integer', 'min:1', 'distinct'],
+                'action' => ['required', 'in:approve,reject'],
+                'reason' => ['nullable', 'string', 'max:1000'],
+            ]);
+            if ($validator->fails()) {
+                return $this->json([
+                    'error' => 'Provide up to 100 unique property IDs and choose approve or reject.',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            $action = (string) $request->input('action');
+            $reason = trim((string) $request->input('reason', ''));
+            $results = [];
+            $succeeded = 0;
+            foreach ($request->input('ids') as $propertyId) {
+                $index = $this->indexById($data['properties'] ?? [], $propertyId);
+                if ($index === null) {
+                    $results[] = [
+                        'id' => $propertyId,
+                        'success' => false,
+                        'error' => 'Property not found.',
+                    ];
+                    continue;
+                }
+
+                $property = $data['properties'][$index];
+                $status = strtolower((string) ($property['approvalStatus'] ?? $property['listingStatus'] ?? $property['status'] ?? ''));
+                if (!empty($property['isDemo']) || !empty($property['isProject'])) {
+                    $error = 'Only real property listings can be reviewed.';
+                } elseif (!in_array($status, ['pending', 'changes requested', 'in progress', 'under review'], true)) {
+                    $error = 'This listing is no longer waiting for review.';
+                } else {
+                    $error = null;
+                }
+                if ($error !== null) {
+                    $results[] = [
+                        'id' => $propertyId,
+                        'title' => $property['title'] ?? null,
+                        'success' => false,
+                        'error' => $error,
+                    ];
+                    continue;
+                }
+
+                try {
+                    $candidateData = $data;
+                    $updatedProperty = $this->applyPropertyAdminAction(
+                        $candidateData,
+                        $index,
+                        $action,
+                        $reason,
+                        $admin,
+                        $request,
+                    );
+                    $data = $candidateData;
+                    $succeeded++;
+                    $results[] = [
+                        'id' => $propertyId,
+                        'title' => $updatedProperty['title'] ?? null,
+                        'success' => true,
+                        'property' => $updatedProperty,
+                    ];
+                } catch (\Throwable $exception) {
+                    Log::warning('Bulk property review failed for a listing.', [
+                        'property_id' => $propertyId,
+                        'error' => $exception->getMessage(),
+                    ]);
+                    $results[] = [
+                        'id' => $propertyId,
+                        'title' => $property['title'] ?? null,
+                        'success' => false,
+                        'error' => 'Could not review this listing. Try again.',
+                    ];
+                }
+            }
+
+            if ($succeeded > 0) JsonStore::write($data);
+            return $this->json([
+                'action' => $action,
+                'summary' => [
+                    'succeeded' => $succeeded,
+                    'failed' => count($results) - $succeeded,
+                ],
+                'results' => $results,
             ]);
         }
         if ($resource === 'demo-properties' && $method === 'PATCH' && $id === null) {

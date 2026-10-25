@@ -201,6 +201,75 @@ class BackendGapClosureTest extends TestCase
             ->assertUnprocessable();
     }
 
+    public function test_admin_can_bulk_review_listings_and_see_each_outcome(): void
+    {
+        $this->seedData([
+            'users' => [
+                $this->user(1, 'admin-bulk-review@example.test', 'Admin'),
+                $this->user(2, 'seller-bulk-review@example.test', 'User'),
+            ],
+            'properties' => [
+                ['id' => 41, 'title' => 'Bulk review home one', 'sellerId' => 2, 'approvalStatus' => 'Pending', 'listingStatus' => 'Pending'],
+                ['id' => 42, 'title' => 'Bulk review home two', 'sellerId' => 2, 'approvalStatus' => 'Pending', 'listingStatus' => 'Pending'],
+                ['id' => 43, 'title' => 'Already active property', 'sellerId' => 2, 'approvalStatus' => 'Active', 'listingStatus' => 'Active'],
+                ['id' => 44, 'title' => 'Demo property', 'sellerId' => 2, 'approvalStatus' => 'Pending', 'listingStatus' => 'Pending', 'isDemo' => true],
+                ['id' => 45, 'title' => 'Bulk review reject listing', 'sellerId' => 2, 'approvalStatus' => 'Pending', 'listingStatus' => 'Pending'],
+            ],
+            'notifications' => [],
+            'notificationEvents' => [],
+            'notificationPreferences' => [],
+        ]);
+        $adminHeaders = ['Authorization' => 'Bearer ' . $this->token('admin-bulk-review@example.test')];
+        $sellerHeaders = ['Authorization' => 'Bearer ' . $this->token('seller-bulk-review@example.test')];
+
+        $this->postJson('/api/admin/properties/bulk-review', [
+            'ids' => [41],
+            'action' => 'approve',
+        ], $sellerHeaders)->assertForbidden();
+        $this->postJson('/api/admin/properties/bulk-review', [
+            'ids' => [41, 41],
+            'action' => 'delete',
+        ], $adminHeaders)->assertUnprocessable();
+
+        $approval = $this->postJson('/api/admin/properties/bulk-review', [
+            'ids' => [41, 42, 43, 999, 44],
+            'action' => 'approve',
+        ], $adminHeaders)->assertOk()
+            ->assertJsonPath('summary.succeeded', 2)
+            ->assertJsonPath('summary.failed', 3)
+            ->assertJsonPath('results.0.id', 41)
+            ->assertJsonPath('results.0.success', true)
+            ->assertJsonPath('results.1.id', 42)
+            ->assertJsonPath('results.1.success', true)
+            ->assertJsonPath('results.2.success', false)
+            ->assertJsonPath('results.3.error', 'Property not found.')
+            ->assertJsonPath('results.4.error', 'Only real property listings can be reviewed.');
+
+        $this->assertSame('Active', $approval->json('results.0.property.approvalStatus'));
+        $this->assertSame('Active', $approval->json('results.1.property.listingStatus'));
+        $this->getJson('/api/admin/properties/41/review', $adminHeaders)
+            ->assertOk()
+            ->assertJsonCount(1, 'audit')
+            ->assertJsonPath('audit.0.action', 'approve')
+            ->assertJsonPath('audit.0.by', 1);
+
+        $this->postJson('/api/admin/properties/bulk-review', [
+            'ids' => [45],
+            'action' => 'reject',
+            'reason' => 'The ownership document is missing.',
+        ], $adminHeaders)->assertOk()
+            ->assertJsonPath('summary.succeeded', 1)
+            ->assertJsonPath('results.0.property.approvalStatus', 'Rejected')
+            ->assertJsonPath('results.0.property.rejectionReason', 'The ownership document is missing.')
+            ->assertJsonPath('results.0.property.reviewHistory.0.action', 'reject');
+
+        $this->getJson('/api/notifications?category=account', $sellerHeaders)
+            ->assertOk()
+            ->assertJsonCount(3, 'items')
+            ->assertJsonFragment(['type' => 'PROPERTY_LISTING_APPROVED'])
+            ->assertJsonFragment(['type' => 'PROPERTY_LISTING_REJECTED']);
+    }
+
     public function test_admin_feature_and_recommend_row_actions_persist_live_listing_choices(): void
     {
         $this->seedData([

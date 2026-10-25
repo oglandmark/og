@@ -53,7 +53,7 @@ test('mobile management module is loaded by the existing website admin', () => {
   const script = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.js'), 'utf8');
   const styles = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.css'), 'utf8');
 
-  assert.match(html, /admin-mobile-management\.js\?v=unified-agent-management-20261022/);
+  assert.match(html, /admin-mobile-management\.js\?v=[^"]+/);
   assert.match(script, /aria-label', 'Open navigation'/);
   assert.match(script, /aria-controls/);
   assert.match(script, /aria-expanded/);
@@ -98,11 +98,15 @@ test('admin banner editor can replace uploaded images and videos and confirm del
   assert.match(source, /Permanently delete the \$\{item\.type === 'video' \? 'video' : 'image'\} banner/);
 });
 
-test('Agent table shows profile thumbnails with bounded missing and broken-photo states', () => {
+test('Admin navigation keeps core destinations and exposes current property views', () => {
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   const navBlock = source.match(/const sidebarItems = \[([\s\S]*?)\n  \];/)?.[1] || '';
-  const destinations = ['Main', 'Property listed', 'User management', 'Agent Management', 'App banners management', 'App notifications management'];
-  assert.equal((navBlock.match(/\{ label:/g) || []).length, destinations.length, 'sidebar should contain only six links');
+  const destinations = [
+    'Main', 'Property listed', 'Pending approvals', 'Approved properties', 'Rejected properties',
+    'Featured', 'Recommended', 'Projects', 'Agriculture Land', 'User management', 'Agent Management',
+    'App banners management', 'App notifications management',
+  ];
+  assert.equal((navBlock.match(/\{ label:/g) || []).length, destinations.length, 'sidebar destinations should match its configured navigation');
   for (const item of destinations) assert.ok(navBlock.includes(`label: '${item}'`), `sidebar should include ${item}`);
   assert.doesNotMatch(navBlock, /Property in progress|Property closed/);
   assert.match(source, /for \(const item of sidebarItems\)/);
@@ -133,18 +137,18 @@ test('mobile management pages use the existing Admin shell instead of a second f
   assert.match(styles, /#root\.og-admin-content-page header h1::after/);
 });
 
-test('Admin sidebar only shows the listed shortcut while property status filters remain available', () => {
+test('Admin sidebar keeps the property inbox shortcut while status filters remain available', () => {
   const navigation = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   const properties = fs.readFileSync(path.join(root, 'public/admin/admin-property-management.js'), 'utf8');
   const navBlock = navigation.match(/const sidebarItems = \[([\s\S]*?)\n  \];/)?.[1] || '';
-  assert.match(navBlock, /propertyView=listed/);
+  assert.match(navBlock, /propertyView=inbox/);
   assert.doesNotMatch(navBlock, /propertyView=in-progress|propertyView=closed/);
   assert.match(properties, /new URLSearchParams\(window\.location\.search\)\.get\('propertyView'\)/);
   assert.match(properties, /value === 'listed'/);
   assert.match(properties, /value === 'in-progress'/);
   assert.match(properties, /value === 'closed'/);
   assert.match(properties, /if \(value === 'all'\) return true/);
-  assert.match(properties, /row\.hidden = !matchesFilter\(property, filter\)/);
+  assert.match(properties, /row\.dataset\.ogMatchesFilters = String\(matchesPropertyFilters\(property\)/);
 });
 
 test('admin dashboard has an accessible off-canvas navigation on tablet and mobile', () => {
@@ -205,4 +209,27 @@ test('Agent table shows profile thumbnails with bounded missing and broken-photo
   assert.match(source, /Manage in Users/);
   assert.match(source, /Some Agent sources could not be loaded/);
   assert.match(source, /directorySources\.push/);
+});
+
+test('property table supports eligible batch approval and per-listing results', () => {
+  const source = fs.readFileSync(path.join(root, 'public/admin/admin-property-management.js'), 'utf8');
+  assert.match(source, /isBulkReviewEligible/);
+  assert.match(source, /data-og-review-select/);
+  assert.match(source, /select up to 100 eligible listings/);
+  assert.match(source, /Approve selected/);
+  assert.match(source, /Reject selected/);
+  assert.match(source, /window\.confirm\(`\$\{label\} \$\{ids\.length\} selected listings/);
+  assert.match(source, /request\('\/admin\/properties\/bulk-review'/);
+  assert.match(source, /results\.map\(\(item\) => `\$\{item\.title \|\| `Listing \$\{item\.id\}`\}/);
+});
+
+test('property review history supports batch selection, rejection notes, and outcome reporting', () => {
+  const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
+  assert.match(source, /data-review-bulk-select/);
+  assert.match(source, /isReviewEligible/);
+  assert.match(source, /data-action="bulk-review-properties"/);
+  assert.match(source, /window\.confirm\(`\$\{label\} \$\{ids\.length\} selected listings/);
+  assert.match(source, /Optional reason for rejecting these listings/);
+  assert.match(source, /api\('\/admin\/properties\/bulk-review'/);
+  assert.match(source, /results\.map\(\(item\) => `\$\{item\.title \|\| `Listing \$\{item\.id\}`\}/);
 });

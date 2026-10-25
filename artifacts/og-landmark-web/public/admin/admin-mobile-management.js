@@ -27,6 +27,9 @@
   const sidebarItems = [
     { label: 'Main', path: '/admin/' },
     { label: 'Property listed', path: '/admin/properties?propertyView=inbox' },
+    { label: 'Pending approvals', path: '/admin/properties?propertyView=pending' },
+    { label: 'Approved properties', path: '/admin/properties?propertyView=approved' },
+    { label: 'Rejected properties', path: '/admin/properties?propertyView=rejected' },
     { label: 'Featured', path: '/admin/properties?propertyView=featured' },
     { label: 'Recommended', path: '/admin/properties?propertyView=recommended' },
     { label: 'Projects', path: '/admin/properties?propertyView=projects' },
@@ -424,8 +427,13 @@
         ['approvedBy', 'Approved by (one per line)', 'textarea'], ['registrationNumber', 'Registration number'],
         ['status', 'Project status', 'select', ['Draft', 'Pending Review', 'Approved', 'Live', 'Coming Soon', 'Under Development', 'Completed', 'Paused']],
         ['verificationStatus', 'Verification status', 'select', ['Unverified', 'Pending', 'Under Review', 'Verified']],
-        ['coverImageUri', 'Cover image URL', 'url'], ['photos', 'Gallery image URLs (one per line)', 'textarea'],
-        ['videoLinks', 'Video links (one per line)', 'textarea'], ['amenities', 'Amenities (one per line)', 'textarea'],
+        ['coverImageUri', 'Cover image URL', 'url'],
+        ['coverUpload', 'Upload cover image', 'file', [], '.jpg,.jpeg,.png,.webp'],
+        ['photos', 'Gallery image URLs (one per line)', 'textarea'],
+        ['photoUploads', 'Upload gallery images', 'file', [], '.jpg,.jpeg,.png,.webp'],
+        ['videoLinks', 'Video links (one per line)', 'textarea'],
+        ['videoUploads', 'Upload project videos', 'file', [], '.mp4,.mov,.m4v,.webm'],
+        ['amenities', 'Amenities (one per line)', 'textarea'],
         ['', 'Online presence', 'section'],
         ['facebookPage', 'Facebook page URL', 'url'], ['website', 'Website URL', 'url'],
         ['youtubeChannel', 'YouTube channel URL', 'url'],
@@ -547,6 +555,20 @@
         : `<img src="${esc(currentMediaUrl)}" alt="${esc(item.title || 'Current banner')}" style="display:block;width:min(100%,420px);max-height:220px;object-fit:cover;border-radius:8px">`
       }</div><small>Choose a replacement file to change the media, or leave it empty to keep the current one.</small></div>`
       : '';
+    const projectPhotoUrls = (Array.isArray(item.photos) ? item.photos : String(item.photos || '').split(/\r?\n/))
+      .map((photo) => typeof photo === 'string' ? photo : photo?.url)
+      .filter(Boolean);
+    const projectVideoUrls = (Array.isArray(item.videoLinks) ? item.videoLinks : String(item.videoLinks || '').split(/\r?\n/))
+      .map((video) => typeof video === 'string' ? video : video?.url)
+      .filter(Boolean);
+    const projectMediaPreview = key === 'projects' && editing
+      ? `<div class="og-mm-note full"><strong>Current project media</strong><div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px">
+        ${item.coverImageUri ? `<img src="${esc(item.coverImageUri)}" alt="Project cover" style="width:150px;height:96px;object-fit:cover;border-radius:8px">` : ''}
+        ${projectPhotoUrls.map((url) => `<img src="${esc(url)}" alt="Project gallery image" style="width:150px;height:96px;object-fit:cover;border-radius:8px">`).join('')}
+        ${projectVideoUrls.map((url) => `<video src="${esc(url)}" controls preload="metadata" style="width:220px;height:124px;border-radius:8px;background:#0b1f3a"></video>`).join('')}
+        ${item.coverImageUri || projectPhotoUrls.length || projectVideoUrls.length ? '' : '<span>No project media saved yet.</span>'}
+      </div></div>`
+      : '';
     const formTitle = key === 'projects' ? `${editing ? 'Edit' : 'Add'} project` : `${editing ? 'Edit' : 'Add'} ${config.title}`;
     wrap.innerHTML = `<form class="og-mm-form" id="og-mm-record-form-inner"><h3 style="margin:0 0 12px">${esc(formTitle)}</h3><div class="og-mm-grid">
       ${fields.map(([name, label, type = 'text', options = [], accept]) => {
@@ -570,7 +592,10 @@
             ? (item.type === 'video' ? '.mp4,.mov' : '.jpg,.jpeg,.png,.webp')
             : accept;
           const fileLabel = key === 'banners' && editing ? 'Replace media file (optional)' : label;
-          return `<div class="og-mm-field"><label>${esc(fileLabel)}</label><input name="${esc(name)}" type="file" accept="${esc(bannerAccept || '')}"><small>Image: JPG/PNG/WebP up to 20 MiB; video: MP4/MOV up to 300 MiB.</small></div>`;
+          const multiple = key === 'projects' && ['photoUploads', 'videoUploads'].includes(name) ? 'multiple' : '';
+          const preview = key === 'projects' ? `<div data-project-upload-preview="${esc(name)}" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>` : '';
+          const bannerPreview = key === 'banners' ? '<div data-banner-upload-preview style="margin-top:8px"></div>' : '';
+          return `<div class="og-mm-field"><label>${esc(fileLabel)}</label><input name="${esc(name)}" type="file" accept="${esc(bannerAccept || '')}" ${multiple}><small>${key === 'projects' ? 'Images: JPG, PNG or WebP up to 20 MiB each. Videos: MP4, MOV, M4V or WebM up to 300 MiB each.' : 'Image: JPG/PNG/WebP up to 20 MiB; video: MP4/MOV up to 300 MiB.'}</small>${preview}${bannerPreview}</div>`;
         }
         if (type === 'city') {
           const cityOptions = [...new Set([...serviceAreas, ...(value && !serviceAreas.includes(value) ? [value] : [])])];
@@ -587,8 +612,59 @@
         if (type === 'textarea') return `<div class="og-mm-field full"><label>${esc(label)}</label><textarea name="${esc(name)}" maxlength="6000">${esc(value)}</textarea></div>`;
         const required = key === 'projects' && name === 'name' ? 'required maxlength="180"' : '';
         return `<div class="og-mm-field"><label>${esc(label)}</label><input name="${esc(name)}" type="${esc(type)}" ${type === 'number' ? 'step="any"' : ''} ${required} value="${esc(value)}"></div>`;
-      }).join('')}${currentMediaPreview}
+      }).join('')}${currentMediaPreview}${projectMediaPreview}
     </div><div class="og-mm-form-actions"><button type="button" class="og-mm-action" data-action="cancel-record" data-section="${key}">Cancel</button><button class="og-mm-action primary" type="submit">${key === 'projects' ? 'Save project' : 'Save'}</button></div></form>`;
+    if (key === 'projects') {
+      wrap.querySelectorAll('input[type="file"]').forEach((input) => {
+        input.addEventListener('change', () => {
+          const preview = wrap.querySelector(`[data-project-upload-preview="${input.name}"]`);
+          if (!preview) return;
+          for (const url of input.__ogPreviewUrls || []) URL.revokeObjectURL(url);
+          input.__ogPreviewUrls = [];
+          preview.replaceChildren();
+          for (const file of Array.from(input.files || [])) {
+            const url = URL.createObjectURL(file);
+            input.__ogPreviewUrls.push(url);
+            const item = document.createElement('div');
+            item.style.cssText = 'width:120px;font-size:11px;color:#5f6b79';
+            const media = document.createElement(input.name === 'videoUploads' ? 'video' : 'img');
+            media.src = url;
+            if (media instanceof HTMLVideoElement) {
+              media.controls = true;
+              media.preload = 'metadata';
+            }
+            media.style.cssText = 'display:block;width:120px;height:76px;object-fit:cover;border-radius:7px;background:#0b1f3a';
+            const filename = document.createElement('span');
+            filename.textContent = file.name;
+            item.append(media, filename);
+            preview.appendChild(item);
+          }
+        });
+      });
+    }
+    if (key === 'banners') {
+      const input = wrap.querySelector('input[name="media"]');
+      const preview = wrap.querySelector('[data-banner-upload-preview]');
+      input?.addEventListener('change', () => {
+        if (!preview) return;
+        if (input.__ogPreviewUrl) URL.revokeObjectURL(input.__ogPreviewUrl);
+        preview.replaceChildren();
+        const file = input.files?.[0];
+        if (!file) return;
+        input.__ogPreviewUrl = URL.createObjectURL(file);
+        const video = (editing ? item.type : wrap.querySelector('select[name="type"]')?.value) === 'video';
+        const media = document.createElement(video ? 'video' : 'img');
+        media.src = input.__ogPreviewUrl;
+        if (video) {
+          media.controls = true;
+          media.preload = 'metadata';
+        }
+        media.style.cssText = 'display:block;width:min(100%,420px);max-height:220px;object-fit:cover;border-radius:8px;background:#0b1f3a';
+        const label = document.createElement('small');
+        label.textContent = `Selected file: ${file.name}`;
+        preview.append(media, label);
+      });
+    }
     wrap.querySelector('form').addEventListener('submit', async (event) => {
       event.preventDefault();
       const form = event.currentTarget;
@@ -619,7 +695,41 @@
       if (key === 'banners' && !editing) payload.active = payload.active !== false;
       if (key === 'users' && editing) delete payload.password;
       delete payload.media;
+      delete payload.coverUpload;
+      delete payload.photoUploads;
+      delete payload.videoUploads;
       try {
+        if (key === 'projects') {
+          const coverFile = form.elements.coverUpload?.files?.[0];
+          if (coverFile) {
+            const uploadForm = new FormData();
+            uploadForm.append('image', coverFile);
+            uploadForm.append('context', 'project');
+            const uploaded = await api('/upload/single', { method: 'POST', body: uploadForm });
+            if (typeof uploaded?.url !== 'string' || !uploaded.url.trim()) throw new Error('The cover image upload did not return a media URL.');
+            payload.coverImageUri = uploaded.url.trim();
+          }
+          const photoFiles = Array.from(form.elements.photoUploads?.files || []);
+          if (photoFiles.length) {
+            const uploadForm = new FormData();
+            photoFiles.forEach((file) => uploadForm.append('images[]', file));
+            uploadForm.append('context', 'project');
+            const uploaded = await api('/upload/multiple', { method: 'POST', body: uploadForm });
+            const urls = Array.isArray(uploaded?.urls) ? uploaded.urls : (uploaded?.url ? [uploaded.url] : []);
+            if (urls.length !== photoFiles.length) throw new Error('One or more project images could not be uploaded.');
+            payload.photos = [...(Array.isArray(payload.photos) ? payload.photos : []), ...urls];
+          }
+          const videoFiles = Array.from(form.elements.videoUploads?.files || []);
+          if (videoFiles.length) {
+            const uploadForm = new FormData();
+            videoFiles.forEach((file) => uploadForm.append('video', file));
+            uploadForm.append('context', 'project');
+            const uploaded = await api('/upload/video', { method: 'POST', body: uploadForm });
+            const urls = Array.isArray(uploaded?.urls) ? uploaded.urls : (uploaded?.url ? [uploaded.url] : []);
+            if (urls.length !== videoFiles.length) throw new Error('One or more project videos could not be uploaded.');
+            payload.videoLinks = [...(Array.isArray(payload.videoLinks) ? payload.videoLinks : []), ...urls];
+          }
+        }
         if (key === 'notifications' && payload.sendNow && !window.confirm('Send this notification to the selected live users now? This cannot be recalled.')) {
           submit.disabled = false;
           return;
@@ -837,6 +947,11 @@
       if (button.dataset.action === 'cancel-record') renderSection(section, modal.querySelector('.og-mm-content'));
       if (button.dataset.action === 'review-property') {
         const operation = button.dataset.operation;
+        if (operation === 'approve') {
+          const property = (sectionData.reviews || []).find((item) => String(item.id) === String(id));
+          const title = property?.title || `listing ${id}`;
+          if (!window.confirm(`Approve “${title}” and make it publicly visible under the current listing rules?`)) return;
+        }
         const reason = ['reject', 'request-changes'].includes(operation)
           ? window.prompt(operation === 'reject' ? 'Why is this listing being rejected?' : 'What changes are needed?')
           : '';

@@ -75,7 +75,8 @@ test('Admin property filters keep status and city controls while curated pages u
     assert.ok(propertyManagementSource.includes(`'${city}'`), `missing ${city} city`);
   }
   assert.match(propertyManagementSource, /matchesPropertyFilters\(property\)/);
-  assert.match(propertyManagementSource, /row\.hidden = !matchesPropertyFilters\(property\)/);
+  assert.match(propertyManagementSource, /matchesPropertyFilters\(property\) && \(!propertySearch/);
+  assert.match(propertyManagementSource, /row\.hidden = row\.dataset\.ogMatchesFilters !== 'true'/);
 });
 
 test('Admin counts properties visible in the table and includes the mobile demo catalogue as read-only rows', () => {
@@ -116,6 +117,9 @@ test('Admin can select and filter persistent Recommended listings for mobile Hom
 
 test('Admin review inbox includes new submissions and has separate Featured, Recommended, and Projects pages', () => {
   assert.match(mobileManagementSource, /label: 'Property listed', path: '\/admin\/properties\?propertyView=inbox'/);
+  assert.match(mobileManagementSource, /label: 'Pending approvals', path: '\/admin\/properties\?propertyView=pending'/);
+  assert.match(mobileManagementSource, /label: 'Approved properties', path: '\/admin\/properties\?propertyView=approved'/);
+  assert.match(mobileManagementSource, /label: 'Rejected properties', path: '\/admin\/properties\?propertyView=rejected'/);
   assert.match(mobileManagementSource, /label: 'Featured', path: '\/admin\/properties\?propertyView=featured'/);
   assert.match(mobileManagementSource, /label: 'Recommended', path: '\/admin\/properties\?propertyView=recommended'/);
   assert.match(mobileManagementSource, /label: 'Projects', path: '\/admin\/properties\?propertyView=projects'/);
@@ -142,6 +146,17 @@ test('Admin project management supports app-shaped create/edit and safe archive 
   assert.match(mobileManagementSource, /payload\.developer = payload\.developerName/);
   assert.match(mobileManagementSource, /status to Live or Approved to publish/);
   assert.match(mobileManagementSource, /preserving linked blocks, units, and inventory/);
+  assert.match(mobileManagementSource, /coverUpload/);
+  assert.match(mobileManagementSource, /photoUploads/);
+  assert.match(mobileManagementSource, /videoUploads/);
+  assert.match(mobileManagementSource, /Current project media/);
+  assert.match(mobileManagementSource, /uploadForm\.append\('context', 'project'\)/);
+  assert.match(mobileManagementSource, /api\('\/upload\/multiple'/);
+  assert.match(mobileManagementSource, /api\('\/upload\/video'/);
+  assert.match(mobileManagementSource, /Current project media/);
+  assert.match(mobileManagementSource, /data-project-upload-preview/);
+  assert.match(mobileManagementSource, /data-banner-upload-preview/);
+  assert.match(mobileManagementSource, /Approve “\$\{title\}” and make it publicly visible/);
 });
 
 test('Agriculture Land has a separate Admin option with its own summary and category scope', () => {
@@ -153,10 +168,14 @@ test('Agriculture Land has a separate Admin option with its own summary and cate
   assert.match(propertyManagementSource, /matchesCategory\(property, 'agricultural'\)/);
 });
 
-test('Admin properties are unpaginated by default and honor an explicit page limit', () => {
+test('Admin property table supports search, sorting, and pagination without truncating the API list', () => {
   const routeStart = serverSource.indexOf("app.get('/api/admin/properties'");
   const routeEnd = serverSource.indexOf("app.get('/api/admin/properties/:id/review'", routeStart);
   const route = serverSource.slice(routeStart, routeEnd);
   assert.match(route, /if \(req\.query\.limit !== undefined\)/);
   assert.doesNotMatch(route, /limit = '20'/);
+  assert.match(propertyManagementSource, /aria-label="Search properties"/);
+  assert.match(propertyManagementSource, /price-low/);
+  assert.match(propertyManagementSource, /25 per page/);
+  assert.match(propertyManagementSource, /data-page-summary/);
 });

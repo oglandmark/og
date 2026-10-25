@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class DeveloperApiService
 {
@@ -86,6 +87,10 @@ class DeveloperApiService
 
         if ($method === 'POST' && $id === null) {
             $payload = $request->all();
+            if ($resource === 'projects' && $isAdmin) {
+                $validation = $this->validateProjectPayload($request);
+                if ($validation !== null) return $validation;
+            }
             if ($resource !== 'projects') {
                 $projectId = (string) ($payload['projectId'] ?? '');
                 if ($projectId !== '') {
@@ -132,6 +137,10 @@ class DeveloperApiService
             return response()->noContent();
         }
         if (in_array($method, ['PUT', 'PATCH'], true)) {
+            if ($resource === 'projects' && $isAdmin) {
+                $validation = $this->validateProjectPayload($request);
+                if ($validation !== null) return $validation;
+            }
             $patch = $request->except(['id', 'userId', 'developerId', 'createdAt']);
             $data[$key][$index] = array_merge($item, $patch, [
                 'updatedAt' => now()->toISOString(),
@@ -206,5 +215,31 @@ class DeveloperApiService
             'Access-Control-Allow-Headers' => 'Authorization, Content-Type',
             'Access-Control-Allow-Methods' => 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
         ]);
+    }
+
+    private function validateProjectPayload(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => ['sometimes', 'nullable', 'string', 'max:180'],
+            'title' => ['sometimes', 'nullable', 'string', 'max:180'],
+            'status' => ['sometimes', 'nullable', 'string', 'max:40'],
+            'coverImageUri' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'photos' => ['sometimes', 'array', 'max:30'],
+            'photos.*' => ['string', 'max:2000'],
+            'videoLinks' => ['sometimes', 'array', 'max:20'],
+            'videoLinks.*' => ['string', 'max:2000'],
+            'latitude' => ['sometimes', 'nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['sometimes', 'nullable', 'numeric', 'between:-180,180'],
+            'startingPrice' => ['sometimes', 'nullable', 'numeric', 'min:0'],
+            'maxPrice' => ['sometimes', 'nullable', 'numeric', 'min:0'],
+        ]);
+        if ($validator->fails()) {
+            return $this->json([
+                'error' => $validator->errors()->first(),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        return null;
     }
 }

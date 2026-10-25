@@ -689,6 +689,54 @@ class BackendGapClosureTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_admin_can_upload_and_save_developer_project_media_with_backend_validation(): void
+    {
+        $this->useTemporaryMediaStorage();
+        $this->seedData([
+            'users' => [$this->user(1, 'admin-project-media@example.test', 'Admin')],
+            'developerProjects' => [],
+        ]);
+        $headers = ['Authorization' => 'Bearer ' . $this->token('admin-project-media@example.test')];
+
+        $cover = $this->post('/api/upload/single', [
+            'image' => UploadedFile::fake()->image('cover.jpg')->size(40),
+            'context' => 'project',
+        ], $headers)->assertOk()->json('url');
+        $gallery = $this->post('/api/upload/multiple', [
+            'images' => [
+                UploadedFile::fake()->image('gallery-one.jpg')->size(40),
+                UploadedFile::fake()->image('gallery-two.webp')->size(40),
+            ],
+            'context' => 'project',
+        ], $headers)->assertOk()->json('urls');
+        $videos = $this->post('/api/upload/video', [
+            'video' => UploadedFile::fake()->create('tour.mp4', 512, 'video/mp4'),
+            'context' => 'project',
+        ], $headers)->assertOk()->json('url');
+
+        $project = $this->postJson('/api/admin/developer-projects', [
+            'name' => 'Media-ready project',
+            'title' => 'Media-ready project',
+            'status' => 'Draft',
+            'coverImageUri' => $cover,
+            'photos' => $gallery,
+            'videoLinks' => [$videos],
+        ], $headers)->assertCreated()
+            ->assertJsonPath('coverImageUri', $cover)
+            ->assertJsonPath('photos.0', $gallery[0])
+            ->assertJsonPath('videoLinks.0', $videos)
+            ->json();
+
+        $this->getJson('/api/admin/developer-projects/' . $project['id'], $headers)
+            ->assertOk()
+            ->assertJsonPath('photos.1', $gallery[1]);
+
+        $this->postJson('/api/admin/developer-projects', [
+            'name' => 'Invalid project media',
+            'photos' => 'not-an-array',
+        ], $headers)->assertUnprocessable();
+    }
+
     public function test_admin_send_now_creates_preference_aware_notifications_and_pushes(): void
     {
         Http::fake();

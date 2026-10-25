@@ -9,7 +9,7 @@
   let mobileProjectProperties = [];
   const observedProperties = new Map();
   let agents = [];
-  const propertyViews = new Set(['listed', 'in-progress', 'closed']);
+  const propertyViews = new Set(['listed', 'in-progress', 'closed', 'pending', 'approved', 'rejected']);
   const requestedView = new URLSearchParams(window.location.search).get('propertyView');
   const listingInboxView = requestedView === 'inbox';
   const featuredView = requestedView === 'featured';
@@ -22,6 +22,10 @@
   let featuredFilter = featuredView ? 'featured' : 'all';
   let recommendedFilter = recommendedView ? 'recommended' : 'all';
   let latestFilter = 'all';
+  let propertySearch = '';
+  let propertySort = 'newest';
+  let propertyPage = 1;
+  let propertyPageSize = 25;
   let latestMobileIds = new Set();
   let observer;
   let enhancementQueued = false;
@@ -46,6 +50,16 @@
       const listing = normalize(property.listingStatus || property.status || 'active');
       return ['active', 'approved', 'listed'].includes(approval)
         && ['active', 'approved', 'listed'].includes(listing);
+    }
+    if (value === 'approved') {
+      const approval = normalize(property.approvalStatus || 'active');
+      const listing = normalize(property.listingStatus || property.status || 'active');
+      return ['active', 'approved', 'listed'].includes(approval)
+        && ['active', 'approved', 'listed'].includes(listing);
+    }
+    if (value === 'rejected') return statuses.includes('rejected');
+    if (value === 'pending') {
+      return statuses.some((status) => ['pending', 'changes requested', 'in progress', 'under review'].includes(status));
     }
     if (value === 'in-progress') {
       return statuses.some((status) => ['pending', 'changes requested', 'in progress', 'under review'].includes(status));
@@ -290,6 +304,12 @@
       .og-mobile-demo-subtitle{margin-top:3px;color:#64748b;font-size:11px}
       .og-pm-filter{border:1px solid #dbe2ea;border-radius:999px;background:#fff;color:#334155;padding:7px 12px;font:600 12px/1.2 system-ui;cursor:pointer}
       .og-pm-filter.is-active{background:#0B1F3A;color:#fff;border-color:#0B1F3A}
+      .og-pm-table-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;width:100%;padding-top:4px}
+      .og-pm-table-tools input,.og-pm-table-tools select{min-height:36px;border:1px solid #dbe2ea;border-radius:8px;background:#fff;padding:7px 10px;color:#334155;font:500 12px system-ui}
+      .og-pm-table-tools input{flex:1;min-width:220px}
+      .og-pm-pagination{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:12px 16px;color:#64748b;font:500 12px system-ui}
+      .og-pm-pagination button{border:1px solid #dbe2ea;border-radius:7px;background:#fff;padding:6px 10px;color:#0B1F3A;cursor:pointer}
+      .og-pm-pagination button:disabled{opacity:.45;cursor:not-allowed}
       .og-pm-manage{border:1px solid #c8a45a;border-radius:7px;background:#fff;color:#0B1F3A;padding:6px 9px;font:600 12px system-ui;white-space:nowrap;cursor:pointer}
       .og-pm-manage:hover{background:#fbf7ed}
       .og-pm-feature-toggle{min-width:112px;border:1px solid #dbe2ea;border-radius:999px;background:#fff;color:#475569;padding:7px 10px;font:700 11px/1.1 system-ui;white-space:nowrap;cursor:pointer}
@@ -1095,6 +1115,7 @@
         button.addEventListener('click', () => {
           if (group.key === 'filter') filter = value;
           if (group.key === 'city') cityFilter = value;
+          propertyPage = 1;
           queueEnhancement();
         });
         button.textContent = title;
@@ -1102,6 +1123,33 @@
       }
       filters.appendChild(row);
     }
+    const tools = document.createElement('div');
+    tools.className = 'og-pm-table-tools';
+    tools.innerHTML = `<input type="search" aria-label="Search properties" placeholder="Search title, city, owner, or address">
+      <select aria-label="Sort properties"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="title">Title A–Z</option></select>
+      <select aria-label="Rows per page"><option value="25">25 per page</option><option value="50">50 per page</option><option value="100">100 per page</option></select>`;
+    const search = tools.querySelector('input');
+    const sort = tools.querySelectorAll('select')[0];
+    const pageSize = tools.querySelectorAll('select')[1];
+    search.value = propertySearch;
+    sort.value = propertySort;
+    pageSize.value = String(propertyPageSize);
+    search.addEventListener('input', () => {
+      propertySearch = normalize(search.value);
+      propertyPage = 1;
+      queueEnhancement();
+    });
+    sort.addEventListener('change', () => {
+      propertySort = sort.value;
+      propertyPage = 1;
+      queueEnhancement();
+    });
+    pageSize.addEventListener('change', () => {
+      propertyPageSize = Number(pageSize.value) || 25;
+      propertyPage = 1;
+      queueEnhancement();
+    });
+    filters.appendChild(tools);
     table.closest('.bg-white')?.prepend(filters);
   }
 
@@ -1206,6 +1254,51 @@
       <div class="og-pm-agriculture-stat"><span>Under review</span><strong>${reviewCount}</strong></div>`;
   }
 
+  function updatePropertyTable(root, table) {
+    const body = table.querySelector('tbody');
+    if (!body) return 0;
+    const rows = [...body.querySelectorAll('tr')].filter((row) => !row.querySelector('[colspan]'));
+    const propertyForRow = (row) => row.dataset.ogMobileDemoRow
+      ? [...mobileDemoProperties, ...mobileProjectProperties].find((item) => String(item.id) === row.dataset.ogMobileDemoRow)
+      : row.querySelector('[data-og-pm-cell] button')?.__ogListingProperty;
+    const matched = rows.filter((row) => row.dataset.ogMatchesFilters === 'true');
+    const getProperty = (row) => propertyForRow(row) || {};
+    matched.sort((a, b) => {
+      const left = getProperty(a);
+      const right = getProperty(b);
+      if (propertySort === 'title') return String(left.title || '').localeCompare(String(right.title || ''), undefined, { sensitivity: 'base' });
+      if (propertySort === 'price-low' || propertySort === 'price-high') {
+        const difference = (Number(left.price) || 0) - (Number(right.price) || 0);
+        return propertySort === 'price-low' ? difference : -difference;
+      }
+      const difference = new Date(left.createdAt || left.created_at || 0).getTime() - new Date(right.createdAt || right.created_at || 0).getTime();
+      return propertySort === 'oldest' ? difference : -difference;
+    });
+    matched.forEach((row, index) => {
+      if (body.children[index] !== row) body.insertBefore(row, body.children[index] || null);
+    });
+    const pageCount = Math.max(1, Math.ceil(matched.length / propertyPageSize));
+    propertyPage = Math.min(propertyPage, pageCount);
+    const start = (propertyPage - 1) * propertyPageSize;
+    matched.forEach((row, index) => { row.hidden = index < start || index >= start + propertyPageSize; });
+    rows.filter((row) => row.dataset.ogMatchesFilters !== 'true').forEach((row) => { row.hidden = true; });
+    let pager = root.querySelector('.og-pm-pagination');
+    if (!pager) {
+      pager = document.createElement('div');
+      pager.className = 'og-pm-pagination';
+      pager.innerHTML = '<span data-page-summary></span><button type="button" data-page-prev>Previous</button><button type="button" data-page-next>Next</button>';
+      table.parentElement?.insertAdjacentElement('afterend', pager);
+      pager.querySelector('[data-page-prev]').addEventListener('click', () => { propertyPage = Math.max(1, propertyPage - 1); queueEnhancement(); });
+      pager.querySelector('[data-page-next]').addEventListener('click', () => { propertyPage += 1; queueEnhancement(); });
+    }
+    const pageSummary = `Showing ${matched.length ? start + 1 : 0}–${Math.min(start + propertyPageSize, matched.length)} of ${matched.length}`;
+    const summaryNode = pager.querySelector('[data-page-summary]');
+    if (summaryNode.textContent !== pageSummary) summaryNode.textContent = pageSummary;
+    pager.querySelector('[data-page-prev]').disabled = propertyPage <= 1;
+    pager.querySelector('[data-page-next]').disabled = propertyPage >= pageCount;
+    return matched.length;
+  }
+
   function enhance() {
     const root = findRoot();
     if (!root) return;
@@ -1213,6 +1306,9 @@
     const headingLabels = {
       all: 'All properties',
       listed: 'Property listed',
+      pending: 'Pending approvals',
+      approved: 'Approved properties',
+      rejected: 'Rejected properties',
       'in-progress': 'Property in progress',
       closed: 'Property closed',
     };
@@ -1259,11 +1355,22 @@
       if (row.dataset.ogMobileDemoRow) {
         const mobileRecord = [...mobileDemoProperties, ...mobileProjectProperties]
           .find((item) => String(item.id) === row.dataset.ogMobileDemoRow);
-        if (mobileRecord) row.hidden = !matchesPropertyFilters(mobileRecord);
+        if (mobileRecord) {
+          const searchText = normalize([mobileRecord.title, mobileRecord.city, mobileRecord.sellerName, mobileRecord.address, row.innerText].join(' '));
+          row.dataset.ogMatchesFilters = String(matchesPropertyFilters(mobileRecord) && (!propertySearch || searchText.includes(propertySearch)));
+          row.hidden = row.dataset.ogMatchesFilters !== 'true';
+        } else {
+          row.dataset.ogMatchesFilters = String(!propertySearch || normalize(row.innerText).includes(propertySearch));
+          row.hidden = row.dataset.ogMatchesFilters !== 'true';
+        }
         continue;
       }
       const property = rowProperty(row, used);
-      if (!property) continue;
+      if (!property) {
+        row.dataset.ogMatchesFilters = String(!propertySearch || normalize(row.innerText).includes(propertySearch));
+        row.hidden = row.dataset.ogMatchesFilters !== 'true';
+        continue;
+      }
       if (!apiProperties.some((item) => String(item.id) === String(property.id))) {
         addObservedProperty(property);
       }
@@ -1288,7 +1395,9 @@
       button.dataset.ogPmEdit = 'true';
       button.__ogListingProperty = property;
       const rowStatus = row.dataset.ogPropertyStatus;
-      row.hidden = !matchesPropertyFilters(property);
+      const searchText = normalize([property.title, property.city, property.sellerName, property.address, property.district, property.locality, row.innerText].join(' '));
+      row.dataset.ogMatchesFilters = String(matchesPropertyFilters(property) && (!propertySearch || searchText.includes(propertySearch)));
+      row.hidden = row.dataset.ogMatchesFilters !== 'true';
       let featuredCell = row.querySelector('[data-og-featured-cell]');
       if (!featuredCell) {
         featuredCell = document.createElement('td');
@@ -1359,7 +1468,7 @@
       agentCell.textContent = assignedName ? `${assignedName}${assignedCity ? ` · ${assignedCity}` : ''}` : 'Not assigned';
     }
     const summary = heading?.parentElement?.querySelector('p');
-    const visibleCount = properties.filter((property) => matchesPropertyFilters(property)).length;
+    const visibleCount = updatePropertyTable(root, table);
     if (summary) summary.textContent = propertyLoadError
       ? `Edit controls unavailable: ${propertyLoadError}`
       : `${visibleCount} shown · ${properties.length} total properties`;

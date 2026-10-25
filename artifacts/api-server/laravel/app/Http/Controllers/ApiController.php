@@ -2070,8 +2070,9 @@ class ApiController extends Controller
     private function upload(Request $request, array $parts)
     {
         $user = $this->currentUser($request, true);
+        $projectMedia = $this->isAdmin($user) && $request->input('context') === 'project';
         if ($this->isAdmin($user)) {
-            $permission = ($parts[0] ?? '') === 'single' ? 'content.manage' : 'property.manage';
+            $permission = ($parts[0] ?? '') === 'single' || $projectMedia ? 'content.manage' : 'property.manage';
             if (!$this->adminHasPermission($user, $permission, JsonStore::read())) {
                 return $this->json(['error' => 'Your staff role does not allow this action.', 'permission' => $permission], 403);
             }
@@ -2080,6 +2081,21 @@ class ApiController extends Controller
         $files = $request->file($field);
         $files = is_array($files) ? $files : ($files ? [$files] : []);
         if (!$files) return $this->json(['error' => 'No upload received.'], 422);
+        if ($projectMedia) {
+            foreach ($files as $file) {
+                $extension = strtolower($file->getClientOriginalExtension());
+                if (!$file->isValid()) {
+                    return $this->json(['error' => 'The selected file could not be read. Please choose it again.', 'code' => 'UPLOAD_FILE_INVALID'], 422);
+                }
+                if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'mov', 'm4v', 'webm'], true)) {
+                    return $this->json(['error' => 'Project media must be JPG, PNG, WebP, MP4, MOV, M4V, or WebM.'], 422);
+                }
+                $maxBytes = in_array($extension, ['mp4', 'mov', 'm4v', 'webm'], true) ? 300 * 1024 * 1024 : 20 * 1024 * 1024;
+                if ((int) $file->getSize() > $maxBytes) {
+                    return $this->json(['error' => 'Project images are limited to 20 MiB and project videos to 300 MiB.'], 413);
+                }
+            }
+        }
         $mediaStorage = app(MediaStorage::class);
         try {
             $mediaStorage->ensureReady();
@@ -2094,6 +2110,7 @@ class ApiController extends Controller
         $directory = $mediaStorage->directory();
         $urls = [];
         $media = [];
+        $writtenPaths = [];
         foreach ($files as $file) {
             if (!$file->isValid()) {
                 $uploadError = $file->getError();
@@ -2123,7 +2140,11 @@ class ApiController extends Controller
             $kind = str_starts_with((string) $mimeType, 'video/') ? 'video' : 'image';
             try {
                 $file->move($directory, $name);
+                $writtenPaths[] = $directory . DIRECTORY_SEPARATOR . $name;
             } catch (\Throwable $exception) {
+                foreach (array_merge($writtenPaths, [$directory . DIRECTORY_SEPARATOR . $name]) as $writtenPath) {
+                    if (is_file($writtenPath)) @unlink($writtenPath);
+                }
                 Log::error('Uploaded media could not be written to storage.', [
                     'filename' => $name,
                     'error' => $exception->getMessage(),

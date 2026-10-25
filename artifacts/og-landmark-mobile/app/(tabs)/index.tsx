@@ -1447,6 +1447,8 @@ export default function HomeScreen() {
   const [apiLoading,       setApiLoading]       = useState(true);
   const [devProjects,      setDevProjects]      = useState<DeveloperProject[]>([]);
   const [managedAgents,    setManagedAgents]    = useState<SampleAgent[]>([]);
+  const [managedAgentsLoading, setManagedAgentsLoading] = useState(true);
+  const [managedAgentsLoadError, setManagedAgentsLoadError] = useState(false);
   const [mobileContent,    setMobileContent]    = useState<MobileContent | null>(null);
   const homeContent = mobileContent?.homepage;
   const homeSections = homeContent?.sections ?? {};
@@ -1524,14 +1526,40 @@ export default function HomeScreen() {
     const refreshAgents = async () => {
       if (!active || loading) return;
       loading = true;
+      if (managedAgents.length === 0) setManagedAgentsLoading(true);
       try {
-        const records = await getAgents();
+        let lastRecords: Awaited<ReturnType<typeof getAgents>> | null = null;
+        let lastError: unknown;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          if (!active) return;
+          try {
+            const records = await getAgents();
+            lastRecords = records;
+            if (records.length > 0) {
+              if (!active) return;
+              setManagedAgents(records.map(apiAgentToSample));
+              setManagedAgentsLoadError(false);
+              return;
+            }
+          } catch (error: unknown) {
+            lastError = error;
+          }
+          if (attempt < 2) {
+            await new Promise((resolve) => setTimeout(resolve, 700));
+          }
+        }
         if (!active) return;
-        setManagedAgents(records.map(apiAgentToSample));
+        if (lastRecords) {
+          setManagedAgents(lastRecords.map(apiAgentToSample));
+          setManagedAgentsLoadError(false);
+        } else if (lastError) {
+          setManagedAgentsLoadError(true);
+        }
       } catch {
         if (!active) return;
-        setManagedAgents([]);
+        setManagedAgentsLoadError(true);
       } finally {
+        if (active && managedAgents.length === 0) setManagedAgentsLoading(false);
         loading = false;
       }
     };
@@ -1545,7 +1573,7 @@ export default function HomeScreen() {
       clearInterval(interval);
       appStateSubscription.remove();
     };
-  }, []));
+  }, [managedAgents.length]));
 
   // Fetch live properties on focus; bundled examples remain the offline fallback
   useFocusEffect(useCallback(() => {
@@ -1846,6 +1874,22 @@ export default function HomeScreen() {
             colors={colors}
             onAgentPress={(agentId) => router.push(`/agent/${agentId}` as any)}
           />
+        ) : managedAgentsLoading ? (
+          <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingVertical: 24 }}>
+            <ActivityIndicator size="small" color={colors.action} />
+            <Text style={{ color: colors.mutedForeground, fontSize: 14, textAlign: 'center', marginTop: 10 }}>
+              Loading Agents…
+            </Text>
+          </View>
+        ) : managedAgentsLoadError ? (
+          <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingVertical: 24 }}>
+            <Text style={{ color: colors.mutedForeground, fontSize: 14, textAlign: 'center' }}>
+              Agents could not be loaded right now.
+            </Text>
+            <Pressable onPress={() => router.push('/agent/find' as any)} style={{ paddingTop: 10 }}>
+              <Text style={{ color: colors.action, fontSize: 13 }}>Open Find Agents</Text>
+            </Pressable>
+          </View>
         ) : (
           <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingVertical: 24 }}>
             <Text style={{ color: colors.mutedForeground, fontSize: 14, textAlign: 'center' }}>

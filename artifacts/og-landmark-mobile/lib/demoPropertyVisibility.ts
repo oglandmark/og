@@ -1,12 +1,12 @@
 export type DemoPropertyVisibilityRecord = {
-  id: number;
+  id: number | string;
   isDemo?: boolean;
   demoId?: number;
   approvalStatus?: string;
   listingStatus?: string;
 };
 
-const demoIdOf = (property: DemoPropertyVisibilityRecord) => property.demoId ?? property.id;
+const demoIdOf = (property: DemoPropertyVisibilityRecord) => property.demoId ?? Number(property.id);
 
 export function isDemoPropertyVisible(
   property: DemoPropertyVisibilityRecord,

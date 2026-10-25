@@ -114,6 +114,19 @@ test('successful public feeds show live listings only, without adding bundled de
   );
 });
 
+test('public mobile property lists require Admin-approved and active listings', () => {
+  const records = [
+    { id: 10, approvalStatus: 'Pending', listingStatus: 'Active' },
+    { id: 11, approvalStatus: 'Approved', listingStatus: 'Active' },
+    { id: 12, approvalStatus: 'Approved', listingStatus: 'Pending' },
+    { id: 13, isDemo: true, approvalStatus: 'Approved', listingStatus: 'Active' },
+  ];
+  assert.deepEqual(
+    filterVisibleDemoProperties(records, []).map(({ id }) => id),
+    [11],
+  );
+});
+
 test('restoring a demo does not make it public again', () => {
   const restoredHiddenIds: number[] = [];
   assert.deepEqual(
@@ -163,7 +176,7 @@ test('Home, Explore, saved, detail, and Agent views use the shared visibility ru
   }
 });
 
-test('Home retains fallback only while loading/offline and Explore preserves cache only for filtered requests', () => {
+test('Home and Explore use live approved data only and retain cache only for filtered requests', () => {
   const home = readScreen('app', '(tabs)', 'index.tsx');
   const explore = readScreen('app', '(tabs)', 'explore.tsx');
   const detail = readScreen('app', 'property', '[id].tsx');

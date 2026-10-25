@@ -378,9 +378,21 @@
       fields: [
         ['type', 'Media type', 'select', ['image', 'video']], ['title', 'Title'], ['subtitle', 'Subtitle'], ['category', 'Category', 'select', ['homes', 'commercial', 'agriculture', 'plots', 'projects', 'video']],
         ['imageUrl', 'Image URL'], ['videoUrl', 'Video URL'], ['media', 'Upload image/video', 'file', [], '.jpg,.jpeg,.png,.webp,.mp4,.mov'], ['route', 'App route'], ['cta', 'Button text'],
+        ['startDate', 'Campaign start date (optional)', 'date'], ['endDate', 'Campaign end date (optional)', 'date'],
         ['order', 'Sort order', 'number'], ['active', 'Visible in app', 'checkbox'],
       ],
-      row: (item) => `<td><strong>${esc(item.title || item.eyebrow || 'Untitled')}</strong><div>${esc(item.type || 'image')}</div></td><td>${esc(item.category || '—')}</td><td>${esc(item.order ?? '—')}</td><td>${item.active === false ? 'Hidden' : 'Live'}</td>`,
+      row: (item) => {
+        const date = new Date();
+        const today = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+        const status = item.active === false
+          ? 'Hidden'
+          : item.startDate && item.startDate > today
+            ? 'Upcoming'
+            : item.endDate && item.endDate < today
+              ? 'Expired'
+              : 'Live';
+        return `<td><strong>${esc(item.title || item.eyebrow || 'Untitled')}</strong><div>${esc(item.type || 'image')}</div></td><td>${esc(item.category || '—')}</td><td>${esc(item.order ?? '—')}</td><td>${esc(item.startDate || 'No start')} – ${esc(item.endDate || 'No end')}</td><td>${status}</td>`;
+      },
     },
     notifications: {
       title: 'Mobile notifications', list: '/admin/announcements', createPath: '/admin/announcements',
@@ -485,7 +497,7 @@
       const columnsBySection = {
         properties: ['Property', 'City', 'Price', 'Status', 'Actions'],
         users: ['Account', 'Phone', 'Role', 'Status', 'Actions'],
-        banners: ['Banner', 'Category', 'Order', 'Visibility', 'Actions'],
+        banners: ['Banner', 'Category', 'Order', 'Campaign dates', 'Visibility', 'Actions'],
         notifications: ['Notification', 'Status', 'Recipients', 'Created', 'Actions'],
         projects: ['Project', 'City', 'Completion', 'Status', 'Actions'],
         locations: ['Location', 'Status', 'Updated', 'Actions'],
@@ -669,6 +681,17 @@
       event.preventDefault();
       const form = event.currentTarget;
       const submit = form.querySelector('[type="submit"]');
+      if (key === 'banners') {
+        const startDate = form.elements.startDate.value;
+        const endDate = form.elements.endDate.value;
+        if (startDate && endDate && startDate > endDate) {
+          const message = document.createElement('div');
+          message.className = 'og-mm-error';
+          message.textContent = 'End date must be the same as or later than the start date.';
+          form.prepend(message);
+          return;
+        }
+      }
       submit.disabled = true;
       const data = Object.fromEntries(new FormData(form));
       const payload = { ...data };

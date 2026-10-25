@@ -2267,9 +2267,12 @@ class ApiController extends Controller
         $all = $this->sortMobileBanners($data['mobileBanners']);
         if ($method === 'GET') {
             if ($adminRead) return $this->json($all);
+            $today = now()->toDateString();
             return $this->json(array_values(array_filter(
                 $all,
-                fn ($banner) => filter_var($banner['active'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                fn ($banner) => filter_var($banner['active'] ?? true, FILTER_VALIDATE_BOOLEAN)
+                    && (empty($banner['startDate']) || $banner['startDate'] <= $today)
+                    && (empty($banner['endDate']) || $banner['endDate'] >= $today),
             )));
         }
 
@@ -2299,6 +2302,11 @@ class ApiController extends Controller
 
         if ($method === 'PUT' || ($method === 'PATCH' && ($parts[2] ?? '') === '')) {
             $changes = $request->except(['media', 'id', 'type', '_method']);
+            $schedule = $this->mobileBannerSchedule($request->all(), $banner, true);
+            if (isset($schedule['error'])) {
+                return $this->json($schedule, 422);
+            }
+            $changes = array_merge($changes, $schedule);
             if (array_key_exists('ctaParams', $changes) && is_string($changes['ctaParams'])) {
                 $decodedParams = json_decode($changes['ctaParams'], true);
                 if (json_last_error() !== JSON_ERROR_NONE || !is_array($decodedParams)) {
@@ -2422,6 +2430,22 @@ class ApiController extends Controller
 
     private function createMobileBanner(Request $request, array $data, array $banners)
     {
+        $existingImage = null;
+        if (strtolower(trim((string) $request->input('type', ''))) === 'image') {
+            $category = trim((string) $request->input('category', ''));
+            foreach ($data['mobileBanners'] as $existing) {
+                if ((string) ($existing['category'] ?? '') === $category
+                    && strtolower((string) ($existing['type'] ?? 'image')) === 'image') {
+                    $existingImage = $existing;
+                    break;
+                }
+            }
+        }
+        $schedule = $this->mobileBannerSchedule($request->all(), $existingImage ?? [], true);
+        if (isset($schedule['error'])) {
+            return $this->json($schedule, 422);
+        }
+
         $type = strtolower(trim((string) $request->input('type', '')));
         if (!in_array($type, ['image', 'video'], true)) {
             return $this->json(['error' => 'Banner type must be image or video.'], 422);
@@ -2499,6 +2523,7 @@ class ApiController extends Controller
         if ($ctaParams !== null) $metadata['ctaParams'] = $ctaParams;
         if ($request->has('active')) $metadata['active'] = $request->boolean('active');
         if ($request->has('order')) $metadata['order'] = (int) $request->input('order');
+        $metadata = array_merge($metadata, $schedule);
 
         if ($type === 'image') {
             $existingIndex = null;
@@ -2521,10 +2546,52 @@ class ApiController extends Controller
 
         if (!array_key_exists('active', $metadata)) $metadata['active'] = true;
         if (!array_key_exists('order', $metadata)) $metadata['order'] = count($banners);
+        $metadata['startDate'] ??= null;
+        $metadata['endDate'] ??= null;
         $banner = array_merge($metadata, ['id' => JsonStore::nextId($data)]);
         $data['mobileBanners'][] = $banner;
         JsonStore::write($data);
         return $this->json(['success' => true, 'banner' => $banner], 201);
+    }
+
+    /**
+     * Normalize optional campaign dates while preserving omitted fields on updates.
+     */
+    private function mobileBannerSchedule(array $input, array $current = [], bool $partial = false): array
+    {
+        $dates = [];
+        $errors = [];
+        foreach (['startDate', 'endDate'] as $field) {
+            $provided = array_key_exists($field, $input);
+            if ($partial && !$provided) {
+                continue;
+            }
+
+            $value = $provided ? $input[$field] : ($current[$field] ?? null);
+            $value = is_string($value) ? trim($value) : $value;
+            if ($value === '') $value = null;
+
+            if ($value !== null && (
+                !is_string($value)
+                || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)
+                || !checkdate((int) substr($value, 5, 2), (int) substr($value, 8, 2), (int) substr($value, 0, 4))
+            )) {
+                $label = $field === 'startDate' ? 'Start date' : 'End date';
+                $errors[$field] = $label . ' must be a valid date in YYYY-MM-DD format.';
+                continue;
+            }
+            $dates[$field] = $value;
+        }
+
+        $startDate = array_key_exists('startDate', $dates) ? $dates['startDate'] : ($current['startDate'] ?? null);
+        $endDate = array_key_exists('endDate', $dates) ? $dates['endDate'] : ($current['endDate'] ?? null);
+        if ($startDate !== null && $endDate !== null && $startDate > $endDate) {
+            $errors['endDate'] = 'End date must be the same as or later than the start date.';
+        }
+
+        return $errors
+            ? ['error' => 'The banner campaign dates are invalid.', 'errors' => $errors]
+            : $dates;
     }
 
     private function hasImageBannerCategory(array $banners, string $category, $exceptId = null): bool

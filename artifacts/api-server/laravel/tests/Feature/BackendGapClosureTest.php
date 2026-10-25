@@ -1500,6 +1500,82 @@ class BackendGapClosureTest extends TestCase
         $this->assertSame('Agriculture Land', $saved['mobileBanners'][3]['ctaParams']['propertyType']);
     }
 
+    public function test_public_banner_feed_filters_campaign_windows_and_admin_can_read_all(): void
+    {
+        $today = now()->toDateString();
+        $this->seedData([
+            'users' => [$this->user(1, 'admin@example.com', 'Admin')],
+            'mobileBannersSeeded' => true,
+            'mobileBanners' => [
+                ['id' => 1, 'type' => 'video', 'active' => true, 'order' => 1, 'startDate' => $today, 'endDate' => $today],
+                ['id' => 2, 'type' => 'video', 'active' => true, 'order' => 2, 'startDate' => now()->addDay()->toDateString()],
+                ['id' => 3, 'type' => 'video', 'active' => true, 'order' => 3, 'endDate' => now()->subDay()->toDateString()],
+                ['id' => 4, 'type' => 'video', 'active' => true, 'order' => 4],
+                ['id' => 5, 'type' => 'video', 'active' => false, 'order' => 5],
+            ],
+        ]);
+        $adminToken = $this->token('admin@example.com');
+
+        $this->getJson('/api/mobile/banners')
+            ->assertOk()
+            ->assertJsonCount(2)
+            ->assertJsonPath('0.id', 1)
+            ->assertJsonPath('1.id', 4);
+        $this->getJson('/api/mobile/banners/all', ['Authorization' => "Bearer {$adminToken}"])
+            ->assertOk()
+            ->assertJsonCount(5);
+    }
+
+    public function test_banner_campaign_dates_validate_and_persist_on_create_and_update(): void
+    {
+        $this->seedData([
+            'users' => [$this->user(1, 'admin@example.com', 'Admin')],
+            'mobileBannersSeeded' => true,
+            'mobileBanners' => [],
+        ]);
+        $adminToken = $this->token('admin@example.com');
+        $headers = ['Authorization' => "Bearer {$adminToken}"];
+        $startDate = now()->addDay()->toDateString();
+        $endDate = now()->addDays(5)->toDateString();
+
+        $this->postJson('/api/mobile/banners', [
+            'type' => 'image',
+            'category' => 'homes',
+            'imageUrl' => '/images/mobile-banners/homes.jpg',
+            'startDate' => $startDate,
+            'endDate' => now()->toDateString(),
+        ], $headers)->assertUnprocessable()
+            ->assertJsonPath('errors.endDate', 'End date must be the same as or later than the start date.');
+
+        $created = $this->postJson('/api/mobile/banners', [
+            'type' => 'image',
+            'category' => 'homes',
+            'imageUrl' => '/images/mobile-banners/homes.jpg',
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ], $headers)->assertCreated()
+            ->assertJsonPath('banner.startDate', $startDate)
+            ->assertJsonPath('banner.endDate', $endDate)
+            ->json('banner');
+
+        $this->putJson('/api/mobile/banners/' . $created['id'], [
+            'endDate' => '2026-02-30',
+        ], $headers)->assertUnprocessable()
+            ->assertJsonPath('errors.endDate', 'End date must be a valid date in YYYY-MM-DD format.');
+
+        $updated = $this->putJson('/api/mobile/banners/' . $created['id'], [
+            'endDate' => '',
+        ], $headers)->assertOk()
+            ->assertJsonPath('banner.startDate', $startDate)
+            ->assertJsonPath('banner.endDate', null)
+            ->json('banner');
+
+        $saved = JsonStore::read()['mobileBanners'][0];
+        $this->assertSame($startDate, $saved['startDate']);
+        $this->assertNull($saved['endDate']);
+        $this->assertSame($updated['id'], $created['id']);
+    }
+
     public function test_banner_admin_read_authorization_precedes_initialization_or_mutation(): void
     {
         $this->seedData(['users' => [

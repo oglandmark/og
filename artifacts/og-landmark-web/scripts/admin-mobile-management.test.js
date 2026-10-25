@@ -90,6 +90,11 @@ test('admin banner editor can replace uploaded images and videos and confirm del
   assert.match(source, /item\.type === 'video' \? '\.mp4,\.mov' : '\.jpg,\.jpeg,\.png,\.webp'/);
   assert.match(source, /formData\.append\('_method', 'PUT'\)/);
   assert.match(source, /key === 'banners' && bannerFile \? 'POST' : 'PUT'/);
+  assert.match(source, /\['startDate', 'Campaign start date \(optional\)', 'date'\]/);
+  assert.match(source, /\['endDate', 'Campaign end date \(optional\)', 'date'\]/);
+  assert.match(source, /End date must be the same as or later than the start date\./);
+  assert.match(source, /item\.startDate && item\.startDate > today[\s\S]*?'Upcoming'/);
+  assert.match(source, /item\.endDate && item\.endDate < today[\s\S]*?'Expired'/);
   assert.match(source, /Permanently delete the \$\{item\.type === 'video' \? 'video' : 'image'\} banner/);
 });
 

@@ -145,6 +145,12 @@ test('Admin projects page provides portfolio status, inventory, search and filte
   assert.match(mobileManagementSource, /data-action="delete-record" data-section="projects"/);
 });
 
+test('Projects sidebar opens project management and keeps property listings separately accessible', () => {
+  assert.match(mobileManagementSource, /label: 'Projects', path: '\/admin\/management\/developer-projects'/);
+  assert.match(mobileManagementSource, /label: 'Project listings', path: '\/admin\/properties\?propertyView=projects'/);
+  assert.match(mobileManagementSource, /section: 'projects', path: '\/admin\/management\/developer-projects'/);
+});
+
 test('property filters use live status/city data and expose agent assignment controls', () => {
   assert.match(propertyManagementSource, /window\.__ogAdminApiProperties/);
   assert.match(propertyManagementSource, /property\?\.cityName/);
@@ -169,7 +175,7 @@ test('Admin review inbox includes new submissions and has separate Featured, Rec
   assert.match(mobileManagementSource, /label: 'Rejected properties', path: '\/admin\/properties\?propertyView=rejected'/);
   assert.match(mobileManagementSource, /label: 'Featured', path: '\/admin\/properties\?propertyView=featured'/);
   assert.match(mobileManagementSource, /label: 'Recommended', path: '\/admin\/properties\?propertyView=recommended'/);
-  assert.match(mobileManagementSource, /label: 'Projects', path: '\/admin\/properties\?propertyView=projects'/);
+  assert.match(mobileManagementSource, /label: 'Project listings', path: '\/admin\/properties\?propertyView=projects'/);
   assert.match(propertyManagementSource, /listingInboxView \? 'Property listed'/);
   assert.match(propertyManagementSource, /categoryFilter = agricultureView \? 'agricultural' : projectsView \? 'projects' : 'all'/);
 });

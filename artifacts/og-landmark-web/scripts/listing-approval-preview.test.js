@@ -16,7 +16,10 @@ const mobileRoot = path.resolve(webRoot, '../og-landmark-mobile');
 const laravelRoot = path.resolve(webRoot, '../api-server/laravel');
 const listingId = 984241;
 const listingTitle = 'Browser Preview Flow House';
+const bannerId = 984242;
+const bannerTitle = 'Browser Preview Home Banner';
 const projectId = 'preview-project-248';
+const updatedHomeTitle = 'Browser Preview Updated Home Content';
 const adminEmail = 'browser-preview-admin@example.test';
 const adminPassword = 'BrowserPreviewOnly123!';
 
@@ -154,7 +157,7 @@ function browserExecutable() {
   ].filter(Boolean).find(candidate => fs.existsSync(candidate));
 }
 
-test('Admin-approved listings, Agents, and Projects sync across Website and Mobile', async () => {
+test('Admin listing, directory, project, banner, and Home edits sync across Website and open Mobile screens', async () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'og-landmark-approval-preview-'));
   const databasePath = path.join(tempDir, 'laravel.sqlite');
   const fixturePath = path.join(tempDir, 'fixture.json');
@@ -174,6 +177,9 @@ test('Admin-approved listings, Agents, and Projects sync across Website and Mobi
   let mobileContext;
   let adminToken;
   let fixtureWasRemoved = false;
+  let bannerWasRemoved = false;
+  let settingsWereRestored = false;
+  let originalMobileSettings = null;
   let originalFailure;
   let cleanupFailure;
 
@@ -242,6 +248,23 @@ test('Admin-approved listings, Agents, and Projects sync across Website and Mobi
       }],
       notifications: [],
       pushDevices: [],
+      mobileBanners: [
+        {
+          id: bannerId,
+          type: 'image',
+          imageUrl: null,
+          videoUrl: null,
+          eyebrow: 'ISOLATED BROWSER TEST',
+          title: bannerTitle,
+          subtitle: 'Temporary banner used to verify Admin changes on an open Home screen.',
+          category: 'homes',
+          cta: 'Explore homes',
+          route: '/explore',
+          ctaParams: {},
+          active: true,
+          order: 0,
+        },
+      ],
       adminAuditLog: [],
       adminActivity: [],
       auditLog: [],
@@ -381,6 +404,10 @@ file_put_contents($argv[2], json_encode([
     assert.equal(typeof adminToken, 'string', 'the Admin dashboard should save the real browser session');
     assert.equal(browserUser?.role, 'Admin');
 
+    const originalSettingsResponse = await jsonRequest(webBase, '/api/mobile/settings');
+    assert.equal(originalSettingsResponse.response.status, 200);
+    originalMobileSettings = originalSettingsResponse.payload;
+
     await adminPage.goto(`${webBase}/admin/management/reviews`, { waitUntil: 'domcontentloaded' });
     const approveButton = adminPage.locator(
       `[data-action="review-property"][data-operation="approve"][data-id="${listingId}"]`,
@@ -458,6 +485,11 @@ file_put_contents($argv[2], json_encode([
     const updateAgentResponse = await updateAgentResponsePromise;
     assert.equal(updateAgentResponse.status(), 200, 'Admin should activate the Agent through its authenticated API');
 
+    const websiteAgents = await (await fetch(`${apiBase}/agents`)).text();
+    assert.ok(websiteAgents.includes(agentName), 'the active Agent should appear in the Website directory');
+    const mobileAgents = await jsonRequest(apiBase, '/api/mobile-agents');
+    assert.ok(mobileAgents.payload.some(agent => String(agent.id) === String(agentId)), 'the active Agent should appear in the Mobile directory API');
+
     mobileContext = await browser.newContext({
       viewport: { width: 402, height: 874 },
       isMobile: true,
@@ -469,6 +501,75 @@ file_put_contents($argv[2], json_encode([
     const mobilePage = await mobileContext.newPage();
     mobilePage.setDefaultTimeout(45_000);
     mobilePage.setDefaultNavigationTimeout(180_000);
+
+    await mobilePage.goto(mobileBase, { waitUntil: 'domcontentloaded' });
+    await mobilePage.getByText(listingTitle, { exact: true }).first().waitFor({ state: 'visible' });
+    assert.equal(new URL(mobilePage.url()).pathname, '/', 'the listing should appear on Home');
+
+    await mobilePage.getByTestId('home-category-slide-homes')
+      .getByText(bannerTitle, { exact: true })
+      .waitFor({ state: 'visible' });
+    await mobilePage.getByText('Find Your Property', { exact: true }).waitFor({ state: 'visible' });
+    const homeUrlBeforeAdminChanges = mobilePage.url();
+
+    await adminPage.goto(`${webBase}/admin/mobile/banners`, { waitUntil: 'domcontentloaded' });
+    const editBannerButton = adminPage.locator(
+      `[data-action="edit-record"][data-section="banners"][data-id="${bannerId}"]`,
+    );
+    await editBannerButton.waitFor({ state: 'visible' });
+    await editBannerButton.click();
+    const bannerForm = adminPage.locator('#og-mm-record-form-inner');
+    const activeCheckbox = bannerForm.locator('input[name="active"]');
+    assert.equal(await activeCheckbox.isChecked(), true, 'the isolated banner should start active');
+    await activeCheckbox.uncheck();
+    const bannerUpdateResponsePromise = adminPage.waitForResponse(response =>
+      response.request().method() === 'PUT'
+      && response.url().endsWith(`/api/mobile/banners/${bannerId}`),
+    );
+    await bannerForm.locator('button[type="submit"]').click();
+    const bannerUpdateResponse = await bannerUpdateResponsePromise;
+    assert.equal(bannerUpdateResponse.status(), 200, 'the authenticated Admin banner editor should save the visibility change');
+
+    const settingsUpdateResponsePromise = adminPage.waitForResponse(response =>
+      response.request().method() === 'PUT'
+      && response.url().endsWith('/api/mobile/settings'),
+    );
+    const settingsUpdate = await adminPage.evaluate(async (title) => {
+      const token = localStorage.getItem('og_token');
+      const response = await fetch('/api/mobile/settings', {
+        method: 'PUT',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content: { homepage: { sections: { browseTitle: title } } } }),
+      });
+      return { status: response.status, payload: await response.json().catch(() => null) };
+    }, updatedHomeTitle);
+    const settingsUpdateResponse = await settingsUpdateResponsePromise;
+    assert.equal(settingsUpdateResponse.status(), 200, 'the authenticated Admin session should save Home content settings');
+    assert.equal(settingsUpdate.status, 200);
+    assert.equal(
+      settingsUpdate.payload?.settings?.content?.homepage?.sections?.browseTitle,
+      updatedHomeTitle,
+      'the Admin API should persist the updated Home title',
+    );
+
+    await Promise.all([
+      mobilePage.getByText(updatedHomeTitle, { exact: true }).waitFor({ state: 'visible', timeout: 25_000 }),
+      mobilePage.waitForFunction(
+        title => !document.body.innerText.includes(title),
+        bannerTitle,
+        { timeout: 25_000 },
+      ),
+    ]);
+    assert.equal(
+      mobilePage.url(),
+      homeUrlBeforeAdminChanges,
+      'the already-open Home should reflect both Admin changes without navigation',
+    );
+
     const initialProjectsResponsePromise = mobilePage.waitForResponse(response =>
       response.request().method() === 'GET'
       && response.url().endsWith('/api/projects'),
@@ -478,9 +579,17 @@ file_put_contents($argv[2], json_encode([
     const initialProjectsResponse = await initialProjectsResponsePromise;
     assert.equal(initialProjectsResponse.status(), 200, 'Mobile Explore should load the public project feed before publishing');
     const initialMobileProjects = await initialProjectsResponse.json();
-    assert.equal(initialMobileProjects.some(project => String(project.id) === projectId), false, 'Draft project must be absent from the already-open Mobile Projects view');
+    assert.equal(
+      initialMobileProjects.some(project => String(project.id) === projectId),
+      false,
+      'Draft project must be absent from the already-open Mobile Projects view',
+    );
     await mobilePage.getByText('Loading approved projects…', { exact: true }).waitFor({ state: 'detached', timeout: 20_000 });
-    assert.equal(await mobilePage.getByText('Preview Live Project 248', { exact: true }).count(), 0, 'the unpublished project must not be rendered in Mobile Explore');
+    assert.equal(
+      await mobilePage.getByText('Preview Live Project 248', { exact: true }).count(),
+      0,
+      'the unpublished project must not be rendered in Mobile Explore',
+    );
     const openProjectsUrl = mobilePage.url();
 
     await adminPage.goto(`${webBase}/admin/management/developer-projects`, { waitUntil: 'domcontentloaded' });
@@ -500,22 +609,10 @@ file_put_contents($argv[2], json_encode([
     const updateProjectResponse = await updateProjectResponsePromise;
     assert.equal(updateProjectResponse.status(), 200, 'Admin should activate the project through its authenticated API');
 
-    const websiteAgents = await (await fetch(`${apiBase}/agents`)).text();
-    assert.ok(websiteAgents.includes(agentName), 'the active Agent should appear in the Website directory');
-    const mobileAgents = await jsonRequest(apiBase, '/api/mobile-agents');
-    assert.ok(mobileAgents.payload.some(agent => String(agent.id) === String(agentId)), 'the active Agent should appear in the Mobile directory API');
     const publicProjects = await jsonRequest(webBase, '/api/projects');
     assert.ok(publicProjects.payload.some(project => String(project.id) === projectId && project.status === 'Live'), 'the active project should appear in the Website public project feed');
-
     await mobilePage.getByText('Preview Live Project 248', { exact: true }).waitFor({ state: 'visible', timeout: 40_000 });
     assert.equal(mobilePage.url(), openProjectsUrl, 'the same Mobile Projects screen should update without navigation');
-
-    await mobilePage.goto(mobileBase, { waitUntil: 'domcontentloaded' });
-    await mobilePage.getByText(listingTitle, { exact: true }).first().waitFor({ state: 'visible' });
-    assert.equal(new URL(mobilePage.url()).pathname, '/', 'the listing should appear on Home');
-
-    await mobilePage.goto(`${mobileBase}/explore`, { waitUntil: 'domcontentloaded' });
-    await mobilePage.getByText(listingTitle, { exact: true }).first().waitFor({ state: 'visible' });
 
     await mobilePage.goto(`${mobileBase}/property/${listingId}`, { waitUntil: 'domcontentloaded' });
     await mobilePage.getByText(listingTitle, { exact: true }).first().waitFor({ state: 'visible' });
@@ -532,6 +629,36 @@ file_put_contents($argv[2], json_encode([
     await browser?.close().catch(() => undefined);
 
     if (adminToken && webProcess?.exitCode === null) {
+      if (originalMobileSettings) {
+        try {
+          const restored = await jsonRequest(webBase, '/api/mobile/settings', {
+            method: 'PUT',
+            token: adminToken,
+            body: originalMobileSettings,
+          });
+          assert.equal(restored.response.status, 200, 'the isolated Home settings should be restored after the test');
+          settingsWereRestored = true;
+        } catch (cleanupError) {
+          cleanupFailure ||= cleanupError;
+        }
+      }
+      try {
+        const removedBanner = await jsonRequest(webBase, `/api/mobile/banners/${bannerId}`, {
+          method: 'DELETE',
+          token: adminToken,
+        });
+        assert.equal(removedBanner.response.status, 200, 'the isolated banner should be removed after the browser flow');
+        const remainingBanners = await jsonRequest(webBase, '/api/mobile/banners/all', { token: adminToken });
+        assert.equal(remainingBanners.response.status, 200);
+        assert.equal(
+          remainingBanners.payload.some(banner => Number(banner.id) === bannerId),
+          false,
+          'the isolated banner should be absent after cleanup',
+        );
+        bannerWasRemoved = true;
+      } catch (cleanupError) {
+        cleanupFailure ||= cleanupError;
+      }
       try {
         const removed = await jsonRequest(webBase, `/api/admin/properties/${listingId}`, {
           method: 'DELETE',
@@ -558,6 +685,8 @@ file_put_contents($argv[2], json_encode([
     if (!originalFailure) {
       if (cleanupFailure) throw cleanupFailure;
       assert.ok(fixtureWasRemoved, 'the temporary listing fixture must be explicitly removed');
+      assert.ok(bannerWasRemoved, 'the temporary banner fixture must be explicitly removed');
+      assert.ok(settingsWereRestored, 'the isolated Home settings must be restored after the browser flow');
     }
   }
 });

@@ -1619,6 +1619,7 @@ export default function HomeScreen() {
     let active = true;
     let loading = false;
     let firstLoad = true;
+    let loggedPropertyRequestError = false;
     const refreshProperties = async () => {
       if (!active || loading) return;
       loading = true;
@@ -1632,8 +1633,12 @@ export default function HomeScreen() {
           setApiProps(items.map(apiPropertyToProperty));
           setPropertyError('');
         }
-      } catch {
+      } catch (error) {
         if (active) {
+          if (!loggedPropertyRequestError) {
+            console.error('[Home] Live property request failed', { apiBase: API_BASE, error });
+            loggedPropertyRequestError = true;
+          }
           setPropertyError('Live properties are temporarily unavailable. Demo listings are disabled.');
         }
       } finally {

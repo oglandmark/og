@@ -7,6 +7,7 @@
   let apiProperties = [];
   let mobileDemoProperties = [];
   let mobileProjectProperties = [];
+  let hiddenDemoPropertyIds = new Set();
   const observedProperties = new Map();
   let agents = [];
   const propertyViews = new Set(['listed', 'in-progress', 'closed', 'pending', 'approved', 'rejected']);
@@ -188,15 +189,23 @@
   }
   async function loadMobileDemoProperties() {
     try {
-      const response = await originalFetch('/admin/demo-properties.json');
+      const [response, settings] = await Promise.all([
+        originalFetch('/admin/demo-properties.json'),
+        request('/mobile/settings').catch((error) => {
+          console.error('Mobile demo visibility could not be loaded in Admin.', error);
+          return {};
+        }),
+      ]);
       if (!response.ok) throw new Error(`Catalog request failed (${response.status})`);
       const catalog = await response.json();
       if (!Array.isArray(catalog)) throw new Error('Demo catalog is not a list');
+      hiddenDemoPropertyIds = new Set((settings?.hiddenDemoPropertyIds || []).map(String));
       mobileDemoProperties = catalog.map((property) => ({
         ...property,
         id: `mobile-demo:${property.id}`,
         demoId: property.id,
         isDemo: true,
+        mobileHidden: hiddenDemoPropertyIds.has(String(property.id)),
         approvalStatus: 'Active',
         listingStatus: 'Active',
         sellerName: property.agent || 'OG Landmark demo',
@@ -215,6 +224,7 @@
         return {
           ...project,
           id: `mobile-project:${project.id}`,
+          sourceId: project.id,
           title: project.title || project.name || 'Developer project',
           type: 'Project',
           category: 'Projects',
@@ -350,6 +360,8 @@
       .og-pm-pagination button{border:1px solid #dbe2ea;border-radius:7px;background:#fff;padding:6px 10px;color:#0B1F3A;cursor:pointer}
       .og-pm-pagination button:disabled{opacity:.45;cursor:not-allowed}
       .og-pm-manage{border:1px solid #c8a45a;border-radius:7px;background:#fff;color:#0B1F3A;padding:6px 9px;font:600 12px system-ui;white-space:nowrap;cursor:pointer}
+      .og-pm-delete-row,.og-pm-mobile-action{margin:2px;border:1px solid #fecaca;border-radius:7px;background:#fff;color:#b91c1c;padding:6px 9px;font:600 11px system-ui;white-space:nowrap;cursor:pointer}
+      .og-pm-mobile-action{border-color:#dbe2ea;color:#334155}.og-pm-delete-row:hover{background:#fff1f2}.og-pm-mobile-action:hover{background:#f8fafc}
       .og-pm-manage:hover{background:#fbf7ed}
       .og-pm-feature-toggle{min-width:112px;border:1px solid #dbe2ea;border-radius:999px;background:#fff;color:#475569;padding:7px 10px;font:700 11px/1.1 system-ui;white-space:nowrap;cursor:pointer}
       .og-pm-feature-toggle.is-featured{border-color:#c8a45a;background:#fbf7ed;color:#805b12}
@@ -743,7 +755,8 @@
             ? '—'
             : `PKR ${Number(property.price).toLocaleString()}`;
         } else if (label === 'status') {
-          cell.textContent = property.isProject ? property.status : 'Active · Demo';
+          cell.dataset.ogMobileStatus = 'true';
+          cell.textContent = property.isProject ? property.status : property.mobileHidden ? 'Hidden · Demo' : 'Active · Demo';
         } else if (label === 'featured') {
           const badge = document.createElement('span');
           badge.className = `og-pm-feature-badge${isFeaturedProperty(property) && !property.isProject ? ' is-featured' : ''}`;
@@ -759,10 +772,17 @@
         } else if (label.includes('referred agent')) {
           cell.textContent = property.isProject ? 'Project record' : 'Demo listing';
         } else if (label === 'manage') {
-          const badge = document.createElement('span');
-          badge.className = 'og-mobile-demo-tag';
-          badge.textContent = 'Read only';
-          cell.appendChild(badge);
+          const action = document.createElement('button');
+          action.type = 'button';
+          action.className = 'og-pm-mobile-action';
+          if (property.isProject) {
+            action.textContent = 'Archive project';
+            action.addEventListener('click', () => { void archiveMobileProject(property, action); });
+          } else {
+            action.textContent = property.mobileHidden ? 'Show in app' : 'Hide from app';
+            action.addEventListener('click', () => { void toggleDemoVisibility(property, action); });
+          }
+          cell.appendChild(action);
         }
         next.appendChild(cell);
       }
@@ -1167,6 +1187,57 @@
       window.location.reload();
     } catch (error) {
       showError(container, error.message || 'Could not delete this listing.');
+      button.disabled = false;
+    }
+  }
+
+  async function deletePropertyFromRow(property, button, row) {
+    if (!window.confirm(`Permanently delete “${property.title || 'this listing'}” from the mobile app and Admin records? This cannot be undone.`)) return;
+    button.disabled = true;
+    try {
+      await request(`/admin/properties/${encodeURIComponent(property.id)}`, { method: 'DELETE' });
+      apiProperties = apiProperties.filter((item) => String(item.id) !== String(property.id));
+      observedProperties.delete(String(property.id));
+      row.remove();
+      rebuildPropertyData();
+    } catch (error) {
+      window.alert(error.message || 'Could not delete this listing.');
+      button.disabled = false;
+    }
+  }
+
+  async function toggleDemoVisibility(property, button) {
+    const hidden = !property.mobileHidden;
+    button.disabled = true;
+    try {
+      const result = await request('/admin/demo-properties', {
+        method: 'PATCH',
+        body: JSON.stringify({ ids: [Number(property.demoId)], hidden }),
+      });
+      hiddenDemoPropertyIds = new Set((result?.hiddenDemoPropertyIds || []).map(String));
+      property.mobileHidden = hiddenDemoPropertyIds.has(String(property.demoId));
+      button.textContent = property.mobileHidden ? 'Show in app' : 'Hide from app';
+      const row = button.closest('[data-og-mobile-demo-row]');
+      const statusCell = row?.querySelector('[data-og-mobile-status]');
+      if (statusCell) statusCell.textContent = property.mobileHidden ? 'Hidden · Demo' : 'Active · Demo';
+    } catch (error) {
+      window.alert(error.message || 'Could not update demo visibility.');
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  async function archiveMobileProject(property, button) {
+    if (!window.confirm(`Archive “${property.title || 'this project'}” from the mobile app? Linked blocks, units, and inventory will be preserved and the project can be restored.`)) return;
+    button.disabled = true;
+    try {
+      await request(`/admin/developer-projects/${encodeURIComponent(property.sourceId)}`, { method: 'DELETE' });
+      const row = button.closest('[data-og-mobile-demo-row]');
+      row?.remove();
+      mobileProjectProperties = mobileProjectProperties.filter((item) => String(item.sourceId) !== String(property.sourceId));
+      rebuildPropertyData();
+    } catch (error) {
+      window.alert(error.message || 'Could not archive this project.');
       button.disabled = false;
     }
   }
@@ -1611,6 +1682,20 @@
       button.dataset.propertyId = String(property.id);
       button.dataset.ogPmEdit = 'true';
       button.__ogListingProperty = property;
+      let deleteButton = cell.querySelector('[data-og-delete-property]');
+      if (!deleteButton) {
+        deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.dataset.ogDeleteProperty = 'true';
+        deleteButton.className = 'og-pm-delete-row';
+        deleteButton.textContent = 'Delete';
+        deleteButton.addEventListener('click', () => {
+          const current = deleteButton.__ogListingProperty;
+          if (current) void deletePropertyFromRow(current, deleteButton, row);
+        });
+        cell.appendChild(deleteButton);
+      }
+      deleteButton.__ogListingProperty = property;
       const rowStatus = row.dataset.ogPropertyStatus;
       const searchText = normalize([property.title, property.city, property.sellerName, property.address, property.district, property.locality, row.innerText].join(' '));
       row.dataset.ogMatchesFilters = String(matchesPropertyFilters(property) && (!propertySearch || searchText.includes(propertySearch)));

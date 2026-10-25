@@ -547,7 +547,7 @@
       const rows = items.map((item) => `<tr>${config.row(item)}<td><div class="og-mm-row-actions">
         ${key === 'notifications' && item.status !== 'sent' ? `<button class="og-mm-action primary" data-action="send-announcement" data-section="${key}" data-id="${esc(item.id)}">Send</button>` : ''}
         <button class="og-mm-action" data-action="edit-record" data-section="${key}" data-id="${esc(item.id)}">Edit</button>
-        <button class="og-mm-action danger" data-action="delete-record" data-section="${key}" data-id="${esc(item.id)}">${key === 'projects' ? 'Archive' : 'Delete'}</button>
+        <button class="og-mm-action danger" data-action="delete-record" data-section="${key}" data-id="${esc(item.id)}">${key === 'projects' ? 'Remove from app' : 'Delete'}</button>
       </div></td></tr>`).join('');
       const addButton = config.createPath ? `<button class="og-mm-action primary" data-action="add-record" data-section="${key}">${esc(config.addLabel || 'Add new')}</button>` : '';
       content.innerHTML = `<div class="og-mm-note">${esc(config.note || `${config.title} — live records loaded from the shared Admin API used by the website and mobile app.`)}</div>
@@ -604,7 +604,7 @@
         <td>${esc(updated ? updated.slice(0, 10) : '—')}</td>
         <td><div class="og-mm-row-actions">${projectViewState.archived
           ? `<button class="og-mm-action primary" data-action="restore-project" data-id="${esc(item.id)}">Restore</button>`
-          : `<button class="og-mm-action" data-action="edit-record" data-section="projects" data-id="${esc(item.id)}">Edit</button><button class="og-mm-action danger" data-action="delete-record" data-section="projects" data-id="${esc(item.id)}">Archive</button>`}</div></td>
+          : `<button class="og-mm-action" data-action="edit-record" data-section="projects" data-id="${esc(item.id)}">Edit</button><button class="og-mm-action danger" data-action="delete-record" data-section="projects" data-id="${esc(item.id)}">Remove from app</button>`}</div></td>
       </tr>`;
     }).join('');
     const addButton = projectViewState.archived ? '' : '<button class="og-mm-action primary" data-action="add-record" data-section="projects">＋ Add project</button>';

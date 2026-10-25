@@ -79,7 +79,7 @@ test('Admin property filters keep status and city controls while curated pages u
   assert.match(propertyManagementSource, /row\.hidden = row\.dataset\.ogMatchesFilters !== 'true'/);
 });
 
-test('Admin counts properties visible in the table and includes the mobile demo catalogue as read-only rows', () => {
+test('Admin includes mobile demo and project rows in the property table', () => {
   assert.match(propertyManagementSource, /addObservedProperty\(property\)/);
   assert.match(propertyManagementSource, /originalFetch\('\/admin\/demo-properties\.json'\)/);
   assert.match(propertyManagementSource, /ensureMobileDemoRows\(table\)/);
@@ -87,7 +87,19 @@ test('Admin counts properties visible in the table and includes the mobile demo 
   assert.match(propertyManagementSource, /Mobile app project/);
   assert.match(propertyManagementSource, /request\('\/admin\/developer-projects'\)/);
   assert.match(propertyManagementSource, /request\('\/admin\/properties'\)/);
-  assert.match(propertyManagementSource, /Read only/);
+  assert.match(propertyManagementSource, /Hide from app/);
+  assert.match(propertyManagementSource, /Archive project/);
+});
+
+test('Admin can remove app content without permanently deleting demo catalogue entries', () => {
+  assert.match(propertyManagementSource, /\/admin\/demo-properties/);
+  assert.match(propertyManagementSource, /hiddenDemoPropertyIds/);
+  assert.match(propertyManagementSource, /Hide from app/);
+  assert.match(propertyManagementSource, /Show in app/);
+  assert.match(propertyManagementSource, /Archive project/);
+  assert.match(propertyManagementSource, /Linked blocks, units, and inventory will be preserved/);
+  assert.match(propertyManagementSource, /Permanently delete .*This cannot be undone/);
+  assert.match(propertyManagementSource, /data-og-delete-property/);
 });
 
 test('Admin can filter and persist featured status for live mobile properties', () => {
@@ -143,6 +155,7 @@ test('Admin projects page provides portfolio status, inventory, search and filte
   assert.match(mobileManagementSource, /Project created successfully/);
   assert.match(mobileManagementSource, /projectViewState\.notice = `“\$\{label\}” archived/);
   assert.match(mobileManagementSource, /data-action="delete-record" data-section="projects"/);
+  assert.match(mobileManagementSource, /Remove from app/);
 });
 
 test('Projects sidebar opens project management and keeps property listings separately accessible', () => {

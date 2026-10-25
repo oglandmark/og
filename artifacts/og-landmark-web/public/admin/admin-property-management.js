@@ -108,8 +108,8 @@
   const isApprovedForPromotion = (property) => {
     const approval = normalize(property?.approvalStatus || property?.listingStatus || property?.status || 'pending');
     const listing = normalize(property?.listingStatus || property?.approvalStatus || property?.status || 'pending');
-    return ['active', 'approved', 'live', 'listed'].includes(approval)
-      && ['active', 'approved', 'live', 'listed'].includes(listing);
+    return ['active', 'approved'].includes(approval)
+      && ['active', 'approved'].includes(listing);
   };
   const matchesRecommended = (property, value) => value === 'all'
     || (value === 'recommended' ? isRecommendedProperty(property) : !isRecommendedProperty(property));
@@ -284,16 +284,17 @@
 
   function rowProperty(row, used) {
     const mediaProperty = row.querySelector('[data-og-listing-review]')?.__ogListingProperty;
-    if (mediaProperty && !used.has(String(mediaProperty.id))) {
-      used.add(String(mediaProperty.id));
-      return mediaProperty;
-    }
-    const listingId = row.dataset.ogListingId || row.getAttribute('data-og-listing-id');
+    const listingId = row.dataset.ogListingId || row.getAttribute('data-og-listing-id') || mediaProperty?.id;
     const sharedProperties = Array.isArray(window.__ogAdminApiProperties) ? window.__ogAdminApiProperties : [];
-    const byId = [...properties, ...sharedProperties].find((item) => String(item.id) === String(listingId));
+    const byId = [...apiProperties, ...properties, ...sharedProperties]
+      .find((item) => String(item.id) === String(listingId));
     if (byId && !used.has(String(byId.id))) {
       used.add(String(byId.id));
       return byId;
+    }
+    if (mediaProperty && !used.has(String(mediaProperty.id))) {
+      used.add(String(mediaProperty.id));
+      return mediaProperty;
     }
     const cells = [...row.cells].map((cell) => normalize(cell.innerText));
     const rowText = normalize(row.innerText);

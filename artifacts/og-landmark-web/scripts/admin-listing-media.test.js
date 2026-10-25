@@ -117,6 +117,20 @@ test('Admin can select and filter persistent Recommended listings for mobile Hom
   assert.match(propertyManagementSource, /\+ Recommend/);
 });
 
+test('Featured and Recommended rows use saved promotion state and match server eligibility', () => {
+  const rowPropertySource = propertyManagementSource.slice(
+    propertyManagementSource.indexOf('function rowProperty'),
+    propertyManagementSource.indexOf('function ensureStyles'),
+  );
+  assert.match(rowPropertySource, /\[\.\.\.apiProperties, \.\.\.properties, \.\.\.sharedProperties\]/);
+  assert.ok(
+    rowPropertySource.indexOf('const byId =') < rowPropertySource.indexOf('if (mediaProperty'),
+    'fresh API state must take precedence over cached review-button metadata',
+  );
+  assert.match(propertyManagementSource, /\['active', 'approved'\]\.includes\(approval\)/);
+  assert.match(propertyManagementSource, /\['active', 'approved'\]\.includes\(listing\)/);
+});
+
 test('property filters use live status/city data and expose agent assignment controls', () => {
   assert.match(propertyManagementSource, /window\.__ogAdminApiProperties/);
   assert.match(propertyManagementSource, /property\?\.cityName/);

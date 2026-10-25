@@ -36,7 +36,7 @@
   let agentDirectoryMessage = '';
   let propertyLoadError = '';
   const normalize = (value) => String(value ?? '').trim().toLowerCase();
-  const statusOf = (property) => normalize(property.approvalStatus || property.listingStatus || 'pending');
+  const statusOf = (property) => normalize(property.approvalStatus || property.listingStatus || property.status || 'pending');
   const statusesOf = (property) => [
     normalize(property.approvalStatus),
     normalize(property.listingStatus),
@@ -58,6 +58,7 @@
         && ['active', 'approved', 'listed'].includes(listing);
     }
     if (value === 'rejected') return statuses.includes('rejected');
+    if (value === 'active') return statuses.some((status) => ['active', 'approved', 'live', 'listed'].includes(status));
     if (value === 'pending') {
       return statuses.some((status) => ['pending', 'changes requested', 'in progress', 'under review'].includes(status));
     }
@@ -87,9 +88,14 @@
   };
   const matchesCity = (property, value) => {
     if (value === 'all') return true;
-    const city = normalize(property.city || property.location?.city || property.tehsil || '');
-    if (value === 'okara') return city.includes('okara');
-    return city === normalize(value);
+    const city = normalize(cityOf(property));
+    const wanted = normalize(value);
+    return city === wanted || city.startsWith(`${wanted} `) || (wanted === 'okara' && city.includes('okara'));
+  };
+  const cityOf = (property) => {
+    const location = property?.location;
+    return String(property?.city || property?.cityName || (typeof location === 'object' ? location?.city : location)
+      || property?.tehsil || '').trim();
   };
   const isFeaturedProperty = (property) => property?.featured === true
     || property?.featured === 1
@@ -100,9 +106,10 @@
     || property?.recommended === 1
     || ['true', '1', 'yes'].includes(normalize(property?.recommended));
   const isApprovedForPromotion = (property) => {
-    const approval = normalize(property?.approvalStatus || property?.listingStatus || 'pending');
-    const listing = normalize(property?.listingStatus || property?.approvalStatus || 'pending');
-    return ['active', 'approved'].includes(approval) && ['active', 'approved'].includes(listing);
+    const approval = normalize(property?.approvalStatus || property?.listingStatus || property?.status || 'pending');
+    const listing = normalize(property?.listingStatus || property?.approvalStatus || property?.status || 'pending');
+    return ['active', 'approved', 'live', 'listed'].includes(approval)
+      && ['active', 'approved', 'live', 'listed'].includes(listing);
   };
   const matchesRecommended = (property, value) => value === 'all'
     || (value === 'recommended' ? isRecommendedProperty(property) : !isRecommendedProperty(property));
@@ -269,6 +276,13 @@
       used.add(String(mediaProperty.id));
       return mediaProperty;
     }
+    const listingId = row.dataset.ogListingId || row.getAttribute('data-og-listing-id');
+    const sharedProperties = Array.isArray(window.__ogAdminApiProperties) ? window.__ogAdminApiProperties : [];
+    const byId = [...properties, ...sharedProperties].find((item) => String(item.id) === String(listingId));
+    if (byId && !used.has(String(byId.id))) {
+      used.add(String(byId.id));
+      return byId;
+    }
     const cells = [...row.cells].map((cell) => normalize(cell.innerText));
     const rowText = normalize(row.innerText);
     const title = normalize(row.querySelector('td .font-medium')?.textContent || '');
@@ -315,6 +329,7 @@
       .og-pm-feature-toggle{min-width:112px;border:1px solid #dbe2ea;border-radius:999px;background:#fff;color:#475569;padding:7px 10px;font:700 11px/1.1 system-ui;white-space:nowrap;cursor:pointer}
       .og-pm-feature-toggle.is-featured{border-color:#c8a45a;background:#fbf7ed;color:#805b12}
       .og-pm-feature-toggle:disabled{opacity:.55;cursor:wait}
+      .og-pm-agent-assign{display:block;margin-top:5px;border:0;background:transparent;padding:0;color:#946f24;font:700 10px system-ui;text-decoration:underline;cursor:pointer}
       .og-pm-feature-badge{display:inline-flex;align-items:center;border:1px solid #dbe2ea;border-radius:999px;background:#f8fafc;color:#64748b;padding:4px 8px;font:700 10px/1 system-ui;white-space:nowrap}
       .og-pm-feature-badge.is-featured{border-color:#e8d7aa;background:#fbf7ed;color:#805b12}
       .og-pm-recommend-toggle{min-width:120px;border:1px solid #dbe2ea;border-radius:999px;background:#fff;color:#475569;padding:7px 10px;font:700 11px/1.1 system-ui;white-space:nowrap;cursor:pointer}
@@ -1153,6 +1168,33 @@
     table.closest('.bg-white')?.prepend(filters);
   }
 
+  function refreshCityFilterOptions(root) {
+    const cityRow = [...root.querySelectorAll('.og-pm-filter-group')]
+      .find((row) => row.querySelector('.og-pm-filter-label')?.textContent.trim() === 'City');
+    if (!cityRow) return;
+    const cities = new Set([
+      'Okara', 'Depalpur', 'Renala Khurd', 'Haveli Lakha', 'Basir Pur',
+      ...properties.map(cityOf).filter(Boolean),
+    ]);
+    const existing = new Set([...cityRow.querySelectorAll('[data-city]')].map((button) => normalize(button.dataset.city)));
+    for (const city of cities) {
+      const key = normalize(city);
+      if (!key || existing.has(key)) continue;
+      const button = document.createElement('button');
+      button.className = 'og-pm-filter';
+      button.type = 'button';
+      button.dataset.city = city;
+      button.textContent = city;
+      button.addEventListener('click', () => {
+        cityFilter = city;
+        propertyPage = 1;
+        queueEnhancement();
+      });
+      cityRow.appendChild(button);
+      existing.add(key);
+    }
+  }
+
   function renderLatestPanel(root, table) {
     if (featuredView || recommendedView || projectsView || agricultureView) {
       table.closest('.bg-white')?.querySelector('[data-og-latest-panel]')?.remove();
@@ -1300,6 +1342,9 @@
   }
 
   function enhance() {
+    if (!apiProperties.length && Array.isArray(window.__ogAdminApiProperties) && window.__ogAdminApiProperties.length) {
+      setPropertyData(window.__ogAdminApiProperties);
+    }
     const root = findRoot();
     if (!root) return;
     const heading = root.querySelector('h2');
@@ -1465,10 +1510,32 @@
       const assigned = property.assignedAgent || {};
       const assignedName = assigned.name || property.assignedAgentName || '';
       const assignedCity = assigned.city || property.assignedAgentCity || '';
-      agentCell.textContent = assignedName ? `${assignedName}${assignedCity ? ` · ${assignedCity}` : ''}` : 'Not assigned';
+      let agentLabel = agentCell.querySelector('[data-og-agent-label]');
+      if (!agentLabel) {
+        agentLabel = document.createElement('span');
+        agentLabel.dataset.ogAgentLabel = 'true';
+        agentCell.appendChild(agentLabel);
+      }
+      agentLabel.textContent = assignedName ? `${assignedName}${assignedCity ? ` · ${assignedCity}` : ''}` : 'Not assigned';
+      let agentButton = agentCell.querySelector('[data-og-agent-assign]');
+      if (!agentButton) {
+        agentButton = document.createElement('button');
+        agentButton.type = 'button';
+        agentButton.dataset.ogAgentAssign = 'true';
+        agentButton.className = 'og-pm-agent-assign';
+        agentButton.addEventListener('click', () => {
+          const current = agentButton.__ogListingProperty;
+          if (current) void openPropertyEditor(current, agentButton);
+        });
+        agentCell.appendChild(agentButton);
+      }
+      agentButton.__ogListingProperty = property;
+      agentButton.textContent = assignedName ? 'Change agent' : 'Assign agent';
+      agentButton.setAttribute('aria-label', `${assignedName ? 'Change' : 'Assign'} agent for ${property.title || 'listing'}`);
     }
     const summary = heading?.parentElement?.querySelector('p');
     const visibleCount = updatePropertyTable(root, table);
+    refreshCityFilterOptions(root);
     if (summary) summary.textContent = propertyLoadError
       ? `Edit controls unavailable: ${propertyLoadError}`
       : `${visibleCount} shown · ${properties.length} total properties`;
@@ -1505,9 +1572,9 @@
   observer = new MutationObserver(queueEnhancement);
   const start = () => {
     ensureStyles();
-    if (Array.isArray(window.__ogAdminListingProperties)) {
-      setPropertyData(window.__ogAdminListingProperties);
-    }
+    const initialProperties = Array.isArray(window.__ogAdminApiProperties)
+      ? window.__ogAdminApiProperties : window.__ogAdminListingProperties;
+    if (Array.isArray(initialProperties)) setPropertyData(initialProperties);
     void loadMobileDemoProperties();
     void loadMobileProjectProperties();
     observer.observe(document.body, { childList: true, subtree: true });

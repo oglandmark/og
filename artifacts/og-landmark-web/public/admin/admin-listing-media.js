@@ -79,6 +79,7 @@
         response.clone().json().then((payload) => {
           properties = propertyList(payload);
           windowRef.__ogAdminListingProperties = properties;
+          windowRef.__ogAdminApiProperties = properties;
           windowRef.dispatchEvent(new windowRef.CustomEvent('og-admin-properties-loaded', {
             detail: properties,
           }));

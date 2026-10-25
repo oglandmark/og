@@ -201,6 +201,41 @@ class BackendGapClosureTest extends TestCase
             ->assertUnprocessable();
     }
 
+    public function test_admin_feature_and_recommend_row_actions_persist_live_listing_choices(): void
+    {
+        $this->seedData([
+            'users' => [$this->user(1, 'admin-curation@example.test', 'Admin')],
+            'properties' => [[
+                'id' => 45,
+                'title' => 'Live curation test listing',
+                'city' => 'Okara',
+                'approvalStatus' => 'Active',
+                'listingStatus' => 'Active',
+                'featured' => false,
+                'recommended' => false,
+            ]],
+        ]);
+        $headers = ['Authorization' => 'Bearer ' . $this->token('admin-curation@example.test')];
+
+        $this->patchJson('/api/admin/properties/45/feature', ['featured' => true], $headers)
+            ->assertOk()
+            ->assertJsonPath('featured', true);
+        $this->patchJson('/api/admin/properties/45/recommend', ['recommended' => true], $headers)
+            ->assertOk()
+            ->assertJsonPath('recommended', true);
+        $this->patchJson('/api/admin/properties/45/feature', ['featured' => false], $headers)
+            ->assertOk()
+            ->assertJsonPath('featured', false);
+        $this->patchJson('/api/admin/properties/45/recommend', ['recommended' => false], $headers)
+            ->assertOk()
+            ->assertJsonPath('recommended', false);
+
+        $saved = collect(JsonStore::read()['properties'])->firstWhere('id', 45);
+        $this->assertFalse($saved['featured']);
+        $this->assertFalse($saved['recommended']);
+        $this->assertCount(4, $saved['reviewHistory']);
+    }
+
     public function test_admin_property_editor_replaces_and_removes_uploaded_photos_and_video(): void
     {
         $this->useTemporaryMediaStorage();

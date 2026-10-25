@@ -113,6 +113,19 @@ test('Admin can select and filter persistent Recommended listings for mobile Hom
   assert.ok(apiControllerSource.includes("($parts[2] ?? '') === 'recommend'"));
   assert.ok(apiControllerSource.includes("$data['properties'][$index]['recommended']"));
   assert.ok(apiControllerSource.includes("'recommended' => false"));
+  assert.match(propertyManagementSource, /data-og-recommend-toggle/);
+  assert.match(propertyManagementSource, /\+ Recommend/);
+});
+
+test('property filters use live status/city data and expose agent assignment controls', () => {
+  assert.match(propertyManagementSource, /window\.__ogAdminApiProperties/);
+  assert.match(propertyManagementSource, /property\?\.cityName/);
+  assert.match(propertyManagementSource, /typeof location === 'object' \? location\?\.city : location/);
+  assert.match(propertyManagementSource, /refreshCityFilterOptions\(root\)/);
+  assert.match(propertyManagementSource, /data-og-agent-assign/);
+  assert.match(propertyManagementSource, /Assign agent/);
+  assert.match(propertyManagementSource, /Change agent/);
+  assert.match(propertyManagementSource, /includes\(status\)/);
 });
 
 test('Admin review inbox includes new submissions and has separate Featured, Recommended, and Projects pages', () => {

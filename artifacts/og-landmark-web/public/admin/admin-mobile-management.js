@@ -56,6 +56,8 @@
       slug: 'reports-and-analytics-dashboard-statistics',
       path: existingPagePaths['Dashboard Statistics'],
     },
+    { label: 'Agent Messages', group: 'Agent Operations', slug: 'agent-communications', section: 'agent-messages', path: '/admin/management/agent-communications' },
+    { label: 'Agent Progress', group: 'Agent Operations', slug: 'agent-progress', section: 'agent-progress', path: '/admin/management/agent-progress' },
     {
       label: 'Staff & Permissions',
       group: 'Staff & Permissions',
@@ -327,11 +329,78 @@
     if (tab === 'properties') return renderProperties(content);
     const page = sidebarPageBySlug[tab];
     if (page?.group === 'Reports & Analytics') return renderReports(content, page.label);
+    if (page?.section === 'agent-messages') return renderAgentMessages(content);
+    if (page?.section === 'agent-progress') return renderAgentProgress(content);
     if (page?.group === 'Staff & Permissions') return renderStaff(content);
     if (page?.group === 'System Settings') return renderSystem(content, page.label);
     if (page?.section === 'reviews') return renderReviews(content);
     if (page?.section && sectionConfig[page.section]) return renderSection(page.section, content);
     content.innerHTML = `<div class="og-mm-empty"><h3>${esc(page?.label || 'Page not found')}</h3><p>This navigation item does not have a connected management workflow yet.</p></div>`;
+  }
+
+  async function renderAgentMessages(content, selectedId = '') {
+    content.innerHTML = '<div class="og-mm-empty">Loading Agent conversations…</div>';
+    try {
+      const threads = await api('/agent-admin-messages');
+      const active = threads.find((thread) => String(thread.id) === String(selectedId)) || threads[0];
+      if (!threads.length) {
+        content.innerHTML = '<div class="og-mm-empty"><h3>No Agent messages yet</h3><p>Agent conversations will appear here when an Agent contacts Admin from the mobile app.</p></div>';
+        return;
+      }
+      const threadList = threads.map((thread) => `<button type="button" class="og-mm-action ${String(thread.id) === String(active.id) ? 'primary' : ''}" data-agent-thread="${esc(thread.id)}"><strong>${esc(thread.agentName || 'Agent')}</strong><small>${esc(thread.lastMessage || thread.agentEmail || 'Open conversation')}</small></button>`).join('');
+      const messages = (active.messages || []).map((message) => `<article class="og-mm-system-card"><strong>${esc(message.senderName || (String(message.senderId) === String(active.agentUserId) ? active.agentName : 'Admin'))}</strong><p>${esc(message.text || '')}</p><small>${esc(message.createdAt || '')}</small></article>`).join('');
+      content.innerHTML = `<div class="og-mm-record-section"><h2>Agent Messages</h2><p>Read and reply to the same Admin conversation used in the mobile app.</p><div class="og-mm-grid"><div class="og-mm-system-card"><h3>Conversations</h3><div class="og-mm-agent-thread-list">${threadList}</div></div><div class="og-mm-system-card"><h3>${esc(active.agentName || 'Agent')} <small>${esc(active.agentEmail || '')}</small></h3><div class="og-mm-agent-thread-list">${messages || '<p>No messages in this conversation yet.</p>'}</div><form data-agent-reply="${esc(active.id)}"><label>Reply<textarea name="text" maxlength="4000" required></textarea></label><button class="og-mm-action primary" type="submit">Send reply</button></form></div></div></div>`;
+      content.querySelectorAll('[data-agent-thread]').forEach((button) => button.addEventListener('click', () => {
+        void renderAgentMessages(content, button.dataset.agentThread);
+      }));
+      content.querySelector('[data-agent-reply]')?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const button = form.querySelector('[type="submit"]');
+        const text = new FormData(form).get('text')?.toString().trim();
+        if (!text) return;
+        button.disabled = true;
+        try {
+          await api(`/agent-admin-messages/${encodeURIComponent(active.id)}`, { method: 'POST', body: JSON.stringify({ text }) });
+          await renderAgentMessages(content, active.id);
+        } catch (error) {
+          content.insertAdjacentHTML('afterbegin', `<div class="og-mm-error">${esc(error.message || 'Could not send reply.')}</div>`);
+          button.disabled = false;
+        }
+      });
+    } catch (error) {
+      content.innerHTML = `<div class="og-mm-error">Could not load Agent messages: ${esc(error.message)}</div>`;
+    }
+  }
+
+  async function renderAgentProgress(content) {
+    content.innerHTML = '<div class="og-mm-empty">Loading Agent progress reports…</div>';
+    try {
+      const reports = await api('/agent-progress');
+      if (!reports.length) {
+        content.innerHTML = '<div class="og-mm-empty"><h3>No progress reports yet</h3><p>Reports submitted by Agents will appear here.</p></div>';
+        return;
+      }
+      content.innerHTML = `<div class="og-mm-record-section"><h2>Agent Progress</h2><p>Review reports submitted from the mobile Agent portal.</p><div class="og-mm-agent-thread-list">${reports.map((report) => `<article class="og-mm-system-card"><div style="display:flex;justify-content:space-between;gap:12px"><strong>${esc(report.agentName || `Agent ${report.agentUserId}`)}</strong><span class="og-mm-status">${esc(report.status || 'submitted')}</span></div><small>${esc(report.date || report.submittedAt || '')}</small><p>${esc(report.summary || '')}</p><div>Leads contacted: ${esc(report.leadsContacted ?? 0)} · Visits: ${esc(report.visitsCompleted ?? 0)} · Follow-ups: ${esc(report.followUps ?? 0)}</div>${report.blockers ? `<p><strong>Blockers:</strong> ${esc(report.blockers)}</p>` : ''}${report.adminNote ? `<p><strong>Admin note:</strong> ${esc(report.adminNote)}</p>` : ''}<form data-agent-review="${esc(report.id)}"><label>Review note<textarea name="adminNote" maxlength="1500">${esc(report.adminNote || '')}</textarea></label><button class="og-mm-action primary" name="status" value="reviewed" type="submit">Mark reviewed</button><button class="og-mm-action" name="status" value="needs_follow_up" type="submit">Request follow-up</button></form></article>`).join('')}</div></div>`;
+      content.querySelectorAll('[data-agent-review]').forEach((form) => form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const submitter = event.submitter;
+        const button = form.querySelector('[type="submit"]');
+        button.disabled = true;
+        try {
+          await api(`/agent-progress/${encodeURIComponent(form.dataset.agentReview)}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: submitter?.value || 'reviewed', adminNote: new FormData(form).get('adminNote')?.toString() || '' }),
+          });
+          await renderAgentProgress(content);
+        } catch (error) {
+          content.insertAdjacentHTML('afterbegin', `<div class="og-mm-error">${esc(error.message || 'Could not review this report.')}</div>`);
+          button.disabled = false;
+        }
+      }));
+    } catch (error) {
+      content.innerHTML = `<div class="og-mm-error">Could not load Agent progress reports: ${esc(error.message)}</div>`;
+    }
   }
 
   const reportColumns = {

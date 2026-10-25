@@ -233,7 +233,7 @@ test('Admin project management supports app-shaped create/edit and safe archive 
   assert.match(mobileManagementSource, /payload\.name = String\(payload\.name \|\| ''\)\.trim\(\)/);
   assert.match(mobileManagementSource, /payload\.title = payload\.name/);
   assert.match(mobileManagementSource, /payload\.developer = payload\.developerName/);
-  assert.match(mobileManagementSource, /status to Live or Approved to publish/);
+  assert.match(mobileManagementSource, /New projects default to Live and appear in the mobile app after saving/);
   assert.match(mobileManagementSource, /preserving linked blocks, units, and inventory/);
   assert.match(mobileManagementSource, /coverUpload/);
   assert.match(mobileManagementSource, /photoUploads/);

@@ -16,7 +16,7 @@
   let agentLoadWarnings = [];
   let projectLeafletPromise;
   const sectionData = {};
-  const projectViewState = { query: '', status: 'all', notice: '' };
+  const projectViewState = { query: '', status: 'all', notice: '', archived: false };
   const selectedReviewIds = new Set();
   let reviewBulkBusy = false;
   let reviewBulkReport = '';
@@ -522,7 +522,10 @@
     content.querySelector('#og-mm-record-form')?.__ogProjectMap?.remove();
     content.innerHTML = '<div class="og-mm-empty">Loading live production records…</div>';
     try {
-      const result = await api(config.list);
+      const listPath = key === 'projects' && projectViewState.archived
+        ? `${config.list}?archived=1`
+        : config.list;
+      const result = await api(listPath);
       const items = Array.isArray(result) ? result : (Array.isArray(result?.items) ? result.items : []);
       sectionData[key] = items;
       if (key === 'projects') {
@@ -581,7 +584,7 @@
     if (!statusOptions.some((status) => status.toLowerCase() === projectViewState.status)) projectViewState.status = 'all';
     const rows = sortedItems.map((item) => {
       const name = item.name || item.title || 'Untitled project';
-      const status = statusOf(item);
+      const status = projectViewState.archived ? 'Archived' : statusOf(item);
       const photos = Array.isArray(item.photos) ? item.photos : [];
       const cover = item.coverImageUri || photos.map((photo) => typeof photo === 'string' ? photo : photo?.url).find(Boolean) || '';
       const location = [item.area, item.city || item.location?.city || (typeof item.location === 'string' ? item.location : ''), item.district].filter(Boolean).join(', ') || 'Location not set';
@@ -597,31 +600,47 @@
         <td>${esc(location)}<span class="og-project-subline">${esc(item.type || 'Project type not set')}</span></td>
         <td><div class="og-project-inventory"><strong>${available.toLocaleString('en-PK')} available</strong><span class="og-project-subline">${total ? `${sold + reserved} of ${total} allocated` : 'Inventory not entered'}</span>${total ? `<div class="og-project-progress" aria-label="${filled}% inventory allocated"><span style="width:${filled}%"></span></div>` : ''}</div></td>
         <td>${esc(item.expectedCompletion || item.completionDate || '—')}<span class="og-project-subline">${esc(item.developmentStatus || 'Progress not set')}</span></td>
-        <td><span class="og-mm-pill og-project-status ${statusClass(status)}">${esc(status)}</span><span class="og-project-subline">${item.startingPrice ? `From ${money(item.startingPrice)}` : 'Price not set'}</span></td>
+        <td><span class="og-mm-pill og-project-status ${statusClass(status)}">${esc(status)}</span><span class="og-project-subline">${projectViewState.archived && item.archivedStatus ? `Was ${esc(item.archivedStatus)}` : item.startingPrice ? `From ${money(item.startingPrice)}` : 'Price not set'}</span></td>
         <td>${esc(updated ? updated.slice(0, 10) : '—')}</td>
-        <td><div class="og-mm-row-actions"><button class="og-mm-action" data-action="edit-record" data-section="projects" data-id="${esc(item.id)}">Edit</button><button class="og-mm-action danger" data-action="delete-record" data-section="projects" data-id="${esc(item.id)}">Archive</button></div></td>
+        <td><div class="og-mm-row-actions">${projectViewState.archived
+          ? `<button class="og-mm-action primary" data-action="restore-project" data-id="${esc(item.id)}">Restore</button>`
+          : `<button class="og-mm-action" data-action="edit-record" data-section="projects" data-id="${esc(item.id)}">Edit</button><button class="og-mm-action danger" data-action="delete-record" data-section="projects" data-id="${esc(item.id)}">Archive</button>`}</div></td>
       </tr>`;
     }).join('');
-    const addButton = '<button class="og-mm-action primary" data-action="add-record" data-section="projects">＋ Add project</button>';
+    const addButton = projectViewState.archived ? '' : '<button class="og-mm-action primary" data-action="add-record" data-section="projects">＋ Add project</button>';
     const notice = projectViewState.notice;
     projectViewState.notice = '';
+    const viewLabel = projectViewState.archived ? 'Archived projects' : 'Developer projects';
     content.innerHTML = `<section class="og-project-page">
-      <div class="og-project-head"><div><h2>Developer projects</h2><p>Create, publish and maintain project profiles used across the platform.</p></div>${addButton}</div>
+      <div class="og-project-head"><div><h2>${viewLabel}</h2><p>${projectViewState.archived ? 'Archived records are hidden from the live portfolio. Restore a project to return it with its saved status and inventory.' : 'Create, publish and maintain project profiles used across the platform.'}</p></div>${addButton}</div>
       ${notice ? `<div class="og-mm-note" role="status">${esc(notice)}</div>` : ''}
+      <div class="og-project-views" role="group" aria-label="Project portfolio view">
+        <button type="button" class="og-mm-action ${projectViewState.archived ? '' : 'primary'}" data-project-view="live" aria-pressed="${!projectViewState.archived}">Live projects</button>
+        <button type="button" class="og-mm-action ${projectViewState.archived ? 'primary' : ''}" data-project-view="archived" aria-pressed="${projectViewState.archived}">Archived projects</button>
+      </div>
       <div class="og-project-stats" aria-label="Project overview">
-        <article class="og-project-stat"><span>Total projects</span><strong>${items.length.toLocaleString('en-PK')}</strong></article>
-        <article class="og-project-stat"><span>Live / approved</span><strong>${liveCount.toLocaleString('en-PK')}</strong></article>
-        <article class="og-project-stat"><span>Drafts / review</span><strong>${attentionCount.toLocaleString('en-PK')}</strong></article>
+        <article class="og-project-stat"><span>${projectViewState.archived ? 'Archived projects' : 'Total projects'}</span><strong>${items.length.toLocaleString('en-PK')}</strong></article>
+        <article class="og-project-stat"><span>Live / approved</span><strong>${(projectViewState.archived ? 0 : liveCount).toLocaleString('en-PK')}</strong></article>
+        <article class="og-project-stat"><span>Drafts / review</span><strong>${(projectViewState.archived ? 0 : attentionCount).toLocaleString('en-PK')}</strong></article>
         <article class="og-project-stat"><span>Units available</span><strong>${availableUnits.toLocaleString('en-PK')}</strong><span class="og-project-subline">of ${totalUnits.toLocaleString('en-PK')} total units</span></article>
       </div>
       <div id="og-mm-record-form"></div>
-      <div class="og-mm-note">Updates save to the shared project API. Publishing is controlled by project status. Archive removes a project from live lists while preserving its blocks, units and inventory.</div>
+      <div class="og-mm-note">${projectViewState.archived ? 'Restoring a project keeps its ID and linked blocks, units, and inventory.' : 'Updates save to the shared project API. Publishing is controlled by project status. Archive removes a project from live lists while preserving its blocks, units and inventory.'}</div>
       <div class="og-project-toolbar"><input type="search" data-project-search aria-label="Search projects" placeholder="Search by project, developer, location or ID" value="${esc(projectViewState.query)}"><select data-project-status aria-label="Filter projects by status">${statusOptions.map((status) => `<option value="${esc(status.toLowerCase())}" ${projectViewState.status === status.toLowerCase() ? 'selected' : ''}>${status === 'all' ? 'All statuses' : esc(status)}</option>`).join('')}</select><span class="og-project-count" data-project-count>${items.length} projects</span></div>
       <div class="og-project-table-wrap"><table class="og-mm-table og-project-table"><thead><tr><th>Project</th><th>Location</th><th>Inventory</th><th>Completion</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead><tbody data-project-rows>
-      ${rows || '<tr><td colspan="7" class="og-project-empty">No projects yet. Add a project to begin managing the portfolio.</td></tr>'}
+      ${rows || `<tr><td colspan="7" class="og-project-empty">${projectViewState.archived ? 'No archived projects.' : 'No projects yet. Add a project to begin managing the portfolio.'}</td></tr>`}
       </tbody></table></div>
       ${rows ? '<div class="og-project-empty" data-project-no-match hidden>No projects match these filters.</div>' : ''}
     </section>`;
+    content.querySelectorAll('[data-project-view]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const nextArchived = button.dataset.projectView === 'archived';
+        if (projectViewState.archived === nextArchived) return;
+        projectViewState.archived = nextArchived;
+        projectViewState.status = 'all';
+        await renderSection('projects', content);
+      });
+    });
     const searchInput = content.querySelector('[data-project-search]');
     const statusSelect = content.querySelector('[data-project-status]');
     const count = content.querySelector('[data-project-count]');
@@ -1369,6 +1388,17 @@
         await api(config.deletePath(item), { method: 'DELETE' });
         if (section === 'projects') projectViewState.notice = `“${label}” archived. Its linked project and inventory records are preserved.`;
         await renderSection(section, modal.querySelector('.og-mm-content'));
+      }
+      if (button.dataset.action === 'restore-project') {
+        const item = (sectionData.projects || []).find((record) => String(record.id) === String(id));
+        if (!item) return;
+        const label = item.title || item.name || `project ${id}`;
+        if (!window.confirm(`Restore “${label}” to the live project portfolio? Its project ID and linked inventory will remain unchanged.`)) return;
+        const restored = await api(`/admin/developer-projects/${encodeURIComponent(id)}/restore`, { method: 'POST' });
+        projectViewState.archived = false;
+        projectViewState.status = 'all';
+        projectViewState.notice = `“${label}” restored with status ${restored.status || 'Draft'}. Its linked inventory is unchanged.`;
+        await renderSection('projects', modal.querySelector('.og-mm-content'));
       }
       if (button.dataset.action === 'send-announcement') {
         const item = (sectionData.notifications || []).find((record) => String(record.id) === String(id));

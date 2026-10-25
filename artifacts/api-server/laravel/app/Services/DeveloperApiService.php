@@ -81,7 +81,12 @@ class DeveloperApiService
 
         if ($method === 'GET' && $id === null) {
             $items = collect($data[$key])->filter(fn ($item) => $this->owns($item, $userId, $data, $isAdmin));
-            if ($resource === 'projects') $items = $items->filter(fn ($item) => empty($item['deletedAt']));
+            if ($resource === 'projects') {
+                $includeArchived = $isAdmin && $request->boolean('archived');
+                $items = $items->filter(fn ($item) => $includeArchived
+                    ? !empty($item['deletedAt'])
+                    : empty($item['deletedAt']));
+            }
             return $this->json($items->values());
         }
 
@@ -118,6 +123,21 @@ class DeveloperApiService
         if (!$this->owns($item, $userId, $data, $isAdmin)) return $this->json(['error' => 'Forbidden'], 403);
 
         if ($method === 'GET') return $this->json($item);
+        if ($method === 'POST' && $resource === 'projects' && ($parts[2] ?? '') === 'restore') {
+            if (!$isAdmin) return $this->json(['error' => 'Only an admin can restore an archived project.'], 403);
+            if (empty($item['deletedAt'])) return $this->json(['error' => 'Project is not archived.'], 409);
+
+            $restoredStatus = $item['archivedStatus'] ?? $item['approvalStatus'] ?? null;
+            $data[$key][$index]['status'] = is_string($restoredStatus)
+                && $restoredStatus !== ''
+                && strcasecmp($restoredStatus, 'Archived') !== 0
+                    ? $restoredStatus
+                    : 'Draft';
+            unset($data[$key][$index]['deletedAt'], $data[$key][$index]['archivedStatus']);
+            $data[$key][$index]['updatedAt'] = now()->toISOString();
+            JsonStore::write($data);
+            return $this->json($data[$key][$index]);
+        }
         if ($method === 'PATCH' && $resource === 'team' && ($parts[2] ?? '') === 'active') {
             $data[$key][$index]['active'] = !($item['active'] ?? false);
             $data[$key][$index]['updatedAt'] = now()->toISOString();
@@ -125,6 +145,9 @@ class DeveloperApiService
             return $this->json($data[$key][$index]);
         }
         if ($method === 'DELETE' && $resource === 'projects') {
+            if (empty($item['deletedAt'])) {
+                $data[$key][$index]['archivedStatus'] = $item['status'] ?? null;
+            }
             $data[$key][$index]['deletedAt'] = now()->toISOString();
             $data[$key][$index]['status'] = 'Archived';
             $data[$key][$index]['updatedAt'] = now()->toISOString();

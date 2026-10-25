@@ -143,16 +143,51 @@ class AdminControlsTest extends TestCase
             ->assertOk()
             ->assertJsonPath('status', 'Live');
         $this->withToken($analystToken)->getJson('/api/admin/developer-projects')->assertForbidden();
+        $this->withToken($analystToken)->getJson('/api/admin/developer-projects?archived=1')->assertForbidden();
+        $data = JsonStore::read();
+        $data['inventoryBlocks'][] = ['id' => 'project-block-1', 'projectId' => $project['id'], 'name' => 'Block A'];
+        $data['inventoryUnits'][] = ['id' => 'project-unit-1', 'projectId' => $project['id'], 'blockId' => 'project-block-1', 'name' => 'Unit 1'];
+        JsonStore::write($data);
         $this->withToken($ownerToken)
             ->deleteJson('/api/admin/developer-projects/' . $project['id'])
             ->assertOk()
             ->assertJsonPath('success', true);
         $this->withToken($ownerToken)->getJson('/api/admin/developer-projects')->assertOk()->assertJsonMissing(['id' => $project['id']]);
+        $this->withToken($ownerToken)
+            ->getJson('/api/admin/developer-projects?archived=1')
+            ->assertOk()
+            ->assertJsonPath('0.id', $project['id'])
+            ->assertJsonPath('0.status', 'Archived')
+            ->assertJsonPath('0.archivedStatus', 'Live');
+        $this->withToken($analystToken)
+            ->postJson('/api/admin/developer-projects/' . $project['id'] . '/restore')
+            ->assertForbidden();
         $archivedProject = collect(JsonStore::read()['developerProjects'])->firstWhere('id', $project['id']);
         $this->assertSame('Archived', $archivedProject['status']);
         $this->assertNotEmpty($archivedProject['deletedAt']);
         $this->assertTrue(collect(JsonStore::read()['adminActivity'] ?? [])->contains(
             fn ($activity) => ($activity['action'] ?? '') === 'admin.delete.developer-projects'
+                && (string) ($activity['details']['resourceId'] ?? '') === (string) $project['id'],
+        ));
+        $this->withToken($ownerToken)
+            ->postJson('/api/admin/developer-projects/' . $project['id'] . '/restore')
+            ->assertOk()
+            ->assertJsonPath('id', $project['id'])
+            ->assertJsonPath('status', 'Live')
+            ->assertJsonMissingPath('deletedAt')
+            ->assertJsonMissingPath('archivedStatus');
+        $this->withToken($ownerToken)
+            ->getJson('/api/admin/developer-projects')
+            ->assertOk()
+            ->assertJsonPath('0.id', $project['id'])
+            ->assertJsonPath('0.status', 'Live');
+        $this->withToken($ownerToken)->getJson('/api/admin/developer-projects?archived=1')->assertOk()->assertJsonMissing(['id' => $project['id']]);
+        $restoredData = JsonStore::read();
+        $this->assertSame($project['id'], collect($restoredData['developerProjects'])->firstWhere('id', $project['id'])['id']);
+        $this->assertSame('project-block-1', collect($restoredData['inventoryBlocks'])->firstWhere('id', 'project-block-1')['id']);
+        $this->assertSame('project-unit-1', collect($restoredData['inventoryUnits'])->firstWhere('id', 'project-unit-1')['id']);
+        $this->assertTrue(collect($restoredData['adminActivity'] ?? [])->contains(
+            fn ($activity) => ($activity['action'] ?? '') === 'admin.restore.developer-projects'
                 && (string) ($activity['details']['resourceId'] ?? '') === (string) $project['id'],
         ));
 

@@ -789,11 +789,13 @@ class ApiController extends Controller
         if (!in_array($method, ['GET', 'HEAD'], true) && $response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
             $data = JsonStore::read();
             $resource = $parts[0] ?? 'data';
-            $action = match ($resource) {
+            $action = $resource === 'developer-projects' && ($parts[2] ?? '') === 'restore'
+                ? 'admin.restore.developer-projects'
+                : match ($resource) {
                 'system' => 'system.settings.updated',
                 'staff' => 'staff.permissions.updated',
                 default => 'admin.' . strtolower($method) . '.' . $resource,
-            };
+                };
             $this->recordAdminActivity($data, $admin, $action, $resource, [
                 'resourceId' => $parts[1] ?? null,
             ]);

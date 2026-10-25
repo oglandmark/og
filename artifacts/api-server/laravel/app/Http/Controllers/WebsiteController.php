@@ -190,6 +190,17 @@ class WebsiteController extends Controller
                     && !in_array(strtolower((string) ($user['status'] ?? 'active')), ['inactive', 'blocked', 'suspended'], true),
             ))
             ->filter(fn ($agent) => is_array($agent))
+            ->filter(function (array $agent): bool {
+                $status = strtolower(trim((string) ($agent['status'] ?? 'active')));
+                $approval = strtolower(trim((string) ($agent['approvalStatus'] ?? 'approved')));
+                $visible = filter_var($agent['visible'] ?? true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                $active = filter_var($agent['active'] ?? true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+
+                return in_array($status, ['active', 'approved', 'live'], true)
+                    && in_array($approval, ['active', 'approved', 'live'], true)
+                    && $visible !== false
+                    && $active !== false;
+            })
             ->map(function (array $agent): array {
                 $photo = $agent['profilePhoto'] ?? $agent['photo'] ?? $agent['avatar'] ?? null;
 

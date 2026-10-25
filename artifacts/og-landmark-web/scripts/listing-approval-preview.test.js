@@ -16,6 +16,7 @@ const mobileRoot = path.resolve(webRoot, '../og-landmark-mobile');
 const laravelRoot = path.resolve(webRoot, '../api-server/laravel');
 const listingId = 984241;
 const listingTitle = 'Browser Preview Flow House';
+const projectId = 'preview-project-248';
 const adminEmail = 'browser-preview-admin@example.test';
 const adminPassword = 'BrowserPreviewOnly123!';
 
@@ -226,6 +227,19 @@ test('Admin approval syncs a listing to Website pages and Expo Home, Explore, an
         },
       ],
       properties: [fixtureListing()],
+      mobileAgents: [],
+      cityAgents: [],
+      developerProjects: [{
+        id: projectId,
+        name: 'Preview Draft Project 248',
+        title: 'Preview Draft Project 248',
+        developerName: 'Preview Developer',
+        type: 'Housing Society',
+        city: 'Okara',
+        status: 'Draft',
+        shortDescription: 'Isolated project used by the Admin-to-public integration test.',
+        createdAt: new Date().toISOString(),
+      }],
       notifications: [],
       pushDevices: [],
       adminAuditLog: [],
@@ -398,6 +412,76 @@ file_put_contents($argv[2], json_encode([
     assert.ok(websiteDetailHtml.includes(listingTitle), 'the Website detail page should show the approved title');
     assert.ok(websiteDetailHtml.includes('Temporary listing for the isolated Admin-to-mobile browser flow.'), 'the Website detail page should show updated listing content');
 
+    const agentName = 'Preview Directory Agent 248';
+    await adminPage.goto(`${webBase}/admin/mobile/agents`, { waitUntil: 'domcontentloaded' });
+    await adminPage.getByRole('button', { name: 'Add mobile Agent' }).click();
+    const agentForm = adminPage.locator('#og-mm-agent-form');
+    await agentForm.locator('input[name="name"]').fill(agentName);
+    await agentForm.locator('input[name="agency"]').fill('Preview Property Group');
+    await agentForm.locator('input[name="city"]').fill('Okara');
+    await agentForm.locator('input[name="email"]').fill('directory-agent@example.test');
+    await agentForm.locator('select[name="status"]').selectOption('Suspended');
+    await agentForm.locator('select[name="approvalStatus"]').selectOption('Rejected');
+    await agentForm.locator('input[name="visible"]').uncheck();
+    const createAgentResponsePromise = adminPage.waitForResponse(response =>
+      response.request().method() === 'POST'
+      && response.url().endsWith('/api/admin/mobile-agents'),
+    );
+    await agentForm.locator('button[type="submit"]').click();
+    const createAgentResponse = await createAgentResponsePromise;
+    assert.equal(createAgentResponse.status(), 201, 'Admin should create the inactive Agent through its authenticated API');
+    const createdAgent = await createAgentResponse.json();
+    const agentId = createdAgent.id;
+    assert.ok(agentId, 'the Admin-created Agent should have a persistent directory ID');
+
+    const hiddenWebsiteAgents = await (await fetch(`${apiBase}/agents`)).text();
+    assert.equal(hiddenWebsiteAgents.includes(agentName), false, 'inactive or rejected Agents must stay hidden on the Website');
+    const hiddenMobileAgents = await jsonRequest(apiBase, '/api/mobile-agents');
+    assert.equal(hiddenMobileAgents.response.status, 200);
+    assert.equal(hiddenMobileAgents.payload.some(agent => String(agent.id) === String(agentId)), false, 'inactive Agents must stay hidden from Mobile');
+
+    const hiddenProjects = await jsonRequest(webBase, '/api/projects');
+    assert.equal(hiddenProjects.response.status, 200);
+    assert.equal(hiddenProjects.payload.some(project => String(project.id) === projectId), false, 'Draft projects must stay hidden from the public Website feed');
+
+    const agentRow = adminPage.getByRole('row').filter({ hasText: agentName });
+    await agentRow.getByRole('button', { name: 'Edit' }).click();
+    const editAgentForm = adminPage.locator('#og-mm-agent-form');
+    await editAgentForm.locator('select[name="status"]').selectOption('Active');
+    await editAgentForm.locator('select[name="approvalStatus"]').selectOption('Approved');
+    await editAgentForm.locator('input[name="visible"]').check();
+    const updateAgentResponsePromise = adminPage.waitForResponse(response =>
+      response.request().method() === 'PUT'
+      && response.url().endsWith(`/api/admin/mobile-agents/${agentId}`),
+    );
+    await editAgentForm.locator('button[type="submit"]').click();
+    const updateAgentResponse = await updateAgentResponsePromise;
+    assert.equal(updateAgentResponse.status(), 200, 'Admin should activate the Agent through its authenticated API');
+
+    await adminPage.goto(`${webBase}/admin/management/developer-projects`, { waitUntil: 'domcontentloaded' });
+    const projectEditButton = adminPage.locator(
+      `[data-action="edit-record"][data-section="projects"][data-id="${projectId}"]`,
+    );
+    await projectEditButton.waitFor({ state: 'visible' });
+    await projectEditButton.click();
+    const projectForm = adminPage.locator('#og-mm-record-form-inner');
+    await projectForm.locator('input[name="name"]').fill('Preview Live Project 248');
+    await projectForm.locator('select[name="status"]').selectOption('Live');
+    const updateProjectResponsePromise = adminPage.waitForResponse(response =>
+      response.request().method() === 'PUT'
+      && response.url().endsWith(`/api/admin/developer-projects/${projectId}`),
+    );
+    await projectForm.getByRole('button', { name: 'Save project' }).click();
+    const updateProjectResponse = await updateProjectResponsePromise;
+    assert.equal(updateProjectResponse.status(), 200, 'Admin should activate the project through its authenticated API');
+
+    const websiteAgents = await (await fetch(`${apiBase}/agents`)).text();
+    assert.ok(websiteAgents.includes(agentName), 'the active Agent should appear in the Website directory');
+    const mobileAgents = await jsonRequest(apiBase, '/api/mobile-agents');
+    assert.ok(mobileAgents.payload.some(agent => String(agent.id) === String(agentId)), 'the active Agent should appear in the Mobile directory API');
+    const publicProjects = await jsonRequest(webBase, '/api/projects');
+    assert.ok(publicProjects.payload.some(project => String(project.id) === projectId && project.status === 'Live'), 'the active project should appear in the Website public project feed');
+
     mobileContext = await browser.newContext({
       viewport: { width: 402, height: 874 },
       isMobile: true,
@@ -420,6 +504,13 @@ file_put_contents($argv[2], json_encode([
     await mobilePage.goto(`${mobileBase}/property/${listingId}`, { waitUntil: 'domcontentloaded' });
     await mobilePage.getByText(listingTitle, { exact: true }).first().waitFor({ state: 'visible' });
     await mobilePage.getByText('Temporary listing for the isolated Admin-to-mobile browser flow.', { exact: true }).waitFor({ state: 'visible' });
+
+    await mobilePage.goto(`${mobileBase}/agent/find`, { waitUntil: 'domcontentloaded' });
+    await mobilePage.getByText(agentName, { exact: true }).waitFor({ state: 'visible' });
+
+    await mobilePage.goto(`${mobileBase}/explore`, { waitUntil: 'domcontentloaded' });
+    await mobilePage.getByText('Projects', { exact: true }).first().click();
+    await mobilePage.getByText('Preview Live Project 248', { exact: true }).waitFor({ state: 'visible' });
   } catch (error) {
     originalFailure = error;
     throw error;

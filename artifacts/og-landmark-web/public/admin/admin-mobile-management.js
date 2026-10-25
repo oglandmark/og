@@ -15,6 +15,7 @@
   let agents = [];
   let agentLoadWarnings = [];
   const sectionData = {};
+  const projectViewState = { query: '', status: 'all', notice: '' };
 
   const serviceAreas = ['Okara', 'Depalpur', 'Renala Khurd', 'Hujra Shah Muqeem', 'Basir Pur', 'Haveli Lakha'];
   const mobileSections = [
@@ -124,6 +125,11 @@
       .og-mm-content{padding:0 0 22px}.og-mm-note{padding:10px 12px;margin-bottom:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;color:#64748b;font-size:12px}
       .og-mm-table{width:100%;border-collapse:collapse}.og-mm-table th,.og-mm-table td{text-align:left;padding:11px 10px;border-bottom:1px solid #edf1f5;font-size:12px;vertical-align:top}.og-mm-table th{color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
       .og-mm-pill{display:inline-flex;padding:4px 8px;border-radius:999px;background:#dcfce7;color:#166534;font-size:10px;font-weight:700}.og-mm-pill.off{background:#f1f5f9;color:#64748b}
+      .og-project-page{display:grid;gap:16px}.og-project-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.og-project-head h2{margin:0;color:#0b1f3a;font-size:22px}.og-project-head p{margin:5px 0 0;color:#64748b;font-size:12px}
+      .og-project-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.og-project-stat{padding:15px 16px;border:1px solid #e2e8f0;border-radius:12px;background:linear-gradient(145deg,#fff,#f8fafc)}.og-project-stat span{display:block;color:#64748b;font-size:11px;font-weight:600}.og-project-stat strong{display:block;margin-top:7px;color:#0b1f3a;font-size:22px;line-height:1.1}
+      .og-project-toolbar{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #e2e8f0;border-radius:12px;background:#fff}.og-project-toolbar input,.og-project-toolbar select{min-height:38px;border:1px solid #dbe2ea;border-radius:8px;padding:8px 10px;background:#fff;color:#0b1f3a;font:13px system-ui}.og-project-toolbar input{flex:1;min-width:180px}.og-project-count{margin-left:auto;color:#64748b;font-size:11px;white-space:nowrap}
+      .og-project-table-wrap{overflow:auto;border:1px solid #e2e8f0;border-radius:12px;background:#fff}.og-project-table{min-width:860px}.og-project-table th{background:#f8fafc;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.05em}.og-project-identity{display:flex;align-items:center;gap:10px;min-width:210px}.og-project-cover{display:grid;flex:0 0 54px;width:54px;height:44px;place-items:center;overflow:hidden;border-radius:8px;background:#eef2f7;color:#8a6d2e;font-size:12px;font-weight:800}.og-project-cover img{width:100%;height:100%;object-fit:cover}.og-project-identity strong{display:block;color:#0b1f3a;font-size:12px}.og-project-identity small,.og-project-subline{display:block;margin-top:3px;color:#718096;font-size:10px}.og-project-inventory{min-width:115px}.og-project-progress{height:5px;margin-top:6px;overflow:hidden;border-radius:99px;background:#e8edf3}.og-project-progress span{display:block;height:100%;border-radius:inherit;background:#c8a45a}.og-project-status{white-space:nowrap}.og-project-status.live{background:#dcfce7;color:#166534}.og-project-status.review{background:#fff7df;color:#8a5a00}.og-project-status.paused,.og-project-status.draft{background:#f1f5f9;color:#64748b}.og-project-empty{padding:32px 16px;text-align:center;color:#64748b;font-size:13px}
+      @media(max-width:760px){.og-project-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.og-project-head{align-items:stretch;flex-direction:column}.og-project-head .og-mm-action{align-self:flex-start}.og-project-toolbar{flex-wrap:wrap}.og-project-toolbar input{flex-basis:100%}.og-project-count{margin-left:0}}
       .og-mm-row-actions{display:flex;gap:6px;white-space:nowrap}.og-mm-action.danger{color:#b91c1c;border-color:#fecaca}
       .og-mm-empty,.og-mm-error{padding:20px;text-align:center;color:#64748b}.og-mm-error{color:#b91c1c}
       .og-mm-form{border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px;background:#f8fafc}
@@ -494,6 +500,10 @@
       const result = await api(config.list);
       const items = Array.isArray(result) ? result : (Array.isArray(result?.items) ? result.items : []);
       sectionData[key] = items;
+      if (key === 'projects') {
+        renderProjects(content, items);
+        return;
+      }
       const columnsBySection = {
         properties: ['Property', 'City', 'Price', 'Status', 'Actions'],
         users: ['Account', 'Phone', 'Role', 'Status', 'Actions'],
@@ -519,6 +529,88 @@
     } catch (error) {
       content.innerHTML = `<div class="og-mm-error">Could not load live records: ${esc(error.message)}</div>`;
     }
+  }
+
+  function renderProjects(content, items) {
+    const statusOf = (item) => String(item.status || item.approvalStatus || 'Draft').trim() || 'Draft';
+    const statusClass = (status) => {
+      const value = status.toLowerCase();
+      if (value === 'live' || value === 'approved') return 'live';
+      if (value.includes('pending') || value.includes('review') || value === 'coming soon') return 'review';
+      if (value.includes('pause')) return 'paused';
+      return 'draft';
+    };
+    const liveCount = items.filter((item) => ['live', 'approved'].includes(statusOf(item).toLowerCase())).length;
+    const attentionCount = items.filter((item) => ['draft', 'pending review', 'pending'].includes(statusOf(item).toLowerCase())).length;
+    const totalUnits = items.reduce((sum, item) => sum + Math.max(0, Number(item.totalUnits) || 0), 0);
+    const availableUnits = items.reduce((sum, item) => sum + Math.max(0, Number(item.availableUnits) || 0), 0);
+    const sortedItems = [...items].sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
+    const statusOptions = ['all', ...new Set(sortedItems.map((item) => statusOf(item)))];
+    if (!statusOptions.some((status) => status.toLowerCase() === projectViewState.status)) projectViewState.status = 'all';
+    const rows = sortedItems.map((item) => {
+      const name = item.name || item.title || 'Untitled project';
+      const status = statusOf(item);
+      const photos = Array.isArray(item.photos) ? item.photos : [];
+      const cover = item.coverImageUri || photos.map((photo) => typeof photo === 'string' ? photo : photo?.url).find(Boolean) || '';
+      const location = [item.area, item.city || item.location?.city || (typeof item.location === 'string' ? item.location : ''), item.district].filter(Boolean).join(', ') || 'Location not set';
+      const total = Math.max(0, Number(item.totalUnits) || 0);
+      const available = Math.max(0, Number(item.availableUnits) || 0);
+      const sold = Math.max(0, Number(item.soldUnits) || 0);
+      const reserved = Math.max(0, Number(item.reservedUnits) || 0);
+      const filled = total ? Math.min(100, Math.round(((sold + reserved) / total) * 100)) : 0;
+      const search = [name, item.developerName, item.developer, item.city, item.area, item.district, item.type, item.id, status].filter(Boolean).join(' ').toLowerCase();
+      const updated = item.updatedAt || item.createdAt || '';
+      return `<tr data-project-row data-project-status="${esc(status.toLowerCase())}" data-project-search="${esc(search)}">
+        <td><div class="og-project-identity"><span class="og-project-cover">${cover ? `<img src="${esc(cover)}" alt="" loading="lazy">` : esc(name.slice(0, 2).toUpperCase())}</span><span><strong>${esc(name)}</strong><small>${esc(item.developerName || item.developer || 'Developer not assigned')} · ID ${esc(item.id)}</small></span></div></td>
+        <td>${esc(location)}<span class="og-project-subline">${esc(item.type || 'Project type not set')}</span></td>
+        <td><div class="og-project-inventory"><strong>${available.toLocaleString('en-PK')} available</strong><span class="og-project-subline">${total ? `${sold + reserved} of ${total} allocated` : 'Inventory not entered'}</span>${total ? `<div class="og-project-progress" aria-label="${filled}% inventory allocated"><span style="width:${filled}%"></span></div>` : ''}</div></td>
+        <td>${esc(item.expectedCompletion || item.completionDate || '—')}<span class="og-project-subline">${esc(item.developmentStatus || 'Progress not set')}</span></td>
+        <td><span class="og-mm-pill og-project-status ${statusClass(status)}">${esc(status)}</span><span class="og-project-subline">${item.startingPrice ? `From ${money(item.startingPrice)}` : 'Price not set'}</span></td>
+        <td>${esc(updated ? updated.slice(0, 10) : '—')}</td>
+        <td><div class="og-mm-row-actions"><button class="og-mm-action" data-action="edit-record" data-section="projects" data-id="${esc(item.id)}">Edit</button><button class="og-mm-action danger" data-action="delete-record" data-section="projects" data-id="${esc(item.id)}">Archive</button></div></td>
+      </tr>`;
+    }).join('');
+    const addButton = '<button class="og-mm-action primary" data-action="add-record" data-section="projects">＋ Add project</button>';
+    const notice = projectViewState.notice;
+    projectViewState.notice = '';
+    content.innerHTML = `<section class="og-project-page">
+      <div class="og-project-head"><div><h2>Developer projects</h2><p>Create, publish and maintain project profiles used across the platform.</p></div>${addButton}</div>
+      ${notice ? `<div class="og-mm-note" role="status">${esc(notice)}</div>` : ''}
+      <div class="og-project-stats" aria-label="Project overview">
+        <article class="og-project-stat"><span>Total projects</span><strong>${items.length.toLocaleString('en-PK')}</strong></article>
+        <article class="og-project-stat"><span>Live / approved</span><strong>${liveCount.toLocaleString('en-PK')}</strong></article>
+        <article class="og-project-stat"><span>Drafts / review</span><strong>${attentionCount.toLocaleString('en-PK')}</strong></article>
+        <article class="og-project-stat"><span>Units available</span><strong>${availableUnits.toLocaleString('en-PK')}</strong><span class="og-project-subline">of ${totalUnits.toLocaleString('en-PK')} total units</span></article>
+      </div>
+      <div id="og-mm-record-form"></div>
+      <div class="og-mm-note">Updates save to the shared project API. Publishing is controlled by project status. Archive removes a project from live lists while preserving its blocks, units and inventory.</div>
+      <div class="og-project-toolbar"><input type="search" data-project-search aria-label="Search projects" placeholder="Search by project, developer, location or ID" value="${esc(projectViewState.query)}"><select data-project-status aria-label="Filter projects by status">${statusOptions.map((status) => `<option value="${esc(status.toLowerCase())}" ${projectViewState.status === status.toLowerCase() ? 'selected' : ''}>${status === 'all' ? 'All statuses' : esc(status)}</option>`).join('')}</select><span class="og-project-count" data-project-count>${items.length} projects</span></div>
+      <div class="og-project-table-wrap"><table class="og-mm-table og-project-table"><thead><tr><th>Project</th><th>Location</th><th>Inventory</th><th>Completion</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead><tbody data-project-rows>
+      ${rows || '<tr><td colspan="7" class="og-project-empty">No projects yet. Add a project to begin managing the portfolio.</td></tr>'}
+      </tbody></table></div>
+      ${rows ? '<div class="og-project-empty" data-project-no-match hidden>No projects match these filters.</div>' : ''}
+    </section>`;
+    const searchInput = content.querySelector('[data-project-search]');
+    const statusSelect = content.querySelector('[data-project-status]');
+    const count = content.querySelector('[data-project-count]');
+    const noMatch = content.querySelector('[data-project-no-match]');
+    const applyFilters = () => {
+      projectViewState.query = searchInput.value.trim();
+      projectViewState.status = statusSelect.value;
+      const query = projectViewState.query.toLowerCase();
+      let visible = 0;
+      content.querySelectorAll('[data-project-row]').forEach((row) => {
+        const matches = (!query || row.dataset.projectSearch.includes(query))
+          && (projectViewState.status === 'all' || row.dataset.projectStatus === projectViewState.status);
+        row.hidden = !matches;
+        if (matches) visible += 1;
+      });
+      if (count) count.textContent = `${visible} of ${items.length} projects`;
+      if (noMatch) noMatch.hidden = visible > 0;
+    };
+    searchInput.addEventListener('input', applyFilters);
+    statusSelect.addEventListener('change', applyFilters);
+    applyFilters();
   }
 
   async function renderReviews(content) {
@@ -587,6 +679,7 @@
         let value = item[name] ?? '';
         if (type === 'section') return `<div class="og-mm-form-section">${esc(label)}</div>`;
         if (key === 'projects' && name === 'name' && !value) value = item.title || '';
+        if (key === 'projects' && name === 'status' && !value) value = 'Draft';
         if (key === 'projects' && name === 'developerName' && !value) value = item.developer || '';
         if (key === 'projects' && name === 'city' && !value) {
           value = typeof item.location === 'object' ? item.location?.city || '' : item.location || '';
@@ -623,7 +716,16 @@
         }
         if (type === 'textarea') return `<div class="og-mm-field full"><label>${esc(label)}</label><textarea name="${esc(name)}" maxlength="6000">${esc(value)}</textarea></div>`;
         const required = key === 'projects' && name === 'name' ? 'required maxlength="180"' : '';
-        return `<div class="og-mm-field"><label>${esc(label)}</label><input name="${esc(name)}" type="${esc(type)}" ${type === 'number' ? 'step="any"' : ''} ${required} value="${esc(value)}"></div>`;
+        let constraints = type === 'number' ? 'step="any"' : '';
+        if (key === 'projects' && type === 'number') {
+          if (['startingPrice', 'maxPrice', 'totalUnits', 'availableUnits', 'reservedUnits', 'soldUnits', 'installmentMonths', 'totalBlocks'].includes(name)) {
+            constraints = `min="0" ${['totalUnits', 'availableUnits', 'reservedUnits', 'soldUnits', 'installmentMonths', 'totalBlocks'].includes(name) ? 'step="1"' : 'step="any"'}`;
+          }
+          if (name === 'downPaymentPct') constraints = 'min="0" max="100" step="any"';
+          if (name === 'latitude') constraints = 'min="-90" max="90" step="any"';
+          if (name === 'longitude') constraints = 'min="-180" max="180" step="any"';
+        }
+        return `<div class="og-mm-field"><label>${esc(label)}</label><input name="${esc(name)}" type="${esc(type)}" ${constraints} ${required} value="${esc(value)}"></div>`;
       }).join('')}${currentMediaPreview}${projectMediaPreview}
     </div><div class="og-mm-form-actions"><button type="button" class="og-mm-action" data-action="cancel-record" data-section="${key}">Cancel</button><button class="og-mm-action primary" type="submit">${key === 'projects' ? 'Save project' : 'Save'}</button></div></form>`;
     if (key === 'projects') {
@@ -681,6 +783,7 @@
       event.preventDefault();
       const form = event.currentTarget;
       const submit = form.querySelector('[type="submit"]');
+      form.querySelectorAll('.og-mm-error').forEach((message) => message.remove());
       if (key === 'banners') {
         const startDate = form.elements.startDate.value;
         const endDate = form.elements.endDate.value;
@@ -688,6 +791,25 @@
           const message = document.createElement('div');
           message.className = 'og-mm-error';
           message.textContent = 'End date must be the same as or later than the start date.';
+          form.prepend(message);
+          return;
+        }
+      }
+      if (key === 'projects') {
+        const valueOf = (name) => Number(form.elements[name]?.value || 0);
+        const totalUnits = valueOf('totalUnits');
+        const allocatedUnits = valueOf('availableUnits') + valueOf('reservedUnits') + valueOf('soldUnits');
+        const startingPrice = valueOf('startingPrice');
+        const maxPriceInput = String(form.elements.maxPrice?.value || '').trim();
+        const maxPrice = valueOf('maxPrice');
+        let validationMessage = '';
+        if (maxPriceInput && startingPrice > maxPrice) validationMessage = 'Maximum price must be greater than or equal to starting price.';
+        else if (allocatedUnits > totalUnits) validationMessage = 'Available, reserved and sold units cannot exceed total units.';
+        if (validationMessage) {
+          const message = document.createElement('div');
+          message.className = 'og-mm-error';
+          message.setAttribute('role', 'alert');
+          message.textContent = validationMessage;
           form.prepend(message);
           return;
         }
@@ -785,6 +907,7 @@
         } else {
           await api(config.createPath, { method: 'POST', body });
         }
+        if (key === 'projects') projectViewState.notice = editing ? 'Project details saved successfully.' : 'Project created successfully.';
         await renderSection(key, modal.querySelector('.og-mm-content'));
       } catch (error) {
         const message = document.createElement('div'); message.className = 'og-mm-error'; message.textContent = error.message || 'Could not save record.';
@@ -999,6 +1122,7 @@
           : `Permanently delete ${label} from the live mobile app?`;
         if (!window.confirm(warning)) return;
         await api(config.deletePath(item), { method: 'DELETE' });
+        if (section === 'projects') projectViewState.notice = `“${label}” archived. Its linked project and inventory records are preserved.`;
         await renderSection(section, modal.querySelector('.og-mm-content'));
       }
       if (button.dataset.action === 'send-announcement') {

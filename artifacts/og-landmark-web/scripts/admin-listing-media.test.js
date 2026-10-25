@@ -131,6 +131,20 @@ test('Featured and Recommended rows use saved promotion state and match server e
   assert.match(propertyManagementSource, /\['active', 'approved'\]\.includes\(listing\)/);
 });
 
+test('Admin projects page provides portfolio status, inventory, search and filter controls', () => {
+  assert.match(mobileManagementSource, /function renderProjects\(content, items\)/);
+  assert.match(mobileManagementSource, /og-project-stats/);
+  assert.match(mobileManagementSource, /Live \/ approved/);
+  assert.match(mobileManagementSource, /Units available/);
+  assert.match(mobileManagementSource, /data-project-search/);
+  assert.match(mobileManagementSource, /data-project-status/);
+  assert.match(mobileManagementSource, /No projects match these filters/);
+  assert.match(mobileManagementSource, /Available, reserved and sold units cannot exceed total units/);
+  assert.match(mobileManagementSource, /Project created successfully/);
+  assert.match(mobileManagementSource, /projectViewState\.notice = `“\$\{label\}” archived/);
+  assert.match(mobileManagementSource, /data-action="delete-record" data-section="projects"/);
+});
+
 test('property filters use live status/city data and expose agent assignment controls', () => {
   assert.match(propertyManagementSource, /window\.__ogAdminApiProperties/);
   assert.match(propertyManagementSource, /property\?\.cityName/);

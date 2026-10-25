@@ -128,6 +128,12 @@ test('property filters use live status/city data and expose agent assignment con
   assert.match(propertyManagementSource, /includes\(status\)/);
 });
 
+test('property filter root remains discoverable after its heading is changed', () => {
+  assert.match(propertyManagementSource, /data-og-property-management-root/);
+  assert.match(propertyManagementSource, /'Property listed', 'Pending approvals'/);
+  assert.match(propertyManagementSource, /markedRoot\?\.isConnected/);
+});
+
 test('Admin review inbox includes new submissions and has separate Featured, Recommended, and Projects pages', () => {
   assert.match(mobileManagementSource, /label: 'Property listed', path: '\/admin\/properties\?propertyView=inbox'/);
   assert.match(mobileManagementSource, /label: 'Pending approvals', path: '\/admin\/properties\?propertyView=pending'/);

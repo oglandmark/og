@@ -265,9 +265,21 @@
     });
   }
 
+  const propertyRootHeadings = new Set([
+    'All Properties', 'Property review queue', 'Property listed', 'Pending approvals',
+    'Approved properties', 'Rejected properties', 'Property in progress', 'Property closed',
+    'Featured properties', 'Recommended properties', 'Projects', 'Agriculture Land',
+  ]);
   function findRoot() {
-    const heading = [...document.querySelectorAll('h2')].find((node) => ['All Properties', 'Property review queue'].includes(node.textContent.trim()));
-    return heading?.closest('.space-y-4') || null;
+    const markedRoot = document.querySelector('[data-og-property-management-root="true"]');
+    const markedHeading = markedRoot?.querySelector('h2')?.textContent.trim();
+    if (markedRoot?.isConnected && propertyRootHeadings.has(markedHeading)) return markedRoot;
+
+    const heading = [...document.querySelectorAll('h2')]
+      .find((node) => propertyRootHeadings.has(node.textContent.trim()));
+    const root = heading?.closest('.space-y-4') || null;
+    if (root) root.dataset.ogPropertyManagementRoot = 'true';
+    return root;
   }
 
   function rowProperty(row, used) {

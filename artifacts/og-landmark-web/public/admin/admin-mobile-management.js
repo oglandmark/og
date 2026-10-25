@@ -276,7 +276,16 @@
         if (modal === page) page.querySelector('.og-mm-content').innerHTML = `<div class="og-mm-error">${esc(error.message)}</div>`;
       });
     } else {
-      render(tab);
+      const pendingRender = render(tab);
+      if (activeSection.section === 'projects' && new URLSearchParams(window.location.search).get('create') === 'project') {
+        Promise.resolve(pendingRender).then(() => {
+          if (modal !== page) return;
+          showRecordForm('projects');
+          const nextUrl = new URL(window.location.href);
+          nextUrl.searchParams.delete('create');
+          history.replaceState({}, '', `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
+        });
+      }
     }
   }
 

@@ -149,6 +149,10 @@ test('Projects sidebar opens project management and keeps property listings sepa
   assert.match(mobileManagementSource, /label: 'Projects', path: '\/admin\/management\/developer-projects'/);
   assert.match(mobileManagementSource, /label: 'Project listings', path: '\/admin\/properties\?propertyView=projects'/);
   assert.match(mobileManagementSource, /section: 'projects', path: '\/admin\/management\/developer-projects'/);
+  assert.match(propertyManagementSource, /data-og-project-add-action/);
+  assert.match(propertyManagementSource, /\/admin\/management\/developer-projects\?create=project/);
+  assert.match(mobileManagementSource, /get\('create'\) === 'project'/);
+  assert.match(mobileManagementSource, /showRecordForm\('projects'\)/);
 });
 
 test('property filters use live status/city data and expose agent assignment controls', () => {

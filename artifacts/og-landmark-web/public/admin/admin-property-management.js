@@ -1376,6 +1376,15 @@
           : projectsView ? 'Projects'
             : agricultureView ? 'Agriculture Land' : headingLabels[filter];
     if (heading && viewHeading) heading.textContent = viewHeading;
+    if (projectsView && heading && !root.querySelector('[data-og-project-add-action]')) {
+      const action = document.createElement('a');
+      action.href = '/admin/management/developer-projects?create=project';
+      action.dataset.ogProjectAddAction = 'true';
+      action.textContent = '+ Add Project';
+      action.setAttribute('aria-label', 'Add a developer project');
+      action.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;margin:8px 0;padding:10px 16px;border-radius:8px;background:#c8a45a;color:#0b1f3a;font:600 13px system-ui;text-decoration:none;box-shadow:0 2px 8px #0b1f3a18';
+      heading.insertAdjacentElement('afterend', action);
+    }
     const table = root.querySelector('table');
     if (!table) return;
     addFilters(root);

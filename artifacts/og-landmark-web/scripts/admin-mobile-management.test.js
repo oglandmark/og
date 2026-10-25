@@ -98,16 +98,17 @@ test('admin banner editor can replace uploaded images and videos and confirm del
   assert.match(source, /Permanently delete the \$\{item\.type === 'video' \? 'video' : 'image'\} banner/);
 });
 
-test('Admin navigation keeps core destinations and exposes current property views', () => {
+test('Admin navigation omits approved and rejected shortcuts while keeping core destinations', () => {
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   const navBlock = source.match(/const sidebarItems = \[([\s\S]*?)\n  \];/)?.[1] || '';
   const destinations = [
-    'Main', 'Property listed', 'Pending approvals', 'Approved properties', 'Rejected properties',
+    'Main', 'Property listed', 'Pending approvals',
     'Featured', 'Recommended', 'Projects', 'Project listings', 'Agriculture Land', 'User management', 'Agent Management',
     'App banners management', 'App notifications management', 'Agent Messages', 'Agent Progress',
   ];
   assert.equal((navBlock.match(/\{ label:/g) || []).length, destinations.length, 'sidebar destinations should match its configured navigation');
   for (const item of destinations) assert.ok(navBlock.includes(`label: '${item}'`), `sidebar should include ${item}`);
+  assert.doesNotMatch(navBlock, /label: '(?:Approved|Rejected) properties'/);
   assert.doesNotMatch(navBlock, /Property in progress|Property closed/);
   assert.match(source, /for \(const item of sidebarItems\)/);
   assert.match(source, /function attachNavigation\(\)\s*\{\s*const nav = document\.querySelector\('aside nav'\);\s*if \(!nav\) return;\s*installStyles\(\);/);

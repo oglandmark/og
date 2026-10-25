@@ -35,8 +35,6 @@
     { label: 'Main', path: '/admin/' },
     { label: 'Property listed', path: '/admin/properties?propertyView=inbox' },
     { label: 'Pending approvals', path: '/admin/properties?propertyView=pending' },
-    { label: 'Approved properties', path: '/admin/properties?propertyView=approved' },
-    { label: 'Rejected properties', path: '/admin/properties?propertyView=rejected' },
     { label: 'Featured', path: '/admin/properties?propertyView=featured' },
     { label: 'Recommended', path: '/admin/properties?propertyView=recommended' },
     { label: 'Projects', path: '/admin/management/developer-projects' },

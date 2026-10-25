@@ -629,13 +629,20 @@ function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isSaved, toggleSaved } = useSaved();
   const numId = Number(id);
-  const localProperty = properties.find((item) => item.id === Math.abs(numId));
+  // Negative routes are reserved for bundled demos. Positive IDs always belong
+  // to the live API, even when their number collides with a bundled demo ID.
+  const localProperty = numId < 0
+    ? properties.find((item) => item.id === Math.abs(numId))
+    : undefined;
 
   // Start with local mock fallback; replace with API data when loaded
   const [property, setProperty] = useState(
     localProperty
       ? { ...localProperty, ...(numId < 0 ? { id: numId, demoId: localProperty.id } : {}) }
       : properties[0]!,
+  );
+  const [propertyLoadState, setPropertyLoadState] = useState<'loading' | 'ready' | 'error'>(
+    numId > 0 ? 'loading' : 'ready',
   );
   const [sellerId,       setSellerId]       = useState<number | undefined>(undefined);
   const [agentId,        setAgentId]        = useState<number | undefined>(undefined);
@@ -646,20 +653,33 @@ function PropertyDetailScreen() {
   const galleryScrollRef = useRef<ScrollView>(null);
   const images = propertyImages(property);
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
-  const demoWasRemoved = property.isDemo === true || isDemoPropertyHidden(property, hiddenDemoPropertyIds);
+  const demoWasRemoved = numId < 0
+    && (property.isDemo === true || isDemoPropertyHidden(property, hiddenDemoPropertyIds));
 
-  // Fetch live property from API + increment view count
+  // Positive IDs always fetch the live API record; negative IDs are bundled demos.
   useEffect(() => {
-    if (!numId || numId < 0 || localProperty?.isDemo) return;
+    if (!numId || numId < 0) {
+      setPropertyLoadState('ready');
+      return;
+    }
+    let cancelled = false;
+    setPropertyLoadState('loading');
     getProperty(numId)
       .then((ap: ApiProperty) => {
+        if (cancelled) return;
         setProperty(apiPropertyToProperty(ap));
         setSellerId(ap.sellerId);
         setAgentId(ap.agentId);
+        setPropertyLoadState('ready');
       })
-      .catch(() => undefined); // keep mock on failure
+      .catch(() => {
+        if (!cancelled) setPropertyLoadState('error');
+      });
     incrementView(numId).catch(() => undefined);
-  }, [numId, localProperty?.isDemo]);
+    return () => {
+      cancelled = true;
+    };
+  }, [numId]);
 
   // Record visit whenever this property is opened
   useEffect(() => {
@@ -699,6 +719,35 @@ function PropertyDetailScreen() {
   const openBooking = () => {
     if (requireSignIn('visit')) setBookingOpen(true);
   };
+
+  if (numId > 0 && propertyLoadState === 'loading') {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <Text style={{ color: colors.mutedForeground, fontFamily: 'Inter_500Medium', fontSize: 15 }}>
+          Loading property…
+        </Text>
+      </View>
+    );
+  }
+
+  if (numId > 0 && propertyLoadState === 'error') {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <Feather name="alert-circle" size={32} color={colors.mutedForeground} />
+        <Text style={{ color: colors.foreground, fontFamily: 'Inter_700Bold', fontSize: 18, marginTop: 14, textAlign: 'center' }}>
+          This property is unavailable right now.
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          onPress={() => router.back()}
+          style={{ marginTop: 18, borderRadius: 10, backgroundColor: colors.action, paddingHorizontal: 18, paddingVertical: 11 }}
+        >
+          <Text style={{ color: colors.actionForeground, fontFamily: 'Inter_600SemiBold', fontSize: 13 }}>Go back</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   if (demoWasRemoved) {
     return (

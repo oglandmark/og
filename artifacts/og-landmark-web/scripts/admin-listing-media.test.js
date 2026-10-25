@@ -205,8 +205,7 @@ test('property filter root remains discoverable after its heading is changed', (
 test('Admin review inbox includes new submissions and has separate Featured, Recommended, and Projects pages', () => {
   assert.match(mobileManagementSource, /label: 'Property listed', path: '\/admin\/properties\?propertyView=inbox'/);
   assert.match(mobileManagementSource, /label: 'Pending approvals', path: '\/admin\/properties\?propertyView=pending'/);
-  assert.match(mobileManagementSource, /label: 'Approved properties', path: '\/admin\/properties\?propertyView=approved'/);
-  assert.match(mobileManagementSource, /label: 'Rejected properties', path: '\/admin\/properties\?propertyView=rejected'/);
+  assert.doesNotMatch(mobileManagementSource, /label: '(?:Approved|Rejected) properties'/);
   assert.match(mobileManagementSource, /label: 'Featured', path: '\/admin\/properties\?propertyView=featured'/);
   assert.match(mobileManagementSource, /label: 'Recommended', path: '\/admin\/properties\?propertyView=recommended'/);
   assert.match(mobileManagementSource, /label: 'Project listings', path: '\/admin\/properties\?propertyView=projects'/);

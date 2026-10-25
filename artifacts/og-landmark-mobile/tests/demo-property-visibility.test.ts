@@ -142,6 +142,15 @@ test('all demo listings are blocked from public detail routes', () => {
   assert.equal(isDemoPropertyHidden(demos[2]!, [103]), false);
 });
 
+test('live property details load by API ID even when it collides with a bundled demo ID', () => {
+  const detail = readScreen('app', 'property', '[id].tsx');
+  assert.match(detail, /const localProperty = numId < 0\s*\?[\s\S]*?properties\.find\(\(item\) => item\.id === Math\.abs\(numId\)\)/);
+  assert.match(detail, /const demoWasRemoved = numId < 0\s*&&/);
+  assert.match(detail, /if \(!numId \|\| numId < 0\)/);
+  assert.match(detail, /propertyLoadState === 'loading'/);
+  assert.match(detail, /propertyLoadState === 'error'/);
+});
+
 test('Home, Explore, saved, detail, and Agent views use the shared visibility rules', () => {
   const screens = [
     {
@@ -194,7 +203,7 @@ test('Home and Explore use live approved data only and retain cache only for fil
   assert.match(explore, /authoritative for the public feed/);
   assert.match(explore, /setInterval\(\(\) => \{\s*if \(AppState\.currentState === 'active'\) void refreshProperties\(\);/);
   assert.match(home, /setInterval\(\(\) => \{\s*if \(AppState\.currentState === 'active'\) void refreshProperties\(\);/);
-  assert.match(detail, /catch\(\(\) => undefined\); \/\/ keep mock on failure/);
+  assert.match(detail, /propertyLoadState === 'error'/);
 });
 
 test('Explore removes Near Me and clears temporary filters after leaving the page', () => {

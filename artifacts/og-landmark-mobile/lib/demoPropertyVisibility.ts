@@ -29,6 +29,14 @@ export function filterVisibleDemoProperties<T extends DemoPropertyVisibilityReco
   );
 }
 
+export function filterDeletedDemoProjects<T extends { id: string }>(
+  projects: readonly T[],
+  deletedIds: readonly string[],
+): T[] {
+  const deleted = new Set(deletedIds);
+  return projects.filter((project) => !deleted.has(project.id));
+}
+
 export function selectHomePropertySource<T extends DemoPropertyVisibilityRecord>(
   apiProperties: readonly T[],
   bundledFallback: readonly T[],

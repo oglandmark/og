@@ -19,6 +19,7 @@ import { PropertyCard } from '@/components/PropertyCard';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { properties, apiPropertyToProperty } from '@/lib/properties';
 import {
+  filterDeletedDemoProjects,
   filterVisibleDemoProperties,
   keepCachedPropertiesWhenRemoteIsEmpty,
 } from '@/lib/demoPropertyVisibility';
@@ -1218,7 +1219,7 @@ export default function ExploreScreen() {
 
             {/* Projects mode */}
             {isProjectsMode && (
-              <ProjectsList staticProjects={staticProjects.filter((project) => !deletedDemoProjectIds.includes(project.id))} devProjects={devProjects} router={router} colors={colors} />
+              <ProjectsList staticProjects={filterDeletedDemoProjects(staticProjects, deletedDemoProjectIds)} devProjects={devProjects} router={router} colors={colors} />
             )}
 
             {/* Recently Viewed */}

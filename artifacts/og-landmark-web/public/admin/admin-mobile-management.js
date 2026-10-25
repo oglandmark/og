@@ -612,16 +612,16 @@
       const updated = item.updatedAt || item.createdAt || '';
       return `<tr data-project-row data-project-status="${esc(status.toLowerCase())}" data-project-search="${esc(search)}">
         <td><div class="og-project-identity"><span class="og-project-cover">${cover ? `<img src="${esc(cover)}" alt="" loading="lazy">` : esc(name.slice(0, 2).toUpperCase())}</span><span><strong>${esc(name)}</strong><small>${esc(item.developerName || item.developer || 'Developer not assigned')} · ID ${esc(item.id)}</small></span></div></td>
-        <td>${esc(location)}<span class="og-project-subline">${esc(item.type || 'Project type not set')}</span></td>
+        <td>${esc(location)}<span class="og-project-subline">${esc(item.type || item.category || 'Project type not set')}</span></td>
         <td><div class="og-project-inventory"><strong>${available.toLocaleString('en-PK')} available</strong><span class="og-project-subline">${total ? `${sold + reserved} of ${total} allocated` : 'Inventory not entered'}</span>${total ? `<div class="og-project-progress" aria-label="${filled}% inventory allocated"><span style="width:${filled}%"></span></div>` : ''}</div></td>
         <td>${esc(item.expectedCompletion || item.completionDate || '—')}<span class="og-project-subline">${esc(item.developmentStatus || 'Progress not set')}</span></td>
-        <td><span class="og-mm-pill og-project-status ${statusClass(status)}">${esc(status)}</span><span class="og-project-subline">${projectViewState.archived && item.archivedStatus ? `Was ${esc(item.archivedStatus)}` : item.startingPrice ? `From ${money(item.startingPrice)}` : 'Price not set'}</span></td>
+        <td><span class="og-mm-pill og-project-status ${statusClass(status)}">${esc(status)}</span><span class="og-project-subline">${projectViewState.archived && item.archivedStatus ? `Was ${esc(item.archivedStatus)}` : item.startingPrice ? `From ${money(item.startingPrice)}` : item.priceRange || 'Price not set'}</span></td>
         <td>${esc(updated ? updated.slice(0, 10) : '—')}</td>
         <td><div class="og-mm-row-actions">${projectViewState.archived
           ? `<button class="og-mm-action primary" data-action="restore-project" data-id="${esc(item.id)}">Restore</button>`
           : item.isBundledDemo
             ? `<button class="og-mm-action danger" data-action="delete-record" data-section="projects" data-id="${esc(item.id)}">Delete project</button>`
-            : `<button class="og-mm-action" data-action="edit-record" data-section="projects" data-id="${esc(item.id)}">Edit</button><button class="og-mm-action danger" data-action="delete-record" data-section="projects" data-id="${esc(item.id)}">Remove from app</button>`}</div></td>
+            : `<button class="og-mm-action" data-action="edit-record" data-section="projects" data-id="${esc(item.id)}">Edit</button><button class="og-mm-action danger" data-action="delete-record" data-section="projects" data-id="${esc(item.id)}">Delete from app</button>`}</div></td>
       </tr>`;
     }).join('');
     const addButton = projectViewState.archived ? '' : '<button class="og-mm-action primary" data-action="add-record" data-section="projects">＋ Add project</button>';

@@ -964,10 +964,28 @@ class BackendGapClosureTest extends TestCase
             ->assertOk()
             ->assertJsonPath('hiddenDemoPropertyIds', [2]);
 
+        $this->withToken($buyerToken)
+            ->deleteJson('/api/admin/demo-properties/1')
+            ->assertForbidden();
+        $this->withToken($adminToken)
+            ->deleteJson('/api/admin/demo-properties/1')
+            ->assertOk()
+            ->assertJsonPath('deletedDemoPropertyIds', [1]);
+        $this->withToken($adminToken)
+            ->deleteJson('/api/admin/demo-projects/okara-model-town')
+            ->assertOk()
+            ->assertJsonPath('deletedDemoProjectIds', ['okara-model-town']);
+        $this->getJson('/api/mobile/settings')
+            ->assertOk()
+            ->assertJsonPath('deletedDemoPropertyIds', [1])
+            ->assertJsonPath('deletedDemoProjectIds', ['okara-model-town']);
+
         JsonStore::reset();
         $saved = JsonStore::read();
         $this->assertSame('Real customer listing', $saved['properties'][0]['title']);
         $this->assertSame([2], $saved['mobileSettings']['hiddenDemoPropertyIds']);
+        $this->assertSame([1], $saved['mobileSettings']['deletedDemoPropertyIds']);
+        $this->assertSame(['okara-model-town'], $saved['mobileSettings']['deletedDemoProjectIds']);
     }
 
     public function test_website_and_mobile_agent_directories_merge_and_deduplicate_profiles(): void

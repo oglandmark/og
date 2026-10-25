@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
 import {
+  filterDeletedDemoProjects,
   filterVisibleDemoProperties,
   isDemoPropertyHidden,
   keepCachedPropertiesWhenRemoteIsEmpty,
@@ -20,6 +21,27 @@ const demos = [
   { id: 102, isDemo: true, title: 'Visible demo' },
   { id: 103, isDemo: false, title: 'Live listing' },
 ];
+
+test('deleted bundled projects are removed from Explore and direct project details', () => {
+  const projects = [
+    { id: 'okara-model-town', name: 'Sample project' },
+    { id: 'developer-live', name: 'Developer project' },
+  ];
+  assert.deepEqual(filterDeletedDemoProjects(projects, ['okara-model-town']), [projects[1]]);
+  assert.match(readScreen('app', '(tabs)', 'explore.tsx'), /filterDeletedDemoProjects\(staticProjects, deletedDemoProjectIds\)/);
+  assert.match(readScreen('app', 'project', '[id].tsx'), /staticProjectDeleted/);
+});
+
+test('deleted bundled projects disappear from the app project list', () => {
+  const projects = [
+    { id: 'okara-model-town', name: 'Sample project' },
+    { id: 'developer-live', name: 'Developer project' },
+  ];
+  assert.deepEqual(
+    filterDeletedDemoProjects(projects, ['okara-model-town']),
+    [projects[1]],
+  );
+});
 
 test('hidden demos stay out of demo-backed views when the property API is empty or unavailable', () => {
   const hiddenIds = [101];

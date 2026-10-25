@@ -544,6 +544,10 @@ importers:
       pg:
         specifier: ^8.23.0
         version: 8.23.0
+    devDependencies:
+      playwright-core:
+        specifier: ^1.64.1
+        version: 1.64.1
 
   lib/api-client-react:
     dependencies:
@@ -4579,6 +4583,11 @@ packages:
 
   pino@9.14.0:
     resolution: {integrity: sha512-8OEwKp5juEvb/MjpIc4hjqfgCNysrS94RIOMXYvpYCdm/jglrKEiAYmiumbmGhCvs+IcInsphYDFwqrjr7398w==}
+    hasBin: true
+
+  playwright-core@1.64.1:
+    resolution: {integrity: sha512-BC4s8y6SEVA6Q1rSxZTto8hI1KUI3xXlHGZgvGqP4IqPdI/a6FX9H29IDNz7vKo9l21b6LfYosScPL6M3xxyDQ==}
+    engines: {node: '>=20'}
     hasBin: true
 
   plist@3.1.1:
@@ -10734,6 +10743,8 @@ snapshots:
       safe-stable-stringify: 2.5.0
       sonic-boom: 4.2.1
       thread-stream: 3.1.0
+
+  playwright-core@1.64.1: {}
 
   plist@3.1.1:
     dependencies:

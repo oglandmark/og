@@ -20,7 +20,8 @@
     "test:agent-visits": "node --test scripts/agent-visit-access.test.js",
     "test:account-deletion": "node --test scripts/account-data-deletion.test.js scripts/account-deletion-api.test.js",
     "test:public-contacts": "node --test scripts/patch-public-contacts.test.js",
-    "test:admin-listing-media": "node --test scripts/admin-listing-media.test.js"
+    "test:admin-listing-media": "node --test scripts/admin-listing-media.test.js",
+    "test:listing-approval-preview": "node --test scripts/listing-approval-preview.test.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -30,5 +31,8 @@
     "mysql2": "^3.14.1",
     "nodemailer": "^6.9.13",
     "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.64.1"
   }
 }

@@ -1575,14 +1575,46 @@ export default function HomeScreen() {
     };
   }, [managedAgents.length]));
 
-  // Fetch live properties on focus; bundled examples remain the offline fallback
+  // Keep the Home property feed fresh across Admin edits while the app is open.
   useFocusEffect(useCallback(() => {
-    setApiLoading(true);
-    setPropertyError('');
-    getProperties({ limit: 60, sort: 'latest' })
-      .then((ps) => setApiProps(ps.map(apiPropertyToProperty)))
-      .catch(() => setPropertyError('Live properties are temporarily unavailable. Showing curated examples instead.'))
-      .finally(() => setApiLoading(false));
+    let active = true;
+    let loading = false;
+    let firstLoad = true;
+    const refreshProperties = async () => {
+      if (!active || loading) return;
+      loading = true;
+      if (firstLoad) {
+        setApiLoading(true);
+        setPropertyError('');
+      }
+      try {
+        const items = await getProperties({ limit: 60, sort: 'latest' });
+        if (active) {
+          setApiProps(items.map(apiPropertyToProperty));
+          setPropertyError('');
+        }
+      } catch {
+        if (active) {
+          setPropertyError('Live properties are temporarily unavailable. Showing curated examples instead.');
+        }
+      } finally {
+        if (active && firstLoad) setApiLoading(false);
+        firstLoad = false;
+        loading = false;
+      }
+    };
+    void refreshProperties();
+    const interval = setInterval(() => {
+      if (AppState.currentState === 'active') void refreshProperties();
+    }, 15_000);
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') void refreshProperties();
+    });
+    return () => {
+      active = false;
+      clearInterval(interval);
+      appStateSubscription.remove();
+    };
   }, []));
 
   useEffect(() => {
@@ -1595,7 +1627,11 @@ export default function HomeScreen() {
   const handleDrawerInfo = (_info: DrawerInfo) => { setDrawerOpen(true); };
 
   // Use API properties when available, fall back to local mock
-  const propertySource = selectHomePropertySource(apiProps, properties);
+  const propertySource = selectHomePropertySource(
+    apiProps,
+    properties,
+    apiLoading || Boolean(propertyError),
+  );
   const allProps = filterVisibleDemoProperties(propertySource, hiddenDemoPropertyIds);
 
   // Data slices — all driven from live API data (or local fallback)

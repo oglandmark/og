@@ -22,6 +22,7 @@ import {
   filterDeletedDemoProjects,
   filterVisibleDemoProperties,
   keepCachedPropertiesWhenRemoteIsEmpty,
+  replacePropertiesFromSuccessfulPublicFeed,
 } from '@/lib/demoPropertyVisibility';
 import { getPropertiesPage } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
@@ -611,75 +612,65 @@ export default function ExploreScreen() {
   useEffect(() => {
     if (!isExploreFocused) return;
     const radiusLocation = searchedPlace ?? mapAreaSearch;
-    if (!radiusLocation && !mapBoundsFilter) {
-      let cancelled = false;
-      const interactionTask = InteractionManager.runAfterInteractions(() => {
-        setGeoLoading(true);
-        getPropertiesPage({ limit: 24, offset: 0 })
-          .then((page) => {
-            if (!cancelled) {
-              setAllProperties((current) => keepCachedPropertiesWhenRemoteIsEmpty(
-                current,
-                uniqueProperties(page.items.map(apiPropertyToProperty)),
-              ));
-              setRemoteOffset(page.items.length);
-              setRemoteHasMore(page.hasMore);
-            }
-          })
-          .catch(() => {})
-          .finally(() => {
-            if (!cancelled) setGeoLoading(false);
-          });
-      });
-      return () => {
-        cancelled = true;
-        interactionTask.cancel();
-      };
-    }
-
-    let cancelled = false;
-    setGeoLoading(true);
-
-    const request = radiusLocation
+    const isFilteredSearch = Boolean(radiusLocation || mapBoundsFilter);
+    const fetchPage = () => radiusLocation
       ? getPropertiesPage({
           lat: radiusLocation.lat,
           lng: radiusLocation.lng,
           radiusKm: radiusLocation.radiusKm,
-           limit: 24,
-           offset: 0,
+          limit: 24,
+          offset: 0,
         })
-      : getPropertiesPage({
-          minLat: mapBoundsFilter!.south,
-          maxLat: mapBoundsFilter!.north,
-          minLng: mapBoundsFilter!.west,
-          maxLng: mapBoundsFilter!.east,
-           limit: 24,
-           offset: 0,
-        });
-
+      : mapBoundsFilter
+        ? getPropertiesPage({
+            minLat: mapBoundsFilter.south,
+            maxLat: mapBoundsFilter.north,
+            minLng: mapBoundsFilter.west,
+            maxLng: mapBoundsFilter.east,
+            limit: 24,
+            offset: 0,
+          })
+        : getPropertiesPage({ limit: 24, offset: 0 });
+    let cancelled = false;
+    let loading = false;
+    let firstLoad = true;
+    const refreshProperties = async () => {
+      if (cancelled || loading) return;
+      loading = true;
+      if (firstLoad) setGeoLoading(true);
+      try {
+        const page = await fetchPage();
+        if (!cancelled) {
+          const remote = uniqueProperties(page.items.map(apiPropertyToProperty));
+          setAllProperties((current) => isFilteredSearch
+            ? keepCachedPropertiesWhenRemoteIsEmpty(current, remote)
+            : replacePropertiesFromSuccessfulPublicFeed(current, remote));
+          setRemoteOffset(page.items.length);
+          setRemoteHasMore(page.hasMore);
+        }
+      } catch {
+        // Keep the current catalogue when the request fails; empty successful
+        // responses are handled above as authoritative for the public feed.
+      } finally {
+        if (!cancelled && firstLoad) setGeoLoading(false);
+        firstLoad = false;
+        loading = false;
+      }
+    };
     const interactionTask = InteractionManager.runAfterInteractions(() => {
-      request
-        .then((page) => {
-          if (!cancelled) {
-            // Keep bundled properties available when the remote catalogue is
-            // empty or temporarily unavailable. The local radius/bounds
-            // filter still produces correct map-search results from that cache.
-            setAllProperties((current) => keepCachedPropertiesWhenRemoteIsEmpty(
-              current,
-              uniqueProperties(page.items.map(apiPropertyToProperty)),
-            ));
-            setRemoteOffset(page.items.length);
-            setRemoteHasMore(page.hasMore);
-          }
-        })
-        .catch(() => {})
-        .finally(() => {
-          if (!cancelled) setGeoLoading(false);
-        });
+      void refreshProperties();
+    });
+    const interval = setInterval(() => {
+      if (AppState.currentState === 'active') void refreshProperties();
+    }, 15_000);
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') void refreshProperties();
     });
 
     return () => {
       cancelled = true;
+      clearInterval(interval);
+      appStateSubscription.remove();
       interactionTask.cancel();
     };
   }, [isExploreFocused, searchedPlace, mapAreaSearch, mapBoundsFilter]);

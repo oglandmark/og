@@ -40,9 +40,19 @@ export function filterDeletedDemoProjects<T extends { id: string }>(
 export function selectHomePropertySource<T extends DemoPropertyVisibilityRecord>(
   apiProperties: readonly T[],
   bundledFallback: readonly T[],
+  allowBundledFallback = true,
 ): T[] {
-  if (apiProperties.length === 0) return [...bundledFallback];
+  if (apiProperties.length === 0) return allowBundledFallback ? [...bundledFallback] : [];
   return mergeLiveWithDemoProperties(apiProperties, bundledFallback);
+}
+
+export function replacePropertiesFromSuccessfulPublicFeed<T extends DemoPropertyVisibilityRecord>(
+  cachedProperties: readonly T[],
+  remoteProperties: readonly T[],
+): T[] {
+  const bundledDemos = cachedProperties.filter((property) => property.isDemo === true);
+  if (remoteProperties.length === 0) return [];
+  return mergeLiveWithDemoProperties(remoteProperties, bundledDemos);
 }
 
 export function keepCachedPropertiesWhenRemoteIsEmpty<T extends DemoPropertyVisibilityRecord>(

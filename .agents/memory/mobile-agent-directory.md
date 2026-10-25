@@ -18,3 +18,9 @@ Admin-created developer projects intended for the public mobile app should defau
 **Why:** The product owner expects Admin-managed Agents and Projects to be discoverable in the mobile app. Draft projects are intentionally excluded from the public API, and a one-time client fetch can leave newly published projects stale.
 
 **How to apply:** Keep the public project API restricted to `Live` or `Approved` records, default new Admin entries to `Live`, and require existing Draft/Pending entries to be explicitly published before they appear.
+
+Admin deletions of bundled demo properties/projects update shared mobile settings; the packaged copies are not removed from the app bundle. Refresh those settings when the app resumes and periodically while it remains open so the local copies stop appearing.
+
+**Why:** Deleting the backend row or adding a hidden ID does not mutate assets bundled in the mobile app, and one-time settings hydration leaves deleted demos visible in an already-open app.
+
+**How to apply:** Filter bundled copies by the Admin-managed hidden/deleted IDs and re-fetch mobile settings on resume and at a modest interval.

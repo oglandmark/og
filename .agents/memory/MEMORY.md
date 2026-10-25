@@ -41,7 +41,7 @@
 - [Post-merge setup](post-merge-setup.md) — this workspace needs a non-frozen pnpm install and the scoped @workspace/db filter.
 - [MySQL migration safety](mysql-migration-safety.md) — production cutover requires a verified live snapshot, protected empty-target import, and source/target parity checks.
 - [MySQL projection parity](mysql-projection-parity.md) — mirrored search projections must keep schema, migration, runtime bindings, and export copies aligned; validate batch placeholder counts before deploy.
-- [Mobile empty-response fallbacks](nearby-results-fallback.md) — preserve local banner slides and cached listings when successful empty API responses would blank the Home screen.
+- [Mobile empty-response fallbacks](nearby-results-fallback.md) — empty global catalogues clear stale live rows; keep cached data only for offline or nearby/map fallback needs.
 - [Laravel backend cutover](laravel-backend-cutover.md) — preserve the API contract and verify browser-facing proxy paths separately from the local API listener.
 - [Production API version parity](production-api-version-parity.md) — verify production endpoints directly; Replit preview may use a separate local API and diverge from Hostinger.
 - [Laravel config cache smoke checks](laravel-config-cache.md) — clear stale DB config before local overrides; health alone may not prove JsonStore reads the target.

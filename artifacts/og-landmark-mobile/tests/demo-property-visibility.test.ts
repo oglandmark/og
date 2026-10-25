@@ -7,6 +7,7 @@ import {
   filterVisibleDemoProperties,
   isDemoPropertyHidden,
   keepCachedPropertiesWhenRemoteIsEmpty,
+  replacePropertiesFromSuccessfulPublicFeed,
   selectHomePropertySource,
 } from '../lib/demoPropertyVisibility';
 
@@ -43,6 +44,12 @@ test('deleted bundled projects disappear from the app project list', () => {
   );
 });
 
+test('mobile refreshes Admin-managed demo visibility while open and after app resume', () => {
+  const provider = readScreen('context', 'DemoPropertyVisibilityContext.tsx');
+  assert.match(provider, /setInterval\(refresh,\s*15_000\)/);
+  assert.match(provider, /AppState\.addEventListener\('change'/);
+});
+
 test('hidden demos stay out of demo-backed views when the property API is empty or unavailable', () => {
   const hiddenIds = [101];
   const expected = [102, 103];
@@ -68,6 +75,22 @@ test('hidden demos stay out of demo-backed views when the property API is empty 
       expected,
     );
   }
+});
+
+test('a successful empty public feed clears cached and bundled properties', () => {
+  const cached = [
+    { id: 8, isDemo: false, title: 'Deleted Admin listing' },
+    { id: -101, demoId: 101, isDemo: true, title: 'Bundled example' },
+  ];
+  assert.deepEqual(
+    replacePropertiesFromSuccessfulPublicFeed(cached, []),
+    [],
+  );
+});
+
+test('Home uses bundled properties while loading or offline, but not after a successful empty response', () => {
+  assert.deepEqual(selectHomePropertySource([], demos, true), demos);
+  assert.deepEqual(selectHomePropertySource([], demos, false), []);
 });
 
 test('live listings are kept and the full bundled demo catalogue is added with collision-safe IDs', () => {
@@ -138,19 +161,22 @@ test('Home, Explore, saved, detail, and Agent views use the shared visibility ru
   }
 });
 
-test('Home retains its bundled offline fallback and Explore keeps cached listings on empty or failed requests', () => {
+test('Home retains fallback only while loading/offline and Explore preserves cache only for filtered requests', () => {
   const home = readScreen('app', '(tabs)', 'index.tsx');
   const explore = readScreen('app', '(tabs)', 'explore.tsx');
   const detail = readScreen('app', 'property', '[id].tsx');
 
-  assert.match(home, /selectHomePropertySource\(apiProps,\s*properties\)/);
+  assert.match(home, /selectHomePropertySource\(\s*apiProps,\s*properties,\s*apiLoading \|\| Boolean\(propertyError\)/);
   assert.match(explore, /useState\(\(\) => uniqueProperties\(properties\)\)/);
+  assert.match(explore, /replacePropertiesFromSuccessfulPublicFeed\(/);
   assert.equal(
     (explore.match(/keepCachedPropertiesWhenRemoteIsEmpty\(/g) ?? []).length,
-    2,
-    'both Explore catalogue request paths must retain cached listings on empty results',
+    1,
+    'only the filtered map request should retain cached listings on empty results',
   );
-  assert.match(explore, /\.catch\(\(\) => \{\}\)\s*\.finally\(\(\) => \{\s*if \(!cancelled\) setGeoLoading\(false\);\s*\}\)/);
+  assert.match(explore, /authoritative for the public feed/);
+  assert.match(explore, /setInterval\(\(\) => \{\s*if \(AppState\.currentState === 'active'\) void refreshProperties\(\);/);
+  assert.match(home, /setInterval\(\(\) => \{\s*if \(AppState\.currentState === 'active'\) void refreshProperties\(\);/);
   assert.match(detail, /catch\(\(\) => undefined\); \/\/ keep mock on failure/);
 });
 

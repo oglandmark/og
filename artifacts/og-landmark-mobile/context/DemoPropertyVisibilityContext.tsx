@@ -7,6 +7,7 @@ import React, {
   useState,
   type ReactNode,
 } from 'react';
+import { AppState } from 'react-native';
 import { getMobileSettings } from '@/lib/api';
 
 type DemoPropertyVisibilityValue = {
@@ -39,7 +40,18 @@ export function DemoPropertyVisibilityProvider({ children }: { children: ReactNo
   }, []);
 
   useEffect(() => {
-    void refreshDemoPropertyVisibility().catch(() => undefined);
+    const refresh = () => {
+      void refreshDemoPropertyVisibility().catch(() => undefined);
+    };
+    refresh();
+    const interval = setInterval(refresh, 15_000);
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refresh();
+    });
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
   }, [refreshDemoPropertyVisibility]);
 
   const value = useMemo(

@@ -29,8 +29,8 @@ take a verified MySQL snapshot and confirm that the target `app_data` row is
 the expected production export; the repository fallback JSON is not a
 production backup.
 
-Copy `../api-server/laravel/.env.example` to the Laravel application's
-server-only environment settings. Set:
+Copy `.env.example` from the separate Laravel backend package to the Laravel
+application's server-only environment settings. Set:
 
 - `APP_KEY` to a generated Laravel key, `APP_DEBUG=false`, and
   `APP_URL=https://api.oglandmark.com`.

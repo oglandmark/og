@@ -40,12 +40,13 @@ snapshot import, or run seed commands against it.
    directory that contains the current listing uploads, and configure the
    existing Hostinger SMTP mailbox values. Never put `.env` under `public/`.
 4. In phpMyAdmin, select the existing Hostinger database and import
-   `database/hostinger-schema-only.sql`. This helper contains only
-   `CREATE TABLE IF NOT EXISTS` statements for Laravel compatibility, normalized
-   core, and migration-state tables. It has no `INSERT`, `UPDATE`, `DELETE`, or
-   `DROP` statements and does not replace the existing `app_data` document.
-   Existing tables are left unchanged; if an existing table has an unexpected
-   structure, stop and inspect it rather than dropping or recreating it.
+   `database/mysql-schema.sql`. This helper creates Laravel compatibility,
+   normalized core, and migration-state tables only when they do not already
+   exist. It inserts an empty `app_data` row only if that row is absent; it
+   does not replace existing application data or contain production listings,
+   users, passwords, or uploaded media. Existing tables are left unchanged; if
+   an existing table has an unexpected structure, stop and inspect it rather
+   than dropping or recreating it.
 5. From the Laravel project root, clear stale cached settings and apply the
    Laravel migrations:
 

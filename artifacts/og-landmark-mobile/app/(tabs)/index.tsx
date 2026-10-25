@@ -1638,8 +1638,9 @@ export default function HomeScreen() {
   const featuredProps    = allProps.filter((p) => p.featured);
   const agriProps        = allProps.filter((p) => p.type === 'Agriculture Land').slice(0, 6);
   const commercialProps  = allProps.filter((p) => p.type === 'Commercial').slice(0, 6);
-  const latestProps = selectLatestProperties(allProps, apiProps.length === 0);
-  const recommendedProps = selectRecommendedProperties(allProps, transaction, apiProps.length === 0);
+  const allowCuratedFallback = apiProps.length === 0 && (apiLoading || Boolean(propertyError));
+  const latestProps = selectLatestProperties(allProps, allowCuratedFallback);
+  const recommendedProps = selectRecommendedProperties(allProps, transaction, allowCuratedFallback);
   const visibleAgents = managedAgents;
 
   const ctaContent = role === 'agent'

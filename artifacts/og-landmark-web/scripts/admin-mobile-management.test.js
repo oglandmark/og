@@ -104,7 +104,7 @@ test('Admin navigation keeps core destinations and exposes current property view
   const destinations = [
     'Main', 'Property listed', 'Pending approvals', 'Approved properties', 'Rejected properties',
     'Featured', 'Recommended', 'Projects', 'Project listings', 'Agriculture Land', 'User management', 'Agent Management',
-    'App banners management', 'App notifications management',
+    'App banners management', 'App notifications management', 'Agent Messages', 'Agent Progress',
   ];
   assert.equal((navBlock.match(/\{ label:/g) || []).length, destinations.length, 'sidebar destinations should match its configured navigation');
   for (const item of destinations) assert.ok(navBlock.includes(`label: '${item}'`), `sidebar should include ${item}`);
@@ -238,4 +238,17 @@ test('property review history supports batch selection, rejection notes, and out
   assert.match(source, /Optional reason for rejecting these listings/);
   assert.match(source, /api\('\/admin\/properties\/bulk-review'/);
   assert.match(source, /results\.map\(\(item\) => `\$\{item\.title \|\| `Listing \$\{item\.id\}`\}/);
+});
+
+test('website Admin can read and manage Agent messages and progress through the shared APIs', () => {
+  const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
+  assert.match(source, /id: 'agent-messages', label: 'Agent Messages'/);
+  assert.match(source, /id: 'agent-progress', label: 'Agent Progress'/);
+  assert.match(source, /\/admin\/mobile\/agent-messages/);
+  assert.match(source, /\/admin\/mobile\/agent-progress/);
+  assert.match(source, /api\('\/agent-admin-messages'\)/);
+  assert.match(source, /api\(`\/agent-admin-messages\/\$\{encodeURIComponent\(active\.id\)\}`/);
+  assert.match(source, /api\('\/agent-progress'\)/);
+  assert.match(source, /api\(`\/agent-progress\/\$\{encodeURIComponent\(form\.dataset\.agentReview\)\}`/);
+  assert.match(source, /status: submitter\?\.value \|\| 'reviewed'/);
 });

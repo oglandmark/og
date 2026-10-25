@@ -63,7 +63,7 @@ test('hidden demos stay out of demo-backed views when the property API is empty 
     );
   }
 
-  // Explore starts from its local cache and keeps it when the API is empty or fails.
+  // Explore may keep cached live listings for a filtered/nearby fallback, but not bundled examples.
   const cachedProperties = [...demos];
   for (const remoteProperties of [[], undefined]) {
     const preserved = keepCachedPropertiesWhenRemoteIsEmpty(
@@ -72,7 +72,7 @@ test('hidden demos stay out of demo-backed views when the property API is empty 
     );
     assert.deepEqual(
       filterVisibleDemoProperties(preserved, hiddenIds).map(({ id }) => id),
-      expected,
+      [103],
     );
   }
 });
@@ -93,7 +93,7 @@ test('Home uses bundled properties while loading or offline, but not after a suc
   assert.deepEqual(selectHomePropertySource([], demos, false), []);
 });
 
-test('live listings are kept and the full bundled demo catalogue is added with collision-safe IDs', () => {
+test('successful public feeds show live listings only, without adding bundled demos', () => {
   const live = [{ id: 1, isDemo: false, title: 'Live listing' }];
   const catalog = [
     { id: 1, isDemo: true, title: 'Demo one' },
@@ -101,14 +101,18 @@ test('live listings are kept and the full bundled demo catalogue is added with c
   ];
   const merged = selectHomePropertySource(live, catalog);
 
-  assert.deepEqual(merged.map(({ id }) => id), [1, -1, -2]);
+  assert.deepEqual(merged.map(({ id }) => id), [1]);
   assert.deepEqual(
     filterVisibleDemoProperties(merged, [1]).map(({ title }) => title),
-    ['Live listing', 'Demo two'],
+    ['Live listing'],
   );
   assert.deepEqual(
     keepCachedPropertiesWhenRemoteIsEmpty(catalog, live).map(({ id }) => id),
-    [1, -1, -2],
+    [1],
+  );
+  assert.deepEqual(
+    replacePropertiesFromSuccessfulPublicFeed(catalog, live).map(({ id }) => id),
+    [1],
   );
 });
 
@@ -167,6 +171,9 @@ test('Home retains fallback only while loading/offline and Explore preserves cac
   const detail = readScreen('app', 'property', '[id].tsx');
 
   assert.match(home, /selectHomePropertySource\(\s*apiProps,\s*properties,\s*apiLoading \|\| Boolean\(propertyError\)/);
+  assert.match(home, /const allowCuratedFallback = apiProps\.length === 0 && \(apiLoading \|\| Boolean\(propertyError\)\)/);
+  assert.match(home, /selectLatestProperties\(allProps,\s*allowCuratedFallback\)/);
+  assert.match(home, /selectRecommendedProperties\(allProps,\s*transaction,\s*allowCuratedFallback\)/);
   assert.match(explore, /useState\(\(\) => uniqueProperties\(properties\)\)/);
   assert.match(explore, /replacePropertiesFromSuccessfulPublicFeed\(/);
   assert.equal(

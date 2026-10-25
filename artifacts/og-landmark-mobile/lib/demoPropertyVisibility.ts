@@ -42,40 +42,24 @@ export function selectHomePropertySource<T extends DemoPropertyVisibilityRecord>
   bundledFallback: readonly T[],
   allowBundledFallback = true,
 ): T[] {
-  if (apiProperties.length === 0) return allowBundledFallback ? [...bundledFallback] : [];
-  return mergeLiveWithDemoProperties(apiProperties, bundledFallback);
+  if (apiProperties.length > 0) return [...apiProperties];
+  return allowBundledFallback ? [...bundledFallback] : [];
 }
 
 export function replacePropertiesFromSuccessfulPublicFeed<T extends DemoPropertyVisibilityRecord>(
   cachedProperties: readonly T[],
   remoteProperties: readonly T[],
 ): T[] {
-  const bundledDemos = cachedProperties.filter((property) => property.isDemo === true);
   if (remoteProperties.length === 0) return [];
-  return mergeLiveWithDemoProperties(remoteProperties, bundledDemos);
+  return [...remoteProperties];
 }
 
 export function keepCachedPropertiesWhenRemoteIsEmpty<T extends DemoPropertyVisibilityRecord>(
   cachedProperties: readonly T[],
   remoteProperties: readonly T[],
 ): T[] {
-  if (remoteProperties.length === 0) return [...cachedProperties];
-  const bundledDemos = cachedProperties.filter(
-    (property) => (property as DemoPropertyVisibilityRecord).isDemo === true,
-  );
-  return mergeLiveWithDemoProperties(remoteProperties, bundledDemos);
-}
-
-function mergeLiveWithDemoProperties<T extends DemoPropertyVisibilityRecord>(
-  live: readonly T[],
-  demos: readonly T[],
-): T[] {
-  return [
-    ...live,
-    ...demos.map((property) => ({
-      ...property,
-      id: -Math.abs(property.demoId ?? property.id),
-      demoId: property.demoId ?? property.id,
-    })),
-  ];
+  if (remoteProperties.length === 0) {
+    return cachedProperties.filter((property) => property.isDemo !== true);
+  }
+  return [...remoteProperties];
 }

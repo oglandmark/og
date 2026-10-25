@@ -28,6 +28,8 @@
     { id: 'users', label: 'Users' },
     { id: 'banners', label: 'Homepage banners' },
     { id: 'notifications', label: 'Notifications' },
+    { id: 'agent-messages', label: 'Agent Messages' },
+    { id: 'agent-progress', label: 'Agent Progress' },
   ];
   const sidebarItems = [
     { label: 'Main', path: '/admin/' },
@@ -44,6 +46,8 @@
     { label: 'Agent Management', path: '/admin/mobile/agents' },
     { label: 'App banners management', path: '/admin/mobile/banners' },
     { label: 'App notifications management', path: '/admin/mobile/notifications' },
+    { label: 'Agent Messages', path: '/admin/mobile/agent-messages' },
+    { label: 'Agent Progress', path: '/admin/mobile/agent-progress' },
   ];
   const existingPagePaths = {
     ...Object.fromEntries(sidebarItems.map((item) => [item.label, item.path])),
@@ -56,8 +60,6 @@
       slug: 'reports-and-analytics-dashboard-statistics',
       path: existingPagePaths['Dashboard Statistics'],
     },
-    { label: 'Agent Messages', group: 'Agent Operations', slug: 'agent-communications', section: 'agent-messages', path: '/admin/management/agent-communications' },
-    { label: 'Agent Progress', group: 'Agent Operations', slug: 'agent-progress', section: 'agent-progress', path: '/admin/management/agent-progress' },
     {
       label: 'Staff & Permissions',
       group: 'Staff & Permissions',
@@ -325,12 +327,12 @@
     if (!modal) return;
     const content = modal.querySelector('.og-mm-content');
     if (tab === 'agents') return renderAgents(content);
+    if (tab === 'agent-messages') return renderAgentMessages(content);
+    if (tab === 'agent-progress') return renderAgentProgress(content);
     if (tab === 'users' || tab === 'banners' || tab === 'notifications') return renderSection(tab, content);
     if (tab === 'properties') return renderProperties(content);
     const page = sidebarPageBySlug[tab];
     if (page?.group === 'Reports & Analytics') return renderReports(content, page.label);
-    if (page?.section === 'agent-messages') return renderAgentMessages(content);
-    if (page?.section === 'agent-progress') return renderAgentProgress(content);
     if (page?.group === 'Staff & Permissions') return renderStaff(content);
     if (page?.group === 'System Settings') return renderSystem(content, page.label);
     if (page?.section === 'reviews') return renderReviews(content);
@@ -385,7 +387,7 @@
       content.querySelectorAll('[data-agent-review]').forEach((form) => form.addEventListener('submit', async (event) => {
         event.preventDefault();
         const submitter = event.submitter;
-        const button = form.querySelector('[type="submit"]');
+        const button = submitter || form.querySelector('[type="submit"]');
         button.disabled = true;
         try {
           await api(`/agent-progress/${encodeURIComponent(form.dataset.agentReview)}`, {

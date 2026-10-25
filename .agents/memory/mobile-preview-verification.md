@@ -3,10 +3,12 @@ name: Mobile preview verification
 description: How to verify mobile inventory changes when the Expo preview screenshot does not reach the relevant screen.
 ---
 
-Keep the Expo development workflow and Replit mobile preview in sync with mobile code changes. Let Expo hot reload handle ordinary source edits; restart the managed workflow for dependency changes or Metro/runtime issues, and present the updated mobile artifact after meaningful changes.
+Keep the Expo development workflow and Replit mobile preview in sync with mobile code changes. In this workspace, launch Metro with `CI` unset: `CI=1` disables reloads and can leave the preview on an old bundle. Restart the managed workflow for dependency changes or Metro/runtime issues, and present the updated mobile artifact after meaningful changes.
+
+Do not infer demo status from a property's title or appearance. Exclude listings only when the data explicitly marks them as demos, while keeping Admin-approved active listings public.
 
 When a mobile preview screenshot remains on the splash screen or renders blank, do not treat that as confirmation that the content change worked. Inspect the live API response that drives the screen and distinguish API verification from visual verification in the report.
 
-**Why:** the user asked that Expo and Replit preview be updated alongside mobile changes. A prior demo-listing fix passed source-level tests while active sample listings were still present in the preview API; its screenshot captured only the splash.
+**Why:** the user asked that Expo and Replit preview be updated alongside mobile changes. Metro reported reloads disabled in CI mode, and a title-based demo guess hid the user's two active Admin listings, so neither an old bundle nor labels alone are reliable evidence.
 
-**How to apply:** Keep the Expo workflow current, verify the live feed after server changes, and present the mobile artifact. If screenshots do not reach Home or Explore, state that visual verification is incomplete.
+**How to apply:** Keep `CI` unset for the managed Expo dev command, verify the live feed after server changes, and present the mobile artifact. Use explicit demo metadata plus approval/listing status; if screenshots do not reach Home or Explore, state that visual verification is incomplete.

@@ -14,6 +14,7 @@
   let hiddenMainChildren = [];
   let agents = [];
   let agentLoadWarnings = [];
+  let projectLeafletPromise;
   const sectionData = {};
   const projectViewState = { query: '', status: 'all', notice: '' };
   const selectedReviewIds = new Set();
@@ -133,6 +134,7 @@
       .og-project-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.og-project-stat{padding:15px 16px;border:1px solid #e2e8f0;border-radius:12px;background:linear-gradient(145deg,#fff,#f8fafc)}.og-project-stat span{display:block;color:#64748b;font-size:11px;font-weight:600}.og-project-stat strong{display:block;margin-top:7px;color:#0b1f3a;font-size:22px;line-height:1.1}
       .og-project-toolbar{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #e2e8f0;border-radius:12px;background:#fff}.og-project-toolbar input,.og-project-toolbar select{min-height:38px;border:1px solid #dbe2ea;border-radius:8px;padding:8px 10px;background:#fff;color:#0b1f3a;font:13px system-ui}.og-project-toolbar input{flex:1;min-width:180px}.og-project-count{margin-left:auto;color:#64748b;font-size:11px;white-space:nowrap}
       .og-project-table-wrap{overflow:auto;border:1px solid #e2e8f0;border-radius:12px;background:#fff}.og-project-table{min-width:860px}.og-project-table th{background:#f8fafc;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.05em}.og-project-identity{display:flex;align-items:center;gap:10px;min-width:210px}.og-project-cover{display:grid;flex:0 0 54px;width:54px;height:44px;place-items:center;overflow:hidden;border-radius:8px;background:#eef2f7;color:#8a6d2e;font-size:12px;font-weight:800}.og-project-cover img{width:100%;height:100%;object-fit:cover}.og-project-identity strong{display:block;color:#0b1f3a;font-size:12px}.og-project-identity small,.og-project-subline{display:block;margin-top:3px;color:#718096;font-size:10px}.og-project-inventory{min-width:115px}.og-project-progress{height:5px;margin-top:6px;overflow:hidden;border-radius:99px;background:#e8edf3}.og-project-progress span{display:block;height:100%;border-radius:inherit;background:#c8a45a}.og-project-status{white-space:nowrap}.og-project-status.live{background:#dcfce7;color:#166534}.og-project-status.review{background:#fff7df;color:#8a5a00}.og-project-status.paused,.og-project-status.draft{background:#f1f5f9;color:#64748b}.og-project-empty{padding:32px 16px;text-align:center;color:#64748b;font-size:13px}
+      .og-project-map-field{grid-column:1/-1}.og-project-map-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 8px}.og-project-map-modes{display:flex;gap:6px}.og-project-map-mode{border:1px solid #dbe2ea;border-radius:7px;padding:7px 11px;background:#fff;color:#334155;font:600 11px system-ui;cursor:pointer}.og-project-map-mode[aria-pressed="true"]{border-color:#c8a45a;background:#c8a45a;color:#0b1f3a}.og-project-map-coords{color:#64748b;font-size:11px;font-variant-numeric:tabular-nums}.og-project-map{width:100%;height:310px;border:1px solid #dbe2ea;border-radius:10px;background:#e8edf3;z-index:0}.og-project-map-status{margin:7px 0 0;color:#64748b;font-size:11px}.og-project-map-status.error{color:#b91c1c}
       @media(max-width:760px){.og-project-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.og-project-head{align-items:stretch;flex-direction:column}.og-project-head .og-mm-action{align-self:flex-start}.og-project-toolbar{flex-wrap:wrap}.og-project-toolbar input{flex-basis:100%}.og-project-count{margin-left:0}}
       .og-mm-row-actions{display:flex;gap:6px;white-space:nowrap}.og-mm-action.danger{color:#b91c1c;border-color:#fecaca}
       .og-mm-empty,.og-mm-error{padding:20px;text-align:center;color:#64748b}.og-mm-error{color:#b91c1c}
@@ -300,6 +302,7 @@
   }
 
   function close() {
+    modal?.querySelector('#og-mm-record-form')?.__ogProjectMap?.remove();
     modal?.remove();
     modal = null;
     hiddenMainChildren.forEach(({ node, wasHidden }) => {
@@ -448,7 +451,8 @@
         ['district', 'District'], ['city', 'City', 'city'], ['tehsil', 'Tehsil'],
         ['area', 'Area / locality'], ['address', 'Street address'], ['nearbyLandmark', 'Nearby landmark'],
         ['googleMapsLink', 'Google Maps link', 'url'], ['latitude', 'Latitude', 'number'],
-        ['longitude', 'Longitude', 'number'], ['projectOfficePhone', 'Project office phone'],
+        ['longitude', 'Longitude', 'number'], ['projectMap', 'Choose location on map', 'map'],
+        ['projectOfficePhone', 'Project office phone'],
         ['', 'Pricing & inventory', 'section'],
         ['startingPrice', 'Starting price (PKR)', 'number'], ['maxPrice', 'Maximum price (PKR)', 'number'],
         ['totalUnits', 'Total units', 'number'], ['availableUnits', 'Available units', 'number'],
@@ -515,6 +519,7 @@
 
   async function renderSection(key, content) {
     const config = sectionConfig[key];
+    content.querySelector('#og-mm-record-form')?.__ogProjectMap?.remove();
     content.innerHTML = '<div class="og-mm-empty">Loading live production records…</div>';
     try {
       const result = await api(config.list);
@@ -744,6 +749,8 @@
     const wrap = modal.querySelector('#og-mm-record-form');
     if (!wrap) return;
     const editing = item.id !== undefined && item.id !== null;
+    wrap.__ogProjectMap?.remove();
+    wrap.__ogProjectMap = null;
     const fields = config.fields.filter(([name, , type]) => (
       !(name === 'status' && key === 'notifications' && editing)
       && !(name === 'sendNow' && key === 'notifications' && editing)
@@ -775,6 +782,7 @@
       ${fields.map(([name, label, type = 'text', options = [], accept]) => {
         let value = item[name] ?? '';
         if (type === 'section') return `<div class="og-mm-form-section">${esc(label)}</div>`;
+        if (type === 'map') return `<div class="og-mm-field og-project-map-field"><label>${esc(label)}</label><div class="og-project-map-toolbar"><div class="og-project-map-modes" role="group" aria-label="Project map style"><button class="og-project-map-mode" type="button" data-project-map-mode="map" aria-pressed="true">Map</button><button class="og-project-map-mode" type="button" data-project-map-mode="satellite" aria-pressed="false">Satellite</button></div><span class="og-project-map-coords" data-project-map-coords>Pin not selected</span></div><div class="og-project-map" data-project-location-map role="application" aria-label="Project location map. Click to place a pin or drag the marker."></div><p class="og-project-map-status" data-project-map-status>Click the map to pin the project location, or drag the marker. You can switch to satellite view.</p></div>`;
         if (key === 'projects' && name === 'name' && !value) value = item.title || '';
         if (key === 'projects' && name === 'status' && !value) value = 'Draft';
         if (key === 'projects' && name === 'developerName' && !value) value = item.developer || '';
@@ -826,6 +834,7 @@
       }).join('')}${currentMediaPreview}${projectMediaPreview}
     </div><div class="og-mm-form-actions"><button type="button" class="og-mm-action" data-action="cancel-record" data-section="${key}">Cancel</button><button class="og-mm-action primary" type="submit">${key === 'projects' ? 'Save project' : 'Save'}</button></div></form>`;
     if (key === 'projects') {
+      initializeProjectMap(wrap);
       wrap.querySelectorAll('input[type="file"]').forEach((input) => {
         input.addEventListener('change', () => {
           const preview = wrap.querySelector(`[data-project-upload-preview="${input.name}"]`);
@@ -894,13 +903,16 @@
       }
       if (key === 'projects') {
         const valueOf = (name) => Number(form.elements[name]?.value || 0);
+        const latitude = String(form.elements.latitude?.value || '').trim();
+        const longitude = String(form.elements.longitude?.value || '').trim();
         const totalUnits = valueOf('totalUnits');
         const allocatedUnits = valueOf('availableUnits') + valueOf('reservedUnits') + valueOf('soldUnits');
         const startingPrice = valueOf('startingPrice');
         const maxPriceInput = String(form.elements.maxPrice?.value || '').trim();
         const maxPrice = valueOf('maxPrice');
         let validationMessage = '';
-        if (maxPriceInput && startingPrice > maxPrice) validationMessage = 'Maximum price must be greater than or equal to starting price.';
+        if (!editing && (!latitude || !longitude)) validationMessage = 'Pin the project location on the map or satellite view before creating the project.';
+        else if (maxPriceInput && startingPrice > maxPrice) validationMessage = 'Maximum price must be greater than or equal to starting price.';
         else if (allocatedUnits > totalUnits) validationMessage = 'Available, reserved and sold units cannot exceed total units.';
         if (validationMessage) {
           const message = document.createElement('div');
@@ -1010,6 +1022,133 @@
         const message = document.createElement('div'); message.className = 'og-mm-error'; message.textContent = error.message || 'Could not save record.';
         form.prepend(message); submit.disabled = false;
       }
+    });
+  }
+
+  function loadProjectLeaflet() {
+    if (window.L) return Promise.resolve(window.L);
+    if (projectLeafletPromise) return projectLeafletPromise;
+    if (!document.getElementById('og-mm-project-leaflet-css')) {
+      const stylesheet = document.createElement('link');
+      stylesheet.id = 'og-mm-project-leaflet-css';
+      stylesheet.rel = 'stylesheet';
+      stylesheet.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(stylesheet);
+    }
+    projectLeafletPromise = new Promise((resolve, reject) => {
+      const load = (src, fallback) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.onload = () => window.L ? resolve(window.L) : reject(new Error('Map library did not initialize.'));
+        script.onerror = () => {
+          script.remove();
+          if (fallback) load('https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js', false);
+          else reject(new Error('Map library could not be loaded.'));
+        };
+        document.head.appendChild(script);
+      };
+      load('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', true);
+    }).catch((error) => {
+      projectLeafletPromise = null;
+      throw error;
+    });
+    return projectLeafletPromise;
+  }
+
+  function initializeProjectMap(wrap) {
+    const form = wrap.querySelector('form');
+    const container = wrap.querySelector('[data-project-location-map]');
+    const status = wrap.querySelector('[data-project-map-status]');
+    const coordsLabel = wrap.querySelector('[data-project-map-coords]');
+    const latitudeInput = form?.elements.latitude;
+    const longitudeInput = form?.elements.longitude;
+    if (!form || !container || !latitudeInput || !longitudeInput) return;
+    const parse = (value, min, max) => {
+      if (String(value).trim() === '') return null;
+      const number = Number(value);
+      return Number.isFinite(number) && number >= min && number <= max ? number : null;
+    };
+    loadProjectLeaflet().then((L) => {
+      if (!container.isConnected || !form.isConnected) return;
+      const latitude = parse(latitudeInput.value, -90, 90);
+      const longitude = parse(longitudeInput.value, -180, 180);
+      const hasPin = latitude !== null && longitude !== null;
+      const center = hasPin ? [latitude, longitude] : [30.8094, 73.4537];
+      const map = L.map(container, { scrollWheelZoom: false }).setView(center, hasPin ? 15 : 11);
+      const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors',
+      });
+      const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Tiles © Esri',
+      });
+      let activeLayer = streetLayer;
+      streetLayer.addTo(map);
+      let marker = null;
+      wrap.__ogProjectMap = map;
+      const attachMarker = (point) => {
+        if (!marker) {
+          marker = L.marker(point, { draggable: true }).addTo(map);
+          marker.on('dragend', () => setPin(marker.getLatLng()));
+        } else {
+          marker.setLatLng(point);
+        }
+      };
+      const updateCoordsLabel = (lat, lng) => {
+        if (coordsLabel) coordsLabel.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      };
+      const setPin = (point, recenter = false) => {
+        const lat = Number(point.lat);
+        const lng = Number(point.lng);
+        latitudeInput.value = lat.toFixed(6);
+        longitudeInput.value = lng.toFixed(6);
+        attachMarker([lat, lng]);
+        updateCoordsLabel(lat, lng);
+        if (status) {
+          status.classList.remove('error');
+          status.textContent = 'Project pin selected. Drag it or click the map to adjust the saved location.';
+        }
+        if (recenter) map.panTo([lat, lng]);
+      };
+      if (hasPin) {
+        attachMarker(center);
+        updateCoordsLabel(latitude, longitude);
+      }
+      else if (coordsLabel) coordsLabel.textContent = 'Pin not selected';
+      map.on('click', (event) => setPin(event.latlng));
+      const syncPinFromInputs = () => {
+        const lat = parse(latitudeInput.value, -90, 90);
+        const lng = parse(longitudeInput.value, -180, 180);
+        if (lat !== null && lng !== null) setPin({ lat, lng }, true);
+        else if (String(latitudeInput.value).trim() === '' && String(longitudeInput.value).trim() === '') {
+          if (coordsLabel) coordsLabel.textContent = 'Pin not selected';
+          if (status) status.textContent = 'Click the map to pin the project location, or drag the marker.';
+        }
+      };
+      latitudeInput.addEventListener('change', syncPinFromInputs);
+      longitudeInput.addEventListener('change', syncPinFromInputs);
+      wrap.querySelectorAll('[data-project-map-mode]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const layer = button.dataset.projectMapMode === 'satellite' ? satelliteLayer : streetLayer;
+          if (layer !== activeLayer) {
+            map.removeLayer(activeLayer);
+            activeLayer = layer;
+            activeLayer.addTo(map);
+          }
+          wrap.querySelectorAll('[data-project-map-mode]').forEach((mode) => {
+            mode.setAttribute('aria-pressed', String(mode === button));
+          });
+          requestAnimationFrame(() => map.invalidateSize());
+        });
+      });
+      if (status && hasPin) status.textContent = 'Saved pin loaded. Drag it or click the map to adjust the project location.';
+      requestAnimationFrame(() => map.invalidateSize());
+    }).catch(() => {
+      if (!container.isConnected || !status) return;
+      status.classList.add('error');
+      status.textContent = 'Map could not load. You can still enter latitude and longitude manually.';
     });
   }
 

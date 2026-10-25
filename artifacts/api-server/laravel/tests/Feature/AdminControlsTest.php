@@ -130,9 +130,13 @@ class AdminControlsTest extends TestCase
                 'title' => 'Okara Heights',
                 'city' => 'Okara',
                 'status' => 'Draft',
+                'latitude' => 30.8094,
+                'longitude' => 73.4537,
             ])
             ->assertCreated()
             ->assertJsonPath('title', 'Okara Heights')
+            ->assertJsonPath('latitude', 30.8094)
+            ->assertJsonPath('longitude', 73.4537)
             ->json();
         $this->withToken($ownerToken)
             ->putJson('/api/admin/developer-projects/' . $project['id'], ['status' => 'Live'])

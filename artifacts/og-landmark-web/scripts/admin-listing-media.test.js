@@ -214,6 +214,12 @@ test('Admin project management supports app-shaped create/edit and safe archive 
   assert.match(mobileManagementSource, /data-project-upload-preview/);
   assert.match(mobileManagementSource, /data-banner-upload-preview/);
   assert.match(mobileManagementSource, /Approve “\$\{title\}” and make it publicly visible/);
+  assert.match(mobileManagementSource, /\['projectMap', 'Choose location on map', 'map'\]/);
+  assert.match(mobileManagementSource, /data-project-map-mode="satellite"/);
+  assert.match(mobileManagementSource, /tileLayer\('https:\/\/server\.arcgisonline\.com\/ArcGIS\/rest\/services\/World_Imagery/);
+  assert.match(mobileManagementSource, /map\.on\('click', \(event\) => setPin\(event\.latlng\)\)/);
+  assert.match(mobileManagementSource, /marker\.on\('dragend', \(\) => setPin\(marker\.getLatLng\(\)\)\)/);
+  assert.match(mobileManagementSource, /Pin the project location on the map or satellite view before creating the project/);
 });
 
 test('Agriculture Land has a separate Admin option with its own summary and category scope', () => {

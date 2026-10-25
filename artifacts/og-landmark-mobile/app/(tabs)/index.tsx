@@ -1639,7 +1639,10 @@ export default function HomeScreen() {
             console.error('[Home] Live property request failed', { apiBase: API_BASE, error });
             loggedPropertyRequestError = true;
           }
-          setPropertyError('Live properties are temporarily unavailable. Demo listings are disabled.');
+          const message = error instanceof Error ? error.message : String(error);
+          setPropertyError(__DEV__
+            ? `Live properties are temporarily unavailable. Demo listings are disabled. (${message.slice(0, 120)})`
+            : 'Live properties are temporarily unavailable. Demo listings are disabled.');
         }
       } finally {
         if (active && firstLoad) setApiLoading(false);

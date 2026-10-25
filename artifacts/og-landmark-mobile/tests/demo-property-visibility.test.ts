@@ -50,16 +50,15 @@ test('mobile refreshes Admin-managed demo visibility while open and after app re
   assert.match(provider, /AppState\.addEventListener\('change'/);
 });
 
-test('hidden demos stay out of demo-backed views when the property API is empty or unavailable', () => {
+test('Home and Explore do not expose demo properties when no approved live property is available', () => {
   const hiddenIds = [101];
-  const expected = [102, 103];
 
-  // Home chooses the bundled catalog for either an empty response or a failed request.
+  // Home never uses the bundled catalogue as a public-property fallback.
   for (const apiProperties of [[], undefined]) {
-    const homeSource = selectHomePropertySource(apiProperties ?? [], demos);
+    const homeSource = selectHomePropertySource(apiProperties ?? []);
     assert.deepEqual(
       filterVisibleDemoProperties(homeSource, hiddenIds).map(({ id }) => id),
-      expected,
+      [],
     );
   }
 
@@ -88,9 +87,8 @@ test('a successful empty public feed clears cached and bundled properties', () =
   );
 });
 
-test('Home uses bundled properties while loading or offline, but not after a successful empty response', () => {
-  assert.deepEqual(selectHomePropertySource([], demos, true), demos);
-  assert.deepEqual(selectHomePropertySource([], demos, false), []);
+test('Home does not show bundled examples while loading, offline, or after an empty API response', () => {
+  assert.deepEqual(selectHomePropertySource([]), []);
 });
 
 test('successful public feeds show live listings only, without adding bundled demos', () => {
@@ -99,7 +97,7 @@ test('successful public feeds show live listings only, without adding bundled de
     { id: 1, isDemo: true, title: 'Demo one' },
     { id: 2, isDemo: true, title: 'Demo two' },
   ];
-  const merged = selectHomePropertySource(live, catalog);
+  const merged = selectHomePropertySource(live);
 
   assert.deepEqual(merged.map(({ id }) => id), [1]);
   assert.deepEqual(
@@ -116,18 +114,18 @@ test('successful public feeds show live listings only, without adding bundled de
   );
 });
 
-test('restoring a demo makes it visible again in list views and property detail', () => {
+test('restoring a demo does not make it public again', () => {
   const restoredHiddenIds: number[] = [];
-
   assert.deepEqual(
     filterVisibleDemoProperties(demos, restoredHiddenIds).map(({ id }) => id),
-    [101, 102, 103],
+    [103],
   );
   assert.equal(isDemoPropertyHidden(demos[0]!, restoredHiddenIds), false);
 });
 
-test('only the hidden demo is blocked from a direct property-detail route', () => {
+test('all demo listings are blocked from public detail routes', () => {
   assert.equal(isDemoPropertyHidden(demos[0]!, [101]), true);
+  assert.equal(filterVisibleDemoProperties(demos, []).some((property) => property.isDemo), false);
   assert.equal(isDemoPropertyHidden(demos[2]!, [103]), false);
 });
 
@@ -170,11 +168,10 @@ test('Home retains fallback only while loading/offline and Explore preserves cac
   const explore = readScreen('app', '(tabs)', 'explore.tsx');
   const detail = readScreen('app', 'property', '[id].tsx');
 
-  assert.match(home, /selectHomePropertySource\(\s*apiProps,\s*properties,\s*apiLoading \|\| Boolean\(propertyError\)/);
-  assert.match(home, /const allowCuratedFallback = apiProps\.length === 0 && \(apiLoading \|\| Boolean\(propertyError\)\)/);
-  assert.match(home, /selectLatestProperties\(allProps,\s*allowCuratedFallback\)/);
-  assert.match(home, /selectRecommendedProperties\(allProps,\s*transaction,\s*allowCuratedFallback\)/);
-  assert.match(explore, /useState\(\(\) => uniqueProperties\(properties\)\)/);
+  assert.match(home, /selectHomePropertySource\(apiProps\)/);
+  assert.match(home, /selectLatestProperties\(allProps\)/);
+  assert.match(home, /selectRecommendedProperties\(allProps,\s*transaction\)/);
+  assert.match(explore, /useState<Property\[\]>\(\[\]\)/);
   assert.match(explore, /replacePropertiesFromSuccessfulPublicFeed\(/);
   assert.equal(
     (explore.match(/keepCachedPropertiesWhenRemoteIsEmpty\(/g) ?? []).length,

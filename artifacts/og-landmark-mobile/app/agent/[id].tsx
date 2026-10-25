@@ -18,7 +18,7 @@ import { addInquiry } from '@/lib/inquiriesStore';
 import { getMyListings, UserListing } from '@/lib/listingsStore';
 import { PropertyCard } from '@/components/PropertyCard';
 import { properties } from '@/lib/properties';
-import { filterVisibleDemoProperties } from '@/lib/demoPropertyVisibility';
+import { filterVisibleDemoProperties, isAdminApprovedProperty } from '@/lib/demoPropertyVisibility';
 import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import VisitSchedulerModal from '@/components/VisitSchedulerModal';
 import { PUBLIC_CONTACT_PHONE_E164, publicWhatsAppUrl } from '@/lib/publicContact';
@@ -253,7 +253,7 @@ export default function AgentProfileScreen() {
       if (!agent) return;
       // Load listings posted by this agent (matched by name or userId)
       const all = await getMyListings(user?.id ?? id ?? '');
-      setAgentListings(all.filter((l) => l.listingStatus === 'Active'));
+      setAgentListings(all.filter(isAdminApprovedProperty));
     })();
   }, [id]);
 

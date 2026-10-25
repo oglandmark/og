@@ -1595,7 +1595,7 @@ export default function HomeScreen() {
         }
       } catch {
         if (active) {
-          setPropertyError('Live properties are temporarily unavailable. Showing curated examples instead.');
+          setPropertyError('Live properties are temporarily unavailable. Demo listings are disabled.');
         }
       } finally {
         if (active && firstLoad) setApiLoading(false);
@@ -1627,20 +1627,15 @@ export default function HomeScreen() {
   const handleDrawerInfo = (_info: DrawerInfo) => { setDrawerOpen(true); };
 
   // Use API properties when available, fall back to local mock
-  const propertySource = selectHomePropertySource(
-    apiProps,
-    properties,
-    apiLoading || Boolean(propertyError),
-  );
+  const propertySource = selectHomePropertySource(apiProps);
   const allProps = filterVisibleDemoProperties(propertySource, hiddenDemoPropertyIds);
 
   // Data slices — all driven from live API data (or local fallback)
   const featuredProps    = allProps.filter((p) => p.featured);
   const agriProps        = allProps.filter((p) => p.type === 'Agriculture Land').slice(0, 6);
   const commercialProps  = allProps.filter((p) => p.type === 'Commercial').slice(0, 6);
-  const allowCuratedFallback = apiProps.length === 0 && (apiLoading || Boolean(propertyError));
-  const latestProps = selectLatestProperties(allProps, allowCuratedFallback);
-  const recommendedProps = selectRecommendedProperties(allProps, transaction, allowCuratedFallback);
+  const latestProps = selectLatestProperties(allProps);
+  const recommendedProps = selectRecommendedProperties(allProps, transaction);
   const visibleAgents = managedAgents;
 
   const ctaContent = role === 'agent'
@@ -1791,7 +1786,7 @@ export default function HomeScreen() {
             title={propertyError ? 'Unable to load live properties' : 'No featured properties yet'}
             message={propertyError || 'Newly approved properties will appear here.'}
             actionLabel={propertyError ? 'Try again' : undefined}
-            onAction={propertyError ? () => { setApiLoading(true); getProperties({ limit: 60, sort: 'latest' }).then((ps) => setApiProps(ps.map(apiPropertyToProperty))).catch(() => setPropertyError('Please check your connection and try again.')).finally(() => setApiLoading(false)); } : undefined}
+            onAction={propertyError ? () => { setApiLoading(true); getProperties({ limit: 60, sort: 'latest' }).then((ps) => { setApiProps(ps.map(apiPropertyToProperty)); setPropertyError(''); }).catch(() => setPropertyError('Please check your connection and try again.')).finally(() => setApiLoading(false)); } : undefined}
             tone={propertyError ? 'error' : 'neutral'}
           />
         )}

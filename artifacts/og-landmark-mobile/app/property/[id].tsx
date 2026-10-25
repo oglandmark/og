@@ -646,7 +646,7 @@ function PropertyDetailScreen() {
   const galleryScrollRef = useRef<ScrollView>(null);
   const images = propertyImages(property);
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
-  const demoWasRemoved = isDemoPropertyHidden(property, hiddenDemoPropertyIds);
+  const demoWasRemoved = property.isDemo === true || isDemoPropertyHidden(property, hiddenDemoPropertyIds);
 
   // Fetch live property from API + increment view count
   useEffect(() => {
@@ -705,7 +705,7 @@ function PropertyDetailScreen() {
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <Feather name="trash-2" size={32} color={colors.mutedForeground} />
         <Text style={{ color: colors.foreground, fontFamily: 'Inter_700Bold', fontSize: 18, marginTop: 14, textAlign: 'center' }}>
-          This demo listing has been removed
+          Demo listings are not part of the approved live property catalogue.
         </Text>
         <Pressable
           accessibilityRole="button"

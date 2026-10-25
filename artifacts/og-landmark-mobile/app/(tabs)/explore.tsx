@@ -21,6 +21,7 @@ import { properties, apiPropertyToProperty } from '@/lib/properties';
 import {
   filterDeletedDemoProjects,
   filterVisibleDemoProperties,
+  isAdminApprovedProperty,
   keepCachedPropertiesWhenRemoteIsEmpty,
   replacePropertiesFromSuccessfulPublicFeed,
 } from '@/lib/demoPropertyVisibility';
@@ -499,7 +500,7 @@ export default function ExploreScreen() {
     params.category === 'Projects' || params.propertyType === 'Project',
   );
   const { hiddenDemoPropertyIds, deletedDemoProjectIds } = useDemoPropertyVisibility();
-  const [allProperties, setAllProperties]     = useState(() => uniqueProperties(properties));
+  const [allProperties, setAllProperties]     = useState<Property[]>([]);
   const demoVisibleProperties = useMemo(
     () => filterVisibleDemoProperties(allProperties, hiddenDemoPropertyIds),
     [allProperties, hiddenDemoPropertyIds],
@@ -641,7 +642,9 @@ export default function ExploreScreen() {
       try {
         const page = await fetchPage();
         if (!cancelled) {
-          const remote = uniqueProperties(page.items.map(apiPropertyToProperty));
+        const remote = uniqueProperties(page.items
+          .filter(isAdminApprovedProperty)
+          .map(apiPropertyToProperty));
           setAllProperties((current) => isFilteredSearch
             ? keepCachedPropertiesWhenRemoteIsEmpty(current, remote)
             : replacePropertiesFromSuccessfulPublicFeed(current, remote));

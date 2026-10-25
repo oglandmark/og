@@ -1497,26 +1497,65 @@ export default function HomeScreen() {
   );
   const [propertyError, setPropertyError] = useState('');
   useFocusEffect(useCallback(() => {
-    getMobileSettings()
-      .then((settings) => setMobileContent(settings.content))
-      .catch(() => undefined);
+    let active = true;
+    let loading = false;
+    const refreshSettings = async () => {
+      if (!active || loading) return;
+      loading = true;
+      try {
+        const settings = await getMobileSettings();
+        if (active) setMobileContent(settings.content);
+      } catch {
+        // Keep the last good Admin-managed content while the API is unavailable.
+      } finally {
+        loading = false;
+      }
+    };
+    void refreshSettings();
+    const interval = setInterval(() => {
+      if (AppState.currentState === 'active') void refreshSettings();
+    }, 15_000);
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') void refreshSettings();
+    });
+    return () => {
+      active = false;
+      clearInterval(interval);
+      appStateSubscription.remove();
+    };
   }, []));
 
   useFocusEffect(useCallback(() => {
     let active = true;
-    getBanners()
-      .then((raw) => {
+    let loading = false;
+    const refreshBanners = async () => {
+      if (!active || loading) return;
+      loading = true;
+      try {
+        const raw = await getBanners();
         if (!active) return;
         const mapped = raw.map(mapApiBanner).filter(
           (slide): slide is HomeCategoryBannerSlide => slide !== null,
         );
         setHomeBannerSlides(mapped.length > 0 ? mapped : LOCAL_HOME_BANNER_SLIDES);
-      })
-      .catch(() => {
-        if (active) setHomeBannerSlides(LOCAL_HOME_BANNER_SLIDES);
-      });
+      } catch {
+        // Preserve the last valid Admin banner response; local slides are the
+        // initial/offline fallback only.
+      } finally {
+        loading = false;
+      }
+    };
+    void refreshBanners();
+    const interval = setInterval(() => {
+      if (AppState.currentState === 'active') void refreshBanners();
+    }, 15_000);
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') void refreshBanners();
+    });
     return () => {
       active = false;
+      clearInterval(interval);
+      appStateSubscription.remove();
     };
   }, []));
 

@@ -48,3 +48,9 @@ The property-list filter bar should keep Status and City controls, but not the C
 **Why:** The user asked to remove the extra filter-chip groups from the property list after adding dedicated navigation pages.
 
 **How to apply:** Keep route-based filters for the dedicated Featured, Recommended, Projects, and Agriculture Land pages, while omitting those groups from the visible filter bar.
+
+Public-facing Admin changes must be reflected consistently on both the Website and Mobile app, including property edits/status/promotions, agent and project directory changes, banners, and app content settings.
+
+**Why:** The user explicitly asked for complete end-to-end synchronization from Admin to Website and Mobile.
+
+**How to apply:** Keep these surfaces on the canonical Laravel-backed data source; make website responses fresh on navigation/reload and give open mobile screens a bounded refresh and app-resume path. Keep private account and moderation data scoped to authorized users.

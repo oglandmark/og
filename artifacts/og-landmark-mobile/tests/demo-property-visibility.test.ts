@@ -50,6 +50,25 @@ test('mobile refreshes Admin-managed demo visibility while open and after app re
   assert.match(provider, /AppState\.addEventListener\('change'/);
 });
 
+test('Home refreshes Admin-managed settings and banners while visible and after app resume', () => {
+  const home = readScreen('app', '(tabs)', 'index.tsx');
+  for (const endpoint of ['getMobileSettings()', 'getBanners()']) {
+    const start = home.indexOf(endpoint);
+    assert.notEqual(start, -1, `Home should load ${endpoint}`);
+    const refreshBlock = home.slice(start, start + 1800);
+    assert.match(refreshBlock, /setInterval\(/, `${endpoint} should refresh while Home is visible`);
+    assert.match(refreshBlock, /AppState\.addEventListener\('change'/, `${endpoint} should refresh after app resume`);
+  }
+});
+
+test('open property details refresh Admin-edited data without recounting each poll', () => {
+  const detail = readScreen('app', 'property', '[id].tsx');
+  assert.match(detail, /const refreshProperty = async \(\) =>/);
+  assert.match(detail, /setInterval\(\(\) => \{\s*if \(AppState\.currentState === 'active'\) void refreshProperty\(\);/);
+  assert.match(detail, /AppState\.addEventListener\('change'/);
+  assert.equal((detail.match(/incrementView\(numId\)/g) || []).length, 1);
+});
+
 test('Home and Explore do not expose demo properties when no approved live property is available', () => {
   const hiddenIds = [101];
 

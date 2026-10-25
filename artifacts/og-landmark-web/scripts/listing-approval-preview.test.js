@@ -153,7 +153,7 @@ function browserExecutable() {
   ].filter(Boolean).find(candidate => fs.existsSync(candidate));
 }
 
-test('Admin approves an isolated listing and it appears on Expo Home, Explore, and detail', async () => {
+test('Admin approval syncs a listing to Website pages and Expo Home, Explore, and detail', async () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'og-landmark-approval-preview-'));
   const databasePath = path.join(tempDir, 'laravel.sqlite');
   const fixturePath = path.join(tempDir, 'fixture.json');
@@ -386,6 +386,17 @@ file_put_contents($argv[2], json_encode([
     assert.equal(published.response.status, 200);
     assert.equal(published.payload?.approvalStatus, 'Active');
     assert.equal(published.payload?.listingStatus, 'Active');
+
+    const websiteListResponse = await fetch(`${apiBase}/properties`);
+    assert.equal(websiteListResponse.status, 200, 'the Website property feed should render after Admin approval');
+    const websiteListHtml = await websiteListResponse.text();
+    assert.ok(websiteListHtml.includes(listingTitle), 'the approved listing should appear on the Website properties page');
+
+    const websiteDetailResponse = await fetch(`${apiBase}/properties/${listingId}`);
+    assert.equal(websiteDetailResponse.status, 200, 'the approved listing should have a public Website detail page');
+    const websiteDetailHtml = await websiteDetailResponse.text();
+    assert.ok(websiteDetailHtml.includes(listingTitle), 'the Website detail page should show the approved title');
+    assert.ok(websiteDetailHtml.includes('Temporary listing for the isolated Admin-to-mobile browser flow.'), 'the Website detail page should show updated listing content');
 
     mobileContext = await browser.newContext({
       viewport: { width: 402, height: 874 },

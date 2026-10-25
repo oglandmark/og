@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Alert, Dimensions, Image, Linking, Modal, Platform, Pressable,
+  Alert, AppState, Dimensions, Image, Linking, Modal, Platform, Pressable,
   ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -663,21 +663,39 @@ function PropertyDetailScreen() {
       return;
     }
     let cancelled = false;
+    let loading = false;
+    let firstLoad = true;
     setPropertyLoadState('loading');
-    getProperty(numId)
-      .then((ap: ApiProperty) => {
+    const refreshProperty = async () => {
+      if (cancelled || loading) return;
+      loading = true;
+      try {
+        const ap: ApiProperty = await getProperty(numId);
         if (cancelled) return;
         setProperty(apiPropertyToProperty(ap));
         setSellerId(ap.sellerId);
         setAgentId(ap.agentId);
         setPropertyLoadState('ready');
-      })
-      .catch(() => {
-        if (!cancelled) setPropertyLoadState('error');
-      });
+      } catch {
+        // Keep the last successful detail on transient refresh failures.
+        if (!cancelled && firstLoad) setPropertyLoadState('error');
+      } finally {
+        firstLoad = false;
+        loading = false;
+      }
+    };
+    void refreshProperty();
     incrementView(numId).catch(() => undefined);
+    const interval = setInterval(() => {
+      if (AppState.currentState === 'active') void refreshProperty();
+    }, 15_000);
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') void refreshProperty();
+    });
     return () => {
       cancelled = true;
+      clearInterval(interval);
+      appStateSubscription.remove();
     };
   }, [numId]);
 

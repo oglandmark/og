@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {
-  ActivityIndicator, Alert, Image, Platform,
+  ActivityIndicator, Alert, Image, Linking, Platform,
   Pressable, ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,6 +23,7 @@ import {
   type UserListing,
 } from '@/lib/listingsStore';
 import { uploadMultipleImages, uploadVideo } from '@/lib/api';
+import { getMediaPermissionRecovery } from '@/lib/mediaPermissionRecovery';
 import { LocationPicker, PinnedMapCard } from '@/components/LocationPicker';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
@@ -521,30 +522,69 @@ export default function ListingWizard() {
 
   // ── Media pickers ──────────────────────────────────────────────────────────
 
+  const showMediaPermissionRecovery = (canAskAgain: boolean) => {
+    const platform = Platform.OS === 'ios' ? 'ios' : 'android';
+    const recovery = getMediaPermissionRecovery(platform, canAskAgain);
+    Alert.alert(recovery.title, recovery.message, [
+      { text: 'Not now', style: 'cancel' },
+      {
+        text: 'Open Settings',
+        onPress: () => {
+          void Linking.openSettings().catch(() => {
+            Alert.alert(
+              'Settings unavailable',
+              'Open device Settings, enable photo access for OG Landmark, then return and try again.',
+            );
+          });
+        },
+      },
+    ]);
+  };
+
   const pickPhotos = async () => {
-    if (Platform.OS !== 'web') {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') { Alert.alert('Permission needed', 'Allow photo library access to add photos.'); return; }
+    try {
+      if (Platform.OS !== 'web') {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (permission.status !== 'granted') {
+          showMediaPermissionRecovery(permission.canAskAgain);
+          return;
+        }
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true, quality: 0.82, selectionLimit: 30,
+      });
+      if (!result.canceled) update({ photos: [...form.photos, ...result.assets.map((a) => a.uri)].slice(0, 30) });
+    } catch {
+      Alert.alert(
+        'Could not open photo library',
+        'Check photo access in Settings and try again. Your current listing photos are unchanged.',
+      );
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true, quality: 0.82, selectionLimit: 30,
-    });
-    if (!result.canceled) update({ photos: [...form.photos, ...result.assets.map((a) => a.uri)].slice(0, 30) });
   };
 
   const pickVideo = async () => {
-    if (Platform.OS !== 'web') {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') { Alert.alert('Permission needed', 'Allow photo library access to add a video.'); return; }
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-      allowsMultipleSelection: false, videoMaxDuration: 120,
-    });
-    if (!result.canceled && result.assets[0]) {
-      const a = result.assets[0];
-      update({ video: { uri: a.uri, duration: a.duration ?? undefined, filename: a.fileName ?? 'video.mp4' } });
+    try {
+      if (Platform.OS !== 'web') {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (permission.status !== 'granted') {
+          showMediaPermissionRecovery(permission.canAskAgain);
+          return;
+        }
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        allowsMultipleSelection: false, videoMaxDuration: 120,
+      });
+      if (!result.canceled && result.assets[0]) {
+        const a = result.assets[0];
+        update({ video: { uri: a.uri, duration: a.duration ?? undefined, filename: a.fileName ?? 'video.mp4' } });
+      }
+    } catch {
+      Alert.alert(
+        'Could not open media library',
+        'Check photo and video access in Settings and try again. Your current listing media is unchanged.',
+      );
     }
   };
 
@@ -576,8 +616,8 @@ export default function ListingWizard() {
           const reason = error instanceof Error ? error.message.trim() : '';
           throw new Error(
             reason
-              ? `Photos could not be uploaded. ${reason}`
-              : 'Photos could not be uploaded. Please check your connection and try again.',
+              ? `Photos could not be uploaded. ${reason} Your selected photos are still in the form; fix the issue and try submitting again.`
+              : 'Photos could not be uploaded. Check your connection and try submitting again; your selected photos are still in the form.',
           );
         }
         uploadedImages = [...form.photos];

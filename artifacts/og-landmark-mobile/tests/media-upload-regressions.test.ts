@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { getMediaPermissionRecovery } from '../lib/mediaPermissionRecovery';
 
 const api = readFileSync(new URL('../lib/api.ts', import.meta.url), 'utf8');
+const listing = readFileSync(new URL('../app/post/listing.tsx', import.meta.url), 'utf8');
 
 test('native media uploads use Expo File parts and Expo fetch', () => {
   assert.match(api, /import \{ File \} from 'expo-file-system'/);
@@ -28,4 +30,19 @@ test('generic server errors and media-storage failures are not retried through t
   assert.match(compatibilityCheck, /UPLOAD_FORMAT_NOT_SUPPORTED/);
   assert.match(compatibilityCheck, /\[400, 404, 415, 422\]/);
   assert.doesNotMatch(compatibilityCheck, /500|502|503|413/);
+});
+
+test('permanently denied gallery access gives platform-specific Settings steps', () => {
+  assert.match(getMediaPermissionRecovery('ios', false).message, /Settings > OG Landmark > Photos/);
+  assert.match(
+    getMediaPermissionRecovery('android', false).message,
+    /Settings > Apps > OG Landmark > Permissions > Photos and videos/,
+  );
+  assert.match(getMediaPermissionRecovery('ios', true).message, /when asked/);
+  assert.match(listing, /Linking\.openSettings\(\)/);
+});
+
+test('photo upload failures tell sellers that selections remain and can be retried', () => {
+  assert.match(listing, /Photos could not be uploaded[\s\S]*?selected photos are still in the form/);
+  assert.match(listing, /Could not open photo library/);
 });

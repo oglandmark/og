@@ -8,6 +8,7 @@
   let mobileDemoProperties = [];
   let mobileProjectProperties = [];
   let hiddenDemoPropertyIds = new Set();
+  let deletedDemoPropertyIds = new Set();
   const observedProperties = new Map();
   let agents = [];
   const propertyViews = new Set(['listed', 'in-progress', 'closed', 'pending', 'approved', 'rejected']);
@@ -200,7 +201,8 @@
       const catalog = await response.json();
       if (!Array.isArray(catalog)) throw new Error('Demo catalog is not a list');
       hiddenDemoPropertyIds = new Set((settings?.hiddenDemoPropertyIds || []).map(String));
-      mobileDemoProperties = catalog.map((property) => ({
+      deletedDemoPropertyIds = new Set((settings?.deletedDemoPropertyIds || []).map(String));
+      mobileDemoProperties = catalog.filter((property) => !deletedDemoPropertyIds.has(String(property.id))).map((property) => ({
         ...property,
         id: `mobile-demo:${property.id}`,
         demoId: property.id,
@@ -779,8 +781,8 @@
             action.textContent = 'Archive project';
             action.addEventListener('click', () => { void archiveMobileProject(property, action); });
           } else {
-            action.textContent = property.mobileHidden ? 'Show in app' : 'Hide from app';
-            action.addEventListener('click', () => { void toggleDemoVisibility(property, action); });
+          action.textContent = 'Delete demo';
+          action.addEventListener('click', () => { void deleteDemoProperty(property, action); });
           }
           cell.appendChild(action);
         }
@@ -1206,23 +1208,18 @@
     }
   }
 
-  async function toggleDemoVisibility(property, button) {
-    const hidden = !property.mobileHidden;
+  async function deleteDemoProperty(property, button) {
+    if (!window.confirm(`Permanently delete demo property “${property.title || 'this demo'}” from the mobile app? This cannot be undone.`)) return;
     button.disabled = true;
     try {
-      const result = await request('/admin/demo-properties', {
-        method: 'PATCH',
-        body: JSON.stringify({ ids: [Number(property.demoId)], hidden }),
-      });
-      hiddenDemoPropertyIds = new Set((result?.hiddenDemoPropertyIds || []).map(String));
-      property.mobileHidden = hiddenDemoPropertyIds.has(String(property.demoId));
-      button.textContent = property.mobileHidden ? 'Show in app' : 'Hide from app';
+      const result = await request(`/admin/demo-properties/${encodeURIComponent(property.demoId)}`, { method: 'DELETE' });
+      deletedDemoPropertyIds = new Set((result?.deletedDemoPropertyIds || []).map(String));
       const row = button.closest('[data-og-mobile-demo-row]');
-      const statusCell = row?.querySelector('[data-og-mobile-status]');
-      if (statusCell) statusCell.textContent = property.mobileHidden ? 'Hidden · Demo' : 'Active · Demo';
+      row?.remove();
+      mobileDemoProperties = mobileDemoProperties.filter((item) => String(item.demoId) !== String(property.demoId));
+      rebuildPropertyData();
     } catch (error) {
       window.alert(error.message || 'Could not update demo visibility.');
-    } finally {
       button.disabled = false;
     }
   }

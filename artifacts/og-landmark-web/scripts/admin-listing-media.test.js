@@ -87,8 +87,9 @@ test('Admin includes mobile demo and project rows in the property table', () => 
   assert.match(propertyManagementSource, /Mobile app project/);
   assert.match(propertyManagementSource, /request\('\/admin\/developer-projects'\)/);
   assert.match(propertyManagementSource, /request\('\/admin\/properties'\)/);
-  assert.match(propertyManagementSource, /Hide from app/);
-  assert.match(propertyManagementSource, /Archive project/);
+  assert.match(propertyManagementSource, /Delete demo/);
+  assert.match(propertyManagementSource, /Permanently delete demo property/);
+  assert.match(propertyManagementSource, /\/admin\/demo-properties\/\$\{encodeURIComponent\(property\.demoId\)\}/);
 });
 
 test('Admin can remove app content without permanently deleting demo catalogue entries', () => {

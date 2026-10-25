@@ -11,6 +11,7 @@ import { getMobileSettings } from '@/lib/api';
 
 type DemoPropertyVisibilityValue = {
   hiddenDemoPropertyIds: number[];
+  deletedDemoProjectIds: string[];
   refreshDemoPropertyVisibility: () => Promise<number[]>;
 };
 
@@ -18,13 +19,22 @@ const DemoPropertyVisibilityContext = createContext<DemoPropertyVisibilityValue 
 
 export function DemoPropertyVisibilityProvider({ children }: { children: ReactNode }) {
   const [hiddenDemoPropertyIds, setHiddenDemoPropertyIds] = useState<number[]>([]);
+  const [deletedDemoProjectIds, setDeletedDemoProjectIds] = useState<string[]>([]);
 
   const refreshDemoPropertyVisibility = useCallback(async () => {
     const settings = await getMobileSettings();
     const ids = Array.isArray(settings.hiddenDemoPropertyIds)
       ? [...new Set(settings.hiddenDemoPropertyIds.filter((id) => Number.isInteger(id) && id > 0))]
       : [];
-    setHiddenDemoPropertyIds(ids);
+    const deletedDemoIds = Array.isArray(settings.deletedDemoPropertyIds)
+      ? settings.deletedDemoPropertyIds.filter((id) => Number.isInteger(id) && id > 0)
+      : [];
+    setHiddenDemoPropertyIds([...new Set([...ids, ...deletedDemoIds])]);
+    setDeletedDemoProjectIds(
+      Array.isArray(settings.deletedDemoProjectIds)
+        ? [...new Set(settings.deletedDemoProjectIds.filter((id) => typeof id === 'string' && id.length > 0))]
+        : [],
+    );
     return ids;
   }, []);
 
@@ -33,8 +43,8 @@ export function DemoPropertyVisibilityProvider({ children }: { children: ReactNo
   }, [refreshDemoPropertyVisibility]);
 
   const value = useMemo(
-    () => ({ hiddenDemoPropertyIds, refreshDemoPropertyVisibility }),
-    [hiddenDemoPropertyIds, refreshDemoPropertyVisibility],
+    () => ({ hiddenDemoPropertyIds, deletedDemoProjectIds, refreshDemoPropertyVisibility }),
+    [hiddenDemoPropertyIds, deletedDemoProjectIds, refreshDemoPropertyVisibility],
   );
 
   return (

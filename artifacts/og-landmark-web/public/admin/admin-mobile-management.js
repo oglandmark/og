@@ -438,7 +438,9 @@
       title: 'Developer projects', list: '/admin/developer-projects', createPath: '/admin/developer-projects',
       addLabel: 'Add project',
       note: 'Manage the project details shown in the mobile app. Set status to Live or Approved to publish. Archive removes it from live lists while preserving linked blocks, units, and inventory.',
-      deletePath: (item) => `/admin/developer-projects/${encodeURIComponent(item.id)}`,
+      deletePath: (item) => item.isBundledDemo
+        ? `/admin/demo-projects/${encodeURIComponent(item.id)}`
+        : `/admin/developer-projects/${encodeURIComponent(item.id)}`,
       fields: [
         ['', 'Basic project details', 'section'],
         ['name', 'Project name *'], ['developerName', 'Developer / company'],
@@ -526,9 +528,22 @@
         ? `${config.list}?archived=1`
         : config.list;
       const result = await api(listPath);
-      const items = Array.isArray(result) ? result : (Array.isArray(result?.items) ? result.items : []);
+      let items = Array.isArray(result) ? result : (Array.isArray(result?.items) ? result.items : []);
       sectionData[key] = items;
       if (key === 'projects') {
+        if (!projectViewState.archived) {
+          const [catalogResponse, settings] = await Promise.all([
+            fetch('/admin/demo-projects.json'),
+            api('/mobile/settings'),
+          ]);
+          if (!catalogResponse.ok) throw new Error('Bundled mobile project list could not be loaded.');
+          const bundled = await catalogResponse.json();
+          const deleted = new Set((settings?.deletedDemoProjectIds || []).map(String));
+          items = [...items, ...(Array.isArray(bundled) ? bundled : [])
+            .filter((project) => !deleted.has(String(project.id)))
+            .map((project) => ({ ...project, isBundledDemo: true }))];
+          sectionData[key] = items;
+        }
         renderProjects(content, items);
         return;
       }
@@ -604,7 +619,9 @@
         <td>${esc(updated ? updated.slice(0, 10) : '—')}</td>
         <td><div class="og-mm-row-actions">${projectViewState.archived
           ? `<button class="og-mm-action primary" data-action="restore-project" data-id="${esc(item.id)}">Restore</button>`
-          : `<button class="og-mm-action" data-action="edit-record" data-section="projects" data-id="${esc(item.id)}">Edit</button><button class="og-mm-action danger" data-action="delete-record" data-section="projects" data-id="${esc(item.id)}">Remove from app</button>`}</div></td>
+          : item.isBundledDemo
+            ? `<button class="og-mm-action danger" data-action="delete-record" data-section="projects" data-id="${esc(item.id)}">Delete project</button>`
+            : `<button class="og-mm-action" data-action="edit-record" data-section="projects" data-id="${esc(item.id)}">Edit</button><button class="og-mm-action danger" data-action="delete-record" data-section="projects" data-id="${esc(item.id)}">Remove from app</button>`}</div></td>
       </tr>`;
     }).join('');
     const addButton = projectViewState.archived ? '' : '<button class="og-mm-action primary" data-action="add-record" data-section="projects">＋ Add project</button>';
@@ -1377,7 +1394,9 @@
         const item = (sectionData[section] || []).find((record) => String(record.id) === String(id));
         if (!item) return;
         const label = item.title || item.name || item.email || `record ${id}`;
-        const warning = section === 'projects'
+        const warning = section === 'projects' && item.isBundledDemo
+          ? `Permanently delete sample project “${label}” from the mobile app? It cannot be restored from Admin.`
+          : section === 'projects'
           ? `Archive project “${label}”? It will no longer appear in the live project list, but its project and inventory records will be preserved.`
           : section === 'banners'
           ? `Permanently delete the ${item.type === 'video' ? 'video' : 'image'} banner “${label}” from the mobile app?`
@@ -1386,7 +1405,8 @@
           : `Permanently delete ${label} from the live mobile app?`;
         if (!window.confirm(warning)) return;
         await api(config.deletePath(item), { method: 'DELETE' });
-        if (section === 'projects') projectViewState.notice = `“${label}” archived. Its linked project and inventory records are preserved.`;
+        if (section === 'projects' && item.isBundledDemo) projectViewState.notice = `“${label}” deleted from the mobile app.`;
+        else if (section === 'projects') projectViewState.notice = `“${label}” archived. Its linked project and inventory records are preserved.`;
         await renderSection(section, modal.querySelector('.og-mm-content'));
       }
       if (button.dataset.action === 'restore-project') {

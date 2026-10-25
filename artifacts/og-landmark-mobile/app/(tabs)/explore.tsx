@@ -493,7 +493,7 @@ export default function ExploreScreen() {
   const [isProjectsMode, setIsProjectsMode]   = useState(
     params.category === 'Projects' || params.propertyType === 'Project',
   );
-  const { hiddenDemoPropertyIds } = useDemoPropertyVisibility();
+  const { hiddenDemoPropertyIds, deletedDemoProjectIds } = useDemoPropertyVisibility();
   const [allProperties, setAllProperties]     = useState(() => uniqueProperties(properties));
   const demoVisibleProperties = useMemo(
     () => filterVisibleDemoProperties(allProperties, hiddenDemoPropertyIds),
@@ -1218,7 +1218,7 @@ export default function ExploreScreen() {
 
             {/* Projects mode */}
             {isProjectsMode && (
-              <ProjectsList staticProjects={staticProjects} devProjects={devProjects} router={router} colors={colors} />
+              <ProjectsList staticProjects={staticProjects.filter((project) => !deletedDemoProjectIds.includes(project.id))} devProjects={devProjects} router={router} colors={colors} />
             )}
 
             {/* Recently Viewed */}

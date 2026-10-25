@@ -937,6 +937,45 @@ class ApiController extends Controller
                 'results' => $results,
             ]);
         }
+        if ($resource === 'demo-projects' && $method === 'DELETE' && $id !== null) {
+            $projectId = trim((string) $id);
+            if ($projectId === '' || strlen($projectId) > 180) {
+                return $this->json(['error' => 'A valid bundled project ID is required.'], 422);
+            }
+            $settings = is_array($data['mobileSettings'] ?? null) ? $data['mobileSettings'] : [];
+            $deletedIds = collect($settings['deletedDemoProjectIds'] ?? [])
+                ->filter(fn ($value) => is_string($value) && $value !== '')
+                ->unique()
+                ->values()
+                ->all();
+            $deletedIds[] = $projectId;
+            $settings['deletedDemoProjectIds'] = array_values(array_unique($deletedIds));
+            $data['mobileSettings'] = $settings;
+            JsonStore::write($data);
+            return $this->json(['deletedDemoProjectIds' => $settings['deletedDemoProjectIds']]);
+        }
+        if ($resource === 'demo-properties' && $method === 'DELETE' && $id !== null) {
+            if (!ctype_digit((string) $id) || (int) $id < 1) {
+                return $this->json(['error' => 'A valid bundled demo property ID is required.'], 422);
+            }
+            $settings = is_array($data['mobileSettings'] ?? null) ? $data['mobileSettings'] : [];
+            $deletedIds = collect($settings['deletedDemoPropertyIds'] ?? [])
+                ->filter(fn ($value) => is_numeric($value) && (int) $value > 0)
+                ->map(fn ($value) => (int) $value)
+                ->unique()
+                ->values()
+                ->all();
+            $demoId = (int) $id;
+            $deletedIds[] = $demoId;
+            $settings['deletedDemoPropertyIds'] = array_values(array_unique($deletedIds));
+            $settings['hiddenDemoPropertyIds'] = array_values(array_diff(
+                collect($settings['hiddenDemoPropertyIds'] ?? [])->map(fn ($value) => (int) $value)->all(),
+                [$demoId],
+            ));
+            $data['mobileSettings'] = $settings;
+            JsonStore::write($data);
+            return $this->json(['deletedDemoPropertyIds' => $settings['deletedDemoPropertyIds']]);
+        }
         if ($resource === 'demo-properties' && $method === 'PATCH' && $id === null) {
             $validator = Validator::make($request->all(), [
                 'ids' => ['required', 'array', 'min:1', 'max:500'],
@@ -1591,6 +1630,8 @@ class ApiController extends Controller
                 'minAppVersion' => '1.0.0',
                 'content' => [],
                 'hiddenDemoPropertyIds' => [],
+                'deletedDemoPropertyIds' => [],
+                'deletedDemoProjectIds' => [],
             ];
             $settings = array_merge($defaults, is_array($data['mobileSettings'] ?? null) ? $data['mobileSettings'] : []);
             if ($method === 'GET') return $this->json($settings);
@@ -2307,6 +2348,8 @@ class ApiController extends Controller
                 'darkModeEnabled' => true, 'maintenanceMode' => false, 'maintenanceMessage' => '',
                 'appVersion' => '1.0.0', 'minAppVersion' => '1.0.0', 'content' => [],
                 'hiddenDemoPropertyIds' => [],
+                'deletedDemoPropertyIds' => [],
+                'deletedDemoProjectIds' => [],
             ];
             $settings = array_merge(
                 $defaultSettings,

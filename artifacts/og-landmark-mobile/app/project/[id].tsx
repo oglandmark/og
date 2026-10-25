@@ -13,6 +13,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
+import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import { projects as staticProjects } from '@/lib/projects';
 import {
   DeveloperProject, formatPKR,
@@ -198,10 +199,13 @@ export default function ProjectDetailScreen() {
   const insets  = useSafeAreaInsets();
   const { user } = useAuth();
   const { id }  = useLocalSearchParams<{ id: string }>();
+  const { deletedDemoProjectIds } = useDemoPropertyVisibility();
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
   // ── Data ───────────────────────────────────────────────────────────────────
-  const staticProject = staticProjects.find((p) => p.id === id) ?? null;
+  const staticProjectDeleted = deletedDemoProjectIds.includes(id || '')
+    && staticProjects.some((project) => project.id === id);
+  const staticProject = staticProjectDeleted ? null : staticProjects.find((p) => p.id === id) ?? null;
   const [devProject,   setDevProject]   = useState<DeveloperProject | null>(null);
   const [units,        setUnits]        = useState<InventoryUnit[]>([]);
   const [blocks,       setBlocks]       = useState<InventoryBlock[]>([]);
@@ -279,6 +283,13 @@ export default function ProjectDetailScreen() {
     return (
       <View style={[styles.screen, { backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }]}>
         <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>Loading project…</Text>
+      </View>
+    );
+  }
+  if (staticProjectDeleted) {
+    return (
+      <View style={[styles.screen, { backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: 24 }]}>
+        <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>This project is no longer available.</Text>
       </View>
     );
   }

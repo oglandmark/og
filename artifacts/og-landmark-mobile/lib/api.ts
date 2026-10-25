@@ -807,6 +807,8 @@ export type MobileSettings = {
   minAppVersion: string;
   content: MobileContent;
   hiddenDemoPropertyIds?: number[];
+  deletedDemoPropertyIds?: number[];
+  deletedDemoProjectIds?: string[];
 };
 
 export async function getMobileSettings(): Promise<MobileSettings> {

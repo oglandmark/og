@@ -154,7 +154,7 @@ function browserExecutable() {
   ].filter(Boolean).find(candidate => fs.existsSync(candidate));
 }
 
-test('Admin approval syncs a listing to Website pages and Expo Home, Explore, and detail', async () => {
+test('Admin-approved listings, Agents, and Projects sync across Website and Mobile', async () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'og-landmark-approval-preview-'));
   const databasePath = path.join(tempDir, 'laravel.sqlite');
   const fixturePath = path.join(tempDir, 'fixture.json');
@@ -458,6 +458,31 @@ file_put_contents($argv[2], json_encode([
     const updateAgentResponse = await updateAgentResponsePromise;
     assert.equal(updateAgentResponse.status(), 200, 'Admin should activate the Agent through its authenticated API');
 
+    mobileContext = await browser.newContext({
+      viewport: { width: 402, height: 874 },
+      isMobile: true,
+      hasTouch: true,
+    });
+    await mobileContext.addInitScript(() => {
+      localStorage.setItem('@og-landmark/onboarding-completed-v1', 'true');
+    });
+    const mobilePage = await mobileContext.newPage();
+    mobilePage.setDefaultTimeout(45_000);
+    mobilePage.setDefaultNavigationTimeout(180_000);
+    const initialProjectsResponsePromise = mobilePage.waitForResponse(response =>
+      response.request().method() === 'GET'
+      && response.url().endsWith('/api/projects'),
+    );
+    await mobilePage.goto(`${mobileBase}/explore`, { waitUntil: 'domcontentloaded' });
+    await mobilePage.getByText('Projects', { exact: true }).first().click();
+    const initialProjectsResponse = await initialProjectsResponsePromise;
+    assert.equal(initialProjectsResponse.status(), 200, 'Mobile Explore should load the public project feed before publishing');
+    const initialMobileProjects = await initialProjectsResponse.json();
+    assert.equal(initialMobileProjects.some(project => String(project.id) === projectId), false, 'Draft project must be absent from the already-open Mobile Projects view');
+    await mobilePage.getByText('Loading approved projects…', { exact: true }).waitFor({ state: 'detached', timeout: 20_000 });
+    assert.equal(await mobilePage.getByText('Preview Live Project 248', { exact: true }).count(), 0, 'the unpublished project must not be rendered in Mobile Explore');
+    const openProjectsUrl = mobilePage.url();
+
     await adminPage.goto(`${webBase}/admin/management/developer-projects`, { waitUntil: 'domcontentloaded' });
     const projectEditButton = adminPage.locator(
       `[data-action="edit-record"][data-section="projects"][data-id="${projectId}"]`,
@@ -482,17 +507,8 @@ file_put_contents($argv[2], json_encode([
     const publicProjects = await jsonRequest(webBase, '/api/projects');
     assert.ok(publicProjects.payload.some(project => String(project.id) === projectId && project.status === 'Live'), 'the active project should appear in the Website public project feed');
 
-    mobileContext = await browser.newContext({
-      viewport: { width: 402, height: 874 },
-      isMobile: true,
-      hasTouch: true,
-    });
-    await mobileContext.addInitScript(() => {
-      localStorage.setItem('@og-landmark/onboarding-completed-v1', 'true');
-    });
-    const mobilePage = await mobileContext.newPage();
-    mobilePage.setDefaultTimeout(45_000);
-    mobilePage.setDefaultNavigationTimeout(180_000);
+    await mobilePage.getByText('Preview Live Project 248', { exact: true }).waitFor({ state: 'visible', timeout: 40_000 });
+    assert.equal(mobilePage.url(), openProjectsUrl, 'the same Mobile Projects screen should update without navigation');
 
     await mobilePage.goto(mobileBase, { waitUntil: 'domcontentloaded' });
     await mobilePage.getByText(listingTitle, { exact: true }).first().waitFor({ state: 'visible' });
@@ -507,10 +523,6 @@ file_put_contents($argv[2], json_encode([
 
     await mobilePage.goto(`${mobileBase}/agent/find`, { waitUntil: 'domcontentloaded' });
     await mobilePage.getByText(agentName, { exact: true }).waitFor({ state: 'visible' });
-
-    await mobilePage.goto(`${mobileBase}/explore`, { waitUntil: 'domcontentloaded' });
-    await mobilePage.getByText('Projects', { exact: true }).first().click();
-    await mobilePage.getByText('Preview Live Project 248', { exact: true }).waitFor({ state: 'visible' });
   } catch (error) {
     originalFailure = error;
     throw error;

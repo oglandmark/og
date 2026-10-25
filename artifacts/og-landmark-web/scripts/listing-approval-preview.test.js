@@ -19,6 +19,8 @@ const listingTitle = 'Browser Preview Flow House';
 const bannerId = 984242;
 const bannerTitle = 'Browser Preview Home Banner';
 const projectId = 'preview-project-248';
+const updatedProjectName = 'Preview Live Project 253';
+const updatedProjectDescription = 'Admin-updated public project description shown on Mobile detail 253.';
 const updatedHomeTitle = 'Browser Preview Updated Home Content';
 const adminEmail = 'browser-preview-admin@example.test';
 const adminPassword = 'BrowserPreviewOnly123!';
@@ -244,6 +246,7 @@ test('Admin listing, directory, project, banner, and Home edits sync across Webs
         city: 'Okara',
         status: 'Draft',
         shortDescription: 'Isolated project used by the Admin-to-public integration test.',
+        fullDescription: 'Original private project description before Admin review.',
         createdAt: new Date().toISOString(),
       }],
       notifications: [],
@@ -599,7 +602,8 @@ file_put_contents($argv[2], json_encode([
     await projectEditButton.waitFor({ state: 'visible' });
     await projectEditButton.click();
     const projectForm = adminPage.locator('#og-mm-record-form-inner');
-    await projectForm.locator('input[name="name"]').fill('Preview Live Project 248');
+    await projectForm.locator('input[name="name"]').fill(updatedProjectName);
+    await projectForm.locator('textarea[name="fullDescription"]').fill(updatedProjectDescription);
     await projectForm.locator('select[name="status"]').selectOption('Live');
     const updateProjectResponsePromise = adminPage.waitForResponse(response =>
       response.request().method() === 'PUT'
@@ -608,11 +612,32 @@ file_put_contents($argv[2], json_encode([
     await projectForm.getByRole('button', { name: 'Save project' }).click();
     const updateProjectResponse = await updateProjectResponsePromise;
     assert.equal(updateProjectResponse.status(), 200, 'Admin should activate the project through its authenticated API');
+    const updatedProject = await updateProjectResponse.json();
+    assert.equal(updatedProject.name, updatedProjectName, 'the authenticated Admin editor should persist the public project name');
+    assert.equal(updatedProject.fullDescription, updatedProjectDescription, 'the authenticated Admin editor should persist the public project description');
 
     const publicProjects = await jsonRequest(webBase, '/api/projects');
     assert.ok(publicProjects.payload.some(project => String(project.id) === projectId && project.status === 'Live'), 'the active project should appear in the Website public project feed');
-    await mobilePage.getByText('Preview Live Project 248', { exact: true }).waitFor({ state: 'visible', timeout: 40_000 });
+    await mobilePage.getByText(updatedProjectName, { exact: true }).waitFor({ state: 'visible', timeout: 40_000 });
     assert.equal(mobilePage.url(), openProjectsUrl, 'the same Mobile Projects screen should update without navigation');
+
+    const mobileProjectResponsePromise = mobilePage.waitForResponse(response =>
+      response.request().method() === 'GET'
+      && response.url().endsWith(`/api/projects/${projectId}`),
+    );
+    await mobilePage.goto(`${mobileBase}/project/${encodeURIComponent(projectId)}`, { waitUntil: 'domcontentloaded' });
+    const mobileProjectResponse = await mobileProjectResponsePromise;
+    assert.equal(mobileProjectResponse.status(), 200, 'the Mobile project detail route should fetch the public live project');
+    const mobileProject = await mobileProjectResponse.json();
+    assert.equal(mobileProject.name, updatedProjectName, 'the Mobile detail data should contain the current Admin-edited project name');
+    assert.equal(mobileProject.fullDescription, updatedProjectDescription, 'the Mobile detail data should contain the current Admin-edited description');
+    await mobilePage.getByText(updatedProjectName, { exact: true }).first().waitFor({ state: 'visible' });
+    await mobilePage.getByText(updatedProjectDescription, { exact: true }).waitFor({ state: 'visible' });
+    assert.equal(
+      await mobilePage.getByText('Original private project description before Admin review.', { exact: true }).count(),
+      0,
+      'Mobile project detail must not render the stale pre-edit description',
+    );
 
     await mobilePage.goto(`${mobileBase}/property/${listingId}`, { waitUntil: 'domcontentloaded' });
     await mobilePage.getByText(listingTitle, { exact: true }).first().waitFor({ state: 'visible' });

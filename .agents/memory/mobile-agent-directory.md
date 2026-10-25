@@ -21,6 +21,12 @@ Admin-created developer projects intended for the public mobile app should defau
 
 **How to apply:** Keep the public project API restricted to `Live` or `Approved` records, default new Admin entries to `Live`, and require existing Draft/Pending entries to be explicitly published before they appear.
 
+Public project detail screens must render the core project response without waiting for developer-only inventory or payment-plan requests. Treat those supplementary requests as optional for buyer access.
+
+**Why:** The public project endpoint allows buyers, while inventory and payment-plan endpoints require a developer account; coupling them to the main loading state can leave public details stuck loading.
+
+**How to apply:** Load the public project first and render it independently. Keep authenticated-only supplementary calls non-blocking and handle their failures without hiding the project name or description.
+
 Admin deletions of bundled demo properties/projects update shared mobile settings; the packaged copies are not removed from the app bundle. Refresh those settings when the app resumes and periodically while it remains open so the local copies stop appearing.
 
 **Why:** Deleting the backend row or adding a hidden ID does not mutate assets bundled in the mobile app, and one-time settings hydration leaves deleted demos visible in an already-open app.

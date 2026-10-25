@@ -221,23 +221,44 @@ export default function ProjectDetailScreen() {
   const [unitFilter,    setUnitFilter]    = useState<string>('All');
 
   useEffect(() => {
-    if (staticProject) return; // static project — no async load needed
-    (async () => {
-      const dp = await getDevProjectById(id ?? '');
-      if (dp) {
-        setDevProject(dp);
-        const [b, u, allPlans] = await Promise.all([
-          getBlocks(dp.id),
-          getUnits(dp.id),
-          getPaymentPlans(dp.developerId),
-        ]);
-        setBlocks(b);
-        setUnits(u);
-        const projectPlans = allPlans.filter((pl) => pl.projectId === dp.id);
-        setPayPlan(projectPlans[0] ?? null);
-      }
+    let active = true;
+    if (staticProject) {
+      setDevProject(null);
       setLoading(false);
+      return () => { active = false; };
+    }
+
+    setLoading(true);
+    (async () => {
+      try {
+        const dp = await getDevProjectById(id ?? '');
+        if (!active) return;
+        setDevProject(dp);
+        setLoading(false);
+        if (!dp) return;
+
+        // Public project details must not wait on developer-only inventory endpoints.
+        try {
+          const [b, u, allPlans] = await Promise.all([
+            getBlocks(dp.id),
+            getUnits(dp.id),
+            getPaymentPlans(dp.developerId),
+          ]);
+          if (!active) return;
+          setBlocks(b);
+          setUnits(u);
+          const projectPlans = allPlans.filter((pl) => pl.projectId === dp.id);
+          setPayPlan(projectPlans[0] ?? null);
+        } catch (error) {
+          console.warn('Optional project inventory details could not be loaded.', error);
+        }
+      } catch (error) {
+        if (!active) return;
+        console.error('Project details could not be loaded.', error);
+        setLoading(false);
+      }
     })();
+    return () => { active = false; };
   }, [id]);
 
   // ── Derived values ─────────────────────────────────────────────────────────

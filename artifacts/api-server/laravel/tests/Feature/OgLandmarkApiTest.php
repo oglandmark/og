@@ -30,6 +30,15 @@ final class OgLandmarkApiTest extends TestCase
                     'status' => 'Active',
                     'permissions' => [],
                     'password' => 'pbkdf2:test-salt:'.hash_pbkdf2('sha512', self::PASSWORD, 'test-salt', 100000, 128),
+                ], [
+                    'id' => 7,
+                    'name' => 'Admin User',
+                    'email' => 'admin@example.test',
+                    'username' => 'testadmin',
+                    'role' => 'User',
+                    'status' => 'Active',
+                    'permissions' => ['admin'],
+                    'password' => 'pbkdf2:admin-salt:'.hash_pbkdf2('sha512', self::PASSWORD, 'admin-salt', 100000, 128),
                 ]],
                 'properties' => [[
                     'id' => 101,
@@ -112,5 +121,35 @@ final class OgLandmarkApiTest extends TestCase
         $this->getJson('/api/properties?search=approved')
             ->assertOk()->assertJsonCount(1)->assertJsonPath('0.id', 101);
         $this->getJson('/api/properties/102')->assertNotFound();
+    }
+
+    public function test_admin_permission_can_review_properties_and_update_agent_visibility(): void
+    {
+        DB::table('app_data')->update(['data' => json_encode(array_replace_recursive(
+            json_decode(DB::table('app_data')->where('id', 1)->value('data'), true),
+            ['mobileAgents' => [['id' => 9, 'name' => 'Managed Agent', 'status' => 'Pending', 'approvalStatus' => 'Pending', 'visible' => false]]],
+        ), JSON_THROW_ON_ERROR)]);
+        $token = $this->postJson('/api/auth/login', [
+            'identifier' => 'testadmin',
+            'password' => self::PASSWORD,
+        ])->assertOk()->json('token');
+
+        $this->withToken($token)->getJson('/api/admin/properties')->assertOk()->assertJsonCount(2);
+        $this->withToken($token)->patchJson('/api/properties/102/approve')
+            ->assertOk()->assertJsonPath('property.approvalStatus', 'Active');
+        $this->withToken($token)->patchJson('/api/admin/mobile-agents/9', [
+            'approvalStatus' => 'Approved', 'status' => 'Active', 'visible' => true,
+        ])->assertOk()->assertJsonPath('agent.visible', true);
+
+        $this->withToken($token)->getJson('/api/mobile-agents')->assertJsonCount(1);
+    }
+
+    public function test_regular_users_cannot_open_admin_moderation_routes(): void
+    {
+        $token = $this->postJson('/api/auth/login', [
+            'identifier' => 'testuser',
+            'password' => self::PASSWORD,
+        ])->assertOk()->json('token');
+        $this->withToken($token)->getJson('/api/admin/properties')->assertForbidden();
     }
 }

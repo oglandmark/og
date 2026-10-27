@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\MobileAgentController;
 use App\Http\Controllers\Api\PropertyController;
 use App\Http\Middleware\LegacyBearerAuth;
+use App\Http\Middleware\LegacyAdminAuth;
 use Illuminate\Support\Facades\Route;
 
 $registerRoutes = static function (): void {
@@ -25,6 +27,13 @@ $registerRoutes = static function (): void {
         Route::delete('/properties/{id}', [PropertyController::class, 'destroy'])->whereNumber('id');
         Route::patch('/properties/{id}/listing-status', [PropertyController::class, 'setListingStatus'])->whereNumber('id');
         Route::patch('/properties/{id}/resubmit', [PropertyController::class, 'resubmit'])->whereNumber('id');
+        Route::middleware(LegacyAdminAuth::class)->group(function (): void {
+            Route::get('/admin/properties', [AdminController::class, 'properties']);
+            Route::patch('/properties/{id}/{action}', [AdminController::class, 'moderateProperty'])
+                ->whereNumber('id')->whereIn('action', ['approve', 'reject', 'request-changes']);
+            Route::get('/admin/mobile-agents', [AdminController::class, 'mobileAgents']);
+            Route::patch('/admin/mobile-agents/{id}', [AdminController::class, 'updateMobileAgent']);
+        });
     });
 };
 

@@ -217,6 +217,106 @@ final class OgLandmarkApiTest extends TestCase
         Storage::disk('public')->assertMissing('listing-media/old-photo.jpg');
     }
 
+    public function test_admin_listing_edits_update_the_public_property_record_without_changing_moderation(): void
+    {
+        $token = $this->adminToken();
+        $payload = [
+            'title' => 'Updated family home',
+            'type' => 'House',
+            'purpose' => 'Sale',
+            'city' => 'Depalpur',
+            'district' => 'Okara',
+            'tehsil' => 'Depalpur',
+            'locality' => 'Main Bazar',
+            'society' => 'Garden Town',
+            'address' => 'Street 5',
+            'lat' => 30.67,
+            'lng' => 73.65,
+            'latitude' => 30.67,
+            'longitude' => 73.65,
+            'price' => 18500000,
+            'area' => '10 Marla',
+            'areaUnit' => 'Marla',
+            'bedrooms' => 4,
+            'bathrooms' => 3,
+            'yearBuilt' => 2020,
+            'furnishing' => 'Furnished',
+            'availability' => 'Ready',
+            'description' => 'Updated listing details',
+            'amenities' => ['Parking', 'Gas'],
+            'assignedAgent' => [
+                'id' => '8',
+                'userId' => '42',
+                'city' => 'Depalpur',
+                'name' => 'Assigned Agent',
+                'phone' => '03001234567',
+                'profileType' => 'mobile',
+            ],
+            // These client-supplied server-owned values must be ignored.
+            'sellerId' => 999,
+            'agentId' => 999,
+            'approvalStatus' => 'Rejected',
+            'listingStatus' => 'Paused',
+        ];
+
+        $this->withToken($token)->patchJson('/api-legacy/api/admin/properties/101', $payload)
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('property.title', 'Updated family home')
+            ->assertJsonPath('property.city', 'Depalpur')
+            ->assertJsonPath('property.assignedAgent.name', 'Assigned Agent')
+            ->assertJsonPath('property.approvalStatus', 'Active')
+            ->assertJsonPath('property.listingStatus', 'Active');
+
+        $this->getJson('/api/properties/101')
+            ->assertOk()
+            ->assertJsonPath('title', 'Updated family home')
+            ->assertJsonPath('price', 18500000)
+            ->assertJsonPath('amenities.0', 'Parking')
+            ->assertJsonPath('locality', 'Main Bazar')
+            ->assertJsonPath('assignedAgent.name', 'Assigned Agent');
+        $this->getJson('/api-legacy/api/properties/101')
+            ->assertOk()
+            ->assertJsonPath('title', 'Updated family home')
+            ->assertJsonPath('price', 18500000)
+            ->assertJsonPath('description', 'Updated listing details');
+        $this->getJson('/api/admin/properties/101/review')
+            ->assertOk()
+            ->assertJsonPath('property.approvalStatus', 'Active')
+            ->assertJsonPath('property.sellerId', 42)
+            ->assertJsonPath('property.reviewHistory.0.action', 'details_updated');
+
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $this->assertSame('details_updated', $data['auditLog'][0]['action']);
+        $this->assertSame('properties', $data['auditLog'][0]['resource']);
+    }
+
+    public function test_admin_listing_edit_requires_admin_permission_and_valid_values(): void
+    {
+        $userToken = $this->postJson('/api/auth/login', [
+            'identifier' => 'user@example.test',
+            'password' => self::PASSWORD,
+        ])->assertOk()->json('token');
+        $this->withToken($userToken)->patchJson('/api/admin/properties/101', [
+            'title' => 'Unauthorized edit',
+            'city' => 'Okara',
+            'amenities' => [],
+            'assignedAgent' => null,
+        ])->assertForbidden();
+
+        $this->withToken($this->adminToken())->patchJson('/api/admin/properties/101', [
+            'title' => 'Invalid coordinates',
+            'city' => 'Okara',
+            'lat' => 100,
+            'lng' => 73,
+            'amenities' => [],
+            'assignedAgent' => null,
+        ])->assertUnprocessable();
+        $this->getJson('/api/properties/101')
+            ->assertOk()
+            ->assertJsonPath('title', 'Approved house');
+    }
+
     public function test_admin_property_media_rejects_unsupported_uploads_without_changing_media(): void
     {
         Storage::fake('public');

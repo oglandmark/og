@@ -81,7 +81,7 @@ test('Admin listing edits keep map coordinates in the property payload', () => {
   assert.match(source, /lat, lng, latitude: lat, longitude: lng/);
 });
 
-test('Listing media is omitted from the legacy property update and sent to Laravel separately', () => {
+test('Listing details and media are saved through the local Laravel admin routes', () => {
   const saveSource = source.slice(
     source.indexOf('async function saveProperty'),
     source.indexOf('async function deleteProperty', source.indexOf('async function saveProperty')),
@@ -90,6 +90,7 @@ test('Listing media is omitted from the legacy property update and sent to Larav
   const payloadEnd = saveSource.indexOf('};', payloadStart);
   const legacyPayload = saveSource.slice(payloadStart, payloadEnd);
   assert.doesNotMatch(legacyPayload, /\b(images|videoUrl|coverImage)\b/);
+  assert.match(saveSource, /request\(`\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}`, \{ method: 'PATCH', body: JSON\.stringify\(payload\) \}\)/);
   assert.match(saveSource, /mediaForm\.append\('_method', 'PATCH'\)/);
   assert.match(saveSource, /method: 'POST',\s*body: mediaForm/);
 });
@@ -103,6 +104,9 @@ test('Laravel admin media route stores edits with moderation and the preview rew
     path.join(__dirname, '..', '..', 'api-server', 'laravel', 'app', 'Http', 'Controllers', 'Api', 'AdminController.php'),
     'utf8',
   );
+  assert.match(routes, /Route::patch\('\/admin\/properties\/\{id\}', \[AdminController::class, 'updateProperty'\]\)/);
+  assert.match(controller, /public function updateProperty\(/);
+  assert.match(controller, /'action' => 'details_updated'/);
   assert.match(routes, /Route::patch\('\/admin\/properties\/\{id\}\/media', \[AdminController::class, 'updatePropertyMedia'\]\)/);
   assert.match(controller, /A property can have at most 30 images/);
   assert.match(controller, /deleteUnreferencedPropertyMedia/);

@@ -283,6 +283,77 @@ final class AdminController extends Controller
         return response()->json(array_values($properties));
     }
 
+    public function updateProperty(string $id, Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:500'],
+            'type' => ['nullable', 'string', 'max:160'],
+            'purpose' => ['nullable', 'string', 'max:100'],
+            'city' => ['required', 'string', 'max:160'],
+            'district' => ['nullable', 'string', 'max:160'],
+            'tehsil' => ['nullable', 'string', 'max:160'],
+            'locality' => ['nullable', 'string', 'max:200'],
+            'society' => ['nullable', 'string', 'max:200'],
+            'address' => ['nullable', 'string', 'max:1000'],
+            'lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'lng' => ['nullable', 'numeric', 'between:-180,180'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'price' => ['nullable', 'numeric', 'min:0'],
+            'area' => ['nullable', 'string', 'max:100'],
+            'areaUnit' => ['nullable', 'string', 'max:40'],
+            'bedrooms' => ['nullable', 'numeric', 'min:0'],
+            'bathrooms' => ['nullable', 'numeric', 'min:0'],
+            'yearBuilt' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'furnishing' => ['nullable', 'string', 'max:100'],
+            'availability' => ['nullable', 'string', 'max:100'],
+            'description' => ['nullable', 'string', 'max:10000'],
+            'amenities' => ['present', 'array', 'max:100'],
+            'amenities.*' => ['string', 'max:200'],
+            'assignedAgent' => ['present', 'nullable', 'array'],
+            'assignedAgent.id' => ['nullable', 'string', 'max:100'],
+            'assignedAgent.userId' => ['nullable', 'string', 'max:100'],
+            'assignedAgent.city' => ['nullable', 'string', 'max:160'],
+            'assignedAgent.name' => ['nullable', 'string', 'max:200'],
+            'assignedAgent.phone' => ['nullable', 'string', 'max:80'],
+            'assignedAgent.profileType' => ['nullable', 'string', 'max:40'],
+        ]);
+
+        $admin = $request->attributes->get('legacyUser', []);
+        $property = $store->mutate(function (array &$data) use ($id, $validated, $admin): ?array {
+            foreach ($data['properties'] ?? [] as $index => $property) {
+                if ((string) ($property['id'] ?? '') !== $id) continue;
+
+                $changedFields = [];
+                foreach ($validated as $field => $value) {
+                    if (! array_key_exists($field, $property) || $property[$field] !== $value) {
+                        $changedFields[] = $field;
+                    }
+                }
+                $property = array_replace($property, $validated);
+                $property['updatedAt'] = now()->toISOString();
+                $property['reviewHistory'] = is_array($property['reviewHistory'] ?? null)
+                    ? $property['reviewHistory'] : [];
+                $property['reviewHistory'][] = [
+                    'action' => 'details_updated',
+                    'by' => $admin['id'] ?? null,
+                    'byName' => $admin['name'] ?? '',
+                    'fields' => $changedFields,
+                    'createdAt' => $property['updatedAt'],
+                ];
+                $data['properties'][$index] = $property;
+                $this->appendAdminAudit($data, $admin, 'details_updated', 'properties', $id, [
+                    'fields' => $changedFields,
+                ]);
+                return $property;
+            }
+            return null;
+        });
+
+        if (! $property) return response()->json(['error' => 'Property not found.'], 404);
+        return response()->json(['success' => true, 'property' => $property]);
+    }
+
     public function propertyReview(string $id, LegacyDataStore $store): JsonResponse
     {
         $data = $store->read();

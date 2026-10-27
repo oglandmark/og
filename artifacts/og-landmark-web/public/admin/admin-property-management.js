@@ -127,6 +127,7 @@
     return dateOrder || (Number(right.id) || 0) - (Number(left.id) || 0);
   };
   const isMobilePublicListing = (property) => ['active', 'approved'].includes(normalize(property.approvalStatus || 'active'))
+    && property.adminHidden !== true
     && ['active', 'approved'].includes(normalize(property.listingStatus || 'active'));
   const getLatestMobileProperties = () => apiProperties
     .filter((property) => !property.isDemo && !property.isProject && isMobilePublicListing(property))
@@ -364,6 +365,8 @@
       .og-pm-manage{border:1px solid #c8a45a;border-radius:7px;background:#fff;color:#0B1F3A;padding:6px 9px;font:600 12px system-ui;white-space:nowrap;cursor:pointer}
       .og-pm-delete-row,.og-pm-mobile-action{margin:2px;border:1px solid #fecaca;border-radius:7px;background:#fff;color:#b91c1c;padding:6px 9px;font:600 11px system-ui;white-space:nowrap;cursor:pointer}
       .og-pm-mobile-action{border-color:#dbe2ea;color:#334155}.og-pm-delete-row:hover{background:#fff1f2}.og-pm-mobile-action:hover{background:#f8fafc}
+      .og-pm-visibility-toggle{margin:2px;border:1px solid #dbe2ea;border-radius:7px;background:#fff;color:#334155;padding:6px 9px;font:600 11px system-ui;white-space:nowrap;cursor:pointer}
+      .og-pm-visibility-toggle:hover{background:#f8fafc}.og-pm-visibility-toggle:disabled{opacity:.55;cursor:wait}
       .og-pm-manage:hover{background:#fbf7ed}
       .og-pm-feature-toggle{min-width:112px;border:1px solid #dbe2ea;border-radius:999px;background:#fff;color:#475569;padding:7px 10px;font:700 11px/1.1 system-ui;white-space:nowrap;cursor:pointer}
       .og-pm-feature-toggle.is-featured{border-color:#c8a45a;background:#fbf7ed;color:#805b12}
@@ -1201,6 +1204,36 @@
     }
   }
 
+  async function togglePropertyVisibility(property, button) {
+    const hidden = property.adminHidden !== true;
+    const action = hidden ? 'Hide' : 'Restore';
+    const confirmation = hidden
+      ? `Hide “${property.title || 'this listing'}” from public Website and Mobile browsing? You can restore it anytime.`
+      : `Restore “${property.title || 'this listing'}” to public Website and Mobile browsing?`;
+    if (!window.confirm(confirmation)) return;
+
+    button.dataset.pending = 'true';
+    button.disabled = true;
+    try {
+      const result = await request(`/admin/properties/${encodeURIComponent(property.id)}/visibility`, {
+        method: 'PATCH',
+        body: JSON.stringify({ hidden }),
+      });
+      const updated = result?.property;
+      if (!updated) throw new Error(`Could not ${action.toLowerCase()} this listing.`);
+      const id = String(property.id);
+      apiProperties = apiProperties.map((item) => String(item.id) === id ? updated : item);
+      if (observedProperties.has(id)) observedProperties.set(id, updated);
+      button.__ogListingProperty = updated;
+      button.dataset.pending = '';
+      rebuildPropertyData();
+    } catch (error) {
+      window.alert(error.message || `Could not ${action.toLowerCase()} this listing.`);
+      button.dataset.pending = '';
+      button.disabled = false;
+    }
+  }
+
   async function deleteDemoProperty(property, button) {
     if (!window.confirm(`Permanently delete demo property “${property.title || 'this demo'}” from the mobile app? This cannot be undone.`)) return;
     button.disabled = true;
@@ -1686,6 +1719,24 @@
         cell.appendChild(deleteButton);
       }
       deleteButton.__ogListingProperty = property;
+      let visibilityButton = cell.querySelector('[data-og-property-visibility]');
+      if (!visibilityButton) {
+        visibilityButton = document.createElement('button');
+        visibilityButton.type = 'button';
+        visibilityButton.dataset.ogPropertyVisibility = 'true';
+        visibilityButton.className = 'og-pm-visibility-toggle';
+        visibilityButton.addEventListener('click', () => {
+          const current = visibilityButton.__ogListingProperty;
+          if (current) void togglePropertyVisibility(current, visibilityButton);
+        });
+        cell.appendChild(visibilityButton);
+      }
+      visibilityButton.__ogListingProperty = property;
+      const isHidden = property.adminHidden === true;
+      visibilityButton.textContent = isHidden ? 'Restore' : 'Hide';
+      visibilityButton.setAttribute('aria-label', `${isHidden ? 'Restore' : 'Hide'} ${property.title || 'listing'} ${isHidden ? 'to' : 'from'} public browsing`);
+      visibilityButton.title = isHidden ? 'Restore this listing to public browsing.' : 'Hide this listing without deleting its record or media.';
+      visibilityButton.disabled = visibilityButton.dataset.pending === 'true';
       const rowStatus = row.dataset.ogPropertyStatus;
       const searchText = normalize([property.title, property.city, property.sellerName, property.address, property.district, property.locality, row.innerText].join(' '));
       row.dataset.ogMatchesFilters = String(matchesPropertyFilters(property) && (!propertySearch || searchText.includes(propertySearch)));

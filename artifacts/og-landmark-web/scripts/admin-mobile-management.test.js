@@ -158,6 +158,15 @@ test('Admin sidebar keeps the property inbox shortcut while status filters remai
   assert.match(properties, /row\.dataset\.ogMatchesFilters = String\(matchesPropertyFilters\(property\)/);
 });
 
+test('Admin property rows can hide and restore listings through the visibility API', () => {
+  const properties = fs.readFileSync(path.join(root, 'public/admin/admin-property-management.js'), 'utf8');
+  assert.match(properties, /data-og-property-visibility/);
+  assert.match(properties, /\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}\/visibility/);
+  assert.match(properties, /body: JSON\.stringify\(\{ hidden \}\)/);
+  assert.match(properties, /visibilityButton\.textContent = isHidden \? 'Restore' : 'Hide'/);
+  assert.match(properties, /property\.adminHidden !== true/);
+});
+
 test('admin dashboard has an accessible off-canvas navigation on tablet and mobile', () => {
   const script = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.js'), 'utf8');
   const styles = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.css'), 'utf8');

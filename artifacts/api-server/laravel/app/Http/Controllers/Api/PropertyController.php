@@ -14,6 +14,9 @@ final class PropertyController extends Controller
     {
         $user = $request->attributes->get('legacyUser');
         $properties = array_values(array_filter($store->read()['properties'] ?? [], function (array $property) use ($user, $request): bool {
+            if (filter_var($property['adminHidden'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+                return false;
+            }
             $owner = $user && (
                 (string) ($property['sellerId'] ?? '') === (string) ($user['id'] ?? '')
                 || (string) ($property['agentId'] ?? '') === (string) ($user['id'] ?? '')
@@ -65,7 +68,9 @@ final class PropertyController extends Controller
     {
         $property = collect($store->read()['properties'] ?? [])->first(fn (array $item): bool => (string) ($item['id'] ?? '') === $id);
         if (! $property) return response()->json(['error' => 'Property not found.'], 404);
-        if (($property['approvalStatus'] ?? '') !== 'Active' || ($property['listingStatus'] ?? 'Active') !== 'Active') {
+        if (filter_var($property['adminHidden'] ?? false, FILTER_VALIDATE_BOOLEAN)
+            || ($property['approvalStatus'] ?? '') !== 'Active'
+            || ($property['listingStatus'] ?? 'Active') !== 'Active') {
             return response()->json(['error' => 'Property not found.'], 404);
         }
         return response()->json($property);

@@ -354,6 +354,51 @@ final class AdminController extends Controller
         return response()->json(['success' => true, 'property' => $property]);
     }
 
+    public function setPropertyVisibility(string $id, Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $validated = $request->validate([
+            'hidden' => ['required', 'boolean'],
+        ]);
+        $hidden = (bool) $validated['hidden'];
+        $admin = $request->attributes->get('legacyUser', []);
+
+        $property = $store->mutate(function (array &$data) use ($id, $hidden, $admin): ?array {
+            foreach ($data['properties'] ?? [] as $index => $property) {
+                if ((string) ($property['id'] ?? '') !== $id) continue;
+
+                $wasHidden = filter_var($property['adminHidden'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                if ($wasHidden === $hidden) return $property;
+
+                $updatedAt = now()->toISOString();
+                $property['adminHidden'] = $hidden;
+                $property['adminHiddenAt'] = $hidden ? $updatedAt : null;
+                $property['adminHiddenBy'] = $hidden ? ($admin['id'] ?? null) : null;
+                $property['updatedAt'] = $updatedAt;
+                $property['reviewHistory'] = is_array($property['reviewHistory'] ?? null)
+                    ? $property['reviewHistory'] : [];
+                $action = $hidden ? 'listing_hidden' : 'listing_restored';
+                $property['reviewHistory'][] = [
+                    'action' => $action,
+                    'by' => $admin['id'] ?? null,
+                    'byName' => $admin['name'] ?? '',
+                    'fromHidden' => $wasHidden,
+                    'toHidden' => $hidden,
+                    'createdAt' => $updatedAt,
+                ];
+                $data['properties'][$index] = $property;
+                $this->appendAdminAudit($data, $admin, $action, 'properties', $id, [
+                    'fromHidden' => $wasHidden,
+                    'toHidden' => $hidden,
+                ]);
+                return $property;
+            }
+            return null;
+        });
+
+        if (! $property) return response()->json(['error' => 'Property not found.'], 404);
+        return response()->json(['success' => true, 'property' => $property]);
+    }
+
     public function propertyReview(string $id, LegacyDataStore $store): JsonResponse
     {
         $data = $store->read();

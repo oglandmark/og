@@ -46,6 +46,7 @@ test('local Replit admin property queues and review actions use Laravel routes',
 
   await window.fetch('/api/admin/properties?approvalStatus=Pending');
   await window.fetch('/api/admin/properties/42', { method: 'PATCH', body: JSON.stringify({ title: 'Updated house' }) });
+  await window.fetch('/api/admin/properties/42/visibility', { method: 'PATCH', body: JSON.stringify({ hidden: true }) });
   await window.fetch('/api/admin/properties/42/review');
   await window.fetch('/api/admin/properties/42/media', { method: 'POST' });
   await window.fetch('/api/admin/properties/42/approve', { method: 'PATCH' });
@@ -56,6 +57,7 @@ test('local Replit admin property queues and review actions use Laravel routes',
   assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
     ['/api-legacy/api/admin/properties?approvalStatus=Pending', 'GET'],
     ['/api-legacy/api/admin/properties/42', 'PATCH'],
+    ['/api-legacy/api/admin/properties/42/visibility', 'PATCH'],
     ['/api-legacy/api/admin/properties/42/review', 'GET'],
     ['/api-legacy/api/admin/properties/42/media', 'POST'],
     ['/api-legacy/api/properties/42/approve', 'PATCH'],
@@ -124,6 +126,7 @@ test('production admin API routing remains on the existing production API', asyn
 
   await window.fetch('/api/admin/properties');
   await window.fetch('/api/admin/properties/42', { method: 'PATCH', body: JSON.stringify({ title: 'Updated house' }) });
+  await window.fetch('/api/admin/properties/42/visibility', { method: 'PATCH', body: JSON.stringify({ hidden: true }) });
   await window.fetch('/api/admin/properties/42/approve', { method: 'PATCH' });
   await window.fetch('/api/admin/properties/42/media', { method: 'POST' });
   await window.fetch('/api/admin/mobile-agents/8', { method: 'PUT' });
@@ -134,6 +137,7 @@ test('production admin API routing remains on the existing production API', asyn
   assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
     ['https://api.oglandmark.com/api/admin/properties', 'GET'],
     ['https://api.oglandmark.com/api/admin/properties/42', 'PATCH'],
+    ['https://api.oglandmark.com/api/admin/properties/42/visibility', 'PATCH'],
     ['https://api.oglandmark.com/api/admin/properties/42/approve', 'PATCH'],
     ['https://api.oglandmark.com/api/admin/properties/42/media', 'POST'],
     ['https://api.oglandmark.com/api/admin/mobile-agents/8', 'PUT'],

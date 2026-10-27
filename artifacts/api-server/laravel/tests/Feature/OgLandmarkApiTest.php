@@ -135,6 +135,72 @@ final class OgLandmarkApiTest extends TestCase
         $this->getJson('/api/properties/102')->assertNotFound();
     }
 
+    public function test_admin_can_hide_and_restore_a_listing_without_deleting_its_history(): void
+    {
+        $token = $this->adminToken();
+        $this->withToken($token)->patchJson('/api-legacy/api/admin/properties/101/visibility', [
+            'hidden' => true,
+        ])->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('property.adminHidden', true)
+            ->assertJsonPath('property.adminHiddenBy', 7)
+            ->assertJsonPath('property.reviewHistory.0.action', 'listing_hidden');
+
+        $this->getJson('/api/properties')->assertOk()->assertJsonCount(0);
+        $this->getJson('/api/properties/101')->assertNotFound();
+        $this->withToken($token)->getJson('/api/admin/properties')
+            ->assertOk()->assertJsonCount(2)->assertJsonPath('0.adminHidden', true);
+        $this->withToken($token)->getJson('/api/admin/properties/101/review')
+            ->assertOk()->assertJsonPath('property.adminHidden', true)
+            ->assertJsonPath('property.reviewHistory.0.action', 'listing_hidden')
+            ->assertJsonPath('audit.0.action', 'listing_hidden');
+
+        $userToken = $this->postJson('/api/auth/login', [
+            'identifier' => 'user@example.test',
+            'password' => self::PASSWORD,
+        ])->assertOk()->json('token');
+        $this->withToken($userToken)->getJson('/api/my-properties')
+            ->assertOk()->assertJsonCount(1)->assertJsonPath('0.adminHidden', true);
+
+        $this->withToken($token)->patchJson('/api/admin/properties/101/visibility', [
+            'hidden' => false,
+        ])->assertOk()
+            ->assertJsonPath('property.adminHidden', false)
+            ->assertJsonPath('property.adminHiddenAt', null)
+            ->assertJsonPath('property.reviewHistory.1.action', 'listing_restored');
+        $this->getJson('/api/properties')->assertOk()->assertJsonCount(1)->assertJsonPath('0.id', 101);
+        $this->getJson('/api/properties/101')->assertOk()->assertJsonPath('id', 101);
+
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $this->assertSame(['listing_restored', 'listing_hidden'], array_column($data['auditLog'], 'action'));
+        $this->assertSame(2, count($data['properties']));
+    }
+
+    public function test_listing_visibility_changes_require_admin_access_and_a_valid_boolean(): void
+    {
+        $userToken = $this->postJson('/api/auth/login', [
+            'identifier' => 'user@example.test',
+            'password' => self::PASSWORD,
+        ])->assertOk()->json('token');
+        $this->withToken($userToken)->patchJson('/api/admin/properties/101/visibility', [
+            'hidden' => true,
+        ])->assertForbidden();
+
+        $adminToken = $this->adminToken();
+        $this->withToken($adminToken)->patchJson('/api/admin/properties/101/visibility', [])
+            ->assertUnprocessable();
+        $this->withToken($adminToken)->patchJson('/api/admin/properties/101/visibility', [
+            'hidden' => 'yes',
+        ])->assertUnprocessable();
+        $this->withToken($adminToken)->patchJson('/api/admin/properties/999/visibility', [
+            'hidden' => true,
+        ])->assertNotFound();
+
+        $this->getJson('/api/properties/101')->assertOk();
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $this->assertEmpty($data['auditLog']);
+    }
+
     public function test_admin_permission_can_review_properties_and_update_agent_visibility(): void
     {
         DB::table('app_data')->update(['data' => json_encode(array_replace_recursive(

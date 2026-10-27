@@ -38,6 +38,7 @@ $registerRoutes = static function (): void {
             Route::patch('/admin/reports/{id}', [AdminController::class, 'updateReport']);
             Route::get('/admin/properties', [AdminController::class, 'properties']);
             Route::patch('/admin/properties/{id}', [AdminController::class, 'updateProperty'])->whereNumber('id');
+            Route::patch('/admin/properties/{id}/visibility', [AdminController::class, 'setPropertyVisibility'])->whereNumber('id');
             Route::get('/admin/properties/{id}/review', [AdminController::class, 'propertyReview'])->whereNumber('id');
             Route::patch('/admin/properties/{id}/media', [AdminController::class, 'updatePropertyMedia'])->whereNumber('id');
             Route::patch('/properties/{id}/{action}', [AdminController::class, 'moderateProperty'])

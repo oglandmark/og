@@ -9,6 +9,10 @@ const screenSource = readFileSync(
   resolve(fileURLToPath(new URL('../app/(tabs)/post-ad.tsx', import.meta.url))),
   'utf8',
 );
+const listingSource = readFileSync(
+  resolve(fileURLToPath(new URL('../app/post/listing.tsx', import.meta.url))),
+  'utf8',
+);
 const tabLayoutSource = readFileSync(
   resolve(fileURLToPath(new URL('../app/(tabs)/_layout.tsx', import.meta.url))),
   'utf8',
@@ -40,6 +44,10 @@ test('signed-in Post an Ad tab taps open the listing route without selecting the
     tabLayoutSource,
     /tabPress:\s*\(event\)\s*=>\s*\{\s*if \(isLoading \|\| !isLoggedIn\) return;\s*event\.preventDefault\(\);\s*router\.replace\(POST_AD_LISTING_ROUTE\);/,
   );
+});
+
+test('property listing wizard uses solid surfaces without glass overlays', () => {
+  assert.doesNotMatch(listingSource, /OptionGlassSurface|colors\.glassBorder|colors\.glassOverlay|expo-linear-gradient/);
 });
 
 test('Android tab background uses the premium glass blur treatment', () => {

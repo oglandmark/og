@@ -9,7 +9,6 @@ import {
   ActivityIndicator, Alert, Image, Linking, Platform,
   Pressable, ScrollView, StyleSheet, View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -791,7 +790,7 @@ export default function ListingWizard() {
             <View style={[s.progressFill, { width: `${progressPercent}%`, backgroundColor: colors.action }]} />
           </View>
         </View>
-        <View style={[s.purposeBadge, { backgroundColor: colors.accent, borderColor: colors.goldGlassBorder }]}>
+        <View style={[s.purposeBadge, { backgroundColor: colors.accent, borderColor: colors.border }]}>
           <Feather name="tag" size={11} color={colors.accentForeground} />
           <Text style={[s.purposeBadgeText, { color: colors.accentForeground }]}>FOR {form.purpose.toUpperCase()}</Text>
         </View>
@@ -902,15 +901,14 @@ function TransactionToggle({ form, update, colors }: { form: Form; update: (p: P
               style={[
                 s.transactionToggleOption,
                 {
-                  backgroundColor: 'transparent',
-                  borderColor: active ? colors.goldGlassBorder : colors.glassBorder,
+                  backgroundColor: active ? colors.selectionBackground : colors.card,
+                  borderColor: active ? colors.selectionBorder : colors.border,
                 },
               ]}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
               accessibilityLabel={`List property for ${option.label}`}
             >
-              <OptionGlassSurface selected={active} colors={colors} radius={11} />
               <Feather name={option.icon} size={16} color={active ? colors.action : colors.mutedForeground} />
               <Text style={[s.transactionToggleText, { color: active ? colors.action : colors.foreground }]}>
                 {option.label}
@@ -985,20 +983,6 @@ function PropertyTypeIcon({ type, colors, size = 24 }: { type: string; colors: a
   );
 }
 
-function OptionGlassSurface({ selected, colors, radius }: { selected: boolean; colors: any; radius: number }) {
-  return (
-    <LinearGradient
-      colors={selected ? [colors.goldGlass, colors.accent] : [colors.glassOverlay, colors.glassCard]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={[StyleSheet.absoluteFill, { borderRadius: radius }]}
-      pointerEvents="none"
-    >
-      <View style={[s.optionGlassSheen, { backgroundColor: colors.actionGlassHighlight }]} />
-    </LinearGradient>
-  );
-}
-
 function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Form>) => void; colors: any }) {
   const [activeGroup, setActiveGroup] = useState<PropCategory>(categoryOf(form.propertyType));
   const typesInGroup = PROPERTY_TYPES.filter((t) => t.category === activeGroup);
@@ -1022,8 +1006,7 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
           return (
             <Pressable key={g.category} onPress={() => setActiveGroup(g.category)}
                accessibilityRole="button" accessibilityState={{ selected: active }} accessibilityLabel={`${g.label} property types`}
-               style={[s.groupTab, { backgroundColor: 'transparent', borderColor: active ? colors.selectionBorder : colors.glassBorder, borderWidth: active ? 1.5 : 1 }]}>
-              <OptionGlassSurface selected={active} colors={colors} radius={13} />
+               style={[s.groupTab, { backgroundColor: active ? colors.selectionBackground : colors.card, borderColor: active ? colors.selectionBorder : colors.border, borderWidth: active ? 1.5 : 1 }]}>
               <Text style={s.groupEmoji}>{g.emoji}</Text>
                <Text style={[s.groupTabText, { color: active ? colors.selectionForeground : colors.foreground, fontWeight: active ? '600' : '400' }]}>{g.label}</Text>
             </Pressable>
@@ -1038,23 +1021,18 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
           return (
             <Pressable key={t.key} onPress={() => handleTypeSelect(t.key)}
                accessibilityRole="button" accessibilityState={{ selected: sel }} accessibilityLabel={t.label}
-               style={[s.typeCard, { backgroundColor: 'transparent', borderColor: sel ? colors.selectionBorder : colors.glassBorder, borderWidth: sel ? 2 : 1 }]}>
-              <OptionGlassSurface selected={sel} colors={colors} radius={17} />
-              <LinearGradient
-                colors={sel ? [colors.accent, colors.card] : [colors.card, colors.secondary]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+               style={[s.typeCard, { backgroundColor: sel ? colors.selectionBackground : colors.card, borderColor: sel ? colors.selectionBorder : colors.border, borderWidth: sel ? 1.5 : 1 }]}>
+              <View
                 style={[
                   s.typeIconTile,
                   {
-                    borderColor: sel ? colors.goldGlassBorder : colors.border,
-                    shadowColor: colors.shadow,
+                    backgroundColor: sel ? colors.selectionBackground : colors.secondary,
+                    borderColor: sel ? colors.selectionBorder : colors.border,
                   },
                 ]}
               >
-                <View pointerEvents="none" style={[s.typeIconHighlight, { backgroundColor: colors.surfaceRaised + '99' }]} />
                 <PropertyTypeIcon type={t.key} colors={colors} />
-              </LinearGradient>
+              </View>
                <Text style={[s.typeLabel, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{t.label}</Text>
               {sel && <View style={[s.typeSelectedMark, { backgroundColor: colors.action }]}><Feather name="check" size={9} color={colors.actionForeground} /></View>}
             </Pressable>
@@ -1109,8 +1087,7 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
             onConfirmationChange?.(false);
             setMapOpen(true);
           }}
-              style={[s.chip, { backgroundColor: 'transparent', borderColor: form.city === c ? colors.selectionBorder : colors.glassBorder, borderWidth: form.city === c ? 1.5 : 1 }]}>
-            <OptionGlassSurface selected={form.city === c} colors={colors} radius={20} />
+              style={[s.chip, { backgroundColor: form.city === c ? colors.selectionBackground : colors.card, borderColor: form.city === c ? colors.selectionBorder : colors.border, borderWidth: form.city === c ? 1.5 : 1 }]}>
              <Text style={[s.chipText, { color: form.city === c ? colors.selectionForeground : colors.foreground, fontWeight: form.city === c ? '600' : '400' }]}>{c}</Text>
           </Pressable>
         ))}
@@ -1255,12 +1232,11 @@ function StepBasic({ form, update, colors, errors }: any) {
                 style={[
                   s.unitBtn,
                   {
-                    borderColor: form.areaUnit === u ? colors.goldGlassBorder : colors.glassBorder,
-                    shadowColor: colors.shadow,
+                    backgroundColor: form.areaUnit === u ? colors.selectionBackground : colors.card,
+                    borderColor: form.areaUnit === u ? colors.selectionBorder : colors.border,
                   },
                 ]}
               >
-                <OptionGlassSurface selected={form.areaUnit === u} colors={colors} radius={8} />
                 <Text style={[s.unitText, { color: form.areaUnit === u ? colors.selectionForeground : colors.mutedForeground, fontWeight: form.areaUnit === u ? '600' : '400' }]}>{u}</Text>
               </Pressable>
             ))}
@@ -1842,8 +1818,7 @@ function StepFeatures({ form, update, colors, category }: any) {
           const sel = form.features.includes(f);
           return (
             <Pressable key={f} onPress={() => toggle(f)}
-              style={[s.featureChip, { backgroundColor: 'transparent', borderColor: sel ? colors.selectionBorder : colors.glassBorder, borderWidth: sel ? 1.5 : 1 }]}>
-              <OptionGlassSurface selected={sel} colors={colors} radius={13} />
+              style={[s.featureChip, { backgroundColor: sel ? colors.selectionBackground : colors.card, borderColor: sel ? colors.selectionBorder : colors.border, borderWidth: sel ? 1.5 : 1 }]}>
               {sel && <Feather name="check" size={11} color={colors.selectionForeground} />}
               <Text style={[s.featureText, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{f}</Text>
             </Pressable>
@@ -1977,8 +1952,7 @@ function StepDocs({ form, update, colors, errors, user, category }: any) {
           const sel = form.documents.includes(d);
           return (
             <Pressable key={d} onPress={() => toggleDoc(d)}
-              style={[s.featureChip, { backgroundColor: 'transparent', borderColor: sel ? colors.selectionBorder : colors.glassBorder, borderWidth: sel ? 1.5 : 1 }]}>
-              <OptionGlassSurface selected={sel} colors={colors} radius={13} />
+              style={[s.featureChip, { backgroundColor: sel ? colors.selectionBackground : colors.card, borderColor: sel ? colors.selectionBorder : colors.border, borderWidth: sel ? 1.5 : 1 }]}>
               {sel && <Feather name="check" size={11} color={colors.selectionForeground} />}
               <Text style={[s.featureText, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{d}</Text>
             </Pressable>
@@ -2072,7 +2046,7 @@ function StepPreview({ form, colors, category }: any) {
           </>
         ) : (
           <View style={[s.previewImagePlaceholder, { backgroundColor: colors.secondary }]}>
-            <View style={[s.previewEmptyIcon, { backgroundColor: colors.accent, borderColor: colors.goldGlassBorder }]}>
+            <View style={[s.previewEmptyIcon, { backgroundColor: colors.accent, borderColor: colors.border }]}>
               <PropertyTypeIcon type={form.propertyType} colors={colors} size={25} />
             </View>
             <Text style={[s.stepSub, { color: colors.mutedForeground, marginTop: 6 }]}>No cover photo</Text>
@@ -2254,8 +2228,7 @@ function ChipRow({ options, selected, onSelect, colors }: { options: string[]; s
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
       {options.map((o) => (
         <Pressable key={o} onPress={() => onSelect(o)}
-           style={[s.chip, { backgroundColor: 'transparent', borderColor: selected === o ? colors.selectionBorder : colors.glassBorder, borderWidth: selected === o ? 1.5 : 1 }]}>
-           <OptionGlassSurface selected={selected === o} colors={colors} radius={20} />
+           style={[s.chip, { backgroundColor: selected === o ? colors.selectionBackground : colors.card, borderColor: selected === o ? colors.selectionBorder : colors.border, borderWidth: selected === o ? 1.5 : 1 }]}>
            <Text style={[s.chipText, { color: selected === o ? colors.selectionForeground : colors.foreground, fontWeight: selected === o ? '600' : '400' }]}>{o}</Text>
         </Pressable>
       ))}
@@ -2267,8 +2240,7 @@ function ToggleRow({ label, value, onChange, colors }: { label: string; value: b
   const isOn = value === true;
   return (
     <Pressable onPress={() => onChange(!value)}
-      style={[s.toggleRow, { backgroundColor: 'transparent', borderColor: isOn ? colors.selectionBorder : colors.glassBorder }]}>
-      <OptionGlassSurface selected={isOn} colors={colors} radius={13} />
+      style={[s.toggleRow, { backgroundColor: isOn ? colors.selectionBackground : colors.card, borderColor: isOn ? colors.selectionBorder : colors.border }]}>
       <Text style={[s.toggleLabel, { color: colors.foreground }]}>{label}</Text>
       <View style={[s.togglePill, { backgroundColor: isOn ? colors.action : colors.border }]}>
         <Text style={[s.togglePillText, { color: '#ffffff' }]}>{isOn ? 'Yes' : 'No'}</Text>
@@ -2284,8 +2256,7 @@ function TogRow({ label, value, onChange, colors }: { label: string; value: bool
   return (
     <Pressable
       onPress={() => onChange(value === null ? true : value === true ? false : null)}
-      style={[s.toggleRow, { backgroundColor: 'transparent', borderColor: isOn ? colors.selectionBorder : colors.glassBorder, marginBottom: 8 }]}>
-      <OptionGlassSurface selected={isOn} colors={colors} radius={13} />
+      style={[s.toggleRow, { backgroundColor: isOn ? colors.selectionBackground : colors.card, borderColor: isOn ? colors.selectionBorder : colors.border, marginBottom: 8 }]}>
       <Text style={[s.toggleLabel, { color: colors.foreground }]}>{label}</Text>
       <View style={[s.togglePill, { backgroundColor: isOn ? colors.action : isOff ? '#e5383822' : colors.border }]}>
         <Text style={[s.togglePillText, { color: isOn ? '#ffffff' : isOff ? '#e53838' : colors.mutedForeground }]}>
@@ -2306,8 +2277,7 @@ function BoolGrid({ items, form, update, colors, tristate }: { items: { key: str
         return (
           <Pressable key={it.key}
             onPress={() => update({ [it.key]: tristate ? (val === null ? true : val === true ? false : null) : !val })}
-            style={[s.featureChip, { backgroundColor: 'transparent', borderColor: sel ? colors.selectionBorder : colors.glassBorder, borderWidth: sel ? 1.5 : 1 }]}>
-            <OptionGlassSurface selected={sel} colors={colors} radius={13} />
+            style={[s.featureChip, { backgroundColor: sel ? colors.selectionBackground : colors.card, borderColor: sel ? colors.selectionBorder : colors.border, borderWidth: sel ? 1.5 : 1 }]}>
             {sel && <Feather name="check" size={11} color={colors.selectionForeground} />}
             <Text style={[s.featureText, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{it.label}</Text>
           </Pressable>
@@ -2361,8 +2331,7 @@ const s = StyleSheet.create({
   groupEmoji:           { fontSize: 13, lineHeight: 16 },
   typeGrid:             { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
   typeCard:             { width: '31%', minHeight: 108, borderRadius: 17, borderWidth: 1, paddingHorizontal: 7, paddingVertical: 9, alignItems: 'center', justifyContent: 'center', gap: 7, position: 'relative' },
-  typeIconTile:         { width: 46, height: 46, borderWidth: 1, borderRadius: 16, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.14, shadowRadius: 7, elevation: 4 },
-  typeIconHighlight:    { position: 'absolute', top: 3, left: 6, right: 6, height: 9, borderRadius: 9 },
+  typeIconTile:         { width: 46, height: 46, borderWidth: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   typeEmoji:            { fontSize: 24, lineHeight: 30, includeFontPadding: false, textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 2 },
   previewTypeEmoji:     { fontSize: 25, lineHeight: 32, includeFontPadding: false, textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 2 },
   portionIllustration:  { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', position: 'relative' },
@@ -2379,8 +2348,7 @@ const s = StyleSheet.create({
   inputWrap:            { borderRadius: 15, borderWidth: 1, overflow: 'hidden', marginBottom: 2 },
   input:                { fontFamily: 'Inter_400Regular', fontSize: 14, paddingHorizontal: 15, paddingVertical: 13 },
   unitSeg:              { flexDirection: 'row', gap: 5 },
-  unitBtn:              { flex: 1, height: 38, borderRadius: 8, borderWidth: 1, alignItems: 'stretch', justifyContent: 'center', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 2 },
-  optionGlassSheen:     { position: 'absolute', top: 2, left: 8, right: 8, height: 5, borderRadius: 999 },
+  unitBtn:              { flex: 1, height: 38, borderRadius: 8, borderWidth: 1, alignItems: 'stretch', justifyContent: 'center' },
   unitText:             { fontFamily: 'Inter_600SemiBold', fontSize: 11, textAlign: 'center' },
   // Chips
   chip:                 { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10 },

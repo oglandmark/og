@@ -114,12 +114,14 @@ test('production admin API routing remains on the existing production API', asyn
 
   await window.fetch('/api/admin/properties');
   await window.fetch('/api/admin/properties/42/approve', { method: 'PATCH' });
+  await window.fetch('/api/admin/properties/42/media', { method: 'POST' });
   await window.fetch('/api/admin/mobile-agents/8', { method: 'PUT' });
 
   assert.equal(window.__OG_ADMIN_LARAVEL_LOCAL__, false);
   assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
     ['https://api.oglandmark.com/api/admin/properties', 'GET'],
     ['https://api.oglandmark.com/api/admin/properties/42/approve', 'PATCH'],
+    ['https://api.oglandmark.com/api/admin/properties/42/media', 'POST'],
     ['https://api.oglandmark.com/api/admin/mobile-agents/8', 'PUT'],
   ]);
 });

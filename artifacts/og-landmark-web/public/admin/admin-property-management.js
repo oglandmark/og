@@ -1146,8 +1146,6 @@
         furnishing: values.furnishing.trim(), availability: values.availability.trim(),
         description: values.description.trim(),
         amenities: values.amenities.split(/\r?\n/).map((item) => item.trim()).filter(Boolean),
-        images,
-        videoUrl,
         assignedAgent: name || phone || profile ? {
           id: profile ? String(profile.id) : null,
           userId: profile?.userId || null,
@@ -1155,7 +1153,6 @@
           name, phone, profileType: profile?.kind || 'manual',
         } : null,
       };
-      payload.coverImage = payload.images[0] || null;
       await request(`/admin/properties/${encodeURIComponent(property.id)}`, { method: 'PATCH', body: JSON.stringify(payload) });
       const mediaForm = new FormData();
       mediaForm.append('images', JSON.stringify(images));

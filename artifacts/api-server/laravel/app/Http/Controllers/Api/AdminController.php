@@ -339,7 +339,7 @@ final class AdminController extends Controller
             ]);
         }
 
-        $newImages = $request->file('images', []);
+        $newImages = $request->file('newImages', []);
         if (! is_array($newImages)) $newImages = [$newImages];
         $newImages = array_values(array_filter($newImages));
         $video = $request->file('video');
@@ -440,11 +440,64 @@ final class AdminController extends Controller
         }
     }
 
-    public function propertyMedia(string $filename): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function propertyMedia(string $filename, Request $request): \Symfony\Component\HttpFoundation\StreamedResponse|JsonResponse
     {
         $path = 'listing-media/'.basename($filename);
-        abort_unless(Storage::disk('public')->exists($path), 404);
-        return Storage::disk('public')->response($path);
+        if (! Storage::disk('public')->exists($path)) {
+            return response()->json(['error' => 'Media not found.'], 404);
+        }
+
+        $size = Storage::disk('public')->size($path);
+        $start = 0;
+        $end = max(0, $size - 1);
+        $status = 200;
+        $range = $request->header('Range');
+        if ($range !== null) {
+            if (! preg_match('/^bytes=(\d*)-(\d*)$/', trim($range), $matches) || $size === 0) {
+                return response()->json(['error' => 'Invalid byte range.'], 416)
+                    ->header('Content-Range', "bytes */{$size}");
+            }
+            if ($matches[1] === '') {
+                $suffixLength = (int) $matches[2];
+                if ($suffixLength < 1) {
+                    return response()->json(['error' => 'Invalid byte range.'], 416)
+                        ->header('Content-Range', "bytes */{$size}");
+                }
+                $start = max(0, $size - $suffixLength);
+            } else {
+                $start = (int) $matches[1];
+                if ($matches[2] !== '') $end = (int) $matches[2];
+            }
+            if ($start >= $size || $end < $start) {
+                return response()->json(['error' => 'Invalid byte range.'], 416)
+                    ->header('Content-Range', "bytes */{$size}");
+            }
+            $end = min($end, $size - 1);
+            $status = 206;
+        }
+
+        $length = $end - $start + 1;
+        $headers = [
+            'Accept-Ranges' => 'bytes',
+            'Content-Length' => (string) $length,
+            'Content-Type' => Storage::disk('public')->mimeType($path) ?: 'application/octet-stream',
+        ];
+        if ($status === 206) $headers['Content-Range'] = "bytes {$start}-{$end}/{$size}";
+
+        return response()->stream(function () use ($path, $start, $length): void {
+            $stream = Storage::disk('public')->readStream($path);
+            if (! is_resource($stream)) return;
+            if ($start > 0) fseek($stream, $start);
+            $remaining = $length;
+            while ($remaining > 0 && ! feof($stream)) {
+                $chunk = fread($stream, min(8192, $remaining));
+                if ($chunk === false || $chunk === '') break;
+                echo $chunk;
+                $remaining -= strlen($chunk);
+                flush();
+            }
+            fclose($stream);
+        }, $status, $headers);
     }
 
     private function validateListingMediaFile(\Illuminate\Http\UploadedFile $file, string $kind): void

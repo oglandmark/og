@@ -77,15 +77,21 @@ test('Admin property deletion requires confirmation and uses the authenticated d
   assert.match(source, /request\(`\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}`, \{ method: 'DELETE' \}\)/);
 });
 
-test('Laravel validates and persists admin-edited map coordinates in both property location shapes', () => {
-  const apiController = fs.readFileSync(
-    path.join(__dirname, '..', '..', 'api-server', 'laravel', 'app', 'Http', 'Controllers', 'ApiController.php'),
-    'utf8',
+test('Admin listing edits keep map coordinates in the property payload', () => {
+  assert.match(source, /lat, lng, latitude: lat, longitude: lng/);
+});
+
+test('Listing media is omitted from the legacy property update and sent to Laravel separately', () => {
+  const saveSource = source.slice(
+    source.indexOf('async function saveProperty'),
+    source.indexOf('async function deleteProperty', source.indexOf('async function saveProperty')),
   );
-  assert.match(apiController, /'lat' => \['sometimes', 'nullable', 'numeric', 'between:-90,90'\]/);
-  assert.match(apiController, /'lng' => \['sometimes', 'nullable', 'numeric', 'between:-180,180'\]/);
-  assert.match(apiController, /\$location\['latitude'\] = \$lat/);
-  assert.match(apiController, /\$location\['longitude'\] = \$lng/);
+  const payloadStart = saveSource.indexOf('const payload = {');
+  const payloadEnd = saveSource.indexOf('};', payloadStart);
+  const legacyPayload = saveSource.slice(payloadStart, payloadEnd);
+  assert.doesNotMatch(legacyPayload, /\b(images|videoUrl|coverImage)\b/);
+  assert.match(saveSource, /mediaForm\.append\('_method', 'PATCH'\)/);
+  assert.match(saveSource, /method: 'POST',\s*body: mediaForm/);
 });
 
 test('Laravel admin media route stores edits with moderation and the preview rewrites the media request', () => {

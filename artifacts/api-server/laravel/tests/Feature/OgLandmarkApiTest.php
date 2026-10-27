@@ -180,26 +180,40 @@ final class OgLandmarkApiTest extends TestCase
         DB::table('app_data')->where('id', 1)->update(['data' => json_encode($data, JSON_THROW_ON_ERROR)]);
         Storage::disk('public')->put('listing-media/old-photo.jpg', 'old photo');
         $token = $this->adminToken();
+        $video = UploadedFile::fake()->createWithContent('property-tour.mp4', '0123456789');
+        $video->mimeType('video/mp4');
 
-        $upload = $this->withToken($token)->post('/api/admin/properties/101/media', [
+        $upload = $this->call('POST', '/api/admin/properties/101/media', [
             '_method' => 'PATCH',
             'images' => json_encode([$existingUrl]),
             'videoUrl' => '',
+        ], [], [
             'newImages' => [UploadedFile::fake()->image('new-photo.jpg')],
-        ], ['Accept' => 'application/json'])
+            'video' => $video,
+        ], ['HTTP_ACCEPT' => 'application/json', 'HTTP_AUTHORIZATION' => 'Bearer '.$token])
             ->assertOk()
             ->assertJsonPath('success', true);
         $photoUrl = $upload->json('property.images.1');
+        $videoUrl = $upload->json('property.videoUrl');
         $this->assertStringStartsWith('/api-legacy/api/admin/property-media/', $photoUrl);
+        $this->assertStringStartsWith('/api-legacy/api/admin/property-media/', $videoUrl);
         $filename = basename(parse_url($photoUrl, PHP_URL_PATH));
+        $videoFilename = basename(parse_url($videoUrl, PHP_URL_PATH));
         Storage::disk('public')->assertExists('listing-media/'.$filename);
+        Storage::disk('public')->assertExists('listing-media/'.$videoFilename);
         Storage::disk('public')->assertExists('listing-media/old-photo.jpg');
+        $this->get($videoUrl, ['Range' => 'bytes=0-3'])
+            ->assertStatus(206)
+            ->assertHeader('Accept-Ranges', 'bytes')
+            ->assertHeader('Content-Range', 'bytes 0-3/10')
+            ->assertHeader('Content-Length', '4');
 
         $this->withToken($token)->patchJson('/api/admin/properties/101/media', [
             'images' => [],
             'videoUrl' => null,
         ])->assertOk()->assertJsonPath('property.images', []);
         Storage::disk('public')->assertMissing('listing-media/'.$filename);
+        Storage::disk('public')->assertMissing('listing-media/'.$videoFilename);
         Storage::disk('public')->assertMissing('listing-media/old-photo.jpg');
     }
 
@@ -208,11 +222,12 @@ final class OgLandmarkApiTest extends TestCase
         Storage::fake('public');
         $token = $this->adminToken();
 
-        $this->withToken($token)->post('/api/admin/properties/101/media', [
+        $this->call('POST', '/api/admin/properties/101/media', [
             '_method' => 'PATCH',
             'images' => '[]',
+        ], [], [
             'newImages' => [UploadedFile::fake()->create('script.txt', 2, 'text/plain')],
-        ], ['Accept' => 'application/json'])->assertUnprocessable();
+        ], ['HTTP_ACCEPT' => 'application/json', 'HTTP_AUTHORIZATION' => 'Bearer '.$token])->assertUnprocessable();
 
         $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
         $this->assertEmpty($data['properties'][0]['images'] ?? []);

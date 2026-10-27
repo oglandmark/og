@@ -1,6 +1,19 @@
 kind = "api"
 previewPath = "/api-legacy"
-title = "API Server"
+title = "OG Landmark Laravel API"
+description = "Isolated Laravel API development service for OG Landmark. Production remains on the current backend until a verified cutover is approved."
 version = "1.0.0"
 id = "3B4_FFSkEVBkAeYMFRJ2e"
+router = "path"
 
+[[services]]
+name = "laravel"
+paths = [ "/" ]
+localPort = 8000
+
+[services.development]
+run = "cd laravel && php artisan serve --host=0.0.0.0 --port=$PORT"
+
+[services.env]
+PORT = "8000"
+BASE_PATH = "/api-legacy"

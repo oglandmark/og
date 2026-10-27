@@ -491,7 +491,7 @@
             <div class="og-pm-field full"><label>Description</label><textarea name="description" maxlength="5000"></textarea></div>
             <div class="og-pm-field full"><label>Amenities (one per line)</label><textarea name="amenities"></textarea></div>
             <div class="og-pm-field full"><label>Listing photos</label><div class="og-pm-media" data-edit-images></div><textarea name="images"></textarea><input name="photoUploads" type="file" accept=".jpg,.jpeg,.png,.webp" multiple><span class="og-pm-note">Remove photos individually above, or upload additional JPG/PNG/WebP photos (up to 30 total).</span></div>
-            <div class="og-pm-field full"><label>Property video URL</label><input name="videoUrl" type="url" maxlength="2000"><video data-current-video hidden controls preload="metadata" style="display:block;width:min(100%,420px);max-height:220px;border-radius:8px;background:#0b1f3a"></video><label><input name="removeVideo" type="checkbox"> Remove current video</label><input name="videoUpload" type="file" accept=".mp4,.mov,.m4v,.3gp,.webm,.avi"><span class="og-pm-note">Upload a video to replace the current one, or clear the URL / select Remove current video to delete it.</span></div>
+            <div class="og-pm-field full"><label>Property video URL</label><input name="videoUrl" type="url" maxlength="2000"><video data-current-video hidden controls preload="metadata" style="display:block;width:min(100%,420px);max-height:220px;border-radius:8px;background:#0b1f3a"></video><label><input name="removeVideo" type="checkbox"> Remove current video</label><input name="videoUpload" type="file" accept=".mp4,.mov"><span class="og-pm-note">Upload a video to replace the current one, or clear the URL / select Remove current video to delete it.</span></div>
             <div class="og-pm-section">Agent referral</div>
             <div class="og-pm-field full"><label>Find an agent in any city</label><input class="og-pm-agent-search" name="agentSearch" type="search" placeholder="Search agent name, city or phone"><select name="agentProfile"><option value="">Manual referral contact / no profile</option></select></div>
             <div class="og-pm-field"><label>Referral contact name</label><input name="agentName" maxlength="120"></div>
@@ -1128,23 +1128,9 @@
       let images = values.images.split(/\r?\n/).map((url) => url.trim()).filter(Boolean);
       const photoFiles = Array.from(form.elements.photoUploads.files || []);
       if (images.length + photoFiles.length > 30) throw new Error('A listing can have up to 30 photos.');
-      if (photoFiles.length) {
-        const formData = new FormData();
-        photoFiles.forEach((file) => formData.append('images[]', file));
-        const uploaded = await request('/upload/multiple', { method: 'POST', body: formData });
-        const uploadedUrls = Array.isArray(uploaded?.urls) ? uploaded.urls : (uploaded?.url ? [uploaded.url] : []);
-        if (uploadedUrls.length !== photoFiles.length) throw new Error('One or more photos could not be uploaded.');
-        images = [...images, ...uploadedUrls];
-      }
       let videoUrl = String(values.videoUrl || '').trim() || null;
       const videoFile = form.elements.videoUpload.files?.[0];
-      if (videoFile) {
-        const formData = new FormData();
-        formData.append('video', videoFile);
-        const uploaded = await request('/upload/video', { method: 'POST', body: formData });
-        if (typeof uploaded?.url !== 'string' || !uploaded.url.trim()) throw new Error('The video upload did not return a media URL.');
-        videoUrl = uploaded.url.trim();
-      } else if (form.elements.removeVideo.checked) {
+      if (!videoFile && form.elements.removeVideo.checked) {
         videoUrl = null;
       }
       const payload = {
@@ -1171,6 +1157,16 @@
       };
       payload.coverImage = payload.images[0] || null;
       await request(`/admin/properties/${encodeURIComponent(property.id)}`, { method: 'PATCH', body: JSON.stringify(payload) });
+      const mediaForm = new FormData();
+      mediaForm.append('images', JSON.stringify(images));
+      mediaForm.append('videoUrl', videoUrl || '');
+      mediaForm.append('_method', 'PATCH');
+      photoFiles.forEach((file) => mediaForm.append('newImages[]', file));
+      if (videoFile) mediaForm.append('video', videoFile);
+      await request(`/admin/properties/${encodeURIComponent(property.id)}/media`, {
+        method: 'POST',
+        body: mediaForm,
+      });
       closeModal();
       window.location.reload();
     } catch (error) {

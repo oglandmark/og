@@ -18,7 +18,7 @@ const mobileManagementSource = fs.readFileSync(
 );
 const serverSource = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
 const apiControllerSource = fs.readFileSync(
-  path.join(__dirname, '..', '..', 'api-server', 'laravel', 'app', 'Http', 'Controllers', 'ApiController.php'),
+  path.join(__dirname, '..', '..', 'api-server', 'laravel', 'app', 'Http', 'Controllers', 'Api', 'PropertyController.php'),
   'utf8',
 );
 

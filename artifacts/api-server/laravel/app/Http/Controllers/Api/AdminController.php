@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Services\LegacyDataStore;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 final class AdminController extends Controller
 {
@@ -309,6 +311,196 @@ final class AdminController extends Controller
             ] : null,
             'audit' => array_slice($audit, 0, 100),
         ]);
+    }
+
+    public function updatePropertyMedia(string $id, Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $imagesInput = $request->input('images', '[]');
+        if (is_string($imagesInput)) {
+            $imagesInput = json_decode($imagesInput, true);
+        }
+        if (! is_array($imagesInput) || count($imagesInput) > 30) {
+            throw ValidationException::withMessages([
+                'images' => ['Images must be a list with no more than 30 photos.'],
+            ]);
+        }
+        foreach ($imagesInput as $image) {
+            if (! is_string($image) || mb_strlen(trim($image)) > 2000) {
+                throw ValidationException::withMessages([
+                    'images' => ['Each image URL must be a string of at most 2000 characters.'],
+                ]);
+            }
+        }
+
+        $videoUrl = $request->input('videoUrl');
+        if ($videoUrl !== null && (! is_string($videoUrl) || mb_strlen(trim($videoUrl)) > 2000)) {
+            throw ValidationException::withMessages([
+                'videoUrl' => ['The video URL must be a string of at most 2000 characters.'],
+            ]);
+        }
+
+        $newImages = $request->file('images', []);
+        if (! is_array($newImages)) $newImages = [$newImages];
+        $newImages = array_values(array_filter($newImages));
+        $video = $request->file('video');
+        if (count($imagesInput) + count($newImages) > 30) {
+            throw ValidationException::withMessages([
+                'images' => ['A property can have at most 30 images.'],
+            ]);
+        }
+
+        foreach ($newImages as $image) {
+            $this->validateListingMediaFile($image, 'image');
+        }
+        if ($video) $this->validateListingMediaFile($video, 'video');
+
+        $storedPaths = [];
+        try {
+            foreach ($newImages as $image) {
+                $path = $image->storePublicly('listing-media', 'public');
+                if (! $path) throw new \RuntimeException('Could not store uploaded photo.');
+                $storedPaths[] = $path;
+                $imagesInput[] = $this->propertyMediaUrl(basename($path));
+            }
+            if ($video) {
+                $path = $video->storePublicly('listing-media', 'public');
+                if (! $path) throw new \RuntimeException('Could not store uploaded video.');
+                $storedPaths[] = $path;
+                $videoUrl = $this->propertyMediaUrl(basename($path));
+            }
+
+            $images = array_values(array_unique(array_filter(
+                array_map(fn ($url): string => trim((string) $url), $imagesInput),
+                fn (string $url): bool => $url !== '',
+            )));
+            $videoUrl = is_string($videoUrl) && trim($videoUrl) !== '' ? trim($videoUrl) : null;
+            $admin = $request->attributes->get('legacyUser', []);
+            $result = $store->mutate(function (array &$data) use ($id, $images, $videoUrl, $admin): ?array {
+                foreach ($data['properties'] ?? [] as $index => $property) {
+                    if ((string) ($property['id'] ?? '') !== $id) continue;
+                    $previousImages = array_values(array_filter(array_map(
+                        fn ($item): string => is_array($item) ? (string) ($item['url'] ?? '') : (string) $item,
+                        is_array($property['images'] ?? null) ? $property['images'] : [],
+                    )));
+                    $previousVideo = $property['videoUrl'] ?? null;
+
+                    $property['images'] = $images;
+                    $property['coverImage'] = in_array($property['coverImage'] ?? null, $images, true)
+                        ? $property['coverImage']
+                        : ($images[0] ?? null);
+                    $property['videoUrl'] = $videoUrl;
+                    $property['media'] = array_replace(
+                        is_array($property['media'] ?? null) ? $property['media'] : [],
+                        [
+                            'images' => array_map(fn (string $url): array => [
+                                'url' => $url, 'propertyId' => $property['id'], 'type' => 'image',
+                            ], $images),
+                            'videos' => $videoUrl ? [[
+                                'url' => $videoUrl, 'propertyId' => $property['id'], 'type' => 'video',
+                            ]] : [],
+                        ],
+                    );
+                    $property['updatedAt'] = now()->toISOString();
+                    $detail = [
+                        'addedImages' => count(array_diff($images, $previousImages)),
+                        'removedImages' => count(array_diff($previousImages, $images)),
+                        'videoChanged' => $previousVideo !== $videoUrl,
+                    ];
+                    $property['reviewHistory'] = is_array($property['reviewHistory'] ?? null)
+                        ? $property['reviewHistory'] : [];
+                    $property['reviewHistory'][] = [
+                        'action' => 'media_updated',
+                        'by' => $admin['id'] ?? null,
+                        'byName' => $admin['name'] ?? '',
+                        'detail' => $detail,
+                        'createdAt' => $property['updatedAt'],
+                    ];
+                    $data['properties'][$index] = $property;
+                    $this->appendAdminAudit($data, $admin, 'media_updated', 'properties', $id, $detail);
+                    return [
+                        'property' => $property,
+                        'removedUrls' => [
+                            ...array_values(array_diff($previousImages, $images)),
+                            ...($previousVideo && $previousVideo !== $videoUrl ? [$previousVideo] : []),
+                        ],
+                    ];
+                }
+                return null;
+            });
+            if (! $result) {
+                Storage::disk('public')->delete($storedPaths);
+                return response()->json(['error' => 'Property not found.'], 404);
+            }
+
+            $this->deleteUnreferencedPropertyMedia($store->read(), $result['removedUrls']);
+            return response()->json(['success' => true, 'property' => $result['property']]);
+        } catch (\Throwable $error) {
+            Storage::disk('public')->delete($storedPaths);
+            throw $error;
+        }
+    }
+
+    public function propertyMedia(string $filename): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $path = 'listing-media/'.basename($filename);
+        abort_unless(Storage::disk('public')->exists($path), 404);
+        return Storage::disk('public')->response($path);
+    }
+
+    private function validateListingMediaFile(\Illuminate\Http\UploadedFile $file, string $kind): void
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+        $mime = strtolower((string) $file->getMimeType());
+        $allowed = $kind === 'image'
+            ? ['jpg', 'jpeg', 'png', 'webp']
+            : ['mp4', 'mov'];
+        $allowedMime = $kind === 'image'
+            ? ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+            : ['video/mp4', 'video/quicktime'];
+        $transportMime = in_array($mime, ['application/octet-stream', 'binary/octet-stream'], true);
+        if (! in_array($extension, $allowed, true) || (! in_array($mime, $allowedMime, true) && ! $transportMime)) {
+            throw ValidationException::withMessages([
+                $kind === 'image' ? 'images' : 'video' => ['Allowed: JPG, PNG, WebP, MP4, MOV.'],
+            ]);
+        }
+        if ($file->getSize() > 300 * 1024 * 1024) {
+            throw ValidationException::withMessages([
+                $kind === 'image' ? 'images' : 'video' => ['Media files must be 300 MB or smaller.'],
+            ]);
+        }
+    }
+
+    private function propertyMediaUrl(string $filename): string
+    {
+        return '/api-legacy/api/admin/property-media/'.rawurlencode($filename);
+    }
+
+    private function deleteUnreferencedPropertyMedia(array $data, array $removedUrls): void
+    {
+        $toStoragePath = static function (mixed $value): ?string {
+            if (! is_string($value) || ! preg_match('~/api/admin/property-media/([A-Za-z0-9._-]+)$~', $value, $match)) {
+                return null;
+            }
+            return 'listing-media/'.basename($match[1]);
+        };
+        $removedPaths = array_unique(array_filter(array_map($toStoragePath, $removedUrls)));
+        foreach ($removedPaths as $path) {
+            $stillUsed = false;
+            foreach ($data['properties'] ?? [] as $property) {
+                $references = [
+                    ...(is_array($property['images'] ?? null) ? $property['images'] : []),
+                    $property['videoUrl'] ?? null,
+                ];
+                foreach ($references as $reference) {
+                    $url = is_array($reference) ? ($reference['url'] ?? null) : $reference;
+                    if ($toStoragePath($url) === $path) {
+                        $stillUsed = true;
+                        break 2;
+                    }
+                }
+            }
+            if (! $stillUsed) Storage::disk('public')->delete($path);
+        }
     }
 
     public function moderateProperty(string $id, string $action, Request $request, LegacyDataStore $store): JsonResponse

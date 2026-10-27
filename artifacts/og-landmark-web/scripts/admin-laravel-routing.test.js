@@ -46,6 +46,7 @@ test('local Replit admin property queues and review actions use Laravel routes',
 
   await window.fetch('/api/admin/properties?approvalStatus=Pending');
   await window.fetch('/api/admin/properties/42/review');
+  await window.fetch('/api/admin/properties/42/media', { method: 'POST' });
   await window.fetch('/api/admin/properties/42/approve', { method: 'PATCH' });
   await window.fetch('/api/admin/properties/42/reject', { method: 'PATCH' });
   await window.fetch('/api/admin/properties/42/request-changes', { method: 'PATCH' });
@@ -54,6 +55,7 @@ test('local Replit admin property queues and review actions use Laravel routes',
   assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
     ['/api-legacy/api/admin/properties?approvalStatus=Pending', 'GET'],
     ['/api-legacy/api/admin/properties/42/review', 'GET'],
+    ['/api-legacy/api/admin/properties/42/media', 'POST'],
     ['/api-legacy/api/properties/42/approve', 'PATCH'],
     ['/api-legacy/api/properties/42/reject', 'PATCH'],
     ['/api-legacy/api/properties/42/request-changes', 'PATCH'],

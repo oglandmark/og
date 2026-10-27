@@ -74,6 +74,8 @@
       laravelPath = laravelRoot + '/admin/properties';
     } else if (/^\/api\/admin\/properties\/\d+\/review$/.test(pathname) && verb === 'GET') {
       laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
+    } else if (/^\/api\/admin\/properties\/\d+\/media$/.test(pathname) && verb === 'POST') {
+      laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
     } else if (/^\/api\/admin\/properties\/\d+\/(?:approve|reject|request-changes)$/.test(pathname)
       && verb === 'PATCH') {
       laravelPath = laravelRoot + pathname.replace('/api/admin/properties/', '/properties/');

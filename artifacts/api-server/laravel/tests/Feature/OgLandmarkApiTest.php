@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 final class OgLandmarkApiTest extends TestCase
@@ -166,6 +168,55 @@ final class OgLandmarkApiTest extends TestCase
             ->assertJsonPath('agent.visible', false);
 
         $this->withToken($token)->getJson('/api/mobile-agents')->assertJsonCount(0);
+    }
+
+    public function test_admin_property_media_upload_update_and_cleanup_use_laravel_storage(): void
+    {
+        Storage::fake('public');
+        $existingUrl = '/api-legacy/api/admin/property-media/old-photo.jpg';
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $data['properties'][0]['images'] = [$existingUrl];
+        $data['properties'][0]['coverImage'] = $existingUrl;
+        DB::table('app_data')->where('id', 1)->update(['data' => json_encode($data, JSON_THROW_ON_ERROR)]);
+        Storage::disk('public')->put('listing-media/old-photo.jpg', 'old photo');
+        $token = $this->adminToken();
+
+        $upload = $this->withToken($token)->post('/api/admin/properties/101/media', [
+            '_method' => 'PATCH',
+            'images' => json_encode([$existingUrl]),
+            'videoUrl' => '',
+            'newImages' => [UploadedFile::fake()->image('new-photo.jpg')],
+        ], ['Accept' => 'application/json'])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+        $photoUrl = $upload->json('property.images.1');
+        $this->assertStringStartsWith('/api-legacy/api/admin/property-media/', $photoUrl);
+        $filename = basename(parse_url($photoUrl, PHP_URL_PATH));
+        Storage::disk('public')->assertExists('listing-media/'.$filename);
+        Storage::disk('public')->assertExists('listing-media/old-photo.jpg');
+
+        $this->withToken($token)->patchJson('/api/admin/properties/101/media', [
+            'images' => [],
+            'videoUrl' => null,
+        ])->assertOk()->assertJsonPath('property.images', []);
+        Storage::disk('public')->assertMissing('listing-media/'.$filename);
+        Storage::disk('public')->assertMissing('listing-media/old-photo.jpg');
+    }
+
+    public function test_admin_property_media_rejects_unsupported_uploads_without_changing_media(): void
+    {
+        Storage::fake('public');
+        $token = $this->adminToken();
+
+        $this->withToken($token)->post('/api/admin/properties/101/media', [
+            '_method' => 'PATCH',
+            'images' => '[]',
+            'newImages' => [UploadedFile::fake()->create('script.txt', 2, 'text/plain')],
+        ], ['Accept' => 'application/json'])->assertUnprocessable();
+
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $this->assertEmpty($data['properties'][0]['images'] ?? []);
+        Storage::disk('public')->assertDirectoryEmpty('listing-media');
     }
 
     public function test_local_admin_routes_validate_the_existing_website_session_and_permissions(): void

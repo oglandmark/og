@@ -38,12 +38,15 @@ $registerRoutes = static function (): void {
             Route::patch('/admin/reports/{id}', [AdminController::class, 'updateReport']);
             Route::get('/admin/properties', [AdminController::class, 'properties']);
             Route::get('/admin/properties/{id}/review', [AdminController::class, 'propertyReview'])->whereNumber('id');
+            Route::patch('/admin/properties/{id}/media', [AdminController::class, 'updatePropertyMedia'])->whereNumber('id');
             Route::patch('/properties/{id}/{action}', [AdminController::class, 'moderateProperty'])
                 ->whereNumber('id')->whereIn('action', ['approve', 'reject', 'request-changes']);
             Route::get('/admin/mobile-agents', [AdminController::class, 'mobileAgents']);
             Route::patch('/admin/mobile-agents/{id}', [AdminController::class, 'updateMobileAgent']);
         });
     });
+    Route::get('/admin/property-media/{filename}', [AdminController::class, 'propertyMedia'])
+        ->where('filename', '[A-Za-z0-9._-]+');
 };
 
 // Keep direct API paths for local service testing and add the artifact's

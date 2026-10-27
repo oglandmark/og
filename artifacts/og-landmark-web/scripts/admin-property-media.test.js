@@ -16,14 +16,16 @@ test('Admin property editor can remove existing photos and upload replacements',
   assert.match(source, /data-edit-images/);
   assert.match(source, /Remove listing photo/);
   assert.match(source, /name="photoUploads" type="file"[^>]*multiple/);
-  assert.match(source, /request\('\/upload\/multiple', \{ method: 'POST', body: formData \}\)/);
-  assert.match(source, /images = \[\.\.\.images, \.\.\.uploadedUrls\]/);
+  assert.match(source, /mediaForm\.append\('newImages\[\]', file\)/);
+  assert.match(source, /request\(`\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}\/media`/);
+  assert.match(source, /mediaForm\.append\('images', JSON\.stringify\(images\)\)/);
 });
 
 test('Admin property editor can replace or remove a listing video', () => {
   assert.match(source, /name="videoUpload" type="file"/);
   assert.match(source, /name="removeVideo" type="checkbox"/);
-  assert.match(source, /request\('\/upload\/video', \{ method: 'POST', body: formData \}\)/);
+  assert.match(source, /mediaForm\.append\('video', videoFile\)/);
+  assert.match(source, /accept="\.mp4,\.mov"/);
   assert.match(source, /videoUrl = null/);
 });
 
@@ -84,4 +86,19 @@ test('Laravel validates and persists admin-edited map coordinates in both proper
   assert.match(apiController, /'lng' => \['sometimes', 'nullable', 'numeric', 'between:-180,180'\]/);
   assert.match(apiController, /\$location\['latitude'\] = \$lat/);
   assert.match(apiController, /\$location\['longitude'\] = \$lng/);
+});
+
+test('Laravel admin media route stores edits with moderation and the preview rewrites the media request', () => {
+  const routes = fs.readFileSync(
+    path.join(__dirname, '..', '..', 'api-server', 'laravel', 'routes', 'api.php'),
+    'utf8',
+  );
+  const controller = fs.readFileSync(
+    path.join(__dirname, '..', '..', 'api-server', 'laravel', 'app', 'Http', 'Controllers', 'Api', 'AdminController.php'),
+    'utf8',
+  );
+  assert.match(routes, /Route::patch\('\/admin\/properties\/\{id\}\/media', \[AdminController::class, 'updatePropertyMedia'\]\)/);
+  assert.match(controller, /A property can have at most 30 images/);
+  assert.match(controller, /deleteUnreferencedPropertyMedia/);
+  assert.match(controller, /action' => 'media_updated'/);
 });

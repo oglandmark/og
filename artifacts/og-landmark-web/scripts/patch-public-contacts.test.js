@@ -10,13 +10,13 @@ test('public website property and general-contact buttons use the shared contact
   const source = fs.readFileSync(bundlePath, 'utf8');
   const patched = patchPublicContacts(source);
 
-  assert.ok(patched.includes('https://wa.me/923011484303?text=${n}'));
-  assert.ok(patched.includes('https://wa.me/923011484303?text=I\'m interested in property #${n}'));
-  assert.ok(patched.includes('tel:03011484303'));
-  assert.ok(patched.includes('children:"03011484303"'));
-  assert.ok(patched.includes('+923011484303'));
+  assert.ok(patched.includes('https://wa.me/923272569000?text=${n}'));
+  assert.ok(patched.includes('https://wa.me/923272569000?text=I\'m interested in property #${n}'));
+  assert.ok(patched.includes('tel:03272569000'));
+  assert.ok(patched.includes('children:"03272569000"'));
+  assert.ok(patched.includes('+923272569000'));
   assert.ok(!patched.includes('+92 300 1234567'));
-  assert.ok(patched.includes('https://wa.me/923011484303'));
+  assert.ok(patched.includes('https://wa.me/923272569000'));
   assert.ok(patched.includes('tel:${d.phone}'), 'lead-record actions must keep the lead phone');
   assert.ok(patched.includes('wa.me/${d.phone.replace(/[^0-9]/g,"")}'));
   assert.ok(!patched.includes('wa.me/923001234567'));

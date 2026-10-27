@@ -18,7 +18,7 @@
 - [EAS pnpm and lockfile compatibility](eas-pnpm8-lockfile.md) — align the lockfile with the target build profile's explicit pnpm version, not only the root package-manager field.
 - [Expo preview native libraries](expo-preview-native-libraries.md) — Replit Expo preview needs the desktop libraries used by React Native DevTools; keep the root pnpm pin unset locally.
 - [Expo dependency alignment](expo-dependency-alignment.md) — package fixes can trigger mid-install Metro resolution errors; verify module resolution and the final bundle after installation finishes.
-- [Expo preview bundle resolver](expo-preview-bundle-resolver.md) — a proxied Expo web bundle can fail resolving expo-router when the artifact path is treated as a Metro module path; diagnose before changing workflows.
+- [Expo preview bundle routing](expo-preview-bundle-resolver.md) — native bundle URLs must use the Expo domain; web preview success alone does not verify Expo Go.
 - [Expo preview CLI prompt](expo-preview-cli-prompt.md) — a repeated Expo Go login prompt can coexist with a working web preview; verify `/status` and the artifact screenshot.
 - [Mobile preview verification](mobile-preview-verification.md) — splash-only screenshots do not verify app content; inspect the live feed and report visual-check limits.
 - [Native splash provider order](native-splash-provider-order.md) — native-only startup overlays must render inside every context provider they consume; web previews may hide this class of crash.
@@ -48,7 +48,7 @@
 - [Laravel config cache smoke checks](laravel-config-cache.md) — clear stale DB config before local overrides; health alone may not prove JsonStore reads the target.
 - [Normalized core storage](normalized-core-storage.md) — keep app accounts in `app_users`, preserve full payloads, and dual-write `app_data` for rollback.
 - [Play Store metadata claims](play-store-metadata.md) — keep OG Landmark store copy factual; Google rejected the “trusted” short and full description claims.
-- [Public contacts and listing pins](public-contact-and-listing-pins.md) — public property/agent call and WhatsApp use 03011484303; preserve account phones and selected coordinates.
+- [Public contacts and listing pins](public-contact-and-listing-pins.md) — use +923272569000 for OG Landmark public WhatsApp contacts; preserve personal account phones and selected coordinates.
 - [Browser admin extensions](browser-admin-extensions.md) — limit work to the website dashboard and necessary Laravel integration; sync and verify local preview.
 - [Public homepage preservation](public-homepage-preservation.md) — keep the original marketing page at `/`; do not replace it with a role portal.
 - [User-controlled app builds](build-approval.md) — do not start a new mobile build until the user explicitly authorizes it.

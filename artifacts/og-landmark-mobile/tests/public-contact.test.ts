@@ -8,15 +8,15 @@ import {
 } from '../lib/publicContact';
 
 test('public contact actions share the OG Landmark number', () => {
-  assert.equal(PUBLIC_CONTACT_PHONE, '03011484303');
-  assert.equal(PUBLIC_CONTACT_PHONE_E164, '+923011484303');
-  assert.equal(PUBLIC_CONTACT_WHATSAPP, '923011484303');
+  assert.equal(PUBLIC_CONTACT_PHONE, '03272569000');
+  assert.equal(PUBLIC_CONTACT_PHONE_E164, '+923272569000');
+  assert.equal(PUBLIC_CONTACT_WHATSAPP, '923272569000');
 });
 
 test('WhatsApp messages use the public number and are URL encoded', () => {
   assert.equal(
     publicWhatsAppUrl('I am interested in a house & land'),
-    'https://wa.me/923011484303?text=I%20am%20interested%20in%20a%20house%20%26%20land',
+    'https://wa.me/923272569000?text=I%20am%20interested%20in%20a%20house%20%26%20land',
   );
-  assert.equal(publicWhatsAppUrl(), 'https://wa.me/923011484303');
+  assert.equal(publicWhatsAppUrl(), 'https://wa.me/923272569000');
 });

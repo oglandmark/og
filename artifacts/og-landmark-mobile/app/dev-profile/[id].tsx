@@ -25,7 +25,7 @@ const DEMO_DEV = {
   activeProjects: 2,
   businessAreas: ['Okara City', 'Depalpur', 'Renala Khurd', 'Haveli Lakha'],
   website: '',
-  phone: '03011484303',
+  phone: '03272569000',
 };
 
 // ── Project mini-card ─────────────────────────────────────────────────────────

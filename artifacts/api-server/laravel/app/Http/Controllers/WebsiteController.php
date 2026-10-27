@@ -213,7 +213,7 @@ class WebsiteController extends Controller
                     'bio' => $agent['bio'] ?? $agent['description'] ?? null,
                     'experienceYears' => $agent['experienceYears'] ?? $agent['experience'] ?? null,
                     'specialties' => $agent['specialties'] ?? [],
-                    'publicPhone' => '03011484303',
+                    'publicPhone' => '03272569000',
                     'publicEmail' => $agent['publicEmail'] ?? null,
                 ];
             })

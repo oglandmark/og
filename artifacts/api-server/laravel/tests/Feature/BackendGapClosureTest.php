@@ -1068,7 +1068,7 @@ class BackendGapClosureTest extends TestCase
                 'id' => $index + 1,
                 'name' => $name,
                 'displayName' => $name,
-                'phone' => '03011484303',
+                'phone' => '03272569000',
             ];
         }
         $this->seedData(['mobileAgents' => $profiles]);
@@ -1119,7 +1119,7 @@ class BackendGapClosureTest extends TestCase
                 'id' => 99,
                 'name' => 'Ahmed Property Consultants',
                 'displayName' => 'Ahmed Property Consultants',
-                'phone' => '03011484303',
+                'phone' => '03272569000',
                 'photo' => '/uploads/custom-ahmed.jpg',
             ]],
             'cityAgents' => [],

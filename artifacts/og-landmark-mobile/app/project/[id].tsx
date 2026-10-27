@@ -390,8 +390,8 @@ export default function ProjectDetailScreen() {
       {/* ── QUICK ACTIONS ────────────────────────────────────────────────── */}
       <View style={[styles.quickActions, { backgroundColor: colors.secondary, borderBottomColor: colors.border }]}>
         {[
-          { icon: 'phone-call', label: 'Call Office', onPress: () => Linking.openURL(`tel:${devProject?.projectOfficePhone ?? '+923011484303'}`) },
-          { icon: 'message-circle', label: 'WhatsApp', onPress: () => Linking.openURL('https://wa.me/923011484303') },
+          { icon: 'phone-call', label: 'Call Office', onPress: () => Linking.openURL(`tel:${devProject?.projectOfficePhone ?? '+923272569000'}`) },
+          { icon: 'message-circle', label: 'WhatsApp', onPress: () => Linking.openURL('https://wa.me/923272569000') },
           { icon: 'calendar', label: 'Visit', onPress: () => setVisitOpen(true), highlight: true },
           { icon: 'map-pin', label: 'Directions', onPress: () => {
             const lat = devProject?.latitude ?? 30.8136;
@@ -734,7 +734,7 @@ export default function ProjectDetailScreen() {
       providerId={developerId}
       projectTitle={name}
       contactPerson={developer}
-      contactPhone={devProject?.projectOfficePhone ?? '03011484303'}
+      contactPhone={devProject?.projectOfficePhone ?? '03272569000'}
       location={location}
       buyerId={user?.id}
     />

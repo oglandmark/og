@@ -20,7 +20,7 @@ import {
 // ─── Base URL ──────────────────────────────────────────────────────────────────
 // Keep the rest of the mobile API on its existing origin. In Replit preview,
 // public property feeds use Laravel so locally uploaded media is testable.
-export const API_BASE = resolveApiBase();
+export const API_BASE = resolveApiBase(process.env.EXPO_PUBLIC_API_DOMAIN);
 const PROPERTY_FEED_API_BASE = resolveApiBase(process.env.EXPO_PUBLIC_DOMAIN);
 
 export function resolveMediaUrl(value?: string | null): string | undefined {
@@ -1397,7 +1397,7 @@ export async function toggleFeatureProperty(id: number, featured: boolean): Prom
 // ── Admin OTP login ──────────────────────────────────────────────────────────
 export async function adminVerify(
   email: string, password: string,
-): Promise<{ success: boolean; message?: string }> {
+): Promise<{ success: boolean; message?: string; user?: ApiUser; token?: string }> {
   return apiFetch('/api/auth/admin-verify', {
     method: 'POST',
     body: JSON.stringify({ email, password }),

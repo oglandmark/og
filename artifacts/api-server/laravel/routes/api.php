@@ -13,6 +13,7 @@ $registerRoutes = static function (): void {
     Route::get('/health', HealthController::class);
     Route::prefix('auth')->group(function (): void {
         Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+        Route::post('/admin-verify', [AuthController::class, 'adminVerify'])->middleware('throttle:10,1');
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::middleware(LegacyBearerAuth::class)->get('/me', [AuthController::class, 'me']);
     });

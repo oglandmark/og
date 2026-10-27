@@ -10,6 +10,87 @@ use Illuminate\Support\Facades\DB;
 
 final class AuthController extends Controller
 {
+    public function adminVerify(Request $request, LegacyDataStore $store): JsonResponse
+    {
+        if (! app()->environment('local') || app()->runningUnitTests()) {
+            return response()->json(['error' => 'Local preview admin sign-in is unavailable.'], 404);
+        }
+
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'max:320'],
+            'password' => ['required', 'string', 'max:1024'],
+        ]);
+        $configuredPassword = getenv('LOCAL_PREVIEW_ADMIN_PASSWORD');
+        if ($configuredPassword === false) {
+            $configuredPassword = env('LOCAL_PREVIEW_ADMIN_PASSWORD', '');
+        }
+        $configuredPassword = (string) $configuredPassword;
+        if ($configuredPassword === '') {
+            return response()->json(['error' => 'Local preview admin password is not configured.'], 503);
+        }
+        $email = mb_strtolower(trim($validated['email']));
+        if (
+            ! hash_equals($configuredPassword, $validated['password'])
+        ) {
+            return response()->json(['error' => 'Invalid email or password'], 401);
+        }
+
+        $user = $store->mutate(function (array &$data) use ($email, $configuredPassword): array {
+            $data['users'] = is_array($data['users'] ?? null) ? $data['users'] : [];
+            $user = collect($data['users'])->first(
+                fn (array $candidate): bool => mb_strtolower(trim((string) ($candidate['email'] ?? ''))) === $email
+            );
+            $salt = bin2hex(random_bytes(16));
+            $passwordHash = 'pbkdf2:'.$salt.':'.hash_pbkdf2('sha512', $configuredPassword, $salt, 100000, 128);
+            if ($user) {
+                $user['password'] = $passwordHash;
+                $user['role'] = 'Admin';
+                $user['status'] = 'Active';
+                foreach ($data['users'] as $index => $existing) {
+                    if ((string) ($existing['id'] ?? '') === (string) ($user['id'] ?? '')) {
+                        $data['users'][$index] = $user;
+                        break;
+                    }
+                }
+                return $user;
+            }
+
+            $id = max(array_map(
+                static fn (array $existing): int => (int) ($existing['id'] ?? 0),
+                $data['users'] ?: [['id' => 0]]
+            )) + 1;
+            $user = [
+                'id' => $id,
+                'name' => 'Local Preview Admin',
+                'email' => $email,
+                'username' => 'local_preview_admin',
+                'password' => $passwordHash,
+                'role' => 'Admin',
+                'status' => 'Active',
+                'approvalStatus' => 'Approved',
+                'verificationStatus' => 'verified',
+                'createdAt' => now()->toIso8601String(),
+            ];
+            $data['users'][] = $user;
+            return $user;
+        });
+
+        $token = rtrim(strtr(base64_encode(random_bytes(48)), '+/', '-_'), '=');
+        $ttlHours = max(1, (int) config('app.session_ttl_hours', env('SESSION_TTL_HOURS', 168)));
+        DB::table('auth_sessions')->insert([
+            'token_hash' => hash('sha256', $token),
+            'user_id' => (int) $user['id'],
+            'expires_at' => now()->addHours($ttlHours),
+            'created_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'user' => $this->publicUser($user),
+            'token' => $token,
+        ]);
+    }
+
     public function login(Request $request, LegacyDataStore $store): JsonResponse
     {
         $validated = $request->validate([

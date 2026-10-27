@@ -231,12 +231,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ): Promise<{ success: boolean; error?: string; otpRequired?: boolean }> => {
     try {
       const res = await adminVerify(email, password);
+      if (res.token && res.user) {
+        const mapped = { ...mapApiUser(res.user), role: 'admin' as const, verificationStatus: 'verified' as const };
+        await login(mapped);
+        await setToken(res.token);
+        return { success: true, otpRequired: false };
+      }
       if (res.success) return { success: true, otpRequired: true };
       return { success: false, error: 'Invalid admin credentials' };
     } catch (err: unknown) {
       return { success: false, error: err instanceof Error ? err.message : 'Verification failed' };
     }
-  }, []);
+  }, [login]);
 
   // ── Admin: step 2 — verify OTP, complete login ───────────────────────────────
   const verifyAdminOtp = useCallback(async (

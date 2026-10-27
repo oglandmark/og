@@ -12,7 +12,7 @@ paths = [ "/api-legacy/api" ]
 localPort = 8000
 
 [services.development]
-run = "cd laravel && php artisan serve --host=0.0.0.0 --port=$PORT"
+run = "cd laravel && php artisan serve --no-reload --host=0.0.0.0 --port=$PORT"
 
 [services.env]
 PORT = "8000"

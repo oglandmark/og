@@ -38,8 +38,12 @@ export default function AdminLoginScreen() {
     const res = await loginAdmin(email.trim(), password);
     setLoading(false);
     if (res.success) {
-      setStep('otp');
-      setTimeout(() => otpRef.current?.focus(), 400);
+      if (res.otpRequired === false) {
+        router.replace('/admin/' as any);
+      } else {
+        setStep('otp');
+        setTimeout(() => otpRef.current?.focus(), 400);
+      }
     } else {
       Alert.alert('Access Denied', res.error || 'Invalid admin credentials.');
     }
@@ -90,7 +94,7 @@ export default function AdminLoginScreen() {
           {step === 'credentials' ? (
             <>
               <Text style={s.title}>Admin Sign In</Text>
-              <Text style={s.hint}>Enter your admin credentials to receive an OTP.</Text>
+              <Text style={s.hint}>Enter your admin credentials. An email OTP may be required.</Text>
 
               <Text style={s.label}>Email Address</Text>
               <TextInput

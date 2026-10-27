@@ -156,34 +156,6 @@ storage_version_token = "1792601583185710"
 content_type = "application/octet-stream"
 
 [[outputs]]
-id = "swPUiEP9Kl1T8CKDVq00S"
-uri = "file://generated-artifacts/OG-Landmark-Website-Source-2026-10-21.zip"
-type = "unspecified"
-title = "OG Landmark Website Source Package"
-description = "Current website project files, public pages/assets, Node.js serving/API code, admin scripts, database schema, tests, and setup notes. Secrets and local runtime data are excluded."
-logical_id = "06398d83-01b7-4e04-9816-24c33906d087"
-content_hash = "sha256:f27d97faf938d348ec2499dd339e62cee84ba7c2cf83e2d425e7074d8fa82f71"
-size = 10080793
-mtime_ms = 1792604809098
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/06398d83-01b7-4e04-9816-24c33906d087/64838913-d74c-4b96-b55d-75fc7788cee6"
-storage_version_token = "1792604821982039"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "SXHXs4Vw4v5aVeB2ejTze"
-uri = "file://generated-artifacts/OG-Landmark-Website-Frontend-2026-10-25.zip"
-type = "unspecified"
-title = "OG Landmark Website Frontend ZIP"
-description = "Current Hostinger-ready website package; excludes private runtime data, uploads, dependencies, and Replit lockfiles."
-logical_id = "d3883ed0-0863-4af5-9e41-3e4a13557b0d"
-content_hash = "sha256:ef316b1eb5eb987b8f7fd6db4322d5d153e50df94f6e763fecd8dc78f2e3dae8"
-size = 9989081
-mtime_ms = 1792947469153
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/d3883ed0-0863-4af5-9e41-3e4a13557b0d/d3ec722f-fcac-47ed-997d-dbcd65b49fbf"
-storage_version_token = "1792947512107794"
-content_type = "application/octet-stream"
-
-[[outputs]]
 id = "8cQrpFkIX4ApQ6vzPi7vz"
 uri = "file://generated-artifacts/OG-Landmark-Laravel-Backend-2026-10-25.zip"
 type = "unspecified"

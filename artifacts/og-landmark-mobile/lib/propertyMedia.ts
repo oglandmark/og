@@ -11,14 +11,22 @@ export function resolveMediaUrl(
   if (!value) return undefined;
 
   const base = apiBase.replace(/\/+$/, '');
+  let baseUrl: URL;
+  try {
+    baseUrl = new URL(base);
+  } catch {
+    return value;
+  }
   const canonicalFirstPartyUrl = value.replace(
     /^https?:\/\/(?:www\.)?oglandmark\.com(?=\/|$)/i,
-    base,
+    'https://www.oglandmark.com',
   );
-  if (canonicalFirstPartyUrl !== value) return canonicalFirstPartyUrl;
+  if (canonicalFirstPartyUrl !== value) {
+    return baseUrl.hostname.endsWith('oglandmark.com') ? canonicalFirstPartyUrl : value;
+  }
   if (/^[a-z][a-z\d+.-]*:/i.test(value)) return value;
   if (value.startsWith('//')) return `https:${value}`;
-  return `${base}${value.startsWith('/') ? value : `/${value}`}`;
+  return new URL(value.startsWith('/') ? value : `/${value}`, `${baseUrl.origin}/`).toString();
 }
 
 export function normalizePropertyMedia<T extends PropertyMediaFields>(

@@ -177,6 +177,7 @@ final class OgLandmarkApiTest extends TestCase
         $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
         $data['properties'][0]['images'] = [$existingUrl];
         $data['properties'][0]['coverImage'] = $existingUrl;
+        $data['properties'][1]['videoUrl'] = 'https://www.oglandmark.com/images/uploads/production-tour.mp4';
         DB::table('app_data')->where('id', 1)->update(['data' => json_encode($data, JSON_THROW_ON_ERROR)]);
         Storage::disk('public')->put('listing-media/old-photo.jpg', 'old photo');
         $token = $this->adminToken();
@@ -202,11 +203,27 @@ final class OgLandmarkApiTest extends TestCase
         Storage::disk('public')->assertExists('listing-media/'.$filename);
         Storage::disk('public')->assertExists('listing-media/'.$videoFilename);
         Storage::disk('public')->assertExists('listing-media/old-photo.jpg');
+
+        $this->getJson('/api-legacy/api/properties')
+            ->assertOk()
+            ->assertJsonPath('0.videoUrl', $videoUrl);
+        $this->getJson('/api-legacy/api/properties/101')
+            ->assertOk()
+            ->assertJsonPath('videoUrl', $videoUrl);
+        $this->withToken($token)->getJson('/api-legacy/api/admin/properties')
+            ->assertOk()
+            ->assertJsonPath('0.videoUrl', $videoUrl)
+            ->assertJsonPath('1.videoUrl', 'https://www.oglandmark.com/images/uploads/production-tour.mp4');
+
+        $this->get($videoUrl)
+            ->assertOk()
+            ->assertStreamedContent('0123456789');
         $this->get($videoUrl, ['Range' => 'bytes=0-3'])
             ->assertStatus(206)
             ->assertHeader('Accept-Ranges', 'bytes')
             ->assertHeader('Content-Range', 'bytes 0-3/10')
-            ->assertHeader('Content-Length', '4');
+            ->assertHeader('Content-Length', '4')
+            ->assertStreamedContent('0123');
 
         $this->withToken($token)->patchJson('/api/admin/properties/101/media', [
             'images' => [],

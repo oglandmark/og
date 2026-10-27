@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { normalizePropertyMedia, resolveMediaUrl } from '../lib/propertyMedia';
 
 const API_BASE = 'https://www.oglandmark.com';
+const propertyModelSource = readFileSync(new URL('../lib/properties.ts', import.meta.url), 'utf8');
 
 test('resolves relative listing media paths to absolute mobile-safe URLs', () => {
   assert.equal(
@@ -49,4 +51,25 @@ test('keeps external media hosts and canonicalizes OG Landmark URLs', () => {
     'https://media.example.com/house.jpg',
   );
   assert.equal(resolveMediaUrl(null, API_BASE), undefined);
+});
+
+test('resolves Laravel preview media at the preview origin without changing production media', () => {
+  const previewApiBase = 'https://preview.replit.dev/api-legacy';
+  assert.equal(
+    resolveMediaUrl('/api-legacy/api/admin/property-media/tour.mp4', previewApiBase),
+    'https://preview.replit.dev/api-legacy/api/admin/property-media/tour.mp4',
+  );
+  assert.equal(
+    resolveMediaUrl('https://www.oglandmark.com/images/uploads/existing-tour.mp4', previewApiBase),
+    'https://www.oglandmark.com/images/uploads/existing-tour.mp4',
+  );
+  assert.equal(
+    resolveMediaUrl('https://cdn.example.com/existing-tour.mp4', previewApiBase),
+    'https://cdn.example.com/existing-tour.mp4',
+  );
+});
+
+test('mobile API property mapping carries video URLs into the playback model', () => {
+  assert.match(propertyModelSource, /videoUrl\?: string \| null/);
+  assert.match(propertyModelSource, /videoUrl:\s*resolveMediaUrl\(ap\.videoUrl,\s*API_BASE\)/);
 });

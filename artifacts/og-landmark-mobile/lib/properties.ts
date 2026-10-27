@@ -1,5 +1,6 @@
 import type { ImageSourcePropType } from 'react-native';
 import { API_BASE } from '@/lib/api';
+import { resolveMediaUrl } from '@/lib/propertyMedia';
 
 export type Property = {
   id: number;
@@ -880,6 +881,7 @@ export function apiPropertyToProperty(ap: {
   id?: number | null; title?: string | null; type?: string | null;
    status?: string | null; approvalStatus?: string | null; listingStatus?: string | null;
    isDemo?: boolean | null; price?: number | null;
+   videoUrl?: string | null;
   area?: number | null; areaUnit?: string | null;
   bedrooms?: number | null; bathrooms?: number | null;
   city?: string | null; address?: string | null;
@@ -955,6 +957,7 @@ export function apiPropertyToProperty(ap: {
     description: ap.description?.trim() || '',
     image,
     gallery,
+    videoUrl: resolveMediaUrl(ap.videoUrl, API_BASE),
     featured:    ap.featured === true,
     recommended: ap.recommended === true,
     createdAt:   ap.createdAt || undefined,

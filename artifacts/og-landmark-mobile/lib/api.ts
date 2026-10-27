@@ -18,15 +18,17 @@ import {
 } from './propertyMedia';
 
 // ─── Base URL ──────────────────────────────────────────────────────────────────
-// API base is selected once so every request and media URL uses the same data source.
+// Keep the rest of the mobile API on its existing origin. In Replit preview,
+// public property feeds use Laravel so locally uploaded media is testable.
 export const API_BASE = resolveApiBase();
+const PROPERTY_FEED_API_BASE = resolveApiBase(process.env.EXPO_PUBLIC_DOMAIN);
 
 export function resolveMediaUrl(value?: string | null): string | undefined {
   return resolveMediaUrlForBase(value, API_BASE);
 }
 
-function normalizeApiProperty(property: ApiProperty): ApiProperty {
-  return normalizePropertyMedia(property, API_BASE);
+function normalizeApiProperty(property: ApiProperty, apiBase = API_BASE): ApiProperty {
+  return normalizePropertyMedia(property, apiBase);
 }
 
 const TOKEN_KEY = '@og-landmark/api-token';
@@ -64,6 +66,7 @@ export async function apiRequest<T>(
   options: RequestInit = {},
   withAuth = true,
   timeoutMs = FETCH_TIMEOUT_MS,
+  apiBase = API_BASE,
 ): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -78,7 +81,7 @@ export async function apiRequest<T>(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetch(`${API_BASE}${path}`, {
+    const res = await fetch(`${apiBase}${path}`, {
       ...options,
       headers,
       signal: controller.signal,
@@ -108,6 +111,10 @@ export async function apiRequest<T>(
 }
 
 const apiFetch = apiRequest;
+
+function propertyFeedFetch<T>(path: string): Promise<T> {
+  return apiRequest<T>(path, {}, false, FETCH_TIMEOUT_MS, PROPERTY_FEED_API_BASE);
+}
 
 // Multipart fetch (for file uploads). Media uploads get a longer timeout than
 // normal JSON requests because a phone may be sending a large video over a
@@ -500,8 +507,8 @@ export async function getProperties(filters: PropertiesFilter = {}): Promise<Api
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([k, v]) => { if (v !== undefined) params.set(k, String(v)); });
   const qs = params.toString();
-  const properties = await apiFetch<ApiProperty[]>(`/api/properties${qs ? `?${qs}` : ''}`, {}, false);
-  return properties.map(normalizeApiProperty);
+  const properties = await propertyFeedFetch<ApiProperty[]>(`/api/properties${qs ? `?${qs}` : ''}`);
+  return properties.map((property) => normalizeApiProperty(property, PROPERTY_FEED_API_BASE));
 }
 
 /** Fetch one bounded page without loading the whole catalogue into memory. */
@@ -510,19 +517,22 @@ export async function getPropertiesPage(filters: PropertiesFilter = {}): Promise
   Object.entries(filters).forEach(([k, v]) => { if (v !== undefined) params.set(k, String(v)); });
   params.set('response', 'page');
   const qs = params.toString();
-  const response = await apiFetch<PropertyPage | ApiProperty[]>(`/api/properties?${qs}`, {}, false);
+  const response = await propertyFeedFetch<PropertyPage | ApiProperty[]>(`/api/properties?${qs}`);
   if (Array.isArray(response)) {
     const offset = Number(filters.offset ?? 0);
     const limit = Number(filters.limit ?? response.length);
     return {
-      items: response.map(normalizeApiProperty),
+      items: response.map((property) => normalizeApiProperty(property, PROPERTY_FEED_API_BASE)),
       total: offset + response.length,
       offset,
       limit,
       hasMore: false,
     };
   }
-  return { ...response, items: response.items.map(normalizeApiProperty) };
+  return {
+    ...response,
+    items: response.items.map((property) => normalizeApiProperty(property, PROPERTY_FEED_API_BASE)),
+  };
 }
 
 /**
@@ -549,7 +559,10 @@ export async function getNearbyProperties(
 }
 
 export async function getProperty(id: number): Promise<ApiProperty> {
-  return normalizeApiProperty(await apiFetch<ApiProperty>(`/api/properties/${id}`, {}, false));
+  return normalizeApiProperty(
+    await propertyFeedFetch<ApiProperty>(`/api/properties/${id}`),
+    PROPERTY_FEED_API_BASE,
+  );
 }
 
 export async function incrementView(id: number): Promise<void> {
@@ -994,7 +1007,7 @@ export async function deleteProperty(id: number): Promise<void> {
 // Returns the logged-in user's own properties — ALL approval statuses (Pending/Active/Rejected)
 export async function getMyProperties(): Promise<ApiProperty[]> {
   const properties = await apiFetch<ApiProperty[]>('/api/my-properties');
-  return properties.map(normalizeApiProperty);
+  return properties.map((property) => normalizeApiProperty(property));
 }
 
 // ─── Offers ───────────────────────────────────────────────────────────────────
@@ -1211,7 +1224,7 @@ export async function getAdminProperties(
   const properties = await apiFetch<ApiProperty[]>(
     `/api/admin/properties${qs.toString() ? `?${qs}` : ''}`,
   );
-  return properties.map(normalizeApiProperty);
+  return properties.map((property) => normalizeApiProperty(property));
 }
 
 export async function verifyAdminProperty(id: number): Promise<void> {

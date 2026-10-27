@@ -32,7 +32,7 @@ final class AuthController extends Controller
         if (
             ! hash_equals($configuredPassword, $validated['password'])
         ) {
-            return response()->json(['error' => 'Invalid email or password'], 401);
+            return response()->json(['error' => 'Invalid local preview credentials'], 401);
         }
 
         $user = $store->mutate(function (array &$data) use ($email, $configuredPassword): array {

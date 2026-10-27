@@ -20,7 +20,8 @@ import {
 // ─── Base URL ──────────────────────────────────────────────────────────────────
 // Keep the rest of the mobile API on its existing origin. In Replit preview,
 // public property feeds use Laravel so locally uploaded media is testable.
-export const API_BASE = resolveApiBase(process.env.EXPO_PUBLIC_API_DOMAIN);
+const previewApiDomain = process.env.EXPO_PUBLIC_API_DOMAIN || process.env.EXPO_PUBLIC_DOMAIN;
+export const API_BASE = resolveApiBase(previewApiDomain);
 const PROPERTY_FEED_API_BASE = resolveApiBase(process.env.EXPO_PUBLIC_DOMAIN);
 
 export function resolveMediaUrl(value?: string | null): string | undefined {

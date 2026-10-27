@@ -3020,6 +3020,12 @@ app.post('/api/auth/admin-verify', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    if (localPreview && process.env.APP_ENV === 'local') {
+      const safe = toPublicUser(user);
+      const token = await createSession(user);
+      return res.json({ success: true, user: safe, token });
+    }
+
     // Generate OTP
     const otp = generateOTP();
     await saveChallenge(email.toLowerCase(), 'admin-login', otp, 5);

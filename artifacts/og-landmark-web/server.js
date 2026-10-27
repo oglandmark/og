@@ -9,7 +9,6 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const { Readable } = require('stream');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -325,130 +324,17 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const authRateBuckets = new Map();
 const replitPreview = Boolean(process.env.REPLIT_DEV_DOMAIN);
-const previewApiUrl = String(process.env.LARAVEL_API_PREVIEW_URL || '').trim().replace(/\/+$/, '');
-const configuredApiUrl = String(process.env.LARAVEL_API_URL || '').trim().replace(/\/+$/, '');
-const laravelApiUrl = replitPreview && previewApiUrl ? previewApiUrl : configuredApiUrl;
-const laravelWebUrl = String(process.env.LARAVEL_WEB_URL || '').trim().replace(/\/+$/, '');
 
-// Public legal URLs stay available from the local static pages even when the
-// optional Laravel website preview proxy is unavailable.
+// Public legal URLs stay available from the local static pages.
 const legalPagesDir = path.join(__dirname, 'public/pages');
 app.get('/privacy-policy', (req, res) => res.sendFile(path.join(legalPagesDir, 'privacy-policy.html')));
 app.get('/privacy', (req, res) => res.sendFile(path.join(legalPagesDir, 'privacy-policy.html')));
 app.get(['/account-deletion', '/data-deletion'], (req, res) => res.sendFile(path.join(legalPagesDir, 'account-deletion.html')));
 
-// Preview Laravel-rendered website pages without changing the existing /api
-// upstream. Clearing LARAVEL_WEB_URL restores the original Node/React routes.
-if (laravelWebUrl) {
-  const webBase = new URL(laravelWebUrl);
-  app.use(async (req, res, next) => {
-    if (req.path === '/api' || req.path.startsWith('/api/')) return next();
-
-    const browserHost = req.headers['x-forwarded-host'] || req.headers.host || '';
-    const forwardedProto = req.headers['x-forwarded-proto']
-      || (/^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(browserHost) ? 'http' : 'https');
-    const target = `${laravelWebUrl}${req.originalUrl}`;
-
-    try {
-      const headers = { ...req.headers };
-      delete headers.host;
-      delete headers.connection;
-      headers['x-forwarded-host'] = browserHost;
-      headers['x-forwarded-proto'] = forwardedProto;
-      headers['x-forwarded-port'] = req.headers['x-forwarded-port'] || (forwardedProto === 'https' ? '443' : '80');
-      headers['x-forwarded-for'] = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-
-      const hasBody = !['GET', 'HEAD'].includes(req.method);
-      const upstream = await fetch(target, {
-        method: req.method,
-        headers,
-        body: hasBody ? req : undefined,
-        duplex: hasBody ? 'half' : undefined,
-        redirect: 'manual',
-      });
-
-      res.status(upstream.status);
-      upstream.headers.forEach((value, key) => {
-        if (!['connection', 'content-encoding', 'content-length', 'transfer-encoding', 'set-cookie'].includes(key)) {
-          res.setHeader(key, value);
-        }
-      });
-      const cookies = upstream.headers.getSetCookie?.() || [];
-      if (cookies.length) res.setHeader('set-cookie', cookies);
-
-      if (upstream.body) {
-        Readable.fromWeb(upstream.body).pipe(res);
-      } else {
-        res.end();
-      }
-    } catch (error) {
-      console.error(`Laravel website preview proxy failed: ${error.message}`);
-      res.status(502).send('Laravel website preview is unavailable.');
-    }
-  });
-}
-
-// Keep the public website on this Node process while allowing its existing
-// /api/* origin to be switched to Laravel with one environment change. The
-// proxy is opt-in so removing LARAVEL_API_URL is an immediate rollback to the
-// legacy API.
 if (replitPreview) {
   // Replit preview requests, including old admin-tab URLs, stay on local APIs.
   app.use('/admin-live-api', (req, res) => {
     res.redirect(307, `/api${req.url}`);
-  });
-}
-if (laravelApiUrl) {
-  // Handle browser preflight locally; the upstream API allowlist does not
-  // include Replit preview origins.
-  app.use('/api', cors({ origin: '*' }));
-  app.use('/api', (req, res, next) => {
-    if (req.method === 'POST' && req.originalUrl.split('?')[0] === '/api/auth/register') {
-      return express.json({ limit: '10mb' })(req, res, next);
-    }
-    return next();
-  });
-  app.use('/api', async (req, res) => {
-    const isRegistrationRequest = req.method === 'POST'
-      && req.originalUrl.split('?')[0] === '/api/auth/register';
-    if (isRegistrationRequest) {
-      const phone = String(req.body?.phone ?? '').trim();
-      if (!phone) return res.status(400).json({ error: 'Mobile number is required to register.', code: 'MOBILE_REQUIRED' });
-      if (!isValidPhone(phone)) return res.status(400).json({ error: 'Please enter a valid mobile number.', code: 'INVALID_MOBILE' });
-    }
-    const target = `${laravelApiUrl}${req.originalUrl}`;
-    try {
-      const headers = { ...req.headers };
-      delete headers.host;
-      delete headers.connection;
-      if (isRegistrationRequest) delete headers['content-length'];
-      const hasBody = !['GET', 'HEAD'].includes(req.method);
-      const requestBody = hasBody ? (isRegistrationRequest ? JSON.stringify(req.body) : req) : undefined;
-      const upstream = await fetch(target, {
-        method: req.method,
-        headers,
-        body: requestBody,
-        duplex: hasBody && !isRegistrationRequest ? 'half' : undefined,
-        redirect: 'manual',
-      });
-      res.status(upstream.status);
-      upstream.headers.forEach((value, key) => {
-        if (
-          !['connection', 'content-encoding', 'content-length', 'transfer-encoding'].includes(key) &&
-          !key.toLowerCase().startsWith('access-control-')
-        ) {
-          res.setHeader(key, value);
-        }
-      });
-      if (upstream.body) {
-        Readable.fromWeb(upstream.body).pipe(res);
-      } else {
-        res.end();
-      }
-    } catch (error) {
-      console.error(`Laravel API proxy failed: ${error.message}`);
-      res.status(502).json({ error: 'Laravel API is unavailable.', code: 'LARAVEL_API_UNAVAILABLE' });
-    }
   });
 }
 
@@ -6534,15 +6420,6 @@ app.get('*', (req, res) => {
 // until initDb succeeds, and the exact failure is visible in the app log.
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`OG Landmark listening on ${PORT}`);
-  if (laravelWebUrl) {
-    console.log('Laravel website preview proxy enabled; /api remains on its configured upstream.');
-  }
-  if (laravelApiUrl) {
-    console.log(
-      `Laravel API proxy enabled (${replitPreview && previewApiUrl ? 'local Replit preview API' : 'configured upstream'}); skipping legacy Node database, mail, and scheduler startup.`
-    );
-    return;
-  }
   setInterval(processScheduledAnnouncements, 30_000);
   verifySmtpConnection();
   initDb()

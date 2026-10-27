@@ -43,7 +43,7 @@
 - [MySQL migration safety](mysql-migration-safety.md) — production cutover requires a verified live snapshot, protected empty-target import, and source/target parity checks.
 - [MySQL projection parity](mysql-projection-parity.md) — mirrored search projections must keep schema, migration, runtime bindings, and export copies aligned; validate batch placeholder counts before deploy.
 - [Mobile property inventory accuracy](nearby-results-fallback.md) — public mobile screens show only Admin-approved active API listings; never surface bundled demos.
-- [Laravel backend cutover](laravel-backend-cutover.md) — preserve the API contract and verify browser-facing proxy paths separately from the local API listener.
+- [Fresh Laravel backend](laravel-backend-cutover.md) — rebuild the backend later while preserving the existing React website and mobile app.
 - [Production API version parity](production-api-version-parity.md) — verify production endpoints directly; Replit preview may use a separate local API and diverge from Hostinger.
 - [Laravel config cache smoke checks](laravel-config-cache.md) — clear stale DB config before local overrides; health alone may not prove JsonStore reads the target.
 - [Normalized core storage](normalized-core-storage.md) — keep app accounts in `app_users`, preserve full payloads, and dual-write `app_data` for rollback.

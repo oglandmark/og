@@ -19,6 +19,7 @@ const {
   deleteAccountData,
   removeUnreferencedAccountMedia,
 } = require('./account-data-deletion');
+const { importApprovedLegacyAgents } = require('./mobile-agent-directory-migration');
 const {
   provider: databaseProvider,
   configured: databaseConfigured,
@@ -653,7 +654,7 @@ function getDefaultMobileAgents() {
 
 function ensureMobileAgents(data) {
   if (!Array.isArray(data.mobileAgents)) {
-    data.mobileAgents = getDefaultMobileAgents();
+    data.mobileAgents = [];
     return true;
   }
   return false;
@@ -748,7 +749,7 @@ function getSeedData() {
       { id: 3, title: 'Agricultural Land Investment in Punjab: A Growing Opportunity', excerpt: 'Why agricultural land in Punjab districts like Okara, Sahiwal, and Faisalabad is attracting urban investors.', content: "<p>Agricultural land in Okara district, known for its fertile soil and canal irrigation, has appreciated 25% in three years. OG Landmark specializes in agricultural land in the Depalpur-Okara region.</p>", author: 'OG Landmark', category: 'Investment', image: '/images/blog-1.jpg', published: true, views: 560, createdAt: '2024-02-01' },
     ],
     savedProperties: {},  // { userId: [propertyId, ...] }
-    mobileAgents: getDefaultMobileAgents(),
+    mobileAgents: [],
     cityAgents: [
       { id: 1, city: 'Okara',               name: 'Muhammad Asif',   phone: '03001234567', whatsapp: '923001234567', active: true },
       { id: 2, city: 'Depalpur',            name: 'Zahid Hussain',   phone: '03011234567', whatsapp: '923011234567', active: true },
@@ -963,7 +964,9 @@ async function readData() {
   if (!dbQuery) {
     if (!localPreview) throw new Error('A production database connection is not configured.');
     const data = JSON.parse(fs.readFileSync(fallbackFile, 'utf8'));
-    const changed = ensureMobileAgents(data) || ensurePropertyRecords(data);
+    let changed = ensureMobileAgents(data);
+    changed = importApprovedLegacyAgents(data).changed || changed;
+    changed = ensurePropertyRecords(data) || changed;
     if (changed) {
       // The JSON fallback and MySQL app_data both use the same canonical
       // property shape after the first read.
@@ -980,6 +983,7 @@ async function readData() {
     // Table exists but empty — seed it
     const seed = getSeedData();
     seed.users.forEach(u => { u.password = hashPassword(u.password); });
+    importApprovedLegacyAgents(seed);
     await dbQuery`INSERT INTO app_data (id, data) VALUES (1, ${JSON.stringify(seed)})`;
     console.log('✅ Database seeded from readData fallback');
     return seed;
@@ -987,6 +991,7 @@ async function readData() {
   const data = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
   const notificationCollectionsChanged = ensureNotificationCollections(data);
   const mobileAgentsAdded = ensureMobileAgents(data);
+  const legacyAgentsImported = importApprovedLegacyAgents(data).changed;
   const propertyRecordsChanged = ensurePropertyRecords(data);
   // Migrate plain-text passwords to hashed on first read (backwards compat)
   let migrated = false;
@@ -996,7 +1001,7 @@ async function readData() {
       migrated = true;
     }
   });
-  if (migrated || notificationCollectionsChanged || mobileAgentsAdded || propertyRecordsChanged) await writeData(data);
+  if (migrated || notificationCollectionsChanged || mobileAgentsAdded || legacyAgentsImported || propertyRecordsChanged) await writeData(data);
   return data;
 }
 
@@ -2541,7 +2546,9 @@ app.get('/api/mobile-agents', async (req, res) => {
   try {
     const data = await readData();
     let agents = (data.mobileAgents || []).filter(a =>
-      a.visible !== false && a.status !== 'Suspended' && a.approvalStatus !== 'Rejected'
+      a.visible !== false
+      && String(a.status || '').toLowerCase() === 'active'
+      && String(a.approvalStatus || '').toLowerCase() === 'approved'
     );
     if (req.query.city) {
       const city = String(req.query.city).toLowerCase();

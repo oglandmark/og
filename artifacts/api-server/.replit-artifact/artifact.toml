@@ -8,7 +8,7 @@ router = "path"
 
 [[services]]
 name = "laravel"
-paths = [ "/" ]
+paths = [ "/api-legacy/api" ]
 localPort = 8000
 
 [services.development]

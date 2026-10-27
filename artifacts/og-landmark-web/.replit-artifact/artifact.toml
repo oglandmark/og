@@ -26,4 +26,3 @@ to = "/index.html"
 [services.env]
 PORT = "25189"
 BASE_PATH = "/"
-LARAVEL_API_PREVIEW_URL = "http://127.0.0.1:8080"

@@ -1,3 +1,30 @@
 uploads = []
 generated = []
-outputs = []
+
+[[outputs]]
+id = "kn9yOvGL6O-d-oTguC7x6"
+uri = "file://generated-artifacts/og-landmark-website-frontend-source.zip"
+type = "unspecified"
+title = "OG Landmark website frontend source"
+description = "Frontend source ZIP with public website assets and React/Vite source; excludes backend, secrets, dependencies, and runtime data."
+logical_id = "7eabe138-969e-466e-818f-4c2be3202ed4"
+content_hash = "sha256:5955247cd0288effad1645f279aba264922cfd84d45ea79ab4240eedc590f70c"
+size = 10052023
+mtime_ms = 1793122705923
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/7eabe138-969e-466e-818f-4c2be3202ed4/16073e46-492a-4a52-9f33-e6f552888ddf"
+storage_version_token = "1793122728512853"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "_56bVnj6AzloyvEVi_qNO"
+uri = "file://generated-artifacts/og-landmark-laravel-api-backend-source.zip"
+type = "unspecified"
+title = "OG Landmark Laravel API backend source"
+description = "Laravel API source ZIP with Composer lockfile and deployment guide; excludes .env, vendor, local database, and runtime files."
+logical_id = "34edd05b-24bc-4af7-acf0-118f2fec37a3"
+content_hash = "sha256:c7ecfc7e1da9b2964a40ba6357dfcbd668c167f54f9c20a174b7ad8a0f628c72"
+size = 116892
+mtime_ms = 1793122706039
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/34edd05b-24bc-4af7-acf0-118f2fec37a3/66cecbe8-a6fb-42be-810b-75cb3098f0ec"
+storage_version_token = "1793122729915540"
+content_type = "application/octet-stream"

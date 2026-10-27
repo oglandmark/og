@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   LIVE_API_BASE,
+  getPreviewLiveProxyPath,
   resolveApiBase,
   shouldFallbackToLivePropertyFeed,
   shouldFallbackUnauthenticatedReadToLive,
@@ -35,4 +36,10 @@ test('only unauthenticated GET requests may fall back after a local 404', () => 
   assert.equal(shouldFallbackUnauthenticatedReadToLive(preview, 'GET', true, 404), false);
   assert.equal(shouldFallbackUnauthenticatedReadToLive(preview, 'GET', false, 500), false);
   assert.equal(shouldFallbackUnauthenticatedReadToLive(LIVE_API_BASE, 'GET', false, 404), false);
+});
+
+test('preview-only fallback routes stay on the same-origin Laravel service', () => {
+  assert.equal(getPreviewLiveProxyPath('/api/mobile/settings'), '/api/preview/live/mobile/settings');
+  assert.equal(getPreviewLiveProxyPath('/api/mobile/banners'), '/api/preview/live/mobile/banners');
+  assert.equal(getPreviewLiveProxyPath('/api/auth/admin-verify'), undefined);
 });

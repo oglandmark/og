@@ -13,6 +13,7 @@ import { fetch as expoFetch } from 'expo/fetch';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import {
   LIVE_API_BASE,
+  getPreviewLiveProxyPath,
   resolveApiBase,
   shouldFallbackToLivePropertyFeed,
   shouldFallbackUnauthenticatedReadToLive,
@@ -99,7 +100,10 @@ export async function apiRequest<T>(
       withAuth,
       res.status,
     )) {
-      res = await fetch(`${LIVE_API_BASE}${path}`, requestInit);
+      const previewProxyPath = getPreviewLiveProxyPath(path);
+      if (previewProxyPath) {
+        res = await fetch(`${apiBase}${previewProxyPath}`, requestInit);
+      }
     }
     clearTimeout(timer);
     if (!res.ok) {
@@ -141,7 +145,13 @@ async function propertyFeedFetch<T>(path: string): Promise<{ data: T; apiBase: s
   }
 
   return {
-    data: await apiRequest<T>(path, {}, false, FETCH_TIMEOUT_MS, LIVE_API_BASE),
+    data: await apiRequest<T>(
+      path.replace(/^\/api\/properties/, '/api/preview/live/properties'),
+      {},
+      false,
+      FETCH_TIMEOUT_MS,
+      PROPERTY_FEED_API_BASE,
+    ),
     apiBase: LIVE_API_BASE,
   };
 }

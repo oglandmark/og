@@ -25,6 +25,12 @@ export function shouldFallbackUnauthenticatedReadToLive(
     && status === 404;
 }
 
+export function getPreviewLiveProxyPath(path: string): string | undefined {
+  if (path === '/api/mobile/settings') return '/api/preview/live/mobile/settings';
+  if (path === '/api/mobile/banners') return '/api/preview/live/mobile/banners';
+  return undefined;
+}
+
 export function resolveApiBase(previewDomain?: string): string {
   const domain = previewDomain?.trim();
   if (!domain) return LIVE_API_BASE;

@@ -2521,7 +2521,9 @@ app.get('/api/mobile-agents', async (req, res) => {
   try {
     const data = await readData();
     let agents = (data.mobileAgents || []).filter(a =>
-      a.visible !== false && a.status !== 'Suspended' && a.approvalStatus !== 'Rejected'
+      a.visible !== false
+      && String(a.status || '').toLowerCase() === 'active'
+      && String(a.approvalStatus || '').toLowerCase() === 'approved'
     );
     if (req.query.city) {
       const city = String(req.query.city).toLowerCase();

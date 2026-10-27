@@ -65,6 +65,7 @@
         <button class="nav-item is-active" data-page="dashboard"><span class="nav-icon" data-icon="home"></span>Dashboard</button>
         <button class="nav-item" data-page="profile"><span class="nav-icon" data-icon="user"></span>Profile</button>
         <button class="nav-item" data-page="properties"><span class="nav-icon" data-icon="search"></span>Browse properties</button>
+        <button class="nav-item" data-page="agents"><span class="nav-icon" data-icon="user"></span>Find Agents</button>
         <button class="nav-item" data-page="saved"><span class="nav-icon" data-icon="heart"></span>Saved properties<span class="nav-count" id="saved-count"></span></button>
         <button class="nav-item" data-page="appointments"><span class="nav-icon" data-icon="calendar"></span>Appointments</button>
         <button class="nav-item" data-page="offers"><span class="nav-icon" data-icon="offer"></span>Offers</button>
@@ -150,6 +151,22 @@
           <div class="filter-bar"><label class="filter-search"><span data-icon="search"></span><input id="property-filter" type="search" placeholder="Search by property, city, or type"></label><select id="purpose-filter" aria-label="Filter by purpose"><option value="">All purposes</option><option>For Sale</option><option>For Rent</option></select></div>
           <div class="property-grid" id="property-grid"><div class="state-loading"><span class="skeleton-card"></span><span class="skeleton-card"></span><span class="skeleton-card"></span></div></div>
         </section>
+        <section class="page-view" id="page-agents" data-title="Find Agents">
+          <div class="page-intro"><p class="eyebrow">LOCAL PROPERTY EXPERTS</p><h1>Find Agents</h1><p>Browse the same Admin-managed Agent directory used by the mobile app.</p></div>
+          <div class="agent-filter-grid">
+            <label class="filter-search"><span data-icon="search"></span><input id="agent-search" type="search" placeholder="Search name, agency or area"></label>
+            <select id="agent-specialty" aria-label="Filter by specialty">
+              <option value="">All specialties</option><option>Residential</option><option>Agricultural Land</option><option>Plots</option><option>Commercial</option><option>Industrial</option><option>Investment</option><option>Rentals</option>
+            </select>
+            <select id="agent-area" aria-label="Filter by area"><option value="">All areas</option></select>
+            <select id="agent-experience" aria-label="Filter by experience">
+              <option value="">All experience</option><option value="under5">Under 5 years</option><option value="5to10">5–10 years</option><option value="over10">10+ years</option>
+            </select>
+            <label class="agent-verified-filter"><input id="agent-verified" type="checkbox" checked> Verified Agents only</label>
+          </div>
+          <div class="agent-results-row"><strong id="agent-result-count">0 Agents</strong><button class="text-link" id="agent-clear-filters" type="button">Clear filters</button></div>
+          <div class="agent-grid" id="agent-grid"><div class="state-loading"><span class="skeleton-card"></span><span class="skeleton-card"></span></div></div>
+        </section>
         <section class="page-view" id="page-saved" data-title="Saved properties">
           <div class="page-intro"><p class="eyebrow">YOUR SHORTLIST</p><h1>Saved properties</h1><p>Keep the places you love close at hand.</p></div>
           <div class="property-grid" id="saved-grid"></div>
@@ -173,6 +190,7 @@
         <section class="page-view" id="page-listings" data-title="My Listings">
           <div class="page-intro listings-intro"><div><p class="eyebrow">SELL WITH OG LANDMARK</p><h1>My Listings</h1><p>Manage the properties you have listed with us.</p></div><a class="button button-gold" href="/portal/seller-dashboard.html?workflow=listings&amp;mode=add"><span data-icon="plus"></span>Post a property</a></div>
           <div class="listing-notice"><span data-icon="info"></span><p>Listing creation and editing use the full property workflow. Open your listing workspace to continue or manage existing listings.</p><a href="/portal/seller-dashboard.html?workflow=listings&amp;mode=manage">Open listing workspace <span data-icon="arrow-right"></span></a></div>
+          <div class="listing-status-tabs" id="listing-status-tabs" role="group" aria-label="Filter listings by status"></div>
           <div class="listing-grid" id="listing-grid"><div class="state-loading"><span class="skeleton-card"></span><span class="skeleton-card"></span></div></div>
         </section>
         <section class="page-view" id="page-kyc" data-title="KYC">

@@ -10,12 +10,13 @@
   }
 
   const state = {
-    properties: [], savedProperties: [], inquiries: [], appointments: [], offers: [], savedIds: [],
+    properties: [], agents: [], savedProperties: [], inquiries: [], appointments: [], offers: [], savedIds: [],
     notifications: [], listings: [], compareIds: [], compareProperties: [], alerts: [], messages: [],
     conversations: [], activeConversation: null, tracking: [], verificationRequests: [], account: null,
     notificationPreferences: null, failures: {}
   };
   let loadInProgress = false;
+  let activeListingFilter = 'All';
   const iconPaths = {
     home: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/>',
@@ -109,6 +110,80 @@
       return `<article class="property-card"><div class="property-image">${src ? `<img src="${safe(src)}" alt="${safe(property.title || 'Property')}" loading="lazy" onerror="this.remove()">` : ''}<span class="property-purpose">${safe(property.purpose || property.status || 'Property')}</span></div><div class="property-copy"><p class="property-location">${safe([property.type, property.city].filter(Boolean).join(' · ') || 'OG Landmark listing')}</p><h3>${safe(property.title || `Property #${propertyId}`)}</h3><p class="property-price">${money(property.price)}</p></div><div class="property-card-foot"><span>Reference ${safe(propertyId ?? '—')}</span><div><button type="button" data-property-id="${safe(propertyId)}">View</button><button type="button" data-compare-id="${safe(propertyId)}">${isCompared ? 'Remove compare' : 'Compare'}</button></div></div></article>`;
     }).join('');
   }
+  function agentAreas(agent) {
+    const areas = Array.isArray(agent.areas) ? agent.areas : [];
+    return [...new Set([...areas, agent.city].filter(Boolean).map((area) => String(area).trim()).filter(Boolean))];
+  }
+  function agentSpecialties(agent) {
+    if (Array.isArray(agent.specialties)) return agent.specialties.map(String);
+    return String(agent.specialization || '').split(',').map((item) => item.trim()).filter(Boolean);
+  }
+  function agentYears(agent) {
+    const direct = Number(agent.years);
+    if (Number.isFinite(direct) && direct >= 0) return direct;
+    const parsed = Number.parseInt(String(agent.experience || ''), 10);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  }
+  function filteredAgents() {
+    const query = document.getElementById('agent-search').value.trim().toLowerCase();
+    const specialty = document.getElementById('agent-specialty').value;
+    const area = document.getElementById('agent-area').value;
+    const experience = document.getElementById('agent-experience').value;
+    const verifiedOnly = document.getElementById('agent-verified').checked;
+    return state.agents.filter((agent) => {
+      const specialties = agentSpecialties(agent);
+      const areas = agentAreas(agent);
+      const years = agentYears(agent);
+      if (verifiedOnly && agent.verified === false) return false;
+      if (specialty && !specialties.some((value) => value.toLowerCase() === specialty.toLowerCase())) return false;
+      if (area && !areas.some((value) => value.toLowerCase() === area.toLowerCase())) return false;
+      if (experience === 'under5' && years >= 5) return false;
+      if (experience === '5to10' && (years < 5 || years > 10)) return false;
+      if (experience === 'over10' && years <= 10) return false;
+      const searchable = [agent.displayName, agent.name, agent.agency, agent.title, agent.city, ...areas, ...specialties].join(' ').toLowerCase();
+      return !query || query.split(/\s+/).every((token) => searchable.includes(token));
+    });
+  }
+  function renderAgents() {
+    const target = document.getElementById('agent-grid');
+    const areaSelect = document.getElementById('agent-area');
+    if (!target || !areaSelect) return;
+    const selectedArea = areaSelect.value;
+    const areas = [...new Set(state.agents.flatMap(agentAreas))].sort((left, right) => left.localeCompare(right));
+    areaSelect.innerHTML = `<option value="">All areas</option>${areas.map((area) => `<option value="${safe(area)}">${safe(area)}</option>`).join('')}`;
+    if (areas.includes(selectedArea)) areaSelect.value = selectedArea;
+    const filtered = filteredAgents();
+    document.getElementById('agent-result-count').textContent = `${filtered.length} ${filtered.length === 1 ? 'Agent' : 'Agents'} found`;
+    if (state.failures.agents) {
+      target.innerHTML = errorMarkup('agents');
+      return;
+    }
+    if (!filtered.length) {
+      target.innerHTML = empty('No Agents match these filters', 'Try another area or specialty, or check back later.');
+      return;
+    }
+    target.innerHTML = filtered.map((agent) => {
+      const name = agent.displayName || agent.name || 'Property Agent';
+      const image = agent.profilePhoto || agent.photo || '';
+      const imageUrl = image && !/^(https?:|data:|\/)/i.test(image) ? `/${image}` : image;
+      const agentAreasList = agentAreas(agent);
+      const specialties = agentSpecialties(agent);
+      const years = agentYears(agent);
+      const agency = agent.agency || agent.agencyName || agent.title || 'OG Landmark Agent';
+      const rating = Number(agent.rating || 0);
+      const whatsappText = encodeURIComponent(`Assalam-o-Alaikum, I would like to speak with ${name} about a property.`);
+      return `<article class="agent-card">
+        <div class="agent-card-head">${imageUrl ? `<img src="${safe(imageUrl)}" alt="${safe(name)}" loading="lazy" onerror="this.remove()">` : `<span class="agent-avatar">${safe(String(name).split(/\s+/).map((part) => part[0] || '').join('').slice(0, 2).toUpperCase() || 'AG')}</span>`}
+          <div class="agent-card-identity"><h2>${safe(name)}</h2><p>${safe(agency)}</p><span class="agent-verified">${agent.verified === false ? 'Agent' : '✓ Verified Agent'}</span></div>
+        </div>
+        <div class="agent-card-meta"><span>${years} ${years === 1 ? 'year' : 'years'} experience</span>${Number.isFinite(rating) && rating > 0 ? `<span>★ ${safe(rating.toFixed(1))}${agent.reviewCount ? ` · ${safe(agent.reviewCount)} reviews` : ''}</span>` : ''}${Number(agent.propertiesCount ?? agent.listings ?? 0) > 0 ? `<span>${safe(agent.propertiesCount ?? agent.listings)} listings</span>` : ''}</div>
+        ${agent.about ? `<p class="agent-about">${safe(agent.about)}</p>` : ''}
+        ${specialties.length ? `<div class="agent-tags">${specialties.map((item) => `<span>${safe(item)}</span>`).join('')}</div>` : ''}
+        ${agentAreasList.length ? `<p class="agent-areas"><strong>Areas served:</strong> ${safe(agentAreasList.join(', '))}</p>` : ''}
+        <div class="agent-card-actions"><a href="tel:+923272569000">Call Agent</a><a href="https://wa.me/923272569000?text=${whatsappText}" target="_blank" rel="noopener noreferrer">WhatsApp</a></div>
+      </article>`;
+    }).join('');
+  }
   function updateCounts() {
     const pending = state.offers.filter((offer) => /pending|submitted|review/i.test(offer.status || '')).length;
     const upcoming = state.appointments.filter((appointment) => !/cancel|complete|reject/i.test(appointment.status || '')).length;
@@ -155,7 +230,50 @@
   function renderListings() {
     const target = document.getElementById('listing-grid');
     if (state.failures.listings) { target.innerHTML = errorMarkup('listings'); return; }
-    target.innerHTML = state.listings.length ? cards(state.listings, { emptyTitle: 'No listings yet' }) : empty('No properties listed yet', 'Ready to sell or rent? Start with the OG Landmark listing workflow.', '<a class="button button-gold" href="/portal/seller-dashboard.html?workflow=listings&amp;mode=add">Post a property</a>');
+    const statuses = ['All', 'Active', 'Pending', 'Draft', 'Paused', 'Sold', 'Rented'];
+    const statusOf = (listing) => {
+      if (statuses.includes(listing.listingStatus)) return listing.listingStatus;
+      if (listing.approvalStatus === 'Active') return 'Active';
+      if (listing.approvalStatus === 'Draft') return 'Draft';
+      if (listing.approvalStatus === 'Rejected') return 'Paused';
+      return 'Pending';
+    };
+    document.getElementById('listing-status-tabs').innerHTML = statuses.map((status) => {
+      const count = status === 'All' ? state.listings.length : state.listings.filter((listing) => statusOf(listing) === status).length;
+      return `<button type="button" class="listing-status-tab ${activeListingFilter === status ? 'is-active' : ''}" data-listing-filter="${status}">${status}<span>${count}</span></button>`;
+    }).join('');
+    const items = activeListingFilter === 'All' ? state.listings : state.listings.filter((listing) => statusOf(listing) === activeListingFilter);
+    if (!items.length) {
+      target.innerHTML = empty(state.listings.length ? `No ${activeListingFilter.toLowerCase()} listings` : 'No properties listed yet', 'Your listing activity and review status will appear here.', '<a class="button button-gold" href="/portal/seller-dashboard.html?workflow=listings&amp;mode=add">Post a property</a>');
+      return;
+    }
+    target.innerHTML = items.map((listing) => {
+      const id = listing.id;
+      const status = statusOf(listing);
+      const image = imageOf(listing);
+      const actions = [];
+      if (status === 'Active') {
+        actions.push(`<button type="button" data-listing-status="Paused" data-listing-id="${safe(id)}">Pause</button>`);
+        actions.push(`<button type="button" data-listing-status="Sold" data-listing-id="${safe(id)}">Mark sold</button>`);
+        actions.push(`<button type="button" data-listing-status="Rented" data-listing-id="${safe(id)}">Mark rented</button>`);
+      } else if (status === 'Paused' && listing.approvalStatus !== 'Rejected') {
+        actions.push(`<button type="button" data-listing-status="Active" data-listing-id="${safe(id)}">Activate</button>`);
+      } else if (status === 'Draft') {
+        actions.push(`<button type="button" data-resubmit-listing="${safe(id)}">Submit for review</button>`);
+      }
+      if (['Rejected', 'Changes Requested'].includes(listing.approvalStatus)) {
+        actions.push(`<button type="button" data-resubmit-listing="${safe(id)}">Resubmit</button>`);
+      }
+      actions.push(`<a href="/portal/seller-dashboard.html?workflow=listings&amp;mode=manage">Edit</a>`);
+      const shareText = encodeURIComponent(`${listing.title || `Property #${id}`}\n${listing.city || ''}\n${money(listing.price)}\n\nPosted on OG Landmark — oglandmark.com`);
+      actions.push(`<a href="https://wa.me/?text=${shareText}" target="_blank" rel="noopener noreferrer">Share</a>`);
+      actions.push(`<button type="button" class="listing-delete" data-delete-listing="${safe(id)}">Delete</button>`);
+      return `<article class="user-listing-card">
+        <div class="user-listing-media">${image ? `<img src="${safe(image)}" alt="${safe(listing.title || 'Property')}" loading="lazy" onerror="this.remove()">` : '<span>OG</span>'}<span class="status-pill ${safe(status.toLowerCase())}">${safe(status)}</span></div>
+        <div class="user-listing-copy"><p>${safe([listing.type, listing.city].filter(Boolean).join(' · '))}</p><h2>${safe(listing.title || `Property #${id}`)}</h2><strong>${money(listing.price)}</strong><small>${safe(listing.approvalStatus || status)}${listing.rejectionReason || listing.changeRequest ? ` · ${safe(listing.rejectionReason || listing.changeRequest)}` : ''}</small></div>
+        <div class="user-listing-actions">${actions.join('')}</div>
+      </article>`;
+    }).join('');
   }
   function renderProfile() {
     const target = document.getElementById('profile-panel');
@@ -358,6 +476,7 @@
     document.getElementById('activity-list').innerHTML = state.failures.activity ? errorMarkup('activity') : activityMarkup();
     document.getElementById('saved-preview').innerHTML = savedPreviewMarkup();
     document.getElementById('property-grid').innerHTML = state.failures.properties ? errorMarkup('properties') : cards(filteredProperties(), { emptyTitle: 'No properties found', emptyText: 'Try a different search or check back later.' });
+    renderAgents();
     document.getElementById('saved-grid').innerHTML = state.failures.saved ? errorMarkup('saved') : state.failures.savedDetails ? empty('Saved details are temporarily unavailable', 'Your saved properties are still in your account. Try again shortly.', '<button type="button" data-retry="saved">Try again</button>') : cards(state.savedProperties, { emptyTitle: 'No saved properties yet', emptyText: 'Browse the listings and save properties to build your shortlist.', emptyAction: '<button type="button" data-go="properties">Browse properties</button>' });
     document.getElementById('wishlist-grid').innerHTML = state.failures.saved ? errorMarkup('saved') : cards(state.savedProperties, { emptyTitle: 'Your wishlist is empty', emptyText: 'Save a property in the mobile app or browse listings here to build your wishlist.', emptyAction: '<button type="button" data-go="properties">Browse properties</button>' });
     renderTables();
@@ -394,6 +513,11 @@
     state.savedProperties = [];
     await Promise.all([
       load('properties', '/api/properties', propertyRows),
+      load('agents', '/api/mobile-agents', (data) => rows(data).filter((agent) =>
+        String(agent.status || '').toLowerCase() === 'active'
+        && String(agent.approvalStatus || '').toLowerCase() === 'approved'
+        && agent.visible !== false
+      )),
       load('inquiries', `/api/inquiries?buyer_id=${encodeURIComponent(user.id)}`, (data) => rows(data, ['inquiries'])),
       load('appointments', `/api/appointments?buyer_id=${encodeURIComponent(user.id)}`, (data) => rows(data, ['appointments'])),
       load('offers', `/api/offers?buyer_id=${encodeURIComponent(user.id)}`, (data) => rows(data, ['offers'])),
@@ -402,7 +526,7 @@
         return Array.isArray(values) ? values.map((entry) => String(typeof entry === 'object' ? entry.property_id ?? entry.id : entry)) : [];
       }),
       load('notifications', '/api/notifications', (data) => rows(data, ['notifications', 'items'])),
-      load('listings', `/api/properties?seller_id=${encodeURIComponent(user.id)}`, propertyRows),
+      load('listings', '/api/my-properties', propertyRows),
       load('account', '/api/account', (data) => data),
       load('verificationRequests', '/api/verification-requests', (data) => rows(data)),
       load('alerts', '/api/saved-searches', (data) => rows(data)),
@@ -515,6 +639,38 @@
       renderAll();
     } catch (error) { showToast(error.message); }
   }
+  async function updateMyListingStatus(id, listingStatus) {
+    if (['Paused', 'Sold', 'Rented'].includes(listingStatus) && !window.confirm(`Change this listing to ${listingStatus.toLowerCase()}?`)) return;
+    try {
+      await api(`/api/properties/${encodeURIComponent(id)}/listing-status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ listingStatus })
+      });
+      await loadAll();
+      showToast(`Listing updated to ${listingStatus}.`);
+    } catch (error) {
+      showToast(error.message);
+    }
+  }
+  async function deleteMyListing(id) {
+    if (!window.confirm('Delete this listing permanently?')) return;
+    try {
+      await api(`/api/properties/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      await loadAll();
+      showToast('Listing deleted.');
+    } catch (error) {
+      showToast(error.message);
+    }
+  }
+  async function resubmitMyListing(id) {
+    try {
+      await api(`/api/properties/${encodeURIComponent(id)}/resubmit`, { method: 'PATCH' });
+      await loadAll();
+      showToast('Listing submitted for review.');
+    } catch (error) {
+      showToast(error.message);
+    }
+  }
   function notificationDestination(item) {
     const isPropertyNotification = /property|listing/i.test(`${item.type || ''} ${item.category || ''}`);
     const path = String(item.link || '').split('?')[0].toLowerCase();
@@ -558,7 +714,11 @@
     const compareButton = event.target.closest('[data-compare-id]');
     const clearCompareButton = event.target.closest('[data-clear-compare]');
     const deleteAlertButton = event.target.closest('[data-delete-alert]');
-    if (pageButton || goButton || notification || closeProperty || conversationButton || compareButton || clearCompareButton || deleteAlertButton) {
+    const listingFilter = event.target.closest('[data-listing-filter]');
+    const listingStatus = event.target.closest('[data-listing-status]');
+    const deleteListing = event.target.closest('[data-delete-listing]');
+    const resubmitListing = event.target.closest('[data-resubmit-listing]');
+    if (pageButton || goButton || notification || closeProperty || conversationButton || compareButton || clearCompareButton || deleteAlertButton || listingFilter || listingStatus || deleteListing || resubmitListing) {
       event.preventDefault();
       event.stopPropagation();
     }
@@ -580,6 +740,13 @@
       renderAlerts();
       showToast('Property alert removed.');
     }).catch((error) => showToast(error.message));
+    if (listingFilter) {
+      activeListingFilter = listingFilter.dataset.listingFilter;
+      renderListings();
+    }
+    if (listingStatus) updateMyListingStatus(listingStatus.dataset.listingId, listingStatus.dataset.listingStatus);
+    if (deleteListing) deleteMyListing(deleteListing.dataset.deleteListing);
+    if (resubmitListing) resubmitMyListing(resubmitListing.dataset.resubmitListing);
   });
   document.addEventListener('submit', async (event) => {
     const form = event.target;
@@ -704,6 +871,18 @@
   });
   document.getElementById('property-filter').addEventListener('input', () => { document.getElementById('property-grid').innerHTML = cards(filteredProperties()); });
   document.getElementById('purpose-filter').addEventListener('change', () => { document.getElementById('property-grid').innerHTML = cards(filteredProperties()); });
+  document.getElementById('agent-search').addEventListener('input', renderAgents);
+  ['agent-specialty', 'agent-area', 'agent-experience', 'agent-verified'].forEach((id) => {
+    document.getElementById(id).addEventListener('change', renderAgents);
+  });
+  document.getElementById('agent-clear-filters').addEventListener('click', () => {
+    document.getElementById('agent-search').value = '';
+    document.getElementById('agent-specialty').value = '';
+    document.getElementById('agent-area').value = '';
+    document.getElementById('agent-experience').value = '';
+    document.getElementById('agent-verified').checked = true;
+    renderAgents();
+  });
   document.getElementById('converter-unit').addEventListener('change', renderUnitConversion);
   document.getElementById('converter-value').addEventListener('input', renderUnitConversion);
   document.getElementById('plot-corners').addEventListener('change', renderPlotFields);

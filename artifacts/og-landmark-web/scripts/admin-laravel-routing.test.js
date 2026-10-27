@@ -66,14 +66,18 @@ test('local Replit agent directory edits use Laravel and become PATCH requests',
   const { window, calls } = createBrowser('og-landmark.replit.dev');
 
   await window.fetch('/api/admin/mobile-agents');
+  await window.fetch('/api/admin/mobile-agents', { method: 'POST', body: JSON.stringify({ name: 'New Agent' }) });
   await window.fetch('/api/admin/mobile-agents/8', {
     method: 'PUT',
     body: JSON.stringify({ status: 'Suspended', approvalStatus: 'Approved', visible: false }),
   });
+  await window.fetch('/api/admin/mobile-agents/8', { method: 'DELETE' });
 
   assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
     ['/api-legacy/api/admin/mobile-agents', 'GET'],
+    ['/api-legacy/api/admin/mobile-agents', 'POST'],
     ['/api-legacy/api/admin/mobile-agents/8', 'PATCH'],
+    ['/api-legacy/api/admin/mobile-agents/8', 'DELETE'],
   ]);
 });
 
@@ -103,9 +107,13 @@ test('localhost admin edits target the local Laravel service', async () => {
   const { window, calls } = createBrowser('localhost');
 
   await window.fetch('/api/admin/mobile-agents/8', { method: 'PUT' });
+  await window.fetch('/api/admin/mobile-agents', { method: 'POST' });
+  await window.fetch('/api/admin/mobile-agents/8', { method: 'DELETE' });
 
   assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
     ['http://127.0.0.1:8000/api/admin/mobile-agents/8', 'PATCH'],
+    ['http://127.0.0.1:8000/api/admin/mobile-agents', 'POST'],
+    ['http://127.0.0.1:8000/api/admin/mobile-agents/8', 'DELETE'],
   ]);
 });
 
@@ -116,6 +124,8 @@ test('production admin API routing remains on the existing production API', asyn
   await window.fetch('/api/admin/properties/42/approve', { method: 'PATCH' });
   await window.fetch('/api/admin/properties/42/media', { method: 'POST' });
   await window.fetch('/api/admin/mobile-agents/8', { method: 'PUT' });
+  await window.fetch('/api/admin/mobile-agents', { method: 'POST' });
+  await window.fetch('/api/admin/mobile-agents/8', { method: 'DELETE' });
 
   assert.equal(window.__OG_ADMIN_LARAVEL_LOCAL__, false);
   assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
@@ -123,6 +133,8 @@ test('production admin API routing remains on the existing production API', asyn
     ['https://api.oglandmark.com/api/admin/properties/42/approve', 'PATCH'],
     ['https://api.oglandmark.com/api/admin/properties/42/media', 'POST'],
     ['https://api.oglandmark.com/api/admin/mobile-agents/8', 'PUT'],
+    ['https://api.oglandmark.com/api/admin/mobile-agents', 'POST'],
+    ['https://api.oglandmark.com/api/admin/mobile-agents/8', 'DELETE'],
   ]);
 });
 

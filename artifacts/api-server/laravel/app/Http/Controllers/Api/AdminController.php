@@ -606,6 +606,101 @@ final class AdminController extends Controller
         return response()->json(array_values($agents));
     }
 
+    public function createMobileAgent(Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'displayName' => ['sometimes', 'string', 'max:120'],
+            'agency' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'city' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:40'],
+            'email' => ['sometimes', 'nullable', 'email', 'max:160'],
+            'years' => ['sometimes', 'integer', 'min:0', 'max:80'],
+            'rating' => ['sometimes', 'numeric', 'min:0', 'max:5'],
+            'reviewCount' => ['sometimes', 'integer', 'min:0'],
+            'listings' => ['sometimes', 'integer', 'min:0'],
+            'color' => ['sometimes', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'verified' => ['sometimes', 'boolean'],
+            'coverPhoto' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'photo' => ['sometimes', 'nullable', 'string', 'max:1000'],
+            'profilePhoto' => ['sometimes', 'nullable', 'string', 'max:1000'],
+            'areas' => ['sometimes', 'array'],
+            'areas.*' => ['string', 'max:120'],
+            'specialties' => ['sometimes', 'array'],
+            'specialties.*' => ['string', 'max:120'],
+            'about' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'approvalStatus' => ['sometimes', 'in:Pending,Approved,Rejected'],
+            'status' => ['sometimes', 'in:Active,Suspended'],
+            'visible' => ['sometimes', 'boolean'],
+        ]);
+        $admin = $request->attributes->get('legacyUser', []);
+        $agent = $store->mutate(function (array &$data) use ($validated, $admin): array {
+            $nextId = (int) ($data['nextId'] ?? 1000);
+            foreach (['users', 'mobileAgents'] as $collection) {
+                foreach ($data[$collection] ?? [] as $record) {
+                    if (is_numeric($record['id'] ?? null)) {
+                        $nextId = max($nextId, (int) $record['id']);
+                    }
+                }
+            }
+            $data['nextId'] = $nextId + 1;
+            $now = now()->toISOString();
+            $name = trim($validated['name']);
+            $email = isset($validated['email']) ? mb_strtolower(trim($validated['email'])) : null;
+            $linkedUser = $email === null ? null : collect($data['users'] ?? [])->first(
+                fn (array $user): bool => mb_strtolower(trim((string) ($user['email'] ?? ''))) === $email
+                    && mb_strtolower((string) ($user['role'] ?? '')) === 'agent'
+            );
+            $agent = array_replace([
+                'id' => $data['nextId'],
+                'name' => $name,
+                'displayName' => $name,
+                'initials' => mb_strtoupper(collect(preg_split('/\s+/', $name) ?: [])->map(
+                    fn (string $part): string => mb_substr($part, 0, 1)
+                )->implode('')),
+                'agency' => '',
+                'city' => '',
+                'phone' => '',
+                'email' => $email,
+                'years' => 0,
+                'rating' => 0,
+                'reviewCount' => 0,
+                'listings' => 0,
+                'color' => '#0b1f3a',
+                'verified' => true,
+                'coverPhoto' => null,
+                'photo' => null,
+                'profilePhoto' => null,
+                'areas' => [],
+                'specialties' => [],
+                'about' => '',
+                'status' => 'Active',
+                'approvalStatus' => 'Approved',
+                'visible' => true,
+                'createdAt' => $now,
+                'updatedAt' => $now,
+            ], $validated);
+            $agent['name'] = $name;
+            $agent['displayName'] = trim((string) ($validated['displayName'] ?? $name));
+            $agent['email'] = $email;
+            if ($linkedUser) $agent['authUserId'] = $linkedUser['id'];
+
+            $data['mobileAgents'] ??= [];
+            $data['mobileAgents'][] = $agent;
+            $data['adminAudit'] ??= [];
+            $data['adminAudit'][] = [
+                'action' => 'mobile_agent_created',
+                'entityId' => $agent['id'],
+                'actorId' => $admin['id'] ?? null,
+                'createdAt' => $now,
+            ];
+            unset($agent['password'], $agent['authUserId']);
+            return $agent;
+        });
+
+        return response()->json(['success' => true, 'agent' => $agent], 201);
+    }
+
     public function updateMobileAgent(string $id, Request $request, LegacyDataStore $store): JsonResponse
     {
         $validated = $request->validate([
@@ -658,6 +753,30 @@ final class AdminController extends Controller
         });
         if (! $result) return response()->json(['error' => 'Agent not found.'], 404);
         return response()->json(['success' => true, 'agent' => $result]);
+    }
+
+    public function deleteMobileAgent(string $id, Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $admin = $request->attributes->get('legacyUser', []);
+        $deleted = $store->mutate(function (array &$data) use ($id, $admin): bool {
+            foreach ($data['mobileAgents'] ?? [] as $index => $agent) {
+                if ((string) ($agent['id'] ?? '') !== $id) continue;
+                $removed = $data['mobileAgents'][$index];
+                array_splice($data['mobileAgents'], $index, 1);
+                $data['adminAudit'] ??= [];
+                $data['adminAudit'][] = [
+                    'action' => 'mobile_agent_deleted',
+                    'entityId' => $removed['id'],
+                    'actorId' => $admin['id'] ?? null,
+                    'createdAt' => now()->toISOString(),
+                ];
+                return true;
+            }
+            return false;
+        });
+
+        if (! $deleted) return response()->json(['error' => 'Agent not found.'], 404);
+        return response()->json(['success' => true]);
     }
 
     private function normalizedPermissions(mixed $permissions): array

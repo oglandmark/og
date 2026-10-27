@@ -234,6 +234,75 @@ final class OgLandmarkApiTest extends TestCase
         Storage::disk('public')->assertDirectoryEmpty('listing-media');
     }
 
+    public function test_admin_can_create_and_delete_mobile_agent_profiles_without_deleting_linked_accounts(): void
+    {
+        DB::table('app_data')->update(['data' => json_encode(array_replace_recursive(
+            json_decode(DB::table('app_data')->where('id', 1)->value('data'), true),
+            ['users' => [[
+                'id' => 42,
+                'name' => 'Linked Agent',
+                'email' => 'linked-agent@example.test',
+                'role' => 'Agent',
+                'status' => 'Active',
+                'permissions' => [],
+            ]]],
+        ), JSON_THROW_ON_ERROR)]);
+        $token = $this->postJson('/api/auth/login', [
+            'identifier' => 'testadmin',
+            'password' => self::PASSWORD,
+        ])->assertOk()->json('token');
+
+        $this->withToken($token)->postJson('/api/admin/mobile-agents', [
+            'name' => 'Standalone Agent',
+            'email' => '',
+        ])->assertCreated()->assertJsonPath('agent.name', 'Standalone Agent')
+            ->assertJsonPath('agent.email', null);
+
+        $created = $this->withToken($token)->postJson('/api/admin/mobile-agents', [
+            'name' => 'Linked Agent',
+            'email' => 'LINKED-AGENT@example.test',
+            'city' => 'Okara',
+            'areas' => ['Okara'],
+            'status' => 'Active',
+            'approvalStatus' => 'Approved',
+            'visible' => true,
+        ])->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('agent.name', 'Linked Agent')
+            ->assertJsonPath('agent.city', 'Okara')
+            ->assertJsonMissingPath('agent.authUserId');
+
+        $agentId = $created->json('agent.id');
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $storedAgent = collect($data['mobileAgents'])->firstWhere('id', $agentId);
+        $this->assertSame(42, $storedAgent['authUserId']);
+
+        $this->withToken($token)->deleteJson('/api/admin/mobile-agents/'.$agentId)
+            ->assertOk()->assertJsonPath('success', true);
+        $this->assertDatabaseHas('app_data', ['id' => 1]);
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $this->assertSame([], array_values(array_filter(
+            $data['mobileAgents'],
+            fn (array $agent): bool => (string) $agent['id'] === (string) $agentId,
+        )));
+        $this->assertSame(42, collect($data['users'])->firstWhere('id', 42)['id']);
+
+        $this->withToken($token)->deleteJson('/api/admin/mobile-agents/'.$agentId)->assertNotFound();
+    }
+
+    public function test_mobile_agent_create_and_delete_still_require_admin_permissions(): void
+    {
+        $userToken = $this->postJson('/api/auth/login', [
+            'identifier' => 'user@example.test',
+            'password' => self::PASSWORD,
+        ])->assertOk()->json('token');
+
+        $this->withToken($userToken)->postJson('/api/admin/mobile-agents', ['name' => 'Unauthorized'])
+            ->assertForbidden();
+        $this->withToken($userToken)->deleteJson('/api/admin/mobile-agents/1')->assertForbidden();
+        $this->postJson('/api/admin/mobile-agents', ['name' => 'Unauthenticated'])->assertForbidden();
+    }
+
     public function test_local_admin_routes_validate_the_existing_website_session_and_permissions(): void
     {
         $this->app->detectEnvironment(fn () => 'local');

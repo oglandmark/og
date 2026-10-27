@@ -42,7 +42,9 @@ $registerRoutes = static function (): void {
             Route::patch('/properties/{id}/{action}', [AdminController::class, 'moderateProperty'])
                 ->whereNumber('id')->whereIn('action', ['approve', 'reject', 'request-changes']);
             Route::get('/admin/mobile-agents', [AdminController::class, 'mobileAgents']);
+            Route::post('/admin/mobile-agents', [AdminController::class, 'createMobileAgent']);
             Route::patch('/admin/mobile-agents/{id}', [AdminController::class, 'updateMobileAgent']);
+            Route::delete('/admin/mobile-agents/{id}', [AdminController::class, 'deleteMobileAgent']);
         });
     });
     Route::get('/admin/property-media/{filename}', [AdminController::class, 'propertyMedia'])

@@ -79,12 +79,12 @@
     } else if (/^\/api\/admin\/properties\/\d+\/(?:approve|reject|request-changes)$/.test(pathname)
       && verb === 'PATCH') {
       laravelPath = laravelRoot + pathname.replace('/api/admin/properties/', '/properties/');
-    } else if (pathname === '/api/admin/mobile-agents' && verb === 'GET') {
+    } else if (pathname === '/api/admin/mobile-agents' && ['GET', 'POST'].indexOf(verb) !== -1) {
       laravelPath = laravelRoot + '/admin/mobile-agents';
     } else if (/^\/api\/admin\/mobile-agents\/\d+$/.test(pathname)
-      && (verb === 'PUT' || verb === 'PATCH')) {
+      && (verb === 'PUT' || verb === 'PATCH' || verb === 'DELETE')) {
       laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
-      verb = 'PATCH';
+      if (verb === 'PUT') verb = 'PATCH';
     }
 
     if (!laravelPath) return { url: url, method: method };

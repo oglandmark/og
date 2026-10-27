@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -135,13 +136,42 @@ final class OgLandmarkApiTest extends TestCase
         ])->assertOk()->json('token');
 
         $this->withToken($token)->getJson('/api/admin/properties')->assertOk()->assertJsonCount(2);
+        $this->withToken($token)->getJson('/api/admin/properties/101/review')
+            ->assertOk()->assertJsonPath('property.id', 101)
+            ->assertJsonPath('seller.email', 'user@example.test');
         $this->withToken($token)->patchJson('/api/properties/102/approve')
             ->assertOk()->assertJsonPath('property.approvalStatus', 'Active');
+        $this->withToken($token)->patchJson('/api/properties/102/request-changes', ['reason' => 'Please add ownership documents.'])
+            ->assertOk()->assertJsonPath('property.approvalStatus', 'Changes Requested')
+            ->assertJsonPath('property.changeRequest', 'Please add ownership documents.');
         $this->withToken($token)->patchJson('/api/admin/mobile-agents/9', [
+            'name' => 'Updated Agent', 'about' => 'Updated profile',
             'approvalStatus' => 'Approved', 'status' => 'Active', 'visible' => true,
-        ])->assertOk()->assertJsonPath('agent.visible', true);
-
+        ])->assertOk()->assertJsonPath('agent.visible', true)
+            ->assertJsonPath('agent.name', 'Updated Agent')
+            ->assertJsonPath('agent.about', 'Updated profile');
         $this->withToken($token)->getJson('/api/mobile-agents')->assertJsonCount(1);
+        $this->withToken($token)->patchJson('/api/admin/mobile-agents/9', [
+            'status' => 'Suspended', 'visible' => false,
+        ])->assertOk()->assertJsonPath('agent.status', 'Suspended')
+            ->assertJsonPath('agent.visible', false);
+
+        $this->withToken($token)->getJson('/api/mobile-agents')->assertJsonCount(0);
+    }
+
+    public function test_local_admin_routes_validate_the_existing_website_session_and_permissions(): void
+    {
+        $this->app->detectEnvironment(fn () => 'local');
+        config(['services.og_landmark.website_auth_url' => 'http://website.test/api/auth/me']);
+        Http::fake([
+            'http://website.test/api/auth/me' => Http::sequence()
+                ->push(['user' => ['id' => 7, 'name' => 'Admin User', 'role' => 'Admin', 'permissions' => ['admin'], 'status' => 'Active']])
+                ->push(['user' => ['id' => 42, 'name' => 'Test User', 'role' => 'User', 'permissions' => [], 'status' => 'Active']]),
+        ]);
+
+        $this->withToken('existing-local-admin-session')->getJson('/api/admin/properties')->assertOk();
+        $this->withToken('existing-local-user-session')->getJson('/api/admin/properties')->assertForbidden();
+        Http::assertSentCount(2);
     }
 
     public function test_regular_users_cannot_open_admin_moderation_routes(): void

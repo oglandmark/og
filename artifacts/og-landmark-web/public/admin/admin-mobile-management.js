@@ -771,7 +771,7 @@
   async function submitReviewBulk(action, content) {
     const ids = [...selectedReviewIds];
     if (!ids.length || reviewBulkBusy) return;
-    const selected = ids.map((id) => (sectionData.reviews || []).find((item) => String(item.id) === id)).filter(Boolean);
+    const selected = ids.map((id) => (sectionData.reviews || []).find((item) => String(item.id) === id) || { id });
     const examples = selected.slice(0, 3).map((item) => item.title || `listing ${item.id}`);
     const label = action === 'approve' ? 'Approve' : 'Reject';
     if (!window.confirm(`${label} ${ids.length} selected listings? Listings that are no longer waiting for review will be reported as failures.${examples.length ? `\n\n${examples.join('\n')}${ids.length > examples.length ? '\n…' : ''}` : ''}`)) return;
@@ -786,14 +786,27 @@
     reviewBulkReport = 'Reviewing selected listings…';
     updateReviewBulkControls(content);
     try {
-      const payload = await api('/admin/properties/bulk-review', {
-        method: 'POST',
-        body: JSON.stringify({ ids, action, reason }),
-      });
-      const results = Array.isArray(payload?.results) ? payload.results : [];
+      const results = window.__OG_ADMIN_LARAVEL_LOCAL__
+        ? await Promise.all(selected.map(async (item) => {
+          try {
+            await api(`/admin/properties/${encodeURIComponent(item.id)}/${action}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ reason }),
+            });
+            return { id: item.id, title: item.title, success: true };
+          } catch (error) {
+            return { id: item.id, title: item.title, success: false, error: error.message || 'Could not review listing.' };
+          }
+        }))
+        : (await api('/admin/properties/bulk-review', {
+          method: 'POST',
+          body: JSON.stringify({ ids, action, reason }),
+        })).results || [];
+      const successful = results.filter((item) => item.success).length;
+      const payload = { summary: { succeeded: successful, failed: results.length - successful } };
       const failed = results.filter((item) => !item.success);
       results.filter((item) => item.success).forEach((item) => selectedReviewIds.delete(String(item.id)));
-      reviewBulkReport = `${payload?.summary?.succeeded ?? results.length - failed.length} succeeded, ${payload?.summary?.failed ?? failed.length} failed.\n`
+      reviewBulkReport = `${payload.summary.succeeded} succeeded, ${payload.summary.failed} failed.\n`
         + results.map((item) => `${item.title || `Listing ${item.id}`} (ID ${item.id}): ${item.success ? (action === 'approve' ? 'Approved' : 'Rejected') : `Failed — ${item.error || 'Could not review listing.'}`}`).join('\n');
     } catch (error) {
       reviewBulkReport = `Batch review could not be completed: ${error.message || 'Please try again.'}`;

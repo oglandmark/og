@@ -16,8 +16,14 @@
   } catch (e) {}
   var isPreviewHost = /(^localhost$|^127\.0\.0\.1$|\.replit\.dev$|\.replit\.app$|\.repl\.co$)/i
     .test(window.location.hostname);
+  var isLocalAdminHost = /(^localhost$|^127\.0\.0\.1$|\.replit\.dev$|\.repl\.co$)/i
+    .test(window.location.hostname);
   var previewBase = isPreviewHost ? '/api' : LIVE;
+  var localLaravelAdminBase = /\.replit\.dev$|\.repl\.co$/i.test(window.location.hostname)
+    ? '/api-legacy/api'
+    : 'http://127.0.0.1:8000/api';
   window.__OG_LIVE_API_BASE__ = LIVE;
+  window.__OG_ADMIN_LARAVEL_LOCAL__ = isLocalAdminHost;
   // Replit previews stay on the local Laravel proxy even if an earlier URL
   // override was saved. Production hosts continue using the live API.
   var base = (isPreviewHost ? '/api' : (fromQuery || fromStorage || previewBase)).replace(/\/+$/, '');
@@ -34,31 +40,74 @@
     } catch (e) {}
   }
 
-  function rewrite(url) {
+  function rewriteLocalAdminRoute(url, method) {
+    if (!isLocalAdminHost || typeof url !== 'string') return { url: url, method: method };
+
+    var parsed;
+    try {
+      parsed = new URL(url, window.location.origin);
+    } catch (e) {
+      return { url: url, method: method };
+    }
+    if (parsed.origin !== window.location.origin) return { url: url, method: method };
+
+    var pathname = parsed.pathname;
+    var verb = String(method || 'GET').toUpperCase();
+    var laravelPath = null;
+    var laravelRoot = localLaravelAdminBase;
+
+    if (pathname === '/api/admin/properties' && verb === 'GET') {
+      laravelPath = laravelRoot + '/admin/properties';
+    } else if (/^\/api\/admin\/properties\/\d+\/review$/.test(pathname) && verb === 'GET') {
+      laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
+    } else if (/^\/api\/admin\/properties\/\d+\/(?:approve|reject|request-changes)$/.test(pathname)
+      && verb === 'PATCH') {
+      laravelPath = laravelRoot + pathname.replace('/api/admin/properties/', '/properties/');
+    } else if (pathname === '/api/admin/mobile-agents' && verb === 'GET') {
+      laravelPath = laravelRoot + '/admin/mobile-agents';
+    } else if (/^\/api\/admin\/mobile-agents\/\d+$/.test(pathname)
+      && (verb === 'PUT' || verb === 'PATCH')) {
+      laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
+      verb = 'PATCH';
+    }
+
+    if (!laravelPath) return { url: url, method: method };
+    return { url: laravelPath + parsed.search + parsed.hash, method: verb };
+  }
+
+  function rewrite(url, method) {
     if (typeof url !== 'string') return url;
+    var rewritten = url;
     if (url.indexOf('/api/') === 0 || url === '/api') {
-      return base + url.slice(4);
+      rewritten = base + url.slice(4);
+    } else if (url.indexOf(window.location.origin + '/api') === 0) {
+      rewritten = base + url.slice(window.location.origin.length + 4);
     }
-    if (url.indexOf(window.location.origin + '/api') === 0) {
-      return base + url.slice(window.location.origin.length + 4);
-    }
-    return url;
+    return rewriteLocalAdminRoute(rewritten, method).url;
   }
 
   var _fetch = window.fetch.bind(window);
   window.fetch = function (input, init) {
-    if (typeof input === 'string') input = rewrite(input);
+    var method = (init && init.method) || (input && input.method) || 'GET';
+    var originalUrl = typeof input === 'string' ? input : input && input.url;
+    var route = rewriteLocalAdminRoute(rewrite(originalUrl), method);
+    if (typeof input === 'string') input = route.url;
     else if (input && typeof input.url === 'string') {
       try {
-        input = new Request(rewrite(input.url), input);
+        input = new Request(route.url, input);
       } catch (e) {}
+    }
+    if (route.method && String(route.method).toUpperCase() !== String(method).toUpperCase()) {
+      init = Object.assign({}, init || {}, { method: route.method });
     }
     return _fetch(input, init);
   };
 
   var _open = XMLHttpRequest.prototype.open;
   XMLHttpRequest.prototype.open = function (method, url) {
-    arguments[1] = rewrite(url);
+    var route = rewriteLocalAdminRoute(rewrite(url, method), method);
+    arguments[0] = route.method || method;
+    arguments[1] = route.url;
     return _open.apply(this, arguments);
   };
 })();

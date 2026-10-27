@@ -2,6 +2,10 @@
 
 return [
 
+    'og_landmark' => [
+        'website_auth_url' => env('OG_WEBSITE_AUTH_URL', 'http://127.0.0.1:25189/api/auth/me'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

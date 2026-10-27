@@ -21,6 +21,7 @@
     "test:account-deletion": "node --test scripts/account-data-deletion.test.js scripts/account-deletion-api.test.js",
     "test:public-contacts": "node --test scripts/patch-public-contacts.test.js",
     "test:admin-listing-media": "node --test scripts/admin-listing-media.test.js",
+    "test:admin-laravel-routing": "node --test scripts/admin-laravel-routing.test.js",
     "test:listing-approval-preview": "node --test scripts/listing-approval-preview.test.js"
   },
   "dependencies": {

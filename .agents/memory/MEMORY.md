@@ -55,5 +55,6 @@
 - [Single public account model](single-user-account-model.md) — public accounts are User; keep staff permissions separate so listing moderation remains available.
 - [Admin login feedback](admin-login-feedback.md) — show credential-stage failures beside the login form; errors inside a collapsed OTP panel make Continue appear inert.
 - [Admin trusted-device policy](admin-trusted-device.md) — keep OTP on non-local environments; the local Replit preview may use password-only admin login.
+- [Local admin session bridge](local-admin-session-bridge.md) — preview Express sessions aren't in Laravel auth_sessions; validate them locally then enforce Laravel permissions.
 - [Admin project lifecycle](admin-project-lifecycle.md) — project admin edits should stay in the admin audit pipeline and archive projects to preserve linked inventory.
 - [Admin-managed mobile directories](mobile-agent-directory.md) — Admin Agents and Live/Approved Projects must refresh into public mobile feeds without reviving deleted or draft records.

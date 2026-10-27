@@ -18,6 +18,36 @@ final class AdminController extends Controller
         return response()->json(array_values($properties));
     }
 
+    public function propertyReview(string $id, LegacyDataStore $store): JsonResponse
+    {
+        $data = $store->read();
+        $property = collect($data['properties'] ?? [])
+            ->first(fn (array $candidate): bool => (string) ($candidate['id'] ?? '') === $id);
+        if (! $property) return response()->json(['error' => 'Property not found.'], 404);
+
+        $sellerId = $property['sellerId'] ?? $property['agentId'] ?? null;
+        $seller = collect($data['users'] ?? [])
+            ->first(fn (array $candidate): bool => (string) ($candidate['id'] ?? '') === (string) $sellerId);
+        $audit = array_values(array_filter(
+            $data['auditLog'] ?? [],
+            fn (array $entry): bool => ($entry['resource'] ?? '') === 'properties'
+                && (string) ($entry['recordId'] ?? '') === $id,
+        ));
+
+        return response()->json([
+            'property' => $property,
+            'seller' => $seller ? [
+                'id' => $seller['id'] ?? null,
+                'name' => $seller['name'] ?? '',
+                'role' => $seller['role'] ?? '',
+                'email' => $seller['email'] ?? '',
+                'phone' => $seller['phone'] ?? '',
+                'agencyName' => $seller['agencyName'] ?? $seller['agency'] ?? '',
+            ] : null,
+            'audit' => array_slice($audit, 0, 100),
+        ]);
+    }
+
     public function moderateProperty(string $id, string $action, Request $request, LegacyDataStore $store): JsonResponse
     {
         $validated = $request->validate(['reason' => ['nullable', 'string', 'max:2000']]);
@@ -71,6 +101,26 @@ final class AdminController extends Controller
     public function updateMobileAgent(string $id, Request $request, LegacyDataStore $store): JsonResponse
     {
         $validated = $request->validate([
+            'name' => ['sometimes', 'string', 'max:120'],
+            'displayName' => ['sometimes', 'string', 'max:120'],
+            'agency' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'city' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:40'],
+            'email' => ['sometimes', 'nullable', 'email', 'max:160'],
+            'years' => ['sometimes', 'integer', 'min:0', 'max:80'],
+            'rating' => ['sometimes', 'numeric', 'min:0', 'max:5'],
+            'reviewCount' => ['sometimes', 'integer', 'min:0'],
+            'listings' => ['sometimes', 'integer', 'min:0'],
+            'color' => ['sometimes', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'verified' => ['sometimes', 'boolean'],
+            'coverPhoto' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'photo' => ['sometimes', 'nullable', 'string', 'max:1000'],
+            'profilePhoto' => ['sometimes', 'nullable', 'string', 'max:1000'],
+            'areas' => ['sometimes', 'array'],
+            'areas.*' => ['string', 'max:120'],
+            'specialties' => ['sometimes', 'array'],
+            'specialties.*' => ['string', 'max:120'],
+            'about' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'approvalStatus' => ['sometimes', 'in:Pending,Approved,Rejected'],
             'status' => ['sometimes', 'in:Active,Suspended'],
             'visible' => ['sometimes', 'boolean'],

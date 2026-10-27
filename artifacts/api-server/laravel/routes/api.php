@@ -29,6 +29,7 @@ $registerRoutes = static function (): void {
         Route::patch('/properties/{id}/resubmit', [PropertyController::class, 'resubmit'])->whereNumber('id');
         Route::middleware(LegacyAdminAuth::class)->group(function (): void {
             Route::get('/admin/properties', [AdminController::class, 'properties']);
+            Route::get('/admin/properties/{id}/review', [AdminController::class, 'propertyReview'])->whereNumber('id');
             Route::patch('/properties/{id}/{action}', [AdminController::class, 'moderateProperty'])
                 ->whereNumber('id')->whereIn('action', ['approve', 'reject', 'request-changes']);
             Route::get('/admin/mobile-agents', [AdminController::class, 'mobileAgents']);

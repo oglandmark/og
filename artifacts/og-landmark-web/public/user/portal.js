@@ -12,7 +12,7 @@
   const state = {
     properties: [], agents: [], savedProperties: [], inquiries: [], appointments: [], offers: [], savedIds: [],
     notifications: [], listings: [], compareIds: [], compareProperties: [], alerts: [], messages: [],
-    conversations: [], activeConversation: null, tracking: [], verificationRequests: [], account: null,
+    conversations: [], activeConversation: null, tracking: [], account: null,
     notificationPreferences: null, failures: {}
   };
   let loadInProgress = false;
@@ -289,17 +289,6 @@
     ];
     target.innerHTML = `<div class="profile-head"><span class="avatar">${safe(initial)}</span><div><h2>${safe(profile.name || displayName)}</h2><p>${safe(profile.email || 'OG Landmark account')}</p></div></div><div class="profile-fields">${fields.map(([label, value]) => `<div class="profile-field"><label>${safe(label)}</label><span>${safe(value || 'Not provided')}</span></div>`).join('')}</div>`;
   }
-  function renderKyc() {
-    const target = document.getElementById('kyc-content');
-    if (state.failures.verificationRequests || state.failures.account) {
-      target.innerHTML = errorMarkup(state.failures.verificationRequests ? 'verificationRequests' : 'account');
-      return;
-    }
-    const profile = state.account || user;
-    const status = profile.kycStatus || profile.verificationStatus || ((profile.isVerified || profile.verified) ? 'Verified' : 'Not submitted');
-    const requests = state.verificationRequests.map((item) => `<div class="tool-row"><div><strong>${safe(item.title || item.type || item.requestType || 'Verification request')}</strong><small>Submitted ${date(item.createdAt || item.date)}</small></div>${statusBadge(item.status || 'Pending')}</div>`).join('');
-    target.innerHTML = `<div class="tool-summary"><span class="tool-icon">${svg('shield')}</span><div><small>Current status</small><strong>${safe(status)}</strong><p>${state.verificationRequests.length ? `${state.verificationRequests.length} verification request(s) are linked to your account.` : 'No verification request is currently listed for your account.'}</p></div></div>${requests || ''}<div class="capability-note"><strong>Need to submit identity documents?</strong><p>KYC document submission is not available in this web portal. Contact OG Landmark support to complete verification.</p></div>`;
-  }
   function renderCompare() {
     const target = document.getElementById('compare-content');
     if (state.failures.compareIds) { target.innerHTML = errorMarkup('compareIds'); return; }
@@ -481,7 +470,6 @@
     document.getElementById('wishlist-grid').innerHTML = state.failures.saved ? errorMarkup('saved') : cards(state.savedProperties, { emptyTitle: 'Your wishlist is empty', emptyText: 'Save a property in the mobile app or browse listings here to build your wishlist.', emptyAction: '<button type="button" data-go="properties">Browse properties</button>' });
     renderTables();
     renderListings();
-    renderKyc();
     renderCompare();
     renderAlerts();
     renderTracking();
@@ -528,7 +516,6 @@
       load('notifications', '/api/notifications', (data) => rows(data, ['notifications', 'items'])),
       load('listings', '/api/my-properties', propertyRows),
       load('account', '/api/account', (data) => data),
-      load('verificationRequests', '/api/verification-requests', (data) => rows(data)),
       load('alerts', '/api/saved-searches', (data) => rows(data)),
       load('compareIds', '/api/comparison', (data) => Array.isArray(data) ? data.map(String) : []),
       load('tracking', '/api/visit-history', (data) => rows(data)),
@@ -827,7 +814,6 @@
         document.getElementById('top-avatar').textContent = updatedInitial;
         document.getElementById('welcome-name').textContent = String(updatedName).trim().split(/\s+/)[0] || 'there';
         renderProfile();
-        renderKyc();
         renderSettings();
         document.getElementById('account-settings-message').textContent = 'Contact details saved.';
       } catch (error) {

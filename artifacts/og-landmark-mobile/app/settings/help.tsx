@@ -12,8 +12,8 @@ type FAQ = { q: string; a: string };
 
 const FAQS: FAQ[] = [
   {
-    q: 'How long does agent verification take?',
-    a: 'Verification typically takes 24–48 hours after you submit your CNIC and contact details. Our team reviews applications during business hours (9am–6pm, Mon–Sat).',
+    q: 'How long does agent approval take?',
+    a: 'Agent applications are usually reviewed within 24–48 hours after registration. Our team reviews applications during business hours (9am–6pm, Mon–Sat).',
   },
   {
     q: 'How do I post a property listing?',
@@ -36,8 +36,8 @@ const FAQS: FAQ[] = [
     a: 'Go to your Profile tab and tap Language, or go to Profile → Language. You can switch between English and Urdu at any time.',
   },
   {
-    q: 'My account is not getting verified. What should I do?',
-    a: 'If 48 hours have passed since registration, contact us via WhatsApp or call our support number. Please have your CNIC number ready for faster resolution.',
+    q: 'My agent application is still pending. What should I do?',
+    a: 'If 48 hours have passed since registration, contact us via WhatsApp or call our support number.',
   },
   {
     q: 'Is OG Landmark free for agents?',

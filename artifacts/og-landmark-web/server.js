@@ -697,7 +697,7 @@ function getSeedData() {
         messages: [
           { id: 1, senderId: 1, senderName: 'Ahmed Hassan', text: "Hello Usman, I've confirmed with the seller. The viewing for the DHA Phase 8 Villa is scheduled for tomorrow at 10:00 AM.", timestamp: new Date(Date.now() - 2*3600000).toISOString() },
           { id: 2, senderId: 4, senderName: 'Usman Ahmed', text: "That sounds great. I'll be there on time.", timestamp: new Date(Date.now() - 3600000).toISOString() },
-          { id: 3, senderId: 1, senderName: 'Ahmed Hassan', text: 'Perfect. Please bring your CNIC just in case security asks at the gate. See you tomorrow!', timestamp: new Date(Date.now() - 30*60000).toISOString() },
+          { id: 3, senderId: 1, senderName: 'Ahmed Hassan', text: 'Perfect. Please bring your appointment confirmation in case security asks at the gate. See you tomorrow!', timestamp: new Date(Date.now() - 30*60000).toISOString() },
         ]
       },
       { id: 2, propertyId: 2, propertyTitle: 'Premium 3-Bed Apartment in Bahria Town', participants: [4, 2], participantNames: ['Usman Ahmed', 'Fatima Khan'], agentImage: '/images/agent-2.jpg', lastUpdated: new Date(Date.now()-86400000).toISOString(),
@@ -4612,7 +4612,6 @@ adminCollection('/api/admin/developer-team', 'developerTeam');
 adminCollection('/api/admin/developer-documents', 'developerDocuments');
 adminCollection('/api/admin/developer-payment-plans', 'developerPaymentPlans');
 adminCollection('/api/admin/developer-promotions', 'promotions', { actions: moderationActions });
-adminCollection('/api/admin/verification-requests', 'verificationRequests', { actions: moderationActions });
 adminCollection('/api/admin/conversations', 'conversations');
 adminCollection('/api/admin/notifications', 'notifications', { allowCreate: true });
 
@@ -4625,7 +4624,7 @@ app.get('/api/admin/users/:id/activity', requireAdmin, async (req, res) => {
     const sources = [
       ['buyerRequests', data.buyerRequests], ['agentLeads', data.agentLeads],
       ['agentVisits', data.agentVisits], ['developerProjects', data.developerProjects],
-      ['developerLeads', data.developerLeads], ['verificationRequests', data.verificationRequests],
+      ['developerLeads', data.developerLeads],
       ['promotions', data.promotions], ['conversations', data.conversations],
       ['notifications', data.notifications], ['auditLog', data.auditLog],
     ];
@@ -4737,7 +4736,7 @@ const DEFAULT_MOBILE_CONTENT = {
       heroTitle: "We're here to help",
       heroSubtitle: 'OG Landmark support team is available 6 days a week',
       faqs: [
-        { q: 'How long does agent verification take?', a: 'Verification typically takes 24–48 hours after you submit your CNIC and contact details.' },
+        { q: 'How long does agent approval take?', a: 'Agent applications are usually reviewed within 24–48 hours after registration.' },
         { q: 'How do I post a property listing?', a: 'Tap the Post an Ad tab, fill in the property details, add photos, and submit.' },
         { q: 'Can I edit or delete my listing after posting?', a: 'Yes. Open the Listings tab, find your listing, then tap Edit or Delete.' },
         { q: 'How do I contact a lead?', a: 'Open the Leads tab and use the Call or WhatsApp buttons to contact the lead.' },
@@ -5589,13 +5588,15 @@ function personalCrud(path, key, prefix) {
 personalCrud('/api/buyer-requests', 'buyerRequests', 'request');
 personalCrud('/api/agent-leads', 'agentLeads', 'agentlead');
 personalCrud('/api/agent-visits', 'agentVisits', 'visit');
+const retiredIdentityVerification = (_req, res) => res.status(410).json({ error: 'Identity verification is not available.' });
+app.all('/api/verification-requests', retiredIdentityVerification);
+app.all('/api/admin/verification-requests', retiredIdentityVerification);
 // Account resources used by the mobile experience.  These are server-side
 // counterparts to formerly device-only history and comparison stores.
 personalCrud('/api/recent-searches', 'recentSearches', 'recent');
 personalCrud('/api/comparisons', 'comparisons', 'comparison');
 personalCrud('/api/visit-history', 'visitHistory', 'history');
 personalCrud('/api/promotions', 'promotions', 'promotion');
-personalCrud('/api/verification-requests', 'verificationRequests', 'verification');
 personalCrud('/api/measurements', 'measurements', 'measurement');
 
 // ─── Mobile domain resources ─────────────────────────────────────────────────
@@ -5604,7 +5605,7 @@ personalCrud('/api/measurements', 'measurements', 'measurement');
 const mobileResources = ['saved-searches', 'buyer-requests', 'agent-leads', 'visits',
   'developer-projects', 'inventory-blocks', 'inventory-units', 'developer-leads',
   'developer-team', 'developer-documents', 'payment-plans', 'promotions',
-  'verification-requests', 'device-tokens', 'audit-log', 'recent-searches',
+  'device-tokens', 'audit-log', 'recent-searches',
   'comparisons', 'visit-history'];
 const resourceKey = name => name.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
 function ownsDocument(user, doc) {
@@ -5720,6 +5721,7 @@ app.get('/user', (req, res) => {
   noCache(res);
   res.sendFile(path.join(publicDir, 'user/index.html'));
 });
+app.get('/user/kyc', (req, res) => res.redirect(302, '/user'));
 app.get('/user/*', (req, res) => {
   if (req.path.includes('/assets/')) return res.status(404).end();
   noCache(res);

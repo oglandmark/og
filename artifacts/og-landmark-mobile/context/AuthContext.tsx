@@ -33,7 +33,6 @@ export type User = {
   agencyName?: string;
   yearsExperience?: string;
   specializations?: string[];
-  cnic?: string;
   areasServed?: string[];
   companyName?: string;
   companyType?: string;

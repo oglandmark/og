@@ -266,7 +266,7 @@ tr:hover td{background:#f8fafc}
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
       Developer Projects
     </a>
-    <a onclick="showPage('verifications')" id="nav-verifications">
+    <a onclick="showPage('verifications')" id="nav-verifications" hidden aria-hidden="true">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
       Verifications
     </a>
@@ -473,16 +473,6 @@ tr:hover td{background:#f8fafc}
     </div>
   </div>
 
-  <!-- VERIFICATIONS -->
-  <div class="page" id="page-verifications">
-    <div class="sec-head"><h3>Verification Requests</h3></div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Entity</th><th>Type</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody id="verifications-body"></tbody>
-      </table>
-    </div>
-  </div>
 
   <!-- CONVERSATIONS -->
   <div class="page" id="page-conversations">
@@ -1772,41 +1762,6 @@ async function loadDeveloperPromotions(projectId) {
 }
 
 // ── Verifications 
-async function loadVerifications() {
-  const tbody = document.getElementById('verifications-body');
-  tbody.innerHTML = '<tr><td colspan="5" class="empty">Loading...</td></tr>';
-  try {
-    const data = await api('GET', '/api/admin/verification-requests');
-    if (!data || !data.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty">No verification requests found</td></tr>';
-      return;
-    }
-    tbody.innerHTML = data.map(v => `
-      <tr>
-        <td><strong>${v.entityName || '—'}</strong></td>
-        <td>${v.type || '—'}</td>
-        <td>${v.submittedAt || v.createdAt || '—'}</td>
-        <td><span class="badge badge-warn">${v.status || 'Pending'}</span></td>
-        <td>
-           <div class="action-btns">
-             <button class="btn btn-green btn-sm" onclick="patchVerification('${v.id}', 'approve')">Approve</button>
-             <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="patchVerification('${v.id}', 'reject')">Reject</button>
-             <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="deleteVerification('${v.id}')">Delete</button>
-           </div>
-        </td>
-      </tr>
-    `).join('');
-  } catch(e) { tbody.innerHTML = `<tr><td colspan="5" class="empty" style="color:var(--danger)">Error: ${e.message}</td></tr>`; }
-}
-async function patchVerification(id, action) {
-  try { await api('PATCH', `/api/admin/verification-requests/${id}`, { action }); showToast('Action successful','success'); loadVerifications(); } catch(e){ showToast(e.message,'error'); }
-}
-async function deleteVerification(id) {
-  if(!confirm('Delete?')) return;
-  try { await api('DELETE', `/api/admin/verification-requests/${id}`); showToast('Deleted','success'); loadVerifications(); } catch(e){ showToast(e.message,'error'); }
-}
-
-
 // ── Conversations 
 async function loadConversations() {
   const tbody = document.getElementById('conversations-body');
@@ -2053,7 +2008,6 @@ async function loadSecondaryData(){
   await Promise.allSettled([
     loadBuyerRequests(),
     loadDeveloperProjects(),
-    loadVerifications(),
     loadConversations(),
     loadNotifications(),
     loadMobileStats(),
@@ -3631,13 +3585,12 @@ function showPage(name){
   document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
   document.getElementById('page-'+name)?.classList.add('active');
   document.getElementById('nav-'+name)?.classList.add('active');
-  const titles={dashboard:'Admin Dashboard','site-content':'Site Content',approvals:'Property Approvals',properties:'All Properties',agents:'Agent Management',users:'Users',inquiries:'All Inquiries',blog:'Blog Posts',settings:'Settings','city-agents':'City Agents','buyer-requests':'Buyer Requests','developer-projects':'Developer Projects',verifications:'Verification Requests',conversations:'Conversations',notifications:'Notifications','prop-review':'Property Review',mobile:'Mobile App Control',banners:'App Banners'};
+  const titles={dashboard:'Admin Dashboard','site-content':'Site Content',approvals:'Property Approvals',properties:'All Properties',agents:'Agent Management',users:'Users',inquiries:'All Inquiries',blog:'Blog Posts',settings:'Settings','city-agents':'City Agents','buyer-requests':'Buyer Requests','developer-projects':'Developer Projects',conversations:'Conversations',notifications:'Notifications','prop-review':'Property Review',mobile:'Mobile App Control',banners:'App Banners'};
   document.getElementById('page-title').textContent=titles[name]||'Dashboard';
   if(name==='site-content') loadSiteContent();
   if(name==='users') refreshUsers();
   if(name==='buyer-requests') loadBuyerRequests();
   if(name==='developer-projects') loadDeveloperProjects();
-  if(name==='verifications') loadVerifications();
   if(name==='conversations') loadConversations();
   if(name==='notifications') loadNotifications();
   if(name==='mobile') loadMobileStats();

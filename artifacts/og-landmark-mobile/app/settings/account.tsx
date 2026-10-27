@@ -339,28 +339,6 @@ export default function AccountSettingsScreen() {
           </View>
         </AnimatedReveal>
 
-        {/* CNIC (read-only) */}
-        <AnimatedReveal delay={140}>
-          <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>IDENTITY</Text>
-          <View style={[styles.fieldsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.fieldRow}>
-              <View style={[styles.fieldIcon, { backgroundColor: colors.accent }]}>
-                <Feather name="credit-card" size={15} color={colors.accentForeground} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>CNIC Number</Text>
-                <Text style={[styles.fieldInput, { color: colors.mutedForeground }]}>
-                  {user?.cnic ? user.cnic : 'Not provided — contact support to update'}
-                </Text>
-              </View>
-              <Feather name="lock" size={14} color={colors.mutedForeground} />
-            </View>
-          </View>
-          <Text style={[styles.helperText, { color: colors.mutedForeground }]}>
-            CNIC changes require admin verification. Contact support via Help & Support.
-          </Text>
-        </AnimatedReveal>
-
         {/* Save */}
         <AnimatedReveal delay={180}>
           <Pressable

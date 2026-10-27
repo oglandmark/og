@@ -41,7 +41,7 @@ final class PreviewLiveFeedController extends Controller
 
     private function forward(string $path, array $query = []): JsonResponse
     {
-        abort_unless(app()->environment('local'), 404);
+        abort_unless(config('app.env') === 'local', 404);
 
         try {
             $response = Http::acceptJson()

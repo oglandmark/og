@@ -12,7 +12,7 @@ final class AuthController extends Controller
 {
     public function adminVerify(Request $request, LegacyDataStore $store): JsonResponse
     {
-        if (! app()->environment('local') || app()->runningUnitTests()) {
+        if (! app()->environment('local')) {
             return response()->json(['error' => 'Local preview admin sign-in is unavailable.'], 404);
         }
 

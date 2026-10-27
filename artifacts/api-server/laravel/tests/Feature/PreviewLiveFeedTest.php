@@ -10,7 +10,7 @@ final class PreviewLiveFeedTest extends TestCase
 {
     public function test_preview_property_feed_proxies_public_live_listings(): void
     {
-        config(['app.env' => 'local']);
+        $this->app->detectEnvironment(static fn (): string => 'local');
         Http::fake([
             'www.oglandmark.com/api/properties*' => Http::response([
                 ['id' => 501, 'approvalStatus' => 'Active', 'featured' => true],
@@ -28,7 +28,7 @@ final class PreviewLiveFeedTest extends TestCase
 
     public function test_live_preview_proxy_is_disabled_outside_local_environment(): void
     {
-        config(['app.env' => 'production']);
+        $this->app->detectEnvironment(static fn (): string => 'production');
         Http::fake();
 
         $this->getJson('/api-legacy/api/preview/live/mobile/settings')->assertNotFound();

@@ -106,6 +106,91 @@ final class OgLandmarkApiTest extends TestCase
         $this->withToken($token)->getJson('/api/auth/me')->assertOk()->assertJsonPath('user.email', 'user@example.test');
     }
 
+    public function test_local_admin_verify_rejects_invalid_credentials_without_creating_a_user_or_session(): void
+    {
+        $this->app->detectEnvironment(static fn (): string => 'local');
+        putenv('LOCAL_PREVIEW_ADMIN_PASSWORD=local-test-password');
+
+        try {
+            $this->postJson('/api/auth/admin-verify', [
+                'email' => 'new-local-admin@example.test',
+                'password' => 'incorrect-password',
+            ])->assertUnauthorized();
+
+            $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true, 512, JSON_THROW_ON_ERROR);
+            $this->assertCount(2, $data['users']);
+            $this->assertNotContains('new-local-admin@example.test', array_column($data['users'], 'email'));
+            $this->assertSame(0, DB::table('auth_sessions')->count());
+        } finally {
+            putenv('LOCAL_PREVIEW_ADMIN_PASSWORD');
+        }
+    }
+
+    public function test_local_admin_verify_returns_a_sanitized_admin_and_creates_a_usable_session(): void
+    {
+        $this->app->detectEnvironment(static fn (): string => 'local');
+        putenv('LOCAL_PREVIEW_ADMIN_PASSWORD=local-test-password');
+
+        try {
+            $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true, 512, JSON_THROW_ON_ERROR);
+            $data['users'][1]['resetToken'] = 'reset-token-value';
+            $data['users'][1]['resetTokenHash'] = 'reset-token-hash-value';
+            $data['users'][1]['otp'] = '123456';
+            $data['users'][1]['secret'] = 'private-secret-value';
+            DB::table('app_data')->where('id', 1)->update(['data' => json_encode($data, JSON_THROW_ON_ERROR)]);
+
+            $response = $this->postJson('/api/auth/admin-verify', [
+                'email' => ' ADMIN@example.test ',
+                'password' => 'local-test-password',
+            ])->assertOk()
+                ->assertJsonPath('success', true)
+                ->assertJsonPath('user.id', 7)
+                ->assertJsonPath('user.email', 'admin@example.test')
+                ->assertJsonPath('user.role', 'Admin')
+                ->assertJsonPath('user.status', 'Active')
+                ->assertJsonMissingPath('user.password')
+                ->assertJsonMissingPath('user.resetToken')
+                ->assertJsonMissingPath('user.resetTokenHash')
+                ->assertJsonMissingPath('user.otp')
+                ->assertJsonMissingPath('user.secret');
+
+            $token = $response->json('token');
+            $this->assertNotEmpty($token);
+            $this->assertDatabaseHas('auth_sessions', [
+                'token_hash' => hash('sha256', $token),
+                'user_id' => 7,
+            ]);
+            $this->assertSame(1, DB::table('auth_sessions')->count());
+            $this->withToken($token)->getJson('/api/auth/me')
+                ->assertOk()
+                ->assertJsonPath('user.id', 7)
+                ->assertJsonPath('user.role', 'Admin')
+                ->assertJsonMissingPath('user.password');
+        } finally {
+            putenv('LOCAL_PREVIEW_ADMIN_PASSWORD');
+        }
+    }
+
+    public function test_admin_verify_is_unavailable_outside_local_environment(): void
+    {
+        $this->app->detectEnvironment(static fn (): string => 'production');
+        putenv('LOCAL_PREVIEW_ADMIN_PASSWORD=local-test-password');
+
+        try {
+            $this->postJson('/api/auth/admin-verify', [
+                'email' => 'new-local-admin@example.test',
+                'password' => 'local-test-password',
+            ])->assertNotFound();
+
+            $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true, 512, JSON_THROW_ON_ERROR);
+            $this->assertCount(2, $data['users']);
+            $this->assertNotContains('new-local-admin@example.test', array_column($data['users'], 'email'));
+            $this->assertSame(0, DB::table('auth_sessions')->count());
+        } finally {
+            putenv('LOCAL_PREVIEW_ADMIN_PASSWORD');
+        }
+    }
+
     public function test_mobile_agent_directory_returns_only_approved_active_visible_agents(): void
     {
         $this->getJson('/api/mobile-agents')->assertOk()->assertJsonCount(1)->assertJsonPath('0.displayName', 'Approved Agent');

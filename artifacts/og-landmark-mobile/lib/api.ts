@@ -11,7 +11,12 @@ import { Image, Platform } from 'react-native';
 import { File } from 'expo-file-system';
 import { fetch as expoFetch } from 'expo/fetch';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
-import { resolveApiBase } from './apiBase';
+import {
+  LIVE_API_BASE,
+  resolveApiBase,
+  shouldFallbackToLivePropertyFeed,
+  shouldFallbackUnauthenticatedReadToLive,
+} from './apiBase';
 import {
   normalizePropertyMedia,
   resolveMediaUrl as resolveMediaUrlForBase,
@@ -82,11 +87,20 @@ export async function apiRequest<T>(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetch(`${apiBase}${path}`, {
+    const requestInit: RequestInit = {
       ...options,
       headers,
       signal: controller.signal,
-    });
+    };
+    let res = await fetch(`${apiBase}${path}`, requestInit);
+    if (shouldFallbackUnauthenticatedReadToLive(
+      apiBase,
+      options.method || 'GET',
+      withAuth,
+      res.status,
+    )) {
+      res = await fetch(`${LIVE_API_BASE}${path}`, requestInit);
+    }
     clearTimeout(timer);
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -113,8 +127,23 @@ export async function apiRequest<T>(
 
 const apiFetch = apiRequest;
 
-function propertyFeedFetch<T>(path: string): Promise<T> {
-  return apiRequest<T>(path, {}, false, FETCH_TIMEOUT_MS, PROPERTY_FEED_API_BASE);
+async function propertyFeedFetch<T>(path: string): Promise<{ data: T; apiBase: string }> {
+  const isPreview = PROPERTY_FEED_API_BASE !== LIVE_API_BASE;
+  try {
+    const localData = await apiRequest<T>(path, {}, false, FETCH_TIMEOUT_MS, PROPERTY_FEED_API_BASE);
+    if (!shouldFallbackToLivePropertyFeed(localData, PROPERTY_FEED_API_BASE)) {
+      return { data: localData, apiBase: PROPERTY_FEED_API_BASE };
+    }
+  } catch (error) {
+    if (!(isPreview && error instanceof ApiRequestError && error.status === 404)) {
+      throw error;
+    }
+  }
+
+  return {
+    data: await apiRequest<T>(path, {}, false, FETCH_TIMEOUT_MS, LIVE_API_BASE),
+    apiBase: LIVE_API_BASE,
+  };
 }
 
 // Multipart fetch (for file uploads). Media uploads get a longer timeout than
@@ -508,8 +537,8 @@ export async function getProperties(filters: PropertiesFilter = {}): Promise<Api
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([k, v]) => { if (v !== undefined) params.set(k, String(v)); });
   const qs = params.toString();
-  const properties = await propertyFeedFetch<ApiProperty[]>(`/api/properties${qs ? `?${qs}` : ''}`);
-  return properties.map((property) => normalizeApiProperty(property, PROPERTY_FEED_API_BASE));
+  const { data: properties, apiBase } = await propertyFeedFetch<ApiProperty[]>(`/api/properties${qs ? `?${qs}` : ''}`);
+  return properties.map((property) => normalizeApiProperty(property, apiBase));
 }
 
 /** Fetch one bounded page without loading the whole catalogue into memory. */
@@ -518,12 +547,12 @@ export async function getPropertiesPage(filters: PropertiesFilter = {}): Promise
   Object.entries(filters).forEach(([k, v]) => { if (v !== undefined) params.set(k, String(v)); });
   params.set('response', 'page');
   const qs = params.toString();
-  const response = await propertyFeedFetch<PropertyPage | ApiProperty[]>(`/api/properties?${qs}`);
+  const { data: response, apiBase } = await propertyFeedFetch<PropertyPage | ApiProperty[]>(`/api/properties?${qs}`);
   if (Array.isArray(response)) {
     const offset = Number(filters.offset ?? 0);
     const limit = Number(filters.limit ?? response.length);
     return {
-      items: response.map((property) => normalizeApiProperty(property, PROPERTY_FEED_API_BASE)),
+      items: response.map((property) => normalizeApiProperty(property, apiBase)),
       total: offset + response.length,
       offset,
       limit,
@@ -532,7 +561,7 @@ export async function getPropertiesPage(filters: PropertiesFilter = {}): Promise
   }
   return {
     ...response,
-    items: response.items.map((property) => normalizeApiProperty(property, PROPERTY_FEED_API_BASE)),
+    items: response.items.map((property) => normalizeApiProperty(property, apiBase)),
   };
 }
 
@@ -560,10 +589,8 @@ export async function getNearbyProperties(
 }
 
 export async function getProperty(id: number): Promise<ApiProperty> {
-  return normalizeApiProperty(
-    await propertyFeedFetch<ApiProperty>(`/api/properties/${id}`),
-    PROPERTY_FEED_API_BASE,
-  );
+  const { data, apiBase } = await propertyFeedFetch<ApiProperty>(`/api/properties/${id}`);
+  return normalizeApiProperty(data, apiBase);
 }
 
 export async function incrementView(id: number): Promise<void> {

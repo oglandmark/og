@@ -12,23 +12,6 @@ final class PreviewLiveFeedController extends Controller
 {
     private const LIVE_API = 'https://www.oglandmark.com/api';
 
-    public function properties(Request $request): JsonResponse
-    {
-        $allowed = [
-            'type', 'city', 'status', 'purpose', 'minPrice', 'maxPrice', 'minBeds',
-            'featured', 'search', 'limit', 'offset', 'sort', 'minLat', 'maxLat',
-            'minLng', 'maxLng', 'lat', 'lng', 'radiusKm', 'response', 'paginated',
-        ];
-        $query = array_intersect_key($request->query(), array_flip($allowed));
-
-        return $this->forward('properties', $query);
-    }
-
-    public function property(string $id): JsonResponse
-    {
-        return $this->forward("properties/{$id}");
-    }
-
     public function mobileSettings(): JsonResponse
     {
         return $this->forward('mobile/settings');

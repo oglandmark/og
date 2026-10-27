@@ -4,7 +4,6 @@ import {
   LIVE_API_BASE,
   getPreviewLiveProxyPath,
   resolveApiBase,
-  shouldFallbackToLivePropertyFeed,
   shouldFallbackUnauthenticatedReadToLive,
 } from '../lib/apiBase';
 
@@ -18,15 +17,6 @@ test('production and untrusted domains use the public API', () => {
   assert.equal(resolveApiBase(''), 'https://www.oglandmark.com');
   assert.equal(resolveApiBase('www.oglandmark.com'), 'https://www.oglandmark.com');
   assert.equal(resolveApiBase('malicious.example'), 'https://www.oglandmark.com');
-});
-
-test('empty local property feeds use live listings without overriding nonempty local preview data', () => {
-  const preview = resolveApiBase('preview.replit.dev');
-  assert.equal(shouldFallbackToLivePropertyFeed([], preview), true);
-  assert.equal(shouldFallbackToLivePropertyFeed({ items: [], total: 0 }, preview), true);
-  assert.equal(shouldFallbackToLivePropertyFeed([{ id: 123 }], preview), false);
-  assert.equal(shouldFallbackToLivePropertyFeed({ items: [{ id: 123 }], total: 1 }, preview), false);
-  assert.equal(shouldFallbackToLivePropertyFeed([], LIVE_API_BASE), false);
 });
 
 test('only unauthenticated GET requests may fall back after a local 404', () => {

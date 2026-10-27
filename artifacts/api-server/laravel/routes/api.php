@@ -22,8 +22,6 @@ $registerRoutes = static function (): void {
     Route::get('/properties', [PropertyController::class, 'index']);
     Route::get('/properties/{id}', [PropertyController::class, 'show'])->whereNumber('id');
     Route::middleware('throttle:60,1')->prefix('preview/live')->group(function (): void {
-        Route::get('/properties', [PreviewLiveFeedController::class, 'properties']);
-        Route::get('/properties/{id}', [PreviewLiveFeedController::class, 'property'])->whereNumber('id');
         Route::get('/mobile/settings', [PreviewLiveFeedController::class, 'mobileSettings']);
         Route::get('/mobile/banners', [PreviewLiveFeedController::class, 'mobileBanners']);
     });

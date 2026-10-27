@@ -15,7 +15,6 @@ import {
   LIVE_API_BASE,
   getPreviewLiveProxyPath,
   resolveApiBase,
-  shouldFallbackToLivePropertyFeed,
   shouldFallbackUnauthenticatedReadToLive,
 } from './apiBase';
 import {
@@ -24,11 +23,11 @@ import {
 } from './propertyMedia';
 
 // ─── Base URL ──────────────────────────────────────────────────────────────────
-// Keep the rest of the mobile API on its existing origin. In Replit preview,
-// public property feeds use Laravel so locally uploaded media is testable.
+// Admin/auth calls can use the local preview API. Public property browsing
+// always reads the canonical live catalogue, including in Replit preview.
 const previewApiDomain = process.env.EXPO_PUBLIC_API_DOMAIN || process.env.EXPO_PUBLIC_DOMAIN;
 export const API_BASE = resolveApiBase(previewApiDomain);
-const PROPERTY_FEED_API_BASE = resolveApiBase(process.env.EXPO_PUBLIC_DOMAIN);
+const PROPERTY_FEED_API_BASE = LIVE_API_BASE;
 
 export function resolveMediaUrl(value?: string | null): string | undefined {
   return resolveMediaUrlForBase(value, API_BASE);
@@ -132,27 +131,9 @@ export async function apiRequest<T>(
 const apiFetch = apiRequest;
 
 async function propertyFeedFetch<T>(path: string): Promise<{ data: T; apiBase: string }> {
-  const isPreview = PROPERTY_FEED_API_BASE !== LIVE_API_BASE;
-  try {
-    const localData = await apiRequest<T>(path, {}, false, FETCH_TIMEOUT_MS, PROPERTY_FEED_API_BASE);
-    if (!shouldFallbackToLivePropertyFeed(localData, PROPERTY_FEED_API_BASE)) {
-      return { data: localData, apiBase: PROPERTY_FEED_API_BASE };
-    }
-  } catch (error) {
-    if (!(isPreview && error instanceof ApiRequestError && error.status === 404)) {
-      throw error;
-    }
-  }
-
   return {
-    data: await apiRequest<T>(
-      path.replace(/^\/api\/properties/, '/api/preview/live/properties'),
-      {},
-      false,
-      FETCH_TIMEOUT_MS,
-      PROPERTY_FEED_API_BASE,
-    ),
-    apiBase: LIVE_API_BASE,
+    data: await apiRequest<T>(path, {}, false, FETCH_TIMEOUT_MS, PROPERTY_FEED_API_BASE),
+    apiBase: PROPERTY_FEED_API_BASE,
   };
 }
 

@@ -17,7 +17,11 @@ return [
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
     'allowed_methods' => ['*'],
     'allowed_origins' => $allowedOrigins,
-    'allowed_origins_patterns' => [],
+    // Expo web previews call the public live property API directly. This
+    // grants read-only CORS access to the Replit Expo preview hostname family.
+    'allowed_origins_patterns' => [
+        '#^https://[a-z0-9-]+\.expo\.pike\.replit\.dev$#i',
+    ],
     'allowed_headers' => ['*'],
     'exposed_headers' => ['X-Total-Count', 'X-Page-Offset', 'X-Page-Size', 'X-Has-More'],
     'max_age' => 600,

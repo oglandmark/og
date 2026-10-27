@@ -41,6 +41,15 @@ final class OgLandmarkApiTest extends TestCase
                     'permissions' => ['admin'],
                     'password' => 'pbkdf2:admin-salt:'.hash_pbkdf2('sha512', self::PASSWORD, 'admin-salt', 100000, 128),
                 ]],
+                'reports' => [
+                    ['id' => 301, 'reporterId' => 42, 'propertyId' => 101, 'status' => 'Pending', 'reportedAt' => '2026-02-01T00:00:00Z', 'reason' => 'Incorrect details'],
+                    ['id' => 302, 'reporterId' => 99, 'propertyId' => 102, 'status' => 'Resolved', 'reportedAt' => '2026-02-02T00:00:00Z', 'reason' => 'Duplicate'],
+                ],
+                'buyerRequests' => [
+                    ['id' => 401, 'userId' => 42, 'createdAt' => '2026-02-03T00:00:00Z', 'action' => 'submitted'],
+                    ['id' => 402, 'userId' => 99, 'createdAt' => '2026-02-04T00:00:00Z', 'action' => 'other user'],
+                ],
+                'auditLog' => [],
                 'properties' => [[
                     'id' => 101,
                     'title' => 'Approved house',
@@ -181,5 +190,143 @@ final class OgLandmarkApiTest extends TestCase
             'password' => self::PASSWORD,
         ])->assertOk()->json('token');
         $this->withToken($token)->getJson('/api/admin/properties')->assertForbidden();
+    }
+
+    public function test_admin_can_list_users_and_inspect_paginated_account_activity(): void
+    {
+        $token = $this->adminToken();
+
+        $this->withToken($token)->getJson('/api/admin/users?role=user&limit=1')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.id', 42)
+            ->assertJsonMissingPath('0.password');
+
+        $this->withToken($token)->getJson('/api/admin/users/42/activity?limit=1&page=1')
+            ->assertOk()
+            ->assertHeader('X-Total-Count', '1')
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.resource', 'buyerRequests')
+            ->assertJsonPath('0.id', 401);
+
+        $this->withToken($token)->getJson('/api/admin/users/999/activity')
+            ->assertNotFound()->assertJsonPath('error', 'User not found');
+    }
+
+    public function test_admin_can_update_validated_staff_permissions_with_audit_history(): void
+    {
+        $token = $this->adminToken();
+
+        $this->withToken($token)->patchJson('/api/admin/users/42/permissions', [
+            'permissions' => ['developer', 'agent'],
+        ])->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('user.id', 42)
+            ->assertJsonPath('user.permissions', ['agent', 'developer'])
+            ->assertJsonMissingPath('user.password');
+
+        $this->withToken($token)->patchJson('/api/admin/users/42/permissions', [
+            'permissions' => ['superuser'],
+        ])->assertUnprocessable();
+        $this->withToken($token)->patchJson('/api/admin/users/42/permissions', [
+            'permissions' => ['admin', 'admin'],
+        ])->assertUnprocessable();
+        $this->withToken($token)->patchJson('/api/admin/users/7/permissions', [
+            'permissions' => [],
+        ])->assertUnprocessable();
+
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $this->assertSame('user_permissions_updated', $data['auditLog'][0]['action']);
+        $this->assertSame('42', $data['auditLog'][0]['recordId']);
+        $this->assertSame(['agent', 'developer'], $data['auditLog'][0]['detail']['toPermissions']);
+    }
+
+    public function test_admin_can_update_role_without_removing_own_admin_access(): void
+    {
+        $token = $this->adminToken();
+        $this->withToken($token)->patchJson('/api/admin/users/42/role', ['role' => 'Agent'])
+            ->assertOk()
+            ->assertJsonPath('user.role', 'Agent')
+            ->assertJsonPath('user.permissions', ['agent']);
+        $this->withToken($token)->patchJson('/api/admin/users/42/role', ['role' => 'Root'])
+            ->assertUnprocessable();
+        $this->withToken($token)->patchJson('/api/admin/users/7/role', ['role' => 'User'])
+            ->assertUnprocessable();
+    }
+
+    public function test_admin_can_edit_and_delete_users_with_audit_history(): void
+    {
+        $token = $this->adminToken();
+        $this->withToken($token)->putJson('/api/admin/users/42', [
+            'name' => 'Updated User',
+            'email' => 'updated@example.test',
+            'status' => 'Suspended',
+            'role' => 'Developer',
+        ])->assertOk()
+            ->assertJsonPath('id', 42)
+            ->assertJsonPath('name', 'Updated User')
+            ->assertJsonPath('role', 'Developer')
+            ->assertJsonPath('permissions', ['developer'])
+            ->assertJsonPath('status', 'Suspended')
+            ->assertJsonMissingPath('password');
+        $this->withToken($token)->putJson('/api/admin/users/42', ['role' => 'Root'])
+            ->assertUnprocessable();
+
+        $this->withToken($token)->deleteJson('/api/admin/users/42')
+            ->assertOk()->assertJsonPath('success', true);
+        $this->withToken($token)->getJson('/api/admin/users/42/activity')->assertNotFound();
+
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $this->assertSame(['user_deleted', 'user_updated'], array_column($data['auditLog'], 'action'));
+        $this->assertSame('42', $data['auditLog'][0]['recordId']);
+    }
+
+    public function test_admin_can_review_reports_and_mutations_are_audited(): void
+    {
+        $token = $this->adminToken();
+        $this->withToken($token)->getJson('/api/admin/reports?status=Pending')
+            ->assertOk()->assertJsonCount(1)->assertJsonPath('0.id', 301);
+        $this->withToken($token)->getJson('/api/admin/reports')
+            ->assertOk()->assertJsonPath('0.id', 302);
+
+        $this->withToken($token)->patchJson('/api/admin/reports/301', [
+            'status' => 'Resolved',
+            'adminNote' => 'Confirmed and resolved.',
+        ])->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('report.status', 'Resolved')
+            ->assertJsonPath('report.adminNote', 'Confirmed and resolved.')
+            ->assertJsonStructure(['report' => ['resolvedAt']]);
+
+        $this->withToken($token)->patchJson('/api/admin/reports/301', ['status' => 'Closed'])
+            ->assertUnprocessable();
+        $this->withToken($token)->patchJson('/api/admin/reports/999', ['status' => 'Resolved'])
+            ->assertNotFound()->assertJsonPath('error', 'Report not found');
+
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $this->assertSame('report_updated', $data['auditLog'][0]['action']);
+        $this->assertSame('reports', $data['auditLog'][0]['resource']);
+        $this->assertSame('301', $data['auditLog'][0]['recordId']);
+    }
+
+    public function test_regular_users_cannot_access_user_or_report_moderation(): void
+    {
+        $token = $this->postJson('/api/auth/login', [
+            'identifier' => 'testuser',
+            'password' => self::PASSWORD,
+        ])->assertOk()->json('token');
+
+        $this->withToken($token)->getJson('/api/admin/users')->assertForbidden();
+        $this->withToken($token)->getJson('/api/admin/reports')->assertForbidden();
+        $this->withToken($token)->patchJson('/api/admin/users/42/permissions', ['permissions' => ['admin']])->assertForbidden();
+        $this->withToken($token)->patchJson('/api/admin/reports/301', ['status' => 'Resolved'])->assertForbidden();
+    }
+
+    private function adminToken(): string
+    {
+        return $this->postJson('/api/auth/login', [
+            'identifier' => 'testadmin',
+            'password' => self::PASSWORD,
+        ])->assertOk()->json('token');
     }
 }

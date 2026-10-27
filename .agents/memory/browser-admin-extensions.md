@@ -25,6 +25,12 @@ When replacing a website logo, use a new asset URL instead of relying on overwri
 
 **How to apply:** Preserve the existing React bundle and make maintainable additions through separately loaded admin modules; route legacy admin entry points to `/admin/`, reuse Laravel authentication/APIs, preserve mobile API compatibility, and verify the local web preview. Do not alter the mobile client UI.
 
+Keep local preview API rewrites in the shared `og-api-base.js` shim and cover them in `admin-laravel-routing.test.js`; do not add per-page URL switches. Production hosts must retain their existing API routing.
+
+**Why:** The shared shim already owns the preview-versus-production routing boundary, and duplicating it in a page can send requests to different backends.
+
+**How to apply:** Add local Laravel route rewrites centrally and test both Replit preview paths and unchanged production paths.
+
 The admin dashboard must show all mobile property listings by default across statuses, with status filters, full edit/delete controls, and cross-city agent referrals. A referral must target a linked active Agent account so it appears in the Agent portal.
 
 **Why:** The user clarified that all currently live mobile listings—not only pending submissions—must be visible and manageable from the website admin.

@@ -56,7 +56,21 @@
     var laravelPath = null;
     var laravelRoot = localLaravelAdminBase;
 
-    if (pathname === '/api/admin/properties' && verb === 'GET') {
+    if (pathname === '/api/users' && verb === 'GET') {
+      laravelPath = laravelRoot + '/admin/users';
+    } else if (pathname === '/api/admin/users' && verb === 'GET') {
+      laravelPath = laravelRoot + '/admin/users';
+    } else if (/^\/api\/admin\/users\/\d+\/activity$/.test(pathname) && verb === 'GET') {
+      laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
+    } else if (/^\/api\/admin\/users\/\d+\/(?:role|permissions)$/.test(pathname) && verb === 'PATCH') {
+      laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
+    } else if (/^\/api\/users\/\d+$/.test(pathname) && (verb === 'PUT' || verb === 'DELETE')) {
+      laravelPath = laravelRoot + pathname.replace('/api/users/', '/admin/users/');
+    } else if (pathname === '/api/admin/reports' && verb === 'GET') {
+      laravelPath = laravelRoot + '/admin/reports';
+    } else if (/^\/api\/admin\/reports\/\d+$/.test(pathname) && verb === 'PATCH') {
+      laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
+    } else if (pathname === '/api/admin/properties' && verb === 'GET') {
       laravelPath = laravelRoot + '/admin/properties';
     } else if (/^\/api\/admin\/properties\/\d+\/review$/.test(pathname) && verb === 'GET') {
       laravelPath = laravelRoot + pathname.replace(/^\/api/, '');

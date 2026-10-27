@@ -28,6 +28,14 @@ $registerRoutes = static function (): void {
         Route::patch('/properties/{id}/listing-status', [PropertyController::class, 'setListingStatus'])->whereNumber('id');
         Route::patch('/properties/{id}/resubmit', [PropertyController::class, 'resubmit'])->whereNumber('id');
         Route::middleware(LegacyAdminAuth::class)->group(function (): void {
+            Route::get('/admin/users', [AdminController::class, 'users']);
+            Route::put('/admin/users/{id}', [AdminController::class, 'updateUser']);
+            Route::patch('/admin/users/{id}/role', [AdminController::class, 'updateUserRole']);
+            Route::patch('/admin/users/{id}/permissions', [AdminController::class, 'updateUserPermissions']);
+            Route::delete('/admin/users/{id}', [AdminController::class, 'deleteUser']);
+            Route::get('/admin/users/{id}/activity', [AdminController::class, 'userActivity']);
+            Route::get('/admin/reports', [AdminController::class, 'reports']);
+            Route::patch('/admin/reports/{id}', [AdminController::class, 'updateReport']);
             Route::get('/admin/properties', [AdminController::class, 'properties']);
             Route::get('/admin/properties/{id}/review', [AdminController::class, 'propertyReview'])->whereNumber('id');
             Route::patch('/properties/{id}/{action}', [AdminController::class, 'moderateProperty'])

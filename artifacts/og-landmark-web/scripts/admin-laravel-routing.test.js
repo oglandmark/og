@@ -75,6 +75,28 @@ test('local Replit agent directory edits use Laravel and become PATCH requests',
   ]);
 });
 
+test('local Replit user and report moderation use Laravel routes', async () => {
+  const { window, calls } = createBrowser('og-landmark.replit.dev');
+
+  await window.fetch('/api/users?role=User');
+  await window.fetch('/api/admin/users/42/activity?limit=10');
+  await window.fetch('/api/users/42', { method: 'PUT' });
+  await window.fetch('/api/users/42', { method: 'DELETE' });
+  await window.fetch('/api/admin/users/42/permissions', { method: 'PATCH' });
+  await window.fetch('/api/admin/reports?status=Pending');
+  await window.fetch('/api/admin/reports/301', { method: 'PATCH' });
+
+  assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
+    ['/api-legacy/api/admin/users?role=User', 'GET'],
+    ['/api-legacy/api/admin/users/42/activity?limit=10', 'GET'],
+    ['/api-legacy/api/admin/users/42', 'PUT'],
+    ['/api-legacy/api/admin/users/42', 'DELETE'],
+    ['/api-legacy/api/admin/users/42/permissions', 'PATCH'],
+    ['/api-legacy/api/admin/reports?status=Pending', 'GET'],
+    ['/api-legacy/api/admin/reports/301', 'PATCH'],
+  ]);
+});
+
 test('localhost admin edits target the local Laravel service', async () => {
   const { window, calls } = createBrowser('localhost');
 

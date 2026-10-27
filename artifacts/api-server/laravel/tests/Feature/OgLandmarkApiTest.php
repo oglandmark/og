@@ -106,6 +106,40 @@ final class OgLandmarkApiTest extends TestCase
         $this->withToken($token)->getJson('/api/auth/me')->assertOk()->assertJsonPath('user.email', 'user@example.test');
     }
 
+    public function test_admin_logout_revokes_only_the_signed_out_session(): void
+    {
+        $signedOutToken = $this->adminToken();
+        $activeToken = $this->adminToken();
+
+        $this->withToken($signedOutToken)->getJson('/api/admin/properties')->assertOk();
+        $this->withToken($activeToken)->getJson('/api/admin/properties')->assertOk();
+
+        $this->withToken($signedOutToken)->postJson('/api/auth/logout')
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseMissing('auth_sessions', [
+            'token_hash' => hash('sha256', $signedOutToken),
+        ]);
+        $this->withToken($signedOutToken)->getJson('/api/admin/properties')->assertUnauthorized();
+        $this->withToken($activeToken)->getJson('/api/admin/properties')->assertOk();
+    }
+
+    public function test_expired_admin_session_is_rejected_while_an_active_session_still_works(): void
+    {
+        $expiredToken = 'expired-admin-session-token';
+        DB::table('auth_sessions')->insert([
+            'token_hash' => hash('sha256', $expiredToken),
+            'user_id' => 7,
+            'expires_at' => now()->subSecond(),
+            'created_at' => now()->subHours(2),
+        ]);
+        $activeToken = $this->adminToken();
+
+        $this->withToken($expiredToken)->getJson('/api/admin/properties')->assertUnauthorized();
+        $this->withToken($activeToken)->getJson('/api/admin/properties')->assertOk();
+    }
+
     public function test_local_admin_verify_rejects_invalid_credentials_without_creating_a_user_or_session(): void
     {
         $this->app->detectEnvironment(static fn (): string => 'local');

@@ -38,6 +38,12 @@ const {
   queryRows,
   taggedQuery: dbQuery,
 } = require('./database/connection');
+const adminEmailOverride = localPreview
+  ? (process.env.LOCAL_PREVIEW_ADMIN_EMAIL || process.env.ADMIN_EMAIL)
+  : process.env.ADMIN_EMAIL;
+const adminPasswordOverride = localPreview
+  ? (process.env.LOCAL_PREVIEW_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD)
+  : process.env.ADMIN_PASSWORD;
 
 // ─── File Upload (Multer) ─────────────────────────────────────────────────────
 // Media bytes live on the configured file volume, never in MySQL. In
@@ -893,8 +899,8 @@ async function initDb() {
     // Apply env-var admin credentials if set
     const adminUser = seed.users.find(u => u.role === 'Admin');
     if (adminUser) {
-      if (process.env.ADMIN_EMAIL)    adminUser.email    = process.env.ADMIN_EMAIL;
-        if (process.env.ADMIN_PASSWORD) adminUser.password = process.env.ADMIN_PASSWORD;
+      if (adminEmailOverride) adminUser.email = adminEmailOverride;
+      if (adminPasswordOverride) adminUser.password = adminPasswordOverride;
     }
     // Hash all seed passwords before saving
     seed.users.forEach(u => { u.password = hashPassword(u.password); });
@@ -906,16 +912,16 @@ async function initDb() {
     const data = typeof existing.data === 'string' ? JSON.parse(existing.data) : existing.data;
     canonicalProperties = data.properties;
     let dataChanged = ensureMobileAgents(data) || ensurePropertyRecords(data);
-    if (process.env.ADMIN_EMAIL || process.env.ADMIN_PASSWORD) {
+    if (adminEmailOverride || adminPasswordOverride) {
       const adminUser = data.users.find(u => u.role === 'Admin');
       if (adminUser) {
         let changed = dataChanged;
-        if (process.env.ADMIN_EMAIL && adminUser.email !== process.env.ADMIN_EMAIL) {
-          adminUser.email = process.env.ADMIN_EMAIL;
+        if (adminEmailOverride && adminUser.email !== adminEmailOverride) {
+          adminUser.email = adminEmailOverride;
           changed = true;
         }
-        if (process.env.ADMIN_PASSWORD) {
-          const newHash = hashPassword(process.env.ADMIN_PASSWORD);
+        if (adminPasswordOverride) {
+          const newHash = hashPassword(adminPasswordOverride);
           if (adminUser.password !== newHash) {
             adminUser.password = newHash;
             changed = true;
@@ -927,7 +933,7 @@ async function initDb() {
         }
       }
     }
-    if (dataChanged && !(process.env.ADMIN_EMAIL || process.env.ADMIN_PASSWORD)) {
+    if (dataChanged && !(adminEmailOverride || adminPasswordOverride)) {
       await dbQuery`UPDATE app_data SET data = ${JSON.stringify(data)}, updated_at = CURRENT_TIMESTAMP(3) WHERE id = 1`;
       console.log('✅ Mobile agent directory migrated into existing database data');
     }

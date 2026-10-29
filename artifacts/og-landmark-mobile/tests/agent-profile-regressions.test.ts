@@ -24,6 +24,10 @@ const mobileApi = readFileSync(
   resolve(mobileRoot, 'lib', 'api.ts'),
   'utf8',
 );
+const mobileApiBase = readFileSync(
+  resolve(mobileRoot, 'lib', 'apiBase.ts'),
+  'utf8',
+);
 
 test('Home and profile screens only show Agents from the managed directory', () => {
   assert.match(
@@ -62,7 +66,8 @@ test('Find Agents refreshes after Admin changes while open or when the app resum
 
 test('Find Agents loads the public Admin-managed directory and maps records to mobile cards', () => {
   assert.match(mobileApi, /`\/api\/mobile-agents/);
-  assert.match(mobileApi, /cache: 'no-store'/);
+  assert.match(mobileApi, /propertyFeedFetch<ApiAgent\[\]>/);
+  assert.match(mobileApiBase, /pathname === '\/api\/mobile-agents'\) return `\/api\/preview\/live\/mobile-agents\$\{query\}`/);
   assert.match(findAgentScreen, /const records = await getAgents\(\);\s*setAgents\(records\.map\(apiAgentToSample\)\)/);
   assert.match(agentData, /const displayName = agent\.displayName \|\| agent\.name \|\| 'Property Agent'/);
   assert.match(agentData, /agency: agent\.agency \|\| agent\.title \|\| agent\.specialization/);

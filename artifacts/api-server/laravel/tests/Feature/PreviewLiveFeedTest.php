@@ -3,10 +3,24 @@
 namespace Tests\Feature;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 final class PreviewLiveFeedTest extends TestCase
 {
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        DB::table('app_data')->insert([
+            'id' => 1,
+            'data' => json_encode(['mobileAgents' => []], JSON_THROW_ON_ERROR),
+            'updated_at' => now(),
+        ]);
+    }
+
     public function test_live_preview_proxy_is_disabled_outside_local_environment(): void
     {
         config(['app.env' => 'production']);
@@ -64,6 +78,51 @@ final class PreviewLiveFeedTest extends TestCase
         Http::assertSent(fn (\Illuminate\Http\Client\Request $request): bool =>
             $request->url() === 'https://www.oglandmark.com/api/mobile-agents?city=Okara&limit=5'
         );
+    }
+
+    public function test_preview_agent_directory_includes_approved_local_admin_agents_and_honors_local_hides(): void
+    {
+        config(['app.env' => 'local']);
+        DB::table('app_data')->where('id', 1)->update(['data' => json_encode([
+            'mobileAgents' => [
+                [
+                    'id' => 1001, 'name' => 'Local Admin Agent', 'city' => 'Okara',
+                    'status' => 'Active', 'approvalStatus' => 'Approved', 'visible' => true,
+                    'email' => 'private@example.test', 'password' => 'never-return-this',
+                ],
+                [
+                    'id' => 1002, 'name' => 'Pending Agent', 'status' => 'Active',
+                    'approvalStatus' => 'Pending', 'visible' => true,
+                ],
+                [
+                    'id' => 1003, 'name' => 'Hidden Agent', 'status' => 'Active',
+                    'approvalStatus' => 'Approved', 'visible' => false,
+                ],
+                [
+                    'id' => 1004, 'name' => 'Edited Live Agent', 'sourcePreviewId' => '28',
+                    'city' => 'Okara', 'status' => 'Active', 'approvalStatus' => 'Approved', 'visible' => true,
+                ],
+            ],
+            'mobileAgentPreviewHiddenIds' => ['29'],
+        ], JSON_THROW_ON_ERROR)]);
+        Http::fake([
+            'www.oglandmark.com/api/mobile-agents*' => Http::response([
+                ['id' => 27, 'name' => 'Remote Agent', 'city' => 'Okara'],
+                ['id' => 28, 'name' => 'Old Live Snapshot', 'city' => 'Okara'],
+                ['id' => 29, 'name' => 'Deleted Live Agent', 'city' => 'Okara'],
+            ]),
+        ]);
+
+        $this->getJson('/api-legacy/api/preview/live/mobile-agents?city=Okara&limit=10')
+            ->assertOk()
+            ->assertJsonCount(3)
+            ->assertJsonPath('0.id', 1001)
+            ->assertJsonPath('0.displayName', 'Local Admin Agent')
+            ->assertJsonMissingPath('0.email')
+            ->assertJsonMissingPath('0.password')
+            ->assertJsonPath('1.id', 1004)
+            ->assertJsonMissingPath('1.sourcePreviewId')
+            ->assertJsonPath('2.id', 27);
     }
 
     public function test_cors_pattern_allows_only_replit_expo_preview_hosts(): void

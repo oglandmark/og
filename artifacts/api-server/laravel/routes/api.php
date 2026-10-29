@@ -39,6 +39,11 @@ $registerRoutes = static function (): void {
         Route::patch('/properties/{id}/listing-status', [PropertyController::class, 'setListingStatus'])->whereNumber('id');
         Route::patch('/properties/{id}/resubmit', [PropertyController::class, 'resubmit'])->whereNumber('id');
         Route::middleware(LegacyAdminAuth::class)->group(function (): void {
+            // The published Admin dashboard still calls the legacy /users API paths.
+            // Keep these aliases admin-protected while the preview proxy maps them locally.
+            Route::get('/users', [AdminController::class, 'users']);
+            Route::put('/users/{id}', [AdminController::class, 'updateUser']);
+            Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
             Route::get('/admin/users', [AdminController::class, 'users']);
             Route::put('/admin/users/{id}', [AdminController::class, 'updateUser']);
             Route::patch('/admin/users/{id}/role', [AdminController::class, 'updateUserRole']);

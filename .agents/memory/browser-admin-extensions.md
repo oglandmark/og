@@ -31,6 +31,12 @@ Keep local preview API rewrites in the shared `og-api-base.js` shim and cover th
 
 **How to apply:** Add local Laravel route rewrites centrally and test both Replit preview paths and unchanged production paths.
 
+The precompiled Admin Users page still requests `/api/users` and `/api/users/{id}`; the canonical Laravel routes are `/api/admin/users` and `/api/admin/users/{id}`. Preview rewrites bridge the paths locally, but the published dashboard calls Laravel directly, so keep admin-protected Laravel aliases unless the bundle is updated.
+
+**Why:** A preview-only rewrite can make local tests pass while the published Users page receives a 404 from Laravel.
+
+**How to apply:** Test the exact legacy Admin paths against Laravel and preserve `LegacyAdminAuth` on every alias.
+
 The admin dashboard must show all mobile property listings by default across statuses, with status filters, full edit/delete controls, and cross-city agent referrals. A referral must target a linked active Agent account so it appears in the Agent portal.
 
 **Why:** The user clarified that all currently live mobile listings—not only pending submissions—must be visible and manageable from the website admin.

@@ -143,7 +143,7 @@ final class OgLandmarkApiTest extends TestCase
             'password' => 'MobilePass123',
         ])->assertOk()->assertJsonPath('user.id', $userId);
         $adminToken = $this->adminToken();
-        $this->withToken($adminToken)->getJson('/api/admin/users')
+        $this->withToken($adminToken)->getJson('/api/users')
             ->assertOk()
             ->assertJsonFragment(['id' => $userId, 'email' => 'mobile.member@example.test']);
 
@@ -154,10 +154,10 @@ final class OgLandmarkApiTest extends TestCase
             'email' => 'another.member@example.test',
         ])->assertStatus(409);
 
-        $this->withToken($adminToken)->deleteJson('/api/admin/users/'.$userId)
+        $this->withToken($adminToken)->deleteJson('/api/users/'.$userId)
             ->assertOk()->assertJsonPath('success', true);
         $this->withToken($registrationToken)->getJson('/api/auth/me')->assertUnauthorized();
-        $this->withToken($adminToken)->getJson('/api/admin/users')
+        $this->withToken($adminToken)->getJson('/api/users')
             ->assertOk()
             ->assertJsonMissing(['id' => $userId, 'email' => 'mobile.member@example.test']);
         $this->assertDatabaseMissing('auth_sessions', [

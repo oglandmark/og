@@ -14,3 +14,9 @@ The local Laravel `/auth/me` response wraps the account as `{ user: ... }`, whil
 **Why:** The Admin bridge serves both backends; treating Laravel's valid wrapped response as a user object makes session recovery clear a valid token and redirect to login.
 
 **How to apply:** Unwrap the optional `user` field in both page-load recovery and existing-session login recovery, and test wrapped and direct responses.
+
+Each local web workflow restart also clears Express's in-memory preview sessions. An already-open Admin tab can retain its cached profile while protected list requests fail, which may look like an empty user list.
+
+**Why:** Preview bearer sessions are stored in process memory rather than durable storage.
+
+**How to apply:** After restarting the local web workflow, sign in again before diagnosing an empty Admin list; distinguish an unauthorized response from a successful empty array.

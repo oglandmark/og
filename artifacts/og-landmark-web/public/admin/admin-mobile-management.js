@@ -650,7 +650,9 @@
     content.querySelector('#og-mm-record-form')?.__ogProjectMap?.remove();
     content.innerHTML = '<div class="og-mm-empty">Loading live production records…</div>';
     try {
-      const listPath = key === 'projects' && projectViewState.archived
+      const listPath = key === 'banners' && window.__OG_ADMIN_LARAVEL_LOCAL__
+        ? '/admin/mobile/banners'
+        : key === 'projects' && projectViewState.archived
         ? `${config.list}?archived=1`
         : config.list;
       const result = await api(listPath);
@@ -691,7 +693,10 @@
         <button class="og-mm-action danger" data-action="delete-record" data-section="${key}" data-id="${esc(item.id)}">${key === 'banners' && item.isPreviewOnly ? 'Remove locally' : key === 'projects' ? 'Remove from app' : 'Delete'}</button>
       </div></td></tr>`).join('');
       const addButton = config.createPath ? `<button class="og-mm-action primary" data-action="add-record" data-section="${key}">${esc(config.addLabel || 'Add new')}</button>` : '';
-      content.innerHTML = `<div class="og-mm-note">${esc(config.note || `${config.title} — live records loaded from the shared Admin API used by the website and mobile app.`)}</div>
+      const sectionNote = key === 'banners' && !window.__OG_ADMIN_LARAVEL_LOCAL__
+        ? 'Manage Mobile Home banners through the shared Admin API.'
+        : config.note || `${config.title} — live records loaded from the shared Admin API used by the website and mobile app.`;
+      content.innerHTML = `<div class="og-mm-note">${esc(sectionNote)}</div>
         <div style="display:flex;justify-content:flex-end;margin-bottom:12px">${addButton}</div><div id="og-mm-record-form"></div>
         <div style="overflow:auto"><table class="og-mm-table"><thead><tr>${columns.map((name) => `<th>${esc(name)}</th>`).join('')}</tr></thead>
         <tbody>${rows || `<tr><td colspan="${colspan}" class="og-mm-empty">No records found.</td></tr>`}</tbody></table></div>`;

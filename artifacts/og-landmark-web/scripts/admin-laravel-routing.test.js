@@ -120,7 +120,7 @@ test('local Replit agent directory edits use Laravel and become PATCH requests',
 
 test('local banner management and media uploads use Laravel without changing production routing', async () => {
   const { window, calls } = createBrowser('og-landmark.replit.dev');
-  await window.fetch('/api/mobile/banners/all');
+  await window.fetch('/api/admin/mobile/banners');
   await window.fetch('/api/mobile/banners', { method: 'POST', body: '{}' });
   await window.fetch('/api/mobile/banners/703', { method: 'PUT', body: '{}' });
   await window.fetch('/api/mobile/banners/703', { method: 'DELETE' });
@@ -129,7 +129,7 @@ test('local banner management and media uploads use Laravel without changing pro
   await window.fetch('/api/admin/mobile-banner-preview-hidden', { method: 'POST', body: '{}' });
 
   assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
-    ['/api-legacy/api/mobile/banners/all', 'GET'],
+    ['/api-legacy/api/admin/mobile/banners', 'GET'],
     ['/api-legacy/api/admin/mobile/banners', 'POST'],
     ['/api-legacy/api/admin/mobile/banners/703', 'PUT'],
     ['/api-legacy/api/admin/mobile/banners/703', 'DELETE'],

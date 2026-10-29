@@ -79,6 +79,7 @@ $registerRoutes = static function (): void {
             Route::post('/admin/mobile-agent-preview-hidden', [AdminController::class, 'hideMobileAgentPreview']);
             Route::get('/admin/city-agents', [AdminController::class, 'cityAgents']);
             Route::get('/admin/developer-projects', [AdminController::class, 'developerProjects']);
+            Route::get('/admin/mobile/banners', [AdminController::class, 'mobileBanners']);
             Route::get('/mobile/banners/all', [AdminController::class, 'mobileBanners']);
             Route::post('/admin/mobile/banners', [AdminController::class, 'createMobileBanner']);
             Route::put('/admin/mobile/banners/{id}', [AdminController::class, 'updateMobileBanner'])->whereNumber('id');

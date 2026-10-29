@@ -96,6 +96,8 @@
       && (verb === 'PUT' || verb === 'PATCH' || verb === 'DELETE')) {
       laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
       if (verb === 'PUT') verb = 'PATCH';
+    } else if (pathname === '/api/admin/mobile/banners' && verb === 'GET') {
+      laravelPath = laravelRoot + '/admin/mobile/banners';
     } else if (pathname === '/api/mobile/banners/all' && verb === 'GET') {
       laravelPath = laravelRoot + '/mobile/banners/all';
     } else if (pathname === '/api/mobile/banners' && verb === 'GET') {

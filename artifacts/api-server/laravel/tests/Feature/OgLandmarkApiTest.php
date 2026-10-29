@@ -1056,7 +1056,7 @@ final class OgLandmarkApiTest extends TestCase
         $this->withToken($token)->getJson('/api/admin/developer-projects')
             ->assertOk()
             ->assertJsonPath('0.name', 'Test Project');
-        $this->withToken($token)->getJson('/api/mobile/banners/all')
+        $this->withToken($token)->getJson('/api/admin/mobile/banners')
             ->assertOk()
             ->assertJsonCount(2)
             ->assertJsonPath('0.title', 'First');

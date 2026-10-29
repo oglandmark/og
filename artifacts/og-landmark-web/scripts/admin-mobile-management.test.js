@@ -206,6 +206,7 @@ test('admin banner editor can replace uploaded images and videos and confirm del
   assert.match(source, /item\.isPreviewOnly \? 'Edit local copy' : 'Edit'/);
   assert.match(source, /item\.isPreviewOnly \? 'Remove locally'/);
   assert.match(source, /payload\.sourcePreviewId = String\(item\.sourcePreviewId\)/);
+  assert.match(source, /key === 'banners' && window\.__OG_ADMIN_LARAVEL_LOCAL__\s*\? '\/admin\/mobile\/banners'/);
   assert.match(source, /Permanently delete the \$\{item\.type === 'video' \? 'video' : 'image'\} banner/);
 });
 
@@ -274,8 +275,8 @@ test('Admin Agents lists Mobile app profiles and assignment options show city', 
   assert.match(properties, /option\.disabled = agent\.contactOnly === true/);
   assert.match(properties, /save\.disabled = !assignable/);
   assert.match(html, /admin-property-management\.js\?v=property-agent-assignment-20261029-v14/);
-  assert.match(html, /og-api-base\.js\?v=local-preview-agent-crud-20261029-v1/);
-  assert.match(html, /admin-mobile-management\.js\?v=admin-mobile-banner-crud-video-20261029-v2/);
+  assert.match(html, /og-api-base\.js\?v=local-preview-banner-read-20261029-v2/);
+  assert.match(html, /admin-mobile-management\.js\?v=admin-mobile-banner-crud-video-20261029-v3/);
 });
 
 test('property table supports eligible batch approval and per-listing results', () => {

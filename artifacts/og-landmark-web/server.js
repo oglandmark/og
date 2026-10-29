@@ -133,6 +133,20 @@ async function saveChallenge(email, purpose, code, minutes) {
   }
   throw new Error('A production database connection is not configured.');
 }
+async function deleteChallenge(email, purpose) {
+  if (dbQuery) {
+    await dbQuery`
+      DELETE FROM auth_challenges
+      WHERE email = ${email} AND purpose = ${purpose}
+    `;
+    return;
+  }
+  if (localPreview) {
+    otpStore.delete(`${purpose}:${email}`);
+    return;
+  }
+  throw new Error('A production database connection is not configured.');
+}
 async function consumeChallenge(email, purpose, code) {
   if (dbQuery) {
     const rows = await dbQuery`
@@ -3197,6 +3211,87 @@ app.post('/api/auth/reset-password', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ─── ADMIN PASSWORD RECOVERY ───────────────────────────────────────────────────
+app.post('/api/auth/admin-forgot-password', async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    if (!email) return res.status(400).json({ error: 'Email is required.' });
+
+    const data = await readData();
+    const admin = data.users.find(user =>
+      normalizeEmail(user.email) === email && hasPermission(user, 'admin')
+    );
+    // Avoid exposing whether an email belongs to an admin account.
+    if (!admin) {
+      return res.json({
+        success: true,
+        message: 'If this email belongs to an admin account, a reset code will be sent.',
+      });
+    }
+
+    const code = generateOTP();
+    await saveChallenge(email, 'password-reset', code, 15);
+
+    try {
+      const result = await sendPasswordResetEmail(email, code, 'Admin');
+      if (result?.fallback) {
+        await deleteChallenge(email, 'password-reset');
+        return res.status(503).json({
+          error: 'Reset email is not configured. Check the SMTP mailbox settings and try again.',
+        });
+      }
+    } catch (emailError) {
+      await deleteChallenge(email, 'password-reset').catch(() => {});
+      console.error('[admin password reset email error]', emailError.message);
+      return res.status(503).json({
+        error: 'The reset email could not be delivered. Check the SMTP mailbox credentials and try again.',
+      });
+    }
+
+    return res.json({ success: true, message: 'Reset code sent. Check your email.' });
+  } catch (error) {
+    console.error('[admin password reset request error]', error.message);
+    return res.status(500).json({ error: 'Unable to request an admin password reset right now.' });
+  }
+});
+
+app.post('/api/auth/admin-reset-password', async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    const code = String(req.body.code || '').trim();
+    const { newPassword } = req.body;
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ error: 'Email, code, and new password are required.' });
+    }
+    const passwordError = passwordValidationError(newPassword);
+    if (passwordError) return res.status(400).json({ error: passwordError });
+
+    const data = await readData();
+    const admin = data.users.find(user =>
+      normalizeEmail(user.email) === email && hasPermission(user, 'admin')
+    );
+    if (!admin) return res.status(400).json({ error: 'Invalid or expired reset code.' });
+
+    const challenge = await consumeChallenge(email, 'password-reset', code);
+    if (!challenge.ok) {
+      const message = challenge.reason === 'expired'
+        ? 'Reset code has expired. Request a new one.'
+        : challenge.reason === 'attempts'
+          ? 'Too many attempts. Request a new code.'
+          : 'Incorrect reset code. Please try again.';
+      return res.status(challenge.reason === 'attempts' ? 429 : 400).json({ error: message });
+    }
+
+    admin.password = hashPassword(newPassword);
+    await writeData(data);
+    await invalidateUserSessions(admin.id, email);
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('[admin password reset error]', error.message);
+    return res.status(500).json({ error: 'Unable to reset the admin password right now.' });
   }
 });
 

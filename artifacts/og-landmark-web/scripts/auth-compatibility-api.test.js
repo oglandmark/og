@@ -193,6 +193,30 @@ test('legacy login, current-user, registration, and staff permissions share one 
     assert.equal((await jsonRequest(baseUrl, '/api/developer/projects', { token: tokens[role] })).response.status, 403);
   }
 
+  const nonAdminRecovery = await jsonRequest(baseUrl, '/api/auth/admin-forgot-password', {
+    method: 'POST',
+    body: { email: 'buyer-41@example.test' },
+  });
+  assert.equal(nonAdminRecovery.response.status, 200);
+  assert.equal(nonAdminRecovery.body.success, true);
+  assert.doesNotMatch(JSON.stringify(nonAdminRecovery.body), /buyer-41@example\.test/i);
+
+  const adminRecovery = await jsonRequest(baseUrl, '/api/auth/admin-forgot-password', {
+    method: 'POST',
+    body: { email: 'admin-43@example.test' },
+  });
+  assert.equal(adminRecovery.response.status, 503);
+  assert.match(adminRecovery.body.error, /SMTP mailbox settings/i);
+  const invalidAdminReset = await jsonRequest(baseUrl, '/api/auth/admin-reset-password', {
+    method: 'POST',
+    body: {
+      email: 'admin-43@example.test',
+      code: '123456',
+      newPassword: 'NewAdminPassword123',
+    },
+  });
+  assert.equal(invalidAdminReset.response.status, 400);
+
   const registration = await jsonRequest(baseUrl, '/api/auth/register', {
     method: 'POST',
     body: {

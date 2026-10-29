@@ -48,7 +48,10 @@ final class LegacyBearerAuth
                     ->timeout(2)
                     ->get((string) config('services.og_landmark.website_auth_url'));
                 if ($response->successful()) {
-                    $user = $response->json('user');
+                    $payload = $response->json();
+                    $user = is_array($payload['user'] ?? null)
+                        ? $payload['user']
+                        : (is_array($payload) ? $payload : null);
                 }
             } catch (Throwable) {
                 // The response below remains the same as an invalid/expired session.

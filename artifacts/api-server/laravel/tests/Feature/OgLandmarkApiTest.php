@@ -869,12 +869,14 @@ final class OgLandmarkApiTest extends TestCase
         Http::fake([
             'http://website.test/api/auth/me' => Http::sequence()
                 ->push(['user' => ['id' => 7, 'name' => 'Admin User', 'role' => 'Admin', 'permissions' => ['admin'], 'status' => 'Active']])
-                ->push(['user' => ['id' => 42, 'name' => 'Test User', 'role' => 'User', 'permissions' => [], 'status' => 'Active']]),
+                ->push(['user' => ['id' => 42, 'name' => 'Test User', 'role' => 'User', 'permissions' => [], 'status' => 'Active']])
+                ->push(['id' => 8, 'name' => 'Preview Admin', 'role' => 'User', 'permissions' => ['admin'], 'status' => 'Active']),
         ]);
 
         $this->withToken('existing-local-admin-session')->getJson('/api/admin/properties')->assertOk();
         $this->withToken('existing-local-user-session')->getJson('/api/admin/properties')->assertForbidden();
-        Http::assertSentCount(2);
+        $this->withToken('direct-express-admin-session')->getJson('/api/admin/users')->assertOk();
+        Http::assertSentCount(3);
     }
 
     public function test_regular_users_cannot_open_admin_moderation_routes(): void

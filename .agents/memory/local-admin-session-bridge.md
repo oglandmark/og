@@ -9,11 +9,11 @@ In Replit local preview, the website can keep bearer sessions in its Express pro
 
 **How to apply:** Keep the local verifier URL configurable, use a short request timeout, and verify both an admin and a regular user. Production must continue to use the persisted Laravel-compatible session table only.
 
-The local Laravel `/auth/me` response wraps the account as `{ user: ... }`, while the legacy Express endpoint returns the account directly. Normalize both response shapes before the Admin browser checks the role.
+Laravel wraps `/auth/me` as `{ user: ... }`, while the website Express endpoint returns the account directly. Normalize both shapes in browser recovery and in Laravel's local website-session verifier before checking permissions.
 
-**Why:** The Admin bridge serves both backends; treating Laravel's valid wrapped response as a user object makes session recovery clear a valid token and redirect to login.
+**Why:** Admin list requests pass through Laravel while the website login session belongs to Express; an unwrapped Express response otherwise looks like an unauthenticated request.
 
-**How to apply:** Unwrap the optional `user` field in both page-load recovery and existing-session login recovery, and test wrapped and direct responses.
+**How to apply:** Unwrap the optional `user` field at every local-session boundary and test both response shapes with admin and regular-user permissions.
 
 Local preview bearer sessions are persisted as token hashes in a private, ignored runtime file so browser reloads and web workflow restarts do not sign the Admin out. The file remains local-only; production sessions continue using `auth_sessions`.
 

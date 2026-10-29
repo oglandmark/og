@@ -978,7 +978,7 @@
         if (type === 'checkbox') return `<div class="og-mm-field${full}"><label><input type="checkbox" name="${esc(name)}" ${(name === 'sendNow' || key === 'projects' ? Boolean(value) : value !== false) ? 'checked' : ''}> ${esc(label)}</label></div>`;
         if (type === 'file') {
           const bannerAccept = key === 'banners'
-            ? ((wrap.querySelector('select[name="type"]')?.value || item.type) === 'video' ? '.mp4,.mov' : '.jpg,.jpeg,.png,.webp')
+            ? 'image/*,video/*,.jpg,.jpeg,.png,.webp,.mp4,.mov'
             : accept;
           const fileLabel = key === 'banners' && editing ? 'Replace media file (optional)' : label;
           const multiple = key === 'projects' && ['photoUploads', 'videoUploads'].includes(name) ? 'multiple' : '';
@@ -1046,7 +1046,7 @@
       const preview = wrap.querySelector('[data-banner-upload-preview]');
       const typeSelect = wrap.querySelector('select[name="type"]');
       const syncBannerMediaType = () => {
-        if (input) input.accept = typeSelect?.value === 'video' ? '.mp4,.mov' : '.jpg,.jpeg,.png,.webp';
+        if (input) input.accept = 'image/*,video/*,.jpg,.jpeg,.png,.webp,.mp4,.mov';
       };
       typeSelect?.addEventListener('change', syncBannerMediaType);
       syncBannerMediaType();
@@ -1056,11 +1056,12 @@
         preview.replaceChildren();
         const file = input.files?.[0];
         if (!file) return;
+        const videoFile = /^video\//i.test(file.type) || /\.(mp4|mov)$/i.test(file.name);
+        if (typeSelect) typeSelect.value = videoFile ? 'video' : 'image';
         input.__ogPreviewUrl = URL.createObjectURL(file);
-        const video = (editing ? item.type : wrap.querySelector('select[name="type"]')?.value) === 'video';
-        const media = document.createElement(video ? 'video' : 'img');
+        const media = document.createElement(videoFile ? 'video' : 'img');
         media.src = input.__ogPreviewUrl;
-        if (video) {
+        if (videoFile) {
           media.controls = true;
           media.preload = 'metadata';
         }

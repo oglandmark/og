@@ -9,6 +9,12 @@ Hostinger email sending requires the full mailbox address as the SMTP username a
 
 **How to apply:** Check `/api/health` for `smtp: "configured"` and the runtime log for `SMTP status: connected`; never put the SMTP password in chat, source, or the ZIP.
 
+For the current email work, keep SMTP scoped to Admin password resets and Admin login OTP. Do not add signup email verification unless the user asks again.
+
+**Why:** The user explicitly narrowed the requested email flows to Admin reset and OTP.
+
+**How to apply:** Preserve the existing public signup/login behavior; use the shared mail transport for the two Admin flows only.
+
 A successful Laravel CLI config check does not prove the managed API workflow has received the credentials. In this workspace, the shell reported both SMTP keys present while the restarted API workflow still reported `smtp: "not_configured"`.
 
 **Why:** Reset-email behavior reads the long-running API process's config, which can differ from a one-off CLI process even when the project secret inventory lists the keys.

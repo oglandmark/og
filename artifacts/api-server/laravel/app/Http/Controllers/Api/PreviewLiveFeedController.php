@@ -22,6 +22,28 @@ final class PreviewLiveFeedController extends Controller
         return $this->forward('mobile/banners');
     }
 
+    public function properties(Request $request): JsonResponse
+    {
+        $allowedQueryKeys = [
+            'type', 'city', 'status', 'purpose', 'minPrice', 'maxPrice',
+            'minBeds', 'featured', 'search', 'keyword', 'limit', 'offset',
+            'sort', 'minLat', 'maxLat', 'minLng', 'maxLng', 'lat', 'lng',
+            'radiusKm', 'response', 'paginated',
+        ];
+
+        return $this->forward('properties', $request->only($allowedQueryKeys));
+    }
+
+    public function property(int $id): JsonResponse
+    {
+        return $this->forward("properties/{$id}");
+    }
+
+    public function mobileAgents(Request $request): JsonResponse
+    {
+        return $this->forward('mobile-agents', $request->only(['city', 'limit']));
+    }
+
     private function forward(string $path, array $query = []): JsonResponse
     {
         abort_unless(config('app.env') === 'local', 404);

@@ -29,6 +29,15 @@ test('only unauthenticated GET requests may fall back after a local 404', () => 
 });
 
 test('preview-only fallback routes stay on the same-origin Laravel service', () => {
+  assert.equal(
+    getPreviewLiveProxyPath('/api/properties?limit=6&sort=latest'),
+    '/api/preview/live/properties?limit=6&sort=latest',
+  );
+  assert.equal(getPreviewLiveProxyPath('/api/properties/42'), '/api/preview/live/properties/42');
+  assert.equal(
+    getPreviewLiveProxyPath('/api/mobile-agents?limit=5&city=Okara'),
+    '/api/preview/live/mobile-agents?limit=5&city=Okara',
+  );
   assert.equal(getPreviewLiveProxyPath('/api/mobile/settings'), '/api/preview/live/mobile/settings');
   assert.equal(getPreviewLiveProxyPath('/api/mobile/banners'), '/api/preview/live/mobile/banners');
   assert.equal(getPreviewLiveProxyPath('/api/auth/admin-verify'), undefined);

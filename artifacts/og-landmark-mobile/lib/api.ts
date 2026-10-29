@@ -131,9 +131,19 @@ export async function apiRequest<T>(
 const apiFetch = apiRequest;
 
 async function propertyFeedFetch<T>(path: string): Promise<{ data: T; apiBase: string }> {
+  const previewProxyPath = API_BASE !== LIVE_API_BASE ? getPreviewLiveProxyPath(path) : undefined;
+  const requestBase = previewProxyPath ? API_BASE : PROPERTY_FEED_API_BASE;
   return {
-    data: await apiRequest<T>(path, {}, false, FETCH_TIMEOUT_MS, PROPERTY_FEED_API_BASE),
-    apiBase: PROPERTY_FEED_API_BASE,
+    data: await apiRequest<T>(
+      previewProxyPath ?? path,
+      {},
+      false,
+      FETCH_TIMEOUT_MS,
+      requestBase,
+    ),
+    // The local proxy returns live listing records; resolve their relative
+    // media paths against the live origin, not the Replit preview origin.
+    apiBase: LIVE_API_BASE,
   };
 }
 
@@ -1192,16 +1202,14 @@ export async function getAgents(
   const qs = new URLSearchParams();
   if (params.city) qs.set('city', params.city);
   if (params.limit) qs.set('limit', String(params.limit));
-  const agents = await apiFetch<ApiAgent[]>(
+  const { data: agents, apiBase } = await propertyFeedFetch<ApiAgent[]>(
     `/api/mobile-agents${qs.toString() ? `?${qs}` : ''}`,
-    { cache: 'no-store' },
-    false,
   );
   return agents.map((agent) => ({
     ...agent,
-    profilePhoto: resolveAgentPhoto(agent.profilePhoto || agent.photo),
-    photo: resolveAgentPhoto(agent.photo || agent.profilePhoto),
-    coverPhoto: resolveAgentPhoto(agent.coverPhoto),
+    profilePhoto: resolveMediaUrlForBase(agent.profilePhoto || agent.photo, apiBase),
+    photo: resolveMediaUrlForBase(agent.photo || agent.profilePhoto, apiBase),
+    coverPhoto: resolveMediaUrlForBase(agent.coverPhoto, apiBase),
   }));
 }
 

@@ -962,7 +962,8 @@ async function readData() {
     if (!localPreview) throw new Error('A production database connection is not configured.');
     const data = JSON.parse(fs.readFileSync(fallbackFile, 'utf8'));
     const changed = ensureMobileAgents(data) || ensurePropertyRecords(data);
-    if (changed) {
+    const adminCredentialsChanged = syncLocalPreviewAdminCredentials(data);
+    if (changed || adminCredentialsChanged) {
       // The JSON fallback and MySQL app_data both use the same canonical
       // property shape after the first read.
       await writeData(data);
@@ -996,6 +997,23 @@ async function readData() {
   });
   if (migrated || notificationCollectionsChanged || mobileAgentsAdded || propertyRecordsChanged) await writeData(data);
   return data;
+}
+
+function syncLocalPreviewAdminCredentials(data) {
+  if (!localPreview || !Array.isArray(data.users)) return false;
+  const admin = data.users.find(user => String(user.role || '').toLowerCase() === 'admin');
+  if (!admin) return false;
+
+  let changed = false;
+  if (adminEmailOverride && admin.email !== adminEmailOverride) {
+    admin.email = adminEmailOverride;
+    changed = true;
+  }
+  if (adminPasswordOverride && !verifyPassword(adminPasswordOverride, admin.password)) {
+    admin.password = hashPassword(adminPasswordOverride);
+    changed = true;
+  }
+  return changed;
 }
 
 async function writeData(data) {
@@ -3034,7 +3052,7 @@ app.post('/api/auth/admin-verify', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    if (localPreview && process.env.APP_ENV === 'local') {
+    if (localPreview && (process.env.APP_ENV === 'local' || replitPreview)) {
       const safe = toPublicUser(user);
       const token = await createSession(user);
       return res.json({ success: true, user: safe, token });

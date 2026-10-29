@@ -1215,7 +1215,7 @@
   }
 
   async function deleteProperty(property, container) {
-    if (!window.confirm(`Permanently delete “${property.title || 'this listing'}”? This removes it from the public listing and admin records.`)) return;
+    if (!window.confirm(`Permanently delete “${property.title || 'this listing'}” from Admin, Website, and Mobile listings? Its audit entry will remain; uploaded files and historical references are not removed.`)) return;
     const button = container.querySelector('[data-delete]');
     button.disabled = true;
     try {
@@ -1229,7 +1229,7 @@
   }
 
   async function deletePropertyFromRow(property, button, row) {
-    if (!window.confirm(`Permanently delete “${property.title || 'this listing'}” from the mobile app and Admin records? This cannot be undone.`)) return;
+    if (!window.confirm(`Permanently delete “${property.title || 'this listing'}” from Admin, Website, and Mobile listings? Its audit entry will remain; uploaded files and historical references are not removed.`)) return;
     button.disabled = true;
     try {
       await request(`/admin/properties/${encodeURIComponent(property.id)}`, { method: 'DELETE' });

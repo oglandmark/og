@@ -294,6 +294,9 @@ final class AdminController extends Controller
             foreach ($data['properties'] ?? [] as $index => $property) {
                 if ((string) ($property['id'] ?? '') !== $id) continue;
                 array_splice($data['properties'], $index, 1);
+                $deletedIds = array_map('strval', $data['previewDeletedPropertyIds'] ?? []);
+                $deletedIds[] = $id;
+                $data['previewDeletedPropertyIds'] = array_values(array_unique($deletedIds));
                 $this->appendAdminAudit($data, $admin, 'property_deleted', 'properties', $id, [
                     'title' => $property['title'] ?? '',
                     'city' => $property['city'] ?? '',

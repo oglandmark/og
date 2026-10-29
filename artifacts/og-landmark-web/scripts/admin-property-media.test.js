@@ -74,6 +74,8 @@ test('property editor loads admin listings directly instead of depending on the 
 test('Admin property deletion requires confirmation and uses the authenticated delete endpoint', () => {
   assert.match(source, /data-delete>Delete property/);
   assert.match(source, /Permanently delete/);
+  assert.match(source, /from Admin, Website, and Mobile listings/);
+  assert.match(source, /audit entry will remain/);
   assert.match(source, /request\(`\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}`, \{ method: 'DELETE' \}\)/);
 });
 

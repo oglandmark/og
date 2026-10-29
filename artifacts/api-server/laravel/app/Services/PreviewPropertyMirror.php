@@ -47,6 +47,7 @@ final class PreviewPropertyMirror
             $store->mutate(function (array &$local) use ($properties): void {
                 $local['properties'] ??= [];
                 $known = array_fill_keys(array_map('strval', $local['previewImportedPropertyIds'] ?? []), true);
+                $deleted = array_fill_keys(array_map('strval', $local['previewDeletedPropertyIds'] ?? []), true);
                 $localIds = array_fill_keys(array_map(
                     fn (array $property) => (string) ($property['id'] ?? ''),
                     $local['properties']
@@ -54,6 +55,7 @@ final class PreviewPropertyMirror
                 foreach ($properties as $property) {
                     if (! is_array($property) || ! isset($property['id'])) continue;
                     $id = (string) $property['id'];
+                    if (isset($deleted[$id])) continue;
                     if (isset($known[$id])) continue;
                     foreach (['images', 'coverImage', 'videoUrl'] as $field) {
                         if (is_string($property[$field] ?? null)) {

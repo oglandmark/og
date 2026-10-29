@@ -825,10 +825,39 @@ final class OgLandmarkApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('deletedId', '101');
         $this->withToken($token)->getJson('/api/admin/properties')->assertOk()->assertJsonMissing(['id' => 101]);
+        $this->getJson('/api/properties')->assertOk()->assertJsonMissing(['id' => 101]);
 
         $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
         $this->assertFalse(collect($data['properties'])->contains(fn ($property) => (string) $property['id'] === '101'));
+        $this->assertContains('101', array_map('strval', $data['previewDeletedPropertyIds']));
         $this->assertSame('property_deleted', collect($data['auditLog'])->first()['action']);
+    }
+
+    public function test_admin_deleted_preview_property_does_not_return_after_mirror_sync(): void
+    {
+        config(['app.env' => 'local']);
+        Http::fake([
+            'www.oglandmark.com/api/properties*' => Http::response([
+                [
+                    'id' => 101, 'title' => 'Approved house', 'city' => 'Okara',
+                    'approvalStatus' => 'Active', 'listingStatus' => 'Active',
+                ],
+            ]),
+        ]);
+
+        $token = $this->adminToken();
+        $this->withToken($token)->deleteJson('/api/admin/properties/101')->assertOk();
+
+        $store = app(\App\Services\LegacyDataStore::class);
+        $store->mutate(function (array &$data): void {
+            $data['previewImportedPropertyIds'] = [];
+            $data['previewPropertiesSyncedAt'] = now()->subMinutes(11)->toIso8601String();
+        });
+        app(\App\Services\PreviewPropertyMirror::class)->sync($store);
+
+        $this->getJson('/api/properties')
+            ->assertOk()
+            ->assertJsonMissing(['id' => 101]);
     }
 
     public function test_local_mobile_property_feed_mirrors_public_listings_into_local_store(): void

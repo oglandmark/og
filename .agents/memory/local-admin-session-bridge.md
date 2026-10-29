@@ -8,3 +8,9 @@ In Replit local preview, the website can keep bearer sessions in its Express pro
 **Why:** Switching admin screens to Laravel in preview otherwise makes a valid existing website session look expired, while removing Laravel authorization would weaken the admin boundary.
 
 **How to apply:** Keep the local verifier URL configurable, use a short request timeout, and verify both an admin and a regular user. Production must continue to use the persisted Laravel-compatible session table only.
+
+The local Laravel `/auth/me` response wraps the account as `{ user: ... }`, while the legacy Express endpoint returns the account directly. Normalize both response shapes before the Admin browser checks the role.
+
+**Why:** The Admin bridge serves both backends; treating Laravel's valid wrapped response as a user object makes session recovery clear a valid token and redirect to login.
+
+**How to apply:** Unwrap the optional `user` field in both page-load recovery and existing-session login recovery, and test wrapped and direct responses.

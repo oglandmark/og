@@ -8,6 +8,7 @@ const {
   apiBase,
   clearSession,
   endpoints,
+  extractUser,
   isAdminUser,
   loginRequest,
   otpRequest,
@@ -55,6 +56,13 @@ test('admin login and OTP requests match Laravel input fields and OTP response c
   assert.equal(requiresOtp({ success: true, message: 'Verification code sent.' }), true);
   assert.equal(requiresOtp({ success: true, user: { role: 'Admin' }, token: 'session' }), false);
   assert.equal(requiresOtp({ error: 'Invalid admin credentials.' }), false);
+});
+
+test('admin session recovery accepts both direct and Laravel-wrapped current-user responses', () => {
+  const user = { id: 7, role: 'Admin' };
+  assert.deepEqual(extractUser(user), user);
+  assert.deepEqual(extractUser({ user }), user);
+  assert.equal(isAdminUser(extractUser({ user })), true);
 });
 
 test('delegated admin login submit reads its form from the event target', () => {

@@ -42,6 +42,10 @@
     return Boolean(user && String(user.role || '').toLowerCase() === 'admin');
   }
 
+  function extractUser(payload) {
+    return payload?.user && typeof payload.user === 'object' ? payload.user : payload;
+  }
+
   function loginRequest(email, password) {
     return { email: String(email || '').trim(), password: String(password || '') };
   }
@@ -130,7 +134,8 @@
     if (existingToken && isAdminUser(existingUser)) {
       clearSession(storage);
       request(windowRef, endpointsForWindow.me, null, existingToken, 'GET')
-        .then(user => {
+        .then(payload => {
+          const user = extractUser(payload);
           if (!isAdminUser(user)) return;
           persistSession(storage, existingToken, user);
           windowRef.location.href = '/admin/';
@@ -357,7 +362,7 @@
     recoveryPromise = originalFetch(endpoint, {
       headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
     }).then(async response => {
-      const user = await readJson(response);
+      const user = extractUser(await readJson(response));
       if (!response.ok || !isAdminUser(user)) {
         invalidSession = true;
         clearSession(storage);
@@ -397,6 +402,7 @@
     apiBase,
     clearSession,
     endpoints,
+    extractUser,
     isAdminUser,
     loginRequest,
     mount,

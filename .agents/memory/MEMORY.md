@@ -45,6 +45,7 @@
 - [Mobile property inventory accuracy](nearby-results-fallback.md) — public mobile screens show only Admin-approved active API listings; never surface bundled demos.
 - [Fresh Laravel backend](laravel-backend-cutover.md) — rebuild the backend later while preserving the existing React website and mobile app.
 - [Production API version parity](production-api-version-parity.md) — verify production endpoints directly; Replit preview may use a separate local API and diverge from Hostinger.
+- [Local-only phase work](local-only-phase-work.md) — keep the 12-phase OG Landmark integration in local Replit preview; do not deploy or update production.
 - [Laravel config and env checks](laravel-config-cache.md) — clear stale DB config; use `--no-reload` when local Laravel workflows need custom Replit env values.
 - [Normalized core storage](normalized-core-storage.md) — keep app accounts in `app_users`, preserve full payloads, and dual-write `app_data` for rollback.
 - [Play Store metadata claims](play-store-metadata.md) — keep OG Landmark store copy factual; Google rejected the “trusted” short and full description claims.

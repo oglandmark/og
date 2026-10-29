@@ -80,4 +80,7 @@ test('normalizes legacy Laravel media routes for preview and production', () => 
 test('mobile API property mapping carries video URLs into the playback model', () => {
   assert.match(propertyModelSource, /videoUrl\?: string \| null/);
   assert.match(propertyModelSource, /videoUrl:\s*resolveMediaUrl\(ap\.videoUrl,\s*API_BASE\)/);
+  assert.match(propertyModelSource, /coverImage\?: string \| null/);
+  assert.match(propertyModelSource, /uploadedImages\.length[\s\S]*ap\.coverImage\s*\?\s*\[ap\.coverImage\]/);
+  assert.match(propertyModelSource, /return resolveMediaUrl\(url,\s*API_BASE\)/);
 });

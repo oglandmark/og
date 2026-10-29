@@ -852,9 +852,7 @@ export function formatAreaDisplay(area: number, areaUnit: string): { value: stri
 
 // ─── Resolve backend image URL (relative or absolute) ────────────────────────
 function resolveImageUrl(url: string): string {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
+  return resolveMediaUrl(url, API_BASE) ?? '';
 }
 
 // ─── Placeholder images (cycled when backend property has no images) ───────────
@@ -885,7 +883,8 @@ export function apiPropertyToProperty(ap: {
   area?: number | null; areaUnit?: string | null;
   bedrooms?: number | null; bathrooms?: number | null;
   city?: string | null; address?: string | null;
-  description?: string | null; images?: string[] | null;
+   description?: string | null; images?: string[] | null;
+   coverImage?: string | null;
    featured?: boolean | null; recommended?: boolean | null;
    sellerName?: string | null;
   sellerPhone?: string | null; amenities?: string[] | null;
@@ -901,7 +900,10 @@ export function apiPropertyToProperty(ap: {
   agentId?: number | null; sellerId?: number | null;
 }): Property {
   const safeId   = typeof ap.id === 'number' && isFinite(ap.id) ? ap.id : 0;
-  const imgs     = Array.isArray(ap.images) ? ap.images.filter(Boolean) : [];
+  const uploadedImages = Array.isArray(ap.images) ? ap.images.filter(Boolean) : [];
+  const imgs = uploadedImages.length
+    ? uploadedImages
+    : (ap.coverImage ? [ap.coverImage] : []);
   const placeholderPool = /agri|farm/i.test(ap.type ?? '') ? AGRICULTURE_PLACEHOLDER : PLACEHOLDERS;
   const placeholder = placeholderPool[safeId % placeholderPool.length] ?? placeholderPool[0]!;
   const image: ImageSourcePropType = imgs[0] ? { uri: resolveImageUrl(imgs[0]) } : placeholder;

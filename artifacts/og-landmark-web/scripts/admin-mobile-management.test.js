@@ -98,6 +98,8 @@ test('admin banner editor can replace uploaded images and videos and confirm del
   assert.match(source, /Replace media file \(optional\)/);
   assert.match(source, /video\/mp4,video\/quicktime,\.mp4,\.mov/);
   assert.match(source, /image\/jpeg,image\/png,image\/webp,\.jpg,\.jpeg,\.png,\.webp/);
+  assert.match(source, /if \(data\[name\] === ''\) delete payload\[name\]/);
+  assert.match(source, /key === 'banners' && name === 'order' \? 'min="0" step="1"'/);
   assert.match(source, /const maxBytes = \(type === 'video' \? 300 : 20\) \* 1024 \* 1024/);
   assert.match(source, /Uploading \$\{type\}…/);
   assert.match(source, /Saving banner…/);
@@ -288,8 +290,8 @@ test('Admin Agents lists Mobile app profiles and assignment options show city', 
   assert.match(properties, /option\.disabled = agent\.contactOnly === true/);
   assert.match(properties, /save\.disabled = !assignable/);
   assert.match(html, /admin-property-management\.js\?v=property-agent-assignment-20261029-v14/);
-  assert.match(html, /og-api-base\.js\?v=local-preview-banner-read-20261029-v2/);
-  assert.match(html, /admin-mobile-management\.js\?v=admin-banner-upload-feedback-20261029-v6/);
+  assert.match(html, /og-api-base\.js\?v=local-preview-banner-read-20261029-v3/);
+  assert.match(html, /admin-mobile-management\.js\?v=admin-banner-upload-feedback-20261029-v7/);
 });
 
 test('property table supports eligible batch approval and per-listing results', () => {

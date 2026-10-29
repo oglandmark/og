@@ -1160,13 +1160,15 @@ final class OgLandmarkApiTest extends TestCase
             'endDate' => '2026-12-31',
         ])->assertCreated()->assertJsonPath('banner.id', 703)->assertJsonPath('banner.type', 'image');
 
-        $this->withToken($token)->putJson('/api/admin/mobile/banners/703', [
+        $updated = $this->withToken($token)->putJson('/api/admin/mobile/banners/703', [
             'type' => 'video',
             'category' => 'homes',
             'title' => 'Admin video banner',
             'videoUrl' => '/api/admin/property-media/home-banner.mp4',
             'active' => true,
+            'order' => null,
         ])->assertOk()->assertJsonPath('banner.type', 'video')->assertJsonPath('banner.imageUrl', null);
+        $this->assertSame(3, $updated->json('banner.order'));
 
         $this->getJson('/api/mobile/banners')->assertOk()->assertJsonFragment(['title' => 'Admin video banner']);
         $this->withToken($token)->deleteJson('/api/admin/mobile/banners/703')->assertOk();
@@ -1196,13 +1198,13 @@ final class OgLandmarkApiTest extends TestCase
             'videoUrl' => '/api/admin/property-media/local-homes.mp4',
             'sourcePreviewId' => 'bundled:homes',
             'active' => true,
-            'order' => 0,
+            'order' => null,
         ])->assertCreated();
+        $this->assertSame(2, $created->json('banner.order'));
 
         $this->withToken($token)->getJson('/api/mobile/banners/all')
             ->assertOk()->assertJsonCount(7)
-            ->assertJsonPath('0.title', 'Local homes video')
-            ->assertJsonPath('0.isPreviewOnly', false);
+            ->assertJsonFragment(['title' => 'Local homes video', 'isPreviewOnly' => false]);
         $this->getJson('/api/mobile/banners')
             ->assertOk()->assertJsonFragment(['title' => 'Local homes video'])
             ->assertJsonMissingPath('0.sourcePreviewId');

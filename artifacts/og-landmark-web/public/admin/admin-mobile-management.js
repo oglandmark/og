@@ -1011,7 +1011,9 @@
         }
         if (type === 'textarea') return `<div class="og-mm-field full"><label>${esc(label)}</label><textarea name="${esc(name)}" maxlength="6000">${esc(value)}</textarea></div>`;
         const required = key === 'projects' && name === 'name' ? 'required maxlength="180"' : '';
-        let constraints = type === 'number' ? 'step="any"' : '';
+        let constraints = type === 'number'
+          ? (key === 'banners' && name === 'order' ? 'min="0" step="1"' : 'step="any"')
+          : '';
         if (key === 'projects' && type === 'number') {
           if (['startingPrice', 'maxPrice', 'totalUnits', 'availableUnits', 'reservedUnits', 'soldUnits', 'installmentMonths', 'totalBlocks'].includes(name)) {
             constraints = `min="0" ${['totalUnits', 'availableUnits', 'reservedUnits', 'soldUnits', 'installmentMonths', 'totalBlocks'].includes(name) ? 'step="1"' : 'step="any"'}`;
@@ -1157,7 +1159,10 @@
       const payload = { ...data };
       for (const [name, , type] of config.fields) {
         if (type === 'checkbox') payload[name] = form.elements[name].checked;
-        if (type === 'number' && data[name] !== undefined && data[name] !== '') payload[name] = Number(data[name]);
+        if (type === 'number' && data[name] !== undefined) {
+          if (data[name] === '') delete payload[name];
+          else payload[name] = Number(data[name]);
+        }
       }
       if (key === 'projects') {
         const splitLines = (value) => String(value || '').split(/\r?\n/).map((entry) => entry.trim()).filter(Boolean);

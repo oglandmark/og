@@ -999,9 +999,10 @@ final class AdminController extends Controller
             'sourcePreviewId' => ['sometimes', 'nullable', 'string', 'max:120'],
             'startDate' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
             'endDate' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
-            'order' => ['sometimes', 'integer', 'min:0', 'max:10000'],
+            'order' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:10000'],
             'active' => ['sometimes', 'boolean'],
         ]);
+        if (($validated['order'] ?? null) === null) unset($validated['order']);
         $this->assertBannerMedia($validated['type'], $validated['imageUrl'] ?? null, $validated['videoUrl'] ?? null);
         $this->assertBannerDates($validated['startDate'] ?? null, $validated['endDate'] ?? null);
 
@@ -1054,9 +1055,10 @@ final class AdminController extends Controller
             'videoUrl' => ['sometimes', 'nullable', 'string', 'max:2048'],
             'startDate' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
             'endDate' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
-            'order' => ['sometimes', 'integer', 'min:0', 'max:10000'],
+            'order' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:10000'],
             'active' => ['sometimes', 'boolean'],
         ]);
+        if (($validated['order'] ?? null) === null) unset($validated['order']);
 
         $banner = $store->mutate(function (array &$data) use ($validated, $id): ?array {
             $banners = array_values($data['mobileBanners'] ?? []);

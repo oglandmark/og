@@ -1000,7 +1000,7 @@ async function readData() {
 }
 
 function syncLocalPreviewAdminCredentials(data) {
-  if (!localPreview || !Array.isArray(data.users)) return false;
+  if (!localPreview || !replitPreview || !Array.isArray(data.users)) return false;
   const admin = data.users.find(user => String(user.role || '').toLowerCase() === 'admin');
   if (!admin) return false;
 

@@ -57,7 +57,11 @@ test('normalizes legacy Laravel media routes for preview and production', () => 
   const previewApiBase = 'https://preview.replit.dev/api-legacy';
   assert.equal(
     resolveMediaUrl('/api-legacy/api/admin/property-media/tour.mp4', previewApiBase),
-    'https://preview.replit.dev/api/admin/property-media/tour.mp4',
+    'https://preview.replit.dev/api-legacy/api/admin/property-media/tour.mp4',
+  );
+  assert.equal(
+    resolveMediaUrl('/api/admin/property-media/front.webp', previewApiBase),
+    'https://preview.replit.dev/api-legacy/api/admin/property-media/front.webp',
   );
   assert.equal(
     resolveMediaUrl('https://www.oglandmark.com/api-legacy/api/admin/property-media/tour.mp4', API_BASE),

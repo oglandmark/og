@@ -11,18 +11,33 @@ export function resolveMediaUrl(
   if (!value) return undefined;
 
   const base = apiBase.replace(/\/+$/, '');
-  const normalizedValue = value.replace(
-    /\/api-legacy\/api(?=\/admin\/property-media\/)/i,
-    '/api',
-  );
-  if (normalizedValue !== value) return resolveMediaUrl(normalizedValue, apiBase);
-
   let baseUrl: URL;
   try {
     baseUrl = new URL(base);
   } catch {
     return value;
   }
+  const absolute = /^[a-z][a-z\d+.-]*:/i.test(value);
+  let sourceUrl: URL | undefined;
+  try {
+    if (absolute) sourceUrl = new URL(value);
+  } catch {
+    return value;
+  }
+  const mediaMatch = (sourceUrl?.pathname || value)
+    .match(/\/(?:api-legacy\/api|api)\/admin\/property-media\/([A-Za-z0-9._-]+)$/i);
+  if (mediaMatch) {
+    const sourceHost = sourceUrl?.hostname || baseUrl.hostname;
+    if (sourceUrl && /(^|\.)oglandmark\.com$/i.test(sourceHost)) {
+      return `https://www.oglandmark.com/api/admin/property-media/${mediaMatch[1]}`;
+    }
+    if (sourceUrl && sourceHost !== baseUrl.hostname) return value;
+    const isPreview = baseUrl.pathname.startsWith('/api-legacy')
+      || /(^|\.)replit\.dev$|(^|\.)repl\.co$/i.test(baseUrl.hostname);
+    const route = isPreview ? '/api-legacy/api' : '/api';
+    return `${baseUrl.origin}${route}/admin/property-media/${mediaMatch[1]}`;
+  }
+
   const canonicalFirstPartyUrl = value.replace(
     /^https?:\/\/(?:www\.)?oglandmark\.com(?=\/|$)/i,
     'https://www.oglandmark.com',

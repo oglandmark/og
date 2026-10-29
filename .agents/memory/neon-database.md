@@ -1,10 +1,10 @@
 ---
-name: Neon PostgreSQL production database
-description: Durable database-provider decision for OG Landmark production deployments.
+name: Production database runtime parity
+description: Reconcile the earlier Neon decision with the live API and preview database providers.
 ---
 
-OG Landmark production uses the user's Neon PostgreSQL database, accessed server-side through `DATABASE_URL`; Supabase is not the production provider.
+The project previously recorded a decision to use Neon PostgreSQL. During the 2026-10-29 audit, the public `www.oglandmark.com/api/health` endpoint reported `databaseProvider=mysql`, while the Replit Laravel preview reported `sqlite`. Treat these as separate runtimes and do not assume the earlier Neon note describes the currently serving API.
 
-**Why:** The user explicitly chose to keep using the original Neon/PostgreSQL database rather than switching the website to Supabase.
+**Why:** The live health response contradicts the earlier provider note, and the local preview uses a separate database; provider assumptions can hide cross-environment data divergence.
 
-**How to apply:** Keep database credentials out of browser code, public files, Git, and chat. Apply `database/schema.sql` in Neon, set `DATABASE_URL` in the deployment environment, and verify `/api/health` reports `databaseProvider: "neon"`.
+**How to apply:** Verify each runtime independently with its health endpoint before diagnosing sync or planning migrations. Do not query or mutate external production data without an approved access path, and never expose connection secrets.

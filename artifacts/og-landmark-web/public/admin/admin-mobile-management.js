@@ -7,6 +7,14 @@
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   })[char]);
+  const mediaUrl = (value) => {
+    const source = String(value ?? '').trim().replace(
+      /\/api-legacy\/api(?=\/admin\/property-media\/)/i,
+      '/api',
+    );
+    if (!source) return '';
+    try { return new URL(source, window.location.origin).href; } catch { return source; }
+  };
   const money = (value) => `PKR ${Number(value || 0).toLocaleString('en-PK')}`;
   let modal;
   let pageHost;
@@ -416,7 +424,7 @@
       const name = agent.displayName || agent.name || 'Unnamed agent';
       const photo = agent.photo || agent.profilePhoto;
       const photoCell = photo
-        ? `<span class="og-mm-agent-list-photo"><img data-agent-list-photo src="${esc(photo)}" alt="${esc(`${name} profile photo`)}" loading="lazy" decoding="async"><span class="og-mm-agent-list-photo-fallback" data-agent-photo-fallback hidden>Photo unavailable</span></span>`
+        ? `<span class="og-mm-agent-list-photo"><img data-agent-list-photo src="${esc(mediaUrl(photo))}" alt="${esc(`${name} profile photo`)}" loading="lazy" decoding="async"><span class="og-mm-agent-list-photo-fallback" data-agent-photo-fallback hidden>Photo unavailable</span></span>`
         : '<span class="og-mm-agent-list-photo og-mm-agent-list-photo-fallback">No photo</span>';
       const sources = new Set((agent.directorySources || []).map(({ collection }) =>
         collection === 'city-agents' ? 'Website' : collection === 'mobile-agents' ? 'Mobile app' : ''));
@@ -1310,7 +1318,7 @@
     };
     const showPhotoPreview = (url) => {
       if (url) {
-        photoPreview.src = url;
+        photoPreview.src = mediaUrl(url);
         photoPreview.hidden = false;
         photoEmpty.hidden = true;
       } else {

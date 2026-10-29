@@ -18,7 +18,10 @@
 
   function resolveMediaUrl(value, siteOrigin) {
     if (typeof value !== 'string' || !value.trim()) return '';
-    const url = value.trim();
+    const url = value.trim().replace(
+      /\/api-legacy\/api(?=\/admin\/property-media\/)/i,
+      '/api',
+    );
     if (/^(https?:|data:image\/)/i.test(url)) return url;
     if (url.startsWith('//')) return `https:${url}`;
     try {

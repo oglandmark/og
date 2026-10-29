@@ -52,6 +52,17 @@ final class OgLandmarkApiTest extends TestCase
                     ['id' => 402, 'userId' => 99, 'createdAt' => '2026-02-04T00:00:00Z', 'action' => 'other user'],
                 ],
                 'auditLog' => [],
+                'cityAgents' => [[
+                    'id' => 501, 'name' => 'City Agent', 'city' => 'Okara',
+                    'phone' => '03001234567', 'password' => 'never-return-this',
+                ]],
+                'developerProjects' => [[
+                    'id' => 601, 'name' => 'Test Project', 'status' => 'Live',
+                ]],
+                'mobileBanners' => [
+                    ['id' => 701, 'title' => 'Later', 'active' => true, 'order' => 2],
+                    ['id' => 702, 'title' => 'First', 'active' => false, 'order' => 1],
+                ],
                 'properties' => [[
                     'id' => 101,
                     'title' => 'Approved house',
@@ -358,7 +369,7 @@ final class OgLandmarkApiTest extends TestCase
     public function test_admin_property_media_upload_update_and_cleanup_use_laravel_storage(): void
     {
         Storage::fake('public');
-        $existingUrl = '/api-legacy/api/admin/property-media/old-photo.jpg';
+        $existingUrl = '/api/admin/property-media/old-photo.jpg';
         $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
         $data['properties'][0]['images'] = [$existingUrl];
         $data['properties'][0]['coverImage'] = $existingUrl;
@@ -381,8 +392,8 @@ final class OgLandmarkApiTest extends TestCase
             ->assertJsonPath('success', true);
         $photoUrl = $upload->json('property.images.1');
         $videoUrl = $upload->json('property.videoUrl');
-        $this->assertStringStartsWith('/api-legacy/api/admin/property-media/', $photoUrl);
-        $this->assertStringStartsWith('/api-legacy/api/admin/property-media/', $videoUrl);
+        $this->assertStringStartsWith('/api/admin/property-media/', $photoUrl);
+        $this->assertStringStartsWith('/api/admin/property-media/', $videoUrl);
         $filename = basename(parse_url($photoUrl, PHP_URL_PATH));
         $videoFilename = basename(parse_url($videoUrl, PHP_URL_PATH));
         Storage::disk('public')->assertExists('listing-media/'.$filename);
@@ -648,6 +659,30 @@ final class OgLandmarkApiTest extends TestCase
 
         $this->withToken($token)->getJson('/api/admin/users/999/activity')
             ->assertNotFound()->assertJsonPath('error', 'User not found');
+    }
+
+    public function test_admin_dashboard_collections_are_available_and_public_banners_hide_inactive_records(): void
+    {
+        $token = $this->adminToken();
+
+        $this->withToken($token)->getJson('/api/admin/city-agents')
+            ->assertOk()
+            ->assertJsonPath('0.id', 501)
+            ->assertJsonMissingPath('0.password');
+        $this->withToken($token)->getJson('/api/admin/developer-projects')
+            ->assertOk()
+            ->assertJsonPath('0.name', 'Test Project');
+        $this->withToken($token)->getJson('/api/mobile/banners/all')
+            ->assertOk()
+            ->assertJsonCount(2)
+            ->assertJsonPath('0.title', 'First');
+
+        $this->getJson('/api/mobile/banners')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.title', 'Later');
+
+        $this->withToken('invalid-session')->getJson('/api/admin/city-agents')->assertUnauthorized();
     }
 
     public function test_admin_can_update_validated_staff_permissions_with_audit_history(): void

@@ -53,11 +53,15 @@ test('keeps external media hosts and canonicalizes OG Landmark URLs', () => {
   assert.equal(resolveMediaUrl(null, API_BASE), undefined);
 });
 
-test('resolves Laravel preview media at the preview origin without changing production media', () => {
+test('normalizes legacy Laravel media routes for preview and production', () => {
   const previewApiBase = 'https://preview.replit.dev/api-legacy';
   assert.equal(
     resolveMediaUrl('/api-legacy/api/admin/property-media/tour.mp4', previewApiBase),
-    'https://preview.replit.dev/api-legacy/api/admin/property-media/tour.mp4',
+    'https://preview.replit.dev/api/admin/property-media/tour.mp4',
+  );
+  assert.equal(
+    resolveMediaUrl('https://www.oglandmark.com/api-legacy/api/admin/property-media/tour.mp4', API_BASE),
+    'https://www.oglandmark.com/api/admin/property-media/tour.mp4',
   );
   assert.equal(
     resolveMediaUrl('https://www.oglandmark.com/images/uploads/existing-tour.mp4', previewApiBase),

@@ -641,7 +641,7 @@ final class AdminController extends Controller
 
     private function propertyMediaUrl(string $filename): string
     {
-        return '/api-legacy/api/admin/property-media/'.rawurlencode($filename);
+        return '/api/admin/property-media/'.rawurlencode($filename);
     }
 
     private function deleteUnreferencedPropertyMedia(array $data, array $removedUrls): void
@@ -720,6 +720,40 @@ final class AdminController extends Controller
             return $agent;
         }, $store->read()['mobileAgents'] ?? []);
         return response()->json(array_values($agents));
+    }
+
+    public function cityAgents(LegacyDataStore $store): JsonResponse
+    {
+        $agents = array_map(function (array $agent): array {
+            unset($agent['password']);
+            return $agent;
+        }, $store->read()['cityAgents'] ?? []);
+
+        return response()->json(array_values($agents));
+    }
+
+    public function developerProjects(LegacyDataStore $store): JsonResponse
+    {
+        return response()->json(array_values($store->read()['developerProjects'] ?? []));
+    }
+
+    public function mobileBanners(LegacyDataStore $store): JsonResponse
+    {
+        $banners = array_values($store->read()['mobileBanners'] ?? []);
+        usort($banners, fn (array $a, array $b): int => (int) ($a['order'] ?? 0) <=> (int) ($b['order'] ?? 0));
+
+        return response()->json($banners);
+    }
+
+    public function publicMobileBanners(LegacyDataStore $store): JsonResponse
+    {
+        $banners = array_values(array_filter(
+            $store->read()['mobileBanners'] ?? [],
+            fn (array $banner): bool => ($banner['active'] ?? true) !== false,
+        ));
+        usort($banners, fn (array $a, array $b): int => (int) ($a['order'] ?? 0) <=> (int) ($b['order'] ?? 0));
+
+        return response()->json($banners);
     }
 
     public function createMobileAgent(Request $request, LegacyDataStore $store): JsonResponse

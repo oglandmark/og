@@ -15,6 +15,12 @@ Mobile clients must normalize relative image and video paths to absolute URLs at
 
 **How to apply:** Normalize upload responses and property list, detail, create, and admin-review responses; verify both the admin thumbnail and review gallery paths.
 
+Persist Laravel media links with the canonical `/api/...` path, not the preview-only `/api-legacy/api/...` alias. Rewrite older stored alias paths when resolving media in web and native clients.
+
+**Why:** The preview alias is registered for Replit routing, while production website requests use `/api`; persisting the alias can make uploaded photos unreachable outside preview.
+
+**How to apply:** Return canonical API media URLs from Laravel and test old and new paths against both preview and production origins.
+
 Normalize selected photos to compressed JPEG on-device before upload; accept common video containers explicitly and return size-limit errors separately from unsupported-format errors.
 
 **Why:** iOS gallery photos may be HEIC/HEIF and large originals can exceed host PHP upload limits, while Expo Go does not transparently transcode arbitrary video codecs.

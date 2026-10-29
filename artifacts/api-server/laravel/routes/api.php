@@ -21,6 +21,7 @@ $registerRoutes = static function (): void {
 
     Route::get('/properties', [PropertyController::class, 'index']);
     Route::get('/properties/{id}', [PropertyController::class, 'show'])->whereNumber('id');
+    Route::get('/mobile/banners', [AdminController::class, 'publicMobileBanners']);
     Route::middleware('throttle:60,1')->prefix('preview/live')->group(function (): void {
         Route::get('/properties', [PreviewLiveFeedController::class, 'properties']);
         Route::get('/properties/{id}', [PreviewLiveFeedController::class, 'property'])->whereNumber('id');
@@ -56,6 +57,9 @@ $registerRoutes = static function (): void {
             Route::post('/admin/mobile-agents', [AdminController::class, 'createMobileAgent']);
             Route::patch('/admin/mobile-agents/{id}', [AdminController::class, 'updateMobileAgent']);
             Route::delete('/admin/mobile-agents/{id}', [AdminController::class, 'deleteMobileAgent']);
+            Route::get('/admin/city-agents', [AdminController::class, 'cityAgents']);
+            Route::get('/admin/developer-projects', [AdminController::class, 'developerProjects']);
+            Route::get('/mobile/banners/all', [AdminController::class, 'mobileBanners']);
         });
     });
     Route::get('/admin/property-media/{filename}', [AdminController::class, 'propertyMedia'])

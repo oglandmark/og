@@ -11,6 +11,12 @@ export function resolveMediaUrl(
   if (!value) return undefined;
 
   const base = apiBase.replace(/\/+$/, '');
+  const normalizedValue = value.replace(
+    /\/api-legacy\/api(?=\/admin\/property-media\/)/i,
+    '/api',
+  );
+  if (normalizedValue !== value) return resolveMediaUrl(normalizedValue, apiBase);
+
   let baseUrl: URL;
   try {
     baseUrl = new URL(base);

@@ -31,6 +31,16 @@ test('resolves relative listing media from the website origin and preserves exte
     resolveMediaUrl('https://cdn.example.test/listing.jpg', 'https://www.oglandmark.com'),
     'https://cdn.example.test/listing.jpg',
   );
+  assert.equal(
+    resolveMediaUrl('/api-legacy/api/admin/property-media/front.jpg', 'https://www.oglandmark.com'),
+    'https://www.oglandmark.com/api/admin/property-media/front.jpg',
+  );
+});
+
+test('Admin Agent photos normalize stored preview-only Laravel media paths', () => {
+  assert.match(mobileManagementSource, /const mediaUrl = \(value\)/);
+  assert.match(mobileManagementSource, /src="\$\{esc\(mediaUrl\(photo\)\)\}"/);
+  assert.match(mobileManagementSource, /photoPreview\.src = mediaUrl\(url\)/);
 });
 
 test('returns every gallery image in upload order and includes a distinct cover image once', () => {

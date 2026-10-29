@@ -702,6 +702,12 @@ final class OgLandmarkApiTest extends TestCase
             'HTTP_ACCEPT' => 'application/json',
             'HTTP_AUTHORIZATION' => 'Bearer '.$token,
         ])->assertUnprocessable();
+
+        $oversizedByPhp = new UploadedFile('', 'banner.mp4', 'video/mp4', UPLOAD_ERR_INI_SIZE);
+        $this->call('POST', '/api/upload/video', [], [], ['video' => $oversizedByPhp], [
+            'HTTP_ACCEPT' => 'application/json',
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+        ])->assertUnprocessable()->assertJsonValidationErrors('video');
         Storage::disk('public')->assertDirectoryEmpty('listing-media');
     }
 

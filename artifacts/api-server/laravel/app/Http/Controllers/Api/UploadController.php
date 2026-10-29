@@ -67,6 +67,17 @@ final class UploadController extends Controller
 
     private function validateMedia(UploadedFile $file, string $kind): void
     {
+        $field = $kind === 'image' ? 'image' : 'video';
+        if (! $file->isValid()) {
+            $message = match ($file->getError()) {
+                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the server upload limit.',
+                UPLOAD_ERR_PARTIAL => 'The upload was interrupted. Please try again.',
+                UPLOAD_ERR_NO_FILE => 'Choose a file to upload.',
+                default => 'The server could not receive this file. Please try again.',
+            };
+            throw ValidationException::withMessages([$field => [$message]]);
+        }
+
         $extension = strtolower($file->getClientOriginalExtension());
         $mime = strtolower((string) $file->getMimeType());
         $allowedExtensions = $kind === 'image' ? ['jpg', 'jpeg', 'png', 'webp'] : ['mp4', 'mov'];
@@ -74,7 +85,6 @@ final class UploadController extends Controller
             ? ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
             : ['video/mp4', 'video/quicktime'];
         $sizeLimit = $kind === 'image' ? self::MAX_IMAGE_BYTES : self::MAX_VIDEO_BYTES;
-        $field = $kind === 'image' ? 'image' : 'video';
 
         if (! in_array($extension, $allowedExtensions, true)
             || ! in_array($mime, $allowedMimes, true)) {

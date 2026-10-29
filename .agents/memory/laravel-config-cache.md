@@ -1,6 +1,6 @@
 ---
 name: Laravel config and environment checks
-description: Clear stale config before local database overrides, and preserve custom env values in Laravel's local PHP server.
+description: Clear stale config before local database overrides, and preserve runtime settings in Laravel's local PHP server.
 ---
 
 Laravel's non-production health check can report a connected database after `SELECT 1` succeeds even when `JsonStore` is reading a different connection and falling back to an empty document.
@@ -20,3 +20,9 @@ The default `php artisan serve` auto-reload mode filters the child PHP server's 
 **Why:** A local Admin endpoint returned “credential not configured” even though the secret existed in the editor environment; the workflow's child server had filtered it out.
 
 **How to apply:** For artifact-managed local Laravel workflows that depend on custom Replit env vars, use `--no-reload` and restart after secret changes. Keep the setting scoped to development; never hard-code secrets in artifact configuration.
+
+PHP CLI options passed to `php artisan serve` do not automatically reach Laravel ServeCommand's separate child `php -S` process. For local uploads above PHP's defaults, run the built-in server directly with `-d upload_max_filesize=...` and `-d post_max_size=...`, using Laravel's router from the `public` working directory. Check `UploadedFile::isValid()` before MIME sniffing so PHP upload errors become validation responses instead of unreadable-path exceptions.
+
+**Why:** The child server otherwise used PHP's 2 MiB file default even when Artisan itself was launched with a 300 MiB limit; a valid-sized banner then arrived with an empty temporary path.
+
+**How to apply:** Keep the explicit PHP limits in the artifact-managed development command, restart that workflow after config changes, and cover both successful uploads and PHP upload-error handling in feature tests.

@@ -46,7 +46,7 @@
 - [Fresh Laravel backend](laravel-backend-cutover.md) — rebuild the backend later while preserving the existing React website and mobile app.
 - [Production API version parity](production-api-version-parity.md) — verify production endpoints directly; Replit preview may use a separate local API and diverge from Hostinger.
 - [Local-only phase work](local-only-phase-work.md) — keep the 12-phase OG Landmark integration in local Replit preview; do not deploy or update production.
-- [Laravel config and env checks](laravel-config-cache.md) — clear stale DB config; use `--no-reload` when local Laravel workflows need custom Replit env values.
+- [Laravel config and env checks](laravel-config-cache.md) — clear stale DB config; configure child PHP server limits directly and use `--no-reload` for custom env values.
 - [Normalized core storage](normalized-core-storage.md) — keep app accounts in `app_users`, preserve full payloads, and dual-write `app_data` for rollback.
 - [Play Store metadata claims](play-store-metadata.md) — keep OG Landmark store copy factual; Google rejected the “trusted” short and full description claims.
 - [Public contacts and listing pins](public-contact-and-listing-pins.md) — use +923272569000 for OG Landmark public WhatsApp contacts; preserve personal account phones and selected coordinates.

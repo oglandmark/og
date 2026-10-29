@@ -312,7 +312,9 @@ function normalizeHomeBannerCategory(value?: string | null): HomeBannerCategory 
 }
 
 function mapApiBanner(slide: ApiBannerSlide): HomeCategoryBannerSlide | null {
-  if (!slide.active || slide.type !== 'image') return null;
+  if (!slide.active || (slide.type !== 'image' && slide.type !== 'video')) return null;
+  const videoUrl = slide.videoUrl?.trim();
+  if (slide.type === 'video' && !videoUrl) return null;
 
   const category =
     normalizeHomeBannerCategory(slide.category) ??
@@ -331,6 +333,9 @@ function mapApiBanner(slide: ApiBannerSlide): HomeCategoryBannerSlide | null {
     id: slide.id,
     category,
     image,
+    ...(slide.type === 'video' && videoUrl
+      ? { videoUrl: videoUrl.startsWith('http') ? videoUrl : `${API_BASE}${videoUrl}` }
+      : {}),
     eyebrow: slide.eyebrow || defaults.eyebrow,
     title: slide.title || defaults.title,
     subtitle: slide.subtitle || defaults.subtitle,

@@ -1,5 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -21,6 +22,7 @@ export type HomeCategoryBannerSlide = {
   id: string | number;
   category: 'homes' | 'commercial' | 'agriculture' | 'plots' | 'projects';
   image: ImageSourcePropType;
+  videoUrl?: string;
   eyebrow: string;
   title: string;
   subtitle: string;
@@ -35,6 +37,24 @@ type HomeCategoryBannerCarouselProps = {
 };
 
 const AUTOPLAY_INTERVAL_MS = 5600;
+
+function BannerVideo({ uri }: { uri: string }) {
+  const player = useVideoPlayer({ uri }, (videoPlayer) => {
+    videoPlayer.loop = true;
+    videoPlayer.muted = true;
+    videoPlayer.play();
+  });
+
+  return (
+    <VideoView
+      player={player}
+      style={StyleSheet.absoluteFill}
+      contentFit="cover"
+      nativeControls={false}
+      surfaceType="textureView"
+    />
+  );
+}
 
 export default function HomeCategoryBannerCarousel({
   slides,
@@ -183,13 +203,17 @@ export default function HomeCategoryBannerCarousel({
             }
             testID={`home-category-slide-${slide.category}${loopCloneSuffix}`}
           >
-            <Image
-              source={slide.image}
-              style={StyleSheet.absoluteFill}
-              contentFit="cover"
-              transition={reduceMotion ? 0 : 350}
-              accessibilityIgnoresInvertColors
-            />
+            {slide.videoUrl && !isLoopClone && isVisible && logicalIndex === activeIndex ? (
+              <BannerVideo uri={slide.videoUrl} />
+            ) : (
+              <Image
+                source={slide.image}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+                transition={reduceMotion ? 0 : 350}
+                accessibilityIgnoresInvertColors
+              />
+            )}
             <LinearGradient
               colors={[colors.actionGlassSoft, 'transparent']}
               locations={[0, 1]}

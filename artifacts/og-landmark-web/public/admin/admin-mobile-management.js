@@ -13,6 +13,10 @@
       '/api',
     );
     if (!source) return '';
+    if (window.__OG_ADMIN_LARAVEL_LOCAL__ && /^\/api\/admin\/property-media\//i.test(source)) {
+      const localLaravelBase = String(window.__OG_LOCAL_LARAVEL_API_BASE__ || '/api-legacy/api').replace(/\/+$/, '');
+      return `${localLaravelBase}${source.replace(/^\/api/i, '')}`;
+    }
     try { return new URL(source, window.location.origin).href; } catch { return source; }
   };
   const money = (value) => `PKR ${Number(value || 0).toLocaleString('en-PK')}`;
@@ -520,9 +524,10 @@
     },
     banners: {
       title: 'Mobile homepage banners', list: '/mobile/banners/all', createPath: '/mobile/banners',
+      addLabel: 'Add banner',
       deletePath: (item) => `/mobile/banners/${encodeURIComponent(item.id)}`,
       fields: [
-        ['type', 'Media type', 'select', ['image', 'video']], ['title', 'Title'], ['subtitle', 'Subtitle'], ['category', 'Category', 'select', ['homes', 'commercial', 'agriculture', 'plots', 'projects', 'video']],
+        ['type', 'Media type', 'select', ['image', 'video']], ['title', 'Title'], ['subtitle', 'Subtitle'], ['category', 'Category', 'select', ['homes', 'commercial', 'agriculture', 'plots', 'projects']],
         ['imageUrl', 'Image URL'], ['videoUrl', 'Video URL'], ['media', 'Upload image/video', 'file', [], '.jpg,.jpeg,.png,.webp,.mp4,.mov'], ['route', 'App route'], ['cta', 'Button text'],
         ['startDate', 'Campaign start date (optional)', 'date'], ['endDate', 'Campaign end date (optional)', 'date'],
         ['order', 'Sort order', 'number'], ['active', 'Visible in app', 'checkbox'],
@@ -537,7 +542,10 @@
             : item.endDate && item.endDate < today
               ? 'Expired'
               : 'Live';
-        return `<td><strong>${esc(item.title || item.eyebrow || 'Untitled')}</strong><div>${esc(item.type || 'image')}</div></td><td>${esc(item.category || '—')}</td><td>${esc(item.order ?? '—')}</td><td>${esc(item.startDate || 'No start')} – ${esc(item.endDate || 'No end')}</td><td>${status}</td>`;
+        const media = item.type === 'video' && item.videoUrl
+          ? `<video src="${esc(mediaUrl(item.videoUrl))}" muted preload="metadata" style="display:block;width:100px;height:56px;object-fit:cover;border-radius:6px"></video>`
+          : item.imageUrl ? `<img src="${esc(mediaUrl(item.imageUrl))}" alt="" loading="lazy" style="display:block;width:100px;height:56px;object-fit:cover;border-radius:6px">` : '';
+        return `<td>${media}<strong>${esc(item.title || item.eyebrow || 'Untitled')}</strong><div>${esc(item.type || 'image')}</div></td><td>${esc(item.category || '—')}</td><td>${esc(item.order ?? '—')}</td><td>${esc(item.startDate || 'No start')} – ${esc(item.endDate || 'No end')}</td><td>${status}</td>`;
       },
     },
     notifications: {
@@ -920,7 +928,6 @@
     const fields = config.fields.filter(([name, , type]) => (
       !(name === 'status' && key === 'notifications' && editing)
       && !(name === 'sendNow' && key === 'notifications' && editing)
-      && !(name === 'type' && key === 'banners' && editing)
     ));
     const currentMediaUrl = item.type === 'video' ? item.videoUrl : item.imageUrl;
     const currentMediaPreview = key === 'banners' && editing && currentMediaUrl
@@ -964,8 +971,8 @@
         if (type === 'readonly') return `<div class="og-mm-field"><label>${esc(label)}</label><input disabled value="${esc(value)}"></div>`;
         if (type === 'checkbox') return `<div class="og-mm-field${full}"><label><input type="checkbox" name="${esc(name)}" ${(name === 'sendNow' || key === 'projects' ? Boolean(value) : value !== false) ? 'checked' : ''}> ${esc(label)}</label></div>`;
         if (type === 'file') {
-          const bannerAccept = key === 'banners' && editing
-            ? (item.type === 'video' ? '.mp4,.mov' : '.jpg,.jpeg,.png,.webp')
+          const bannerAccept = key === 'banners'
+            ? ((wrap.querySelector('select[name="type"]')?.value || item.type) === 'video' ? '.mp4,.mov' : '.jpg,.jpeg,.png,.webp')
             : accept;
           const fileLabel = key === 'banners' && editing ? 'Replace media file (optional)' : label;
           const multiple = key === 'projects' && ['photoUploads', 'videoUploads'].includes(name) ? 'multiple' : '';
@@ -1031,6 +1038,12 @@
     if (key === 'banners') {
       const input = wrap.querySelector('input[name="media"]');
       const preview = wrap.querySelector('[data-banner-upload-preview]');
+      const typeSelect = wrap.querySelector('select[name="type"]');
+      const syncBannerMediaType = () => {
+        if (input) input.accept = typeSelect?.value === 'video' ? '.mp4,.mov' : '.jpg,.jpeg,.png,.webp';
+      };
+      typeSelect?.addEventListener('change', syncBannerMediaType);
+      syncBannerMediaType();
       input?.addEventListener('change', () => {
         if (!preview) return;
         if (input.__ogPreviewUrl) URL.revokeObjectURL(input.__ogPreviewUrl);
@@ -1112,7 +1125,7 @@
         payload.sendNow = Boolean(payload.sendNow);
         delete payload.audienceRole; delete payload.audienceCity;
       }
-      if (key === 'banners' && !editing) payload.active = payload.active !== false;
+        if (key === 'banners' && !editing) payload.active = payload.active !== false;
       if (key === 'users' && editing) delete payload.password;
       delete payload.media;
       delete payload.coverUpload;
@@ -1155,17 +1168,35 @@
           return;
         }
         const bannerFile = key === 'banners' ? form.elements.media?.files?.[0] : null;
-        const body = bannerFile
-          ? (() => {
-              const formData = new FormData();
-              Object.entries(payload).forEach(([name, value]) => {
-                if (value !== undefined && value !== null) formData.append(name, String(value));
-              });
-              formData.append('media', bannerFile);
-              if (editing && key === 'banners') formData.append('_method', 'PUT');
-              return formData;
-            })()
-          : JSON.stringify(payload);
+        if (key === 'banners') {
+          const type = form.elements.type.value;
+          const currentMediaUrl = type === 'video' ? payload.videoUrl : payload.imageUrl;
+          if (bannerFile) {
+            const uploadForm = new FormData();
+            uploadForm.append(type === 'video' ? 'video' : 'image', bannerFile);
+            const uploaded = await api(type === 'video' ? '/upload/video' : '/upload/single', { method: 'POST', body: uploadForm });
+            if (typeof uploaded?.url !== 'string' || !uploaded.url.trim()) throw new Error('The media upload did not return a URL.');
+            if (type === 'video') {
+              payload.videoUrl = uploaded.url.trim();
+              payload.imageUrl = '';
+            } else {
+              payload.imageUrl = uploaded.url.trim();
+              payload.videoUrl = '';
+            }
+          } else if (!String(currentMediaUrl || '').trim()) {
+            const message = document.createElement('div');
+            message.className = 'og-mm-error';
+            message.setAttribute('role', 'alert');
+            message.textContent = `Upload or provide a ${type} for this banner.`;
+            form.prepend(message);
+            submit.disabled = false;
+            return;
+          }
+          payload.type = type;
+          if (type === 'video') payload.imageUrl = '';
+          else payload.videoUrl = '';
+        }
+        const body = JSON.stringify(payload);
         if (editing) {
           if (key === 'users') {
             const previous = item.role || 'User';
@@ -1175,7 +1206,7 @@
             if (nextRole !== previous) await api(`/admin/users/${encodeURIComponent(item.id)}/role`, { method: 'PATCH', body: JSON.stringify({ role: nextRole }) });
           } else {
             await api(`${config.createPath || config.list}/${encodeURIComponent(item.id)}`, {
-              method: key === 'properties' ? 'PATCH' : key === 'banners' && bannerFile ? 'POST' : 'PUT',
+              method: key === 'properties' ? 'PATCH' : 'PUT',
               body,
             });
           }

@@ -96,9 +96,11 @@ test('admin banner editor can replace uploaded images and videos and confirm del
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   assert.match(source, /Current \$\{item\.type === 'video' \? 'video' : 'image'\}/);
   assert.match(source, /Replace media file \(optional\)/);
-  assert.match(source, /item\.type === 'video' \? '\.mp4,\.mov' : '\.jpg,\.jpeg,\.png,\.webp'/);
-  assert.match(source, /formData\.append\('_method', 'PUT'\)/);
-  assert.match(source, /key === 'banners' && bannerFile \? 'POST' : 'PUT'/);
+  assert.match(source, /input\.accept = typeSelect\?\.value === 'video' \? '\.mp4,\.mov' : '\.jpg,\.jpeg,\.png,\.webp'/);
+  assert.match(source, /api\(type === 'video' \? '\/upload\/video' : '\/upload\/single'/);
+  assert.match(source, /payload\.videoUrl = uploaded\.url\.trim\(\)/);
+  assert.match(source, /payload\.imageUrl = uploaded\.url\.trim\(\)/);
+  assert.doesNotMatch(source, /formData\.append\('_method', 'PUT'\)/);
   assert.match(source, /\['startDate', 'Campaign start date \(optional\)', 'date'\]/);
   assert.match(source, /\['endDate', 'Campaign end date \(optional\)', 'date'\]/);
   assert.match(source, /End date must be the same as or later than the start date\./);
@@ -195,9 +197,12 @@ test('admin banner editor can replace uploaded images and videos and confirm del
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   assert.match(source, /Current \$\{item\.type === 'video' \? 'video' : 'image'\}/);
   assert.match(source, /Replace media file \(optional\)/);
-  assert.match(source, /item\.type === 'video' \? '\.mp4,\.mov' : '\.jpg,\.jpeg,\.png,\.webp'/);
-  assert.match(source, /formData\.append\('_method', 'PUT'\)/);
-  assert.match(source, /key === 'banners' && bannerFile \? 'POST' : 'PUT'/);
+  assert.match(source, /input\.accept = typeSelect\?\.value === 'video' \? '\.mp4,\.mov' : '\.jpg,\.jpeg,\.png,\.webp'/);
+  assert.match(source, /api\(type === 'video' \? '\/upload\/video' : '\/upload\/single'/);
+  assert.match(source, /payload\.videoUrl = uploaded\.url\.trim\(\)/);
+  assert.match(source, /payload\.imageUrl = uploaded\.url\.trim\(\)/);
+  assert.doesNotMatch(source, /formData\.append\('_method', 'PUT'\)/);
+  assert.match(source, /method: key === 'properties' \? 'PATCH' : 'PUT'/);
   assert.match(source, /Permanently delete the \$\{item\.type === 'video' \? 'video' : 'image'\} banner/);
 });
 
@@ -267,7 +272,7 @@ test('Admin Agents lists Mobile app profiles and assignment options show city', 
   assert.match(properties, /save\.disabled = !assignable/);
   assert.match(html, /admin-property-management\.js\?v=property-agent-assignment-20261029-v14/);
   assert.match(html, /og-api-base\.js\?v=local-preview-agent-crud-20261029-v1/);
-  assert.match(html, /admin-mobile-management\.js\?v=mobile-agent-local-copy-crud-20261029-v3/);
+  assert.match(html, /admin-mobile-management\.js\?v=admin-mobile-banner-crud-video-20261029-v1/);
 });
 
 test('property table supports eligible batch approval and per-listing results', () => {

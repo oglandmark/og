@@ -1062,6 +1062,32 @@ final class OgLandmarkApiTest extends TestCase
             ->assertJsonCount(1)
             ->assertJsonPath('0.title', 'Later');
 
+        $created = $this->withToken($token)->postJson('/api/admin/mobile/banners', [
+            'type' => 'image',
+            'category' => 'homes',
+            'title' => 'Admin home banner',
+            'imageUrl' => '/api/admin/property-media/home-banner.jpg',
+            'active' => true,
+            'order' => 3,
+            'startDate' => '2026-01-01',
+            'endDate' => '2026-12-31',
+        ])->assertCreated()->assertJsonPath('banner.id', 703)->assertJsonPath('banner.type', 'image');
+
+        $this->withToken($token)->putJson('/api/admin/mobile/banners/703', [
+            'type' => 'video',
+            'category' => 'homes',
+            'title' => 'Admin video banner',
+            'videoUrl' => '/api/admin/property-media/home-banner.mp4',
+            'active' => true,
+        ])->assertOk()->assertJsonPath('banner.type', 'video')->assertJsonPath('banner.imageUrl', null);
+
+        $this->getJson('/api/mobile/banners')->assertOk()->assertJsonFragment(['title' => 'Admin video banner']);
+        $this->withToken($token)->deleteJson('/api/admin/mobile/banners/703')->assertOk();
+        $this->withToken($token)->getJson('/api/mobile/banners/all')->assertJsonMissing(['id' => 703]);
+        $this->withToken($token)->postJson('/api/admin/mobile/banners', [
+            'type' => 'video', 'category' => 'homes', 'title' => 'Missing media',
+        ])->assertUnprocessable();
+
         $this->withToken('invalid-session')->getJson('/api/admin/city-agents')->assertUnauthorized();
     }
 

@@ -118,6 +118,25 @@ test('local Replit agent directory edits use Laravel and become PATCH requests',
   ]);
 });
 
+test('local banner management and media uploads use Laravel without changing production routing', async () => {
+  const { window, calls } = createBrowser('og-landmark.replit.dev');
+  await window.fetch('/api/mobile/banners/all');
+  await window.fetch('/api/mobile/banners', { method: 'POST', body: '{}' });
+  await window.fetch('/api/mobile/banners/703', { method: 'PUT', body: '{}' });
+  await window.fetch('/api/mobile/banners/703', { method: 'DELETE' });
+  await window.fetch('/api/upload/video', { method: 'POST', body: new FormData() });
+  await window.fetch('/api/admin/property-media/banner.mp4');
+
+  assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
+    ['/api-legacy/api/mobile/banners/all', 'GET'],
+    ['/api-legacy/api/admin/mobile/banners', 'POST'],
+    ['/api-legacy/api/admin/mobile/banners/703', 'PUT'],
+    ['/api-legacy/api/admin/mobile/banners/703', 'DELETE'],
+    ['/api-legacy/api/upload/video', 'POST'],
+    ['/api-legacy/api/admin/property-media/banner.mp4', 'GET'],
+  ]);
+});
+
 test('local Replit user and report moderation use Laravel routes', async () => {
   const { window, calls } = createBrowser('og-landmark.replit.dev');
 

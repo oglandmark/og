@@ -23,7 +23,6 @@ export function getPreviewLiveProxyPath(path: string): string | undefined {
   if (propertyDetail) return `/api/preview/live/properties/${propertyDetail[1]}${query}`;
   if (pathname === '/api/mobile-agents') return `/api/preview/live/mobile-agents${query}`;
   if (path === '/api/mobile/settings') return '/api/preview/live/mobile/settings';
-  if (path === '/api/mobile/banners') return '/api/preview/live/mobile/banners';
   return undefined;
 }
 

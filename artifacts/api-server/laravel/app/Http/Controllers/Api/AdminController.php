@@ -950,11 +950,135 @@ final class AdminController extends Controller
         return response()->json($banners);
     }
 
+    public function createMobileBanner(Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $validated = $request->validate([
+            'type' => ['required', 'in:image,video'],
+            'category' => ['required', 'in:homes,commercial,agriculture,plots,projects'],
+            'title' => ['required', 'string', 'max:180'],
+            'subtitle' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'eyebrow' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'cta' => ['sometimes', 'nullable', 'string', 'max:80'],
+            'route' => ['sometimes', 'nullable', 'string', 'max:180'],
+            'ctaParams' => ['sometimes', 'array'],
+            'imageUrl' => ['sometimes', 'nullable', 'string', 'max:2048'],
+            'videoUrl' => ['sometimes', 'nullable', 'string', 'max:2048'],
+            'startDate' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
+            'endDate' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
+            'order' => ['sometimes', 'integer', 'min:0', 'max:10000'],
+            'active' => ['sometimes', 'boolean'],
+        ]);
+        $this->assertBannerMedia($validated['type'], $validated['imageUrl'] ?? null, $validated['videoUrl'] ?? null);
+        $this->assertBannerDates($validated['startDate'] ?? null, $validated['endDate'] ?? null);
+
+        $banner = $store->mutate(function (array &$data) use ($validated): array {
+            $banners = array_values(array_filter($data['mobileBanners'] ?? [], 'is_array'));
+            $id = max(array_map(fn (array $item): int => (int) ($item['id'] ?? 0), $banners) ?: [0]) + 1;
+            $banner = array_merge([
+                'id' => $id,
+                'type' => 'image',
+                'imageUrl' => null,
+                'videoUrl' => null,
+                'eyebrow' => '',
+                'title' => '',
+                'subtitle' => '',
+                'cta' => 'Explore Now',
+                'route' => '/explore',
+                'ctaParams' => [],
+                'active' => true,
+                'order' => count($banners),
+                'createdAt' => now()->toIso8601String(),
+                'updatedAt' => now()->toIso8601String(),
+            ], $validated);
+            if ($banner['type'] === 'video') $banner['imageUrl'] = null;
+            else $banner['videoUrl'] = null;
+            $data['mobileBanners'] = [...$banners, $banner];
+            return $banner;
+        });
+
+        return response()->json(['success' => true, 'banner' => $banner], 201);
+    }
+
+    public function updateMobileBanner(Request $request, int $id, LegacyDataStore $store): JsonResponse
+    {
+        $validated = $request->validate([
+            'type' => ['sometimes', 'in:image,video'],
+            'category' => ['sometimes', 'in:homes,commercial,agriculture,plots,projects'],
+            'title' => ['sometimes', 'required', 'string', 'max:180'],
+            'subtitle' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'eyebrow' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'cta' => ['sometimes', 'nullable', 'string', 'max:80'],
+            'route' => ['sometimes', 'nullable', 'string', 'max:180'],
+            'ctaParams' => ['sometimes', 'array'],
+            'imageUrl' => ['sometimes', 'nullable', 'string', 'max:2048'],
+            'videoUrl' => ['sometimes', 'nullable', 'string', 'max:2048'],
+            'startDate' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
+            'endDate' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
+            'order' => ['sometimes', 'integer', 'min:0', 'max:10000'],
+            'active' => ['sometimes', 'boolean'],
+        ]);
+
+        $banner = $store->mutate(function (array &$data) use ($validated, $id): ?array {
+            $banners = array_values($data['mobileBanners'] ?? []);
+            $index = array_search($id, array_map(fn ($item): int => (int) ($item['id'] ?? 0), $banners), true);
+            if ($index === false) return null;
+            $current = $banners[$index];
+            $next = array_replace($current, $validated);
+            $type = $next['type'] ?? 'image';
+            if ($type === 'video') $next['imageUrl'] = null;
+            else $next['videoUrl'] = null;
+            $this->assertBannerMedia($type, $next['imageUrl'] ?? null, $next['videoUrl'] ?? null);
+            $this->assertBannerDates($next['startDate'] ?? null, $next['endDate'] ?? null);
+            $next['updatedAt'] = now()->toIso8601String();
+            $banners[$index] = $next;
+            $data['mobileBanners'] = $banners;
+            return $next;
+        });
+        if (! $banner) return response()->json(['error' => 'Banner not found.'], 404);
+
+        return response()->json(['success' => true, 'banner' => $banner]);
+    }
+
+    public function deleteMobileBanner(int $id, LegacyDataStore $store): JsonResponse
+    {
+        $deleted = $store->mutate(function (array &$data) use ($id): bool {
+            $banners = array_values($data['mobileBanners'] ?? []);
+            $remaining = array_values(array_filter($banners, fn ($banner): bool => (int) ($banner['id'] ?? 0) !== $id));
+            if (count($remaining) === count($banners)) return false;
+            $data['mobileBanners'] = $remaining;
+            return true;
+        });
+        if (! $deleted) return response()->json(['error' => 'Banner not found.'], 404);
+        return response()->json(['success' => true]);
+    }
+
+    private function assertBannerMedia(string $type, ?string $imageUrl, ?string $videoUrl): void
+    {
+        $mediaUrl = $type === 'video' ? $videoUrl : $imageUrl;
+        if (! is_string($mediaUrl) || trim($mediaUrl) === '') {
+            throw ValidationException::withMessages([
+                $type === 'video' ? 'videoUrl' : 'imageUrl' => ['Upload or provide media for this banner.'],
+            ]);
+        }
+    }
+
+    private function assertBannerDates(?string $startDate, ?string $endDate): void
+    {
+        if ($startDate && $endDate && $endDate < $startDate) {
+            throw ValidationException::withMessages([
+                'endDate' => ['End date must be the same as or later than the start date.'],
+            ]);
+        }
+    }
+
     public function publicMobileBanners(LegacyDataStore $store): JsonResponse
     {
+        $today = now()->toDateString();
         $banners = array_values(array_filter(
             $store->read()['mobileBanners'] ?? [],
-            fn (array $banner): bool => ($banner['active'] ?? true) !== false,
+            fn (array $banner): bool => ($banner['active'] ?? true) !== false
+                && (! ($banner['startDate'] ?? null) || $banner['startDate'] <= $today)
+                && (! ($banner['endDate'] ?? null) || $banner['endDate'] >= $today),
         ));
         usort($banners, fn (array $a, array $b): int => (int) ($a['order'] ?? 0) <=> (int) ($b['order'] ?? 0));
 

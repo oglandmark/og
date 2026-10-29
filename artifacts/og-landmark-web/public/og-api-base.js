@@ -24,6 +24,7 @@
     : 'http://127.0.0.1:8000/api';
   window.__OG_LIVE_API_BASE__ = LIVE;
   window.__OG_ADMIN_LARAVEL_LOCAL__ = isLocalAdminHost;
+  window.__OG_LOCAL_LARAVEL_API_BASE__ = localLaravelAdminBase;
   // Replit previews stay on the local Laravel proxy even if an earlier URL
   // override was saved. Production hosts continue using the live API.
   var base = (isPreviewHost ? '/api' : (fromQuery || fromStorage || previewBase)).replace(/\/+$/, '');
@@ -95,6 +96,19 @@
       && (verb === 'PUT' || verb === 'PATCH' || verb === 'DELETE')) {
       laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
       if (verb === 'PUT') verb = 'PATCH';
+    } else if (pathname === '/api/mobile/banners/all' && verb === 'GET') {
+      laravelPath = laravelRoot + '/mobile/banners/all';
+    } else if (pathname === '/api/mobile/banners' && verb === 'GET') {
+      laravelPath = laravelRoot + '/mobile/banners';
+    } else if (pathname === '/api/mobile/banners' && verb === 'POST') {
+      laravelPath = laravelRoot + '/admin/mobile/banners';
+    } else if (/^\/api\/mobile\/banners\/\d+$/.test(pathname)
+      && ['PUT', 'POST', 'DELETE'].indexOf(verb) !== -1) {
+      laravelPath = laravelRoot + pathname.replace('/api/mobile/banners/', '/admin/mobile/banners/');
+    } else if (/^\/api\/upload\/(?:single|video)$/.test(pathname) && verb === 'POST') {
+      laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
+    } else if (/^\/api\/admin\/property-media\/[A-Za-z0-9._-]+$/.test(pathname) && verb === 'GET') {
+      laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
     } else if (pathname === '/api/admin/mobile-agent-preview-hidden' && ['GET', 'POST'].indexOf(verb) !== -1) {
       laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
     }

@@ -39,6 +39,6 @@ test('preview-only fallback routes stay on the same-origin Laravel service', () 
     '/api/preview/live/mobile-agents?limit=5&city=Okara',
   );
   assert.equal(getPreviewLiveProxyPath('/api/mobile/settings'), '/api/preview/live/mobile/settings');
-  assert.equal(getPreviewLiveProxyPath('/api/mobile/banners'), '/api/preview/live/mobile/banners');
+  assert.equal(getPreviewLiveProxyPath('/api/mobile/banners'), undefined);
   assert.equal(getPreviewLiveProxyPath('/api/auth/admin-verify'), undefined);
 });

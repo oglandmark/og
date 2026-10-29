@@ -18,6 +18,8 @@ final class OgLandmarkApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['app.env' => 'testing']);
+        $this->app['env'] = 'testing';
 
         DB::table('app_data')->insert([
             'id' => 1,
@@ -836,6 +838,7 @@ final class OgLandmarkApiTest extends TestCase
     public function test_admin_deleted_preview_property_does_not_return_after_mirror_sync(): void
     {
         config(['app.env' => 'local']);
+        $this->app['env'] = 'local';
         Http::fake([
             'www.oglandmark.com/api/properties*' => Http::response([
                 [
@@ -863,6 +866,7 @@ final class OgLandmarkApiTest extends TestCase
     public function test_local_mobile_property_feed_mirrors_public_listings_into_local_store(): void
     {
         config(['app.env' => 'local']);
+        $this->app['env'] = 'local';
         Http::fake([
             'www.oglandmark.com/api/properties*' => Http::response([
                 [
@@ -1084,11 +1088,48 @@ final class OgLandmarkApiTest extends TestCase
         $this->getJson('/api/mobile/banners')->assertOk()->assertJsonFragment(['title' => 'Admin video banner']);
         $this->withToken($token)->deleteJson('/api/admin/mobile/banners/703')->assertOk();
         $this->withToken($token)->getJson('/api/mobile/banners/all')->assertJsonMissing(['id' => 703]);
-        $this->withToken($token)->postJson('/api/admin/mobile/banners', [
+        $created = $this->withToken($token)->postJson('/api/admin/mobile/banners', [
             'type' => 'video', 'category' => 'homes', 'title' => 'Missing media',
         ])->assertUnprocessable();
 
         $this->withToken('invalid-session')->getJson('/api/admin/city-agents')->assertUnauthorized();
+    }
+
+    public function test_local_admin_can_manage_the_bundled_home_banners_without_touching_live_data(): void
+    {
+        config(['app.env' => 'local']);
+        $this->app['env'] = 'local';
+        $token = $this->adminToken();
+
+        $this->withToken($token)->getJson('/api/mobile/banners/all')
+            ->assertOk()->assertJsonCount(7)
+            ->assertJsonPath('0.sourcePreviewId', 'bundled:homes')
+            ->assertJsonPath('0.isPreviewOnly', true);
+
+        $created = $this->withToken($token)->postJson('/api/admin/mobile/banners', [
+            'type' => 'video',
+            'category' => 'homes',
+            'title' => 'Local homes video',
+            'videoUrl' => '/api/admin/property-media/local-homes.mp4',
+            'sourcePreviewId' => 'bundled:homes',
+            'active' => true,
+            'order' => 0,
+        ])->assertCreated();
+
+        $this->withToken($token)->getJson('/api/mobile/banners/all')
+            ->assertOk()->assertJsonCount(7)
+            ->assertJsonPath('0.title', 'Local homes video')
+            ->assertJsonPath('0.isPreviewOnly', false);
+        $this->getJson('/api/mobile/banners')
+            ->assertOk()->assertJsonFragment(['title' => 'Local homes video'])
+            ->assertJsonMissingPath('0.sourcePreviewId');
+
+        $localId = $created->json('banner.id');
+        $this->withToken($token)->deleteJson('/api/admin/mobile/banners/'.$localId)->assertOk();
+        $this->withToken($token)->getJson('/api/mobile/banners/all')
+            ->assertOk()->assertJsonCount(6)
+            ->assertJsonMissing(['sourcePreviewId' => 'bundled:homes']);
+        $this->getJson('/api/mobile/banners')->assertJsonMissing(['title' => 'Local homes video']);
     }
 
     public function test_admin_can_update_validated_staff_permissions_with_audit_history(): void

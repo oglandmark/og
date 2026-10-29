@@ -126,6 +126,7 @@ test('local banner management and media uploads use Laravel without changing pro
   await window.fetch('/api/mobile/banners/703', { method: 'DELETE' });
   await window.fetch('/api/upload/video', { method: 'POST', body: new FormData() });
   await window.fetch('/api/admin/property-media/banner.mp4');
+  await window.fetch('/api/admin/mobile-banner-preview-hidden', { method: 'POST', body: '{}' });
 
   assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
     ['/api-legacy/api/mobile/banners/all', 'GET'],
@@ -134,6 +135,7 @@ test('local banner management and media uploads use Laravel without changing pro
     ['/api-legacy/api/admin/mobile/banners/703', 'DELETE'],
     ['/api-legacy/api/upload/video', 'POST'],
     ['/api-legacy/api/admin/property-media/banner.mp4', 'GET'],
+    ['/api-legacy/api/admin/mobile-banner-preview-hidden', 'POST'],
   ]);
 });
 

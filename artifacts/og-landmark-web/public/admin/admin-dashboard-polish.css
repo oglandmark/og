@@ -101,6 +101,33 @@
   padding: clamp(20px, 3vw, 42px) !important;
 }
 
+#root.og-admin-shell main table td:last-child button.text-red-600 {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0 11px;
+  background: #fff7f7;
+  color: #b42318 !important;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none !important;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+#root.og-admin-shell main table td:last-child button.text-red-600:hover:not(:disabled) {
+  border-color: #fda4af;
+  background: #ffe4e6;
+  color: #9f1239 !important;
+}
+
+#root.og-admin-shell main table td:last-child button.text-red-600:focus-visible {
+  outline: 3px solid rgba(190, 24, 93, 0.22);
+  outline-offset: 2px;
+}
+
 #root.og-admin-dashboard main > div.space-y-6 {
   display: flex;
   flex-direction: column;

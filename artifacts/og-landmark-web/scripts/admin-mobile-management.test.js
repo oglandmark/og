@@ -65,7 +65,7 @@ test('mobile management module is loaded by the existing website admin', () => {
   assert.match(styles, /@media \(max-width: 900px\)/);
   assert.match(styles, /og-admin-shell\.og-mobile-nav-open aside/);
   assert.match(styles, /og-admin-nav-overlay/);
-  assert.match(html, /admin-dashboard-polish\.css\?v=stable-admin-menu-20261022/);
+  assert.match(html, /admin-dashboard-polish\.css\?v=professional-user-actions-20261029/);
 });
 
 test('main dashboard adds real management shortcuts above the existing data-backed overview', () => {
@@ -80,7 +80,16 @@ test('main dashboard adds real management shortcuts above the existing data-back
   assert.match(styles, /@media \(max-width: 900px\)/);
   assert.match(styles, /og-admin-shell\.og-mobile-nav-open aside/);
   assert.match(styles, /og-admin-nav-overlay/);
-  assert.match(html, /admin-dashboard-polish\.css\?v=stable-admin-menu-20261022/);
+  assert.match(html, /admin-dashboard-polish\.css\?v=professional-user-actions-20261029/);
+});
+
+test('Admin user delete action has a clear, accessible button treatment', () => {
+  const styles = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.css'), 'utf8');
+  const bundle = fs.readFileSync(path.join(root, 'public/admin/assets/admin-CIC3gCEU.js'), 'utf8');
+  assert.match(bundle, /children:"Delete"/);
+  assert.match(styles, /main table td:last-child button\.text-red-600/);
+  assert.match(styles, /button\.text-red-600:hover:not\(:disabled\)/);
+  assert.match(styles, /button\.text-red-600:focus-visible/);
 });
 
 test('admin banner editor can replace uploaded images and videos and confirm deletion', () => {
@@ -179,7 +188,7 @@ test('admin dashboard has an accessible off-canvas navigation on tablet and mobi
   assert.match(styles, /@media \(max-width: 900px\)/);
   assert.match(styles, /og-admin-shell\.og-mobile-nav-open aside/);
   assert.match(styles, /og-admin-nav-overlay/);
-  assert.match(html, /admin-dashboard-polish\.css\?v=stable-admin-menu-20261022/);
+  assert.match(html, /admin-dashboard-polish\.css\?v=professional-user-actions-20261029/);
 });
 
 test('admin banner editor can replace uploaded images and videos and confirm deletion', () => {

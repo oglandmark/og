@@ -1002,9 +1002,14 @@
     if (!window.confirm(`${label} ${ids.length} selected listings? Listings that are no longer eligible will be reported as failures.${examples}`)) return;
     let reason = '';
     if (action === 'reject') {
-      const enteredReason = window.prompt('Optional reason for rejecting these listings:');
+      const enteredReason = window.prompt('Enter a reason for rejecting these listings:');
       if (enteredReason === null) return;
       reason = enteredReason.trim();
+      if (!reason) {
+        bulkReviewMessage = 'A rejection reason is required.';
+        updateBulkReviewToolbar(root);
+        return;
+      }
     }
 
     bulkReviewBusy = true;
@@ -1596,18 +1601,18 @@
     const heading = root.querySelector('h2');
     const headingLabels = {
       all: 'All properties',
-      listed: 'Property listed',
-      pending: 'Pending approvals',
+      listed: 'Properties',
+      pending: 'Pending Review',
       approved: 'Approved properties',
       rejected: 'Rejected properties',
       'in-progress': 'Property in progress',
       closed: 'Property closed',
     };
-    const viewHeading = listingInboxView ? 'Property listed'
+    const viewHeading = listingInboxView ? 'Properties'
       : featuredView ? 'Featured properties'
         : recommendedView ? 'Recommended properties'
           : projectsView ? 'Projects'
-            : agricultureView ? 'Agriculture Land' : headingLabels[filter];
+            : agricultureView ? 'Land Listings' : headingLabels[filter];
     if (heading && viewHeading) heading.textContent = viewHeading;
     if (projectsView && heading && !root.querySelector('[data-og-project-add-action]')) {
       const action = document.createElement('a');

@@ -111,9 +111,9 @@ test('Admin navigation omits approved and rejected shortcuts while keeping core 
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   const navBlock = source.match(/const sidebarItems = \[([\s\S]*?)\n  \];/)?.[1] || '';
   const destinations = [
-    'Main', 'Property listed', 'Pending approvals',
-    'Featured', 'Recommended', 'Projects', 'Project listings', 'Agriculture Land', 'User management', 'Agent Management',
-    'App banners management', 'App notifications management', 'Agent Messages', 'Agent Progress',
+    'Dashboard', 'Properties', 'Pending Review',
+    'Featured', 'Recommended', 'Projects', 'Project Listings', 'Land Listings', 'Users', 'Agents',
+    'Banners', 'Notifications', 'Agent Messages', 'Agent Progress',
   ];
   assert.equal((navBlock.match(/\{ label:/g) || []).length, destinations.length, 'sidebar destinations should match its configured navigation');
   for (const item of destinations) assert.ok(navBlock.includes(`label: '${item}'`), `sidebar should include ${item}`);
@@ -204,7 +204,7 @@ test('admin banner editor can replace uploaded images and videos and confirm del
 test('Agent table shows profile thumbnails with bounded missing and broken-photo states', () => {
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   assert.match(source, /const photo = agent\.photo \|\| agent\.profilePhoto/);
-  assert.match(source, /data-agent-list-photo src="\$\{esc\(photo\)\}"/);
+  assert.match(source, /data-agent-list-photo src="\$\{esc\(mediaUrl\(photo\)\)\}"/);
   assert.match(source, /og-mm-agent-list-photo og-mm-agent-list-photo-fallback">No photo/);
   assert.match(source, /data-agent-photo-fallback hidden>Photo unavailable/);
   assert.match(source, /image\.addEventListener\('error', \(\) => \{\s*image\.hidden = true;/);

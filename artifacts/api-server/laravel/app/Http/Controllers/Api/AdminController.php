@@ -676,7 +676,8 @@ final class AdminController extends Controller
 
     public function moderateProperty(string $id, string $action, Request $request, LegacyDataStore $store): JsonResponse
     {
-        $validated = $request->validate(['reason' => ['nullable', 'string', 'max:2000']]);
+        $reasonRule = in_array($action, ['reject', 'request-changes'], true) ? 'required' : 'nullable';
+        $validated = $request->validate(['reason' => [$reasonRule, 'string', 'max:2000']]);
         if (! in_array($action, ['approve', 'reject', 'request-changes'], true)) {
             return response()->json(['error' => 'Unsupported moderation action.'], 404);
         }
@@ -713,6 +714,37 @@ final class AdminController extends Controller
         });
         if (! $result) return response()->json(['error' => 'Property not found.'], 404);
         return response()->json(['success' => true, 'property' => $result]);
+    }
+
+    public function bulkReviewProperties(Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $reasonRule = $request->input('action') === 'reject' ? 'required' : 'nullable';
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['required', 'integer', 'distinct'],
+            'action' => ['required', 'in:approve,reject'],
+            'reason' => [$reasonRule, 'string', 'max:2000'],
+        ]);
+
+        $results = [];
+        foreach ($validated['ids'] as $id) {
+            $response = $this->moderateProperty((string) $id, $validated['action'], $request, $store);
+            $payload = $response->getData(true);
+            $property = $payload['property'] ?? null;
+            $results[] = [
+                'id' => $id,
+                'title' => is_array($property) ? ($property['title'] ?? '') : '',
+                'success' => $response->getStatusCode() < 400 && is_array($property),
+                'property' => is_array($property) ? $property : null,
+                'error' => $response->getStatusCode() >= 400 ? ($payload['error'] ?? 'Could not review listing.') : null,
+            ];
+        }
+
+        $succeeded = count(array_filter($results, fn (array $item): bool => $item['success']));
+        return response()->json([
+            'results' => $results,
+            'summary' => ['succeeded' => $succeeded, 'failed' => count($results) - $succeeded],
+        ]);
     }
 
     public function mobileAgents(LegacyDataStore $store): JsonResponse

@@ -419,6 +419,26 @@ final class OgLandmarkApiTest extends TestCase
         $this->withToken($token)->getJson('/api/mobile-agents')->assertJsonCount(0);
     }
 
+    public function test_property_rejections_require_a_reason_and_bulk_review_returns_per_listing_results(): void
+    {
+        $token = $this->adminToken();
+        $this->withToken($token)->patchJson('/api/properties/102/reject')
+            ->assertUnprocessable();
+
+        $this->withToken($token)->postJson('/api/admin/properties/bulk-review', [
+            'ids' => [101, 102, 999],
+            'action' => 'reject',
+            'reason' => 'The submitted ownership details do not match.',
+        ])->assertOk()
+            ->assertJsonPath('summary.succeeded', 2)
+            ->assertJsonPath('summary.failed', 1)
+            ->assertJsonPath('results.0.property.approvalStatus', 'Rejected')
+            ->assertJsonPath('results.2.success', false);
+
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $this->assertSame('The submitted ownership details do not match.', $data['properties'][0]['rejectionReason']);
+    }
+
     public function test_admin_property_media_upload_update_and_cleanup_use_laravel_storage(): void
     {
         Storage::fake('public');
@@ -481,6 +501,84 @@ final class OgLandmarkApiTest extends TestCase
         Storage::disk('public')->assertMissing('listing-media/'.$filename);
         Storage::disk('public')->assertMissing('listing-media/'.$videoFilename);
         Storage::disk('public')->assertMissing('listing-media/old-photo.jpg');
+    }
+
+    public function test_mobile_and_admin_upload_routes_store_authenticated_media_in_shared_storage(): void
+    {
+        Storage::fake('public');
+        $token = $this->postJson('/api/auth/login', [
+            'identifier' => 'user@example.test',
+            'password' => self::PASSWORD,
+        ])->assertOk()->json('token');
+        $image = UploadedFile::fake()->image('agent-photo.jpg');
+
+        $single = $this->call('POST', '/api/upload/single', [], [], ['image' => $image], [
+            'HTTP_ACCEPT' => 'application/json',
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+        ])->assertOk()->assertJsonStructure(['url']);
+        $singleUrl = $single->json('url');
+        $this->assertStringStartsWith('/api/admin/property-media/', $singleUrl);
+        Storage::disk('public')->assertExists('listing-media/'.basename(parse_url($singleUrl, PHP_URL_PATH)));
+        $this->get($singleUrl)->assertOk();
+
+        $legacy = $this->call('POST', '/api/upload', [], [], [
+            'images' => [UploadedFile::fake()->image('legacy-photo.png')],
+        ], [
+            'HTTP_ACCEPT' => 'application/json',
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+        ])->assertOk()->assertJsonCount(1, 'urls');
+        $this->assertStringStartsWith('/api/admin/property-media/', $legacy->json('urls.0'));
+
+        $video = UploadedFile::fake()->createWithContent('property-tour.mp4', 'test-video');
+        $video->mimeType('video/mp4');
+        $videoResponse = $this->call('POST', '/api/upload/video', [], [], ['video' => $video], [
+            'HTTP_ACCEPT' => 'application/json',
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+        ])->assertOk()->assertJsonStructure(['url']);
+        $this->assertStringStartsWith('/api/admin/property-media/', $videoResponse->json('url'));
+    }
+
+    public function test_mobile_media_upload_requires_authentication_and_rejects_unsupported_files(): void
+    {
+        Storage::fake('public');
+        $this->postJson('/api/upload/single')->assertUnauthorized();
+
+        $token = $this->postJson('/api/auth/login', [
+            'identifier' => 'user@example.test',
+            'password' => self::PASSWORD,
+        ])->assertOk()->json('token');
+        $invalid = UploadedFile::fake()->create('script.txt', 2, 'text/plain');
+        $this->call('POST', '/api/upload/single', [], [], ['image' => $invalid], [
+            'HTTP_ACCEPT' => 'application/json',
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+        ])->assertUnprocessable();
+        Storage::disk('public')->assertDirectoryEmpty('listing-media');
+    }
+
+    public function test_mobile_account_photos_are_saved_to_the_existing_user_record(): void
+    {
+        Storage::fake('public');
+        $token = $this->postJson('/api/auth/login', [
+            'identifier' => 'user@example.test',
+            'password' => self::PASSWORD,
+        ])->assertOk()->json('token');
+        $uploaded = $this->call('POST', '/api/upload/single', [], [], [
+            'image' => UploadedFile::fake()->image('profile.jpg'),
+        ], [
+            'HTTP_ACCEPT' => 'application/json',
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+        ])->assertOk()->json('url');
+
+        $this->withToken($token)->putJson('/api/account/profile-photo', ['url' => $uploaded])->assertOk();
+        $this->withToken($token)->putJson('/api/account/cover-photo', ['url' => $uploaded])->assertOk();
+        $this->withToken($token)->getJson('/api/auth/me')
+            ->assertOk()
+            ->assertJsonPath('user.profilePhoto', $uploaded)
+            ->assertJsonPath('user.avatarUrl', $uploaded)
+            ->assertJsonPath('user.coverPhoto', $uploaded);
+        $this->withToken($token)->putJson('/api/account/profile-photo', [
+            'url' => 'https://untrusted.example/photo.jpg',
+        ])->assertUnprocessable();
     }
 
     public function test_admin_listing_edits_update_the_public_property_record_without_changing_moderation(): void

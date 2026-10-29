@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AccountMediaController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\MobileAgentController;
 use App\Http\Controllers\Api\PropertyController;
 use App\Http\Controllers\Api\PreviewLiveFeedController;
+use App\Http\Controllers\Api\UploadController;
 use App\Http\Middleware\LegacyBearerAuth;
 use App\Http\Middleware\LegacyAdminAuth;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +34,11 @@ $registerRoutes = static function (): void {
     });
     Route::get('/mobile-agents', [MobileAgentController::class, 'index']);
     Route::middleware(LegacyBearerAuth::class)->group(function (): void {
+        Route::put('/account/profile-photo', [AccountMediaController::class, 'updateProfilePhoto']);
+        Route::put('/account/cover-photo', [AccountMediaController::class, 'updateCoverPhoto']);
+        Route::post('/upload/single', [UploadController::class, 'singleImage']);
+        Route::post('/upload', [UploadController::class, 'imageCollection']);
+        Route::post('/upload/video', [UploadController::class, 'video']);
         Route::get('/my-properties', [PropertyController::class, 'mine']);
         Route::post('/properties', [PropertyController::class, 'store']);
         Route::put('/properties/{id}', [PropertyController::class, 'update'])->whereNumber('id');
@@ -57,6 +64,7 @@ $registerRoutes = static function (): void {
             Route::patch('/admin/properties/{id}/visibility', [AdminController::class, 'setPropertyVisibility'])->whereNumber('id');
             Route::get('/admin/properties/{id}/review', [AdminController::class, 'propertyReview'])->whereNumber('id');
             Route::patch('/admin/properties/{id}/media', [AdminController::class, 'updatePropertyMedia'])->whereNumber('id');
+            Route::post('/admin/properties/bulk-review', [AdminController::class, 'bulkReviewProperties']);
             Route::patch('/properties/{id}/{action}', [AdminController::class, 'moderateProperty'])
                 ->whereNumber('id')->whereIn('action', ['approve', 'reject', 'request-changes']);
             Route::get('/admin/mobile-agents', [AdminController::class, 'mobileAgents']);

@@ -334,8 +334,14 @@ final class AdminController extends Controller
                         && $isAgent
                         && mb_strtolower((string) ($user['status'] ?? 'active')) === 'active';
                 });
-                if (! $agentAccount) {
-                    return ['error' => 'Choose an active Agent account from the directory.', 'status' => 422];
+                $agentProfile = collect($data['mobileAgents'] ?? [])->first(fn (array $agent): bool =>
+                    (string) ($agent['userId'] ?? '') === $assignedUserId
+                    && mb_strtolower((string) ($agent['approvalStatus'] ?? '')) === 'approved'
+                    && mb_strtolower((string) ($agent['status'] ?? 'active')) === 'active'
+                    && filter_var($agent['visible'] ?? true, FILTER_VALIDATE_BOOLEAN)
+                );
+                if (! $agentAccount || ! $agentProfile) {
+                    return ['error' => 'Choose an active, approved Agent listed in the mobile app.', 'status' => 422];
                 }
             }
             foreach ($data['properties'] ?? [] as $index => $property) {
@@ -424,6 +430,67 @@ final class AdminController extends Controller
     public function setPropertyRecommended(string $id, Request $request, LegacyDataStore $store): JsonResponse
     {
         return $this->updatePropertyPromotion($id, 'recommend', $request, $store);
+    }
+
+    public function assignPropertyAgent(string $id, Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $validated = $request->validate(['userId' => ['present', 'nullable', 'string', 'max:100']]);
+        $userId = trim((string) ($validated['userId'] ?? ''));
+        $admin = $request->attributes->get('legacyUser', []);
+        $result = $store->mutate(function (array &$data) use ($id, $userId, $admin): array {
+            $profile = null;
+            $account = null;
+            if ($userId !== '') {
+                $account = collect($data['users'] ?? [])->first(function (array $user) use ($userId): bool {
+                    $permissions = is_array($user['permissions'] ?? null) ? $user['permissions'] : [];
+                    $isAgent = mb_strtolower((string) ($user['role'] ?? '')) === 'agent'
+                        || in_array('agent', array_map(fn ($permission) => mb_strtolower((string) $permission), $permissions), true);
+                    return (string) ($user['id'] ?? '') === $userId
+                        && $isAgent
+                        && mb_strtolower((string) ($user['status'] ?? 'active')) === 'active';
+                });
+                $profile = collect($data['mobileAgents'] ?? [])->first(fn (array $agent): bool =>
+                    (string) ($agent['userId'] ?? '') === $userId
+                    && mb_strtolower((string) ($agent['approvalStatus'] ?? '')) === 'approved'
+                    && mb_strtolower((string) ($agent['status'] ?? 'active')) === 'active'
+                    && filter_var($agent['visible'] ?? true, FILTER_VALIDATE_BOOLEAN)
+                );
+                if (! $account || ! $profile) {
+                    return ['error' => 'Choose an active, approved Agent listed in the mobile app.', 'status' => 422];
+                }
+            }
+            foreach ($data['properties'] ?? [] as $index => $property) {
+                if ((string) ($property['id'] ?? '') !== $id) continue;
+                $previous = $property['agentId'] ?? null;
+                $property['agentId'] = $userId !== '' ? $userId : null;
+                $property['assignedAgent'] = $userId === '' ? null : [
+                    'id' => (string) ($profile['id'] ?? $userId),
+                    'userId' => $userId,
+                    'name' => $profile['name'] ?? $account['name'] ?? 'Agent',
+                    'phone' => $profile['phone'] ?? $account['phone'] ?? '',
+                    'city' => $profile['city'] ?? $profile['cityName'] ?? '',
+                    'profileType' => 'mobile',
+                ];
+                $property['updatedAt'] = now()->toISOString();
+                $property['reviewHistory'] = is_array($property['reviewHistory'] ?? null) ? $property['reviewHistory'] : [];
+                $property['reviewHistory'][] = [
+                    'action' => $userId === '' ? 'agent_unassigned' : 'agent_assigned',
+                    'by' => $admin['id'] ?? null,
+                    'byName' => $admin['name'] ?? '',
+                    'fromAgentId' => $previous,
+                    'toAgentId' => $userId !== '' ? $userId : null,
+                    'createdAt' => $property['updatedAt'],
+                ];
+                $data['properties'][$index] = $property;
+                $this->appendAdminAudit($data, $admin, 'agent_assigned', 'properties', $id, [
+                    'fromAgentId' => $previous, 'toAgentId' => $userId !== '' ? $userId : null,
+                ]);
+                return ['property' => $property];
+            }
+            return ['error' => 'Property not found.', 'status' => 404];
+        });
+        if (isset($result['error'])) return response()->json(['error' => $result['error']], $result['status']);
+        return response()->json(['success' => true, 'property' => $result['property']]);
     }
 
     private function updatePropertyPromotion(string $id, string $promotion, Request $request, LegacyDataStore $store): JsonResponse

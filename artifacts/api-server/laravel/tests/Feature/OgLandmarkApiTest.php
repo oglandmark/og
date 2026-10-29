@@ -690,6 +690,10 @@ final class OgLandmarkApiTest extends TestCase
             'status' => 'Active',
             'permissions' => ['agent'],
         ];
+        $data['mobileAgents'][] = [
+            'id' => 902, 'userId' => 43, 'name' => 'Assigned Agent',
+            'city' => 'Depalpur', 'status' => 'Active', 'approvalStatus' => 'Approved', 'visible' => true,
+        ];
         DB::table('app_data')->where('id', 1)->update(['data' => json_encode($data, JSON_THROW_ON_ERROR)]);
         $token = $this->adminToken();
         $payload = [
@@ -788,6 +792,30 @@ final class OgLandmarkApiTest extends TestCase
         $this->getJson('/api/properties/101')
             ->assertOk()
             ->assertJsonPath('title', 'Approved house');
+    }
+
+    public function test_admin_assignment_uses_only_active_linked_mobile_agent_profiles(): void
+    {
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $data['users'][] = [
+            'id' => 43, 'name' => 'Linked Agent', 'role' => 'User',
+            'status' => 'Active', 'permissions' => ['agent'],
+        ];
+        $data['mobileAgents'][] = [
+            'id' => 901, 'userId' => 43, 'name' => 'Linked Agent',
+            'city' => 'Okara', 'status' => 'Active', 'approvalStatus' => 'Approved', 'visible' => true,
+        ];
+        DB::table('app_data')->where('id', 1)->update(['data' => json_encode($data, JSON_THROW_ON_ERROR)]);
+        $token = $this->adminToken();
+
+        $this->withToken($token)->patchJson('/api/admin/properties/101/agent', ['userId' => '43'])
+            ->assertOk()
+            ->assertJsonPath('property.agentId', '43')
+            ->assertJsonPath('property.assignedAgent.name', 'Linked Agent')
+            ->assertJsonPath('property.assignedAgent.city', 'Okara');
+        $this->withToken($token)->patchJson('/api/admin/properties/101/agent', ['userId' => '42'])
+            ->assertUnprocessable();
+        $this->getJson('/api/properties/101')->assertOk()->assertJsonPath('agentId', '43');
     }
 
     public function test_admin_property_media_rejects_unsupported_uploads_without_changing_media(): void

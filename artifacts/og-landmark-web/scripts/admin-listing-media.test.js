@@ -175,7 +175,15 @@ test('Agent referral options require an active linked account and hide raw audit
   assert.match(propertyManagementSource, /status === 'active'/);
   assert.match(propertyManagementSource, /allData\.open = false/);
   assert.match(propertyManagementSource, /'reviewHistory', 'assignedAgent'/);
-  assert.match(propertyManagementSource, /Create or activate an Agent account from Admin → Agents/);
+  assert.match(propertyManagementSource, /No published mobile Agents are available\. Add, approve, and link an Agent profile in Admin → Agents/);
+});
+
+test('Assign Agent opens a city-first picker instead of the property editor', () => {
+  assert.match(propertyManagementSource, /if \(current\) void openAgentAssignment\(current, agentButton\)/);
+  assert.match(propertyManagementSource, /aria-label="Select Agent city"/);
+  assert.match(propertyManagementSource, /aria-label="Select Agent"/);
+  assert.match(propertyManagementSource, /propertyPromotionPath\(property\.id, 'agent'\)/);
+  assert.match(propertyManagementSource, /\/admin\/mobile\/agents/);
 });
 
 test('Admin projects page provides portfolio status, inventory, search and filter controls', () => {

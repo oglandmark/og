@@ -363,6 +363,19 @@
       .og-pm-feature-toggle:disabled{opacity:.55;cursor:wait}
       .og-pm-agent-assign{display:block;margin-top:5px;border:0;background:transparent;padding:0;color:#946f24;font:700 10px system-ui;text-decoration:underline;cursor:pointer}
       .og-pm-agent-directory-link{margin-left:6px;color:#946f24;font-weight:700;text-decoration:underline}
+      .og-agent-dialog{width:min(560px,100%);overflow:hidden;border:1px solid #dbe4ee;border-radius:16px;background:#fff;color:#0B1F3A;box-shadow:0 24px 70px #0004;font:14px system-ui}
+      .og-agent-dialog header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:20px 22px;border-bottom:1px solid #e2e8f0}
+      .og-agent-dialog h2{margin:0;font-size:20px}.og-agent-dialog header p{margin:5px 0 0;color:#64748b;font-size:12px}
+      .og-agent-dialog header button{width:34px;height:34px;border:1px solid #dbe2ea;border-radius:8px;background:#fff;color:#334155;font-size:20px;cursor:pointer}
+      .og-agent-dialog form{display:grid;gap:16px;padding:22px}
+      .og-agent-dialog label{display:grid;gap:7px;color:#334155;font-size:12px;font-weight:700}
+      .og-agent-dialog select{min-height:42px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;padding:8px 10px;color:#0f172a;font:14px system-ui}
+      .og-agent-dialog footer{display:flex;justify-content:flex-end;gap:9px;padding-top:6px}
+      .og-agent-dialog footer button{min-height:40px;padding:8px 14px;border:1px solid #dbe2ea;border-radius:8px;background:#fff;color:#334155;font:700 12px system-ui;cursor:pointer}
+      .og-agent-dialog footer button.primary{border-color:#0B1F3A;background:#0B1F3A;color:#fff}
+      .og-agent-dialog footer button:disabled{opacity:.5;cursor:not-allowed}
+      .og-agent-empty,.og-agent-error{margin:0;padding:12px;border-radius:9px;background:#f8fafc;color:#475569;font-size:12px}
+      .og-agent-error{background:#fff1f2;color:#991b1b}
       .og-pm-agent-directory-link{margin-left:6px;color:#946f24;font-weight:700;text-decoration:underline}
       .og-pm-feature-badge{display:inline-flex;align-items:center;border:1px solid #dbe2ea;border-radius:999px;background:#f8fafc;color:#64748b;padding:4px 8px;font:700 10px/1 system-ui;white-space:nowrap}
       .og-pm-feature-badge.is-featured{border-color:#e8d7aa;background:#fbf7ed;color:#805b12}
@@ -1277,66 +1290,153 @@
 
   async function loadAgents() {
     if (agentsLoaded) return;
-    const cityAgents = await request('/admin/city-agents').catch((error) => {
-      agentDirectoryMessage = `City agent directory did not load: ${error.message}`;
-      return [];
-    });
     const [profiles, users] = await Promise.all([
-      request('/admin/mobile-agents').catch(() => []),
+      request('/admin/mobile-agents').catch((error) => {
+        agentDirectoryMessage = `Mobile Agent directory could not load: ${error.message}`;
+        return [];
+      }),
       request('/admin/users').catch((error) => {
         agentDirectoryMessage = `Agent accounts could not be loaded: ${error.message}`;
         return [];
       }),
     ]);
-    const normalizeAgent = (agent, kind) => {
-      const id = String(agent.id ?? agent.userId ?? '');
-      if (!id) return null;
-      return {
-        ...agent,
-        id,
-        kind,
-        name: agent.name || agent.fullName || agent.agentName || 'Agent',
-        phone: agent.phone || agent.phoneNumber || agent.mobile || '',
-        city: agent.city || agent.cityName || agent.officeCity || agent.location?.city || '',
-        userId: String(agent.userId || agent.authUserId || agent.agentUserId || (kind === 'account' ? id : '')),
-      };
-    };
-    const accounts = (Array.isArray(users) ? users : [])
-      .filter((item) => {
-        const permissions = Array.isArray(item.permissions) ? item.permissions : [item.permissions];
-        const role = normalize(item.role);
-        const status = normalize(item.status || 'active');
+    const accounts = new Map((Array.isArray(users) ? users : [])
+      .filter((user) => {
+        const permissions = Array.isArray(user.permissions) ? user.permissions : [user.permissions];
+        const role = normalize(user.role);
+        const status = normalize(user.status || 'active');
         return (role === 'agent' || permissions.some((permission) => normalize(permission) === 'agent'))
           && status === 'active';
       })
-      .map((item) => normalizeAgent(item, 'account'))
-      .filter(Boolean)
-      .map((agent) => ({ ...agent, userId: agent.id }));
-    const byUserId = new Map(accounts.map((agent) => [agent.userId, agent]));
-    const byEmail = new Map(accounts.map((agent) => [normalize(agent.email), agent]).filter(([email]) => email));
-    const byPhone = new Map(accounts.map((agent) => [String(agent.phone).replace(/\D/g, ''), agent]).filter(([phone]) => phone));
-    const unlinkedProfiles = [
-      ...(Array.isArray(cityAgents) ? cityAgents.map((item) => normalizeAgent(item, 'city')) : []),
-      ...(Array.isArray(profiles) ? profiles.map((item) => normalizeAgent(item, 'profile')) : []),
-    ].filter(Boolean);
-    const contacts = [];
-    for (const profile of unlinkedProfiles) {
-      const linked = byUserId.get(profile.userId)
-        || byEmail.get(normalize(profile.email))
-        || byPhone.get(String(profile.phone).replace(/\D/g, ''));
-      if (linked) {
-        linked.city ||= profile.city;
-        linked.phone ||= profile.phone;
-        linked.name = linked.name === 'Agent' ? profile.name : linked.name;
-      } else {
-        contacts.push({ ...profile, userId: '' });
-      }
-    }
-    agents = [...accounts, ...contacts];
+      .map((user) => [String(user.id), user]));
+    agents = (Array.isArray(profiles) ? profiles : [])
+      .filter((profile) => {
+        const userId = String(profile.userId || profile.authUserId || '');
+        const account = accounts.get(userId);
+        const visible = profile.visible == null
+          || [true, 1, '1', 'true', 'yes'].includes(profile.visible)
+          || ['true', '1', 'yes'].includes(normalize(profile.visible));
+        return Boolean(account)
+          && normalize(profile.approvalStatus) === 'approved'
+          && normalize(profile.status || 'active') === 'active'
+          && visible
+          && Boolean(profile.city || profile.cityName || profile.officeCity);
+      })
+      .map((profile) => {
+        const userId = String(profile.userId || profile.authUserId);
+        const account = accounts.get(userId);
+        return {
+          ...profile,
+          id: String(profile.id),
+          kind: 'mobile',
+          userId,
+          name: profile.name || account?.name || 'Agent',
+          phone: profile.phone || account?.phone || '',
+          city: profile.city || profile.cityName || profile.officeCity || '',
+        };
+      });
     if (!agents.length && !agentDirectoryMessage) {
-      agentDirectoryMessage = 'No active Agent accounts are available. Create or activate an Agent account from Admin → Agents before assigning one.';
+      agentDirectoryMessage = 'No published mobile Agents are available. Add, approve, and link an Agent profile in Admin → Agents.';
     }
     agentsLoaded = true;
+  }
+
+  async function openAgentAssignment(property, trigger) {
+    if (!property?.id) return;
+    if (trigger) trigger.disabled = true;
+    try {
+      await loadAgents();
+      ensureStyles();
+      modal?.remove();
+      modal = document.createElement('div');
+      modal.className = 'og-pm-backdrop';
+      modal.innerHTML = `
+        <section class="og-agent-dialog" role="dialog" aria-modal="true" aria-labelledby="og-agent-title">
+          <header><div><h2 id="og-agent-title">Assign Agent</h2><p data-agent-property></p></div><button type="button" data-agent-close aria-label="Close">×</button></header>
+          <form>
+            <label>City<select name="city" aria-label="Select Agent city"></select></label>
+            <label>Agent<select name="agent" aria-label="Select Agent" required></select></label>
+            <p class="og-agent-empty" hidden></p>
+            <p class="og-agent-error" role="alert" hidden></p>
+            <footer><button type="button" data-agent-cancel>Cancel</button><button type="submit" class="primary">Save assignment</button></footer>
+          </form>
+        </section>`;
+      const form = modal.querySelector('form');
+      const citySelect = form.elements.city;
+      const agentSelect = form.elements.agent;
+      citySelect.required = true;
+      const empty = modal.querySelector('.og-agent-empty');
+      const error = modal.querySelector('.og-agent-error');
+      const save = form.querySelector('[type="submit"]');
+      modal.querySelector('[data-agent-property]').textContent =
+        `${property.title || 'Property'} · ${property.city || property.location?.city || 'City not specified'}`;
+      const cities = [...new Set(agents.map((agent) => agent.city).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+      citySelect.innerHTML = '<option value="">Select a city</option>';
+      for (const city of cities) {
+        const option = document.createElement('option');
+        option.value = city;
+        option.textContent = city;
+        citySelect.appendChild(option);
+      }
+      const currentAgentId = String(property.agentId || property.assignedAgent?.userId || '');
+      const renderAgentOptions = () => {
+        const available = agents.filter((agent) => agent.city === citySelect.value);
+        agentSelect.replaceChildren(new Option('Select an Agent', ''));
+        for (const agent of available) {
+          const option = new Option(`${agent.name}${agent.phone ? ` · ${agent.phone}` : ''}`, agent.userId);
+          agentSelect.appendChild(option);
+        }
+        const current = agents.find((agent) => agent.userId === currentAgentId && agent.city === citySelect.value);
+        agentSelect.value = current?.userId || '';
+        empty.hidden = available.length > 0;
+        empty.textContent = agentDirectoryMessage || 'No active, published mobile Agents are available.';
+        save.disabled = available.length === 0;
+      };
+      citySelect.addEventListener('change', renderAgentOptions);
+      const preferredCity = agents.find((agent) => agent.userId === currentAgentId)?.city
+        || (cities.includes(property.city) ? property.city : '');
+      citySelect.value = preferredCity;
+      renderAgentOptions();
+      if (!agents.length) {
+        const link = document.createElement('a');
+        link.href = '/admin/mobile/agents';
+        link.textContent = 'Manage Agents';
+        link.className = 'og-pm-agent-directory-link';
+        empty.append(' ', link);
+      }
+      const close = () => closeModal();
+      modal.querySelectorAll('[data-agent-close],[data-agent-cancel]').forEach((button) => button.addEventListener('click', close));
+      modal.addEventListener('click', (event) => { if (event.target === modal) close(); });
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!agentSelect.value) return;
+        save.disabled = true;
+        error.hidden = true;
+        try {
+          const result = await request(propertyPromotionPath(property.id, 'agent'), {
+            method: 'PATCH',
+            body: JSON.stringify({ userId: agentSelect.value }),
+          });
+          const updated = result?.property || result;
+          apiProperties = apiProperties.map((item) => String(item.id) === String(property.id) ? updated : item);
+          observedProperties.set(String(property.id), updated);
+          rebuildPropertyData();
+          closeModal();
+        } catch (caught) {
+          error.textContent = caught.message || 'Could not assign this Agent.';
+          error.hidden = false;
+          save.disabled = false;
+        }
+      });
+      document.body.appendChild(modal);
+      document.body.style.overflow = 'hidden';
+      document.addEventListener('keydown', escapeClose, { once: true });
+      citySelect.focus();
+    } catch (error) {
+      window.alert(error.message || 'Agent directory could not be opened.');
+    } finally {
+      if (trigger) trigger.disabled = false;
+    }
   }
 
   async function openPropertyEditor(property, trigger) {
@@ -1921,7 +2021,7 @@
         agentButton.className = 'og-pm-agent-assign';
         agentButton.addEventListener('click', () => {
           const current = agentButton.__ogListingProperty;
-          if (current) void openPropertyEditor(current, agentButton);
+          if (current) void openAgentAssignment(current, agentButton);
         });
         agentCell.appendChild(agentButton);
       }

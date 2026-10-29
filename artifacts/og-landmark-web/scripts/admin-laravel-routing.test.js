@@ -81,10 +81,15 @@ test('explicit local Laravel property promotion routes bypass proxy rewriting', 
     method: 'PATCH',
     body: JSON.stringify({ recommended: true }),
   });
+  await window.fetch('/api-legacy/api/admin/properties/42/agent', {
+    method: 'PATCH',
+    body: JSON.stringify({ userId: '88' }),
+  });
 
   assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
     ['/api-legacy/api/admin/properties/42/feature', 'PATCH'],
     ['/api-legacy/api/admin/properties/42/recommend', 'PATCH'],
+    ['/api-legacy/api/admin/properties/42/agent', 'PATCH'],
   ]);
 });
 

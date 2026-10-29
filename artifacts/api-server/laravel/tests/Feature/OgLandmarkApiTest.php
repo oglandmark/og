@@ -147,6 +147,13 @@ final class OgLandmarkApiTest extends TestCase
             ->assertOk()
             ->assertJsonFragment(['id' => $userId, 'email' => 'mobile.member@example.test']);
 
+        $this->withToken($adminToken)->putJson('/api/users/'.$userId, ['status' => 'Suspended'])
+            ->assertOk()->assertJsonPath('status', 'Suspended');
+        $this->withToken($registrationToken)->getJson('/api/auth/me')->assertUnauthorized();
+        $this->withToken($adminToken)->putJson('/api/users/'.$userId, ['status' => 'Active'])
+            ->assertOk()->assertJsonPath('status', 'Active');
+        $this->withToken($registrationToken)->getJson('/api/auth/me')->assertOk();
+
         $this->postJson('/api/auth/register', [
             'firstName' => 'Duplicate',
             'phone' => '+92 312 1234567',

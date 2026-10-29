@@ -125,7 +125,7 @@
     } else if (url.indexOf(window.location.origin + '/api') === 0) {
       rewritten = base + url.slice(window.location.origin.length + 4);
     }
-    return rewriteLocalAdminRoute(rewritten, method).url;
+    return rewritten;
   }
 
   var _fetch = window.fetch.bind(window);

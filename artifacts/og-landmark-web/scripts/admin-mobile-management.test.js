@@ -202,7 +202,7 @@ test('admin banner editor can replace uploaded images and videos and confirm del
   assert.match(source, /payload\.videoUrl = uploaded\.url\.trim\(\)/);
   assert.match(source, /payload\.imageUrl = uploaded\.url\.trim\(\)/);
   assert.doesNotMatch(source, /formData\.append\('_method', 'PUT'\)/);
-  assert.match(source, /method: key === 'properties' \? 'PATCH' : 'PUT'/);
+  assert.match(source, /method: key === 'properties' \|\| key === 'projects' \? 'PATCH' : 'PUT'/);
   assert.match(source, /item\.isPreviewOnly \? 'Edit local copy' : 'Edit'/);
   assert.match(source, /item\.isPreviewOnly \? 'Remove locally'/);
   assert.match(source, /payload\.sourcePreviewId = String\(item\.sourcePreviewId\)/);
@@ -279,7 +279,7 @@ test('Admin Agents lists Mobile app profiles and assignment options show city', 
   assert.match(properties, /save\.disabled = !assignable/);
   assert.match(html, /admin-property-management\.js\?v=property-agent-assignment-20261029-v14/);
   assert.match(html, /og-api-base\.js\?v=local-preview-banner-read-20261029-v2/);
-  assert.match(html, /admin-mobile-management\.js\?v=admin-mobile-banner-crud-video-20261029-v4/);
+  assert.match(html, /admin-mobile-management\.js\?v=admin-mobile-project-crud-20261029-v5/);
 });
 
 test('property table supports eligible batch approval and per-listing results', () => {
@@ -303,6 +303,25 @@ test('property review history supports batch selection, rejection notes, and out
   assert.match(source, /Optional reason for rejecting these listings/);
   assert.match(source, /api\('\/admin\/properties\/bulk-review'/);
   assert.match(source, /results\.map\(\(item\) => `\$\{item\.title \|\| `Listing \$\{item\.id\}`\}/);
+});
+
+test('Admin Developer Projects supports create, edit, archive, restore, and local demo removal', () => {
+  const client = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
+  const server = fs.readFileSync(path.join(root, 'server.js'), 'utf8');
+  assert.match(client, /api\(config\.createPath, \{ method: 'POST', body \}\)/);
+  assert.match(client, /method: key === 'properties' \|\| key === 'projects' \? 'PATCH' : 'PUT'/);
+  assert.match(client, /body: JSON\.stringify\(\{ action: 'archive' \}\)/);
+  assert.match(client, /body: JSON\.stringify\(\{ action: 'restore' \}\)/);
+  assert.match(client, /api\(config\.deletePath\(item\), \{ method: 'DELETE' \}\)/);
+  assert.match(server, /adminCollection\('\/api\/admin\/developer-projects', 'developerProjects', \{ actions: moderationActions, allowCreate: true \}\)/);
+  assert.match(server, /const archivedView = req\.query\.archived === '1'/);
+  assert.match(server, /Project name is required\./);
+  assert.match(server, /Choose a valid project location on the map\./);
+  assert.match(server, /requestedAction === 'archive'/);
+  assert.match(server, /requestedAction === 'restore'/);
+  assert.match(server, /app\.delete\('\/api\/admin\/demo-projects\/:id', requireAdmin/);
+  assert.match(server, /settings\.deletedDemoProjectIds = \[\.\.\.new Set/);
+  assert.match(server, /deletedDemoProjectIds: \[\]/);
 });
 
 test('website Admin can read and manage Agent messages and progress through the shared APIs', () => {

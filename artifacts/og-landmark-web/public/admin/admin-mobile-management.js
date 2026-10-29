@@ -1218,7 +1218,7 @@
             await api(config.createPath, { method: 'POST', body });
           } else {
             await api(`${config.createPath || config.list}/${encodeURIComponent(item.id)}`, {
-              method: key === 'properties' ? 'PATCH' : 'PUT',
+              method: key === 'properties' || key === 'projects' ? 'PATCH' : 'PUT',
               body,
             });
           }
@@ -1599,7 +1599,7 @@
         const warning = section === 'banners' && (item.isPreviewOnly || item.sourcePreviewId)
           ? `Remove “${label}” from this local Admin preview? The live Mobile app banner will remain unchanged.`
           : section === 'projects' && item.isBundledDemo
-          ? `Permanently delete sample project “${label}” from the mobile app? It cannot be restored from Admin.`
+          ? `Remove sample project “${label}” from this local preview and Mobile demo lists?`
           : section === 'projects'
           ? `Archive project “${label}”? It will no longer appear in the live project list, but its project and inventory records will be preserved.`
           : section === 'banners'
@@ -1608,14 +1608,19 @@
           ? `Permanently delete account ${label}? This removes mobile app access. Review linked records first; the action cannot be undone.`
           : `Permanently delete ${label} from the live mobile app?`;
         if (!window.confirm(warning)) return;
-        if (section === 'banners' && item.isPreviewOnly) {
+        if (section === 'projects' && !item.isBundledDemo) {
+          await api(`${config.createPath}/${encodeURIComponent(item.id)}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ action: 'archive' }),
+          });
+        } else if (section === 'banners' && item.isPreviewOnly) {
           await api('/admin/mobile-banner-preview-hidden', {
             method: 'POST', body: JSON.stringify({ id: String(item.sourcePreviewId) }),
           });
         } else {
           await api(config.deletePath(item), { method: 'DELETE' });
         }
-        if (section === 'projects' && item.isBundledDemo) projectViewState.notice = `“${label}” deleted from the mobile app.`;
+        if (section === 'projects' && item.isBundledDemo) projectViewState.notice = `“${label}” removed from this local preview and Mobile demo lists.`;
         else if (section === 'projects') projectViewState.notice = `“${label}” archived. Its linked project and inventory records are preserved.`;
         await renderSection(section, modal.querySelector('.og-mm-content'));
       }
@@ -1624,7 +1629,10 @@
         if (!item) return;
         const label = item.title || item.name || `project ${id}`;
         if (!window.confirm(`Restore “${label}” to the live project portfolio? Its project ID and linked inventory will remain unchanged.`)) return;
-        const restored = await api(`/admin/developer-projects/${encodeURIComponent(id)}/restore`, { method: 'POST' });
+        const restored = await api(`/admin/developer-projects/${encodeURIComponent(id)}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ action: 'restore' }),
+        });
         projectViewState.archived = false;
         projectViewState.status = 'all';
         projectViewState.notice = `“${label}” restored with status ${restored.status || 'Draft'}. Its linked inventory is unchanged.`;

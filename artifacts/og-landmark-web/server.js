@@ -4699,6 +4699,13 @@ function adminCollection(path, key, options = {}) {
     try {
       const data = await readData();
       let records = [...(data[key] || [])];
+      if (key === 'developerProjects') {
+        const archivedView = req.query.archived === '1';
+        records = records.filter(record => {
+          const archived = record.status === 'Archived' || Boolean(record.archivedAt);
+          return archivedView ? archived : !archived;
+        });
+      }
       const requestedStatus = req.query.status || req.query[statusField];
       if (requestedStatus && requestedStatus !== 'all') {
         records = records.filter(record => String(record[statusField] || '').toLowerCase() === String(requestedStatus).toLowerCase());
@@ -4724,10 +4731,24 @@ function adminCollection(path, key, options = {}) {
       try {
         const data = await readData();
         data[key] ||= [];
+        if (key === 'developerProjects') {
+          const name = String(req.body?.name || req.body?.title || '').trim();
+          const latitude = Number(req.body?.latitude);
+          const longitude = Number(req.body?.longitude);
+          if (!name) return res.status(422).json({ error: 'Project name is required.' });
+          if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90
+            || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+            return res.status(422).json({ error: 'Choose a valid project location on the map.' });
+          }
+        }
+        const projectPayload = key === 'developerProjects'
+          ? { ...req.body, name: String(req.body.name || req.body.title).trim(), title: String(req.body.name || req.body.title).trim(), status: req.body.status || 'Live' }
+          : req.body;
         const item = {
-          ...req.body,
-          id: req.body.id || `${key}_${crypto.randomBytes(10).toString('hex')}`,
+          ...projectPayload,
+          id: key === 'developerProjects' ? `project_${crypto.randomBytes(10).toString('hex')}` : (req.body.id || `${key}_${crypto.randomBytes(10).toString('hex')}`),
           createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           createdBy: req.currentUser.id,
         };
         data[key].unshift(item);
@@ -4746,7 +4767,19 @@ function adminCollection(path, key, options = {}) {
       const item = findRecord(data[key], req.params.id);
       if (!item) return res.status(404).json({ error: 'Not found' });
       const { id: _id, userId: _userId, developerId: _developerId, ownerId: _ownerId, action: requestedAction, ...updates } = req.body;
-      if (requestedAction && options.actions) {
+      if (key === 'developerProjects' && requestedAction === 'archive') {
+        item.archivedStatus = item.status === 'Archived' ? (item.archivedStatus || 'Draft') : item.status;
+        item.status = 'Archived';
+        item.archivedAt = new Date().toISOString();
+        item.archivedBy = req.currentUser.id;
+      } else if (key === 'developerProjects' && requestedAction === 'restore') {
+        item.status = item.archivedStatus || 'Draft';
+        delete item.archivedStatus;
+        delete item.archivedAt;
+        delete item.archivedBy;
+        item.restoredAt = new Date().toISOString();
+        item.restoredBy = req.currentUser.id;
+      } else if (requestedAction && options.actions) {
         const action = String(requestedAction).toLowerCase();
         const nextStatus = options.actions[action];
         if (!nextStatus) return res.status(400).json({ error: `Unsupported action: ${requestedAction}` });
@@ -4769,6 +4802,20 @@ function adminCollection(path, key, options = {}) {
       const records = data[key] || [];
       const index = records.findIndex(record => String(record.id) === String(req.params.id));
       if (index < 0) return res.status(404).json({ error: 'Not found' });
+      if (key === 'developerProjects') {
+        const project = records[index];
+        project.archivedStatus = project.status === 'Archived' ? (project.archivedStatus || 'Draft') : project.status;
+        project.status = 'Archived';
+        project.archivedAt = new Date().toISOString();
+        project.archivedBy = req.currentUser.id;
+        project.updatedAt = project.archivedAt;
+        adminAudit(data, req.currentUser, 'archive', key, project.id, {
+          fromStatus: project.archivedStatus,
+          toStatus: 'Archived',
+        });
+        await writeData(data);
+        return res.json({ success: true, id: project.id, status: project.status, archivedAt: project.archivedAt });
+      }
       const [deleted] = records.splice(index, 1);
       adminAudit(data, req.currentUser, 'delete', key, deleted.id, { status: deleted[statusField] || null });
       await writeData(data);
@@ -4786,7 +4833,26 @@ const moderationActions = {
 adminCollection('/api/admin/buyer-requests', 'buyerRequests');
 adminCollection('/api/admin/agent-leads', 'agentLeads');
 adminCollection('/api/admin/agent-visits', 'agentVisits');
-adminCollection('/api/admin/developer-projects', 'developerProjects', { actions: moderationActions });
+adminCollection('/api/admin/developer-projects', 'developerProjects', { actions: moderationActions, allowCreate: true });
+app.delete('/api/admin/demo-projects/:id', requireAdmin, async (req, res) => {
+  try {
+    const id = String(req.params.id || '').trim();
+    if (!id) return res.status(400).json({ error: 'Demo project ID is required.' });
+    const data = await readData();
+    const settings = mobileSettingsPayload(data.mobileSettings);
+    settings.deletedDemoProjectIds = [...new Set([
+      ...(Array.isArray(settings.deletedDemoProjectIds) ? settings.deletedDemoProjectIds.map(String) : []),
+      id,
+    ])];
+    data.mobileSettings = settings;
+    adminAudit(data, req.currentUser, 'remove_demo_project', 'developerProjects', id, { localPreviewOnly: true });
+    await writeData(data);
+    res.json({ success: true, id, deletedDemoProjectIds: settings.deletedDemoProjectIds });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not remove demo project from the local preview.' });
+  }
+});
 adminCollection('/api/admin/developer-blocks', 'developerBlocks');
 adminCollection('/api/admin/developer-units', 'developerUnits');
 adminCollection('/api/admin/developer-leads', 'developerLeads');
@@ -5092,6 +5158,7 @@ const DEFAULT_MOBILE_SETTINGS = {
   darkModeEnabled: true,
   maintenanceMode: false,
   maintenanceMessage: '',
+  deletedDemoProjectIds: [],
   appVersion: '1.0.0',
   minAppVersion: '1.0.0',
   content: DEFAULT_MOBILE_CONTENT,

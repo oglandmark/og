@@ -6,7 +6,7 @@
 
   const roles = [
     ['all', 'All Users'],
-    ['Buyer', 'Buyers'],
+    ['Buyer', 'Users / Buyers'],
     ['Seller', 'Sellers'],
     ['Agent', 'Agents'],
     ['Developer', 'Developers'],
@@ -228,7 +228,7 @@
     if (host.dataset.ogUserManagement === 'true') return;
     host.dataset.ogUserManagement = 'true';
     host.innerHTML = `<section class="og-users-manager">
-      <header class="og-users-heading"><div><h2>Users &amp; Agents</h2><p>Manage marketplace accounts, access and activity.</p></div>
+      <header class="og-users-heading"><div><h2>Users &amp; Agents</h2><p>Mobile app registrations appear under Users / Buyers and refresh automatically.</p></div>
         <button type="button" data-action="refresh">Refresh</button></header>
       <label class="og-users-search"><span>Search</span><input data-user-search type="search" placeholder="Name, email, phone, role or city"></label>
       <nav class="og-users-tabs" aria-label="Filter users">${roles.map(([key, label]) => `<button type="button" data-user-role="${key}" aria-pressed="${key === 'all'}">${label} <span data-count>0</span></button>`).join('')}</nav>

@@ -224,7 +224,7 @@ test('Agent table shows profile thumbnails with bounded missing and broken-photo
   assert.match(source, /name="verified" \$\{agent\.verified !== false \? 'checked' : ''\}/);
   assert.match(source, /data-action="delete-agent"/);
   assert.match(source, /showAgentForm\(agent\)/);
-  assert.match(source, /readAgentSource\('\/admin\/city-agents'/);
+  assert.match(source, /readAgentSource\('\/city-agents'/);
   assert.match(source, /readAgentSource\('\/admin\/mobile-agents'/);
   assert.match(source, /readAgentSource\('\/admin\/users\?role=agent'/);
   assert.match(source, /api\('\/admin\/mobile-agents', \{ method: 'POST'/);
@@ -236,14 +236,19 @@ test('Agent table shows profile thumbnails with bounded missing and broken-photo
   assert.match(source, /directorySources\.push/);
 });
 
-test('local Laravel admin proxy serves the website Agent directory and assignment options show city', () => {
+test('Admin Agents uses the website directory endpoint and assignment options show city', () => {
   const apiBase = fs.readFileSync(path.join(root, 'public/og-api-base.js'), 'utf8');
   const properties = fs.readFileSync(path.join(root, 'public/admin/admin-property-management.js'), 'utf8');
+  const agents = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'public/admin/index.html'), 'utf8');
 
-  assert.match(apiBase, /pathname === '\/api\/admin\/city-agents' && verb === 'GET'[\s\S]*?laravelRoot \+ '\/admin\/city-agents'/);
-  assert.match(properties, /request\('\/admin\/city-agents'\)/);
+  assert.doesNotMatch(apiBase, /\/api\/admin\/city-agents/);
+  assert.match(agents, /readAgentSource\('\/city-agents', 'Website directory'\)/);
+  assert.match(properties, /request\('\/city-agents'\)/);
   assert.match(properties, /cityProfilesByAccount\.get\(userId\)/);
   assert.match(properties, /`\$\{agent\.name\} · \$\{agent\.city\}\$\{agent\.phone \? ` · \$\{agent\.phone\}` : ''\}`/);
+  assert.match(html, /og-api-base\.js\?v=agent-directory-source-fix-20261029/);
+  assert.match(html, /admin-mobile-management\.js\?v=agent-directory-source-fix-20261029/);
 });
 
 test('property table supports eligible batch approval and per-listing results', () => {

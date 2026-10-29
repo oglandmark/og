@@ -1295,7 +1295,7 @@
         agentDirectoryMessage = `Mobile Agent directory could not load: ${error.message}`;
         return [];
       }),
-      request('/admin/city-agents').catch(() => []),
+      request('/city-agents').catch(() => []),
       request('/admin/users').catch((error) => {
         agentDirectoryMessage = `Agent accounts could not be loaded: ${error.message}`;
         return [];

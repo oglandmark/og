@@ -187,7 +187,7 @@
       }
     };
     const [websiteAgents, mobileAgents, agentAccounts] = await Promise.all([
-      readAgentSource('/admin/city-agents', 'Website directory'),
+      readAgentSource('/city-agents', 'Website directory'),
       readAgentSource('/admin/mobile-agents', 'Mobile directory'),
       readAgentSource('/admin/users?role=agent', 'Agent accounts'),
     ]);

@@ -6,6 +6,7 @@ use App\Services\LegacyDataStore;
 use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
@@ -42,19 +43,31 @@ final class LegacyBearerAuth
         // existing bearer token; LegacyAdminAuth still checks its returned
         // server-owned role and permissions before any admin route runs.
         if (! $user && app()->environment('local')) {
-            try {
-                $response = Http::acceptJson()
-                    ->withToken($token)
-                    ->timeout(2)
-                    ->get((string) config('services.og_landmark.website_auth_url'));
-                if ($response->successful()) {
-                    $payload = $response->json();
-                    $user = is_array($payload['user'] ?? null)
-                        ? $payload['user']
-                        : (is_array($payload) ? $payload : null);
+            $cache = Cache::store('file');
+            $cacheKey = 'og-local-auth-bridge:'.hash('sha256', $token);
+            $cachedUser = $cache->get($cacheKey);
+            if (is_array($cachedUser)) {
+                $user = $cachedUser;
+            }
+
+            if (! $user) {
+                try {
+                    $response = Http::acceptJson()
+                        ->withToken($token)
+                        ->timeout(2)
+                        ->get((string) config('services.og_landmark.website_auth_url'));
+                    if ($response->successful()) {
+                        $payload = $response->json();
+                        $user = is_array($payload['user'] ?? null)
+                            ? $payload['user']
+                            : (is_array($payload) ? $payload : null);
+                        if ($user) {
+                            $cache->put($cacheKey, $user, now()->addMinute());
+                        }
+                    }
+                } catch (Throwable) {
+                    // The response below remains the same as an invalid/expired session.
                 }
-            } catch (Throwable) {
-                // The response below remains the same as an invalid/expired session.
             }
         }
 

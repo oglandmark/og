@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -709,6 +710,32 @@ final class OgLandmarkApiTest extends TestCase
             'HTTP_AUTHORIZATION' => 'Bearer '.$token,
         ])->assertUnprocessable()->assertJsonValidationErrors('video');
         Storage::disk('public')->assertDirectoryEmpty('listing-media');
+    }
+
+    public function test_local_website_auth_validation_is_cached_to_avoid_rate_limits(): void
+    {
+        $token = 'local-preview-bridge-cache-test-token';
+        $cacheKey = 'og-local-auth-bridge:'.hash('sha256', $token);
+        Cache::store('file')->forget($cacheKey);
+        config(['app.env' => 'local']);
+        $this->app['env'] = 'local';
+        config(['services.og_landmark.website_auth_url' => 'http://127.0.0.1:25189/api/auth/me']);
+        Http::fake([
+            'http://127.0.0.1:25189/api/auth/me' => Http::response([
+                'id' => 'local-admin',
+                'name' => 'Local Admin',
+                'email' => 'local-admin@example.test',
+                'role' => 'Admin',
+                'status' => 'Active',
+                'permissions' => ['admin'],
+            ]),
+        ]);
+
+        $this->withToken($token)->getJson('/api/auth/me')->assertOk();
+        $this->withToken($token)->getJson('/api/admin/mobile/banners')->assertOk();
+
+        Http::assertSentCount(1);
+        Cache::store('file')->forget($cacheKey);
     }
 
     public function test_mobile_account_photos_are_saved_to_the_existing_user_record(): void

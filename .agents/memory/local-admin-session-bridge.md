@@ -20,3 +20,9 @@ Local preview bearer sessions are persisted as token hashes in a private, ignore
 **Why:** The user asked that refreshing local Admin should not end the session, and in-memory-only sessions became invalid when the web process restarted.
 
 **How to apply:** Keep session hashes, user IDs, and expiries in the private preview store; persist login, logout, expiry, and password-reset revocation. Never enable this store outside local preview.
+
+The local Express `/api/auth/me` endpoint shares a 30-request authentication limit with other auth paths. Since Laravel validates an Express-owned bearer token for each protected request, cache only successful local user validations by the token hash for 60 seconds in Laravel's file cache; continue running Laravel permission checks on every request.
+
+**Why:** Repeated Admin page requests exhausted the website auth limit, and Laravel surfaced the resulting 429 as “Authentication required.”
+
+**How to apply:** Keep this cache inside the `APP_ENV=local` fallback, never cache failed validation, and remember that a local logout or permission change can take up to 60 seconds to take effect.

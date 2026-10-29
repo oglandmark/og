@@ -5,10 +5,7 @@
   const originalFetch = window.fetch.bind(window);
   let properties = [];
   let apiProperties = [];
-  let mobileDemoProperties = [];
   let mobileProjectProperties = [];
-  let hiddenDemoPropertyIds = new Set();
-  let deletedDemoPropertyIds = new Set();
   const observedProperties = new Map();
   let agents = [];
   const propertyViews = new Set(['listed', 'in-progress', 'closed', 'pending', 'approved', 'rejected']);
@@ -173,7 +170,6 @@
     for (const property of [
       ...apiProperties,
       ...observedProperties.values(),
-      ...mobileDemoProperties,
       ...mobileProjectProperties,
     ]) {
       const key = property.id != null
@@ -197,35 +193,6 @@
     if (observedProperties.has(id)) return;
     observedProperties.set(id, property);
     rebuildPropertyData();
-  }
-  async function loadMobileDemoProperties() {
-    try {
-      const [response, settings] = await Promise.all([
-        originalFetch('/admin/demo-properties.json'),
-        request('/mobile/settings').catch((error) => {
-          console.error('Mobile demo visibility could not be loaded in Admin.', error);
-          return {};
-        }),
-      ]);
-      if (!response.ok) throw new Error(`Catalog request failed (${response.status})`);
-      const catalog = await response.json();
-      if (!Array.isArray(catalog)) throw new Error('Demo catalog is not a list');
-      hiddenDemoPropertyIds = new Set((settings?.hiddenDemoPropertyIds || []).map(String));
-      deletedDemoPropertyIds = new Set((settings?.deletedDemoPropertyIds || []).map(String));
-      mobileDemoProperties = catalog.filter((property) => !deletedDemoPropertyIds.has(String(property.id))).map((property) => ({
-        ...property,
-        id: `mobile-demo:${property.id}`,
-        demoId: property.id,
-        isDemo: true,
-        mobileHidden: hiddenDemoPropertyIds.has(String(property.id)),
-        approvalStatus: 'Active',
-        listingStatus: 'Active',
-        sellerName: property.agent || 'OG Landmark demo',
-      }));
-      rebuildPropertyData();
-    } catch (error) {
-      console.error('Mobile demo listings could not be loaded in Admin.', error);
-    }
   }
   async function loadMobileProjectProperties() {
     try {
@@ -750,8 +717,12 @@
   function ensureMobileDemoRows(table) {
     const body = table.querySelector('tbody');
     const headers = [...(table.querySelectorAll('thead th') || [])];
-    const mobileCatalog = [...mobileDemoProperties, ...mobileProjectProperties];
-    if (!body || !headers.length || !mobileCatalog.length) return;
+    if (!body) return;
+    for (const row of body.querySelectorAll('[data-og-mobile-demo-row]')) {
+      if (row.dataset.ogMobileDemoRow.startsWith('mobile-demo:')) row.remove();
+    }
+    const mobileCatalog = [...mobileProjectProperties];
+    if (!headers.length || !mobileCatalog.length) return;
     for (const property of mobileCatalog) {
       const row = [...body.querySelectorAll('[data-og-mobile-demo-row]')]
         .find((item) => item.dataset.ogMobileDemoRow === String(property.id));
@@ -767,7 +738,7 @@
         if (label.includes('photo')) {
           const badge = document.createElement('span');
           badge.className = 'og-mobile-demo-photo';
-          badge.textContent = property.isProject ? 'PROJECT' : 'DEMO';
+          badge.textContent = 'PROJECT';
           cell.appendChild(badge);
         } else if (label.includes('title') || label.includes('property')) {
           const title = document.createElement('div');
@@ -778,7 +749,7 @@
           detail.textContent = property.type || 'Property';
           const tag = document.createElement('span');
           tag.className = 'og-mobile-demo-tag';
-          tag.textContent = property.isProject ? 'Mobile app project' : 'Mobile app demo';
+          tag.textContent = 'Mobile app project';
           cell.append(title, detail, tag);
         } else if (label === 'city') {
           cell.textContent = property.city || '—';
@@ -790,32 +761,25 @@
             : `PKR ${Number(property.price).toLocaleString()}`;
         } else if (label === 'status') {
           cell.dataset.ogMobileStatus = 'true';
-          cell.textContent = property.isProject ? property.status : property.mobileHidden ? 'Hidden · Demo' : 'Active · Demo';
+          cell.textContent = property.status;
         } else if (label === 'featured') {
           const badge = document.createElement('span');
-          badge.className = `og-pm-feature-badge${isFeaturedProperty(property) && !property.isProject ? ' is-featured' : ''}`;
-          badge.textContent = property.isProject
-            ? 'Not applicable'
-            : isFeaturedProperty(property) ? 'Featured · Demo' : 'Not featured';
+          badge.className = 'og-pm-feature-badge';
+          badge.textContent = 'Not applicable';
           cell.appendChild(badge);
         } else if (label === 'recommended') {
           const badge = document.createElement('span');
           badge.className = 'og-pm-feature-badge';
-          badge.textContent = property.isProject ? 'Not applicable' : 'Demo fallback';
+          badge.textContent = 'Not applicable';
           cell.appendChild(badge);
         } else if (label.includes('referred agent')) {
-          cell.textContent = property.isProject ? 'Project record' : 'Demo listing';
+          cell.textContent = 'Project record';
         } else if (label === 'manage') {
           const action = document.createElement('button');
           action.type = 'button';
           action.className = 'og-pm-mobile-action';
-          if (property.isProject) {
-            action.textContent = 'Archive project';
-            action.addEventListener('click', () => { void archiveMobileProject(property, action); });
-          } else {
-          action.textContent = 'Delete demo';
-          action.addEventListener('click', () => { void deleteDemoProperty(property, action); });
-          }
+          action.textContent = 'Archive project';
+          action.addEventListener('click', () => { void archiveMobileProject(property, action); });
           cell.appendChild(action);
         }
         next.appendChild(cell);
@@ -1279,22 +1243,6 @@
     }
   }
 
-  async function deleteDemoProperty(property, button) {
-    if (!window.confirm(`Permanently delete demo property “${property.title || 'this demo'}” from the mobile app? This cannot be undone.`)) return;
-    button.disabled = true;
-    try {
-      const result = await request(`/admin/demo-properties/${encodeURIComponent(property.demoId)}`, { method: 'DELETE' });
-      deletedDemoPropertyIds = new Set((result?.deletedDemoPropertyIds || []).map(String));
-      const row = button.closest('[data-og-mobile-demo-row]');
-      row?.remove();
-      mobileDemoProperties = mobileDemoProperties.filter((item) => String(item.demoId) !== String(property.demoId));
-      rebuildPropertyData();
-    } catch (error) {
-      window.alert(error.message || 'Could not update demo visibility.');
-      button.disabled = false;
-    }
-  }
-
   async function archiveMobileProject(property, button) {
     if (!window.confirm(`Archive “${property.title || 'this project'}” from the mobile app? Linked blocks, units, and inventory will be preserved and the project can be restored.`)) return;
     button.disabled = true;
@@ -1649,7 +1597,7 @@
     if (!body) return 0;
     const rows = [...body.querySelectorAll('tr')].filter((row) => !row.querySelector('[colspan]'));
     const propertyForRow = (row) => row.dataset.ogMobileDemoRow
-      ? [...mobileDemoProperties, ...mobileProjectProperties].find((item) => String(item.id) === row.dataset.ogMobileDemoRow)
+      ? mobileProjectProperties.find((item) => String(item.id) === row.dataset.ogMobileDemoRow)
       : row.querySelector('[data-og-pm-cell] button')?.__ogListingProperty;
     const matched = rows.filter((row) => row.dataset.ogMatchesFilters === 'true');
     const getProperty = (row) => propertyForRow(row) || {};
@@ -1763,7 +1711,7 @@
     const rows = [...table.querySelectorAll('tbody tr')].filter((row) => !row.querySelector('[colspan]'));
     for (const row of rows) {
       if (row.dataset.ogMobileDemoRow) {
-        const mobileRecord = [...mobileDemoProperties, ...mobileProjectProperties]
+        const mobileRecord = [...mobileProjectProperties]
           .find((item) => String(item.id) === row.dataset.ogMobileDemoRow);
         ensureReviewSelectionCell(row, mobileRecord, root);
         if (mobileRecord) {
@@ -1995,7 +1943,6 @@
     const initialProperties = Array.isArray(window.__ogAdminApiProperties)
       ? window.__ogAdminApiProperties : window.__ogAdminListingProperties;
     if (Array.isArray(initialProperties)) setPropertyData(initialProperties);
-    void loadMobileDemoProperties();
     void loadMobileProjectProperties();
     observer.observe(document.body, { childList: true, subtree: true });
     queueEnhancement();

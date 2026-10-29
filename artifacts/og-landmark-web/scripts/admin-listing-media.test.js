@@ -105,34 +105,24 @@ test('Admin property filters keep status and city controls while curated pages u
   assert.match(propertyManagementSource, /row\.hidden = row\.dataset\.ogMatchesFilters !== 'true'/);
 });
 
-test('Admin includes mobile demo and project rows in the property table', () => {
+test('Admin property table excludes demo listings but continues to show mobile projects', () => {
   assert.match(propertyManagementSource, /addObservedProperty\(property\)/);
-  assert.match(propertyManagementSource, /originalFetch\('\/admin\/demo-properties\.json'\)/);
   assert.match(propertyManagementSource, /ensureMobileDemoRows\(table\)/);
-  assert.match(propertyManagementSource, /Mobile app demo/);
+  assert.match(propertyManagementSource, /const mobileCatalog = \[\.\.\.mobileProjectProperties\]/);
+  assert.doesNotMatch(propertyManagementSource, /loadMobileDemoProperties|\/admin\/demo-properties\.json|Mobile app demo|Delete demo/);
   assert.match(propertyManagementSource, /Mobile app project/);
   assert.match(propertyManagementSource, /request\('\/admin\/developer-projects'\)/);
   assert.match(propertyManagementSource, /request\('\/admin\/properties'\)/);
-  assert.match(propertyManagementSource, /Delete demo/);
-  assert.match(propertyManagementSource, /Permanently delete demo property/);
-  assert.match(propertyManagementSource, /\/admin\/demo-properties\/\$\{encodeURIComponent\(property\.demoId\)\}/);
 });
 
-test('Admin can permanently delete demo properties and bundled projects from the app', () => {
-  assert.match(propertyManagementSource, /\/admin\/demo-properties/);
-  assert.match(propertyManagementSource, /Permanently delete demo property/);
-  assert.match(propertyManagementSource, /\/admin\/demo-properties\/\$\{encodeURIComponent\(property\.demoId\)\}/);
-  assert.match(mobileManagementSource, /demo-projects\.json/);
-  assert.match(mobileManagementSource, /Permanently delete sample project/);
-  assert.match(mobileManagementSource, /deletedDemoProjectIds/);
-  assert.match(mobileManagementSource, /Delete project/);
-  assert.match(mobileManagementSource, /\/admin\/demo-projects\/\$\{encodeURIComponent\(item\.id\)\}/);
-  assert.match(mobileManagementSource, /fetch\('\/admin\/demo-projects\.json'\)/);
+test('Admin removes stale demo rows without deleting real listings or mobile catalog data', () => {
+  assert.match(propertyManagementSource, /row\.dataset\.ogMobileDemoRow\.startsWith\('mobile-demo:'\)\) row\.remove\(\)/);
+  assert.doesNotMatch(propertyManagementSource, /async function deleteDemoProperty/);
+  assert.match(propertyManagementSource, /async function archiveMobileProject/);
   assert.match(propertyManagementSource, /Linked blocks, units, and inventory will be preserved/);
-  assert.match(propertyManagementSource, /Permanently delete .*This cannot be undone/);
   assert.match(propertyManagementSource, /data-og-delete-property/);
-  assert.match(apiControllerSource, /deletedDemoProjectIds/);
-  assert.match(apiControllerSource, /deletedDemoPropertyIds/);
+  assert.match(propertyManagementSource, /\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}/);
+  assert.match(mobileManagementSource, /demo-projects\.json/);
 });
 
 test('Admin can filter and persist featured status for live mobile properties', () => {

@@ -11,6 +11,7 @@ const {
   extractUser,
   isAdminUser,
   loginRequest,
+  mount,
   otpRequest,
   persistSession,
   requiresOtp,
@@ -104,6 +105,28 @@ test('only admin sessions are persisted and logout recovery clears all dashboard
   assert.equal(storage.getItem('adminAuth'), null);
 });
 
+test('permission-based Admin profile is normalized before the compiled guard mounts', () => {
+  const storage = memoryStorage({
+    og_token: 'permission-admin-token',
+    og_user: JSON.stringify({ id: 4, role: 'User', permissions: ['admin'] }),
+  });
+  const windowRef = {
+    document: {},
+    localStorage: storage,
+    __OG_API_BASE__: '/api',
+    location: {
+      pathname: '/admin/users',
+      href: 'https://preview.replit.dev/admin/users',
+      replace() {},
+    },
+    fetch: () => new Promise(() => {}),
+  };
+
+  mount(windowRef);
+
+  assert.equal(JSON.parse(storage.getItem('og_user')).role, 'Admin');
+});
+
 test('admin page loads the OTP/session bridge before the compiled dashboard and sends profile IDs as strings', () => {
   const html = fs.readFileSync(htmlPath, 'utf8');
   const management = fs.readFileSync(managementPath, 'utf8');
@@ -112,6 +135,6 @@ test('admin page loads the OTP/session bridge before the compiled dashboard and 
 
   assert.notEqual(bridgeIndex, -1);
   assert.ok(bridgeIndex < bundleIndex, 'auth compatibility must mount before the dashboard');
-  assert.match(html, /admin-auth-compatibility\.js\?v=permission-admin-dashboard-guard-20261029/);
+  assert.match(html, /admin-auth-compatibility\.js\?v=permission-admin-startup-guard-20261029/);
   assert.match(management, /id:\s*profile\s*\?\s*String\(profile\.id\)\s*:\s*null/);
 });

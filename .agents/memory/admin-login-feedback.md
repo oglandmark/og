@@ -13,4 +13,4 @@ Admin session checks must accept the server-issued `admin` permission even when 
 
 **Why:** The app keeps staff access in permissions while public accounts remain `User`; a role-only client guard otherwise logs a valid administrator out immediately after sign-in.
 
-**How to apply:** Normalize the local dashboard profile during both login and session recovery, preserve its permission list, and continue enforcing authorization from server-owned account data.
+**How to apply:** Normalize the local dashboard profile during login and synchronously at page startup before the legacy role-only guard runs. Preserve its permission list and continue enforcing authorization from server-owned account data.

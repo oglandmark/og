@@ -11,8 +11,17 @@ final class PreviewPropertyMirror
 
     public function syncIfStale(LegacyDataStore $store): void
     {
-        if (config('app.env') !== 'local') return;
+        if (
+            config('app.env') !== 'local'
+            || getenv('APP_ENV') === 'testing'
+            || defined('PHPUNIT_COMPOSER_INSTALL')
+        ) return;
+        $this->sync($store);
+    }
 
+    public function sync(LegacyDataStore $store): void
+    {
+        if (config('app.env') !== 'local') return;
         $data = $store->read();
         $lastSync = strtotime((string) ($data['previewPropertiesSyncedAt'] ?? ''));
         if ($lastSync && $lastSync > now()->subMinutes(10)->timestamp) return;
@@ -46,6 +55,16 @@ final class PreviewPropertyMirror
                     if (! is_array($property) || ! isset($property['id'])) continue;
                     $id = (string) $property['id'];
                     if (isset($known[$id])) continue;
+                    foreach (['images', 'coverImage', 'videoUrl'] as $field) {
+                        if (is_string($property[$field] ?? null)) {
+                            $property[$field] = $this->absoluteMedia($property[$field]);
+                        } elseif ($field === 'images' && is_array($property[$field] ?? null)) {
+                            $property[$field] = array_map(
+                                fn ($url) => is_string($url) ? $this->absoluteMedia($url) : $url,
+                                $property[$field]
+                            );
+                        }
+                    }
                     if (! isset($localIds[$id])) $local['properties'][] = $property;
                     $known[$id] = true;
                     $localIds[$id] = true;
@@ -65,5 +84,11 @@ final class PreviewPropertyMirror
             if (isset($payload[$key]) && is_array($payload[$key])) return $payload[$key];
         }
         return array_is_list($payload) ? $payload : null;
+    }
+
+    private function absoluteMedia(string $url): string
+    {
+        if (preg_match('/^https?:\/\//i', $url) || str_starts_with($url, '//')) return $url;
+        return 'https://www.oglandmark.com/' . ltrim($url, '/');
     }
 }

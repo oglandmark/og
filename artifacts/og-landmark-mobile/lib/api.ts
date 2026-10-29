@@ -73,6 +73,7 @@ export async function apiRequest<T>(
   withAuth = true,
   timeoutMs = FETCH_TIMEOUT_MS,
   apiBase = API_BASE,
+  allowPreviewLiveFallback = true,
 ): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -93,7 +94,7 @@ export async function apiRequest<T>(
       signal: controller.signal,
     };
     let res = await fetch(`${apiBase}${path}`, requestInit);
-    if (shouldFallbackUnauthenticatedReadToLive(
+    if (allowPreviewLiveFallback && shouldFallbackUnauthenticatedReadToLive(
       apiBase,
       options.method || 'GET',
       withAuth,
@@ -130,16 +131,24 @@ export async function apiRequest<T>(
 
 const apiFetch = apiRequest;
 
-async function propertyFeedFetch<T>(path: string): Promise<{ data: T; apiBase: string }> {
-  const previewProxyPath = undefined;
-  const requestBase = PROPERTY_FEED_API_BASE;
+async function propertyFeedFetch<T>(
+  path: string,
+  localPreviewCatalog = true,
+): Promise<{ data: T; apiBase: string }> {
+  const previewProxyPath = !localPreviewCatalog && API_BASE !== LIVE_API_BASE
+    ? getPreviewLiveProxyPath(path)
+    : undefined;
+  const requestBase = localPreviewCatalog || previewProxyPath
+    ? PROPERTY_FEED_API_BASE
+    : LIVE_API_BASE;
   return {
     data: await apiRequest<T>(
-      path,
+      previewProxyPath ?? path,
       {},
       false,
       FETCH_TIMEOUT_MS,
       requestBase,
+      !localPreviewCatalog,
     ),
     apiBase: requestBase,
   };
@@ -1202,6 +1211,7 @@ export async function getAgents(
   if (params.limit) qs.set('limit', String(params.limit));
   const { data: agents, apiBase } = await propertyFeedFetch<ApiAgent[]>(
     `/api/mobile-agents${qs.toString() ? `?${qs}` : ''}`,
+    false,
   );
   return agents.map((agent) => ({
     ...agent,

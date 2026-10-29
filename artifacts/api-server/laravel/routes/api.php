@@ -60,6 +60,7 @@ $registerRoutes = static function (): void {
             Route::get('/admin/reports', [AdminController::class, 'reports']);
             Route::patch('/admin/reports/{id}', [AdminController::class, 'updateReport']);
             Route::get('/admin/properties', [AdminController::class, 'properties']);
+            Route::delete('/admin/properties/{id}', [AdminController::class, 'deleteProperty'])->whereNumber('id');
             Route::patch('/admin/properties/{id}', [AdminController::class, 'updateProperty'])->whereNumber('id');
             Route::patch('/admin/properties/{id}/visibility', [AdminController::class, 'setPropertyVisibility'])->whereNumber('id');
             Route::patch('/admin/properties/{id}/feature', [AdminController::class, 'setPropertyFeatured'])->whereNumber('id');

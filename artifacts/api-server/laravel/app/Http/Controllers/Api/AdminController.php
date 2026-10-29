@@ -287,6 +287,25 @@ final class AdminController extends Controller
         return response()->json(array_values($properties));
     }
 
+    public function deleteProperty(string $id, Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $admin = $request->attributes->get('legacyUser', []);
+        $deleted = $store->mutate(function (array &$data) use ($id, $admin): ?array {
+            foreach ($data['properties'] ?? [] as $index => $property) {
+                if ((string) ($property['id'] ?? '') !== $id) continue;
+                array_splice($data['properties'], $index, 1);
+                $this->appendAdminAudit($data, $admin, 'property_deleted', 'properties', $id, [
+                    'title' => $property['title'] ?? '',
+                    'city' => $property['city'] ?? '',
+                ]);
+                return $property;
+            }
+            return null;
+        });
+        if (! $deleted) return response()->json(['error' => 'Property not found.'], 404);
+        return response()->json(['success' => true, 'deletedId' => $id]);
+    }
+
     public function updateProperty(string $id, Request $request, LegacyDataStore $store): JsonResponse
     {
         $validated = $request->validate([

@@ -17,6 +17,10 @@ import {
 } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
 import { useColors } from '@/hooks/useColors';
+import {
+  getHomeBannerAutoplayMode,
+  HOME_BANNER_IMAGE_AUTOPLAY_MS,
+} from '@/lib/homeBannerPlayback';
 
 export type HomeCategoryBannerSlide = {
   id: string | number;
@@ -36,14 +40,38 @@ type HomeCategoryBannerCarouselProps = {
   isVisible: boolean;
 };
 
-const AUTOPLAY_INTERVAL_MS = 5600;
-
-function BannerVideo({ uri }: { uri: string }) {
+function BannerVideo({
+  uri,
+  loop,
+  shouldAdvance,
+  onFinished,
+}: {
+  uri: string;
+  loop: boolean;
+  shouldAdvance: boolean;
+  onFinished: () => void;
+}) {
   const player = useVideoPlayer({ uri }, (videoPlayer) => {
-    videoPlayer.loop = true;
+    videoPlayer.loop = loop;
     videoPlayer.muted = true;
     videoPlayer.play();
   });
+
+  useEffect(() => {
+    player.loop = loop;
+  }, [loop, player]);
+
+  useEffect(() => {
+    if (!shouldAdvance) return undefined;
+    const completionSubscription = player.addListener('playToEnd', onFinished);
+    const statusSubscription = player.addListener('statusChange', ({ status }) => {
+      if (status === 'error') onFinished();
+    });
+    return () => {
+      completionSubscription.remove();
+      statusSubscription.remove();
+    };
+  }, [onFinished, player, shouldAdvance]);
 
   return (
     <VideoView
@@ -69,6 +97,13 @@ export default function HomeCategoryBannerCarousel({
   const [activeIndex, setActiveIndex] = useState(0);
   const [carouselWidth, setCarouselWidth] = useState(windowWidth);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const activeSlide = slides[activeIndex];
+  const autoplayMode = getHomeBannerAutoplayMode({
+    isVisible,
+    reduceMotion,
+    slideCount: slides.length,
+    isVideo: Boolean(activeSlide?.videoUrl),
+  });
   const renderedSlides =
     slides.length > 1 ? [...slides, slides[0]] : slides;
 
@@ -102,23 +137,28 @@ export default function HomeCategoryBannerCarousel({
     }
   }, [activeIndex, setIndex, slides.length]);
 
+  const advanceToNextSlide = useCallback(() => {
+    if (slides.length < 2) return;
+    const currentIndex = activeIndexRef.current;
+    const nextIndex = (currentIndex + 1) % slides.length;
+    const targetIndex =
+      currentIndex === slides.length - 1 ? slides.length : nextIndex;
+    setIndex(nextIndex);
+    scrollRef.current?.scrollTo({
+      x: targetIndex * carouselWidth,
+      animated: true,
+    });
+  }, [carouselWidth, setIndex, slides.length]);
+
   useEffect(() => {
-    if (!isVisible || reduceMotion || slides.length < 2) return undefined;
+    if (autoplayMode !== 'timer') return undefined;
 
-    const timer = setInterval(() => {
-      const currentIndex = activeIndexRef.current;
-      const nextIndex = (currentIndex + 1) % slides.length;
-      const targetIndex =
-        currentIndex === slides.length - 1 ? slides.length : nextIndex;
-      setIndex(nextIndex);
-      scrollRef.current?.scrollTo({
-        x: targetIndex * carouselWidth,
-        animated: true,
-      });
-    }, AUTOPLAY_INTERVAL_MS);
+    const timer = setTimeout(() => {
+      advanceToNextSlide();
+    }, HOME_BANNER_IMAGE_AUTOPLAY_MS);
 
-    return () => clearInterval(timer);
-  }, [carouselWidth, isVisible, reduceMotion, setIndex, slides.length]);
+    return () => clearTimeout(timer);
+  }, [activeIndex, advanceToNextSlide, autoplayMode]);
 
   const handleScrollEnd = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -204,7 +244,12 @@ export default function HomeCategoryBannerCarousel({
             testID={`home-category-slide-${slide.category}${loopCloneSuffix}`}
           >
             {slide.videoUrl && !isLoopClone && isVisible && logicalIndex === activeIndex ? (
-              <BannerVideo uri={slide.videoUrl} />
+              <BannerVideo
+                uri={slide.videoUrl}
+                loop={autoplayMode !== 'video-end'}
+                shouldAdvance={autoplayMode === 'video-end'}
+                onFinished={advanceToNextSlide}
+              />
             ) : (
               <Image
                 source={slide.image}

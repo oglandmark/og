@@ -323,6 +323,21 @@ final class AdminController extends Controller
 
         $admin = $request->attributes->get('legacyUser', []);
         $property = $store->mutate(function (array &$data) use ($id, $validated, $admin): ?array {
+            $assignedUserId = trim((string) ($validated['assignedAgent']['userId'] ?? ''));
+            $validated['agentId'] = $assignedUserId !== '' ? $assignedUserId : null;
+            if ($assignedUserId !== '') {
+                $agentAccount = collect($data['users'] ?? [])->first(function (array $user) use ($assignedUserId): bool {
+                    $permissions = is_array($user['permissions'] ?? null) ? $user['permissions'] : [];
+                    $isAgent = mb_strtolower((string) ($user['role'] ?? '')) === 'agent'
+                        || in_array('agent', array_map(fn ($permission) => mb_strtolower((string) $permission), $permissions), true);
+                    return (string) ($user['id'] ?? '') === $assignedUserId
+                        && $isAgent
+                        && mb_strtolower((string) ($user['status'] ?? 'active')) === 'active';
+                });
+                if (! $agentAccount) {
+                    return ['error' => 'Choose an active Agent account from the directory.', 'status' => 422];
+                }
+            }
             foreach ($data['properties'] ?? [] as $index => $property) {
                 if ((string) ($property['id'] ?? '') !== $id) continue;
 

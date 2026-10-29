@@ -362,6 +362,8 @@
       .og-pm-feature-toggle.is-featured{border-color:#c8a45a;background:#fbf7ed;color:#805b12}
       .og-pm-feature-toggle:disabled{opacity:.55;cursor:wait}
       .og-pm-agent-assign{display:block;margin-top:5px;border:0;background:transparent;padding:0;color:#946f24;font:700 10px system-ui;text-decoration:underline;cursor:pointer}
+      .og-pm-agent-directory-link{margin-left:6px;color:#946f24;font-weight:700;text-decoration:underline}
+      .og-pm-agent-directory-link{margin-left:6px;color:#946f24;font-weight:700;text-decoration:underline}
       .og-pm-feature-badge{display:inline-flex;align-items:center;border:1px solid #dbe2ea;border-radius:999px;background:#f8fafc;color:#64748b;padding:4px 8px;font:700 10px/1 system-ui;white-space:nowrap}
       .og-pm-feature-badge.is-featured{border-color:#e8d7aa;background:#fbf7ed;color:#805b12}
       .og-pm-recommend-toggle{min-width:120px;border:1px solid #dbe2ea;border-radius:999px;background:#fff;color:#475569;padding:7px 10px;font:700 11px/1.1 system-ui;white-space:nowrap;cursor:pointer}
@@ -576,6 +578,13 @@
     }
     const directoryNote = form.querySelector('[data-agent-directory-note]');
     directoryNote.textContent = agentDirectoryMessage || 'Agent accounts from all cities are available. A referral appears in the Agent portal and does not change listing status; unlinked contacts are shown as contact-only.';
+    if (!agents.some((agent) => agent.userId) && !agentDirectoryMessage) {
+      const manageAgents = document.createElement('a');
+      manageAgents.href = '/admin/mobile/agents';
+      manageAgents.textContent = 'Open Agents';
+      manageAgents.className = 'og-pm-agent-directory-link';
+      directoryNote.append(' ', manageAgents);
+    }
     const selectedAgentId = String(assigned.id || property.assignedAgentId || '');
     const selectedAgent = agents.find((agent) => agent.id === selectedAgentId && (!assigned.profileType || agent.kind === assigned.profileType));
     if (selectedAgent) select.value = `${selectedAgent.kind}:${selectedAgent.id}`;
@@ -813,7 +822,10 @@
     const format = (value) => {
       if (value === null || value === undefined || value === '') return '—';
       if (Array.isArray(value)) return value.map((item) => typeof item === 'object' ? JSON.stringify(item) : String(item)).join(', ');
-      if (typeof value === 'object') return JSON.stringify(value);
+      if (typeof value === 'object') {
+        const readable = Object.values(value).filter((item) => item == null || ['string', 'number', 'boolean'].includes(typeof item));
+        return readable.length ? readable.filter((item) => item !== null && item !== '').join(' · ') : 'Details available';
+      }
       return String(value);
     };
     const facts = [
@@ -872,10 +884,10 @@
     }
 
     const allData = make('details');
-    allData.open = true;
+    allData.open = false;
     allData.appendChild(make('summary', '', 'Full submitted property details'));
     const fields = make('div', 'og-pm-all-fields');
-    const hiddenKeys = new Set(['images', 'media', 'coverImage']);
+    const hiddenKeys = new Set(['images', 'media', 'coverImage', 'reviewHistory', 'assignedAgent']);
     for (const [key, value] of Object.entries(property)) {
       if (hiddenKeys.has(key) || /password|token|secret|credential/i.test(key)) continue;
       const item = make('div');
@@ -1271,7 +1283,10 @@
     });
     const [profiles, users] = await Promise.all([
       request('/admin/mobile-agents').catch(() => []),
-      request('/admin/users?role=agent').catch(() => []),
+      request('/admin/users').catch((error) => {
+        agentDirectoryMessage = `Agent accounts could not be loaded: ${error.message}`;
+        return [];
+      }),
     ]);
     const normalizeAgent = (agent, kind) => {
       const id = String(agent.id ?? agent.userId ?? '');
@@ -1287,6 +1302,13 @@
       };
     };
     const accounts = (Array.isArray(users) ? users : [])
+      .filter((item) => {
+        const permissions = Array.isArray(item.permissions) ? item.permissions : [item.permissions];
+        const role = normalize(item.role);
+        const status = normalize(item.status || 'active');
+        return (role === 'agent' || permissions.some((permission) => normalize(permission) === 'agent'))
+          && status === 'active';
+      })
       .map((item) => normalizeAgent(item, 'account'))
       .filter(Boolean)
       .map((agent) => ({ ...agent, userId: agent.id }));
@@ -1311,7 +1333,9 @@
       }
     }
     agents = [...accounts, ...contacts];
-    if (!agents.length && !agentDirectoryMessage) agentDirectoryMessage = 'No agents are currently available in the referral directory.';
+    if (!agents.length && !agentDirectoryMessage) {
+      agentDirectoryMessage = 'No active Agent accounts are available. Create or activate an Agent account from Admin → Agents before assigning one.';
+    }
     agentsLoaded = true;
   }
 

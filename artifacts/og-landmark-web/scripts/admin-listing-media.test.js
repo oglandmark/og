@@ -169,6 +169,15 @@ test('Featured and Recommended rows use saved promotion state and match server e
   assert.match(propertyManagementSource, /\['active', 'approved'\]\.includes\(listing\)/);
 });
 
+test('Agent referral options require an active linked account and hide raw audit payloads', () => {
+  assert.match(propertyManagementSource, /request\('\/admin\/users'\)/);
+  assert.match(propertyManagementSource, /permissions\.some\(\(permission\) => normalize\(permission\) === 'agent'\)/);
+  assert.match(propertyManagementSource, /status === 'active'/);
+  assert.match(propertyManagementSource, /allData\.open = false/);
+  assert.match(propertyManagementSource, /'reviewHistory', 'assignedAgent'/);
+  assert.match(propertyManagementSource, /Create or activate an Agent account from Admin → Agents/);
+});
+
 test('Admin projects page provides portfolio status, inventory, search and filter controls', () => {
   assert.match(mobileManagementSource, /function renderProjects\(content, items\)/);
   assert.match(mobileManagementSource, /og-project-stats/);

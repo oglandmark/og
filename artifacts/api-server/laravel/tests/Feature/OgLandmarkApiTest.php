@@ -681,6 +681,16 @@ final class OgLandmarkApiTest extends TestCase
 
     public function test_admin_listing_edits_update_the_public_property_record_without_changing_moderation(): void
     {
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $data['users'][] = [
+            'id' => 43,
+            'name' => 'Assigned Agent',
+            'email' => 'agent@example.test',
+            'role' => 'User',
+            'status' => 'Active',
+            'permissions' => ['agent'],
+        ];
+        DB::table('app_data')->where('id', 1)->update(['data' => json_encode($data, JSON_THROW_ON_ERROR)]);
         $token = $this->adminToken();
         $payload = [
             'title' => 'Updated family home',
@@ -708,7 +718,7 @@ final class OgLandmarkApiTest extends TestCase
             'amenities' => ['Parking', 'Gas'],
             'assignedAgent' => [
                 'id' => '8',
-                'userId' => '42',
+                'userId' => '43',
                 'city' => 'Depalpur',
                 'name' => 'Assigned Agent',
                 'phone' => '03001234567',
@@ -727,6 +737,7 @@ final class OgLandmarkApiTest extends TestCase
             ->assertJsonPath('property.title', 'Updated family home')
             ->assertJsonPath('property.city', 'Depalpur')
             ->assertJsonPath('property.assignedAgent.name', 'Assigned Agent')
+            ->assertJsonPath('property.agentId', '43')
             ->assertJsonPath('property.approvalStatus', 'Active')
             ->assertJsonPath('property.listingStatus', 'Active');
 

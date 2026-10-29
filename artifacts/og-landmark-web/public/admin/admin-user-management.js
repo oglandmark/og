@@ -36,14 +36,14 @@
     let token = '';
     try { token = window.localStorage.getItem('og_token') || ''; } catch {}
     const response = await fetch(url, {
+      ...options,
       headers: {
+        ...(options && options.headers ? options.headers : {}),
         Accept: 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(options && options.body ? { 'Content-Type': 'application/json' } : {}),
-        ...(options && options.headers ? options.headers : {}),
       },
       cache: 'no-store',
-      ...options,
     });
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(body.error || body.message || `Request failed (${response.status})`);

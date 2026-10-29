@@ -92,6 +92,8 @@ if (!databaseConfigured && !localPreview) {
 }
 const fallbackFile = process.env.OG_LANDMARK_RUNTIME_DATA
   || path.join(__dirname, 'runtime-data.json');
+const previewSessionFile = process.env.OG_LANDMARK_PREVIEW_SESSION_STORE
+  || path.join(__dirname, '.local', 'og-landmark-preview', 'auth-sessions.json');
 let dbReady = false;
 let dbInitError = null;
 // Legacy maps remain only as a local cache; authoritative sessions/challenges are persisted.
@@ -492,6 +494,23 @@ function passwordValidationError(value) {
 
 // ─── Auth Middleware ──────────────────────────────────────────────────────────
 const tokenDigest = token => crypto.createHash('sha256').update(token).digest('hex');
+function readPreviewSessions() {
+  try {
+    const records = JSON.parse(fs.readFileSync(previewSessionFile, 'utf8'));
+    return Array.isArray(records) ? records.filter(record => record && typeof record === 'object') : [];
+  } catch (error) {
+    if (error.code === 'ENOENT') return [];
+    console.error('LOCAL PREVIEW SESSION STORE ERROR:', error.message);
+    return [];
+  }
+}
+function writePreviewSessions(sessions) {
+  const directory = path.dirname(previewSessionFile);
+  fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+  const temporaryFile = `${previewSessionFile}.${process.pid}.tmp`;
+  fs.writeFileSync(temporaryFile, JSON.stringify(sessions), { mode: 0o600 });
+  fs.renameSync(temporaryFile, previewSessionFile);
+}
 function getBearerToken(req) {
   const authHeader = req.headers['authorization'] || '';
   return authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
@@ -505,6 +524,15 @@ async function createSession(user) {
       VALUES (${tokenDigest(token)}, ${user.id}, ${expiry.toISOString()})
     `;
   } else if (localPreview) {
+    const now = Date.now();
+    const sessions = readPreviewSessions()
+      .filter(session => Date.parse(session.expiresAt) > now);
+    sessions.push({
+      tokenHash: tokenDigest(token),
+      userId: user.id,
+      expiresAt: expiry.toISOString(),
+    });
+    writePreviewSessions(sessions);
     tokenStore.set(token, { userId: user.id, expiresAt: expiry.getTime() });
   } else {
     throw new Error('A production database connection is not configured.');
@@ -519,8 +547,11 @@ async function invalidateUserSessions(userId, email = null) {
     }
   } else if (localPreview) {
     for (const [token, session] of tokenStore.entries()) {
-      if (session.userId === userId) tokenStore.delete(token);
+      if (String(session.userId) === String(userId)) tokenStore.delete(token);
     }
+    const sessions = readPreviewSessions();
+    const activeSessions = sessions.filter(session => String(session.userId) !== String(userId));
+    if (activeSessions.length !== sessions.length) writePreviewSessions(activeSessions);
     if (typeof email === 'string' && email.trim()) {
       const challengeSuffix = `:${email.trim().toLowerCase()}`;
       for (const key of otpStore.keys()) {
@@ -533,6 +564,7 @@ async function getRequestUser(req) {
   const token = getBearerToken(req);
   if (!token) return null;
   let userId;
+  let data;
   try {
     if (dbQuery) {
       const sessions = await dbQuery`
@@ -546,14 +578,22 @@ async function getRequestUser(req) {
       if (!session) return null;
       userId = Number(session.user_id);
     } else if (localPreview) {
-      const stored = tokenStore.get(token);
-      if (!stored || stored.expiresAt < Date.now()) return null;
+      let stored = tokenStore.get(token);
+      if (!stored || stored.expiresAt < Date.now()) {
+        const tokenHash = tokenDigest(token);
+        const session = readPreviewSessions().find(record =>
+          record.tokenHash === tokenHash && Date.parse(record.expiresAt) > Date.now()
+        );
+        if (!session) return null;
+        stored = { userId: session.userId, expiresAt: Date.parse(session.expiresAt) };
+        tokenStore.set(token, stored);
+      }
       userId = stored.userId;
     } else {
       return null;
     }
-    const data = await readData();
-    const user = data.users.find(u => u.id === userId);
+    data ||= await readData();
+    const user = data.users.find(u => String(u.id) === String(userId));
     return user ? resolveAuthenticatedUser(user) : null;
   } catch { return null; }
 }
@@ -3032,6 +3072,10 @@ app.post('/api/auth/logout', async (req, res) => {
         await dbQuery`DELETE FROM auth_sessions WHERE token_hash = ${tokenDigest(token)}`;
       } else if (localPreview) {
         tokenStore.delete(token);
+        const tokenHash = tokenDigest(token);
+        const sessions = readPreviewSessions();
+        const activeSessions = sessions.filter(session => session.tokenHash !== tokenHash);
+        if (activeSessions.length !== sessions.length) writePreviewSessions(activeSessions);
       }
     }
     res.json({ success: true });

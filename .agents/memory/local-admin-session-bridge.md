@@ -15,8 +15,8 @@ The local Laravel `/auth/me` response wraps the account as `{ user: ... }`, whil
 
 **How to apply:** Unwrap the optional `user` field in both page-load recovery and existing-session login recovery, and test wrapped and direct responses.
 
-Each local web workflow restart also clears Express's in-memory preview sessions. An already-open Admin tab can retain its cached profile while protected list requests fail, which may look like an empty user list.
+Local preview bearer sessions are persisted as token hashes in a private, ignored runtime file so browser reloads and web workflow restarts do not sign the Admin out. The file remains local-only; production sessions continue using `auth_sessions`.
 
-**Why:** Preview bearer sessions are stored in process memory rather than durable storage.
+**Why:** The user asked that refreshing local Admin should not end the session, and in-memory-only sessions became invalid when the web process restarted.
 
-**How to apply:** After restarting the local web workflow, sign in again before diagnosing an empty Admin list; distinguish an unauthorized response from a successful empty array.
+**How to apply:** Keep session hashes, user IDs, and expiries in the private preview store; persist login, logout, expiry, and password-reset revocation. Never enable this store outside local preview.

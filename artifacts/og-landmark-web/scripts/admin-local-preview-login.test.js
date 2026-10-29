@@ -161,21 +161,23 @@ test('Replit preview Admin login uses configured password without requiring APP_
   };
   fs.writeFileSync(dataPath, JSON.stringify(fixture), { mode: 0o600 });
 
-  const child = spawn(process.execPath, [path.join(webRoot, 'server.js')], {
+  const serverEnvironment = isolatedEnvironment({
+    NODE_ENV: 'development',
+    APP_ENV: '',
+    PORT: String(port),
+    REPLIT_DEV_DOMAIN: 'og-admin-preview-login.replit.dev',
+    REPLIT_ENVIRONMENT: 'development',
+    LOCAL_PREVIEW_ADMIN_PASSWORD: previewPassword,
+    LOCAL_PREVIEW_ADMIN_EMAIL: '',
+    OG_LANDMARK_RUNTIME_DATA: dataPath,
+    OG_LANDMARK_PREVIEW_SESSION_STORE: path.join(directory, 'auth-sessions.json'),
+    DATABASE_URL: '',
+    NEON_DATABASE_URL: '',
+  });
+  let child = spawn(process.execPath, [path.join(webRoot, 'server.js')], {
     cwd: webRoot,
     stdio: 'ignore',
-    env: isolatedEnvironment({
-      NODE_ENV: 'development',
-      APP_ENV: '',
-      PORT: String(port),
-      REPLIT_DEV_DOMAIN: 'og-admin-preview-login.replit.dev',
-      REPLIT_ENVIRONMENT: 'development',
-      LOCAL_PREVIEW_ADMIN_PASSWORD: previewPassword,
-      LOCAL_PREVIEW_ADMIN_EMAIL: '',
-      OG_LANDMARK_RUNTIME_DATA: dataPath,
-      DATABASE_URL: '',
-      NEON_DATABASE_URL: '',
-    }),
+    env: serverEnvironment,
   });
 
   try {
@@ -201,6 +203,40 @@ test('Replit preview Admin login uses configured password without requiring APP_
       headers: { Authorization: `Bearer ${payload.token}` },
     });
     assert.equal(adminPropertiesResponse.status, 200);
+
+    await stopProcess(child);
+    child = spawn(process.execPath, [path.join(webRoot, 'server.js')], {
+      cwd: webRoot,
+      stdio: 'ignore',
+      env: serverEnvironment,
+    });
+    await waitForHealth(child, `${baseUrl}/api/health`);
+
+    const refreshedSession = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${payload.token}` },
+    });
+    assert.equal(refreshedSession.status, 200, 'The local Admin session should survive a web workflow restart.');
+    const refreshedUser = await refreshedSession.json();
+    assert.deepEqual(refreshedUser.permissions, ['admin']);
+    const refreshedAdminList = await fetch(`${baseUrl}/api/admin/properties`, {
+      headers: { Authorization: `Bearer ${payload.token}` },
+    });
+    assert.equal(refreshedAdminList.status, 200);
+
+    const logout = await fetch(`${baseUrl}/api/auth/logout`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${payload.token}`,
+      },
+      body: JSON.stringify({}),
+    });
+    assert.equal(logout.status, 200);
+    const loggedOutSession = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${payload.token}` },
+    });
+    assert.equal(loggedOutSession.status, 401, 'Logging out should revoke the persisted local session.');
   } finally {
     await stopProcess(child);
     fs.rmSync(directory, { recursive: true, force: true });
@@ -242,6 +278,7 @@ test('preview Admin reset sends an OTP, persists the new password, and rejects t
       LOCAL_PREVIEW_ADMIN_PASSWORD: previewPassword,
       LOCAL_PREVIEW_ADMIN_EMAIL: '',
       OG_LANDMARK_RUNTIME_DATA: dataPath,
+      OG_LANDMARK_PREVIEW_SESSION_STORE: path.join(directory, 'auth-sessions.json'),
       DATABASE_URL: '',
       NEON_DATABASE_URL: '',
       SMTP_HOST: '127.0.0.1',

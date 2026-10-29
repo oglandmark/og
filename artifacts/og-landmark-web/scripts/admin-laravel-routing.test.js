@@ -105,12 +105,16 @@ test('local Replit agent directory edits use Laravel and become PATCH requests',
     body: JSON.stringify({ status: 'Suspended', approvalStatus: 'Approved', visible: false }),
   });
   await window.fetch('/api/admin/mobile-agents/8', { method: 'DELETE' });
+  await window.fetch('/api/admin/mobile-agent-preview-hidden');
+  await window.fetch('/api/admin/mobile-agent-preview-hidden', { method: 'POST', body: JSON.stringify({ id: 'live-8' }) });
 
   assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
     ['/api-legacy/api/admin/mobile-agents', 'GET'],
     ['/api-legacy/api/admin/mobile-agents', 'POST'],
     ['/api-legacy/api/admin/mobile-agents/8', 'PATCH'],
     ['/api-legacy/api/admin/mobile-agents/8', 'DELETE'],
+    ['/api-legacy/api/admin/mobile-agent-preview-hidden', 'GET'],
+    ['/api-legacy/api/admin/mobile-agent-preview-hidden', 'POST'],
   ]);
 });
 

@@ -22,6 +22,7 @@
   let hiddenMainChildren = [];
   let agents = [];
   let agentLoadWarnings = [];
+  let agentNotice = '';
   let projectLeafletPromise;
   const sectionData = {};
   const projectViewState = { query: '', status: 'all', notice: '', archived: false };
@@ -187,14 +188,18 @@
         return [];
       }
     };
-    const [cityProfiles, mobileAgents, agentAccounts, previewMobileAgents] = await Promise.all([
+    const [cityProfiles, mobileAgents, agentAccounts, previewMobileAgents, hiddenPreviewIds] = await Promise.all([
       readAgentSource('/city-agents', 'Linked Agent city data'),
       readAgentSource('/admin/mobile-agents', 'Mobile directory'),
       readAgentSource('/admin/users?role=agent', 'Agent accounts'),
       window.__OG_ADMIN_LARAVEL_LOCAL__
         ? readAgentSource('/preview/live/mobile-agents', 'Mobile public preview')
         : Promise.resolve([]),
+      window.__OG_ADMIN_LARAVEL_LOCAL__
+        ? readAgentSource('/admin/mobile-agent-preview-hidden', 'Local preview state')
+        : Promise.resolve([]),
     ]);
+    const hiddenPreviewIdSet = new Set(hiddenPreviewIds.map(String));
     const cityProfilesByAccount = new Map();
     for (const record of cityProfiles) {
       const userId = String(record.userId || record.accountId || record.authUserId || '').trim();
@@ -203,7 +208,8 @@
     const merged = new Map();
     const sources = [
       ['mobile-agents', Array.isArray(mobileAgents) ? mobileAgents : []],
-      ['mobile-preview', Array.isArray(previewMobileAgents) ? previewMobileAgents : []],
+      ['mobile-preview', (Array.isArray(previewMobileAgents) ? previewMobileAgents : [])
+        .filter((record) => !hiddenPreviewIdSet.has(String(record.id)))],
       ['agent-accounts', Array.isArray(agentAccounts) ? agentAccounts.filter((record) => String(record.role || '').toLowerCase() === 'agent') : []],
     ];
     for (const [collection, records] of sources) {
@@ -222,15 +228,24 @@
           name: record.name || cityProfile.name,
           displayName: record.displayName || cityProfile.displayName,
         } : record;
-        const identity = userId ? `user:${userId}` : email ? `email:${email}`
+        const identity = record.sourcePreviewId
+          ? `mobile-profile:${record.sourcePreviewId}`
+          : userId ? `user:${userId}` : email ? `email:${email}`
           : ['mobile-agents', 'mobile-preview'].includes(collection) ? `mobile-profile:${record.id}`
             : `${collection}:${record.id}`;
         const existing = merged.get(identity);
         if (collection === 'agent-accounts' && !existing) continue;
         if (existing) {
-          for (const [key, value] of Object.entries(enrichedRecord)) {
-            if (value !== null && value !== '' && (existing[key] === undefined || existing[key] === null || existing[key] === '')) {
-              existing[key] = value;
+          const localPreviewOverride = collection === 'mobile-preview' && Boolean(existing.sourcePreviewId);
+          if (!localPreviewOverride) {
+            for (const [key, value] of Object.entries(enrichedRecord)) {
+              if (collection === 'mobile-agents' && record.sourcePreviewId) {
+                existing[key] = value;
+                continue;
+              }
+              if (value !== null && value !== '' && (existing[key] === undefined || existing[key] === null || existing[key] === '')) {
+                existing[key] = value;
+              }
             }
           }
           if (collection === 'agent-accounts') existing.accountId ||= String(record.id);
@@ -430,13 +445,17 @@
       const sources = new Set((agent.directorySources || []).map(({ collection }) =>
         collection === 'mobile-agents' ? 'Mobile app'
           : collection === 'mobile-preview' ? 'Mobile app preview' : ''));
+      if (agent.sourcePreviewId) sources.add('Local preview copy');
       if (agent.accountId) sources.add('Agent account');
       const sourceLabel = [...sources].filter(Boolean).join(' + ') || 'Agent account';
-      const editableDirectory = agent.directorySources?.some(({ collection }) => collection === 'mobile-agents');
-      const actions = editableDirectory
-        ? `<button class="og-mm-action" data-action="edit-agent" data-index="${agents.indexOf(agent)}">Edit</button><button class="og-mm-action danger" data-action="delete-agent" data-index="${agents.indexOf(agent)}">Remove</button>`
-        : agent.directorySources?.some(({ collection }) => collection === 'mobile-preview')
-          ? '<span class="og-mm-readonly">Preview · read only</span>'
+      const hasMobileRecord = agent.directorySources?.some(({ collection }) => collection === 'mobile-agents');
+      const hasPreviewRecord = Boolean(agent.sourcePreviewId)
+        || agent.directorySources?.some(({ collection }) => collection === 'mobile-preview');
+      const canManage = hasMobileRecord || hasPreviewRecord;
+      const editLabel = hasPreviewRecord ? 'Edit local copy' : 'Edit';
+      const deleteLabel = hasPreviewRecord ? 'Remove locally' : 'Remove';
+      const actions = canManage
+        ? `<button class="og-mm-action" data-action="edit-agent" data-index="${agents.indexOf(agent)}">${editLabel}</button><button class="og-mm-action danger" data-action="delete-agent" data-index="${agents.indexOf(agent)}">${deleteLabel}</button>`
         : '<a class="og-mm-action" href="/admin/users?role=agent">Manage in Users</a>';
       const profileFacts = [
         ['Title', agent.title],
@@ -464,7 +483,8 @@
     const warning = agentLoadWarnings.length
       ? `<div class="og-mm-error">Some Agent sources could not be loaded: ${esc(agentLoadWarnings.join(' · '))}</div>`
       : '';
-      content.innerHTML = `${warning}<div class="og-mm-note">Showing ${agents.length} Mobile app Agents. Website-only profiles are not listed here. Public mobile preview profiles are read-only; assignable Agents need a linked local Agent account. New Agents are added to the local mobile directory.</div>
+    const notice = agentNotice ? `<div class="og-mm-success" role="status">${esc(agentNotice)}</div>` : '';
+    content.innerHTML = `${warning}${notice}<div class="og-mm-note">Showing ${agents.length} Mobile app Agents. Website-only profiles are not listed here. Live-feed profiles can be edited as local preview copies; those changes do not update the live app.</div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="og-mm-action primary" data-action="add-agent">Add mobile Agent</button></div>
       <div id="og-mm-agent-form-wrap"></div>
       <div style="overflow:auto"><table class="og-mm-table"><thead><tr><th>Photo</th><th>Agent</th><th>City / phone</th><th>Email</th><th>Directory status</th><th>Actions</th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="og-mm-empty">No Agent profiles or Agent accounts found.</td></tr>'}</tbody></table></div>`;
@@ -1300,7 +1320,8 @@
 
   function showAgentForm(agent = {}) {
     const wrap = modal.querySelector('#og-mm-agent-form-wrap');
-    wrap.innerHTML = `<form class="og-mm-form" id="og-mm-agent-form">
+    const isLivePreview = agent.directorySources?.some(({ collection }) => collection === 'mobile-preview');
+    wrap.innerHTML = `${isLivePreview ? '<div class="og-mm-note">Saving creates or updates a local preview copy only. The live Mobile app profile will not change.</div>' : ''}<form class="og-mm-form" id="og-mm-agent-form">
       <h3 style="margin:0 0 12px">${agent.id ? 'Edit Agent profile' : 'Add Agent profile'}</h3>
       <div class="og-mm-grid">
         <div class="og-mm-field"><label>Agent name *</label><input name="name" required maxlength="120" value="${esc(agent.displayName || agent.name || '')}"></div>
@@ -1429,13 +1450,24 @@
           approvalStatus: data.approvalStatus, visible: form.elements.visible.checked,
         };
         const sources = agent?.directorySources || [];
-        if (sources.length) {
-          await Promise.all(sources.map(({ collection, id }) => api(`/admin/${collection}/${encodeURIComponent(id)}`, {
+        const localMobile = sources.find(({ collection }) => collection === 'mobile-agents');
+        const previewSource = sources.find(({ collection }) => collection === 'mobile-preview');
+        if (localMobile) {
+          await api(`/admin/mobile-agents/${encodeURIComponent(localMobile.id)}`, {
             method: 'PUT', body: JSON.stringify(payload),
-          })));
+          });
+        } else if (previewSource) {
+          await api('/admin/mobile-agents', {
+            method: 'POST',
+            body: JSON.stringify({ ...payload, sourcePreviewId: String(previewSource.id) }),
+          });
         } else {
           await api('/admin/mobile-agents', { method: 'POST', body: JSON.stringify(payload) });
         }
+        agentNotice = isLivePreview || agent?.sourcePreviewId
+          ? 'Local preview copy saved; live Mobile app profile is unchanged.'
+          : 'Agent profile saved.';
+        agentLoadWarnings = [];
         await loadData();
         renderAgents(modal.querySelector('.og-mm-content'));
       } catch (error) {
@@ -1459,10 +1491,27 @@
       if (button.dataset.action === 'cancel-form') renderAgents(modal.querySelector('.og-mm-content'));
       if (button.dataset.action === 'delete-agent') {
         const agent = agents[Number(button.dataset.index)];
-        if (!agent || !window.confirm(`Remove “${agent.displayName || agent.name || 'this Agent'}” from the website and mobile Agent directory? Its login account will remain.`)) return;
-        await Promise.all((agent.directorySources || []).map(({ collection, id }) =>
-          api(`/admin/${collection}/${encodeURIComponent(id)}`, { method: 'DELETE' }),
-        ));
+        if (!agent) return;
+        const localMobile = agent.directorySources?.find(({ collection }) => collection === 'mobile-agents');
+        const previewSource = agent.directorySources?.find(({ collection }) => collection === 'mobile-preview');
+        const isPreviewCopy = Boolean(agent.sourcePreviewId || previewSource);
+        const confirmMessage = isPreviewCopy
+          ? `Remove “${agent.displayName || agent.name || 'this Agent'}” from this local Admin preview? The live Mobile app profile will remain unchanged.`
+          : `Remove “${agent.displayName || agent.name || 'this Agent'}” from the local Mobile Agent directory? Its login account will remain.`;
+        if (!window.confirm(confirmMessage)) return;
+        button.disabled = true;
+        if (localMobile) {
+          await api(`/admin/mobile-agents/${encodeURIComponent(localMobile.id)}`, { method: 'DELETE' });
+        } else if (previewSource) {
+          await api('/admin/mobile-agent-preview-hidden', {
+            method: 'POST',
+            body: JSON.stringify({ id: String(previewSource.id) }),
+          });
+        }
+        agentNotice = isPreviewCopy
+          ? 'Agent removed from this local Admin preview; live Mobile app profile is unchanged.'
+          : 'Agent removed from the local Mobile directory.';
+        agentLoadWarnings = [];
         await loadData();
         renderAgents(modal.querySelector('.og-mm-content'));
       }
@@ -1557,7 +1606,17 @@
       }
       if (button.dataset.action === 'export-report') await exportReport();
     } catch (error) {
-      window.alert(error.message || 'Could not update mobile app data.');
+      const content = modal?.querySelector('.og-mm-content');
+      if (content) {
+        const message = document.createElement('div');
+        message.className = 'og-mm-error';
+        message.setAttribute('role', 'alert');
+        message.textContent = error.message || 'Could not update mobile app data.';
+        content.prepend(message);
+      } else {
+        window.alert(error.message || 'Could not update mobile app data.');
+      }
+      if (button?.isConnected) button.disabled = false;
     }
   }
 

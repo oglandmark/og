@@ -984,12 +984,22 @@ final class AdminController extends Controller
             'specialties' => ['sometimes', 'array'],
             'specialties.*' => ['string', 'max:120'],
             'about' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'sourcePreviewId' => ['sometimes', 'nullable', 'string', 'max:120'],
             'approvalStatus' => ['sometimes', 'in:Pending,Approved,Rejected'],
             'status' => ['sometimes', 'in:Active,Suspended'],
             'visible' => ['sometimes', 'boolean'],
         ]);
         $admin = $request->attributes->get('legacyUser', []);
         $agent = $store->mutate(function (array &$data) use ($validated, $admin): array {
+            $sourcePreviewId = trim((string) ($validated['sourcePreviewId'] ?? ''));
+            if ($sourcePreviewId !== '') {
+                foreach ($data['mobileAgents'] ?? [] as $existingAgent) {
+                    if ((string) ($existingAgent['sourcePreviewId'] ?? '') !== $sourcePreviewId) continue;
+                    unset($existingAgent['password'], $existingAgent['authUserId']);
+                    return $existingAgent;
+                }
+                $validated['sourcePreviewId'] = $sourcePreviewId;
+            }
             $nextId = (int) ($data['nextId'] ?? 1000);
             foreach (['users', 'mobileAgents'] as $collection) {
                 foreach ($data[$collection] ?? [] as $record) {
@@ -1118,6 +1128,11 @@ final class AdminController extends Controller
                 if ((string) ($agent['id'] ?? '') !== $id) continue;
                 $removed = $data['mobileAgents'][$index];
                 array_splice($data['mobileAgents'], $index, 1);
+                if (! empty($removed['sourcePreviewId'])) {
+                    $data['mobileAgentPreviewHiddenIds'] ??= [];
+                    $data['mobileAgentPreviewHiddenIds'][] = (string) $removed['sourcePreviewId'];
+                    $data['mobileAgentPreviewHiddenIds'] = array_values(array_unique($data['mobileAgentPreviewHiddenIds']));
+                }
                 $data['adminAudit'] ??= [];
                 $data['adminAudit'][] = [
                     'action' => 'mobile_agent_deleted',
@@ -1132,6 +1147,46 @@ final class AdminController extends Controller
 
         if (! $deleted) return response()->json(['error' => 'Agent not found.'], 404);
         return response()->json(['success' => true]);
+    }
+
+    public function hiddenMobileAgentPreviewIds(LegacyDataStore $store): JsonResponse
+    {
+        $ids = array_values(array_unique(array_map(
+            'strval',
+            $store->read()['mobileAgentPreviewHiddenIds'] ?? [],
+        )));
+
+        return response()->json($ids);
+    }
+
+    public function hideMobileAgentPreview(Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $validated = $request->validate([
+            'id' => ['required', 'string', 'max:120'],
+        ]);
+        $admin = $request->attributes->get('legacyUser', []);
+        $id = trim($validated['id']);
+        if ($id === '') {
+            return response()->json(['error' => 'Preview Agent ID is required.'], 422);
+        }
+
+        $store->mutate(function (array &$data) use ($id, $admin): void {
+            $data['mobileAgentPreviewHiddenIds'] ??= [];
+            $data['mobileAgentPreviewHiddenIds'][] = $id;
+            $data['mobileAgentPreviewHiddenIds'] = array_values(array_unique(array_map(
+                'strval',
+                $data['mobileAgentPreviewHiddenIds'],
+            )));
+            $data['adminAudit'] ??= [];
+            $data['adminAudit'][] = [
+                'action' => 'mobile_agent_preview_hidden',
+                'entityId' => $id,
+                'actorId' => $admin['id'] ?? null,
+                'createdAt' => now()->toISOString(),
+            ];
+        });
+
+        return response()->json(['success' => true, 'id' => $id]);
     }
 
     private function normalizedPermissions(mixed $permissions): array

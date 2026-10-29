@@ -31,6 +31,7 @@ final class MobileAgentController extends Controller
         // Keep the mobile directory's established safe response fields.
         $agents = array_map(function (array $agent): array {
             unset($agent['password'], $agent['email'], $agent['authUserId'], $agent['loginEmail']);
+            unset($agent['sourcePreviewId']);
             $agent['displayName'] = $agent['displayName'] ?? $agent['name'] ?? '';
             $agent['profilePhoto'] = $agent['photo'] ?? $agent['profilePhoto'] ?? null;
             $agent['coverPhoto'] = $agent['coverPhoto'] ?? null;

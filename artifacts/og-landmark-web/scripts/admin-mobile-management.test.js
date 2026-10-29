@@ -231,7 +231,11 @@ test('Agent table shows profile thumbnails with bounded missing and broken-photo
   assert.doesNotMatch(source, /\['city-agents', Array\.isArray\(websiteAgents\)/);
   assert.match(source, /Showing \$\{agents\.length\} Mobile app Agents/);
   assert.match(source, /Website-only profiles are not listed here/);
-  assert.match(source, /Preview · read only/);
+  assert.match(source, /Edit local copy/);
+  assert.match(source, /Remove locally/);
+  assert.match(source, /sourcePreviewId: String\(previewSource\.id\)/);
+  assert.match(source, /\/admin\/mobile-agent-preview-hidden/);
+  assert.match(source, /The live Mobile app profile will not change/);
   assert.match(source, /<summary>Full profile<\/summary>/);
   assert.match(source, /\['Verified', agent\.verified == null/);
   assert.match(source, /api\('\/admin\/mobile-agents', \{ method: 'POST'/);
@@ -262,8 +266,8 @@ test('Admin Agents lists Mobile app profiles and assignment options show city', 
   assert.match(properties, /option\.disabled = agent\.contactOnly === true/);
   assert.match(properties, /save\.disabled = !assignable/);
   assert.match(html, /admin-property-management\.js\?v=property-agent-assignment-20261029-v14/);
-  assert.match(html, /og-api-base\.js\?v=agent-directory-source-fix-20261029-full-profile/);
-  assert.match(html, /admin-mobile-management\.js\?v=mobile-agent-directory-only-20261029-v3/);
+  assert.match(html, /og-api-base\.js\?v=local-preview-agent-crud-20261029-v1/);
+  assert.match(html, /admin-mobile-management\.js\?v=mobile-agent-local-copy-crud-20261029-v3/);
 });
 
 test('property table supports eligible batch approval and per-listing results', () => {

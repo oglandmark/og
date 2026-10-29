@@ -938,16 +938,27 @@ final class OgLandmarkApiTest extends TestCase
             'status' => 'Active',
             'approvalStatus' => 'Approved',
             'visible' => true,
+            'sourcePreviewId' => 'live-preview-42',
         ])->assertCreated()
             ->assertJsonPath('success', true)
             ->assertJsonPath('agent.name', 'Linked Agent')
             ->assertJsonPath('agent.city', 'Okara')
+            ->assertJsonPath('agent.sourcePreviewId', 'live-preview-42')
             ->assertJsonMissingPath('agent.authUserId');
 
         $agentId = $created->json('agent.id');
         $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
         $storedAgent = collect($data['mobileAgents'])->firstWhere('id', $agentId);
         $this->assertSame(42, $storedAgent['authUserId']);
+        $this->withToken($token)->getJson('/api/mobile-agents')
+            ->assertOk()->assertJsonMissingPath('0.sourcePreviewId');
+        $this->withToken($token)->postJson('/api/admin/mobile-agents', [
+            'name' => 'Duplicate snapshot',
+            'sourcePreviewId' => 'live-preview-42',
+        ])->assertCreated()->assertJsonPath('agent.id', $agentId)
+            ->assertJsonPath('agent.name', 'Linked Agent');
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $this->assertSame(1, collect($data['mobileAgents'])->where('sourcePreviewId', 'live-preview-42')->count());
 
         $this->withToken($token)->deleteJson('/api/admin/mobile-agents/'.$agentId)
             ->assertOk()->assertJsonPath('success', true);
@@ -957,7 +968,13 @@ final class OgLandmarkApiTest extends TestCase
             $data['mobileAgents'],
             fn (array $agent): bool => (string) $agent['id'] === (string) $agentId,
         )));
+        $this->assertSame(['live-preview-42'], $data['mobileAgentPreviewHiddenIds']);
         $this->assertSame(42, collect($data['users'])->firstWhere('id', 42)['id']);
+
+        $this->withToken($token)->postJson('/api/admin/mobile-agent-preview-hidden', ['id' => 'live-preview-only'])
+            ->assertOk()->assertJsonPath('success', true);
+        $this->withToken($token)->getJson('/api/admin/mobile-agent-preview-hidden')
+            ->assertOk()->assertExactJson(['live-preview-42', 'live-preview-only']);
 
         $this->withToken($token)->deleteJson('/api/admin/mobile-agents/'.$agentId)->assertNotFound();
     }
@@ -972,6 +989,8 @@ final class OgLandmarkApiTest extends TestCase
         $this->withToken($userToken)->postJson('/api/admin/mobile-agents', ['name' => 'Unauthorized'])
             ->assertForbidden();
         $this->withToken($userToken)->deleteJson('/api/admin/mobile-agents/1')->assertForbidden();
+        $this->withToken($userToken)->getJson('/api/admin/mobile-agent-preview-hidden')->assertForbidden();
+        $this->withToken($userToken)->postJson('/api/admin/mobile-agent-preview-hidden', ['id' => 'live-1'])->assertForbidden();
         $this->postJson('/api/admin/mobile-agents', ['name' => 'Unauthenticated'])->assertForbidden();
     }
 

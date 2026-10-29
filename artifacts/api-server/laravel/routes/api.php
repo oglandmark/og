@@ -75,6 +75,8 @@ $registerRoutes = static function (): void {
             Route::post('/admin/mobile-agents', [AdminController::class, 'createMobileAgent']);
             Route::patch('/admin/mobile-agents/{id}', [AdminController::class, 'updateMobileAgent']);
             Route::delete('/admin/mobile-agents/{id}', [AdminController::class, 'deleteMobileAgent']);
+            Route::get('/admin/mobile-agent-preview-hidden', [AdminController::class, 'hiddenMobileAgentPreviewIds']);
+            Route::post('/admin/mobile-agent-preview-hidden', [AdminController::class, 'hideMobileAgentPreview']);
             Route::get('/admin/city-agents', [AdminController::class, 'cityAgents']);
             Route::get('/admin/developer-projects', [AdminController::class, 'developerProjects']);
             Route::get('/mobile/banners/all', [AdminController::class, 'mobileBanners']);

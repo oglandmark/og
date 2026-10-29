@@ -91,6 +91,11 @@ test('only admin sessions are persisted and logout recovery clears all dashboard
   assert.equal(isAdminUser({ role: 'User', permissions: ['admin'] }), true);
   assert.equal(persistSession(storage, 'permission-admin-token', { id: 4, role: 'User', permissions: ['admin'] }), true);
   assert.equal(storage.getItem('og_token'), 'permission-admin-token');
+  assert.deepEqual(JSON.parse(storage.getItem('og_user')), {
+    id: 4,
+    role: 'Admin',
+    permissions: ['admin'],
+  });
   assert.equal(persistSession(storage, 'buyer-token', { role: 'User', permissions: [] }), false);
 
   clearSession(storage);
@@ -107,6 +112,6 @@ test('admin page loads the OTP/session bridge before the compiled dashboard and 
 
   assert.notEqual(bridgeIndex, -1);
   assert.ok(bridgeIndex < bundleIndex, 'auth compatibility must mount before the dashboard');
-  assert.match(html, /admin-auth-compatibility\.js\?v=permission-admin-local-login-20261029/);
+  assert.match(html, /admin-auth-compatibility\.js\?v=permission-admin-dashboard-guard-20261029/);
   assert.match(management, /id:\s*profile\s*\?\s*String\(profile\.id\)\s*:\s*null/);
 });

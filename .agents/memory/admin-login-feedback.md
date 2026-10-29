@@ -9,8 +9,8 @@ Credential and OTP failures must be displayed in the currently visible stage of 
 
 **How to apply:** Show credential-stage responses beside the admin login form. Use the OTP panel for errors only after the OTP stage is visible.
 
-Admin session checks must accept the server-issued `admin` permission even when the canonical account role is `User`; do not require the public role string to be `Admin`.
+Admin session checks must accept the server-issued `admin` permission even when the canonical account role is `User`. The legacy dashboard's client guard checks only the saved role string, so its browser-only session profile must project a verified admin permission as role `Admin`; keep the server account canonical as `User`.
 
-**Why:** The app keeps staff access in permissions while public accounts remain `User`, so strict role checks can reject a valid administrator after successful credential verification.
+**Why:** The app keeps staff access in permissions while public accounts remain `User`; a role-only client guard otherwise logs a valid administrator out immediately after sign-in.
 
-**How to apply:** Use the returned permissions for Admin login/session acceptance and keep API authorization server-side.
+**How to apply:** Normalize the local dashboard profile during both login and session recovery, preserve its permission list, and continue enforcing authorization from server-owned account data.

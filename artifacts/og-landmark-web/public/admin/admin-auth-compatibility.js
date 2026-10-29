@@ -66,8 +66,11 @@
 
   function persistSession(storage, token, user) {
     if (!token || !isAdminUser(user)) return false;
+    const dashboardUser = String(user.role || '').trim().toLowerCase() === 'admin'
+      ? user
+      : { ...user, role: 'Admin' };
     storage.setItem(TOKEN_KEY, token);
-    storage.setItem(USER_KEY, JSON.stringify(user));
+    storage.setItem(USER_KEY, JSON.stringify(dashboardUser));
     storage.setItem(ADMIN_AUTH_KEY, 'true');
     return true;
   }

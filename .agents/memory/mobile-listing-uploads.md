@@ -17,9 +17,9 @@ Mobile clients must normalize relative image and video paths to absolute URLs at
 
 Persist Laravel media links with the canonical `/api/...` path, not the preview-only `/api-legacy/api/...` alias. Rewrite older stored alias paths when resolving media in web and native clients.
 
-**Why:** The preview alias is registered for Replit routing, while production website requests use `/api`; persisting the alias can make uploaded photos unreachable outside preview.
+**Why:** The preview alias is registered for Replit routing, while production uses `/api`; persisting the alias can make uploaded photos unreachable outside preview. Native image requests also need the preview alias directly.
 
-**How to apply:** Return canonical API media URLs from Laravel and test old and new paths against both preview and production origins. On the local website Admin, translate canonical `/api/admin/property-media/...` image/video sources to the preview proxy path `/api-legacy/api/admin/property-media/...`; native image requests do not pass through the fetch rewrite.
+**How to apply:** Return canonical API media URLs from Laravel and test old and new paths against both preview and production origins. Resolve canonical `/api/admin/property-media/...` sources to `/api-legacy/api/admin/property-media/...` for Replit web and native previews, while keeping production on `/api`. Native image requests do not pass through the fetch rewrite.
 
 Normalize selected photos to compressed JPEG on-device before upload; accept common video containers explicitly and return size-limit errors separately from unsupported-format errors.
 

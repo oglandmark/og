@@ -7,6 +7,13 @@
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   })[char]);
+  const fileSizeLabel = (bytes) => {
+    if (!Number.isFinite(Number(bytes)) || Number(bytes) < 0) return 'size unknown';
+    const size = Number(bytes);
+    return size >= 1024 * 1024
+      ? `${(size / (1024 * 1024)).toFixed(1)} MiB`
+      : `${Math.max(1, Math.round(size / 1024))} KiB`;
+  };
   const mediaUrl = (value) => {
     const source = String(value ?? '').trim().replace(
       /\/api-legacy\/api(?=\/admin\/property-media\/)/i,
@@ -111,7 +118,11 @@
       },
     });
     const payload = response.status === 204 ? null : await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload?.error || payload?.message || `Request failed (${response.status})`);
+    const validationDetails = Object.values(payload?.errors || {})
+      .flatMap((messages) => Array.isArray(messages) ? messages : [messages])
+      .filter((message) => typeof message === 'string')
+      .join(' ');
+    if (!response.ok) throw new Error(validationDetails || payload?.error || payload?.message || `Request failed (${response.status})`);
     return payload;
   }
 
@@ -1046,7 +1057,10 @@
       const preview = wrap.querySelector('[data-banner-upload-preview]');
       const typeSelect = wrap.querySelector('select[name="type"]');
       const syncBannerMediaType = () => {
-        if (input) input.accept = 'image/*,video/*,.jpg,.jpeg,.png,.webp,.mp4,.mov';
+        if (!input) return;
+        input.accept = typeSelect?.value === 'video'
+          ? 'video/mp4,video/quicktime,.mp4,.mov'
+          : 'image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp';
       };
       typeSelect?.addEventListener('change', syncBannerMediaType);
       syncBannerMediaType();
@@ -1067,7 +1081,7 @@
         }
         media.style.cssText = 'display:block;width:min(100%,420px);max-height:220px;object-fit:cover;border-radius:8px;background:#0b1f3a';
         const label = document.createElement('small');
-        label.textContent = `Selected file: ${file.name}`;
+        label.textContent = `Selected file: ${file.name} (${fileSizeLabel(file.size)})`;
         preview.append(media, label);
       });
     }
@@ -1107,6 +1121,35 @@
           message.textContent = validationMessage;
           form.prepend(message);
           return;
+        }
+      }
+      if (key === 'banners') {
+        const file = form.elements.media?.files?.[0];
+        if (file) {
+          const type = form.elements.type.value;
+          const extension = file.name.split('.').pop()?.toLowerCase();
+          const allowedExtension = type === 'video'
+            ? ['mp4', 'mov'].includes(extension)
+            : ['jpg', 'jpeg', 'png', 'webp'].includes(extension);
+          const maxBytes = (type === 'video' ? 300 : 20) * 1024 * 1024;
+          if (!allowedExtension) {
+            const message = document.createElement('div');
+            message.className = 'og-mm-error';
+            message.setAttribute('role', 'alert');
+            message.textContent = type === 'video'
+              ? 'Choose an MP4 or MOV video for this banner.'
+              : 'Choose a JPG, PNG or WebP image for this banner.';
+            form.prepend(message);
+            return;
+          }
+          if (file.size > maxBytes) {
+            const message = document.createElement('div');
+            message.className = 'og-mm-error';
+            message.setAttribute('role', 'alert');
+            message.textContent = `${file.name} is ${fileSizeLabel(file.size)}; the ${type} limit is ${type === 'video' ? '300' : '20'} MiB.`;
+            form.prepend(message);
+            return;
+          }
         }
       }
       submit.disabled = true;
@@ -1179,6 +1222,7 @@
           const type = form.elements.type.value;
           const currentMediaUrl = type === 'video' ? payload.videoUrl : payload.imageUrl;
           if (bannerFile) {
+            submit.textContent = `Uploading ${type}…`;
             const uploadForm = new FormData();
             uploadForm.append(type === 'video' ? 'video' : 'image', bannerFile);
             const uploaded = await api(type === 'video' ? '/upload/video' : '/upload/single', { method: 'POST', body: uploadForm });
@@ -1202,6 +1246,7 @@
           payload.type = type;
           if (type === 'video') payload.imageUrl = '';
           else payload.videoUrl = '';
+          submit.textContent = 'Saving banner…';
         }
         if (key === 'banners' && editing && item.isPreviewOnly) {
           payload.sourcePreviewId = String(item.sourcePreviewId);
@@ -1229,7 +1274,7 @@
         await renderSection(key, modal.querySelector('.og-mm-content'));
       } catch (error) {
         const message = document.createElement('div'); message.className = 'og-mm-error'; message.textContent = error.message || 'Could not save record.';
-        form.prepend(message); submit.disabled = false;
+        form.prepend(message); submit.disabled = false; submit.textContent = 'Save';
       }
     });
   }

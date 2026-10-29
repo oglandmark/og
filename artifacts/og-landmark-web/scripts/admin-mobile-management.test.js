@@ -96,7 +96,12 @@ test('admin banner editor can replace uploaded images and videos and confirm del
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   assert.match(source, /Current \$\{item\.type === 'video' \? 'video' : 'image'\}/);
   assert.match(source, /Replace media file \(optional\)/);
-  assert.ok(source.includes("input.accept = 'image/*,video/*,.jpg,.jpeg,.png,.webp,.mp4,.mov'"));
+  assert.match(source, /video\/mp4,video\/quicktime,\.mp4,\.mov/);
+  assert.match(source, /image\/jpeg,image\/png,image\/webp,\.jpg,\.jpeg,\.png,\.webp/);
+  assert.match(source, /const maxBytes = \(type === 'video' \? 300 : 20\) \* 1024 \* 1024/);
+  assert.match(source, /Uploading \$\{type\}…/);
+  assert.match(source, /Saving banner…/);
+  assert.match(source, /Object\.values\(payload\?\.errors \|\| \{\}\)/);
   assert.match(source, /api\(type === 'video' \? '\/upload\/video' : '\/upload\/single'/);
   assert.match(source, /payload\.videoUrl = uploaded\.url\.trim\(\)/);
   assert.match(source, /payload\.imageUrl = uploaded\.url\.trim\(\)/);
@@ -197,7 +202,12 @@ test('admin banner editor can replace uploaded images and videos and confirm del
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   assert.match(source, /Current \$\{item\.type === 'video' \? 'video' : 'image'\}/);
   assert.match(source, /Replace media file \(optional\)/);
-  assert.ok(source.includes("input.accept = 'image/*,video/*,.jpg,.jpeg,.png,.webp,.mp4,.mov'"));
+  assert.match(source, /video\/mp4,video\/quicktime,\.mp4,\.mov/);
+  assert.match(source, /image\/jpeg,image\/png,image\/webp,\.jpg,\.jpeg,\.png,\.webp/);
+  assert.match(source, /const maxBytes = \(type === 'video' \? 300 : 20\) \* 1024 \* 1024/);
+  assert.match(source, /Uploading \$\{type\}…/);
+  assert.match(source, /Saving banner…/);
+  assert.match(source, /Object\.values\(payload\?\.errors \|\| \{\}\)/);
   assert.match(source, /api\(type === 'video' \? '\/upload\/video' : '\/upload\/single'/);
   assert.match(source, /payload\.videoUrl = uploaded\.url\.trim\(\)/);
   assert.match(source, /payload\.imageUrl = uploaded\.url\.trim\(\)/);
@@ -279,7 +289,7 @@ test('Admin Agents lists Mobile app profiles and assignment options show city', 
   assert.match(properties, /save\.disabled = !assignable/);
   assert.match(html, /admin-property-management\.js\?v=property-agent-assignment-20261029-v14/);
   assert.match(html, /og-api-base\.js\?v=local-preview-banner-read-20261029-v2/);
-  assert.match(html, /admin-mobile-management\.js\?v=admin-mobile-project-crud-20261029-v5/);
+  assert.match(html, /admin-mobile-management\.js\?v=admin-banner-upload-feedback-20261029-v6/);
 });
 
 test('property table supports eligible batch approval and per-listing results', () => {

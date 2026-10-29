@@ -638,6 +638,56 @@ final class OgLandmarkApiTest extends TestCase
         $this->assertStringStartsWith('/api/admin/property-media/', $videoResponse->json('url'));
     }
 
+    public function test_admin_can_upload_banner_media_then_save_both_banner_types(): void
+    {
+        config(['app.env' => 'local']);
+        $this->app['env'] = 'local';
+        Storage::fake('public');
+        $token = $this->adminToken();
+
+        $headers = [
+            'HTTP_ACCEPT' => 'application/json',
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+        ];
+        $this->withToken($token)->getJson('/api/admin/mobile/banners')->assertOk();
+        $imageUpload = $this->call('POST', '/api/upload/single', [], [], [
+            'image' => UploadedFile::fake()->image('banner.jpg'),
+        ], $headers)->assertOk();
+        $imageUrl = $imageUpload->json('url');
+        $imageSave = $this->withToken($token)->postJson('/api/admin/mobile/banners', [
+            'type' => 'image',
+            'category' => 'homes',
+            'title' => 'Uploaded image banner',
+            'imageUrl' => $imageUrl,
+            'active' => true,
+            'order' => 1,
+        ]);
+        $imageBanner = $imageSave->assertCreated()->json('banner');
+
+        $video = UploadedFile::fake()->createWithContent('banner.mp4', 'test-video');
+        $video->mimeType('video/mp4');
+        $videoUpload = $this->call('POST', '/api/upload/video', [], [], [
+            'video' => $video,
+        ], $headers)->assertOk();
+        $videoUrl = $videoUpload->json('url');
+        $videoBanner = $this->withToken($token)->postJson('/api/admin/mobile/banners', [
+            'type' => 'video',
+            'category' => 'homes',
+            'title' => 'Uploaded video banner',
+            'videoUrl' => $videoUrl,
+            'active' => true,
+            'order' => 2,
+        ])->assertCreated()->json('banner');
+
+        $this->assertSame($imageUrl, $imageBanner['imageUrl']);
+        $this->assertSame($videoUrl, $videoBanner['videoUrl']);
+        foreach ([$imageUrl, $videoUrl] as $url) {
+            $this->assertStringStartsWith('/api/admin/property-media/', $url);
+            Storage::disk('public')->assertExists('listing-media/'.basename(parse_url($url, PHP_URL_PATH)));
+            $this->get($url)->assertOk();
+        }
+    }
+
     public function test_mobile_media_upload_requires_authentication_and_rejects_unsupported_files(): void
     {
         Storage::fake('public');

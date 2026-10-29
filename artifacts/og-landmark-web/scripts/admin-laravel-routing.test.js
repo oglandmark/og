@@ -52,6 +52,9 @@ test('local Replit admin property queues and review actions use Laravel routes',
   await window.fetch('/api/admin/properties/42', { method: 'DELETE' });
   await window.fetch('/api/admin/properties/42/review');
   await window.fetch('/api/admin/properties/42/media', { method: 'PATCH' });
+  const mediaForm = new FormData();
+  mediaForm.append('_method', 'PATCH');
+  await window.fetch('/api/admin/properties/42/media', { method: 'POST', body: mediaForm });
   await window.fetch('/api/admin/properties/42/approve', { method: 'PATCH' });
   await window.fetch('/api/admin/properties/42/reject', { method: 'PATCH' });
   await window.fetch('/api/admin/properties/42/request-changes', { method: 'PATCH' });
@@ -66,6 +69,7 @@ test('local Replit admin property queues and review actions use Laravel routes',
     ['/api-legacy/api/admin/properties/42', 'DELETE'],
     ['/api-legacy/api/admin/properties/42/review', 'GET'],
     ['/api-legacy/api/admin/properties/42/media', 'PATCH'],
+    ['/api-legacy/api/admin/properties/42/media', 'POST'],
     ['/api-legacy/api/properties/42/approve', 'PATCH'],
     ['/api-legacy/api/properties/42/reject', 'PATCH'],
     ['/api-legacy/api/properties/42/request-changes', 'PATCH'],

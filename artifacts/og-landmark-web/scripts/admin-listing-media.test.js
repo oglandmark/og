@@ -127,7 +127,9 @@ test('Admin removes stale demo rows without deleting real listings or mobile cat
 
 test('Admin can filter and persist featured status for live mobile properties', () => {
   assert.match(propertyManagementSource, /data-og-featured-header/);
-  assert.match(propertyManagementSource, /\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}\/feature/);
+  assert.match(propertyManagementSource, /propertyPromotionPath\(property\.id, 'feature'\)/);
+  assert.match(propertyManagementSource, /window\.__OG_ADMIN_LARAVEL_LOCAL__ \? `\/api-legacy\/api\$\{path\}` : path/);
+  assert.match(propertyManagementSource, /path\.startsWith\('\/api-legacy\/api\/'\) \? path : `\$\{apiBase\(\)\}\$\{path\}`/);
   assert.match(propertyManagementSource, /JSON\.stringify\(\{ featured: nextFeatured \}\)/);
   assert.match(propertyManagementSource, /property\.isDemo \|\| property\.isProject/);
   assert.match(propertyManagementSource, /featuredFilter/);
@@ -138,7 +140,7 @@ test('Admin can filter and persist featured status for live mobile properties', 
 
 test('Admin can select and filter persistent Recommended listings for mobile Home', () => {
   assert.match(propertyManagementSource, /data-og-recommended-header/);
-  assert.match(propertyManagementSource, /\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}\/recommend/);
+  assert.match(propertyManagementSource, /propertyPromotionPath\(property\.id, 'recommend'\)/);
   assert.match(propertyManagementSource, /JSON\.stringify\(\{ recommended: nextRecommended \}\)/);
   assert.match(propertyManagementSource, /property\.isDemo \|\| property\.isProject/);
   assert.match(propertyManagementSource, /recommendedFilter/);

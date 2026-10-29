@@ -70,6 +70,24 @@ test('local Replit admin property queues and review actions use Laravel routes',
   ]);
 });
 
+test('explicit local Laravel property promotion routes bypass proxy rewriting', async () => {
+  const { window, calls } = createBrowser('og-landmark.replit.dev');
+
+  await window.fetch('/api-legacy/api/admin/properties/42/feature', {
+    method: 'PATCH',
+    body: JSON.stringify({ featured: true }),
+  });
+  await window.fetch('/api-legacy/api/admin/properties/42/recommend', {
+    method: 'PATCH',
+    body: JSON.stringify({ recommended: true }),
+  });
+
+  assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
+    ['/api-legacy/api/admin/properties/42/feature', 'PATCH'],
+    ['/api-legacy/api/admin/properties/42/recommend', 'PATCH'],
+  ]);
+});
+
 test('local Replit agent directory edits use Laravel and become PATCH requests', async () => {
   const { window, calls } = createBrowser('og-landmark.replit.dev');
 

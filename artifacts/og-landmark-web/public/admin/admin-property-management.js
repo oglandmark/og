@@ -155,6 +155,10 @@
     && matchesRecommended(property, recommended)
     && matchesLatest(property, latest);
   const apiBase = () => String(window.__OG_API_BASE__ || '/api').replace(/\/+$/, '');
+  const propertyPromotionPath = (id, action) => {
+    const path = `/admin/properties/${encodeURIComponent(id)}/${action}`;
+    return window.__OG_ADMIN_LARAVEL_LOCAL__ ? `/api-legacy/api${path}` : path;
+  };
   const propertyList = (payload) => {
     if (Array.isArray(payload)) return payload;
     if (Array.isArray(payload?.properties)) return payload.properties;
@@ -898,7 +902,8 @@
 
   async function request(path, options = {}) {
     const multipart = typeof FormData !== 'undefined' && options.body instanceof FormData;
-    const response = await originalFetch(`${apiBase()}${path}`, {
+    const endpoint = path.startsWith('/api-legacy/api/') ? path : `${apiBase()}${path}`;
+    const response = await originalFetch(endpoint, {
       ...options,
       headers: { ...authHeaders(), ...(options.headers || {}), ...(options.body && !multipart ? { 'Content-Type': 'application/json' } : {}) },
     });
@@ -1047,7 +1052,7 @@
     button.dataset.pending = 'true';
     try {
       const updated = await request(
-        `/admin/properties/${encodeURIComponent(property.id)}/feature`,
+        propertyPromotionPath(property.id, 'feature'),
         { method: 'PATCH', body: JSON.stringify({ featured: nextFeatured }) },
       );
       const savedProperty = updated?.property || updated;
@@ -1075,7 +1080,7 @@
     button.dataset.pending = 'true';
     try {
       const updated = await request(
-        `/admin/properties/${encodeURIComponent(property.id)}/recommend`,
+        propertyPromotionPath(property.id, 'recommend'),
         { method: 'PATCH', body: JSON.stringify({ recommended: nextRecommended }) },
       );
       const savedProperty = updated?.property || updated;

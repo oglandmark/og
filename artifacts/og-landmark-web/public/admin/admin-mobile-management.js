@@ -157,6 +157,7 @@
       .og-mm-agent-photo-preview{display:flex;align-items:center;gap:10px;margin-top:8px}.og-mm-agent-photo-preview img{width:72px;height:72px;object-fit:cover;border:1px solid #cbd5e1;border-radius:50%;background:#f1f5f9}.og-mm-agent-photo-preview span{color:#64748b;font-size:11px}
       .og-mm-agent-list-photo{display:flex;align-items:center;justify-content:center;width:40px;height:40px;overflow:hidden;border:1px solid #e2e8f0;border-radius:50%;background:#f8fafc;color:#64748b;font-size:9px;text-align:center;line-height:1.15}
       .og-mm-agent-list-photo img{display:block;width:100%;height:100%;object-fit:cover}.og-mm-agent-list-photo-fallback{padding:3px}
+      .og-mm-agent-details{margin-top:7px;color:#475569;font-size:11px}.og-mm-agent-details summary{cursor:pointer;color:#0b1f3a;font-weight:700}.og-mm-agent-details dl{display:grid;gap:5px;margin:7px 0 0;max-width:420px}.og-mm-agent-details dl>div{display:grid;grid-template-columns:92px 1fr;gap:8px}.og-mm-agent-details dt{color:#64748b;font-weight:700}.og-mm-agent-details dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.og-mm-readonly{display:inline-flex;padding:7px 9px;border-radius:8px;background:#f1f5f9;color:#64748b;font-size:10px;font-weight:700}
       .og-mm-agent-photo-status{display:block;min-height:16px;margin-top:4px;color:#64748b;font-size:11px}.og-mm-agent-photo-status.error{color:#b91c1c}.og-mm-agent-photo-status.success{color:#166534}
       .og-mm-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:12px 0 16px}
       .og-mm-stat{padding:13px;border:1px solid #e2e8f0;border-radius:10px;background:#fff}.og-mm-stat span{display:block;color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}.og-mm-stat strong{display:block;margin-top:5px;font-size:21px}
@@ -186,48 +187,48 @@
         return [];
       }
     };
-    const [websiteAgents, mobileAgents, agentAccounts] = await Promise.all([
-      readAgentSource('/city-agents', 'Website directory'),
+    const [cityProfiles, mobileAgents, agentAccounts, previewMobileAgents] = await Promise.all([
+      readAgentSource('/city-agents', 'Linked Agent city data'),
       readAgentSource('/admin/mobile-agents', 'Mobile directory'),
       readAgentSource('/admin/users?role=agent', 'Agent accounts'),
+      window.__OG_ADMIN_LARAVEL_LOCAL__
+        ? readAgentSource('/preview/live/mobile-agents', 'Mobile public preview')
+        : Promise.resolve([]),
     ]);
+    const cityProfilesByAccount = new Map();
+    for (const record of cityProfiles) {
+      const userId = String(record.userId || record.accountId || record.authUserId || '').trim();
+      if (userId && !cityProfilesByAccount.has(userId)) cityProfilesByAccount.set(userId, record);
+    }
     const merged = new Map();
     const sources = [
-      ['city-agents', Array.isArray(websiteAgents) ? websiteAgents : []],
       ['mobile-agents', Array.isArray(mobileAgents) ? mobileAgents : []],
+      ['mobile-preview', Array.isArray(previewMobileAgents) ? previewMobileAgents : []],
       ['agent-accounts', Array.isArray(agentAccounts) ? agentAccounts.filter((record) => String(record.role || '').toLowerCase() === 'agent') : []],
     ];
-    const phoneCounts = new Map();
-    const normalizedPhoneFor = (record) => {
-      const phone = String(record.phone || record.mobile || '').replace(/\D/g, '');
-      return phone.length === 12 && phone.startsWith('92') ? `0${phone.slice(2)}`
-        : phone.length === 10 && phone.startsWith('3') ? `0${phone}` : phone;
-    };
-    for (const [collection, records] of sources) {
-      for (const record of records) {
-        const phone = normalizedPhoneFor(record);
-        if (phone) {
-          const key = `${collection}:${phone}`;
-          phoneCounts.set(key, (phoneCounts.get(key) || 0) + 1);
-        }
-      }
-    }
     for (const [collection, records] of sources) {
       for (const record of records) {
         if (!record || typeof record !== 'object') continue;
-        const normalizedPhone = normalizedPhoneFor(record);
         const email = String(record.email || record.loginEmail || '').trim().toLowerCase();
         const userId = String(record.userId || record.accountId || record.authUserId || record.agentUserId
           || (collection === 'agent-accounts' ? record.id : '')).trim();
-        const nameKey = String(record.displayName || record.name || '').trim().toLowerCase().replace(/\s+/g, ' ');
-        const sharedPhone = normalizedPhone && ['city-agents', 'mobile-agents', 'agent-accounts'].some((source) =>
-          (phoneCounts.get(`${source}:${normalizedPhone}`) || 0) > 1);
-        const phoneIdentity = sharedPhone ? `phone-name:${normalizedPhone}:${nameKey}` : `phone:${normalizedPhone}`;
-        const identity = userId ? `user:${userId}` : email ? `email:${email}` : normalizedPhone ? phoneIdentity : `${collection}:${record.id}`;
+        const cityProfile = userId && collection !== 'agent-accounts' ? cityProfilesByAccount.get(userId) : null;
+        const enrichedRecord = cityProfile ? {
+          ...record,
+          city: record.city || record.cityName || record.officeCity || cityProfile.city || cityProfile.cityName || cityProfile.officeCity,
+          phone: record.phone || cityProfile.phone,
+          agency: record.agency || cityProfile.agency,
+          specialization: record.specialization || cityProfile.specialization,
+          name: record.name || cityProfile.name,
+          displayName: record.displayName || cityProfile.displayName,
+        } : record;
+        const identity = userId ? `user:${userId}` : email ? `email:${email}`
+          : ['mobile-agents', 'mobile-preview'].includes(collection) ? `mobile-profile:${record.id}`
+            : `${collection}:${record.id}`;
         const existing = merged.get(identity);
         if (collection === 'agent-accounts' && !existing) continue;
         if (existing) {
-          for (const [key, value] of Object.entries(record)) {
+          for (const [key, value] of Object.entries(enrichedRecord)) {
             if (value !== null && value !== '' && (existing[key] === undefined || existing[key] === null || existing[key] === '')) {
               existing[key] = value;
             }
@@ -238,7 +239,7 @@
           }
         } else {
           merged.set(identity, {
-            ...record,
+            ...enrichedRecord,
             accountId: collection === 'agent-accounts' ? String(record.id) : '',
             accountOnly: collection === 'agent-accounts',
             directorySources: collection === 'agent-accounts' ? [] : [{ collection, id: record.id }],
@@ -427,24 +428,43 @@
         ? `<span class="og-mm-agent-list-photo"><img data-agent-list-photo src="${esc(mediaUrl(photo))}" alt="${esc(`${name} profile photo`)}" loading="lazy" decoding="async"><span class="og-mm-agent-list-photo-fallback" data-agent-photo-fallback hidden>Photo unavailable</span></span>`
         : '<span class="og-mm-agent-list-photo og-mm-agent-list-photo-fallback">No photo</span>';
       const sources = new Set((agent.directorySources || []).map(({ collection }) =>
-        collection === 'city-agents' ? 'Website' : collection === 'mobile-agents' ? 'Mobile app' : ''));
+        collection === 'mobile-agents' ? 'Mobile app'
+          : collection === 'mobile-preview' ? 'Mobile app preview' : ''));
       if (agent.accountId) sources.add('Agent account');
       const sourceLabel = [...sources].filter(Boolean).join(' + ') || 'Agent account';
-      const actions = agent.directorySources?.length
+      const editableDirectory = agent.directorySources?.some(({ collection }) => collection === 'mobile-agents');
+      const actions = editableDirectory
         ? `<button class="og-mm-action" data-action="edit-agent" data-index="${agents.indexOf(agent)}">Edit</button><button class="og-mm-action danger" data-action="delete-agent" data-index="${agents.indexOf(agent)}">Remove</button>`
+        : agent.directorySources?.some(({ collection }) => collection === 'mobile-preview')
+          ? '<span class="og-mm-readonly">Preview · read only</span>'
         : '<a class="og-mm-action" href="/admin/users?role=agent">Manage in Users</a>';
+      const profileFacts = [
+        ['Title', agent.title],
+        ['About', agent.about],
+        ['Areas', Array.isArray(agent.areas) ? agent.areas.join(', ') : agent.areas],
+        ['Specialties', Array.isArray(agent.specialties) ? agent.specialties.join(', ') : agent.specialties || agent.specialization],
+        ['WhatsApp', agent.whatsapp],
+        ['Experience', agent.years ? `${agent.years} years` : ''],
+        ['Rating', agent.rating != null ? `${agent.rating}${agent.reviewCount ? ` (${agent.reviewCount} reviews)` : ''}` : ''],
+        ['Listings', agent.listings ?? agent.propertiesCount],
+        ['Verified', agent.verified == null ? '' : agent.verified ? 'Yes' : 'No'],
+      ].filter(([, value]) => value !== null && value !== undefined && value !== '');
+      const fullProfile = profileFacts.length
+        ? `<details class="og-mm-agent-details"><summary>Full profile</summary><dl>${profileFacts.map(([label, value]) =>
+          `<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl></details>`
+        : '';
       return `<tr>
       <td>${photoCell}</td>
-      <td><strong>${esc(name)}</strong><div>${esc(agent.agency || agent.specialization || 'Independent')} · ${esc(sourceLabel)}</div></td>
+      <td><strong>${esc(name)}</strong><div>${esc(agent.agency || agent.specialization || 'Independent')} · ${esc(sourceLabel)}</div>${fullProfile}</td>
       <td>${esc(agent.city || '—')}<div>${esc(agent.phone || '')}</div></td>
       <td>${esc(agent.email || agent.loginEmail || '—')}</td>
-      <td><span class="og-mm-pill ${agent.status === 'Suspended' || agent.visible === false ? 'off' : ''}">${esc(agent.status || 'Active')}${agent.visible === false ? ' · Hidden' : ''}</span></td>
+      <td><span class="og-mm-pill ${agent.status === 'Suspended' || agent.visible === false ? 'off' : ''}">${esc(agent.status || 'Active')}${agent.approvalStatus ? ` · ${esc(agent.approvalStatus)}` : ''}${agent.visible === false ? ' · Hidden' : ''}</span></td>
       <td><div class="og-mm-row-actions">${actions}</div></td></tr>`;
     }).join('');
     const warning = agentLoadWarnings.length
       ? `<div class="og-mm-error">Some Agent sources could not be loaded: ${esc(agentLoadWarnings.join(' · '))}</div>`
       : '';
-    content.innerHTML = `${warning}<div class="og-mm-note">Showing ${agents.length} unique Agents from the website and mobile directories. Matching profiles are combined; new Agents are added to the mobile directory and also appear on the website.</div>
+      content.innerHTML = `${warning}<div class="og-mm-note">Showing ${agents.length} Mobile app Agents. Website-only profiles are not listed here. Public mobile preview profiles are read-only; assignable Agents need a linked local Agent account. New Agents are added to the local mobile directory.</div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="og-mm-action primary" data-action="add-agent">Add mobile Agent</button></div>
       <div id="og-mm-agent-form-wrap"></div>
       <div style="overflow:auto"><table class="og-mm-table"><thead><tr><th>Photo</th><th>Agent</th><th>City / phone</th><th>Email</th><th>Directory status</th><th>Actions</th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="og-mm-empty">No Agent profiles or Agent accounts found.</td></tr>'}</tbody></table></div>`;

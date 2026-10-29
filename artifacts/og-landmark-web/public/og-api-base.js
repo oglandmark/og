@@ -56,7 +56,9 @@
     var laravelPath = null;
     var laravelRoot = localLaravelAdminBase;
 
-    if (pathname === '/api/users' && verb === 'GET') {
+    if (pathname === '/api/preview/live/mobile-agents' && verb === 'GET') {
+      laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
+    } else if (pathname === '/api/users' && verb === 'GET') {
       laravelPath = laravelRoot + '/admin/users';
     } else if (pathname === '/api/admin/users' && verb === 'GET') {
       laravelPath = laravelRoot + '/admin/users';

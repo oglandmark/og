@@ -224,31 +224,46 @@ test('Agent table shows profile thumbnails with bounded missing and broken-photo
   assert.match(source, /name="verified" \$\{agent\.verified !== false \? 'checked' : ''\}/);
   assert.match(source, /data-action="delete-agent"/);
   assert.match(source, /showAgentForm\(agent\)/);
-  assert.match(source, /readAgentSource\('\/city-agents'/);
+  assert.match(source, /readAgentSource\('\/city-agents', 'Linked Agent city data'\)/);
   assert.match(source, /readAgentSource\('\/admin\/mobile-agents'/);
   assert.match(source, /readAgentSource\('\/admin\/users\?role=agent'/);
+  assert.match(source, /window\.__OG_ADMIN_LARAVEL_LOCAL__[\s\S]*?readAgentSource\('\/preview\/live\/mobile-agents', 'Mobile public preview'\)/);
+  assert.doesNotMatch(source, /\['city-agents', Array\.isArray\(websiteAgents\)/);
+  assert.match(source, /Showing \$\{agents\.length\} Mobile app Agents/);
+  assert.match(source, /Website-only profiles are not listed here/);
+  assert.match(source, /Preview · read only/);
+  assert.match(source, /<summary>Full profile<\/summary>/);
+  assert.match(source, /\['Verified', agent\.verified == null/);
   assert.match(source, /api\('\/admin\/mobile-agents', \{ method: 'POST'/);
   assert.match(source, /record\.role \|\| ''\)\.toLowerCase\(\) === 'agent'/);
-  assert.match(source, /phone-name:\$\{normalizedPhone\}:\$\{nameKey\}/);
-  assert.match(source, /Showing \$\{agents\.length\} unique Agents/);
+  assert.match(source, /mobile-profile:\$\{record\.id\}/);
+  assert.doesNotMatch(source, /Showing \$\{agents\.length\} Agents from the website/);
   assert.match(source, /Manage in Users/);
   assert.match(source, /Some Agent sources could not be loaded/);
   assert.match(source, /directorySources\.push/);
 });
 
-test('Admin Agents uses the website directory endpoint and assignment options show city', () => {
+test('Admin Agents lists Mobile app profiles and assignment options show city', () => {
   const apiBase = fs.readFileSync(path.join(root, 'public/og-api-base.js'), 'utf8');
   const properties = fs.readFileSync(path.join(root, 'public/admin/admin-property-management.js'), 'utf8');
   const agents = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'public/admin/index.html'), 'utf8');
 
   assert.doesNotMatch(apiBase, /\/api\/admin\/city-agents/);
-  assert.match(agents, /readAgentSource\('\/city-agents', 'Website directory'\)/);
-  assert.match(properties, /request\('\/city-agents'\)/);
+  assert.match(apiBase, /pathname === '\/api\/preview\/live\/mobile-agents' && verb === 'GET'/);
+  assert.match(agents, /readAgentSource\('\/city-agents', 'Linked Agent city data'\)/);
+  assert.doesNotMatch(agents, /\['city-agents', Array\.isArray/);
   assert.match(properties, /cityProfilesByAccount\.get\(userId\)/);
-  assert.match(properties, /`\$\{agent\.name\} · \$\{agent\.city\}\$\{agent\.phone \? ` · \$\{agent\.phone\}` : ''\}`/);
-  assert.match(html, /og-api-base\.js\?v=agent-directory-source-fix-20261029/);
-  assert.match(html, /admin-mobile-management\.js\?v=agent-directory-source-fix-20261029/);
+  assert.match(properties, /request\('\/preview\/live\/mobile-agents'\)/);
+  assert.match(properties, /request\('\/city-agents'\)/);
+  assert.doesNotMatch(properties, /addContactOnlyProfile\(profile, 'website'\)/);
+  assert.match(properties, /\$\{agent\.name\} · \$\{agent\.city\}/);
+  assert.match(properties, /local account required/);
+  assert.match(properties, /option\.disabled = agent\.contactOnly === true/);
+  assert.match(properties, /save\.disabled = !assignable/);
+  assert.match(html, /admin-property-management\.js\?v=property-agent-assignment-20261029-v14/);
+  assert.match(html, /og-api-base\.js\?v=agent-directory-source-fix-20261029-full-profile/);
+  assert.match(html, /admin-mobile-management\.js\?v=mobile-agent-directory-only-20261029-v3/);
 });
 
 test('property table supports eligible batch approval and per-listing results', () => {

@@ -1290,12 +1290,13 @@
 
   async function loadAgents() {
     if (agentsLoaded) return;
-    const [profiles, cityProfiles, users] = await Promise.all([
+    const [profiles, cityProfiles, previewProfiles, users] = await Promise.all([
       request('/admin/mobile-agents').catch((error) => {
         agentDirectoryMessage = `Mobile Agent directory could not load: ${error.message}`;
         return [];
       }),
       request('/city-agents').catch(() => []),
+      window.__OG_ADMIN_LARAVEL_LOCAL__ ? request('/preview/live/mobile-agents').catch(() => []) : Promise.resolve([]),
       request('/admin/users').catch((error) => {
         agentDirectoryMessage = `Agent accounts could not be loaded: ${error.message}`;
         return [];
@@ -1346,8 +1347,28 @@
             || cityProfile?.city || cityProfile?.cityName || cityProfile?.officeCity || '',
         };
       });
+    const addContactOnlyProfile = (profile, kind) => {
+      if (!profile || typeof profile !== 'object') return;
+      const id = String(profile.id ?? '').trim();
+      const city = String(profile.city || profile.cityName || profile.officeCity || '').trim();
+      if (!id || !city || agents.some((agent) => agent.kind === kind && agent.id === id)) return;
+      agents.push({
+        ...profile,
+        id,
+        kind,
+        userId: '',
+        name: profile.displayName || profile.name || 'Agent',
+        phone: profile.phone || '',
+        city,
+        contactOnly: true,
+      });
+    };
+    for (const profile of Array.isArray(previewProfiles) ? previewProfiles : []) {
+      const existingMobile = agents.some((agent) => agent.id === String(profile?.id || '') && agent.userId);
+      if (!existingMobile) addContactOnlyProfile(profile, 'mobile-preview');
+    }
     if (!agents.length && !agentDirectoryMessage) {
-      agentDirectoryMessage = 'No published mobile Agents are available. Add, approve, and link an Agent profile in Admin → Agents.';
+      agentDirectoryMessage = 'No Agent profiles are available in the local directory.';
     }
     agentsLoaded = true;
   }
@@ -1394,21 +1415,28 @@
         const available = agents.filter((agent) => agent.city === citySelect.value);
         agentSelect.replaceChildren(new Option('Select an Agent', ''));
         for (const agent of available) {
-          const option = new Option(`${agent.name} · ${agent.city}${agent.phone ? ` · ${agent.phone}` : ''}`, agent.userId);
+          const option = new Option(
+            `${agent.name} · ${agent.city}${agent.phone ? ` · ${agent.phone}` : ''}${agent.contactOnly ? ' · local account required' : ''}`,
+            agent.userId || `${agent.kind}:${agent.id}`,
+          );
+          option.disabled = agent.contactOnly === true;
           agentSelect.appendChild(option);
         }
         const current = agents.find((agent) => agent.userId === currentAgentId && agent.city === citySelect.value);
         agentSelect.value = current?.userId || '';
-        empty.hidden = available.length > 0;
-        empty.textContent = agentDirectoryMessage || 'No active, published mobile Agents are available.';
-        save.disabled = available.length === 0;
+        const assignable = available.some((agent) => Boolean(agent.userId));
+        empty.hidden = assignable;
+        empty.textContent = available.length && !assignable
+          ? 'These directory profiles need a linked active Agent account before they can be assigned.'
+          : agentDirectoryMessage || 'No active, published mobile Agents are available.';
+        save.disabled = !assignable;
       };
       citySelect.addEventListener('change', renderAgentOptions);
       const preferredCity = agents.find((agent) => agent.userId === currentAgentId)?.city
         || (cities.includes(property.city) ? property.city : '');
       citySelect.value = preferredCity;
       renderAgentOptions();
-      if (!agents.length) {
+      if (!agents.some((agent) => agent.userId)) {
         const link = document.createElement('a');
         link.href = '/admin/mobile/agents';
         link.textContent = 'Manage Agents';

@@ -3,15 +3,15 @@ name: Mobile Agent directory
 description: Keep the bundled mobile Agent fallback and Admin-managed Agent directory consistent.
 ---
 
-The Admin dashboard is the source of truth for public Agent visibility. Import bundled legacy profiles into the managed directory once so Admin can edit or remove them; never show unmanaged bundled Agents as a fallback after the API directory is empty or unavailable.
+The Admin Agents page manages Mobile app Agent profiles only. Do not list website-only Agent profiles there; website profiles may enrich a Mobile profile only when an account link identifies the same Agent.
 
 The public Website Agent directory must enforce the same active, approved, and visible checks as the Mobile directory. Do not assume that a record in `mobileAgents` or `cityAgents` is automatically public.
 
 Agent cards can share a public contact phone. Do not use that phone alone as a unique profile key when it appears multiple times; keep distinct Agent IDs/names and only merge when an account or email links them, or when phone plus name identifies the same profile.
 
-**Why:** Agents visible in the app or website must be manageable from Admin. Unmanaged bundled profiles can reappear after deletion, and website-only records otherwise remain invisible to the Agent dashboard.
+**Why:** The user clarified that Admin Agents is specifically for Mobile app Agents; website-only profiles in that list are misleading and can be mistaken for app profiles.
 
-**How to apply:** Load both `cityAgents` and `mobileAgents` in Admin; create new shared profiles in `mobileAgents`, and update/delete every linked source. Keep `/api/mobile-agents` restricted to mobile records and `/api/agents` inclusive of both sources. Apply status, approval, and visibility gates on every public Website and Mobile surface. Use a one-time sample-import marker; never re-import deleted profiles. Refresh app data on focus, and treat API failure or an empty directory as no public Agents.
+**How to apply:** Build Admin Agents rows from the Mobile directory and the Mobile app's public feed. Use website profiles only to fill missing city/contact details for a linked Mobile Agent, never as standalone rows or assignment options. Keep `/api/mobile-agents` restricted to mobile records and `/api/agents` inclusive of both sources. Apply status, approval, and visibility gates on every public Website and Mobile surface. Use a one-time sample-import marker; never re-import deleted profiles. Refresh app data on focus, and treat API failure or an empty directory as no public Agents.
 
 ## Admin-managed Projects
 

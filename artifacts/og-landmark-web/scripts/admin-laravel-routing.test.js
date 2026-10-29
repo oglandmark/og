@@ -134,6 +134,7 @@ test('production admin API routing remains on the existing production API', asyn
   await window.fetch('/api/admin/properties/42/feature', { method: 'PATCH', body: JSON.stringify({ featured: true }) });
   await window.fetch('/api/admin/properties/42/recommend', { method: 'PATCH', body: JSON.stringify({ recommended: true }) });
   await window.fetch('/api/admin/properties/42/approve', { method: 'PATCH' });
+  await window.fetch('/api/properties/42/approve', { method: 'PATCH' });
   await window.fetch('/api/admin/properties/42/media', { method: 'POST' });
   await window.fetch('/api/admin/mobile-agents/8', { method: 'PUT' });
   await window.fetch('/api/admin/mobile-agents', { method: 'POST' });
@@ -147,6 +148,7 @@ test('production admin API routing remains on the existing production API', asyn
     ['https://api.oglandmark.com/api/admin/properties/42/feature', 'PATCH'],
     ['https://api.oglandmark.com/api/admin/properties/42/recommend', 'PATCH'],
     ['https://api.oglandmark.com/api/admin/properties/42/approve', 'PATCH'],
+    ['https://api.oglandmark.com/api/properties/42/approve', 'PATCH'],
     ['https://api.oglandmark.com/api/admin/properties/42/media', 'POST'],
     ['https://api.oglandmark.com/api/admin/mobile-agents/8', 'PUT'],
     ['https://api.oglandmark.com/api/admin/mobile-agents', 'POST'],

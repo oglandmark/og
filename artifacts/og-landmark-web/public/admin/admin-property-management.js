@@ -1201,7 +1201,7 @@
         body: mediaForm,
       });
       if (approveAfterSave) {
-        await request(`/admin/properties/${encodeURIComponent(property.id)}/approve`, {
+        await request(`/properties/${encodeURIComponent(property.id)}/approve`, {
           method: 'PATCH',
           body: JSON.stringify({}),
         });

@@ -241,7 +241,7 @@ test('Admin review inbox includes new submissions and has separate Featured, Rec
 });
 
 test('property rows always provide a resilient review action for wrapped or unmatched titles', () => {
-  assert.match(propertyManagementSource, /function normalizedRowText\(value\)[\s\S]*?replace\(\/\\s\+\/g, ' '\)/);
+  assert.match(propertyManagementSource, /const normalizedRowText = \(value\) => normalize\(value\)\.replace/);
   assert.match(propertyManagementSource, /function matchPropertyToRow\(row, source = \[\]\)/);
   assert.match(propertyManagementSource, /async function resolvePropertyForRow\(row\)/);
   assert.match(propertyManagementSource, /data-og-pm-review-row/);
@@ -257,7 +257,7 @@ test('property review can remove or upload photos and approve only after saving 
   const save = propertyManagementSource.slice(saveStart, saveEnd);
   assert.ok(save.indexOf("await request(`/admin/properties/${encodeURIComponent(property.id)}/media`")
     < save.indexOf('if (approveAfterSave)'));
-  assert.match(save, /\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}\/approve/);
+  assert.match(save, /\/properties\/\$\{encodeURIComponent\(property\.id\)\}\/approve/);
   assert.match(adminControllerSource, /'approve' => 'Active'/);
   assert.match(apiRoutesSource, /whereIn\('action', \['approve', 'reject', 'request-changes'\]\)/);
 });

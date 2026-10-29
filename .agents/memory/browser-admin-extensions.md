@@ -37,6 +37,12 @@ The precompiled Admin Users page still requests `/api/users` and `/api/users/{id
 
 **How to apply:** Test the exact legacy Admin paths against Laravel and preserve `LegacyAdminAuth` on every alias.
 
+The user authorized the Replit Admin preview to include live mobile accounts as well as preview accounts.
+
+**Why:** Preview and production use separate user stores, and the user explicitly asked for both in the preview.
+
+**How to apply:** Authenticate to production separately; never reuse a local preview session for production user reads or mutations.
+
 The admin dashboard must show all mobile property listings by default across statuses, with status filters, full edit/delete controls, and cross-city agent referrals. A referral must target a linked active Agent account so it appears in the Agent portal.
 
 **Why:** The user clarified that all currently live mobile listings—not only pending submissions—must be visible and manageable from the website admin.

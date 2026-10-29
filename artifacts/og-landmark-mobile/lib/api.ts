@@ -23,11 +23,11 @@ import {
 } from './propertyMedia';
 
 // ─── Base URL ──────────────────────────────────────────────────────────────────
-// Admin/auth calls can use the local preview API. Public property browsing
-// always reads the canonical live catalogue, including in Replit preview.
+// Replit preview imports a read-only snapshot into its local catalogue so local
+// Admin changes are visible to the preview app without writing to production.
 const previewApiDomain = process.env.EXPO_PUBLIC_API_DOMAIN || process.env.EXPO_PUBLIC_DOMAIN;
 export const API_BASE = resolveApiBase(previewApiDomain);
-const PROPERTY_FEED_API_BASE = LIVE_API_BASE;
+const PROPERTY_FEED_API_BASE = API_BASE;
 
 export function resolveMediaUrl(value?: string | null): string | undefined {
   return resolveMediaUrlForBase(value, API_BASE);
@@ -131,19 +131,17 @@ export async function apiRequest<T>(
 const apiFetch = apiRequest;
 
 async function propertyFeedFetch<T>(path: string): Promise<{ data: T; apiBase: string }> {
-  const previewProxyPath = API_BASE !== LIVE_API_BASE ? getPreviewLiveProxyPath(path) : undefined;
-  const requestBase = previewProxyPath ? API_BASE : PROPERTY_FEED_API_BASE;
+  const previewProxyPath = undefined;
+  const requestBase = PROPERTY_FEED_API_BASE;
   return {
     data: await apiRequest<T>(
-      previewProxyPath ?? path,
+      path,
       {},
       false,
       FETCH_TIMEOUT_MS,
       requestBase,
     ),
-    // The local proxy returns live listing records; resolve their relative
-    // media paths against the live origin, not the Replit preview origin.
-    apiBase: LIVE_API_BASE,
+    apiBase: requestBase,
   };
 }
 

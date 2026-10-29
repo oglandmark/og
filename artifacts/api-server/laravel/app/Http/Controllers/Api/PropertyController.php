@@ -4,14 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\LegacyDataStore;
+use App\Services\PreviewPropertyMirror;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 final class PropertyController extends Controller
 {
-    public function index(Request $request, LegacyDataStore $store): JsonResponse
+    public function index(Request $request, LegacyDataStore $store, PreviewPropertyMirror $mirror): JsonResponse
     {
+        $mirror->syncIfStale($store);
         $request->validate([
             'featured' => ['sometimes', 'in:true,false,1,0'],
             'recommended' => ['sometimes', 'in:true,false,1,0'],

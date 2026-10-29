@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\LegacyDataStore;
+use App\Services\PreviewPropertyMirror;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -276,8 +277,9 @@ final class AdminController extends Controller
         return response()->json($activity)->header('X-Total-Count', (string) $total);
     }
 
-    public function properties(Request $request, LegacyDataStore $store): JsonResponse
+    public function properties(Request $request, LegacyDataStore $store, PreviewPropertyMirror $mirror): JsonResponse
     {
+        $mirror->syncIfStale($store);
         $properties = $store->read()['properties'] ?? [];
         $status = $request->query('approvalStatus');
         if ($status) $properties = array_values(array_filter($properties, fn (array $property): bool => ($property['approvalStatus'] ?? '') === $status));

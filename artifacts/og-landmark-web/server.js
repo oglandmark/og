@@ -1009,7 +1009,11 @@ function syncLocalPreviewAdminCredentials(data) {
     admin.email = adminEmailOverride;
     changed = true;
   }
-  if (adminPasswordOverride && !verifyPassword(adminPasswordOverride, admin.password)) {
+  if (
+    adminPasswordOverride
+    && data.localPreviewAdminPasswordReset !== true
+    && !verifyPassword(adminPasswordOverride, admin.password)
+  ) {
     admin.password = hashPassword(adminPasswordOverride);
     changed = true;
   }
@@ -3244,6 +3248,11 @@ app.post('/api/auth/admin-forgot-password', async (req, res) => {
     );
     // Avoid exposing whether an email belongs to an admin account.
     if (!admin) {
+      if (localPreview && replitPreview) {
+        return res.status(404).json({
+          error: 'No local Admin account matches this email. Use the email shown in the Admin profile.',
+        });
+      }
       return res.json({
         success: true,
         message: 'If this email belongs to an admin account, a reset code will be sent.',
@@ -3261,6 +3270,7 @@ app.post('/api/auth/admin-forgot-password', async (req, res) => {
           error: 'Reset email is not configured. Check the SMTP mailbox settings and try again.',
         });
       }
+      console.info('Admin password reset email accepted by SMTP transport.');
     } catch (emailError) {
       await deleteChallenge(email, 'password-reset').catch(() => {});
       console.error('[admin password reset email error]', emailError.message);
@@ -3304,6 +3314,9 @@ app.post('/api/auth/admin-reset-password', async (req, res) => {
     }
 
     admin.password = hashPassword(newPassword);
+    if (localPreview && replitPreview) {
+      data.localPreviewAdminPasswordReset = true;
+    }
     await writeData(data);
     await invalidateUserSessions(admin.id, email);
     return res.json({ success: true });

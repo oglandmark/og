@@ -10,6 +10,106 @@ use Illuminate\Support\Facades\DB;
 
 final class AuthController extends Controller
 {
+    public function register(Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $validated = $request->validate([
+            'firstName' => ['required', 'string', 'max:120'],
+            'lastName' => ['nullable', 'string', 'max:120'],
+            'username' => ['nullable', 'string', 'max:30', 'regex:/^[a-zA-Z][a-zA-Z0-9._-]{2,29}$/'],
+            'email' => ['nullable', 'email', 'max:320'],
+            'phone' => ['required', 'string', 'max:40', 'regex:/^[+0-9().\s-]+$/'],
+            'password' => ['required', 'string', 'min:8', 'max:1024', 'regex:/^(?=.*[A-Za-z])(?=.*\d).+$/'],
+            'confirmPassword' => ['nullable', 'string', 'max:1024'],
+        ]);
+        $password = $validated['password'];
+        if (($validated['confirmPassword'] ?? $password) !== $password) {
+            return response()->json(['error' => 'Passwords do not match.'], 400);
+        }
+
+        $email = mb_strtolower(trim((string) ($validated['email'] ?? '')));
+        $requestedUsername = mb_strtolower(trim((string) ($validated['username'] ?? '')));
+        $phone = trim($validated['phone']);
+        $phoneKey = $this->normalizedPhone($phone);
+        if (strlen($phoneKey) < 10 || strlen($phoneKey) > 15) {
+            return response()->json(['error' => 'Please enter a valid mobile number.'], 400);
+        }
+
+        $token = rtrim(strtr(base64_encode(random_bytes(48)), '+/', '-_'), '=');
+        $ttlHours = max(1, (int) config('app.session_ttl_hours', env('SESSION_TTL_HOURS', 168)));
+        $result = $store->mutate(function (array &$data) use (
+            $validated, $password, $email, $requestedUsername, $phone, $phoneKey, $token, $ttlHours
+        ): array {
+            $data['users'] = array_values(array_filter($data['users'] ?? [], 'is_array'));
+            foreach ($data['users'] as $existing) {
+                if ($email !== '' && mb_strtolower(trim((string) ($existing['email'] ?? ''))) === $email) {
+                    return ['error' => 'An account with this email already exists', 'status' => 409];
+                }
+                if ($requestedUsername !== '' && mb_strtolower(trim((string) ($existing['username'] ?? ''))) === $requestedUsername) {
+                    return ['error' => 'This username is already in use. Please choose another.', 'status' => 409];
+                }
+                if ($this->normalizedPhone((string) ($existing['phone'] ?? '')) === $phoneKey) {
+                    return ['error' => 'This mobile number is already registered.', 'status' => 409];
+                }
+            }
+
+            $usernameBase = preg_replace('/[^a-z0-9._-]/', '', $requestedUsername !== ''
+                ? $requestedUsername
+                : explode('@', $email !== '' ? $email : mb_strtolower($validated['firstName']))[0]);
+            $usernameBase = $usernameBase ?: 'user';
+            if (! preg_match('/^[a-z]/', $usernameBase)) $usernameBase = 'user'.$usernameBase;
+            $usernameBase = mb_substr($usernameBase, 0, 24);
+            $username = $usernameBase;
+            $suffix = 1;
+            while (collect($data['users'])->contains(
+                fn (array $existing): bool => mb_strtolower(trim((string) ($existing['username'] ?? ''))) === $username
+            )) {
+                $username = mb_substr($usernameBase, 0, 24 - strlen((string) $suffix)).$suffix;
+                $suffix++;
+            }
+
+            $highestId = max(
+                (int) ($data['nextId'] ?? 1000),
+                ...array_map(static fn (array $existing): int => (int) ($existing['id'] ?? 0), $data['users'] ?: [['id' => 0]])
+            );
+            $id = $highestId + 1;
+            $data['nextId'] = $id;
+            $salt = bin2hex(random_bytes(16));
+            $user = [
+                'id' => $id,
+                'name' => trim($validated['firstName'].' '.($validated['lastName'] ?? '')),
+                'username' => $username,
+                'email' => $email,
+                'phone' => $phone,
+                'accountType' => 'User',
+                'permissions' => [],
+                'role' => 'User',
+                'status' => 'Active',
+                'password' => 'pbkdf2:'.$salt.':'.hash_pbkdf2('sha512', $password, $salt, 100000, 128),
+                'joinedDate' => now()->toDateString(),
+                'createdAt' => now()->toIso8601String(),
+            ];
+            $data['users'][] = $user;
+
+            DB::table('auth_sessions')->insert([
+                'token_hash' => hash('sha256', $token),
+                'user_id' => $id,
+                'expires_at' => now()->addHours($ttlHours),
+                'created_at' => now(),
+            ]);
+
+            return ['user' => $user];
+        });
+
+        if (isset($result['error'])) {
+            return response()->json(['error' => $result['error']], $result['status']);
+        }
+
+        return response()->json([
+            'user' => $this->publicUser($result['user']),
+            'token' => $token,
+        ], 201);
+    }
+
     public function adminVerify(Request $request, LegacyDataStore $store): JsonResponse
     {
         if (! app()->environment('local')) {
@@ -177,6 +277,14 @@ final class AuthController extends Controller
         }
         $candidate = hash_pbkdf2('sha512', $plain, $parts[1], 100000, 128);
         return hash_equals($parts[2], $candidate);
+    }
+
+    private function normalizedPhone(string $value): string
+    {
+        $digits = preg_replace('/\D+/', '', $value) ?? '';
+        if (str_starts_with($digits, '0092')) return '92'.substr($digits, 4);
+        if (str_starts_with($digits, '0') && strlen($digits) >= 10) return '92'.substr($digits, 1);
+        return $digits;
     }
 
     private function publicUser(array $user): array

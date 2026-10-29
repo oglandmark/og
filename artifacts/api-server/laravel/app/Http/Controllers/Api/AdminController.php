@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\LegacyDataStore;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -171,6 +172,7 @@ final class AdminController extends Controller
                     return ['error' => 'You cannot delete your own account.', 'status' => 422];
                 }
                 array_splice($data['users'], $index, 1);
+                DB::table('auth_sessions')->where('user_id', $user['id'] ?? $id)->delete();
                 $this->appendAdminAudit($data, $admin, 'user_deleted', 'users', $user['id'] ?? $id, [
                     'role' => $user['role'] ?? null,
                 ]);

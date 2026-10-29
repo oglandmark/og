@@ -117,6 +117,59 @@ final class OgLandmarkApiTest extends TestCase
         $this->withToken($token)->getJson('/api/auth/me')->assertOk()->assertJsonPath('user.email', 'user@example.test');
     }
 
+    public function test_mobile_registration_creates_an_admin_visible_user_and_admin_delete_revokes_access(): void
+    {
+        $registration = $this->postJson('/api/auth/register', [
+            'firstName' => 'Mobile',
+            'lastName' => 'Member',
+            'username' => 'mobile.member',
+            'email' => 'mobile.member@example.test',
+            'phone' => '03121234567',
+            'password' => 'MobilePass123',
+            'confirmPassword' => 'MobilePass123',
+            'role' => 'Admin',
+        ])->assertCreated()
+            ->assertJsonPath('user.name', 'Mobile Member')
+            ->assertJsonPath('user.role', 'User')
+            ->assertJsonPath('user.accountType', 'User')
+            ->assertJsonMissingPath('user.password');
+
+        $userId = $registration->json('user.id');
+        $registrationToken = $registration->json('token');
+        $this->withToken($registrationToken)->getJson('/api/auth/me')
+            ->assertOk()->assertJsonPath('user.id', $userId);
+        $login = $this->postJson('/api/auth/login', [
+            'identifier' => 'mobile.member@example.test',
+            'password' => 'MobilePass123',
+        ])->assertOk()->assertJsonPath('user.id', $userId);
+        $adminToken = $this->adminToken();
+        $this->withToken($adminToken)->getJson('/api/admin/users')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $userId, 'email' => 'mobile.member@example.test']);
+
+        $this->postJson('/api/auth/register', [
+            'firstName' => 'Duplicate',
+            'phone' => '+92 312 1234567',
+            'password' => 'MobilePass123',
+            'email' => 'another.member@example.test',
+        ])->assertStatus(409);
+
+        $this->withToken($adminToken)->deleteJson('/api/admin/users/'.$userId)
+            ->assertOk()->assertJsonPath('success', true);
+        $this->withToken($registrationToken)->getJson('/api/auth/me')->assertUnauthorized();
+        $this->withToken($adminToken)->getJson('/api/admin/users')
+            ->assertOk()
+            ->assertJsonMissing(['id' => $userId, 'email' => 'mobile.member@example.test']);
+        $this->assertDatabaseMissing('auth_sessions', [
+            'user_id' => $userId,
+            'token_hash' => hash('sha256', $registrationToken),
+        ]);
+        $this->assertDatabaseMissing('auth_sessions', [
+            'user_id' => $userId,
+            'token_hash' => hash('sha256', $login->json('token')),
+        ]);
+    }
+
     public function test_admin_logout_revokes_only_the_signed_out_session(): void
     {
         $signedOutToken = $this->adminToken();

@@ -525,6 +525,7 @@
     banners: {
       title: 'Mobile homepage banners', list: '/mobile/banners/all', createPath: '/mobile/banners',
       addLabel: 'Add banner',
+      note: 'Manage the five built-in Mobile Home banners here. Edits and removals save as local preview copies only; they never change the live app.',
       deletePath: (item) => `/mobile/banners/${encodeURIComponent(item.id)}`,
       fields: [
         ['type', 'Media type', 'select', ['image', 'video']], ['title', 'Title'], ['subtitle', 'Subtitle'], ['category', 'Category', 'select', ['homes', 'commercial', 'agriculture', 'plots', 'projects']],
@@ -686,8 +687,8 @@
       const colspan = columns.length;
       const rows = items.map((item) => `<tr>${config.row(item)}<td><div class="og-mm-row-actions">
         ${key === 'notifications' && item.status !== 'sent' ? `<button class="og-mm-action primary" data-action="send-announcement" data-section="${key}" data-id="${esc(item.id)}">Send</button>` : ''}
-        <button class="og-mm-action" data-action="edit-record" data-section="${key}" data-id="${esc(item.id)}">Edit</button>
-        <button class="og-mm-action danger" data-action="delete-record" data-section="${key}" data-id="${esc(item.id)}">${key === 'projects' ? 'Remove from app' : 'Delete'}</button>
+        <button class="og-mm-action" data-action="edit-record" data-section="${key}" data-id="${esc(item.id)}">${key === 'banners' && item.isPreviewOnly ? 'Edit local copy' : 'Edit'}</button>
+        <button class="og-mm-action danger" data-action="delete-record" data-section="${key}" data-id="${esc(item.id)}">${key === 'banners' && item.isPreviewOnly ? 'Remove locally' : key === 'projects' ? 'Remove from app' : 'Delete'}</button>
       </div></td></tr>`).join('');
       const addButton = config.createPath ? `<button class="og-mm-action primary" data-action="add-record" data-section="${key}">${esc(config.addLabel || 'Add new')}</button>` : '';
       content.innerHTML = `<div class="og-mm-note">${esc(config.note || `${config.title} — live records loaded from the shared Admin API used by the website and mobile app.`)}</div>
@@ -1196,6 +1197,9 @@
           if (type === 'video') payload.imageUrl = '';
           else payload.videoUrl = '';
         }
+        if (key === 'banners' && editing && item.isPreviewOnly) {
+          payload.sourcePreviewId = String(item.sourcePreviewId);
+        }
         const body = JSON.stringify(payload);
         if (editing) {
           if (key === 'users') {
@@ -1204,6 +1208,8 @@
             delete payload.role;
             await api(`/users/${encodeURIComponent(item.id)}`, { method: 'PUT', body: JSON.stringify(payload) });
             if (nextRole !== previous) await api(`/admin/users/${encodeURIComponent(item.id)}/role`, { method: 'PATCH', body: JSON.stringify({ role: nextRole }) });
+          } else if (key === 'banners' && item.isPreviewOnly) {
+            await api(config.createPath, { method: 'POST', body });
           } else {
             await api(`${config.createPath || config.list}/${encodeURIComponent(item.id)}`, {
               method: key === 'properties' ? 'PATCH' : 'PUT',
@@ -1584,7 +1590,9 @@
         const item = (sectionData[section] || []).find((record) => String(record.id) === String(id));
         if (!item) return;
         const label = item.title || item.name || item.email || `record ${id}`;
-        const warning = section === 'projects' && item.isBundledDemo
+        const warning = section === 'banners' && (item.isPreviewOnly || item.sourcePreviewId)
+          ? `Remove “${label}” from this local Admin preview? The live Mobile app banner will remain unchanged.`
+          : section === 'projects' && item.isBundledDemo
           ? `Permanently delete sample project “${label}” from the mobile app? It cannot be restored from Admin.`
           : section === 'projects'
           ? `Archive project “${label}”? It will no longer appear in the live project list, but its project and inventory records will be preserved.`
@@ -1594,7 +1602,13 @@
           ? `Permanently delete account ${label}? This removes mobile app access. Review linked records first; the action cannot be undone.`
           : `Permanently delete ${label} from the live mobile app?`;
         if (!window.confirm(warning)) return;
-        await api(config.deletePath(item), { method: 'DELETE' });
+        if (section === 'banners' && item.isPreviewOnly) {
+          await api('/admin/mobile-banner-preview-hidden', {
+            method: 'POST', body: JSON.stringify({ id: String(item.sourcePreviewId) }),
+          });
+        } else {
+          await api(config.deletePath(item), { method: 'DELETE' });
+        }
         if (section === 'projects' && item.isBundledDemo) projectViewState.notice = `“${label}” deleted from the mobile app.`;
         else if (section === 'projects') projectViewState.notice = `“${label}” archived. Its linked project and inventory records are preserved.`;
         await renderSection(section, modal.querySelector('.og-mm-content'));

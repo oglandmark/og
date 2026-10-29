@@ -944,10 +944,43 @@ final class AdminController extends Controller
 
     public function mobileBanners(LegacyDataStore $store): JsonResponse
     {
-        $banners = array_values($store->read()['mobileBanners'] ?? []);
+        $banners = $this->effectiveMobileBanners($store->read());
         usort($banners, fn (array $a, array $b): int => (int) ($a['order'] ?? 0) <=> (int) ($b['order'] ?? 0));
 
         return response()->json($banners);
+    }
+
+    private function effectiveMobileBanners(array $data): array
+    {
+        $local = array_values(array_filter($data['mobileBanners'] ?? [], 'is_array'));
+        $hidden = array_fill_keys(array_map('strval', $data['mobileBannerPreviewHiddenIds'] ?? []), true);
+        $overrides = [];
+        foreach ($local as $banner) {
+            if (! empty($banner['sourcePreviewId'])) $overrides[(string) $banner['sourcePreviewId']] = $banner;
+        }
+        $defaults = app()->environment('local') ? [
+            ['id' => 'default-homes', 'sourcePreviewId' => 'bundled:homes', 'type' => 'image', 'category' => 'homes', 'eyebrow' => 'Find your place', 'title' => 'Homes that feel like home', 'subtitle' => 'Explore verified homes across Pakistan.', 'cta' => 'Explore homes', 'imageUrl' => '/images/mobile-banners/homes.jpg', 'route' => '/explore', 'active' => true, 'order' => 0],
+            ['id' => 'default-commercial', 'sourcePreviewId' => 'bundled:commercial', 'type' => 'image', 'category' => 'commercial', 'eyebrow' => 'Make your next move', 'title' => 'Commercial spaces with potential', 'subtitle' => 'Discover shops, offices and commercial properties.', 'cta' => 'Explore commercial', 'imageUrl' => '/images/mobile-banners/commercial.jpg', 'route' => '/explore', 'active' => true, 'order' => 1],
+            ['id' => 'default-agriculture', 'sourcePreviewId' => 'bundled:agriculture', 'type' => 'image', 'category' => 'agriculture', 'eyebrow' => 'Room to grow', 'title' => 'Agricultural land for tomorrow', 'subtitle' => 'Find fertile land and investment opportunities.', 'cta' => 'Explore land', 'imageUrl' => '/images/mobile-banners/agriculture.jpg', 'route' => '/explore', 'active' => true, 'order' => 2],
+            ['id' => 'default-plots', 'sourcePreviewId' => 'bundled:plots', 'type' => 'image', 'category' => 'plots', 'eyebrow' => 'Build what’s next', 'title' => 'The right plot starts here', 'subtitle' => 'Explore plots in the locations you love.', 'cta' => 'Explore plots', 'imageUrl' => '/images/mobile-banners/plots.jpg', 'route' => '/explore', 'active' => true, 'order' => 3],
+            ['id' => 'default-projects', 'sourcePreviewId' => 'bundled:projects', 'type' => 'image', 'category' => 'projects', 'eyebrow' => 'A better way forward', 'title' => 'Discover exceptional projects', 'subtitle' => 'Explore thoughtfully selected developments.', 'cta' => 'Explore projects', 'imageUrl' => '/images/mobile-banners/projects.jpg', 'route' => '/explore', 'active' => true, 'order' => 4],
+        ] : [];
+        $result = [];
+        foreach ($defaults as $default) {
+            $previewId = $default['sourcePreviewId'];
+            if (isset($hidden[$previewId])) continue;
+            $result[] = isset($overrides[$previewId])
+                ? array_replace($default, $overrides[$previewId], ['isPreviewOnly' => false])
+                : array_replace($default, ['isPreviewOnly' => true]);
+            unset($overrides[$previewId]);
+        }
+        foreach ($local as $banner) {
+            $previewId = (string) ($banner['sourcePreviewId'] ?? '');
+            if ($previewId !== '' && isset($hidden[$previewId])) continue;
+            if ($previewId !== '' && ! isset($overrides[$previewId])) continue;
+            $result[] = array_replace($banner, ['isPreviewOnly' => false]);
+        }
+        return $result;
     }
 
     public function createMobileBanner(Request $request, LegacyDataStore $store): JsonResponse
@@ -963,6 +996,7 @@ final class AdminController extends Controller
             'ctaParams' => ['sometimes', 'array'],
             'imageUrl' => ['sometimes', 'nullable', 'string', 'max:2048'],
             'videoUrl' => ['sometimes', 'nullable', 'string', 'max:2048'],
+            'sourcePreviewId' => ['sometimes', 'nullable', 'string', 'max:120'],
             'startDate' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
             'endDate' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
             'order' => ['sometimes', 'integer', 'min:0', 'max:10000'],
@@ -992,6 +1026,12 @@ final class AdminController extends Controller
             ], $validated);
             if ($banner['type'] === 'video') $banner['imageUrl'] = null;
             else $banner['videoUrl'] = null;
+            if (! empty($banner['sourcePreviewId'])) {
+                $data['mobileBannerPreviewHiddenIds'] = array_values(array_filter(
+                    $data['mobileBannerPreviewHiddenIds'] ?? [],
+                    fn ($hiddenId): bool => (string) $hiddenId !== (string) $banner['sourcePreviewId'],
+                ));
+            }
             $data['mobileBanners'] = [...$banners, $banner];
             return $banner;
         });
@@ -1045,6 +1085,13 @@ final class AdminController extends Controller
             $banners = array_values($data['mobileBanners'] ?? []);
             $remaining = array_values(array_filter($banners, fn ($banner): bool => (int) ($banner['id'] ?? 0) !== $id));
             if (count($remaining) === count($banners)) return false;
+            foreach ($banners as $banner) {
+                if ((int) ($banner['id'] ?? 0) === $id && ! empty($banner['sourcePreviewId'])) {
+                    $data['mobileBannerPreviewHiddenIds'] ??= [];
+                    $data['mobileBannerPreviewHiddenIds'][] = (string) $banner['sourcePreviewId'];
+                    $data['mobileBannerPreviewHiddenIds'] = array_values(array_unique(array_map('strval', $data['mobileBannerPreviewHiddenIds'])));
+                }
+            }
             $data['mobileBanners'] = $remaining;
             return true;
         });
@@ -1071,15 +1118,35 @@ final class AdminController extends Controller
         }
     }
 
+    public function hiddenMobileBannerPreviewIds(LegacyDataStore $store): JsonResponse
+    {
+        return response()->json(array_values(array_unique(array_map('strval', $store->read()['mobileBannerPreviewHiddenIds'] ?? []))));
+    }
+
+    public function hideMobileBannerPreview(Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $id = trim((string) $request->validate(['id' => ['required', 'string', 'max:120']])['id']);
+        $store->mutate(function (array &$data) use ($id): void {
+            $data['mobileBannerPreviewHiddenIds'] ??= [];
+            $data['mobileBannerPreviewHiddenIds'][] = $id;
+            $data['mobileBannerPreviewHiddenIds'] = array_values(array_unique(array_map('strval', $data['mobileBannerPreviewHiddenIds'])));
+        });
+        return response()->json(['success' => true]);
+    }
+
     public function publicMobileBanners(LegacyDataStore $store): JsonResponse
     {
         $today = now()->toDateString();
         $banners = array_values(array_filter(
-            $store->read()['mobileBanners'] ?? [],
+            $this->effectiveMobileBanners($store->read()),
             fn (array $banner): bool => ($banner['active'] ?? true) !== false
                 && (! ($banner['startDate'] ?? null) || $banner['startDate'] <= $today)
                 && (! ($banner['endDate'] ?? null) || $banner['endDate'] >= $today),
         ));
+        $banners = array_map(function (array $banner): array {
+            unset($banner['sourcePreviewId'], $banner['isPreviewOnly']);
+            return $banner;
+        }, $banners);
         usort($banners, fn (array $a, array $b): int => (int) ($a['order'] ?? 0) <=> (int) ($b['order'] ?? 0));
 
         return response()->json($banners);

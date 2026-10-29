@@ -1542,7 +1542,7 @@ export default function HomeScreen() {
         const mapped = raw.map(mapApiBanner).filter(
           (slide): slide is HomeCategoryBannerSlide => slide !== null,
         );
-        setHomeBannerSlides(mapped.length > 0 ? mapped : LOCAL_HOME_BANNER_SLIDES);
+        setHomeBannerSlides(mapped);
       } catch {
         // Preserve the last valid Admin banner response; local slides are the
         // initial/offline fallback only.

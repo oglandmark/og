@@ -83,6 +83,8 @@ $registerRoutes = static function (): void {
             Route::post('/admin/mobile/banners', [AdminController::class, 'createMobileBanner']);
             Route::put('/admin/mobile/banners/{id}', [AdminController::class, 'updateMobileBanner'])->whereNumber('id');
             Route::delete('/admin/mobile/banners/{id}', [AdminController::class, 'deleteMobileBanner'])->whereNumber('id');
+            Route::get('/admin/mobile-banner-preview-hidden', [AdminController::class, 'hiddenMobileBannerPreviewIds']);
+            Route::post('/admin/mobile-banner-preview-hidden', [AdminController::class, 'hideMobileBannerPreview']);
         });
     });
     Route::get('/admin/property-media/{filename}', [AdminController::class, 'propertyMedia'])

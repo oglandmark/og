@@ -111,6 +111,8 @@
       laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
     } else if (pathname === '/api/admin/mobile-agent-preview-hidden' && ['GET', 'POST'].indexOf(verb) !== -1) {
       laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
+    } else if (pathname === '/api/admin/mobile-banner-preview-hidden' && ['GET', 'POST'].indexOf(verb) !== -1) {
+      laravelPath = laravelRoot + pathname.replace(/^\/api/, '');
     }
 
     if (!laravelPath) return { url: url, method: method };

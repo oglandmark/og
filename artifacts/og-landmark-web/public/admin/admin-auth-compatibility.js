@@ -355,6 +355,12 @@
     const token = storage.getItem(TOKEN_KEY);
     let savedUser = null;
     try { savedUser = JSON.parse(storage.getItem(USER_KEY) || 'null'); } catch {}
+    if (token && isAdminUser(savedUser)) {
+      // The compiled dashboard checks role synchronously during mount. Project
+      // permission-based Admin accounts before its guard runs, not after /me.
+      persistSession(storage, token, savedUser);
+      try { savedUser = JSON.parse(storage.getItem(USER_KEY) || 'null'); } catch {}
+    }
     if (!token || !isAdminUser(savedUser)) {
       clearSession(storage);
       windowRef.location.replace('/admin/login');

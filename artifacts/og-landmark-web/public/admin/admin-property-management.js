@@ -41,6 +41,15 @@
   let agentDirectoryMessage = '';
   let propertyLoadError = '';
   const normalize = (value) => String(value ?? '').trim().toLowerCase();
+  const normalizedRowText = (value) => normalize(value).replace(/\s+/g, ' ');
+  const resolveListingMediaUrl = (value) => {
+    const resolver = window.OGAdminListingMedia?.resolveMediaUrl;
+    if (typeof resolver === 'function') {
+      const resolved = resolver(value, window.location.origin);
+      if (resolved) return resolved;
+    }
+    return new URL(value, window.location.href).href;
+  };
   const statusOf = (property) => normalize(property.approvalStatus || property.listingStatus || property.status || 'pending');
   const statusesOf = (property) => [
     normalize(property.approvalStatus),
@@ -300,10 +309,15 @@
 
   function rowProperty(row, used) {
     const mediaProperty = row.querySelector('[data-og-listing-review]')?.__ogListingProperty;
-    const listingId = row.dataset.ogListingId || row.getAttribute('data-og-listing-id') || mediaProperty?.id;
+    const linkedRecord = row.querySelector('[data-property-id],[data-listing-id]');
+    const listingId = row.dataset.ogListingId || row.dataset.propertyId || row.dataset.listingId
+      || row.getAttribute('data-og-listing-id') || linkedRecord?.dataset.propertyId
+      || linkedRecord?.dataset.listingId || mediaProperty?.id;
     const sharedProperties = Array.isArray(window.__ogAdminApiProperties) ? window.__ogAdminApiProperties : [];
-    const byId = [...apiProperties, ...properties, ...sharedProperties]
-      .find((item) => String(item.id) === String(listingId));
+    const candidates = [...new Map([
+      ...apiProperties, ...properties, ...sharedProperties, ...observedProperties.values(),
+    ].filter((item) => item?.id != null).map((item) => [String(item.id), item])).values()];
+    const byId = candidates.find((item) => String(item.id) === String(listingId));
     if (byId && !used.has(String(byId.id))) {
       used.add(String(byId.id));
       return byId;
@@ -312,19 +326,19 @@
       used.add(String(mediaProperty.id));
       return mediaProperty;
     }
-    const cells = [...row.cells].map((cell) => normalize(cell.innerText));
-    const rowText = normalize(row.innerText);
-    const title = normalize(row.querySelector('td .font-medium')?.textContent || '');
+    const cells = [...row.cells].map((cell) => normalizedRowText(cell.innerText));
+    const rowText = normalizedRowText(row.innerText);
+    const title = normalizedRowText(row.querySelector('td .font-medium,td [data-property-title]')?.textContent || '');
     if (!rowText) return null;
     let best = null;
     let bestScore = -1;
-    for (const property of properties) {
-      const propertyTitle = normalize(property.title);
+    for (const property of candidates) {
+      const propertyTitle = normalizedRowText(property.title);
       if (used.has(String(property.id)) || !propertyTitle || !rowText.includes(propertyTitle)) continue;
-      let score = title === propertyTitle ? 100 : 50;
-      const city = normalize(property.city);
-      const seller = normalize(property.sellerName);
-      const price = property.price == null ? '' : normalize(`PKR ${Number(property.price).toLocaleString()}`);
+      let score = title === propertyTitle ? 100 : title && propertyTitle.includes(title) ? 90 : 50;
+      const city = normalizedRowText(cityOf(property));
+      const seller = normalizedRowText(property.sellerName);
+      const price = property.price == null ? '' : normalizedRowText(`PKR ${Number(property.price).toLocaleString()}`);
       if (city && cells.some((cell) => cell === city)) score += 3;
       if (seller && cells.some((cell) => cell === seller)) score += 2;
       if (price && cells.some((cell) => cell.includes(price))) score += 1;
@@ -398,7 +412,7 @@
       .og-pm-agriculture-stat strong{display:block;margin-top:5px;color:#153b25;font:700 19px/1.2 system-ui}
       @media(max-width:760px){.og-pm-agriculture-overview{grid-template-columns:repeat(3,minmax(0,1fr))}.og-pm-agriculture-intro{grid-column:1/-1}}
       .og-pm-backdrop{position:fixed;inset:0;z-index:11000;display:flex;align-items:center;justify-content:center;padding:16px;background:#071526b8}
-      .og-pm-dialog{width:min(850px,100%);max-height:92vh;overflow:auto;border-radius:16px;background:#fff;color:#0B1F3A;box-shadow:0 24px 70px #0004;font:14px system-ui}
+      .og-pm-dialog{width:min(1080px,100%);max-height:94vh;overflow:auto;border-radius:16px;background:#fff;color:#0B1F3A;box-shadow:0 24px 70px #0004;font:14px system-ui}
       .og-pm-head{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;gap:16px;padding:18px 22px;background:#fff;border-bottom:1px solid #e2e8f0}
       .og-pm-head h2{margin:0;font-size:19px}.og-pm-head p{margin:4px 0 0;color:#64748b;font-size:12px}
       .og-pm-close{border:1px solid #e2e8f0;border-radius:8px;background:white;width:34px;height:34px;font-size:20px;cursor:pointer}
@@ -428,8 +442,11 @@
       .og-pm-fact dt{margin-bottom:4px;color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
       .og-pm-fact dd{margin:0;color:#0f172a;font-size:12px;font-weight:600;overflow-wrap:anywhere}
       .og-pm-media{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px}
-      .og-pm-media img{width:104px;height:76px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0}
+      .og-pm-media img{width:210px;height:148px;object-fit:cover;border-radius:11px;border:1px solid #e2e8f0}
       .og-pm-media-item{display:grid;gap:4px;flex:none}.og-pm-media-item button{border:0;border-radius:6px;background:#fee2e2;color:#991b1b;padding:5px 7px;font:600 10px system-ui;cursor:pointer}
+      .og-pm-approve{background:#167545}
+      .og-pm-approve:hover{background:#12653b}
+      .og-pm-approve[hidden]{display:none}
       .og-pm-review-overview details{margin:8px 0 0;border-top:1px solid #e2e8f0;padding:10px 0;color:#334155}
       .og-pm-review-overview summary{cursor:pointer;font-size:12px;font-weight:700}
       .og-pm-all-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 18px;margin-top:10px}
@@ -502,7 +519,7 @@
             <div class="og-pm-field full"><span class="og-pm-note" data-agent-directory-note></span></div>
           </div>
           <div class="og-pm-error" role="alert" hidden></div>
-          <div class="og-pm-footer"><button class="og-pm-button danger" type="button" data-delete>Delete property</button><div class="og-pm-actions"><button class="og-pm-button secondary" type="button" data-cancel>Cancel</button><button class="og-pm-button" type="submit">Save listing</button></div></div>
+          <div class="og-pm-footer"><button class="og-pm-button danger" type="button" data-delete>Delete property</button><div class="og-pm-actions"><button class="og-pm-button secondary" type="button" data-cancel>Cancel</button><button class="og-pm-button" type="submit">Save changes</button><button class="og-pm-button og-pm-approve" type="submit" data-approve-publish>Approve &amp; publish</button></div></div>
         </form>
       </section>`;
     const form = modal.querySelector('form');
@@ -526,7 +543,7 @@
       editableImages.replaceChildren();
       urls.forEach((source, index) => {
         let url;
-        try { url = new URL(source, window.location.href); } catch { return; }
+        try { url = new URL(resolveListingMediaUrl(source)); } catch { return; }
         if (!['http:', 'https:'].includes(url.protocol)) return;
         const item = document.createElement('div');
         item.className = 'og-pm-media-item';
@@ -554,12 +571,19 @@
     const removeVideoLabel = form.elements.removeVideo?.closest('label');
     if (property.videoUrl) {
       try {
-        currentVideo.src = new URL(property.videoUrl, window.location.href).href;
+        currentVideo.src = resolveListingMediaUrl(property.videoUrl);
         currentVideo.hidden = false;
       } catch {}
     }
     if (removeVideoLabel) removeVideoLabel.hidden = !property.videoUrl;
     renderReviewOverview(modal.querySelector('.og-pm-review-overview'), property, review);
+    const approvalState = normalize(property.approvalStatus || property.listingStatus || property.status || 'pending');
+    const canApprove = ['pending', 'changes requested', 'in progress', 'under review'].includes(approvalState);
+    const approveButton = form.querySelector('[data-approve-publish]');
+    approveButton.hidden = !canApprove;
+    approveButton.title = canApprove
+      ? 'Save the reviewed details and photos, then publish this listing.'
+      : 'Only a listing awaiting review can be approved here.';
     set('agentName', assigned.name || property.assignedAgentName);
     set('agentPhone', assigned.phone || property.assignedAgentPhone);
     const select = form.elements.agentProfile;
@@ -851,7 +875,7 @@
       const gallery = make('div', 'og-pm-media');
       for (const source of images) {
         let url;
-        try { url = new URL(source, window.location.href); } catch { continue; }
+        try { url = new URL(resolveListingMediaUrl(source)); } catch { continue; }
         if (!['http:', 'https:'].includes(url.protocol)) continue;
         const image = make('img');
         image.src = url.href;
@@ -863,7 +887,7 @@
     }
     if (property.videoUrl) {
       try {
-        const video = new URL(property.videoUrl, window.location.href);
+        const video = new URL(resolveListingMediaUrl(property.videoUrl));
         if (['http:', 'https:'].includes(video.protocol)) {
           const link = make('a', 'og-pm-source', 'Open property video');
           link.href = video.href;
@@ -875,6 +899,7 @@
     }
 
     const allData = make('details');
+    allData.open = true;
     allData.appendChild(make('summary', '', 'Full submitted property details'));
     const fields = make('div', 'og-pm-all-fields');
     const hiddenKeys = new Set(['images', 'media', 'coverImage']);
@@ -1115,8 +1140,11 @@
   async function saveProperty(event, property, container) {
     event.preventDefault();
     const form = event.currentTarget;
-    const button = form.querySelector('[type="submit"]');
-    button.disabled = true;
+    const button = event.submitter || form.querySelector('[type="submit"]');
+    const approveAfterSave = Boolean(event.submitter?.hasAttribute('data-approve-publish'));
+    if (approveAfterSave && !window.confirm(`Save the reviewed details and photos, then approve and publish “${property.title || 'this listing'}”?`)) return;
+    const submitButtons = [...form.querySelectorAll('button[type="submit"]')];
+    submitButtons.forEach((item) => { item.disabled = true; });
     try {
       const values = Object.fromEntries(new FormData(form));
       const profile = agents.find((agent) => `${agent.kind}:${agent.id}` === values.agentProfile);
@@ -1172,11 +1200,18 @@
         method: 'POST',
         body: mediaForm,
       });
+      if (approveAfterSave) {
+        await request(`/admin/properties/${encodeURIComponent(property.id)}/approve`, {
+          method: 'PATCH',
+          body: JSON.stringify({}),
+        });
+      }
       closeModal();
       window.location.reload();
     } catch (error) {
       showError(container, error.message || 'Could not save this listing.');
-      button.disabled = false;
+      submitButtons.forEach((item) => { item.disabled = false; });
+      button?.focus();
     }
   }
 
@@ -1342,6 +1377,63 @@
       window.alert(error.message || 'Could not open this property for editing.');
     } finally {
       if (trigger) trigger.disabled = false;
+    }
+  }
+  function matchPropertyToRow(row, source = []) {
+    const linkedRecord = row.querySelector('[data-property-id],[data-listing-id]');
+    const listingId = row.dataset.ogListingId || row.dataset.propertyId || row.dataset.listingId
+      || row.getAttribute('data-og-listing-id') || linkedRecord?.dataset.propertyId
+      || linkedRecord?.dataset.listingId;
+    const candidates = [...new Map(source
+      .filter((item) => item?.id != null)
+      .map((item) => [String(item.id), item])).values()];
+    if (listingId) {
+      const byId = candidates.find((item) => String(item.id) === String(listingId));
+      if (byId) return byId;
+    }
+    const rowText = normalizedRowText(row.innerText);
+    const title = normalizedRowText(row.querySelector('td .font-medium,td [data-property-title]')?.textContent || '');
+    if (!rowText) return null;
+    let best = null;
+    let bestScore = -1;
+    for (const property of candidates) {
+      const propertyTitle = normalizedRowText(property.title);
+      if (!propertyTitle || !(title === propertyTitle || title.includes(propertyTitle) || rowText.includes(propertyTitle))) continue;
+      let score = title === propertyTitle ? 100 : title && propertyTitle.includes(title) ? 90 : 50;
+      const city = normalizedRowText(cityOf(property));
+      const price = property.price == null ? '' : normalizedRowText(`PKR ${Number(property.price).toLocaleString()}`);
+      if (city && rowText.includes(city)) score += 3;
+      if (price && rowText.includes(price)) score += 2;
+      if (score > bestScore) { best = property; bestScore = score; }
+    }
+    return best;
+  }
+  async function resolvePropertyForRow(row) {
+    const cached = matchPropertyToRow(row, [
+      ...apiProperties,
+      ...properties,
+      ...(Array.isArray(window.__ogAdminApiProperties) ? window.__ogAdminApiProperties : []),
+      ...observedProperties.values(),
+    ]);
+    if (cached) return cached;
+    const payload = await request('/admin/properties');
+    const fresh = propertyList(payload);
+    setPropertyData(fresh);
+    return matchPropertyToRow(row, fresh);
+  }
+  async function openPropertyRowEditor(row, button) {
+    button.disabled = true;
+    try {
+      const property = await resolvePropertyForRow(row);
+      if (!property) {
+        window.alert('Could not match this table row to a property record. Refresh the listings and try again.');
+        return;
+      }
+      await openPropertyEditor(property, button);
+    } catch (error) {
+      window.alert(error.message || 'Could not load this property for review.');
+    } finally {
+      button.disabled = false;
     }
   }
   window.__ogOpenPropertyEditor = openPropertyEditor;
@@ -1682,6 +1774,25 @@
       const property = rowProperty(row, used);
       if (!property) {
         ensureReviewSelectionCell(row, null, root);
+        if (normalizedRowText(row.innerText)) {
+          let reviewCell = row.querySelector('[data-og-pm-cell]');
+          if (!reviewCell) {
+            reviewCell = document.createElement('td');
+            reviewCell.dataset.ogPmCell = 'true';
+            reviewCell.className = 'px-4 py-3';
+            row.appendChild(reviewCell);
+          }
+          let reviewButton = reviewCell.querySelector('[data-og-pm-review-row]');
+          if (!reviewButton) {
+            reviewButton = document.createElement('button');
+            reviewButton.type = 'button';
+            reviewButton.className = 'og-pm-manage';
+            reviewButton.dataset.ogPmReviewRow = 'true';
+            reviewButton.textContent = 'Review listing';
+            reviewButton.addEventListener('click', () => { void openPropertyRowEditor(row, reviewButton); });
+            reviewCell.appendChild(reviewButton);
+          }
+        }
         row.dataset.ogMatchesFilters = String(!propertySearch || normalize(row.innerText).includes(propertySearch));
         row.hidden = row.dataset.ogMatchesFilters !== 'true';
         continue;
@@ -1706,7 +1817,7 @@
         });
         cell.appendChild(button);
       }
-      if (button.textContent !== 'Edit listing') button.textContent = 'Edit listing';
+      if (button.textContent !== 'Review listing') button.textContent = 'Review listing';
       button.dataset.propertyId = String(property.id);
       button.dataset.ogPmEdit = 'true';
       button.__ogListingProperty = property;

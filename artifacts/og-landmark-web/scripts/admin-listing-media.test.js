@@ -43,6 +43,14 @@ test('resolves relative listing media from the website origin and preserves exte
     resolveMediaUrl('/api-legacy/api/admin/property-media/front.jpg', 'https://www.oglandmark.com'),
     'https://www.oglandmark.com/api/admin/property-media/front.jpg',
   );
+  assert.equal(
+    resolveMediaUrl('/api/admin/property-media/front.jpg', 'https://preview.replit.dev'),
+    'https://preview.replit.dev/api-legacy/api/admin/property-media/front.jpg',
+  );
+  assert.equal(
+    resolveMediaUrl('https://preview.replit.dev/api/admin/property-media/front.jpg', 'https://preview.replit.dev'),
+    'https://preview.replit.dev/api-legacy/api/admin/property-media/front.jpg',
+  );
 });
 
 test('Admin Agent photos normalize stored preview-only Laravel media paths', () => {
@@ -230,6 +238,28 @@ test('Admin review inbox includes new submissions and has separate Featured, Rec
   assert.match(mobileManagementSource, /label: 'Project listings', path: '\/admin\/properties\?propertyView=projects'/);
   assert.match(propertyManagementSource, /listingInboxView \? 'Property listed'/);
   assert.match(propertyManagementSource, /categoryFilter = agricultureView \? 'agricultural' : projectsView \? 'projects' : 'all'/);
+});
+
+test('property rows always provide a resilient review action for wrapped or unmatched titles', () => {
+  assert.match(propertyManagementSource, /function normalizedRowText\(value\)[\s\S]*?replace\(\/\\s\+\/g, ' '\)/);
+  assert.match(propertyManagementSource, /function matchPropertyToRow\(row, source = \[\]\)/);
+  assert.match(propertyManagementSource, /async function resolvePropertyForRow\(row\)/);
+  assert.match(propertyManagementSource, /data-og-pm-review-row/);
+  assert.match(propertyManagementSource, /button\.textContent = 'Review listing'/);
+});
+
+test('property review can remove or upload photos and approve only after saving edits', () => {
+  assert.match(propertyManagementSource, /data-approve-publish/);
+  assert.match(propertyManagementSource, /name="photoUploads" type="file"/);
+  assert.match(propertyManagementSource, /Remove listing photo/);
+  const saveStart = propertyManagementSource.indexOf('async function saveProperty(event, property, container)');
+  const saveEnd = propertyManagementSource.indexOf('async function deleteProperty(', saveStart);
+  const save = propertyManagementSource.slice(saveStart, saveEnd);
+  assert.ok(save.indexOf("await request(`/admin/properties/${encodeURIComponent(property.id)}/media`")
+    < save.indexOf('if (approveAfterSave)'));
+  assert.match(save, /\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}\/approve/);
+  assert.match(adminControllerSource, /'approve' => 'Active'/);
+  assert.match(apiRoutesSource, /whereIn\('action', \['approve', 'reject', 'request-changes'\]\)/);
 });
 
 test('Admin separates the automatic latest six live listings from the full property table', () => {

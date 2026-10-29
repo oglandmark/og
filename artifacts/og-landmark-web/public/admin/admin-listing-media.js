@@ -18,12 +18,34 @@
 
   function resolveMediaUrl(value, siteOrigin) {
     if (typeof value !== 'string' || !value.trim()) return '';
-    const url = value.trim().replace(
-      /\/api-legacy\/api(?=\/admin\/property-media\/)/i,
-      '/api',
-    );
-    if (/^(https?:|data:image\/)/i.test(url)) return url;
+    let url = value.trim();
+    const localPreview = /\.replit\.dev$|\.repl\.co$/i.test(new URL(siteOrigin).hostname);
+    if (/^https?:/i.test(url)) {
+      try {
+        const parsed = new URL(url);
+        if (localPreview && parsed.origin === siteOrigin
+          && /^\/api\/admin\/property-media\//i.test(parsed.pathname)) {
+          parsed.pathname = parsed.pathname.replace(/^\/api(?=\/admin\/property-media\/)/i, '/api-legacy/api');
+          return parsed.href;
+        }
+        if (!localPreview) {
+          parsed.pathname = parsed.pathname.replace(
+            /^\/api-legacy\/api(?=\/admin\/property-media\/)/i,
+            '/api',
+          );
+        }
+        return parsed.href;
+      } catch {
+        return '';
+      }
+    }
+    if (/^data:image\//i.test(url)) return url;
     if (url.startsWith('//')) return `https:${url}`;
+    if (localPreview && /^\/api\/admin\/property-media\//i.test(url)) {
+      url = url.replace(/^\/api(?=\/admin\/property-media\/)/i, '/api-legacy/api');
+    } else if (!localPreview) {
+      url = url.replace(/^\/api-legacy\/api(?=\/admin\/property-media\/)/i, '/api');
+    }
     try {
       return new URL(url, siteOrigin).href;
     } catch {

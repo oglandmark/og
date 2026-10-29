@@ -496,6 +496,9 @@ final class OgLandmarkApiTest extends TestCase
             ->assertJsonPath('seller.email', 'user@example.test');
         $this->withToken($token)->patchJson('/api/properties/102/approve')
             ->assertOk()->assertJsonPath('property.approvalStatus', 'Active');
+        $this->getJson('/api/properties')
+            ->assertOk()
+            ->assertJsonFragment(['id' => 102, 'approvalStatus' => 'Active', 'listingStatus' => 'Active']);
         $this->withToken($token)->patchJson('/api/properties/102/request-changes', ['reason' => 'Please add ownership documents.'])
             ->assertOk()->assertJsonPath('property.approvalStatus', 'Changes Requested')
             ->assertJsonPath('property.changeRequest', 'Please add ownership documents.');

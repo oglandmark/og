@@ -26,7 +26,7 @@ final class PreviewLiveFeedController extends Controller
     {
         $allowedQueryKeys = [
             'type', 'city', 'status', 'purpose', 'minPrice', 'maxPrice',
-            'minBeds', 'featured', 'search', 'keyword', 'limit', 'offset',
+            'minBeds', 'featured', 'recommended', 'search', 'keyword', 'limit', 'offset',
             'sort', 'minLat', 'maxLat', 'minLng', 'maxLng', 'lat', 'lng',
             'radiusKm', 'response', 'paginated',
         ];

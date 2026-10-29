@@ -21,6 +21,14 @@ const apiControllerSource = fs.readFileSync(
   path.join(__dirname, '..', '..', 'api-server', 'laravel', 'app', 'Http', 'Controllers', 'Api', 'PropertyController.php'),
   'utf8',
 );
+const adminControllerSource = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'api-server', 'laravel', 'app', 'Http', 'Controllers', 'Api', 'AdminController.php'),
+  'utf8',
+);
+const apiRoutesSource = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'api-server', 'laravel', 'routes', 'api.php'),
+  'utf8',
+);
 
 test('resolves relative listing media from the website origin and preserves external URLs', () => {
   assert.equal(
@@ -138,10 +146,11 @@ test('Admin can select and filter persistent Recommended listings for mobile Hom
   assert.match(propertyManagementSource, /recommendedFilter/);
   assert.match(mobileManagementSource, /propertyView=recommended/);
   assert.match(propertyManagementSource, /Approve this listing before recommending it/);
-  assert.ok(apiControllerSource.includes("'feature', 'recommend'"));
-  assert.ok(apiControllerSource.includes("($parts[2] ?? '') === 'recommend'"));
-  assert.ok(apiControllerSource.includes("$data['properties'][$index]['recommended']"));
-  assert.ok(apiControllerSource.includes("'recommended' => false"));
+  assert.match(apiRoutesSource, /\/admin\/properties\/\{id\}\/feature/);
+  assert.match(apiRoutesSource, /\/admin\/properties\/\{id\}\/recommend/);
+  assert.match(adminControllerSource, /in_array\(\$promotion, \['feature', 'recommend'\]/);
+  assert.match(adminControllerSource, /\$property\[\$field\] = \$enabled/);
+  assert.match(apiControllerSource, /\$payload\['recommended'\] = false/);
   assert.match(propertyManagementSource, /data-og-recommend-toggle/);
   assert.match(propertyManagementSource, /\+ Recommend/);
 });

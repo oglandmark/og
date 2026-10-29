@@ -391,6 +391,94 @@ final class OgLandmarkApiTest extends TestCase
         $this->assertEmpty($data['auditLog']);
     }
 
+    public function test_property_owners_cannot_spoof_review_or_promotion_fields(): void
+    {
+        $token = $this->postJson('/api/auth/login', [
+            'identifier' => 'user@example.test',
+            'password' => self::PASSWORD,
+        ])->assertOk()->json('token');
+
+        $created = $this->withToken($token)->postJson('/api/properties', [
+            'title' => 'New owner listing',
+            'city' => 'Okara',
+            'price' => 5000000,
+            'sellerId' => 7,
+            'agentId' => 7,
+            'approvalStatus' => 'Active',
+            'listingStatus' => 'Active',
+            'featured' => true,
+            'recommended' => true,
+            'priority' => true,
+            'adminHidden' => true,
+            'isDemo' => true,
+            'isProject' => true,
+            'reviewHistory' => [['action' => 'forged']],
+            'rejectionReason' => 'forged',
+        ])->assertCreated()
+            ->assertJsonPath('sellerId', 42)
+            ->assertJsonPath('agentId', null)
+            ->assertJsonPath('approvalStatus', 'Pending')
+            ->assertJsonPath('listingStatus', 'Pending')
+            ->assertJsonPath('featured', false)
+            ->assertJsonPath('recommended', false)
+            ->assertJsonPath('priority', false)
+            ->assertJsonPath('adminHidden', false)
+            ->assertJsonPath('isDemo', false)
+            ->assertJsonPath('isProject', false)
+            ->assertJsonPath('reviewHistory.0.action', 'submitted')
+            ->assertJsonPath('rejectionReason', null);
+
+        $this->withToken($token)->putJson('/api/properties/101', [
+            'title' => 'Updated listing',
+            'featured' => true,
+            'recommended' => true,
+            'adminHidden' => true,
+            'approvalStatus' => 'Active',
+            'listingStatus' => 'Active',
+            'sellerId' => 7,
+            'reviewHistory' => [['action' => 'forged']],
+        ])->assertOk()
+            ->assertJsonPath('sellerId', 42)
+            ->assertJsonPath('approvalStatus', 'Pending')
+            ->assertJsonPath('listingStatus', 'Pending')
+            ->assertJsonPath('featured', false)
+            ->assertJsonPath('recommended', false)
+            ->assertJsonMissing(['action' => 'forged']);
+    }
+
+    public function test_admin_property_promotions_require_approved_active_listings_and_are_audited(): void
+    {
+        $adminToken = $this->adminToken();
+        $userToken = $this->postJson('/api/auth/login', [
+            'identifier' => 'user@example.test',
+            'password' => self::PASSWORD,
+        ])->assertOk()->json('token');
+
+        $this->withToken($adminToken)->patchJson('/api/admin/properties/101/feature', ['featured' => true])
+            ->assertOk()->assertJsonPath('property.featured', true);
+        $this->withToken($adminToken)->patchJson('/api/admin/properties/101/recommend', ['recommended' => true])
+            ->assertOk()->assertJsonPath('property.recommended', true);
+        $this->getJson('/api/properties?featured=true')
+            ->assertOk()->assertJsonCount(1)->assertJsonPath('0.id', 101);
+        $this->getJson('/api/properties?recommended=true')
+            ->assertOk()->assertJsonCount(1)->assertJsonPath('0.id', 101);
+        $this->withToken($adminToken)->patchJson('/api/admin/properties/102/feature', ['featured' => true])
+            ->assertStatus(409);
+        $this->withToken($adminToken)->patchJson('/api/admin/properties/102/recommend', ['recommended' => true])
+            ->assertStatus(409);
+        $this->withToken($adminToken)->patchJson('/api/admin/properties/101/feature', [])
+            ->assertUnprocessable();
+        $this->withToken($userToken)->patchJson('/api/admin/properties/101/recommend', ['recommended' => true])
+            ->assertForbidden();
+        $this->withToken($adminToken)->patchJson('/api/admin/properties/101/feature', ['featured' => false])
+            ->assertOk()->assertJsonPath('property.featured', false);
+
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $actions = array_column($data['auditLog'], 'action');
+        $this->assertContains('featured_updated', $actions);
+        $this->assertContains('recommended_updated', $actions);
+    }
+
     public function test_admin_permission_can_review_properties_and_update_agent_visibility(): void
     {
         DB::table('app_data')->update(['data' => json_encode(array_replace_recursive(

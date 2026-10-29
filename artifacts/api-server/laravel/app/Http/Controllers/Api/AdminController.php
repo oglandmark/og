@@ -401,6 +401,71 @@ final class AdminController extends Controller
         return response()->json(['success' => true, 'property' => $property]);
     }
 
+    public function setPropertyFeatured(string $id, Request $request, LegacyDataStore $store): JsonResponse
+    {
+        return $this->updatePropertyPromotion($id, 'feature', $request, $store);
+    }
+
+    public function setPropertyRecommended(string $id, Request $request, LegacyDataStore $store): JsonResponse
+    {
+        return $this->updatePropertyPromotion($id, 'recommend', $request, $store);
+    }
+
+    private function updatePropertyPromotion(string $id, string $promotion, Request $request, LegacyDataStore $store): JsonResponse
+    {
+        if (! in_array($promotion, ['feature', 'recommend'], true)) {
+            return response()->json(['error' => 'Unsupported listing promotion.'], 404);
+        }
+        $field = $promotion === 'feature' ? 'featured' : 'recommended';
+        $validated = $request->validate([$field => ['required', 'boolean']]);
+        $enabled = (bool) $validated[$field];
+        $admin = $request->attributes->get('legacyUser', []);
+
+        $result = $store->mutate(function (array &$data) use ($id, $promotion, $field, $enabled, $admin): array {
+            foreach ($data['properties'] ?? [] as $index => $property) {
+                if ((string) ($property['id'] ?? '') !== $id) continue;
+
+                $approval = mb_strtolower(trim((string) ($property['approvalStatus'] ?? '')));
+                $listing = mb_strtolower(trim((string) ($property['listingStatus'] ?? '')));
+                $eligible = in_array($approval, ['active', 'approved'], true)
+                    && in_array($listing, ['active', 'approved'], true)
+                    && ! filter_var($property['isDemo'] ?? false, FILTER_VALIDATE_BOOLEAN)
+                    && ! filter_var($property['isProject'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                if ($enabled && ! $eligible) {
+                    return ['error' => 'Only active, approved property listings can be promoted.', 'status' => 409];
+                }
+
+                $previous = (bool) ($property[$field] ?? false);
+                $property[$field] = $enabled;
+                $property['updatedAt'] = now()->toISOString();
+                $property['reviewHistory'] = is_array($property['reviewHistory'] ?? null)
+                    ? $property['reviewHistory'] : [];
+                $action = $promotion === 'feature' ? 'featured_updated' : 'recommended_updated';
+                $property['reviewHistory'][] = [
+                    'action' => $action,
+                    'by' => $admin['id'] ?? null,
+                    'byName' => $admin['name'] ?? '',
+                    'from' => $previous,
+                    'to' => $enabled,
+                    'createdAt' => $property['updatedAt'],
+                ];
+                $data['properties'][$index] = $property;
+                $this->appendAdminAudit($data, $admin, $action, 'properties', $property['id'] ?? $id, [
+                    'field' => $field,
+                    'from' => $previous,
+                    'to' => $enabled,
+                ]);
+                return ['property' => $property];
+            }
+            return ['error' => 'Property not found.', 'status' => 404];
+        });
+
+        if (isset($result['error'])) {
+            return response()->json(['error' => $result['error']], $result['status']);
+        }
+        return response()->json(['success' => true, 'property' => $result['property']]);
+    }
+
     public function propertyReview(string $id, LegacyDataStore $store): JsonResponse
     {
         $data = $store->read();

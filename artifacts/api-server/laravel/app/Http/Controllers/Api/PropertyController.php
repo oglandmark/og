@@ -12,6 +12,10 @@ final class PropertyController extends Controller
 {
     public function index(Request $request, LegacyDataStore $store): JsonResponse
     {
+        $request->validate([
+            'featured' => ['sometimes', 'in:true,false,1,0'],
+            'recommended' => ['sometimes', 'in:true,false,1,0'],
+        ]);
         $user = $request->attributes->get('legacyUser');
         $properties = array_values(array_filter($store->read()['properties'] ?? [], function (array $property) use ($user, $request): bool {
             if (filter_var($property['adminHidden'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
@@ -33,6 +37,12 @@ final class PropertyController extends Controller
             foreach (['city', 'type', 'purpose'] as $field) {
                 $queryValue = $request->query($field);
                 if ($queryValue && mb_strtolower((string) ($property[$field] ?? '')) !== mb_strtolower((string) $queryValue)) {
+                    return false;
+                }
+            }
+            foreach (['featured', 'recommended'] as $field) {
+                if ($request->query($field) !== null
+                    && filter_var($property[$field] ?? false, FILTER_VALIDATE_BOOLEAN) !== $request->boolean($field)) {
                     return false;
                 }
             }
@@ -101,10 +111,16 @@ final class PropertyController extends Controller
             'price' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        $property = $store->mutate(function (array &$data) use ($request, $user, $validated, $draft): array {
+        $serverOwnedFields = [
+            'id', 'sellerId', 'agentId', 'approvalStatus', 'listingStatus',
+            'featured', 'recommended', 'priority', 'adminHidden', 'adminHiddenAt',
+            'adminHiddenBy', 'isDemo', 'isProject', 'reviewHistory', 'rejectionReason',
+            'changeRequest', 'views', 'inquiryCount', 'createdAt', 'updatedAt',
+        ];
+        $property = $store->mutate(function (array &$data) use ($request, $user, $validated, $draft, $serverOwnedFields): array {
             $id = (int) ($data['nextId'] ?? 1000) + 1;
             $data['nextId'] = $id;
-            $payload = array_replace($validated, $request->except(['sellerId', 'agentId', 'approvalStatus', 'listingStatus', 'id']));
+            $payload = array_replace($validated, $request->except($serverOwnedFields));
             $payload['id'] = $id;
             $payload['sellerId'] = ($user['role'] ?? '') === 'Agent' ? null : $user['id'];
             $payload['agentId'] = ($user['role'] ?? '') === 'Agent' ? $user['id'] : null;
@@ -112,6 +128,13 @@ final class PropertyController extends Controller
             $payload['listingStatus'] = $draft ? 'Draft' : 'Pending';
             $payload['submissionState'] = $draft ? 'draft' : 'submitted';
             $payload['featured'] = false;
+            $payload['recommended'] = false;
+            $payload['priority'] = false;
+            $payload['adminHidden'] = false;
+            $payload['isDemo'] = false;
+            $payload['isProject'] = false;
+            $payload['rejectionReason'] = null;
+            $payload['changeRequest'] = null;
             $payload['views'] = 0;
             $payload['inquiryCount'] = 0;
             $payload['createdAt'] = now()->toISOString();
@@ -137,7 +160,13 @@ final class PropertyController extends Controller
             'city' => ['sometimes', 'required', 'string', 'max:160'],
             'price' => ['sometimes', 'nullable', 'numeric', 'min:0'],
         ]);
-        $property = $store->mutate(function (array &$data) use ($id, $request, $user, $validated): ?array {
+        $serverOwnedFields = [
+            'id', 'sellerId', 'agentId', 'approvalStatus', 'listingStatus',
+            'featured', 'recommended', 'priority', 'adminHidden', 'adminHiddenAt',
+            'adminHiddenBy', 'isDemo', 'isProject', 'reviewHistory', 'rejectionReason',
+            'changeRequest', 'views', 'inquiryCount', 'createdAt', 'updatedAt',
+        ];
+        $property = $store->mutate(function (array &$data) use ($id, $request, $user, $validated, $serverOwnedFields): ?array {
             foreach ($data['properties'] ?? [] as $index => $candidate) {
                 if ((string) ($candidate['id'] ?? '') !== $id) continue;
                 if (($user['role'] ?? '') !== 'Admin'
@@ -145,10 +174,13 @@ final class PropertyController extends Controller
                     && (string) ($candidate['agentId'] ?? '') !== (string) $user['id']) {
                     return ['_forbidden' => true];
                 }
-                $merged = array_replace($candidate, $validated, $request->except(['id', 'sellerId', 'agentId', 'approvalStatus', 'listingStatus']));
+                $merged = array_replace($candidate, $validated, $request->except($serverOwnedFields));
                 if (($user['role'] ?? '') !== 'Admin') {
                     $merged['approvalStatus'] = 'Pending';
                     $merged['listingStatus'] = 'Pending';
+                    $merged['featured'] = false;
+                    $merged['recommended'] = false;
+                    $merged['priority'] = false;
                 }
                 $merged['updatedAt'] = now()->toISOString();
                 $data['properties'][$index] = $merged;

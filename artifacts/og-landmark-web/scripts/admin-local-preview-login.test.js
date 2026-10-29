@@ -247,7 +247,7 @@ test('preview Admin reset sends an OTP, persists the new password, and rejects t
       email: 'wrong-admin@example.test',
     });
     assert.equal(unknownEmail.response.status, 404);
-    assert.match(unknownEmail.payload.error, /does not match/i);
+    assert.match(unknownEmail.payload.error, /matches this email/i);
 
     const requestCode = await postJson(baseUrl, '/api/auth/admin-forgot-password', { email });
     assert.equal(requestCode.response.status, 200, requestCode.payload.error || 'Reset email should be accepted.');

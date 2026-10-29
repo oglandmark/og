@@ -1290,11 +1290,12 @@
 
   async function loadAgents() {
     if (agentsLoaded) return;
-    const [profiles, users] = await Promise.all([
+    const [profiles, cityProfiles, users] = await Promise.all([
       request('/admin/mobile-agents').catch((error) => {
         agentDirectoryMessage = `Mobile Agent directory could not load: ${error.message}`;
         return [];
       }),
+      request('/admin/city-agents').catch(() => []),
       request('/admin/users').catch((error) => {
         agentDirectoryMessage = `Agent accounts could not be loaded: ${error.message}`;
         return [];
@@ -1309,10 +1310,17 @@
           && status === 'active';
       })
       .map((user) => [String(user.id), user]));
+    const cityProfilesByAccount = new Map();
+    for (const profile of Array.isArray(cityProfiles) ? cityProfiles : []) {
+      const linkedUserId = String(profile.userId || profile.accountId || profile.authUserId || '').trim();
+      if (!linkedUserId || cityProfilesByAccount.has(linkedUserId)) continue;
+      cityProfilesByAccount.set(linkedUserId, profile);
+    }
     agents = (Array.isArray(profiles) ? profiles : [])
       .filter((profile) => {
         const userId = String(profile.userId || profile.authUserId || '');
         const account = accounts.get(userId);
+        const cityProfile = cityProfilesByAccount.get(userId);
         const visible = profile.visible == null
           || [true, 1, '1', 'true', 'yes'].includes(profile.visible)
           || ['true', '1', 'yes'].includes(normalize(profile.visible));
@@ -1320,19 +1328,22 @@
           && normalize(profile.approvalStatus) === 'approved'
           && normalize(profile.status || 'active') === 'active'
           && visible
-          && Boolean(profile.city || profile.cityName || profile.officeCity);
+          && Boolean(profile.city || profile.cityName || profile.officeCity
+            || cityProfile?.city || cityProfile?.cityName || cityProfile?.officeCity);
       })
       .map((profile) => {
         const userId = String(profile.userId || profile.authUserId);
         const account = accounts.get(userId);
+        const cityProfile = cityProfilesByAccount.get(userId);
         return {
           ...profile,
           id: String(profile.id),
           kind: 'mobile',
           userId,
-          name: profile.name || account?.name || 'Agent',
+          name: profile.name || cityProfile?.name || account?.name || 'Agent',
           phone: profile.phone || account?.phone || '',
-          city: profile.city || profile.cityName || profile.officeCity || '',
+          city: profile.city || profile.cityName || profile.officeCity
+            || cityProfile?.city || cityProfile?.cityName || cityProfile?.officeCity || '',
         };
       });
     if (!agents.length && !agentDirectoryMessage) {
@@ -1383,7 +1394,7 @@
         const available = agents.filter((agent) => agent.city === citySelect.value);
         agentSelect.replaceChildren(new Option('Select an Agent', ''));
         for (const agent of available) {
-          const option = new Option(`${agent.name}${agent.phone ? ` · ${agent.phone}` : ''}`, agent.userId);
+          const option = new Option(`${agent.name} · ${agent.city}${agent.phone ? ` · ${agent.phone}` : ''}`, agent.userId);
           agentSelect.appendChild(option);
         }
         const current = agents.find((agent) => agent.userId === currentAgentId && agent.city === citySelect.value);

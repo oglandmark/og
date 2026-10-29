@@ -236,6 +236,16 @@ test('Agent table shows profile thumbnails with bounded missing and broken-photo
   assert.match(source, /directorySources\.push/);
 });
 
+test('local Laravel admin proxy serves the website Agent directory and assignment options show city', () => {
+  const apiBase = fs.readFileSync(path.join(root, 'public/og-api-base.js'), 'utf8');
+  const properties = fs.readFileSync(path.join(root, 'public/admin/admin-property-management.js'), 'utf8');
+
+  assert.match(apiBase, /pathname === '\/api\/admin\/city-agents' && verb === 'GET'[\s\S]*?laravelRoot \+ '\/admin\/city-agents'/);
+  assert.match(properties, /request\('\/admin\/city-agents'\)/);
+  assert.match(properties, /cityProfilesByAccount\.get\(userId\)/);
+  assert.match(properties, /`\$\{agent\.name\} · \$\{agent\.city\}\$\{agent\.phone \? ` · \$\{agent\.phone\}` : ''\}`/);
+});
+
 test('property table supports eligible batch approval and per-listing results', () => {
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-property-management.js'), 'utf8');
   assert.match(source, /isBulkReviewEligible/);

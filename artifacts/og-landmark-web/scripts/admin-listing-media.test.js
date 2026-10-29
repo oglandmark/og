@@ -249,7 +249,7 @@ test('property review can remove or upload photos and approve only after saving 
   const save = propertyManagementSource.slice(saveStart, saveEnd);
   assert.ok(save.indexOf("await request(`/admin/properties/${encodeURIComponent(property.id)}/media`")
     < save.indexOf('if (approveAfterSave)'));
-  assert.match(save, /\/properties\/\$\{encodeURIComponent\(property\.id\)\}\/approve/);
+  assert.match(save, /\/admin\/properties\/\$\{encodeURIComponent\(property\.id\)\}\/approve/);
   assert.match(adminControllerSource, /'approve' => 'Active'/);
   assert.match(apiRoutesSource, /whereIn\('action', \['approve', 'reject', 'request-changes'\]\)/);
 });

@@ -1001,7 +1001,7 @@ async function readData() {
 
 function syncLocalPreviewAdminCredentials(data) {
   if (!localPreview || !replitPreview || !Array.isArray(data.users)) return false;
-  const admin = data.users.find(user => String(user.role || '').toLowerCase() === 'admin');
+  const admin = data.users.find(user => hasPermission(user, 'admin'));
   if (!admin) return false;
 
   let changed = false;

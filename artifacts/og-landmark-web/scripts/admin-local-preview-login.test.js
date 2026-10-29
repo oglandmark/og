@@ -151,7 +151,7 @@ test('Replit preview Admin login uses configured password without requiring APP_
       id: 1,
       name: 'Preview Admin',
       email,
-      role: 'Admin',
+      role: 'User',
       status: 'Active',
       permissions: ['admin'],
       password: fixturePassword('OldPassword123!'),
@@ -187,8 +187,20 @@ test('Replit preview Admin login uses configured password without requiring APP_
     });
     const payload = await response.json();
     assert.equal(response.status, 200, payload.error || 'Admin preview login should succeed.');
-    assert.equal(payload.user?.role, 'Admin');
+    assert.equal(payload.user?.role, 'User');
+    assert.deepEqual(payload.user?.permissions, ['admin']);
     assert.equal(typeof payload.token, 'string');
+    const currentUserResponse = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${payload.token}` },
+    });
+    const currentUser = await currentUserResponse.json();
+    assert.equal(currentUserResponse.status, 200);
+    assert.equal(currentUser.role, 'User');
+    assert.deepEqual(currentUser.permissions, ['admin']);
+    const adminPropertiesResponse = await fetch(`${baseUrl}/api/admin/properties`, {
+      headers: { Authorization: `Bearer ${payload.token}` },
+    });
+    assert.equal(adminPropertiesResponse.status, 200);
   } finally {
     await stopProcess(child);
     fs.rmSync(directory, { recursive: true, force: true });

@@ -39,7 +39,11 @@
   }
 
   function isAdminUser(user) {
-    return Boolean(user && String(user.role || '').toLowerCase() === 'admin');
+    if (!user) return false;
+    const roleIsAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
+    const hasAdminPermission = Array.isArray(user.permissions)
+      && user.permissions.some(permission => String(permission).trim().toLowerCase() === 'admin');
+    return roleIsAdmin || hasAdminPermission;
   }
 
   function extractUser(payload) {

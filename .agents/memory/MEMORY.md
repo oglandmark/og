@@ -54,7 +54,7 @@
 - [Public homepage preservation](public-homepage-preservation.md) — keep the original marketing page at `/`; do not replace it with a role portal.
 - [User-controlled app builds](build-approval.md) — do not start a new mobile build until the user explicitly authorizes it.
 - [Single public account model](single-user-account-model.md) — public accounts are User; keep staff permissions separate so listing moderation remains available.
-- [Admin login feedback](admin-login-feedback.md) — show credential-stage failures beside the login form; errors inside a collapsed OTP panel make Continue appear inert.
+- [Admin login feedback](admin-login-feedback.md) — show credential errors and accept the server-issued Admin permission even when the public role is `User`.
 - [Admin trusted-device policy](admin-trusted-device.md) — keep OTP on non-local environments; the local Replit preview may use password-only admin login.
 - [Local admin session bridge](local-admin-session-bridge.md) — preview Express sessions aren't in Laravel auth_sessions; validate them locally then enforce Laravel permissions.
 - [Admin project lifecycle](admin-project-lifecycle.md) — project admin edits should stay in the admin audit pipeline and archive projects to preserve linked inventory.

@@ -63,6 +63,8 @@ test('admin session recovery accepts both direct and Laravel-wrapped current-use
   assert.deepEqual(extractUser(user), user);
   assert.deepEqual(extractUser({ user }), user);
   assert.equal(isAdminUser(extractUser({ user })), true);
+  assert.equal(isAdminUser({ id: 8, role: 'User', permissions: ['admin'] }), true);
+  assert.equal(isAdminUser({ id: 9, role: 'User', permissions: [] }), false);
 });
 
 test('delegated admin login submit reads its form from the event target', () => {
@@ -86,7 +88,10 @@ test('only admin sessions are persisted and logout recovery clears all dashboard
   assert.deepEqual(JSON.parse(storage.getItem('og_user')), { id: 3, role: 'Admin' });
   assert.equal(storage.getItem('adminAuth'), 'true');
   assert.equal(isAdminUser({ role: 'admin' }), true);
-  assert.equal(isAdminUser({ role: 'User', permissions: ['admin'] }), false);
+  assert.equal(isAdminUser({ role: 'User', permissions: ['admin'] }), true);
+  assert.equal(persistSession(storage, 'permission-admin-token', { id: 4, role: 'User', permissions: ['admin'] }), true);
+  assert.equal(storage.getItem('og_token'), 'permission-admin-token');
+  assert.equal(persistSession(storage, 'buyer-token', { role: 'User', permissions: [] }), false);
 
   clearSession(storage);
   assert.equal(storage.getItem('og_token'), null);
@@ -102,5 +107,6 @@ test('admin page loads the OTP/session bridge before the compiled dashboard and 
 
   assert.notEqual(bridgeIndex, -1);
   assert.ok(bridgeIndex < bundleIndex, 'auth compatibility must mount before the dashboard');
+  assert.match(html, /admin-auth-compatibility\.js\?v=permission-admin-local-login-20261029/);
   assert.match(management, /id:\s*profile\s*\?\s*String\(profile\.id\)\s*:\s*null/);
 });

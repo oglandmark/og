@@ -33,8 +33,15 @@
   const dateText = (value) => value ? esc(String(value).slice(0, 10)) : '—';
 
   async function request(url, options) {
+    let token = '';
+    try { token = window.localStorage.getItem('og_token') || ''; } catch {}
     const response = await fetch(url, {
-      headers: { Accept: 'application/json', ...(options && options.body ? { 'Content-Type': 'application/json' } : {}) },
+      headers: {
+        Accept: 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options && options.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(options && options.headers ? options.headers : {}),
+      },
       cache: 'no-store',
       ...options,
     });

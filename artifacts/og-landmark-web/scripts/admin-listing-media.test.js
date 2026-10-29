@@ -242,6 +242,8 @@ test('Admin review inbox includes new submissions and has separate Featured, Rec
 
 test('property rows always provide a resilient review action for wrapped or unmatched titles', () => {
   assert.match(propertyManagementSource, /const normalizedRowText = \(value\) => normalize\(value\)\.replace/);
+  assert.match(propertyManagementSource, /hasPropertyManagementMarkers = markedRoot\?\.querySelector\([\s\S]*?data-og-pm-header/);
+  assert.match(propertyManagementSource, /propertyRootHeadings\.has\(markedHeading\) \|\| hasPropertyManagementMarkers/);
   assert.match(propertyManagementSource, /function matchPropertyToRow\(row, source = \[\]\)/);
   assert.match(propertyManagementSource, /async function resolvePropertyForRow\(row\)/);
   assert.match(propertyManagementSource, /data-og-pm-review-row/);

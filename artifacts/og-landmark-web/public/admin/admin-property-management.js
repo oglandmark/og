@@ -298,7 +298,12 @@
   function findRoot() {
     const markedRoot = document.querySelector('[data-og-property-management-root="true"]');
     const markedHeading = markedRoot?.querySelector('h2')?.textContent.trim();
-    if (markedRoot?.isConnected && propertyRootHeadings.has(markedHeading)) return markedRoot;
+    const hasPropertyManagementMarkers = markedRoot?.querySelector(
+      '[data-og-pm-header], [data-og-pm-filters]',
+    );
+    if (markedRoot?.isConnected && (
+      propertyRootHeadings.has(markedHeading) || hasPropertyManagementMarkers
+    )) return markedRoot;
 
     const heading = [...document.querySelectorAll('h2')]
       .find((node) => propertyRootHeadings.has(node.textContent.trim()));

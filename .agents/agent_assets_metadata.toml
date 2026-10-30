@@ -84,3 +84,17 @@ mtime_ms = 1793379348587
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/9aa32874-7041-4bbd-8d98-91c23e487fa3/9d7c6651-8975-4596-a724-42df9604e68f"
 storage_version_token = "1793379376252792"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "1LYCIo9OF45O59mk5REOG"
+uri = "file://generated-artifacts/og-landmark-release/og-landmark-hostinger-vite-app.zip"
+type = "unspecified"
+title = "OG Landmark · Hostinger Vite Upload ZIP"
+description = "Hostinger Node.js Web App upload archive with Vite project metadata, root index.html, and the existing static website assets. Vite production build completed and ZIP integrity passed."
+logical_id = "9d6d3470-e6a5-4e51-bd1d-a98b8bb26d1d"
+content_hash = "sha256:199296d0f1374ad835db49a40c0f302321bd95d7b7024b459ce02e70c01bc305"
+size = 13185517
+mtime_ms = 1793382869055
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/9d6d3470-e6a5-4e51-bd1d-a98b8bb26d1d/27ea3de3-6b9b-4e18-9657-cf337dab89a8"
+storage_version_token = "1793382884588543"
+content_type = "application/octet-stream"

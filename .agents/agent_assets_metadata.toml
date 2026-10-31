@@ -98,3 +98,17 @@ mtime_ms = 1793383459359
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/9d6d3470-e6a5-4e51-bd1d-a98b8bb26d1d/24094e0d-6a51-4b98-98db-5218e4115197"
 storage_version_token = "1793383478835189"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "B1yPzL8xNKN_RrR2Lj2dY"
+uri = "file://generated-artifacts/og-landmark-release/og-landmark-hostinger-express-app.zip"
+type = "unspecified"
+title = "OG Landmark · Hostinger Express ZIP"
+description = "Express deployment archive with package.json and server.js at ZIP root, React website files under public/, and no node_modules, .env, or .git. Local route and startup checks passed."
+logical_id = "2c3d8a19-abd7-44e2-b72e-a101921683f9"
+content_hash = "sha256:af015f236dab4d55aac021675fa9df710fbcc2888f71753f820e8d4076072353"
+size = 13185434
+mtime_ms = 1793424726336
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/2c3d8a19-abd7-44e2-b72e-a101921683f9/e404a273-bbd8-4eef-81f2-6a6cc4359a87"
+storage_version_token = "1793424739366542"
+content_type = "application/octet-stream"

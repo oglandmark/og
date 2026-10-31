@@ -1,10 +1,10 @@
 ---
 name: Production database runtime parity
-description: Reconcile the earlier Neon decision with the live API and preview database providers.
+description: Keep the current Supabase production database distinct from the deleted Hostinger API runtime and local preview.
 ---
 
-The project previously recorded a decision to use Neon PostgreSQL. During the 2026-10-29 audit, the public `www.oglandmark.com/api/health` endpoint reported `databaseProvider=mysql`, while the Replit Laravel preview reported `sqlite`. Treat these as separate runtimes and do not assume the earlier Neon note describes the currently serving API.
+The user confirms the current production database is Supabase PostgreSQL, not Hostinger MySQL. The public website still calls `https://api.oglandmark.com/api`; the user deleted that API subdomain and its app, so restoring Supabase connectivity also requires an API server and DNS mapping.
 
-**Why:** The live health response contradicts the earlier provider note, and the local preview uses a separate database; provider assumptions can hide cross-environment data divergence.
+**Why:** The user corrected the previous MySQL assumption while diagnosing registration, login, and password-reset failures. The source repository contains legacy MySQL/Laravel deployment notes, but current user-provided production state takes precedence.
 
-**How to apply:** Verify each runtime independently with its health endpoint before diagnosing sync or planning migrations. Do not query or mutate external production data without an approved access path, and never expose connection secrets.
+**How to apply:** Keep Supabase data intact; do not restore/import/seed MySQL over it. Deploy a current server-side API using the private Supabase `DATABASE_URL`, then restore `api.oglandmark.com` to that API and verify health and auth routes. Never put database credentials in browser code, ZIPs, Git, or chat.

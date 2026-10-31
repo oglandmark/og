@@ -3,8 +3,8 @@ name: MySQL migration safety
 description: Rules for completing the OG Landmark PostgreSQL-to-MySQL cutover without data loss.
 ---
 
-The existing Hostinger MySQL database still contains live users and listings and is the selected Laravel source of truth. Reuse it directly; a verified source snapshot is required only when copying to a different target. Repository seed JSON is not evidence of production parity.
+This guidance is historical for a future MySQL transfer only. The user now confirms Supabase PostgreSQL is the current production database; do not treat Hostinger MySQL as the current source or try to restore it over Supabase.
 
-**Why:** The application stores its canonical state as one JSON document, so a successful schema migration alone cannot prove that users, listings, sessions, and challenges were preserved. Replacing the still-live MySQL document with the repository snapshot would lose production changes.
+**Why:** The user corrected the provider state while diagnosing production auth failures. Earlier migration notes predate the current Supabase setup.
 
-**How to apply:** Back up the existing MySQL database and matching media, configure Laravel to use that same server-only MySQL connection, clear stale cached settings, run non-destructive migrations without seeding or importing, then verify the live listings and connected MySQL health response before routing traffic.
+**How to apply:** If MySQL is ever used again, follow this file's original backup and parity requirements. For current recovery, preserve Supabase and configure the replacement API with its private server-side PostgreSQL URL; verify the live API before testing auth.

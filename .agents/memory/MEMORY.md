@@ -8,7 +8,7 @@
 - [Hostinger media recovery](hostinger-media-recovery.md) — back up app_data media references and files together, then verify live photo/video delivery after restore.
 - [Hostinger SMTP delivery](hostinger-smtp-delivery.md) — use a real mailbox and verify SMTP from the API workflow, not only the CLI.
 - [Mobile listing uploads](mobile-listing-uploads.md) — keep sequential upload/fallback compatibility and normalize relative media URLs before native rendering.
-- [Production database runtime parity](neon-database.md) — re-check live health; public API reports MySQL while Replit Laravel preview is SQLite, despite an earlier Neon decision.
+- [Production database runtime parity](neon-database.md) — user confirms Supabase is current; restore the deleted API service and DNS without replacing Supabase data.
 - [Neon auth schema](neon-auth-schema.md) — app_data alone is insufficient; auth tables must exist before production auth flows are exercised.
 - [Expo GitHub build dispatch](expo-github-build-dispatch.md) — after transfers, align the owner slug and verify app ID against the project URL; investigate repo binding when dispatch finds none.
 - [EAS environment project matching](eas-environment-project-id.md) — production variables must be added to the exact EAS project ID used by the build.
@@ -40,7 +40,7 @@
 - [Listing edit media](listing-edit-media.md) — treat stored media URLs as remote and send explicit null when an editor removes optional media.
 - [Local auth test fixtures](local-auth-fixtures.md) — local JSON server fixtures must seed passwords in the server's PBKDF2 format before login tests.
 - [Post-merge setup](post-merge-setup.md) — this workspace needs a non-frozen pnpm install and the scoped @workspace/db filter.
-- [MySQL migration safety](mysql-migration-safety.md) — production cutover requires a verified live snapshot, protected empty-target import, and source/target parity checks.
+- [Historical MySQL migration safety](mysql-migration-safety.md) — apply only to a future MySQL transfer; do not treat Hostinger MySQL as the current Supabase store.
 - [MySQL projection parity](mysql-projection-parity.md) — mirrored search projections must keep schema, migration, runtime bindings, and export copies aligned; validate batch placeholder counts before deploy.
 - [Mobile property inventory accuracy](nearby-results-fallback.md) — public mobile screens show only Admin-approved active API listings; never surface bundled demos.
 - [Fresh Laravel backend](laravel-backend-cutover.md) — rebuild the backend later while preserving the existing React website and mobile app.

@@ -112,3 +112,17 @@ mtime_ms = 1793424726336
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/2c3d8a19-abd7-44e2-b72e-a101921683f9/e404a273-bbd8-4eef-81f2-6a6cc4359a87"
 storage_version_token = "1793424739366542"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "X3ma1xIsTqEFD6lqENjg3"
+uri = "file://generated-artifacts/og-landmark-release/og-landmark-supabase-express-api.zip"
+type = "unspecified"
+title = "OG Landmark · Supabase Express API ZIP"
+description = "Full Express API package with register, login, and password-reset routes plus Supabase PostgreSQL support. Root includes package.json and server.js; no credentials, node_modules, .env, .git, or local runtime data."
+logical_id = "d44b8617-ce94-49f0-b7f1-baed1f1bcca5"
+content_hash = "sha256:644927ac12c8071d4a8436140d9f184c60518b0caa4da53501692b16f6b267c7"
+size = 13267766
+mtime_ms = 1793427533470
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/d44b8617-ce94-49f0-b7f1-baed1f1bcca5/be51081a-af08-4cf3-a326-2ff9ea1337f1"
+storage_version_token = "1793427579798299"
+content_type = "application/octet-stream"

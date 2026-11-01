@@ -1,13 +1,13 @@
 /**
  * OG Landmark — API base for static Hostinger deploy.
- * Rewrites same-origin /api/* (and absolute same-origin /api) to the Laravel API.
+ * Production traffic uses the Express API served on the root website domain.
  *
  * Override for local preview:
  *   ?api=http://127.0.0.1:8000/api
  *   localStorage.setItem('og_api_base', 'http://127.0.0.1:8000/api')
  */
 (function () {
-  var LIVE = 'https://api.oglandmark.com/api';
+  var LIVE = 'https://oglandmark.com/api';
   var params = new URLSearchParams(window.location.search);
   var fromQuery = params.get('api');
   var fromStorage = null;
@@ -18,6 +18,14 @@
     .test(window.location.hostname);
   var isLocalAdminHost = /(^localhost$|^127\.0\.0\.1$|\.replit\.dev$|\.repl\.co$)/i
     .test(window.location.hostname);
+  var isOgLandmarkHost = /(^|\.)oglandmark\.com$/i.test(window.location.hostname);
+  if (!isPreviewHost && isOgLandmarkHost
+    && /^https:\/\/api\.oglandmark\.com\/api\/?$/i.test(String(fromStorage || ''))) {
+    fromStorage = null;
+    try {
+      localStorage.removeItem('og_api_base');
+    } catch (e) {}
+  }
   var previewBase = isPreviewHost ? '/api' : LIVE;
   var localLaravelAdminBase = /\.replit\.dev$|\.repl\.co$/i.test(window.location.hostname)
     ? '/api-legacy/api'
@@ -26,7 +34,7 @@
   window.__OG_ADMIN_LARAVEL_LOCAL__ = isLocalAdminHost;
   window.__OG_LOCAL_LARAVEL_API_BASE__ = localLaravelAdminBase;
   // Replit previews stay on the local Laravel proxy even if an earlier URL
-  // override was saved. Production hosts continue using the live API.
+  // override was saved. Production hosts use the Express API at the root domain.
   var base = (isPreviewHost ? '/api' : (fromQuery || fromStorage || previewBase)).replace(/\/+$/, '');
   window.__OG_API_BASE__ = base;
   // Persist ?api= so /admin and /user navigations keep the same API origin.

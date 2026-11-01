@@ -1,10 +1,10 @@
 ---
 name: Production database runtime parity
-description: Keep the current Supabase production database distinct from the deleted Hostinger API runtime and local preview.
+description: Keep Supabase as production storage and route the Hostinger website to its active root-domain Express API.
 ---
 
-The user confirms the current production database is Supabase PostgreSQL, not Hostinger MySQL. The public website still calls `https://api.oglandmark.com/api`; the user deleted that API subdomain and its app, so restoring Supabase connectivity also requires an API server and DNS mapping.
+The user confirms the production database is Supabase PostgreSQL. The root Hostinger Express app responds at `https://oglandmark.com/api/health`; when checked, it reported `DATABASE_URL` missing. The `api.oglandmark.com` subdomain was created as a normal website and does not currently route to the Node API. Production web API calls now target `https://oglandmark.com/api`.
 
-**Why:** The user corrected the previous MySQL assumption while diagnosing registration, login, and password-reset failures. The source repository contains legacy MySQL/Laravel deployment notes, but current user-provided production state takes precedence.
+**Why:** Live health checks showed the root Express API is reachable but not connected to its database, while the API subdomain does not reach the app. The user's production data remains in Supabase.
 
-**How to apply:** Keep Supabase data intact; do not restore/import/seed MySQL over it. Deploy a current server-side API using the private Supabase `DATABASE_URL`, then restore `api.oglandmark.com` to that API and verify health and auth routes. Never put database credentials in browser code, ZIPs, Git, or chat.
+**How to apply:** Configure the private Supabase PostgreSQL `DATABASE_URL` in the existing root-domain Hostinger Express app, not just `SUPABASE_URL`/anon key. Keep the frontend on `/api` at `oglandmark.com`; do not import MySQL over Supabase. Keep database credentials out of browser code, ZIPs, Git, and chat.

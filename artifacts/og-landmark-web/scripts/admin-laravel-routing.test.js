@@ -6,16 +6,17 @@ const test = require('node:test');
 
 const source = fs.readFileSync(path.join(__dirname, '../public/og-api-base.js'), 'utf8');
 
-function createBrowser(hostname) {
+function createBrowser(hostname, options = {}) {
   const calls = [];
   const origin = `https://${hostname}`;
+  let storedApiBase = options.apiBase || null;
   function XMLHttpRequest() {}
   XMLHttpRequest.prototype.open = function (method, url) {
     calls.push({ type: 'xhr', method, url });
   };
 
   const window = {
-    location: { hostname, origin, search: '' },
+    location: { hostname, origin, search: options.search || '' },
     fetch: async (input, init = {}) => {
       calls.push({
         type: 'fetch',
@@ -32,9 +33,9 @@ function createBrowser(hostname) {
     URLSearchParams,
     Request,
     localStorage: {
-      getItem: () => null,
-      removeItem: () => {},
-      setItem: () => {},
+      getItem: key => key === 'og_api_base' ? storedApiBase : null,
+      removeItem: key => { if (key === 'og_api_base') storedApiBase = null; },
+      setItem: (key, value) => { if (key === 'og_api_base') storedApiBase = value; },
     },
   };
   vm.runInNewContext(source, context);
@@ -179,7 +180,7 @@ test('localhost admin edits target the local Laravel service', async () => {
   ]);
 });
 
-test('production admin API routing remains on the existing production API', async () => {
+test('production admin API routing uses the root-domain Express API', async () => {
   const { window, calls } = createBrowser('www.oglandmark.com');
 
   await window.fetch('/api/admin/properties');
@@ -196,17 +197,30 @@ test('production admin API routing remains on the existing production API', asyn
 
   assert.equal(window.__OG_ADMIN_LARAVEL_LOCAL__, false);
   assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
-    ['https://api.oglandmark.com/api/admin/properties', 'GET'],
-    ['https://api.oglandmark.com/api/admin/properties/42', 'PATCH'],
-    ['https://api.oglandmark.com/api/admin/properties/42/visibility', 'PATCH'],
-    ['https://api.oglandmark.com/api/admin/properties/42/feature', 'PATCH'],
-    ['https://api.oglandmark.com/api/admin/properties/42/recommend', 'PATCH'],
-    ['https://api.oglandmark.com/api/admin/properties/42/approve', 'PATCH'],
-    ['https://api.oglandmark.com/api/properties/42/approve', 'PATCH'],
-    ['https://api.oglandmark.com/api/admin/properties/42/media', 'POST'],
-    ['https://api.oglandmark.com/api/admin/mobile-agents/8', 'PUT'],
-    ['https://api.oglandmark.com/api/admin/mobile-agents', 'POST'],
-    ['https://api.oglandmark.com/api/admin/mobile-agents/8', 'DELETE'],
+    ['https://oglandmark.com/api/admin/properties', 'GET'],
+    ['https://oglandmark.com/api/admin/properties/42', 'PATCH'],
+    ['https://oglandmark.com/api/admin/properties/42/visibility', 'PATCH'],
+    ['https://oglandmark.com/api/admin/properties/42/feature', 'PATCH'],
+    ['https://oglandmark.com/api/admin/properties/42/recommend', 'PATCH'],
+    ['https://oglandmark.com/api/admin/properties/42/approve', 'PATCH'],
+    ['https://oglandmark.com/api/properties/42/approve', 'PATCH'],
+    ['https://oglandmark.com/api/admin/properties/42/media', 'POST'],
+    ['https://oglandmark.com/api/admin/mobile-agents/8', 'PUT'],
+    ['https://oglandmark.com/api/admin/mobile-agents', 'POST'],
+    ['https://oglandmark.com/api/admin/mobile-agents/8', 'DELETE'],
+  ]);
+});
+
+test('production clears the stale API-subdomain override and uses root-domain API', async () => {
+  const { window, calls } = createBrowser('oglandmark.com', {
+    apiBase: 'https://api.oglandmark.com/api',
+  });
+
+  await window.fetch('/api/auth/login', { method: 'POST' });
+
+  assert.equal(window.__OG_API_BASE__, 'https://oglandmark.com/api');
+  assert.deepEqual(calls.map(({ url, method }) => [url, method]), [
+    ['https://oglandmark.com/api/auth/login', 'POST'],
   ]);
 });
 

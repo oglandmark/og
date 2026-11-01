@@ -126,3 +126,17 @@ mtime_ms = 1793427533470
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/d44b8617-ce94-49f0-b7f1-baed1f1bcca5/be51081a-af08-4cf3-a326-2ff9ea1337f1"
 storage_version_token = "1793427579798299"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "AnD60ZOzIlg45NNITWuOq"
+uri = "file://generated-artifacts/og-landmark-release/og-landmark-root-api-update.zip"
+type = "unspecified"
+title = "OG Landmark · Root API Update ZIP"
+description = "Updated Express package for the existing oglandmark.com Hostinger Node app. Production browser requests now use https://oglandmark.com/api; Replit preview routing is unchanged. The ZIP contains no .env, credentials, or local runtime data."
+logical_id = "e49e74eb-652d-4d36-9a49-50fbce0942ba"
+content_hash = "sha256:8700442b1599c9bec3b9e19f8eaef9c836148a6de7d1815080b4ad945d770548"
+size = 13268706
+mtime_ms = 1793518654307
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/e49e74eb-652d-4d36-9a49-50fbce0942ba/172733c6-b0c1-4503-8290-eff028b3a94e"
+storage_version_token = "1793518758818311"
+content_type = "application/octet-stream"

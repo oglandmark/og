@@ -290,7 +290,7 @@ test('Admin Agents lists Mobile app profiles and assignment options show city', 
   assert.match(properties, /option\.disabled = agent\.contactOnly === true/);
   assert.match(properties, /save\.disabled = !assignable/);
   assert.match(html, /admin-property-management\.js\?v=property-agent-assignment-20261029-v14/);
-  assert.match(html, /og-api-base\.js\?v=local-preview-banner-read-20261029-v3/);
+  assert.match(html, /og-api-base\.js\?v=api-root-domain-20261101/);
   assert.match(html, /admin-mobile-management\.js\?v=admin-banner-upload-feedback-20261029-v7/);
 });
 

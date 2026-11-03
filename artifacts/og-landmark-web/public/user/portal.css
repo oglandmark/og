@@ -244,6 +244,17 @@ a{color:inherit}
 .profile-fields{display:grid;grid-template-columns:1fr 1fr;gap:18px 24px;padding-top:20px}
 .profile-field label{display:block;margin-bottom:6px;color:#8a95a3;font-size:9px;text-transform:uppercase;letter-spacing:.7px;font-weight:700}
 .profile-field span{color:#344255;font-size:12px}
+.profile-edit-form{padding:24px}
+.profile-edit-form .profile-field{display:grid;gap:6px;color:#8a95a3;font-size:9px;text-transform:uppercase;letter-spacing:.7px;font-weight:700}
+.profile-edit-form .profile-field input{width:100%;height:38px;padding:0 10px;border:1px solid var(--line);border-radius:5px;background:#fff;color:var(--ink);font-size:12px;text-transform:none;letter-spacing:normal}
+.profile-form-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}
+.appointment-request-form{display:grid;grid-template-columns:1.7fr repeat(3,minmax(120px,1fr)) auto;gap:10px;align-items:end;padding:16px;margin:0 0 14px;background:#fff;border:1px solid var(--line);border-radius:9px}
+.appointment-request-form label{display:grid;gap:6px;color:#53647b;font-size:10px;font-weight:600}
+.appointment-request-form input,.appointment-request-form select{min-width:0;height:38px;padding:0 9px;border:1px solid var(--line);border-radius:5px;background:#fff;color:var(--ink);font-size:11px}
+.appointment-request-form .form-message{grid-column:1/-1}
+.row-action{padding:5px 8px;border:1px solid var(--line);border-radius:5px;background:white;color:#a15b56;font-size:10px}
+@media(max-width:1120px){.appointment-request-form{grid-template-columns:repeat(2,minmax(0,1fr))}.appointment-request-form .button{justify-self:start}}
+@media(max-width:760px){.appointment-request-form{grid-template-columns:1fr}.appointment-request-form .form-message{grid-column:auto}}
 .portal-footer{display:flex;justify-content:space-between;gap:16px;padding:15px clamp(20px,4vw,54px);border-top:1px solid var(--line);color:#8993a1;font-size:9px}
 .portal-footer i{font-style:normal;color:var(--gold);padding:0 3px}
 .portal-footer a{text-decoration:none;color:#60718a}

@@ -69,6 +69,10 @@ test('legacy login, current-user, registration, and staff permissions share one 
       fixtureUser(47, 'User', { permissions: ['agent'], approvalStatus: 'Pending' }),
     ],
     properties: [],
+    appointments: [
+      { id: 701, buyerId: 41, propertyTitle: 'Buyer-owned appointment', status: 'Upcoming', date: '2026-12-01' },
+      { id: 702, buyerId: 42, propertyTitle: 'Other account appointment', status: 'Upcoming', date: '2026-12-02' },
+    ],
     nextId: 1000,
   };
   await fs.writeFile(dataFile, JSON.stringify(fixture), { mode: 0o600 });
@@ -177,6 +181,22 @@ test('legacy login, current-user, registration, and staff permissions share one 
     assert.deepEqual(currentUser.body.permissions, []);
   }
 
+  const buyerAppointments = await jsonRequest(baseUrl, '/api/appointments', { token: tokens.Buyer });
+  assert.deepEqual(buyerAppointments.body.map(item => item.id), [701]);
+  const cancelledAppointment = await jsonRequest(baseUrl, '/api/appointments/701', {
+    token: tokens.Buyer,
+    method: 'PATCH',
+    body: { status: 'Cancelled' },
+  });
+  assert.equal(cancelledAppointment.response.status, 200);
+  assert.equal(cancelledAppointment.body.status, 'Cancelled');
+  const otherAppointment = await jsonRequest(baseUrl, '/api/appointments/702', {
+    token: tokens.Buyer,
+    method: 'PATCH',
+    body: { status: 'Cancelled' },
+  });
+  assert.equal(otherAppointment.response.status, 403);
+
   for (const [role, permission] of [['Admin', 'admin'], ['Agent', 'agent'], ['Developer', 'developer']]) {
     const currentUser = await jsonRequest(baseUrl, '/api/auth/me', { token: tokens[role] });
     assert.equal(currentUser.body.role, role);
@@ -237,10 +257,20 @@ test('legacy login, current-user, registration, and staff permissions share one 
   assert.deepEqual(registration.body.user.permissions, []);
   const registeredCurrentUser = await jsonRequest(baseUrl, '/api/auth/me', { token: registration.body.token });
   assert.equal(registeredCurrentUser.body.role, 'User');
+  assert.equal(registeredCurrentUser.body.name, 'Public User');
   assert.deepEqual(registeredCurrentUser.body.permissions, []);
   const registeredAccount = await jsonRequest(baseUrl, '/api/account', { token: registration.body.token });
   assert.equal(registeredAccount.response.status, 200);
   assert.equal(registeredAccount.body.accountType, 'User');
+  assert.equal(registeredAccount.body.name, 'Public User');
   assert.deepEqual(registeredAccount.body.permissions, []);
   assert.equal((await jsonRequest(baseUrl, '/api/admin/users', { token: registration.body.token })).response.status, 403);
+  const logout = await jsonRequest(baseUrl, '/api/auth/logout', {
+    token: registration.body.token,
+    method: 'POST',
+  });
+  assert.equal(logout.response.status, 200);
+  assert.equal(logout.body.success, true);
+  const afterLogout = await jsonRequest(baseUrl, '/api/auth/me', { token: registration.body.token });
+  assert.equal(afterLogout.response.status, 401);
 });

@@ -1,7 +1,7 @@
 (() => {
   const root = document.getElementById('public-portal');
   if (!root || !document.documentElement.classList.contains('public-account')) return;
-  const token = localStorage.getItem('og_token');
+  let token = localStorage.getItem('og_token');
   let user;
   try { user = JSON.parse(localStorage.getItem('og_user') || '{}') || {}; } catch { user = {}; }
   if (!token || !user.id) {
@@ -12,7 +12,7 @@
   const state = {
     properties: [], agents: [], savedProperties: [], inquiries: [], appointments: [], offers: [], savedIds: [],
     notifications: [], listings: [], compareIds: [], compareProperties: [], alerts: [], messages: [],
-    conversations: [], activeConversation: null, tracking: [], account: null,
+    conversations: [], activeConversation: null, tracking: [], documents: [], account: null,
     notificationPreferences: null, failures: {}
   };
   let loadInProgress = false;
@@ -42,21 +42,26 @@
   document.querySelectorAll('[data-icon]').forEach((node) => { node.innerHTML = svg(node.dataset.icon); });
 
   const safe = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
-  const initial = (user.name || user.full_name || user.username || user.email || 'U').trim().charAt(0).toUpperCase();
-  const displayName = user.name || user.full_name || user.username || 'there';
-  const firstName = String(displayName).trim().split(/\s+/)[0] || 'there';
-  const roleText = user.role || 'User';
-  document.getElementById('side-avatar').textContent = initial;
-  document.getElementById('top-avatar').textContent = initial;
-  document.getElementById('side-name').textContent = displayName;
-  document.getElementById('side-role').textContent = roleText;
-  document.getElementById('top-name').textContent = displayName;
-  document.getElementById('welcome-name').textContent = firstName;
+  let displayName = user.name || user.full_name || user.username || 'there';
+  function syncIdentity(profile) {
+    user = { ...user, ...profile };
+    displayName = user.name || user.full_name || user.username || user.email || 'there';
+    const nameInitial = String(displayName).trim().charAt(0).toUpperCase() || 'U';
+    document.getElementById('side-avatar').textContent = nameInitial;
+    document.getElementById('top-avatar').textContent = nameInitial;
+    document.getElementById('side-name').textContent = displayName;
+    document.getElementById('side-role').textContent = user.role || 'User';
+    document.getElementById('top-name').textContent = displayName;
+    document.getElementById('welcome-name').textContent = String(displayName).trim().split(/\s+/)[0] || 'there';
+    localStorage.setItem('og_user', JSON.stringify(user));
+  }
+  syncIdentity(user);
   renderProfile();
 
   function api(path, options = {}) {
+    const isMultipart = typeof FormData !== 'undefined' && options.body instanceof FormData;
     const headers = { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(options.headers || {}) };
-    if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+    if (options.body && !isMultipart && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
     return fetch(path, { ...options, headers }).then(async (response) => {
       if (response.status === 401) {
         localStorage.removeItem('og_token');
@@ -68,6 +73,7 @@
         const body = await response.json().catch(() => ({}));
         throw new Error(body.error || `Could not load data (${response.status}).`);
       }
+      if (response.status === 204) return null;
       return response.json();
     });
   }
@@ -218,8 +224,12 @@
     return list.map((property) => `<div class="preview-property">${imageOf(property) ? `<img src="${safe(imageOf(property))}" alt="" loading="lazy">` : '<div class="preview-placeholder"></div>'}<div><strong>${safe(property.title || `Property #${property.id}`)}</strong><span>${money(property.price)}</span><small>${safe([property.type, property.city].filter(Boolean).join(' · '))}</small></div></div>`).join('');
   }
   function renderTables() {
-    const appointmentRows = state.appointments.map((item) => `<div class="data-row"><div><strong>${safe(item.propertyTitle || 'Property visit')}</strong><small>${safe(item.type || 'Property appointment')}</small></div><div class="data-cell">${date(item.date)}${item.time ? `<small>${safe(item.time)}</small>` : ''}</div><div class="data-cell data-extra">${statusBadge(item.status)}</div></div>`).join('');
+    const appointmentRows = state.appointments.map((item) => `<div class="data-row"><div><strong>${safe(item.propertyTitle || 'Property visit')}</strong><small>${safe(item.type || 'Property appointment')}</small></div><div class="data-cell">${date(item.date)}${item.time ? `<small>${safe(item.time)}</small>` : ''}</div><div class="data-cell data-extra">${statusBadge(item.status)}</div><div class="data-cell">${/cancel|complete|reject/i.test(item.status || '') ? '' : `<button type="button" class="row-action" data-cancel-appointment="${safe(item.id)}">Cancel</button>`}</div></div>`).join('');
     document.getElementById('appointments-content').innerHTML = state.failures.appointments ? errorMarkup('appointments') : appointmentRows || empty('No appointments yet', 'Scheduled visits will appear here.');
+    const propertySelect = document.getElementById('appointment-property');
+    const selectedProperty = propertySelect.value;
+    propertySelect.innerHTML = `<option value="">Choose a property</option>${state.properties.map(item => `<option value="${safe(item.id)}">${safe(item.title || `Property #${item.id}`)}${item.city ? ` — ${safe(item.city)}` : ''}</option>`).join('')}`;
+    propertySelect.value = selectedProperty;
     const offerRows = state.offers.map((item) => `<div class="data-row"><div><strong>${safe(item.propertyTitle || 'Property offer')}</strong><small>Submitted ${date(item.date)}</small></div><div class="data-cell">${money(item.offerPrice)}</div><div class="data-cell data-extra">${statusBadge(item.status)}</div></div>`).join('');
     document.getElementById('offers-content').innerHTML = state.failures.offers ? errorMarkup('offers') : offerRows || empty('No offers yet', 'Offers you submit will be listed here.');
     const inquiryRows = state.inquiries.map((item) => `<div class="data-row"><div><strong>${safe(item.propertyTitle || 'Property inquiry')}</strong><small>${item.reply ? `Reply: ${safe(item.reply)}` : 'No reply has been added yet.'}</small></div><div class="data-cell">${date(item.date)}</div><div class="data-cell data-extra">${statusBadge(item.status)}</div></div>`).join('');
@@ -279,15 +289,18 @@
     const target = document.getElementById('profile-panel');
     if (!target) return;
     const profile = state.account || user;
-    const fields = [
-      ['Full name', profile.name || profile.full_name || profile.username],
-      ['Email address', profile.email],
-      ['Mobile number', profile.phone || profile.mobile],
-      ['Account type', profile.role],
-      ['Username', profile.username],
-      ['Account ID', profile.id]
-    ];
-    target.innerHTML = `<div class="profile-head"><span class="avatar">${safe(initial)}</span><div><h2>${safe(profile.name || displayName)}</h2><p>${safe(profile.email || 'OG Landmark account')}</p></div></div><div class="profile-fields">${fields.map(([label, value]) => `<div class="profile-field"><label>${safe(label)}</label><span>${safe(value || 'Not provided')}</span></div>`).join('')}</div>`;
+    target.innerHTML = `<form class="profile-edit-form" id="profile-edit-form">
+      <div class="profile-head"><span class="avatar">${safe(String(profile.name || displayName).trim().charAt(0).toUpperCase() || 'U')}</span><div><h2>${safe(profile.name || displayName)}</h2><p>${safe(profile.email || 'OG Landmark account')}</p></div></div>
+      <div class="profile-fields">
+        <label class="profile-field"><span>Full name</span><input name="name" value="${safe(profile.name || profile.full_name || '')}" maxlength="120" required></label>
+        <div class="profile-field"><label>Email address</label><span>${safe(profile.email || 'Not provided')}</span></div>
+        <label class="profile-field"><span>Mobile number</span><input name="phone" value="${safe(profile.phone || profile.mobile || '')}" maxlength="40"></label>
+        <label class="profile-field"><span>City</span><input name="city" value="${safe(profile.city || '')}" maxlength="100"></label>
+        <div class="profile-field"><label>Account type</label><span>${safe(profile.role || 'User')}</span></div>
+        <div class="profile-field"><label>Member since</label><span>${safe(profile.joinedDate || '—')}</span></div>
+      </div>
+      <div class="profile-form-actions"><p class="form-message" id="profile-message" aria-live="polite"></p><button class="button button-gold" type="submit">Save profile</button></div>
+    </form>`;
   }
   function renderCompare() {
     const target = document.getElementById('compare-content');
@@ -317,7 +330,7 @@
     target.innerHTML = items || empty('No tracked properties yet', 'Properties you view in the mobile app will appear here.');
   }
   function renderDocuments() {
-    document.getElementById('documents-content').innerHTML = `<div class="tool-summary"><span class="tool-icon">${svg('document')}</span><div><small>Documents</small><strong>No web documents workspace</strong><p>The available document manager is limited to Developer project documents. Personal user documents are not available through an account API on web.</p></div></div>`;
+    document.getElementById('documents-content').innerHTML = `<div class="tool-summary"><span class="tool-icon">${svg('document')}</span><div><small>Private account files</small><strong>Document storage is not available on this website yet</strong><p>No sample documents are shown. This section will display your files once private account storage is connected.</p></div></div>`;
   }
   const CALC_MARLA_SQFT = 272.25;
   const CALC_KANAL_SQFT = 5445;
@@ -522,6 +535,7 @@
       load('conversations', '/api/conversations', (data) => rows(data)),
       load('notificationPreferences', '/api/notification-preferences', (data) => data)
     ]);
+    if (!state.failures.account && state.account) syncIdentity(state.account);
     if (!state.failures.saved) {
       const catalog = new Map(state.properties.map((property) => [String(property.id), property]));
       const detailResults = await Promise.all(state.savedIds.map(async (id) => {
@@ -705,7 +719,8 @@
     const listingStatus = event.target.closest('[data-listing-status]');
     const deleteListing = event.target.closest('[data-delete-listing]');
     const resubmitListing = event.target.closest('[data-resubmit-listing]');
-    if (pageButton || goButton || notification || closeProperty || conversationButton || compareButton || clearCompareButton || deleteAlertButton || listingFilter || listingStatus || deleteListing || resubmitListing) {
+    const cancelAppointment = event.target.closest('[data-cancel-appointment]');
+    if (pageButton || goButton || notification || closeProperty || conversationButton || compareButton || clearCompareButton || deleteAlertButton || listingFilter || listingStatus || deleteListing || resubmitListing || cancelAppointment) {
       event.preventDefault();
       event.stopPropagation();
     }
@@ -734,6 +749,15 @@
     if (listingStatus) updateMyListingStatus(listingStatus.dataset.listingId, listingStatus.dataset.listingStatus);
     if (deleteListing) deleteMyListing(deleteListing.dataset.deleteListing);
     if (resubmitListing) resubmitMyListing(resubmitListing.dataset.resubmitListing);
+    if (cancelAppointment) {
+      api(`/api/appointments/${encodeURIComponent(cancelAppointment.dataset.cancelAppointment)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'Cancelled' })
+      }).then(async () => {
+        await loadAll();
+        showToast('Appointment cancelled.');
+      }).catch(error => showToast(error.message));
+    }
   });
   document.addEventListener('submit', async (event) => {
     const form = event.target;
@@ -767,6 +791,53 @@
         renderAlerts();
         showToast('Property alert saved to your account.');
       } catch (error) { showToast(error.message); }
+    } else if (form.id === 'appointment-request-form') {
+      event.preventDefault();
+      const values = new FormData(form);
+      const button = form.querySelector('button[type="submit"]');
+      const message = document.getElementById('appointment-message');
+      button.disabled = true;
+      message.textContent = '';
+      try {
+        await api('/api/appointments', {
+          method: 'POST',
+          body: JSON.stringify({
+            propertyId: Number(values.get('propertyId')),
+            date: String(values.get('date') || ''),
+            time: String(values.get('time') || ''),
+            type: String(values.get('type') || 'Site Visit')
+          })
+        });
+        form.reset();
+        button.disabled = false;
+        await loadAll();
+        showToast('Appointment request submitted.');
+      } catch (error) {
+        message.textContent = error.message;
+        button.disabled = false;
+      }
+    } else if (form.id === 'profile-edit-form') {
+      event.preventDefault();
+      const values = new FormData(form);
+      const button = form.querySelector('button[type="submit"]');
+      const message = document.getElementById('profile-message');
+      button.disabled = true;
+      try {
+        state.account = await api('/api/account', {
+          method: 'PUT',
+          body: JSON.stringify({
+            name: String(values.get('name') || '').trim(),
+            phone: String(values.get('phone') || '').trim(),
+            city: String(values.get('city') || '').trim()
+          })
+        });
+        syncIdentity(state.account);
+        renderProfile();
+        showToast('Profile updated.');
+      } catch (error) {
+        message.textContent = error.message;
+        button.disabled = false;
+      }
     } else if (form.id === 'send-message-form') {
       event.preventDefault();
       const text = String(new FormData(form).get('text') || '').trim();
@@ -804,8 +875,7 @@
             city: String(values.get('city') || '').trim()
           })
         });
-        user = { ...user, ...state.account };
-        localStorage.setItem('og_user', JSON.stringify(user));
+        syncIdentity(state.account);
         const updatedName = user.name || displayName;
         document.getElementById('side-name').textContent = updatedName;
         document.getElementById('top-name').textContent = updatedName;
@@ -882,10 +952,22 @@
     document.getElementById('sidebar').classList.remove('is-open');
     document.getElementById('mobile-shade').classList.remove('is-open');
   });
-  document.getElementById('logout').addEventListener('click', () => {
-    localStorage.removeItem('og_token');
-    localStorage.removeItem('og_user');
-    window.location.replace('/auth?mode=login');
+  document.getElementById('logout').addEventListener('click', async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    button.textContent = 'Signing out…';
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+      });
+    } catch {
+      // A network failure must not leave the account open in this browser.
+    } finally {
+      localStorage.removeItem('og_token');
+      localStorage.removeItem('og_user');
+      window.location.replace('/auth?mode=login');
+    }
   });
   const refreshIfIdle = () => {
     const active = document.activeElement;

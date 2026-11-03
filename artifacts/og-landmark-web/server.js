@@ -3739,11 +3739,24 @@ app.patch('/api/appointments/:id', requireAuth, async (req, res) => {
     const data = await readData();
     const item = data.appointments.find(a => a.id === Number(req.params.id));
     if (!item) return res.status(404).json({ error: 'Not found' });
-    // Only the seller the appointment belongs to, or an admin/agent, may update it
+    // Buyers may cancel only their own appointment; scheduling changes remain
+    // restricted to the assigned seller, an Admin, or an Agent.
     const { userId, role } = req.auth;
     const allowedRoles = ['Admin', 'Agent'];
-    if (!allowedRoles.includes(role) && item.sellerId !== userId) {
+    const isBuyerCancel = String(item.buyerId) === String(userId)
+      && ['cancelled', 'canceled'].includes(String(req.body.status || '').toLowerCase())
+      && Object.keys(req.body).every(key => key === 'status');
+    if (!allowedRoles.includes(role) && item.sellerId !== userId && !isBuyerCancel) {
       return res.status(403).json({ error: 'Forbidden' });
+    }
+    if (isBuyerCancel) {
+      if (/cancel|complete|reject/i.test(String(item.status || ''))) {
+        return res.status(409).json({ error: 'This appointment can no longer be cancelled.' });
+      }
+      item.status = 'Cancelled';
+      item.updatedAt = new Date().toISOString();
+      await writeData(data);
+      return res.json(item);
     }
     const prevStatus = item.status;
     const allowed = ['status', 'notes', 'date', 'time', 'type', 'agentId'];

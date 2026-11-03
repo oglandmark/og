@@ -39,3 +39,19 @@ test('website My Listings uses account-scoped data and supports mobile lifecycle
   assert.match(portal, /\/listing-status`/);
   assert.match(portal, /\/resubmit`/);
 });
+
+test('website account identity is refreshed from the authenticated API and logout revokes its session', () => {
+  assert.match(portal, /load\('account', '\/api\/account'/);
+  assert.match(portal, /syncIdentity\(state\.account\)/);
+  assert.match(portal, /\/api\/auth\/logout/);
+  assert.match(portal, /finally\s*\{[\s\S]*?removeItem\('og_token'\)/);
+});
+
+test('profile and appointments are backed by account APIs instead of fixed example records', () => {
+  assert.match(html, /id="profile-edit-form"|id="profile-panel"/);
+  assert.match(html, /id="appointment-request-form"/);
+  assert.match(portal, /api\('\/api\/appointments'/);
+  assert.match(portal, /data-cancel-appointment/);
+  assert.match(portal, /This section will display your files once private account storage is connected/);
+  assert.doesNotMatch(portal, /CNIC_Front\.jpg|Bank_Statement_Jan\.pdf|Usman Ahmed/);
+});

@@ -171,7 +171,15 @@
           <div class="property-grid" id="saved-grid"></div>
         </section>
         <section class="page-view" id="page-appointments" data-title="Appointments">
-          <div class="page-intro"><p class="eyebrow">PROPERTY VISITS</p><h1>Appointments</h1><p>All your scheduled visits in one place.</p></div>
+          <div class="page-intro"><p class="eyebrow">PROPERTY VISITS</p><h1>Appointments</h1><p>Request a property visit and track its status here.</p></div>
+          <form class="appointment-request-form" id="appointment-request-form">
+            <label>Property<select name="propertyId" id="appointment-property" required><option value="">Choose a property</option></select></label>
+            <label>Date<input name="date" type="date" required></label>
+            <label>Time<input name="time" type="time" required></label>
+            <label>Visit type<select name="type"><option>Site Visit</option><option>Video Call</option><option>Office Meeting</option></select></label>
+            <button class="button button-gold" type="submit">Request appointment</button>
+            <p class="form-message" id="appointment-message" aria-live="polite"></p>
+          </form>
           <div class="table-panel" id="appointments-content"></div>
         </section>
         <section class="page-view" id="page-offers" data-title="Offers">

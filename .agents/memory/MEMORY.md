@@ -52,6 +52,7 @@
 - [Public contacts and listing pins](public-contact-and-listing-pins.md) — use +923272569000 for OG Landmark public WhatsApp contacts; preserve personal account phones and selected coordinates.
 - [Browser admin extensions](browser-admin-extensions.md) — limit work to the website dashboard and necessary Laravel integration; sync and verify local preview.
 - [Public homepage preservation](public-homepage-preservation.md) — keep the original marketing page at `/`; do not replace it with a role portal.
+- [Website account portal live parity](website-account-portal-live-parity.md) — local portal updates do not prove oglandmark.com serves them; verify the published account routes separately.
 - [User-controlled app builds](build-approval.md) — do not start a new mobile build until the user explicitly authorizes it.
 - [Single public account model](single-user-account-model.md) — public accounts are User; keep staff permissions separate so listing moderation remains available.
 - [Admin login feedback](admin-login-feedback.md) — show credential errors and accept the server-issued Admin permission even when the public role is `User`.

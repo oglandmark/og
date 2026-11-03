@@ -68,7 +68,25 @@ test('legacy login, current-user, registration, and staff permissions share one 
       fixtureUser(46, 'User', { permissions: ['admin'] }),
       fixtureUser(47, 'User', { permissions: ['agent'], approvalStatus: 'Pending' }),
     ],
-    properties: [],
+    properties: [{
+      id: 1005,
+      title: 'Visible Fixture Listing',
+      type: 'House',
+      purpose: 'For Sale',
+      status: 'For Sale',
+      price: 25000000,
+      city: 'Lahore',
+      address: 'Test Street',
+      bedrooms: 3,
+      bathrooms: 2,
+      area: 2400,
+      areaUnit: 'sqft',
+      description: 'A test listing for the property detail route.',
+      images: [],
+      approvalStatus: 'Active',
+      listingStatus: 'Active',
+      createdAt: '2026-11-03T00:00:00.000Z',
+    }],
     appointments: [
       { id: 701, buyerId: 41, propertyTitle: 'Buyer-owned appointment', status: 'Upcoming', date: '2026-12-01' },
       { id: 702, buyerId: 42, propertyTitle: 'Other account appointment', status: 'Upcoming', date: '2026-12-02' },
@@ -183,6 +201,12 @@ test('legacy login, current-user, registration, and staff permissions share one 
 
   const buyerAppointments = await jsonRequest(baseUrl, '/api/appointments', { token: tokens.Buyer });
   assert.deepEqual(buyerAppointments.body.map(item => item.id), [701]);
+  const propertyDetail = await jsonRequest(baseUrl, '/api/properties/1005');
+  assert.equal(propertyDetail.response.status, 200);
+  assert.equal(propertyDetail.body.title, 'Visible Fixture Listing');
+  const propertyPage = await fetch(`${baseUrl}/properties/1005`);
+  assert.equal(propertyPage.status, 200);
+  assert.match(await propertyPage.text(), /Visible Fixture Listing/);
   const cancelledAppointment = await jsonRequest(baseUrl, '/api/appointments/701', {
     token: tokens.Buyer,
     method: 'PATCH',

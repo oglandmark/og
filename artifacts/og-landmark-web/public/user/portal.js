@@ -113,7 +113,7 @@
       const src = imageOf(property);
       const propertyId = property.id;
       const isCompared = state.compareIds.map(String).includes(String(propertyId));
-      return `<article class="property-card"><div class="property-image">${src ? `<img src="${safe(src)}" alt="${safe(property.title || 'Property')}" loading="lazy" onerror="this.remove()">` : ''}<span class="property-purpose">${safe(property.purpose || property.status || 'Property')}</span></div><div class="property-copy"><p class="property-location">${safe([property.type, property.city].filter(Boolean).join(' · ') || 'OG Landmark listing')}</p><h3>${safe(property.title || `Property #${propertyId}`)}</h3><p class="property-price">${money(property.price)}</p></div><div class="property-card-foot"><span>Reference ${safe(propertyId ?? '—')}</span><div><button type="button" data-property-id="${safe(propertyId)}">View</button><button type="button" data-compare-id="${safe(propertyId)}">${isCompared ? 'Remove compare' : 'Compare'}</button></div></div></article>`;
+      return `<article class="property-card"><div class="property-image">${src ? `<img src="${safe(src)}" alt="${safe(property.title || 'Property')}" loading="lazy" onerror="this.remove()">` : ''}<span class="property-purpose">${safe(property.purpose || property.status || 'Property')}</span></div><div class="property-copy"><p class="property-location">${safe([property.type, property.city].filter(Boolean).join(' · ') || 'OG Landmark listing')}</p><h3>${safe(property.title || `Property #${propertyId}`)}</h3><p class="property-price">${money(property.price)}</p></div><div class="property-card-foot"><span>Reference ${safe(propertyId ?? '—')}</span><div><a href="/properties/${encodeURIComponent(propertyId)}" aria-label="View ${safe(property.title || `property ${propertyId}`)}">View</a><button type="button" data-compare-id="${safe(propertyId)}">${isCompared ? 'Remove compare' : 'Compare'}</button></div></div></article>`;
     }).join('');
   }
   function agentAreas(agent) {
@@ -524,7 +524,7 @@
       load('offers', `/api/offers?buyer_id=${encodeURIComponent(user.id)}`, (data) => rows(data, ['offers'])),
       load('savedIds', `/api/saved/${encodeURIComponent(user.id)}`, (data) => {
         const values = Array.isArray(data) ? data : data?.property_ids || data?.saved || data?.ids || data?.data || [];
-        return Array.isArray(values) ? values.map((entry) => String(typeof entry === 'object' ? entry.property_id ?? entry.id : entry)) : [];
+        return Array.isArray(values) ? values.map((entry) => String(typeof entry === 'object' ? entry.property_id ?? entry.propertyId ?? entry.id : entry)) : [];
       }),
       load('notifications', '/api/notifications', (data) => rows(data, ['notifications', 'items'])),
       load('listings', '/api/my-properties', propertyRows),

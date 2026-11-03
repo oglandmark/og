@@ -55,3 +55,8 @@ test('profile and appointments are backed by account APIs instead of fixed examp
   assert.match(portal, /This section will display your files once private account storage is connected/);
   assert.doesNotMatch(portal, /CNIC_Front\.jpg|Bank_Statement_Jan\.pdf|Usman Ahmed/);
 });
+
+test('property cards open the website listing route and saved IDs accept API object shapes', () => {
+  assert.match(portal, /href="\/properties\/\$\{encodeURIComponent\(propertyId\)\}"/);
+  assert.match(portal, /entry\.property_id \?\? entry\.propertyId \?\? entry\.id/);
+});

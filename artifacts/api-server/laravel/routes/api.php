@@ -17,6 +17,8 @@ $registerRoutes = static function (): void {
     Route::get('/health', HealthController::class);
     Route::prefix('auth')->group(function (): void {
         Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
+        Route::post('/verify-email', [AuthController::class, 'verifyRegistrationEmail'])->middleware('throttle:10,1');
+        Route::post('/resend-verification', [AuthController::class, 'resendRegistrationEmail'])->middleware('throttle:3,1');
         Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
         Route::post('/admin-verify', [AuthController::class, 'adminVerify'])->middleware('throttle:10,1');
         Route::post('/logout', [AuthController::class, 'logout']);

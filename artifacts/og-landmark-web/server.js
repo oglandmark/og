@@ -342,6 +342,28 @@ async function sendOtpEmail(toEmail, otp) {
   return { sent: true, fallback: false };
 }
 
+async function sendRegistrationOtpEmail(toEmail, otp) {
+  const transporter = createTransporter();
+  if (!transporter) return { sent: false, fallback: true };
+  const body = `
+    <h2 style="color:#0B1F3A;font-size:20px;margin:0 0 8px;text-align:center">Verify your email</h2>
+    <p style="color:#555;font-size:14px;text-align:center;margin:0 0 24px">Enter this code to finish creating your OG Landmark account.</p>
+    <div style="background:#0B1F3A;border-radius:12px;padding:28px;text-align:center;margin-bottom:24px">
+      <div style="font-size:44px;font-weight:900;letter-spacing:14px;color:#C8A45A;padding:8px 0;font-family:'Courier New',monospace">${otp}</div>
+      <p style="color:#8a9ab5;font-size:12px;margin:0">Valid for <strong style="color:#ffffff">10 minutes</strong></p>
+    </div>
+    <p style="color:#888;font-size:12px;text-align:center;margin:0">If you did not start this registration, ignore this email.</p>
+  `;
+  await transporter.sendMail({
+    from: fromAddress(),
+    replyTo: smtpSettings.from || smtpSettings.user,
+    to: toEmail,
+    subject: 'Verify your OG Landmark email',
+    html: emailWrapper(body),
+  });
+  return { sent: true, fallback: false };
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const authRateBuckets = new Map();
@@ -3207,6 +3229,33 @@ app.post('/api/auth/register', async (req, res) => {
       password: hashPassword(password),
       joinedDate: new Date().toISOString().split('T')[0],
     };
+    const requestedRole = String(req.body.role || 'Buyer').toLowerCase();
+    if (['buyer', 'user'].includes(requestedRole)) {
+      if (!email) return res.status(400).json({ error: 'Email is required to verify your account.' });
+      const otp = generateOTP();
+      data.pendingRegistrations = data.pendingRegistrations && typeof data.pendingRegistrations === 'object'
+        ? data.pendingRegistrations
+        : {};
+      data.pendingRegistrations[email] = { user: newUser, createdAt: new Date().toISOString(), lastSentAt: new Date().toISOString() };
+      await writeData(data);
+      try {
+        await saveChallenge(email, 'signup', otp, 10);
+        const delivery = await sendRegistrationOtpEmail(email, otp);
+        if (!delivery?.sent) throw new Error('SMTP is not configured.');
+      } catch (emailError) {
+        await deleteChallenge(email, 'signup').catch(() => {});
+        const pending = await readData();
+        delete pending.pendingRegistrations?.[email];
+        await writeData(pending);
+        console.error('[signup verification email error]', emailError.message);
+        return res.status(503).json({ error: 'Unable to send the verification email. Please try again later.' });
+      }
+      return res.status(202).json({
+        verificationRequired: true,
+        email,
+        message: 'A verification code has been sent to your email address.',
+      });
+    }
     data.users.push(newUser);
     await writeData(data);
     const safe = toPublicUser(newUser);
@@ -3215,6 +3264,76 @@ app.post('/api/auth/register', async (req, res) => {
   } catch (err) {
     console.error('REGISTER ERROR:', err.message);
     res.status(500).json({ error: 'Unable to create your account right now. Please try again.' });
+  }
+});
+
+app.post('/api/auth/verify-email', async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    const otp = String(req.body.otp || '').trim();
+    if (!isValidEmail(email) || !/^\d{6}$/.test(otp)) {
+      return res.status(400).json({ error: 'A valid email and six-digit code are required.' });
+    }
+    const verification = await consumeChallenge(email, 'signup', otp);
+    if (!verification.ok) {
+      return res.status(verification.reason === 'expired' ? 410 : 422).json({
+        error: verification.reason === 'expired'
+          ? 'The verification code expired. Request a new one.'
+          : 'The verification code is incorrect.',
+      });
+    }
+    const data = await readData();
+    const pending = data.pendingRegistrations?.[email];
+    if (!pending?.user) return res.status(404).json({ error: 'No pending registration was found.' });
+    const duplicate = data.users.find(user =>
+      normalizeEmail(user.email) === email
+      || normalizeUsername(user.username) === normalizeUsername(pending.user.username)
+      || normalizePhone(user.phone) === normalizePhone(pending.user.phone)
+    );
+    if (duplicate) {
+      delete data.pendingRegistrations[email];
+      await writeData(data);
+      return res.status(409).json({ error: 'The registration details are already in use. Start registration again with different details.' });
+    }
+    const user = { ...pending.user, emailVerifiedAt: new Date().toISOString(), verificationStatus: 'verified' };
+    data.users.push(user);
+    delete data.pendingRegistrations[email];
+    await writeData(data);
+    const token = await createSession(user);
+    return res.status(201).json({ user: toPublicUser(user), token });
+  } catch (err) {
+    console.error('[signup verification error]', err.message);
+    return res.status(500).json({ error: 'Unable to verify your email right now.' });
+  }
+});
+
+app.post('/api/auth/resend-verification', async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    if (!isValidEmail(email)) return res.status(400).json({ error: 'A valid email is required.' });
+    const data = await readData();
+    const pending = data.pendingRegistrations?.[email];
+    if (!pending?.user) return res.status(404).json({ error: 'No pending registration was found.' });
+    if (Date.now() - Date.parse(pending.lastSentAt || pending.createdAt) < 60_000) {
+      return res.status(429).json({ error: 'Please wait before requesting another code.' });
+    }
+    const otp = generateOTP();
+    await saveChallenge(email, 'signup', otp, 10);
+    try {
+      const delivery = await sendRegistrationOtpEmail(email, otp);
+      if (!delivery?.sent) throw new Error('SMTP is not configured.');
+    } catch (emailError) {
+      await deleteChallenge(email, 'signup').catch(() => {});
+      console.error('[signup verification resend error]', emailError.message);
+      return res.status(503).json({ error: 'Unable to send the verification email. Please try again later.' });
+    }
+    pending.lastSentAt = new Date().toISOString();
+    data.pendingRegistrations[email] = pending;
+    await writeData(data);
+    return res.json({ verificationRequired: true, email, message: 'A new verification code has been sent.' });
+  } catch (err) {
+    console.error('[signup verification resend error]', err.message);
+    return res.status(500).json({ error: 'Unable to resend the verification email right now.' });
   }
 });
 

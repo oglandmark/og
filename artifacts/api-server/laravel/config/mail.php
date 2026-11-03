@@ -1,5 +1,14 @@
 <?php
 
+$smtpUser = env('SMTP_USER') ?: env('MAIL_USERNAME') ?: getenv('SMTP_USER') ?: getenv('MAIL_USERNAME') ?: '';
+$smtpPassword = env('SMTP_PASS') ?: env('MAIL_PASSWORD') ?: getenv('SMTP_PASS') ?: getenv('MAIL_PASSWORD') ?: '';
+$smtpHost = env('SMTP_HOST') ?: env('MAIL_HOST') ?: getenv('SMTP_HOST') ?: getenv('MAIL_HOST') ?: 'smtp.hostinger.com';
+$smtpPort = (int) (env('SMTP_PORT') ?: env('MAIL_PORT') ?: getenv('SMTP_PORT') ?: getenv('MAIL_PORT') ?: 465);
+$configuredFrom = env('MAIL_FROM_ADDRESS') ?: getenv('MAIL_FROM_ADDRESS') ?: '';
+$smtpFrom = filter_var($smtpUser, FILTER_VALIDATE_EMAIL)
+    ? $smtpUser
+    : (filter_var($configuredFrom, FILTER_VALIDATE_EMAIL) ? $configuredFrom : 'hello@example.com');
+
 return [
 
     /*
@@ -39,12 +48,12 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
-            'scheme' => env('MAIL_SCHEME'),
+            'scheme' => env('MAIL_SCHEME') ?: ($smtpPort === 465 ? 'smtps' : 'smtp'),
             'url' => env('MAIL_URL'),
-            'host' => env('MAIL_HOST', '127.0.0.1'),
-            'port' => env('MAIL_PORT', 2525),
-            'username' => env('MAIL_USERNAME'),
-            'password' => env('MAIL_PASSWORD'),
+            'host' => $smtpHost,
+            'port' => $smtpPort,
+            'username' => $smtpUser,
+            'password' => $smtpPassword,
             'timeout' => null,
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
@@ -111,8 +120,8 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
+        'address' => $smtpFrom,
+        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'OG Landmark')),
     ],
 
 ];

@@ -329,6 +329,29 @@ export type LoginResponse = {
   message?: string;
 };
 
+export type RegistrationResponse = LoginResponse | {
+  verificationRequired: true;
+  email: string;
+  pending?: boolean;
+  message?: string;
+};
+
+export async function verifyRegistrationEmail(email: string, otp: string): Promise<LoginResponse> {
+  const res = await apiFetch<LoginResponse>('/api/auth/verify-email', {
+    method: 'POST',
+    body: JSON.stringify({ email: email.trim().toLowerCase(), otp }),
+  }, false, AUTH_FETCH_TIMEOUT_MS);
+  if (res.token) await setToken(res.token);
+  return res;
+}
+
+export async function resendRegistrationEmail(email: string): Promise<{ message?: string }> {
+  return apiFetch<{ message?: string }>('/api/auth/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email: email.trim().toLowerCase() }),
+  }, false, AUTH_FETCH_TIMEOUT_MS);
+}
+
 export async function loginWithAPI(identifier: string, password: string): Promise<LoginResponse> {
   const res = await apiFetch<LoginResponse>('/api/auth/login', {
     method: 'POST',
@@ -364,7 +387,7 @@ export async function loginWithSocial(
 export async function registerWithAPI(payload: {
   name: string; username?: string; email?: string; password: string; phone: string; role: string;
   confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
-}): Promise<LoginResponse> {
+}): Promise<RegistrationResponse> {
   const parts = payload.name.trim().split(' ');
   const firstName = parts[0] ?? payload.name;
   const lastName = parts.slice(1).join(' ');

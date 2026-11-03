@@ -27,7 +27,7 @@ const BORDER = '#e4e6ea';
 
 export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
-  const { registerAPI, loginSocial } = useAuth();
+  const { registerAPI, verifySignupEmail, resendSignupEmail, loginSocial } = useAuth();
   const { tr, isRTL } = useLanguage();
   const [name, setName] = useState('');
   const [identifier, setIdentifier] = useState('');
@@ -36,6 +36,8 @@ export default function SignUpScreen() {
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
 
   const rtl = isRTL ? 'right' as const : 'left' as const;
   const identifierValue = identifier.trim();
@@ -75,6 +77,9 @@ export default function SignUpScreen() {
     if (!name.trim()) { setError('Full name is required.'); return; }
     const value = identifier.trim();
     if (!value) { setError(tr('signupIdentifierRequired')); return; }
+    if (isMobileIdentifier || !value.includes('@') || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      setError('Enter a valid email address to receive your verification code.'); return;
+    }
     if (!isMobileIdentifier && value.includes('@') && !value.includes('.')) {
       setError(tr('signupEmailError')); return;
     }
@@ -109,6 +114,11 @@ export default function SignUpScreen() {
       );
       return;
     }
+    if (result.verificationRequired) {
+      setVerificationEmail(result.email ?? value.toLowerCase());
+      setError('');
+      return;
+    }
     if (!result.success) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError(result.error ?? 'Registration failed. Please try again.');
@@ -116,6 +126,23 @@ export default function SignUpScreen() {
     }
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.replace('/(tabs)');
+  }
+
+  async function handleVerifyEmail() {
+    if (!/^\d{6}$/.test(verificationCode)) { setError('Enter the six-digit code from your email.'); return; }
+    setLoading(true);
+    const result = await verifySignupEmail(verificationEmail, verificationCode);
+    setLoading(false);
+    if (!result.success) { setError(result.error ?? 'Verification failed.'); return; }
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    router.replace('/(tabs)');
+  }
+
+  async function handleResendEmail() {
+    setLoading(true);
+    const result = await resendSignupEmail(verificationEmail);
+    setLoading(false);
+    setError(result.success ? 'A new code has been sent.' : result.error ?? 'Unable to resend the code.');
   }
 
   return (
@@ -135,7 +162,26 @@ export default function SignUpScreen() {
         </View>
 
         <View style={styles.content}>
-          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.title}>{verificationEmail ? 'Verify your email' : 'Create Account'}</Text>
+          {verificationEmail ? (
+            <>
+              <Text style={styles.footerText}>Enter the six-digit code sent to {verificationEmail}. The code expires in 10 minutes.</Text>
+              {!!error && <Text style={[styles.errorText, { textAlign: 'center', marginVertical: 16 }]}>{error}</Text>}
+              <View style={styles.fieldWrap}>
+                <Text style={[styles.label, { textAlign: 'center' }]}>VERIFICATION CODE</Text>
+                <TextInput value={verificationCode} onChangeText={(value) => { setVerificationCode(value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
+                  keyboardType="number-pad" maxLength={6} placeholder="000000" placeholderTextColor={MUTED}
+                  textAlign="center" style={[styles.underlineInput, { letterSpacing: 8, fontSize: 22 }]} />
+              </View>
+              <Button onPress={() => { void handleVerifyEmail(); }} loading={loading} style={styles.submitBtn}>
+                Verify email
+              </Button>
+              <Pressable onPress={() => { void handleResendEmail(); }} disabled={loading} style={{ alignItems: 'center', marginBottom: 24 }}>
+                <Text style={styles.footerLink}>Resend code</Text>
+              </Pressable>
+            </>
+          ) : (
+            <>
           {!!(error || facebook.error) && (
             <View style={styles.errorBox}>
               <Feather name="alert-circle" size={13} color="#b94b42" />
@@ -206,6 +252,8 @@ export default function SignUpScreen() {
               <Text style={styles.footerLink}> Sign In</Text>
             </Pressable>
           </View>
+            </>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

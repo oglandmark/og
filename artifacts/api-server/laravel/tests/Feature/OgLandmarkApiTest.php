@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Mail\SignupVerificationOtp;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -122,7 +124,13 @@ final class OgLandmarkApiTest extends TestCase
 
     public function test_mobile_registration_creates_an_admin_visible_user_and_admin_delete_revokes_access(): void
     {
-        $registration = $this->postJson('/api/auth/register', [
+        Mail::fake();
+        config([
+            'mail.mailers.smtp.username' => 'no-reply@example.test',
+            'mail.mailers.smtp.password' => 'test-password',
+            'mail.from.address' => 'no-reply@example.test',
+        ]);
+        $this->postJson('/api/auth/register', [
             'firstName' => 'Mobile',
             'lastName' => 'Member',
             'username' => 'mobile.member',
@@ -131,10 +139,28 @@ final class OgLandmarkApiTest extends TestCase
             'password' => 'MobilePass123',
             'confirmPassword' => 'MobilePass123',
             'role' => 'Admin',
-        ])->assertCreated()
+        ])->assertStatus(202)
+            ->assertJsonPath('verificationRequired', true)
+            ->assertJsonPath('email', 'mobile.member@example.test');
+        $registrationCode = null;
+        Mail::assertSent(SignupVerificationOtp::class, function (SignupVerificationOtp $mail) use (&$registrationCode): bool {
+            $registrationCode = $mail->code;
+            return true;
+        });
+        $this->assertNotEmpty($registrationCode);
+        $wrongCode = $registrationCode === '000000' ? '000001' : '000000';
+        $this->postJson('/api/auth/verify-email', [
+            'email' => 'mobile.member@example.test',
+            'otp' => $wrongCode,
+        ])->assertStatus(422);
+        $registration = $this->postJson('/api/auth/verify-email', [
+            'email' => 'mobile.member@example.test',
+            'otp' => $registrationCode,
+        ])->assertOk()
             ->assertJsonPath('user.name', 'Mobile Member')
             ->assertJsonPath('user.role', 'User')
             ->assertJsonPath('user.accountType', 'User')
+            ->assertJsonPath('user.verificationStatus', 'verified')
             ->assertJsonMissingPath('user.password');
 
         $userId = $registration->json('user.id');

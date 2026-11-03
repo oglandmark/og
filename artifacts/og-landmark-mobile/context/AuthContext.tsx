@@ -11,6 +11,8 @@ import {
   loginWithSocial,
   logoutAPI,
   registerWithAPI,
+  resendRegistrationEmail,
+  verifyRegistrationEmail,
   resolveMediaUrl,
   setToken,
 } from '@/lib/api';
@@ -68,7 +70,9 @@ type AuthContextValue = {
   registerAPI: (payload: {
     name: string; username?: string; email?: string; password: string; phone: string; role: Role;
     confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
-  }) => Promise<{ success: boolean; error?: string; pendingApproval?: boolean; pendingMessage?: string }>;
+  }) => Promise<{ success: boolean; error?: string; pendingApproval?: boolean; pendingMessage?: string; verificationRequired?: boolean; email?: string }>;
+  verifySignupEmail: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
+  resendSignupEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 };
 
@@ -281,13 +285,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const registerAPI = useCallback(async (payload: {
     name: string; username?: string; email?: string; password: string; phone: string; role: Role;
     confirmPassword?: string; agencyName?: string; companyName?: string; city?: string;
-  }): Promise<{ success: boolean; error?: string; pendingApproval?: boolean; pendingMessage?: string }> => {
+  }): Promise<{ success: boolean; error?: string; pendingApproval?: boolean; pendingMessage?: string; verificationRequired?: boolean; email?: string }> => {
     try {
       const res = await registerWithAPI({ ...payload, role: 'User' });
       if (res.pending) {
         return { success: true, pendingApproval: true, pendingMessage: res.message ?? 'Your account is under review.' };
       }
-      if (!res.user) return { success: false, error: 'Registration failed' };
+      if ('verificationRequired' in res && res.verificationRequired) {
+        return { success: true, verificationRequired: true, email: res.email };
+      }
+      if (!('user' in res) || !res.user) return { success: false, error: 'Registration failed' };
       const mapped = {
         ...mapApiUser(res.user),
         phone: res.user.phone || payload.phone || '',
@@ -306,6 +313,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [login]);
 
+  const verifySignupEmail = useCallback(async (email: string, otp: string) => {
+    try {
+      const res = await verifyRegistrationEmail(email, otp);
+      const mapped = {
+        ...mapApiUser(res.user),
+        phone: res.user.phone || '',
+        role: 'user' as const,
+        accountType: 'user' as const,
+        verificationStatus: 'verified' as const,
+      };
+      await login(mapped);
+      if (res.token) await setToken(res.token);
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Verification failed' };
+    }
+  }, [login]);
+
+  const resendSignupEmail = useCallback(async (email: string) => {
+    try {
+      await resendRegistrationEmail(email);
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Unable to resend code' };
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     setUser(null);
     await Promise.all([
@@ -322,9 +356,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoggedIn: !!user,
       isAdmin: user?.role === 'admin',
       isLoading,
-      login, loginAPI, loginSocial, loginAdmin, verifyAdminOtp, registerAPI, logout,
+      login, loginAPI, loginSocial, loginAdmin, verifyAdminOtp, registerAPI, verifySignupEmail, resendSignupEmail, logout,
     }),
-    [user, isLoading, login, loginAPI, loginSocial, loginAdmin, verifyAdminOtp, registerAPI, logout],
+    [user, isLoading, login, loginAPI, loginSocial, loginAdmin, verifyAdminOtp, registerAPI, verifySignupEmail, resendSignupEmail, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

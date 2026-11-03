@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Mail\SignupVerificationOtp;
 use App\Http\Controllers\Controller;
 use App\Services\LegacyDataStore;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use RuntimeException;
+use Throwable;
 
 final class AuthController extends Controller
 {
@@ -16,7 +20,7 @@ final class AuthController extends Controller
             'firstName' => ['required', 'string', 'max:120'],
             'lastName' => ['nullable', 'string', 'max:120'],
             'username' => ['nullable', 'string', 'max:30', 'regex:/^[a-zA-Z][a-zA-Z0-9._-]{2,29}$/'],
-            'email' => ['nullable', 'email', 'max:320'],
+            'email' => ['required', 'email', 'max:320'],
             'phone' => ['required', 'string', 'max:40', 'regex:/^[+0-9().\s-]+$/'],
             'password' => ['required', 'string', 'min:8', 'max:1024', 'regex:/^(?=.*[A-Za-z])(?=.*\d).+$/'],
             'confirmPassword' => ['nullable', 'string', 'max:1024'],
@@ -33,11 +37,11 @@ final class AuthController extends Controller
         if (strlen($phoneKey) < 10 || strlen($phoneKey) > 15) {
             return response()->json(['error' => 'Please enter a valid mobile number.'], 400);
         }
-
-        $token = rtrim(strtr(base64_encode(random_bytes(48)), '+/', '-_'), '=');
-        $ttlHours = max(1, (int) config('app.session_ttl_hours', env('SESSION_TTL_HOURS', 168)));
-        $result = $store->mutate(function (array &$data) use (
-            $validated, $password, $email, $requestedUsername, $phone, $phoneKey, $token, $ttlHours
+        $otp = (string) random_int(100000, 999999);
+        $salt = bin2hex(random_bytes(16));
+        $passwordHash = 'pbkdf2:'.$salt.':'.hash_pbkdf2('sha512', $password, $salt, 100000, 128);
+        $pending = $store->mutate(function (array &$data) use (
+            $validated, $email, $requestedUsername, $phone, $phoneKey, $passwordHash, $otp
         ): array {
             $data['users'] = array_values(array_filter($data['users'] ?? [], 'is_array'));
             foreach ($data['users'] as $existing) {
@@ -67,47 +71,157 @@ final class AuthController extends Controller
                 $suffix++;
             }
 
+            $data['pendingRegistrations'] = is_array($data['pendingRegistrations'] ?? null) ? $data['pendingRegistrations'] : [];
+            $data['pendingRegistrations'][$email] = [
+                'firstName' => trim($validated['firstName']),
+                'lastName' => trim((string) ($validated['lastName'] ?? '')),
+                'username' => $username,
+                'email' => $email,
+                'phone' => $phone,
+                'password' => $passwordHash,
+                'createdAt' => now()->toIso8601String(),
+                'lastSentAt' => now()->toIso8601String(),
+            ];
+            DB::table('auth_challenges')->updateOrInsert(
+                ['email' => $email, 'purpose' => 'signup'],
+                ['code_hash' => hash('sha256', $otp), 'attempts' => 0, 'expires_at' => now()->addMinutes(10)]
+            );
+            return ['email' => $email];
+        });
+
+        if (isset($pending['error'])) {
+            return response()->json(['error' => $pending['error']], $pending['status']);
+        }
+
+        try {
+            $this->sendRegistrationOtp($pending['email'], $otp);
+        } catch (Throwable $error) {
+            $store->mutate(function (array &$data) use ($pending): void {
+                unset($data['pendingRegistrations'][$pending['email']]);
+                DB::table('auth_challenges')->where('email', $pending['email'])->where('purpose', 'signup')->delete();
+            });
+            report($error);
+            return response()->json(['error' => 'Unable to send the verification email. Please try again later.'], 503);
+        }
+
+        return response()->json([
+            'verificationRequired' => true,
+            'email' => $pending['email'],
+            'message' => 'A verification code has been sent to your email address.',
+        ], 202);
+    }
+
+    public function verifyRegistrationEmail(Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'max:320'],
+            'otp' => ['required', 'digits:6'],
+        ]);
+        $email = mb_strtolower(trim($validated['email']));
+        $token = rtrim(strtr(base64_encode(random_bytes(48)), '+/', '-_'), '=');
+        $ttlHours = max(1, (int) config('app.session_ttl_hours', env('SESSION_TTL_HOURS', 168)));
+        $result = $store->mutate(function (array &$data) use ($email, $validated, $token, $ttlHours): array {
+            $challenge = DB::table('auth_challenges')
+                ->where('email', $email)->where('purpose', 'signup')->lockForUpdate()->first();
+            $pending = $data['pendingRegistrations'][$email] ?? null;
+            if (! $challenge || ! is_array($pending) || now()->greaterThan($challenge->expires_at)) {
+                return ['error' => 'The verification code expired. Request a new one.', 'status' => 410];
+            }
+            if ((int) $challenge->attempts >= 5) {
+                return ['error' => 'Too many incorrect codes. Request a new one.', 'status' => 429];
+            }
+            if (! hash_equals((string) $challenge->code_hash, hash('sha256', $validated['otp']))) {
+                DB::table('auth_challenges')->where('email', $email)->where('purpose', 'signup')
+                    ->update(['attempts' => (int) $challenge->attempts + 1]);
+                return ['error' => 'The verification code is incorrect.', 'status' => 422];
+            }
+            foreach ($data['users'] ?? [] as $existing) {
+                $sameEmail = mb_strtolower(trim((string) ($existing['email'] ?? ''))) === $email;
+                $sameUsername = mb_strtolower(trim((string) ($existing['username'] ?? ''))) === mb_strtolower((string) $pending['username']);
+                $samePhone = $this->normalizedPhone((string) ($existing['phone'] ?? '')) === $this->normalizedPhone((string) $pending['phone']);
+                if ($sameEmail || $sameUsername || $samePhone) {
+                    unset($data['pendingRegistrations'][$email]);
+                    DB::table('auth_challenges')->where('email', $email)->where('purpose', 'signup')->delete();
+                    return ['error' => 'The registration details are already in use. Start registration again with different details.', 'status' => 409];
+                }
+            }
             $highestId = max(
                 (int) ($data['nextId'] ?? 1000),
                 ...array_map(static fn (array $existing): int => (int) ($existing['id'] ?? 0), $data['users'] ?: [['id' => 0]])
             );
             $id = $highestId + 1;
             $data['nextId'] = $id;
-            $salt = bin2hex(random_bytes(16));
             $user = [
                 'id' => $id,
-                'name' => trim($validated['firstName'].' '.($validated['lastName'] ?? '')),
-                'username' => $username,
+                'name' => trim($pending['firstName'].' '.$pending['lastName']),
+                'username' => $pending['username'],
                 'email' => $email,
-                'phone' => $phone,
+                'phone' => $pending['phone'],
                 'accountType' => 'User',
                 'permissions' => [],
                 'role' => 'User',
                 'status' => 'Active',
-                'password' => 'pbkdf2:'.$salt.':'.hash_pbkdf2('sha512', $password, $salt, 100000, 128),
+                'password' => $pending['password'],
+                'emailVerifiedAt' => now()->toIso8601String(),
+                'verificationStatus' => 'verified',
                 'joinedDate' => now()->toDateString(),
                 'createdAt' => now()->toIso8601String(),
             ];
             $data['users'][] = $user;
-
+            unset($data['pendingRegistrations'][$email]);
+            DB::table('auth_challenges')->where('email', $email)->where('purpose', 'signup')->delete();
             DB::table('auth_sessions')->insert([
-                'token_hash' => hash('sha256', $token),
-                'user_id' => $id,
-                'expires_at' => now()->addHours($ttlHours),
-                'created_at' => now(),
+                'token_hash' => hash('sha256', $token), 'user_id' => $id,
+                'expires_at' => now()->addHours($ttlHours), 'created_at' => now(),
             ]);
-
             return ['user' => $user];
         });
+        if (isset($result['error'])) return response()->json(['error' => $result['error']], $result['status']);
+        return response()->json(['user' => $this->publicUser($result['user']), 'token' => $token]);
+    }
 
-        if (isset($result['error'])) {
-            return response()->json(['error' => $result['error']], $result['status']);
+    public function resendRegistrationEmail(Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $validated = $request->validate(['email' => ['required', 'email', 'max:320']]);
+        $email = mb_strtolower(trim($validated['email']));
+        $otp = (string) random_int(100000, 999999);
+        $pending = $store->mutate(function (array &$data) use ($email, $otp): array {
+            $record = $data['pendingRegistrations'][$email] ?? null;
+            if (! is_array($record)) return ['error' => 'No pending registration was found.', 'status' => 404];
+            if (now()->parse($record['lastSentAt'] ?? $record['createdAt'] ?? now())->addSeconds(60)->isFuture()) {
+                return ['error' => 'Please wait before requesting another code.', 'status' => 429];
+            }
+            $record['lastSentAt'] = now()->toIso8601String();
+            $data['pendingRegistrations'][$email] = $record;
+            DB::table('auth_challenges')->updateOrInsert(
+                ['email' => $email, 'purpose' => 'signup'],
+                ['code_hash' => hash('sha256', $otp), 'attempts' => 0, 'expires_at' => now()->addMinutes(10)]
+            );
+            return ['email' => $email];
+        });
+        if (isset($pending['error'])) return response()->json(['error' => $pending['error']], $pending['status']);
+        try {
+            $this->sendRegistrationOtp($email, $otp);
+        } catch (Throwable $error) {
+            report($error);
+            return response()->json(['error' => 'Unable to send the verification email. Please try again later.'], 503);
         }
+        return response()->json(['verificationRequired' => true, 'email' => $email, 'message' => 'A new verification code has been sent.']);
+    }
 
-        return response()->json([
-            'user' => $this->publicUser($result['user']),
-            'token' => $token,
-        ], 201);
+    private function sendRegistrationOtp(string $email, string $otp): void
+    {
+        $smtp = config('mail.mailers.smtp');
+        if (! filter_var($smtp['username'] ?? '', FILTER_VALIDATE_EMAIL) || empty($smtp['password'])) {
+            throw new RuntimeException('SMTP credentials are not configured.');
+        }
+        $from = (string) config('mail.from.address');
+        if (! filter_var($from, FILTER_VALIDATE_EMAIL)) {
+            throw new RuntimeException('A valid SMTP sender address is not configured.');
+        }
+        Mail::mailer('smtp')->to($email)->send(
+            (new SignupVerificationOtp($otp))->from($from, (string) config('mail.from.name', 'OG Landmark'))
+        );
     }
 
     public function adminVerify(Request $request, LegacyDataStore $store): JsonResponse

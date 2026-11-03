@@ -142,6 +142,21 @@
       <button class="btn btn-outline" onclick="showPanel('panel-login')">Already have an account? Sign In</button>
     </div>
 
+    <div class="panel" id="panel-register-verify">
+      <button class="back-btn" onclick="showPanel('panel-register')">← Back</button>
+      <div class="role-badge"><span class="role-dot"></span>Buyer Portal</div>
+      <div class="form-title">Verify your email</div>
+      <div class="form-subtitle">Enter the six-digit code sent to <span id="register-verify-email"></span>. It expires in 10 minutes.</div>
+      <div class="field">
+        <label>Email Verification Code</label>
+        <input type="text" class="otp-input" id="register-otp" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code"/>
+      </div>
+      <div class="err-msg" id="register-verify-err"></div>
+      <div class="ok-msg" id="register-verify-ok"></div>
+      <button class="btn" id="register-verify-btn" onclick="doVerifyRegistration()">Verify Email</button>
+      <button class="btn btn-outline" id="register-resend-btn" onclick="resendRegistrationCode()">Resend Code</button>
+    </div>
+
     <!-- Panel 2: Password Reset Request -->
     <div class="panel" id="panel-reset">
       <button class="back-btn" onclick="showPanel('panel-login')">← Back to Login</button>
@@ -196,6 +211,7 @@ let siteKey = null;
 let captchaLoginId = null;
 let captchaResetId = null;
 let pendingEmail = '';
+let pendingRegistrationEmail = '';
 
 async function init() {
   try {
@@ -356,6 +372,12 @@ async function doRegister() {
       setLoading('reg-btn', false, 'Create Account');
       return showErr('reg-err', d.error || 'Registration failed. Please try again.');
     }
+    if (d.verificationRequired) {
+      pendingRegistrationEmail = d.email || email.toLowerCase();
+      document.getElementById('register-verify-email').textContent = pendingRegistrationEmail;
+      showPanel('panel-register-verify');
+      return;
+    }
     if (!['User', 'Buyer'].includes(d.user.role)) {
       setLoading('reg-btn', false, 'Create Account');
       return showErr('reg-err', 'Registration error. Please contact support.');
@@ -370,11 +392,53 @@ async function doRegister() {
   }
 }
 
+async function doVerifyRegistration() {
+  clearErrors();
+  const otp = document.getElementById('register-otp').value.trim();
+  if (!/^\d{6}$/.test(otp)) return showErr('register-verify-err', 'Enter the six-digit code.');
+  setLoading('register-verify-btn', true, 'Verify Email');
+  try {
+    const r = await fetch('/api/auth/verify-email', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: pendingRegistrationEmail, otp })
+    });
+    const d = await r.json();
+    if (!r.ok) {
+      setLoading('register-verify-btn', false, 'Verify Email');
+      return showErr('register-verify-err', d.error || 'Verification failed.');
+    }
+    localStorage.setItem('og_user', JSON.stringify(d.user));
+    localStorage.setItem('og_token', d.token);
+    window.location.href = '/user/';
+  } catch (e) {
+    showErr('register-verify-err', 'Connection error. Please try again.');
+    setLoading('register-verify-btn', false, 'Verify Email');
+  }
+}
+
+async function resendRegistrationCode() {
+  clearErrors();
+  setLoading('register-resend-btn', true, 'Resend Code');
+  try {
+    const r = await fetch('/api/auth/resend-verification', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: pendingRegistrationEmail })
+    });
+    const d = await r.json();
+    if (!r.ok) showErr('register-verify-err', d.error || 'Unable to resend code.');
+    else showOk('register-verify-ok', 'A new code has been sent.');
+  } catch (e) {
+    showErr('register-verify-err', 'Connection error. Please try again.');
+  }
+  setLoading('register-resend-btn', false, 'Resend Code');
+}
+
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
   const active = document.querySelector('.panel.active').id;
   if (active === 'panel-login')              doLogin();
   else if (active === 'panel-register')      doRegister();
+  else if (active === 'panel-register-verify') doVerifyRegistration();
   else if (active === 'panel-reset')         doResetRequest();
   else if (active === 'panel-reset-confirm') doResetConfirm();
 });

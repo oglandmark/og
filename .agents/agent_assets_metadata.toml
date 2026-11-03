@@ -140,3 +140,31 @@ mtime_ms = 1793518654307
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/e49e74eb-652d-4d36-9a49-50fbce0942ba/172733c6-b0c1-4503-8290-eff028b3a94e"
 storage_version_token = "1793518758818311"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "CcWljg9BeNte0vWpxZKfq"
+uri = "file://generated-artifacts/og-landmark-website-frontend.zip"
+type = "unspecified"
+title = "OG Landmark Website Frontend ZIP"
+description = "Current static website frontend, including the OTP signup update and Hostinger .htaccess rules."
+logical_id = "66b9c30f-5e16-4571-8661-5d14096c6ffb"
+content_hash = "sha256:04555bca7c08761686aefc190ba93f4befe057537b6a7d280860d022ad2465b2"
+size = 13188932
+mtime_ms = 1793711255408
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/66b9c30f-5e16-4571-8661-5d14096c6ffb/457985a1-bbdd-418a-9e53-8ad4eaf2d0d0"
+storage_version_token = "1793711332590441"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "eCzvvElLb5hBkpURTo0Sw"
+uri = "file://generated-artifacts/og-landmark-laravel-backend.zip"
+type = "unspecified"
+title = "OG Landmark Laravel Backend ZIP"
+description = "Current Laravel API source with Composer packages; excludes .env, local database, uploaded media, logs, and runtime caches."
+logical_id = "2034755b-251f-4f2e-8600-c05ffc0ef4bd"
+content_hash = "sha256:8cb87d2b7fd434673ce5cdc77b2379a35da846e0a2e9410f602a2aba88896190"
+size = 36817526
+mtime_ms = 1793711277684
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/2034755b-251f-4f2e-8600-c05ffc0ef4bd/7387d05a-1e1b-4e77-8beb-af7dc9101752"
+storage_version_token = "1793711334283138"
+content_type = "application/octet-stream"

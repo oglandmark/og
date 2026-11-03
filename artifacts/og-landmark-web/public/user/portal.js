@@ -62,7 +62,12 @@
     const isMultipart = typeof FormData !== 'undefined' && options.body instanceof FormData;
     const headers = { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(options.headers || {}) };
     if (options.body && !isMultipart && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
-    return fetch(path, { ...options, headers }).then(async (response) => {
+    const useLaravelPreview = /\.replit\.dev$/i.test(window.location.hostname)
+      || ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    const endpoint = useLaravelPreview && path.startsWith('/api/')
+      ? `/api-legacy${path}`
+      : path;
+    return fetch(endpoint, { ...options, headers }).then(async (response) => {
       if (response.status === 401) {
         localStorage.removeItem('og_token');
         localStorage.removeItem('og_user');

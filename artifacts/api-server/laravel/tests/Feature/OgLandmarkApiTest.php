@@ -1326,6 +1326,65 @@ final class OgLandmarkApiTest extends TestCase
         $this->withToken($token)->patchJson('/api/admin/reports/301', ['status' => 'Resolved'])->assertForbidden();
     }
 
+    public function test_user_dashboard_profile_saved_compare_alerts_notifications_and_messages_are_account_scoped(): void
+    {
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true);
+        $data['savedProperties'] = ['42' => [101], '7' => [101]];
+        $data['notifications'] = [
+            ['id' => 801, 'userId' => 42, 'message' => 'Your listing was updated.', 'read' => false],
+            ['id' => 802, 'userId' => 7, 'message' => 'Private to another account.', 'read' => false],
+        ];
+        $data['conversations'] = [[
+            'id' => 901, 'participants' => [42, 7], 'propertyTitle' => 'Approved house',
+            'messages' => [['id' => 902, 'senderId' => 7, 'text' => 'Hello', 'createdAt' => now()->toIso8601String()]],
+        ]];
+        $data['savedSearches'] = [];
+        $data['notificationPreferences'] = [];
+        $data['visitHistory'] = [['id' => 903, 'userId' => 42], ['id' => 904, 'userId' => 7]];
+        DB::table('app_data')->where('id', 1)->update(['data' => json_encode($data)]);
+
+        $token = $this->postJson('/api/auth/login', [
+            'identifier' => 'testuser', 'password' => self::PASSWORD,
+        ])->assertOk()->json('token');
+
+        $this->withToken($token)->getJson('/api/account')->assertOk()
+            ->assertJsonPath('id', 42)->assertJsonMissingPath('password');
+        $this->withToken($token)->putJson('/api/account', [
+            'name' => 'Updated Buyer', 'phone' => '03000000000', 'city' => 'Okara',
+        ])->assertOk()->assertJsonPath('name', 'Updated Buyer');
+
+        $this->withToken($token)->getJson('/api/saved/42')->assertOk()->assertExactJson([101]);
+        $this->withToken($token)->getJson('/api/saved/7')->assertForbidden();
+        $this->withToken($token)->postJson('/api/saved/42/101')->assertOk()->assertJsonPath('saved', false);
+        $this->withToken($token)->putJson('/api/comparison', ['propertyIds' => [101, 102]])
+            ->assertOk()->assertExactJson([101, 102]);
+        $this->withToken($token)->getJson('/api/comparison')->assertOk()->assertExactJson([101, 102]);
+
+        $alert = $this->withToken($token)->postJson('/api/saved-searches', [
+            'label' => 'Okara houses', 'query' => 'house', 'filters' => ['city' => 'Okara'],
+        ])->assertCreated()->assertJsonPath('userId', 42)->json();
+        $this->withToken($token)->getJson('/api/saved-searches')->assertOk()->assertJsonCount(1);
+        $this->withToken($token)->deleteJson('/api/saved-searches/'.$alert['id'])->assertNoContent();
+
+        $this->withToken($token)->getJson('/api/notifications')->assertOk()->assertJsonCount(1);
+        $this->withToken($token)->patchJson('/api/notifications/801/read')->assertOk()->assertJsonPath('read', true);
+        $this->withToken($token)->getJson('/api/conversations')->assertOk()->assertJsonCount(1);
+        $this->withToken($token)->getJson('/api/conversations/901/messages')->assertOk()->assertJsonCount(1);
+        $this->withToken($token)->postJson('/api/conversations/901/messages', [
+            'senderId' => 7, 'text' => 'Reply from the signed-in buyer',
+        ])->assertCreated()->assertJsonPath('senderId', 42);
+
+        $this->withToken($token)->getJson('/api/visit-history')->assertOk()->assertJsonCount(1);
+        $this->withToken($token)->putJson('/api/notification-preferences', [
+            'properties' => false, 'frequency' => 'weekly',
+        ])->assertOk()->assertJsonPath('properties', false)->assertJsonPath('frequency', 'weekly');
+
+        $this->withToken($token)->postJson('/api/appointments', [
+            'propertyId' => 101, 'date' => now()->addDays(2)->toDateString(),
+            'time' => '10:30', 'type' => 'Site Visit',
+        ])->assertCreated()->assertJsonPath('buyerId', 42);
+    }
+
     private function adminToken(): string
     {
         return $this->postJson('/api/auth/login', [

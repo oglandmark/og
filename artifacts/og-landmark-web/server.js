@@ -4192,6 +4192,7 @@ app.post('/api/saved/:userId/:propertyId', requireAuth, async (req, res) => {
     const data = await readData();
     const uid = req.params.userId;
     const pid = Number(req.params.propertyId);
+    data.savedProperties ||= {};
     if (!data.savedProperties[uid]) data.savedProperties[uid] = [];
     const idx = data.savedProperties[uid].indexOf(pid);
     if (idx === -1) { data.savedProperties[uid].push(pid); await writeData(data); return res.json({ saved: true }); }
@@ -5860,6 +5861,58 @@ personalCrud('/api/comparisons', 'comparisons', 'comparison');
 personalCrud('/api/visit-history', 'visitHistory', 'history');
 personalCrud('/api/promotions', 'promotions', 'promotion');
 personalCrud('/api/measurements', 'measurements', 'measurement');
+
+// The website and mobile app share this account-scoped comparison contract.
+// Keep the singular route's number[] response while tolerating older records
+// written through the generic plural CRUD route.
+app.get('/api/comparison', requireAuth, async (req, res) => {
+  try {
+    const data = await readData();
+    const records = (data.comparisons || []).filter(item => String(item.userId) === String(req.currentUser.id));
+    const ids = records.flatMap(item => Array.isArray(item.propertyIds)
+      ? item.propertyIds
+      : item.propertyId !== undefined ? [item.propertyId] : []);
+    res.json([...new Set(ids.map(Number).filter(id => Number.isSafeInteger(id) && id > 0))].slice(-3));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+app.put('/api/comparison', requireAuth, async (req, res) => {
+  try {
+    const propertyIds = req.body?.propertyIds;
+    if (!Array.isArray(propertyIds) || propertyIds.length > 3
+      || propertyIds.some(id => !Number.isSafeInteger(Number(id)) || Number(id) <= 0)) {
+      return res.status(400).json({ error: 'propertyIds must contain up to three positive property IDs.' });
+    }
+    const data = await readData();
+    data.comparisons = (data.comparisons || []).filter(item => String(item.userId) !== String(req.currentUser.id));
+    if (propertyIds.length) {
+      data.comparisons.push({
+        id: `comparison_${req.currentUser.id}`,
+        userId: req.currentUser.id,
+        propertyIds: [...new Set(propertyIds.map(Number))],
+        updatedAt: new Date().toISOString(),
+      });
+    }
+    await writeData(data);
+    res.json([...new Set(propertyIds.map(Number))]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+app.delete('/api/comparison', requireAuth, async (req, res) => {
+  try {
+    const data = await readData();
+    data.comparisons = (data.comparisons || []).filter(item => String(item.userId) !== String(req.currentUser.id));
+    await writeData(data);
+    res.status(204).end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 // ─── Mobile domain resources ─────────────────────────────────────────────────
 // JSON documents retain the mobile clients' flexible payload contracts while

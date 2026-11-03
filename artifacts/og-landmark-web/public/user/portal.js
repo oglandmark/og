@@ -113,7 +113,8 @@
       const src = imageOf(property);
       const propertyId = property.id;
       const isCompared = state.compareIds.map(String).includes(String(propertyId));
-      return `<article class="property-card"><div class="property-image">${src ? `<img src="${safe(src)}" alt="${safe(property.title || 'Property')}" loading="lazy" onerror="this.remove()">` : ''}<span class="property-purpose">${safe(property.purpose || property.status || 'Property')}</span></div><div class="property-copy"><p class="property-location">${safe([property.type, property.city].filter(Boolean).join(' · ') || 'OG Landmark listing')}</p><h3>${safe(property.title || `Property #${propertyId}`)}</h3><p class="property-price">${money(property.price)}</p></div><div class="property-card-foot"><span>Reference ${safe(propertyId ?? '—')}</span><div><a href="/properties/${encodeURIComponent(propertyId)}" aria-label="View ${safe(property.title || `property ${propertyId}`)}">View</a><button type="button" data-compare-id="${safe(propertyId)}">${isCompared ? 'Remove compare' : 'Compare'}</button></div></div></article>`;
+      const isSaved = state.savedIds.map(String).includes(String(propertyId));
+      return `<article class="property-card"><div class="property-image">${src ? `<img src="${safe(src)}" alt="${safe(property.title || 'Property')}" loading="lazy" onerror="this.remove()">` : ''}<span class="property-purpose">${safe(property.purpose || property.status || 'Property')}</span></div><div class="property-copy"><p class="property-location">${safe([property.type, property.city].filter(Boolean).join(' · ') || 'OG Landmark listing')}</p><h3>${safe(property.title || `Property #${propertyId}`)}</h3><p class="property-price">${money(property.price)}</p></div><div class="property-card-foot"><span>Reference ${safe(propertyId ?? '—')}</span><div><a href="/properties/${encodeURIComponent(propertyId)}" aria-label="View ${safe(property.title || `property ${propertyId}`)}">View</a><button type="button" data-save-property="${safe(propertyId)}">${isSaved ? 'Remove saved' : 'Save'}</button><button type="button" data-compare-id="${safe(propertyId)}">${isCompared ? 'Remove compare' : 'Compare'}</button></div></div></article>`;
     }).join('');
   }
   function agentAreas(agent) {
@@ -640,6 +641,24 @@
       renderAll();
     } catch (error) { showToast(error.message); }
   }
+  async function toggleSavedProperty(id, button) {
+    button.disabled = true;
+    try {
+      const result = await api(`/api/saved/${encodeURIComponent(user.id)}/${encodeURIComponent(id)}`, { method: 'POST' });
+      const key = String(id);
+      state.savedIds = result?.saved
+        ? [...new Set([...state.savedIds.map(String), key])]
+        : state.savedIds.map(String).filter((savedId) => savedId !== key);
+      state.savedProperties = result?.saved
+        ? [...state.savedProperties.filter((property) => String(property.id) !== key), ...state.properties.filter((property) => String(property.id) === key)]
+        : state.savedProperties.filter((property) => String(property.id) !== key);
+      renderAll();
+      showToast(result?.saved ? 'Property saved to your account.' : 'Property removed from saved properties.');
+    } catch (error) {
+      button.disabled = false;
+      showToast(error.message);
+    }
+  }
   async function updateMyListingStatus(id, listingStatus) {
     if (['Paused', 'Sold', 'Rented'].includes(listingStatus) && !window.confirm(`Change this listing to ${listingStatus.toLowerCase()}?`)) return;
     try {
@@ -693,15 +712,12 @@
     const id = item.notificationId || item.id;
     if (id && !(item.read || item.isRead)) {
       try {
-        await fetch(`/api/notifications/${encodeURIComponent(id)}/read`, {
-          method: 'PATCH',
-          headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
-        });
+        await api(`/api/notifications/${encodeURIComponent(id)}/read`, { method: 'PATCH' });
         item.read = true;
         item.isRead = true;
         renderTables();
         updateCounts();
-      } catch {}
+      } catch (error) { showToast(error.message); }
     }
   }
   document.addEventListener('click', (event) => {
@@ -713,6 +729,7 @@
     const closeProperty = event.target.closest('[data-close-property]');
     const conversationButton = event.target.closest('[data-conversation-id]');
     const compareButton = event.target.closest('[data-compare-id]');
+    const savePropertyButton = event.target.closest('[data-save-property]');
     const clearCompareButton = event.target.closest('[data-clear-compare]');
     const deleteAlertButton = event.target.closest('[data-delete-alert]');
     const listingFilter = event.target.closest('[data-listing-filter]');
@@ -720,7 +737,7 @@
     const deleteListing = event.target.closest('[data-delete-listing]');
     const resubmitListing = event.target.closest('[data-resubmit-listing]');
     const cancelAppointment = event.target.closest('[data-cancel-appointment]');
-    if (pageButton || goButton || notification || closeProperty || conversationButton || compareButton || clearCompareButton || deleteAlertButton || listingFilter || listingStatus || deleteListing || resubmitListing || cancelAppointment) {
+    if (pageButton || goButton || notification || closeProperty || conversationButton || compareButton || savePropertyButton || clearCompareButton || deleteAlertButton || listingFilter || listingStatus || deleteListing || resubmitListing || cancelAppointment) {
       event.preventDefault();
       event.stopPropagation();
     }
@@ -732,6 +749,7 @@
     if (propertyButton && propertyButton.dataset.propertyId) openPropertyDetail(propertyButton.dataset.propertyId);
     if (conversationButton) loadConversationMessages(state.conversations.find((item) => String(item.id) === conversationButton.dataset.conversationId));
     if (compareButton) toggleCompare(compareButton.dataset.compareId);
+    if (savePropertyButton) toggleSavedProperty(savePropertyButton.dataset.saveProperty, savePropertyButton);
     if (clearCompareButton) api('/api/comparison', { method: 'DELETE' }).then(() => {
       state.compareIds = [];
       state.compareProperties = [];
@@ -779,13 +797,18 @@
     } else if (form.id === 'save-alert-form') {
       event.preventDefault();
       const values = new FormData(form);
-      const query = document.getElementById('property-filter').value.trim();
+      const searchText = document.getElementById('property-filter').value.trim();
       const purpose = document.getElementById('purpose-filter').value;
       const label = String(values.get('label') || '').trim();
+      const query = searchText || purpose;
+      if (!query) {
+        showToast('Search for a property or choose a purpose before saving an alert.');
+        return;
+      }
       try {
         const alert = await api('/api/saved-searches', {
           method: 'POST',
-          body: JSON.stringify({ label, query, filters: { location: query, transaction: purpose } })
+          body: JSON.stringify({ label, query, filters: { location: searchText, transaction: purpose } })
         });
         state.alerts.unshift(alert);
         renderAlerts();

@@ -207,6 +207,21 @@ test('legacy login, current-user, registration, and staff permissions share one 
   const propertyPage = await fetch(`${baseUrl}/properties/1005`);
   assert.equal(propertyPage.status, 200);
   assert.match(await propertyPage.text(), /Visible Fixture Listing/);
+  const saved = await jsonRequest(baseUrl, '/api/saved/41/1005', { token: tokens.Buyer, method: 'POST' });
+  assert.equal(saved.response.status, 200, JSON.stringify(saved.body));
+  assert.equal(saved.body?.saved, true, JSON.stringify(saved.body));
+  const savedIds = await jsonRequest(baseUrl, '/api/saved/41', { token: tokens.Buyer });
+  assert.deepEqual(savedIds.body, [1005]);
+  const comparison = await jsonRequest(baseUrl, '/api/comparison', { token: tokens.Buyer, method: 'PUT', body: { propertyIds: [1005] } });
+  assert.deepEqual(comparison.body, [1005]);
+  const comparisonRead = await jsonRequest(baseUrl, '/api/comparison', { token: tokens.Buyer });
+  assert.deepEqual(comparisonRead.body, [1005]);
+  const otherComparison = await jsonRequest(baseUrl, '/api/comparison', { token: tokens.Seller });
+  assert.deepEqual(otherComparison.body, []);
+  const invalidComparison = await jsonRequest(baseUrl, '/api/comparison', { token: tokens.Buyer, method: 'PUT', body: { propertyIds: [1, 2, 3, 4] } });
+  assert.equal(invalidComparison.response.status, 400);
+  const clearComparison = await jsonRequest(baseUrl, '/api/comparison', { token: tokens.Buyer, method: 'DELETE' });
+  assert.equal(clearComparison.response.status, 204);
   const cancelledAppointment = await jsonRequest(baseUrl, '/api/appointments/701', {
     token: tokens.Buyer,
     method: 'PATCH',

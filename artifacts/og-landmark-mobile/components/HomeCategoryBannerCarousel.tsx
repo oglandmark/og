@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   AccessibilityInfo,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -43,16 +44,24 @@ type HomeCategoryBannerCarouselProps = {
 
 function BannerVideo({
   uri,
+  poster,
   loop,
   shouldAdvance,
   onFinished,
+  loadingBackgroundColor,
+  loadingIndicatorColor,
 }: {
   uri: string;
+  poster: ImageSourcePropType;
   loop: boolean;
   shouldAdvance: boolean;
   onFinished: () => void;
+  loadingBackgroundColor: string;
+  loadingIndicatorColor: string;
 }) {
-  const player = useVideoPlayer({ uri }, (videoPlayer) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const player = useVideoPlayer({ uri, useCaching: true }, (videoPlayer) => {
     videoPlayer.loop = loop;
     videoPlayer.muted = true;
     videoPlayer.playbackRate = HOME_BANNER_VIDEO_PLAYBACK_RATE;
@@ -64,25 +73,58 @@ function BannerVideo({
   }, [loop, player]);
 
   useEffect(() => {
-    if (!shouldAdvance) return undefined;
-    const completionSubscription = player.addListener('playToEnd', onFinished);
+    setIsPlaying(player.playing);
+    setHasError(player.status === 'error');
     const statusSubscription = player.addListener('statusChange', ({ status }) => {
-      if (status === 'error') onFinished();
+      const failed = status === 'error';
+      setHasError(failed);
+      if (failed && shouldAdvance) onFinished();
     });
+    const playingSubscription = player.addListener('playingChange', ({ isPlaying: playing }) => {
+      setIsPlaying(playing);
+    });
+    const completionSubscription = shouldAdvance
+      ? player.addListener('playToEnd', onFinished)
+      : null;
     return () => {
-      completionSubscription.remove();
+      completionSubscription?.remove();
       statusSubscription.remove();
+      playingSubscription.remove();
     };
   }, [onFinished, player, shouldAdvance]);
 
   return (
-    <VideoView
-      player={player}
-      style={StyleSheet.absoluteFill}
-      contentFit="cover"
-      nativeControls={false}
-      surfaceType="textureView"
-    />
+    <View style={StyleSheet.absoluteFill}>
+      <VideoView
+        player={player}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        nativeControls={false}
+        surfaceType="textureView"
+      />
+      {!isPlaying ? (
+        <>
+          <Image
+            source={poster}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            accessibilityIgnoresInvertColors
+          />
+          {!hasError ? (
+            <View style={styles.videoLoadingOverlay} pointerEvents="none">
+              <View
+                style={[
+                  styles.videoLoadingIndicator,
+                  { backgroundColor: loadingBackgroundColor },
+                ]}
+              >
+                <ActivityIndicator size="small" color={loadingIndicatorColor} />
+              </View>
+            </View>
+          ) : null}
+        </>
+      ) : null}
+    </View>
   );
 }
 
@@ -248,9 +290,12 @@ export default function HomeCategoryBannerCarousel({
             {slide.videoUrl && !isLoopClone && isVisible && logicalIndex === activeIndex ? (
               <BannerVideo
                 uri={slide.videoUrl}
+                poster={slide.image}
                 loop={autoplayMode !== 'video-end'}
                 shouldAdvance={autoplayMode === 'video-end'}
                 onFinished={advanceToNextSlide}
+                loadingBackgroundColor={colors.actionGlassStrong}
+                loadingIndicatorColor={colors.actionForeground}
               />
             ) : (
               <Image
@@ -410,6 +455,18 @@ const styles = StyleSheet.create({
   slide: {
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  videoLoadingOverlay: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  videoLoadingIndicator: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bottomGradient: {
     position: 'absolute',

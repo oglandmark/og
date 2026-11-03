@@ -3,7 +3,12 @@ import test from 'node:test';
 import {
   getHomeBannerAutoplayMode,
   HOME_BANNER_IMAGE_AUTOPLAY_MS,
+  HOME_BANNER_VIDEO_PLAYBACK_RATE,
 } from '../lib/homeBannerPlayback';
+
+test('video banners play at normal real-time speed', () => {
+  assert.equal(HOME_BANNER_VIDEO_PLAYBACK_RATE, 1.0);
+});
 
 test('video banners advance on playback completion rather than the image timer', () => {
   assert.equal(

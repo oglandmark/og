@@ -20,6 +20,7 @@ import { useColors } from '@/hooks/useColors';
 import {
   getHomeBannerAutoplayMode,
   HOME_BANNER_IMAGE_AUTOPLAY_MS,
+  HOME_BANNER_VIDEO_PLAYBACK_RATE,
 } from '@/lib/homeBannerPlayback';
 
 export type HomeCategoryBannerSlide = {
@@ -54,6 +55,7 @@ function BannerVideo({
   const player = useVideoPlayer({ uri }, (videoPlayer) => {
     videoPlayer.loop = loop;
     videoPlayer.muted = true;
+    videoPlayer.playbackRate = HOME_BANNER_VIDEO_PLAYBACK_RATE;
     videoPlayer.play();
   });
 

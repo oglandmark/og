@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AccountMediaController;
+use App\Http\Controllers\Api\DeveloperProjectController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\MobileAgentController;
 use App\Http\Controllers\Api\PropertyController;
@@ -27,6 +28,8 @@ $registerRoutes = static function (): void {
 
     Route::get('/properties', [PropertyController::class, 'index']);
     Route::get('/properties/{id}', [PropertyController::class, 'show'])->whereNumber('id');
+    Route::get('/projects', [DeveloperProjectController::class, 'index']);
+    Route::get('/projects/{id}', [DeveloperProjectController::class, 'show']);
     Route::get('/mobile/banners', [AdminController::class, 'publicMobileBanners']);
     Route::middleware('throttle:60,1')->prefix('preview/live')->group(function (): void {
         Route::get('/properties', [PreviewLiveFeedController::class, 'properties']);

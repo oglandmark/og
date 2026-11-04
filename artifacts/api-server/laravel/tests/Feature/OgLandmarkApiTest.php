@@ -104,6 +104,107 @@ final class OgLandmarkApiTest extends TestCase
             ->assertJsonPath('database', 'connected');
     }
 
+    public function test_public_project_feed_matches_mobile_shape_and_excludes_non_public_statuses(): void
+    {
+        $this->seedDeveloperProjectsForPublicFeed();
+
+        $this->getJson('/api/projects')
+            ->assertOk()
+            ->assertJsonCount(4)
+            ->assertJsonPath('0.id', 'project-live')
+            ->assertJsonPath('0.developerId', 'developer-42')
+            ->assertJsonPath('0.name', 'Public Project')
+            ->assertJsonPath('0.shortDescription', 'A public mobile-feed project.')
+            ->assertJsonPath('0.photos.0', 'https://www.oglandmark.com/media/project-cover.jpg')
+            ->assertJsonPath('0.status', 'Live')
+            ->assertJsonMissing(['id' => 'project-draft'])
+            ->assertJsonMissing(['id' => 'project-archived']);
+    }
+
+    public function test_public_project_details_hide_non_public_projects(): void
+    {
+        $this->seedDeveloperProjectsForPublicFeed();
+
+        $this->getJson('/api/projects/project-live')
+            ->assertOk()
+            ->assertJsonPath('id', 'project-live')
+            ->assertJsonPath('name', 'Public Project')
+            ->assertJsonPath('fullDescription', 'Full project details for the buyer-facing mobile screen.')
+            ->assertJsonPath('amenities.0', 'Park');
+
+        $this->getJson('/api/projects/project-draft')
+            ->assertNotFound()
+            ->assertJsonPath('error', 'Not found');
+        $this->getJson('/api/projects/does-not-exist')->assertNotFound();
+    }
+
+    private function seedDeveloperProjectsForPublicFeed(): void
+    {
+        $data = json_decode(DB::table('app_data')->where('id', 1)->value('data'), true, 512, JSON_THROW_ON_ERROR);
+        $data['developerProjects'] = [];
+        foreach ([
+            'live' => 'Live',
+            'approved' => 'Approved',
+            'coming-soon' => 'Coming Soon',
+            'under-development' => 'Under Development',
+            'draft' => 'Draft',
+            'archived' => 'Archived',
+        ] as $slug => $status) {
+            $data['developerProjects'][] = [
+                'id' => 'project-'.$slug,
+                'developerId' => 'developer-42',
+                'name' => 'Public Project',
+                'type' => 'Housing Society',
+                'tagline' => 'A test project',
+                'shortDescription' => 'A public mobile-feed project.',
+                'fullDescription' => 'Full project details for the buyer-facing mobile screen.',
+                'highlights' => ['Test highlight'],
+                'district' => 'Okara',
+                'city' => 'Okara',
+                'tehsil' => 'Okara',
+                'area' => 'GT Road',
+                'address' => 'Okara, Pakistan',
+                'googleMapsLink' => '',
+                'projectOfficePhone' => '03001234567',
+                'startingPrice' => 1250000,
+                'maxPrice' => 2500000,
+                'totalUnits' => 200,
+                'availableUnits' => 120,
+                'reservedUnits' => 30,
+                'soldUnits' => 50,
+                'plotSizes' => ['5 Marla'],
+                'paymentPlanAvailable' => true,
+                'downPaymentPct' => 20,
+                'installmentMonths' => 36,
+                'totalArea' => '100 acres',
+                'totalBlocks' => 4,
+                'developmentStatus' => 'Under Construction',
+                'launchDate' => '2026-01-01',
+                'expectedCompletion' => '2028-01-01',
+                'possessionStatus' => 'Partial',
+                'nocStatus' => 'Approved',
+                'approvedBy' => ['TMA'],
+                'registrationNumber' => 'TEST-001',
+                'status' => $status,
+                'verificationStatus' => 'Verified',
+                'coverImageUri' => 'https://www.oglandmark.com/media/project-cover.jpg',
+                'photos' => ['https://www.oglandmark.com/media/project-cover.jpg'],
+                'videoLinks' => [],
+                'facebookPage' => '',
+                'website' => '',
+                'youtubeChannel' => '',
+                'amenities' => ['Park'],
+                'createdAt' => '2026-01-01T00:00:00Z',
+                'updatedAt' => '2026-01-02T00:00:00Z',
+            ];
+        }
+
+        DB::table('app_data')->where('id', 1)->update([
+            'data' => json_encode($data, JSON_THROW_ON_ERROR),
+            'updated_at' => now(),
+        ]);
+    }
+
     public function test_login_accepts_legacy_password_hash_and_returns_a_safe_user(): void
     {
         $response = $this->postJson('/api/auth/login', [

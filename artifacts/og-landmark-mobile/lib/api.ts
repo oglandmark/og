@@ -14,7 +14,6 @@ import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import {
   LIVE_API_BASE,
   getPreviewLiveProxyPath,
-  resolveApiBase,
   shouldFallbackUnauthenticatedReadToLive,
 } from './apiBase';
 import {
@@ -23,10 +22,9 @@ import {
 } from './propertyMedia';
 
 // ─── Base URL ──────────────────────────────────────────────────────────────────
-// Replit preview imports a read-only snapshot into its local catalogue so local
-// Admin changes are visible to the preview app without writing to production.
-const previewApiDomain = process.env.EXPO_PUBLIC_API_DOMAIN || process.env.EXPO_PUBLIC_DOMAIN;
-export const API_BASE = resolveApiBase(previewApiDomain);
+// Mobile API reads and writes intentionally use the live Laravel API in every
+// environment. Keep EXPO_PUBLIC_DOMAIN for Expo routing, not API selection.
+export const API_BASE = LIVE_API_BASE;
 const PROPERTY_FEED_API_BASE = API_BASE;
 
 export function resolveMediaUrl(value?: string | null): string | undefined {

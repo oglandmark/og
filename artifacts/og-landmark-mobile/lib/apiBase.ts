@@ -1,4 +1,4 @@
-export const LIVE_API_BASE = 'https://www.oglandmark.com';
+export const LIVE_API_BASE = 'https://api.oglandmark.com';
 
 export function shouldFallbackUnauthenticatedReadToLive(
   currentBase: string,
@@ -32,6 +32,7 @@ export function resolveApiBase(previewDomain?: string): string {
 
   try {
     const parsed = new URL(/^[a-z][a-z\d+.-]*:/i.test(domain) ? domain : `https://${domain}`);
+    if (parsed.hostname.toLowerCase() === 'api.oglandmark.com') return parsed.origin;
     if (!/(^|\.)replit\.dev$|(^|\.)repl\.co$|(^|\.)expo\.pike\.replit\.dev$/i.test(parsed.hostname)) {
       return LIVE_API_BASE;
     }

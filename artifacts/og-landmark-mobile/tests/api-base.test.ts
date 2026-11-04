@@ -14,10 +14,10 @@ test('Replit previews use the local Laravel API route', () => {
 });
 
 test('production and untrusted domains use the public API', () => {
-  assert.equal(resolveApiBase(''), 'https://www.oglandmark.com');
-  assert.equal(resolveApiBase('https://oglandmark.com'), 'https://www.oglandmark.com');
-  assert.equal(resolveApiBase('www.oglandmark.com'), 'https://www.oglandmark.com');
-  assert.equal(resolveApiBase('malicious.example'), 'https://www.oglandmark.com');
+  assert.equal(resolveApiBase(''), 'https://api.oglandmark.com');
+  assert.equal(resolveApiBase('https://oglandmark.com'), 'https://api.oglandmark.com');
+  assert.equal(resolveApiBase('api.oglandmark.com'), 'https://api.oglandmark.com');
+  assert.equal(resolveApiBase('malicious.example'), 'https://api.oglandmark.com');
 });
 
 test('only unauthenticated GET requests may fall back after a local 404', () => {

@@ -44,7 +44,7 @@
 - [MySQL projection parity](mysql-projection-parity.md) — mirrored search projections must keep schema, migration, runtime bindings, and export copies aligned; validate batch placeholder counts before deploy.
 - [Mobile property inventory accuracy](nearby-results-fallback.md) — public mobile screens show only Admin-approved active API listings; never surface bundled demos.
 - [Fresh Laravel backend](laravel-backend-cutover.md) — rebuild the backend later while preserving the existing React website and mobile app.
-- [Production API version parity](production-api-version-parity.md) — verify production endpoints directly; Replit preview may use a separate local API and diverge from Hostinger.
+- [Production API version parity](production-api-version-parity.md) — the public website host and live JSON API host differ; verify routes against the API subdomain.
 - [Local-only phase work](local-only-phase-work.md) — keep the 12-phase OG Landmark integration in local Replit preview; do not deploy or update production.
 - [Laravel config and env checks](laravel-config-cache.md) — clear stale DB config; configure child PHP server limits directly and use `--no-reload` for custom env values.
 - [Normalized core storage](normalized-core-storage.md) — keep app accounts in `app_users`, preserve full payloads, and dual-write `app_data` for rollback.

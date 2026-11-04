@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { normalizePropertyMedia, resolveMediaUrl } from '../lib/propertyMedia';
+import { buildPropertyImageGallery } from '../lib/propertyGallery';
 
 const API_BASE = 'https://www.oglandmark.com';
 const propertyModelSource = readFileSync(new URL('../lib/properties.ts', import.meta.url), 'utf8');
@@ -83,4 +84,35 @@ test('mobile API property mapping carries video URLs into the playback model', (
   assert.match(propertyModelSource, /coverImage\?: string \| null/);
   assert.match(propertyModelSource, /uploadedImages\.length[\s\S]*ap\.coverImage\s*\?\s*\[ap\.coverImage\]/);
   assert.match(propertyModelSource, /return resolveMediaUrl\(url,\s*API_BASE\)/);
+});
+
+test('live property galleries contain only the listing photos', () => {
+  const uploadedPhoto = 'https://media.example.com/og-green.jpg';
+  const result = buildPropertyImageGallery(
+    [uploadedPhoto],
+    ['demo-house-1.jpg', 'demo-house-2.jpg'],
+    false,
+  );
+
+  assert.deepEqual(result, [uploadedPhoto]);
+});
+
+test('only bundled demo galleries are padded with bundled sample photos', () => {
+  const result = buildPropertyImageGallery(
+    ['demo-listing-photo.jpg'],
+    ['demo-house-1.jpg', 'demo-house-2.jpg'],
+    true,
+  );
+
+  assert.equal(result.length, 15);
+  assert.deepEqual(result.slice(0, 3), [
+    'demo-listing-photo.jpg',
+    'demo-house-1.jpg',
+    'demo-house-2.jpg',
+  ]);
+});
+
+test('live listings without photos use a branded placeholder, not a demo property image', () => {
+  assert.match(propertyModelSource, /LIVE_PROPERTY_NO_IMAGE[\s\S]*og-landmark-logo-square\.png/);
+  assert.match(propertyModelSource, /imgs\[0\][\s\S]*LIVE_PROPERTY_NO_IMAGE/);
 });

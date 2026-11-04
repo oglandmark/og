@@ -1,6 +1,7 @@
 import type { ImageSourcePropType } from 'react-native';
 import { API_BASE } from '@/lib/api';
 import { resolveMediaUrl } from '@/lib/propertyMedia';
+import { buildPropertyImageGallery } from '@/lib/propertyGallery';
 
 export type Property = {
   id: number;
@@ -798,21 +799,11 @@ const AGRICULTURE_IMAGES: ImageSourcePropType[] = [
   require('@/assets/images/agriculture/agri-field-4.jpg'),
 ];
 
-/** Returns exactly 15 images: property's own first, padded with other assets if needed. */
+/** Keeps live listing photos untouched; only bundled demo properties are padded. */
 export function propertyImages(property: Property): ImageSourcePropType[] {
   const own = [property.image, ...property.gallery];
   const imagePool = /agri|farm/i.test(property.type) ? AGRICULTURE_IMAGES : ALL_IMAGES;
-  const uniquePool = imagePool.filter(
-    (img) => !own.some((o) => JSON.stringify(o) === JSON.stringify(img)),
-  );
-  const pool = uniquePool.length > 0 ? uniquePool : imagePool;
-  const result = [...own];
-  let i = 0;
-  while (result.length < 15) {
-    result.push(pool[i % pool.length]);
-    i++;
-  }
-  return result.slice(0, 15);
+  return buildPropertyImageGallery(own, imagePool, property.isDemo === true);
 }
 
 /**
@@ -855,22 +846,14 @@ function resolveImageUrl(url: string): string {
   return resolveMediaUrl(url, API_BASE) ?? '';
 }
 
-// ─── Placeholder images (cycled when backend property has no images) ───────────
-const PLACEHOLDERS: ImageSourcePropType[] = [
-  require('@/assets/images/property-1.jpg'),
-  require('@/assets/images/property-2.jpg'),
-  require('@/assets/images/property-3.jpg'),
-  require('@/assets/images/property-4.jpg'),
-  require('@/assets/images/property-5.jpg'),
-  require('@/assets/images/property-6.jpg'),
-];
-
-const AGRICULTURE_PLACEHOLDER = AGRICULTURE_IMAGES;
+// ─── Neutral branded image for live listings without seller-uploaded photos ───
+const LIVE_PROPERTY_NO_IMAGE: ImageSourcePropType =
+  require('@/assets/images/og-landmark-logo-square.png');
 
 /**
  * Convert an ApiProperty (from the backend) to the Property shape used
- * throughout the mobile app. Falls back to placeholder images when the
- * backend property has no uploaded images.
+ * throughout the mobile app. Live listings without uploads use a branded
+ * placeholder, never photos from bundled demo properties.
  *
  * All fields are defensively coerced so a partial/malformed API response
  * never causes a runtime crash in downstream components.
@@ -904,9 +887,9 @@ export function apiPropertyToProperty(ap: {
   const imgs = uploadedImages.length
     ? uploadedImages
     : (ap.coverImage ? [ap.coverImage] : []);
-  const placeholderPool = /agri|farm/i.test(ap.type ?? '') ? AGRICULTURE_PLACEHOLDER : PLACEHOLDERS;
-  const placeholder = placeholderPool[safeId % placeholderPool.length] ?? placeholderPool[0]!;
-  const image: ImageSourcePropType = imgs[0] ? { uri: resolveImageUrl(imgs[0]) } : placeholder;
+  const image: ImageSourcePropType = imgs[0]
+    ? { uri: resolveImageUrl(imgs[0]) }
+    : LIVE_PROPERTY_NO_IMAGE;
   const gallery: ImageSourcePropType[] = imgs.slice(1).map(
     (u) => ({ uri: resolveImageUrl(u) } as ImageSourcePropType),
   );

@@ -42,7 +42,7 @@
 - [Post-merge setup](post-merge-setup.md) — this workspace needs a non-frozen pnpm install and the scoped @workspace/db filter.
 - [Historical MySQL migration safety](mysql-migration-safety.md) — apply only to a future MySQL transfer; do not treat Hostinger MySQL as the current Supabase store.
 - [MySQL projection parity](mysql-projection-parity.md) — mirrored search projections must keep schema, migration, runtime bindings, and export copies aligned; validate batch placeholder counts before deploy.
-- [Mobile property inventory accuracy](nearby-results-fallback.md) — public mobile screens show only Admin-approved active API listings; never surface bundled demos.
+- [Mobile property inventory accuracy](nearby-results-fallback.md) — live property feeds and photo galleries must not mix in bundled demo content.
 - [Fresh Laravel backend](laravel-backend-cutover.md) — rebuild the backend later while preserving the existing React website and mobile app.
 - [Production API version parity](production-api-version-parity.md) — the public website host and live JSON API host differ; verify routes against the API subdomain.
 - [Local-only phase work](local-only-phase-work.md) — keep the 12-phase OG Landmark integration in local Replit preview; do not deploy or update production.

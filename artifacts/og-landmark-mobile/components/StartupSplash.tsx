@@ -29,12 +29,28 @@ import { useColors } from '@/hooks/useColors';
 const DESIGN_WIDTH = 390;
 const DESIGN_HEIGHT = 844;
 const SKYLINE_HEIGHTS = [0.52, 0.82, 0.61, 1, 0.73, 0.91, 0.57, 0.96, 0.68, 0.86, 0.62, 1, 0.76, 0.54];
+const SKYLINE_BUILDINGS = SKYLINE_HEIGHTS.map((buildingHeight, index) => {
+  const buildingWidth = DESIGN_WIDTH / SKYLINE_HEIGHTS.length;
+  const x = index * buildingWidth;
+  const y = DESIGN_HEIGHT - buildingHeight * 126;
+  return { index, x, y, width: buildingWidth - 2 };
+});
+const SKYLINE_CLUSTERS = [
+  SKYLINE_BUILDINGS.slice(0, 5),
+  SKYLINE_BUILDINGS.slice(5, 10),
+  SKYLINE_BUILDINGS.slice(10),
+];
 const SPLASH_STARS = Array.from({ length: 26 }, (_, index) => ({
   x: (index * 137 + 23) % DESIGN_WIDTH,
   y: 90 + ((index * 191 + 31) % 540),
   radius: 0.8 + (index % 4) * 0.45,
   opacity: 0.18 + (index % 5) * 0.07,
 }));
+const STAR_CLUSTERS = [
+  SPLASH_STARS.filter((_, index) => index % 3 === 0),
+  SPLASH_STARS.filter((_, index) => index % 3 === 1),
+  SPLASH_STARS.filter((_, index) => index % 3 === 2),
+];
 
 export function StartupSplash({
   colors,
@@ -56,6 +72,12 @@ export function StartupSplash({
   const innerRotation = useSharedValue(0);
   const logoProgress = useSharedValue(reduceMotion ? 1 : 0);
   const glintProgress = useSharedValue(0);
+  const skylineLeftProgress = useSharedValue(reduceMotion ? 1 : 0);
+  const skylineCenterProgress = useSharedValue(reduceMotion ? 1 : 0);
+  const skylineRightProgress = useSharedValue(reduceMotion ? 1 : 0);
+  const starTwinkleA = useSharedValue(0.5);
+  const starTwinkleB = useSharedValue(0.5);
+  const starTwinkleC = useSharedValue(0.5);
   const wordmarkProgress = useSharedValue(reduceMotion ? 1 : 0);
   const dividerProgress = useSharedValue(reduceMotion ? 1 : 0);
   const categoryProgress = useSharedValue(reduceMotion ? 1 : 0);
@@ -83,6 +105,30 @@ export function StartupSplash({
       transform: [{ translateX: -90 + progressValue * 300 }, { skewX: '-18deg' }],
     };
   });
+  const skylineLeftStyle = useAnimatedStyle(() => ({
+    opacity: skylineLeftProgress.value,
+    transform: [{ translateY: (1 - skylineLeftProgress.value) * 16 }],
+  }));
+  const skylineCenterStyle = useAnimatedStyle(() => ({
+    opacity: skylineCenterProgress.value,
+    transform: [{ translateY: (1 - skylineCenterProgress.value) * 16 }],
+  }));
+  const skylineRightStyle = useAnimatedStyle(() => ({
+    opacity: skylineRightProgress.value,
+    transform: [{ translateY: (1 - skylineRightProgress.value) * 16 }],
+  }));
+  const starTwinkleAStyle = useAnimatedStyle(() => ({
+    opacity: 0.15 + starTwinkleA.value * 0.7,
+    transform: [{ translateY: starTwinkleA.value * 1.5 }],
+  }));
+  const starTwinkleBStyle = useAnimatedStyle(() => ({
+    opacity: 0.15 + starTwinkleB.value * 0.7,
+    transform: [{ translateY: starTwinkleB.value * 1.5 }],
+  }));
+  const starTwinkleCStyle = useAnimatedStyle(() => ({
+    opacity: 0.15 + starTwinkleC.value * 0.7,
+    transform: [{ translateY: starTwinkleC.value * 1.5 }],
+  }));
   const wordmarkStyle = useAnimatedStyle(() => ({
     opacity: wordmarkProgress.value,
     transform: [{ translateY: (1 - wordmarkProgress.value) * 12 }],
@@ -161,12 +207,24 @@ export function StartupSplash({
     categoryProgress.value = withDelay(4200, withTiming(1, { duration: 550 }));
     progress.value = withTiming(1, { duration: 8000, easing: Easing.out(Easing.quad) });
     hintProgress.value = withDelay(5000, withTiming(1, { duration: 450 }));
+    skylineLeftProgress.value = withDelay(4700, withTiming(1, { duration: 780, easing: Easing.out(Easing.quad) }));
+    skylineCenterProgress.value = withDelay(4920, withTiming(1, { duration: 780, easing: Easing.out(Easing.quad) }));
+    skylineRightProgress.value = withDelay(5140, withTiming(1, { duration: 780, easing: Easing.out(Easing.quad) }));
+    starTwinkleA.value = withRepeat(withTiming(1, { duration: 2100, easing: Easing.inOut(Easing.ease) }), -1, true);
+    starTwinkleB.value = withDelay(420, withRepeat(withTiming(1, { duration: 2700, easing: Easing.inOut(Easing.ease) }), -1, true));
+    starTwinkleC.value = withDelay(860, withRepeat(withTiming(1, { duration: 3300, easing: Easing.inOut(Easing.ease) }), -1, true));
 
     return () => {
       cancelAnimation(outerRotation);
       cancelAnimation(innerRotation);
       cancelAnimation(logoProgress);
       cancelAnimation(glintProgress);
+      cancelAnimation(skylineLeftProgress);
+      cancelAnimation(skylineCenterProgress);
+      cancelAnimation(skylineRightProgress);
+      cancelAnimation(starTwinkleA);
+      cancelAnimation(starTwinkleB);
+      cancelAnimation(starTwinkleC);
       cancelAnimation(wordmarkProgress);
       cancelAnimation(dividerProgress);
       cancelAnimation(categoryProgress);
@@ -183,6 +241,12 @@ export function StartupSplash({
     outerRotation,
     progress,
     reduceMotion,
+    skylineCenterProgress,
+    skylineLeftProgress,
+    skylineRightProgress,
+    starTwinkleA,
+    starTwinkleB,
+    starTwinkleC,
     wordmarkProgress,
   ]);
 
@@ -220,46 +284,66 @@ export function StartupSplash({
         </SvgLinearGradient>
         </Defs>
         <Rect width={DESIGN_WIDTH} height={DESIGN_HEIGHT} fill="url(#splashBackground)" />
-        {SPLASH_STARS.map((star, index) => (
-          <Circle
-            key={`star-${index}`}
-            cx={star.x}
-            cy={star.y}
-            r={star.radius}
-            fill={index % 3 === 0 ? colors.splashGold : colors.splashWhite}
-            opacity={star.opacity}
-          />
-        ))}
         <Rect x={0} y={680} width={DESIGN_WIDTH} height={164} fill="url(#cityFade)" />
-        {SKYLINE_HEIGHTS.map((buildingHeight, index) => {
-          const buildingWidth = DESIGN_WIDTH / SKYLINE_HEIGHTS.length;
-          const buildingX = index * buildingWidth;
-          const buildingY = 844 - buildingHeight * 126;
-          return (
-            <React.Fragment key={`building-${index}`}>
-              <Rect
-                x={buildingX + 1}
-                y={buildingY}
-                width={buildingWidth - 2}
-                height={844 - buildingY}
-                fill={colors.splashNavy}
-                opacity={0.55}
-              />
-              {[0, 1, 2].map((windowIndex) => (
-                <Rect
-                  key={`window-${windowIndex}`}
-                  x={buildingX + 5 + (windowIndex % 2) * 8}
-                  y={buildingY + 13 + Math.floor(windowIndex / 2) * 14}
-                  width={3}
-                  height={4}
-                  fill={windowIndex % 2 === 0 ? colors.splashGold : colors.splashTeal}
-                  opacity={0.35}
+      </Svg>
+
+      {[skylineLeftStyle, skylineCenterStyle, skylineRightStyle].map((clusterStyle, clusterIndex) => (
+        <View
+          key={`skyline-cluster-${clusterIndex}`}
+          pointerEvents="none"
+          style={[styles.backgroundSvg, styles.svgLayer, { transform: [{ scale }] }]}
+        >
+          <Animated.View style={[styles.svgLayer, clusterStyle]}>
+            <Svg width={DESIGN_WIDTH} height={DESIGN_HEIGHT} viewBox={`0 0 ${DESIGN_WIDTH} ${DESIGN_HEIGHT}`}>
+              {SKYLINE_CLUSTERS[clusterIndex].map((building) => (
+                <React.Fragment key={`building-${building.index}`}>
+                  <Rect
+                    x={building.x + 1}
+                    y={building.y}
+                    width={building.width}
+                    height={DESIGN_HEIGHT - building.y}
+                    fill={colors.splashNavy}
+                    opacity={0.55}
+                  />
+                  {[0, 1, 2].map((windowIndex) => (
+                    <Rect
+                      key={`window-${windowIndex}`}
+                      x={building.x + 5 + (windowIndex % 2) * 8}
+                      y={building.y + 13 + Math.floor(windowIndex / 2) * 14}
+                      width={3}
+                      height={4}
+                      fill={windowIndex % 2 === 0 ? colors.splashGold : colors.splashTeal}
+                      opacity={0.35}
+                    />
+                  ))}
+                </React.Fragment>
+              ))}
+            </Svg>
+          </Animated.View>
+        </View>
+      ))}
+      {[starTwinkleAStyle, starTwinkleBStyle, starTwinkleCStyle].map((clusterStyle, clusterIndex) => (
+        <View
+          key={`star-cluster-${clusterIndex}`}
+          pointerEvents="none"
+          style={[styles.backgroundSvg, styles.svgLayer, { transform: [{ scale }] }]}
+        >
+          <Animated.View style={[styles.svgLayer, clusterStyle]}>
+            <Svg width={DESIGN_WIDTH} height={DESIGN_HEIGHT} viewBox={`0 0 ${DESIGN_WIDTH} ${DESIGN_HEIGHT}`}>
+              {STAR_CLUSTERS[clusterIndex].map((star, starIndex) => (
+                <Circle
+                  key={`star-${starIndex}`}
+                  cx={star.x}
+                  cy={star.y}
+                  r={star.radius}
+                  fill={(starIndex + clusterIndex) % 3 === 0 ? colors.splashGold : colors.splashWhite}
+                  opacity={star.opacity}
                 />
               ))}
-            </React.Fragment>
-          );
-        })}
-      </Svg>
+            </Svg>
+          </Animated.View>
+        </View>
+      ))}
 
       <View
         pointerEvents="none"
@@ -524,6 +608,10 @@ const styles = StyleSheet.create({
     left: '50%',
     marginLeft: -DESIGN_WIDTH / 2,
     marginTop: -DESIGN_HEIGHT / 2,
+  },
+  svgLayer: {
+    width: DESIGN_WIDTH,
+    height: DESIGN_HEIGHT,
   },
   stage: {
     position: 'absolute',

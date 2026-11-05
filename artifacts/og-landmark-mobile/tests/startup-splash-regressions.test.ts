@@ -72,3 +72,13 @@ test('splash keeps rotating rings composited and avoids frame-by-frame SVG path 
   assert.doesNotMatch(startupSplash, /useAnimatedProps|strokeDashoffset/);
 });
 
+test('skyline rises in staggered groups while background stars twinkle smoothly', () => {
+  assert.match(startupSplash, /skylineLeftProgress\.value = withDelay\(4700/);
+  assert.match(startupSplash, /skylineCenterProgress\.value = withDelay\(4920/);
+  assert.match(startupSplash, /skylineRightProgress\.value = withDelay\(5140/);
+  assert.match(startupSplash, /starTwinkleA\.value = withRepeat/);
+  assert.match(startupSplash, /starTwinkleB\.value = withDelay\(420, withRepeat/);
+  assert.match(startupSplash, /starTwinkleC\.value = withDelay\(860, withRepeat/);
+  assert.match(startupSplash, /if \(reduceMotion\) return undefined/);
+});
+

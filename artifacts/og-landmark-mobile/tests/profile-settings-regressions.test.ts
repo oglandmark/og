@@ -1,0 +1,39 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import test from 'node:test';
+
+const base = new URL('../', import.meta.url);
+const read = (path: string) => readFileSync(new URL(path, base), 'utf8');
+
+test('profile redesign keeps the existing bottom tab configuration intact', () => {
+  const tabs = read('app/(tabs)/_layout.tsx');
+  for (const name of ['index', 'explore', 'post-ad', 'saved', 'dashboard', 'listings', 'projects', 'leads', 'messages', 'calculator', 'profile']) {
+    assert.match(tabs, new RegExp(`<Tabs\\.Screen name="${name}"`), `missing existing tab route ${name}`);
+  }
+  assert.match(tabs, /function AnimatedTabBar/);
+  assert.match(tabs, /<BottomTabBar \{\.\.\.props\} \/>/);
+});
+
+test('guest profile presents the four locked shortcuts and real auth actions', () => {
+  const profile = read('app/(tabs)/profile.tsx');
+  for (const text of ['Saved Properties', 'Saved Searches', 'Search Alerts', 'Visits', 'Your next home', 'starts here.', 'YOUR PROFILE']) {
+    assert.ok(profile.includes(text), `guest profile is missing ${text}`);
+  }
+  assert.match(profile, /guest-settings/);
+  assert.match(profile, /guest-sign-in/);
+  assert.match(profile, /guest-create-account/);
+  assert.ok(profile.includes("router.push('/(auth)/login'"));
+  assert.ok(profile.includes("router.push('/(auth)/signup'"));
+});
+
+test('settings home is reachable and retains public, account, notification and deletion actions', () => {
+  const profile = read('app/(tabs)/profile.tsx');
+  const settings = read('app/settings/index.tsx');
+  assert.ok(profile.includes("router.push('/settings'"));
+  for (const route of ['/settings/language', '/settings/help', '/settings/legal?section=about', '/settings/legal?section=security', '/settings/legal?section=legal', '/settings/account', '/settings/notifications']) {
+    assert.ok(settings.includes(route), `settings home is missing ${route}`);
+  }
+  for (const behavior of ['registerPushTokenForUser', 'deleteMyAccount', 'clearLocalAccountData', "title: 'Sign Out'", 'settings-delete-account']) {
+    assert.ok(settings.includes(behavior), `settings home is missing ${behavior}`);
+  }
+});

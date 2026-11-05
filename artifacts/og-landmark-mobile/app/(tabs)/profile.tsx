@@ -880,95 +880,75 @@ function GuestScreen({
   topInset: number; tabBarHeight: number;
 }) {
   const onScroll = useTabBarScrollHandler();
-  const LOCKED_ITEMS: { icon: keyof typeof Feather.glyphMap; label: string; sub: string }[] = [
-    { icon: 'heart',          label: 'Saved Properties',  sub: 'Your shortlisted properties' },
-    { icon: 'search',         label: 'Saved Searches',    sub: 'Quick-access search filters' },
-    { icon: 'bell',           label: 'Search Alerts',     sub: 'Get notified on new matches' },
-    { icon: 'calendar',       label: 'Scheduled Visits',  sub: 'Track your booked viewings' },
-    { icon: 'message-circle', label: 'My Inquiries',      sub: 'Your property inquiries' },
-    { icon: 'eye',            label: 'Recently Viewed',   sub: 'Properties you have opened' },
+  const LOCKED_ITEMS: { icon: keyof typeof Feather.glyphMap; label: string; sub: string; tint: string }[] = [
+    { icon: 'heart', label: 'Saved Properties', sub: 'Your shortlisted homes', tint: colors.gold },
+    { icon: 'search', label: 'Saved Searches', sub: 'Quick-access filters', tint: colors.teal },
+    { icon: 'bell', label: 'Search Alerts', sub: 'Alerts on new matches', tint: colors.teal },
+    { icon: 'calendar', label: 'Visits', sub: 'Schedule property tours', tint: colors.gold },
   ];
 
   return (
     <ScrollView
-      style={[styles.screen, { backgroundColor: colors.background }]}
-      contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: tabBarHeight, paddingHorizontal: 20 }}
+      style={[styles.screen, { backgroundColor: colors.splashBackground }]}
+      contentContainerStyle={{ paddingTop: topInset + 12, paddingBottom: tabBarHeight + 20, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
       scrollEventThrottle={16}
     >
       {/* Header */}
       <AnimatedReveal>
-        <View style={styles.header}>
-          <BrandMark />
-        </View>
-      </AnimatedReveal>
-
-      {/* Welcome card */}
-      <AnimatedReveal delay={60}>
-        <View style={[gst.welcomeCard, { backgroundColor: colors.action }]}>
-          <View style={gst.welcomeAvatar}>
-            <Feather name="user" size={28} color={colors.action} />
+        <View style={gst.brandHeader}>
+          <BrandMark inverse />
+          <View style={gst.headerRight}>
+            <View style={gst.guestBadge}><Text style={gst.guestBadgeText}>Guest</Text></View>
+            <Pressable testID="guest-settings" accessibilityLabel="Settings" onPress={() => router.push('/settings' as any)}
+              style={gst.settingsButton}>
+              <Feather name="settings" size={17} color={colors.background} />
+            </Pressable>
           </View>
-          <Text style={gst.welcomeGreeting}>Welcome 👋</Text>
-          <Text style={gst.welcomeName}>Guest</Text>
-          <Text style={gst.welcomeSub}>Sign in to access your profile, saved searches, visits, and more.</Text>
-          {/* CTAs */}
-          <Pressable onPress={() => router.push('/(auth)/login' as any)}
-            style={({ pressed }) => [gst.loginBtn, { opacity: pressed ? 0.87 : 1 }]}>
-            <Text style={gst.loginBtnText}>Sign In</Text>
-            <Feather name="arrow-right" size={15} color={colors.action} />
-          </Pressable>
-          <Pressable onPress={() => router.push('/(auth)/signup' as any)}
-            accessibilityRole="button"
-            accessibilityLabel="Create Account"
-            style={({ pressed }) => [gst.registerBtn, { opacity: pressed ? 0.87 : 1 }]}>
-            <Text style={gst.registerBtnText}>Create Account</Text>
-          </Pressable>
         </View>
       </AnimatedReveal>
 
-      {/* Locked activity items */}
+      <AnimatedReveal delay={60}>
+        <View style={gst.intro}>
+          <Text style={[gst.eyebrow, { color: colors.teal }]}>YOUR PROFILE</Text>
+          <Text style={[gst.headline, { color: colors.background }]}>Your next home{'\n'}starts here.</Text>
+          <Text style={[gst.welcomeSub, { color: colors.splashMuted }]}>Sign in to save properties, track searches and book visits in one place.</Text>
+        </View>
+      </AnimatedReveal>
+
       <AnimatedReveal delay={130}>
-        <SectionHeader title="Your Activity" colors={colors} />
-        <View style={styles.menuGroup}>
+        <View style={gst.shortcutGrid}>
           {LOCKED_ITEMS.map((item) => (
-            <Pressable key={item.label} onPress={() => router.push('/(auth)/login' as any)}
-              style={[rl.row, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={[rl.iconBox, { backgroundColor: colors.secondary }]}>
-                <Feather name={item.icon} size={17} color={colors.mutedForeground} />
+            <Pressable key={item.label} accessibilityRole="button" accessibilityLabel={`${item.label}, sign in required`}
+              testID={`guest-shortcut-${item.label.toLowerCase().replaceAll(' ', '-')}`}
+              onPress={() => router.push('/(auth)/login' as any)}
+              style={({ pressed }) => [gst.shortcut, { backgroundColor: colors.surfaceDeep, borderColor: colors.glassBorder, opacity: pressed ? 0.82 : 1 }]}>
+              <View style={gst.shortcutTop}>
+                <Feather name={item.icon} size={23} color={item.tint} />
+                <Feather name="lock" size={13} color={colors.splashMuted} />
               </View>
-              <View style={rl.copy}>
-                <Text style={[rl.label, { color: colors.foreground }]}>{item.label}</Text>
-                <Text style={[rl.sub, { color: colors.mutedForeground }]}>{item.sub}</Text>
-              </View>
-              <View style={[gst.lockPill, { backgroundColor: colors.secondary }]}>
-                <Feather name="lock" size={10} color={colors.mutedForeground} />
-                <Text style={[gst.lockText, { color: colors.mutedForeground }]}>Sign In</Text>
-              </View>
+              <Text style={[gst.shortcutTitle, { color: colors.background }]}>{item.label}</Text>
+              <Text style={[gst.shortcutSub, { color: colors.splashMuted }]}>{item.sub}</Text>
             </Pressable>
           ))}
         </View>
       </AnimatedReveal>
 
-      {/* Public settings */}
       <AnimatedReveal delay={220}>
-        <SectionHeader title="Settings" colors={colors} />
-        <View style={styles.menuGroup}>
-          <RowLink icon="globe" label="Language" sublabel="English / اردو"
-            onPress={() => router.push('/settings/language' as any)} colors={colors} iconColor={colors.action} />
-          <RowLink icon="help-circle" label="Help & Support" sublabel="FAQs, contact us"
-            onPress={() => router.push('/settings/help' as any)} colors={colors} iconColor={colors.action} />
-          <RowLink icon="info" label="About OG Landmark" sublabel="Version 1.0"
-            onPress={() => router.push('/settings/legal?section=about' as any)} colors={colors} iconColor={colors.action} />
-          <RowLink icon="shield" label="Privacy & Security" sublabel="How we protect your account"
-            onPress={() => router.push('/settings/legal?section=security' as any)} colors={colors} iconColor={colors.action} />
-          <RowLink icon="file-text" label="Terms & Privacy" sublabel="Legal information"
-            onPress={() => router.push('/settings/legal?section=legal' as any)} colors={colors} iconColor={colors.action} />
-        </View>
+        <Pressable testID="guest-sign-in" onPress={() => router.push('/(auth)/login' as any)}
+          style={({ pressed }) => [gst.loginBtn, { backgroundColor: colors.gold, opacity: pressed ? 0.86 : 1 }]}>
+          <Text style={[gst.loginBtnText, { color: colors.goldForeground }]}>Sign In</Text>
+          <Feather name="arrow-right" size={17} color={colors.goldForeground} />
+        </Pressable>
+        <Pressable testID="guest-create-account" onPress={() => router.push('/(auth)/signup' as any)}
+          accessibilityRole="button" accessibilityLabel="Create Account"
+          style={({ pressed }) => [gst.registerBtn, { borderColor: colors.glassBorder, opacity: pressed ? 0.82 : 1 }]}>
+          <Text style={[gst.registerBtnText, { color: colors.background }]}>Create Account</Text>
+        </Pressable>
       </AnimatedReveal>
 
-      <Text style={[styles.version, { color: colors.mutedForeground }]}>OG Landmark v1.0 · Guest Mode</Text>
+      <Text style={[styles.version, { color: colors.splashMuted }]}>OG Landmark · Guest Mode</Text>
     </ScrollView>
   );
 }
@@ -1270,7 +1250,7 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.headerActions}>
             <NotificationBell compact />
-            <Pressable onPress={() => router.push('/settings/account' as any)}
+            <Pressable testID="profile-settings" accessibilityLabel="Settings" onPress={() => router.push('/settings' as any)}
               style={[styles.iconButton, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
               <Feather name="settings" size={18} color={colors.mutedForeground} />
             </Pressable>
@@ -1289,7 +1269,7 @@ export default function ProfileScreen() {
           </View>
           {/* Info */}
           <View style={styles.profileCopy}>
-            <Text style={styles.pcGreeting}>{tr('profileHi')} 👋</Text>
+            <Text style={styles.pcGreeting}>{tr('profileHi')}</Text>
             <Text style={styles.pcName} numberOfLines={1}>{displayName}</Text>
             <View style={styles.pcMeta}>
               <View style={[styles.rolePill, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
@@ -1458,76 +1438,6 @@ export default function ProfileScreen() {
         </>
       )}
 
-      {/* ── Settings & Support ─────────────────────────────────────────── */}
-      <AnimatedReveal delay={260}>
-        <SectionHeader title="Settings & Support" colors={colors} />
-        <View style={styles.menuGroup}>
-          {commonSettings.map((item) => item.label === 'Notifications' ? (
-            <React.Fragment key={item.label}>
-              <RowLink
-                icon={item.icon}
-                label={item.label}
-                sublabel={notificationSummary}
-                onPress={() => {
-                  setNotificationSettingsOpen((open) => !open);
-                  setNotificationMessage(null);
-                }}
-                colors={colors}
-                iconColor={colors.action}
-                testID="profile-notifications-setting"
-              />
-              {notificationSettingsOpen ? (
-                <NotificationSettingsPanel
-                  colors={colors}
-                  permission={notificationPermission}
-                  busy={notificationBusy}
-                  message={notificationMessage}
-                  onAction={() => { void handleNotificationAction(); }}
-                  onManage={() => router.push('/settings/notifications' as any)}
-                />
-              ) : null}
-            </React.Fragment>
-          ) : (
-            <RowLink
-              key={item.label}
-              icon={item.icon}
-              label={item.label}
-              sublabel={item.sub}
-              onPress={item.route
-                ? () => router.push(item.route as any)
-                : () => Alert.alert(item.label, 'This feature is coming soon.')}
-              colors={colors}
-              iconColor={colors.action}
-            />
-          ))}
-        </View>
-      </AnimatedReveal>
-
-      {/* ── Logout ─────────────────────────────────────────────────────── */}
-      <AnimatedReveal delay={340}>
-        <View style={styles.menuGroup}>
-          <RowLink icon="log-out" label="Sign Out" sublabel="Log out of your account"
-            onPress={() => { void logout(); }} colors={colors} destructive />
-        </View>
-        <Text style={[styles.version, { color: colors.mutedForeground }]}>{tr('version')}</Text>
-      </AnimatedReveal>
-
-      {/* ── Account deletion ─────────────────────────────────────────────── */}
-      <AnimatedReveal delay={380}>
-        <SectionHeader title="Danger Zone" colors={colors} />
-        <View style={styles.menuGroup}>
-          <RowLink
-            icon="trash-2"
-            label={deletingAccount ? 'Deleting Account…' : 'Delete Account'}
-            sublabel="Permanently remove your account and saved data"
-            onPress={handleDeleteAccount}
-            colors={colors}
-            destructive
-            testID="profile-delete-account"
-          />
-        </View>
-      </AnimatedReveal>
-
       {/* ── Modals ─────────────────────────────────────────────────────── */}
       <InquiriesModal visible={inquiriesOpen} onClose={() => setInquiriesOpen(false)}
         inquiries={inquiries} onDelete={handleDeleteInquiry} colors={colors} insets={insets} />
@@ -1544,17 +1454,24 @@ export default function ProfileScreen() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const gst = StyleSheet.create({
-  welcomeCard:   { borderRadius: 24, padding: 22, alignItems: 'center', gap: 6, marginBottom: 8 },
-  welcomeAvatar: { width: 72, height: 72, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
-  welcomeGreeting:{ fontFamily: 'Inter_400Regular', fontSize: 13, color: 'rgba(255,255,255,0.7)' },
-  welcomeName:   { fontFamily: 'Inter_700Bold', fontSize: 28, color: '#ffffff', letterSpacing: -0.5 },
-  welcomeSub:    { fontFamily: 'Inter_400Regular', fontSize: 13, color: 'rgba(255,255,255,0.65)', textAlign: 'center', lineHeight: 19, paddingHorizontal: 10, marginTop: 4 },
-  loginBtn:      { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: brandColors.light.gold, borderRadius: 14, paddingHorizontal: 28, paddingVertical: 9, marginTop: 14, width: '100%', justifyContent: 'center' },
-  loginBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#0B1F3A' },
-  registerBtn:   { backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 9, width: '100%', alignItems: 'center' },
-  registerBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
-  lockPill:      { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 },
-  lockText:      { fontFamily: 'Inter_600SemiBold', fontSize: 10 },
+  brandHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 38 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  guestBadge: { borderWidth: 1, borderColor: '#ffffff35', borderRadius: 18, paddingHorizontal: 13, paddingVertical: 7 },
+  guestBadgeText: { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#F4F2EC' },
+  settingsButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#ffffff14', alignItems: 'center', justifyContent: 'center' },
+  intro: { marginBottom: 25 },
+  eyebrow: { fontFamily: 'Inter_700Bold', fontSize: 11, letterSpacing: 2.3, marginBottom: 10 },
+  headline: { fontFamily: 'Inter_700Bold', fontSize: 34, lineHeight: 42, letterSpacing: -0.6 },
+  welcomeSub: { fontFamily: 'Inter_400Regular', fontSize: 15, lineHeight: 23, marginTop: 13, maxWidth: 380 },
+  shortcutGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
+  shortcut: { flexGrow: 1, flexBasis: '47%', minHeight: 139, borderWidth: 1, borderRadius: 24, padding: 15, justifyContent: 'space-between' },
+  shortcutTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  shortcutTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 15, marginBottom: 5 },
+  shortcutSub: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17 },
+  loginBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 18, minHeight: 58, width: '100%', justifyContent: 'center', marginTop: 0 },
+  loginBtnText: { fontFamily: 'Inter_700Bold', fontSize: 16 },
+  registerBtn: { borderWidth: 1, borderRadius: 18, minHeight: 56, width: '100%', alignItems: 'center', justifyContent: 'center', marginTop: 10 },
+  registerBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 15 },
 });
 
 const styles = StyleSheet.create({

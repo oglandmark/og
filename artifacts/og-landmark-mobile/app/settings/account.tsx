@@ -90,15 +90,15 @@ export default function AccountSettingsScreen() {
   const handlePhotoPress = () => {
     Alert.alert('Profile Photo', 'Choose an option:', [
       {
-        text: '📷  Take Photo',
+        text: 'Take Photo',
         onPress: () => void pickImage('camera'),
       },
       {
-        text: '🖼  Choose from Gallery',
+        text: 'Choose from Gallery',
         onPress: () => void pickImage('gallery'),
       },
       photoUri
-        ? { text: '🗑  Remove Photo', style: 'destructive' as const, onPress: () => void removePhoto() }
+        ? { text: 'Remove Photo', style: 'destructive' as const, onPress: () => void removePhoto() }
         : { text: 'Cancel', style: 'cancel' as const },
       ...(photoUri ? [{ text: 'Cancel', style: 'cancel' as const }] : []),
     ]);
@@ -107,10 +107,10 @@ export default function AccountSettingsScreen() {
   const handleCoverPress = () => {
     if (!canManageAgentCover) return;
     Alert.alert('Agent Cover Photo', 'Choose an option:', [
-      { text: '📷  Take Photo', onPress: () => void pickImage('camera', 'cover') },
-      { text: '🖼  Choose from Gallery', onPress: () => void pickImage('gallery', 'cover') },
+      { text: 'Take Photo', onPress: () => void pickImage('camera', 'cover') },
+      { text: 'Choose from Gallery', onPress: () => void pickImage('gallery', 'cover') },
       coverUri
-        ? { text: '🗑  Remove Cover Photo', style: 'destructive' as const, onPress: () => void removeCover() }
+        ? { text: 'Remove Cover Photo', style: 'destructive' as const, onPress: () => void removeCover() }
         : { text: 'Cancel', style: 'cancel' as const },
       ...(coverUri ? [{ text: 'Cancel', style: 'cancel' as const }] : []),
     ]);

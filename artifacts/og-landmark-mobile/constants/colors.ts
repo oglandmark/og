@@ -15,39 +15,42 @@
 const colors = {
   light: {
     // Legacy aliases (kept for backward compatibility)
-    text: '#15243A',
-    tint: '#B9914D',
+    text: '#0B1F3A',
+    tint: '#19C3B1',
 
     // Core surfaces
-    background: '#F5F4F0',
-    foreground: '#15243A',
+    background: '#FFFFFF',
+    foreground: '#0B1F3A',
 
     // Cards / elevated surfaces
-    card: '#FFFEFB',
-    cardForeground: '#15243A',
-    glassCard: '#FFFEFBF2',
-    glassBorder: '#E5E1D8',
-    glassOverlay: '#FFFEFB80',
-    mapGlass: 'rgba(255, 254, 251, 0.88)',
-    mapGlassBorder: 'rgba(255, 254, 251, 0.94)',
-    mapGlassPanel: 'rgba(255, 254, 251, 0.78)',
-    mapGlassPanelBorder: 'rgba(255, 254, 251, 0.96)',
+    card: '#FFFFFF',
+    cardForeground: '#0B1F3A',
+    glassCard: '#FFFFFFF2',
+    glassBorder: '#E1E8EE',
+    glassOverlay: '#FFFFFF80',
+    mapGlass: 'rgba(255, 255, 255, 0.88)',
+    mapGlassBorder: 'rgba(255, 255, 255, 0.94)',
+    mapGlassPanel: 'rgba(255, 255, 255, 0.78)',
+    mapGlassPanelBorder: 'rgba(255, 255, 255, 0.96)',
 
     // Primary action color (buttons, links, active states)
-    primary: '#B9914D',
-    primaryForeground: '#15243A',
+    primary: '#0B1F3A',
+    primaryForeground: '#FFFFFF',
 
     // Official OG Landmark navy for interactive controls and CTAs
     action: '#0B1F3A',
     actionDeep: '#071428',
     actionSoft: '#183B60',
-    actionForeground: '#ffffff',
+    actionForeground: '#FFFFFF',
     actionPressed: '#082036',
     // Premium glass control tokens
-    gold: '#C6A15D',
-    goldForeground: '#15243A',
-    goldGlass: '#C6A15DB8',
-    goldGlassBorder: '#DDC58F',
+    gold: '#F2B84B',
+    goldForeground: '#0B1F3A',
+    goldGlass: '#F2B84BB8',
+    goldGlassBorder: '#F7D58C',
+    teal: '#19C3B1',
+    tealForeground: '#0B1F3A',
+    tealSoft: '#E6F8F5',
     actionGlass: '#0B1F3AD9',
     actionGlassStrong: '#071428E8',
     actionGlassSoft: '#6A8DAF2E',
@@ -55,9 +58,9 @@ const colors = {
     actionGlassHighlight: '#ffffff24',
     actionGlow: '#9AAFC2',
     // Palette supplied with the updated OG Landmark animated splash.
-    splashBackground: '#06122A',
+    splashBackground: '#0B1F3A',
     splashNavy: '#0B1F3A',
-    splashGlow: '#1A4A7A',
+    splashGlow: '#124B5A',
     splashTeal: '#19C3B1',
     splashMint: '#7FE0D4',
     splashGold: '#F2B84B',
@@ -65,41 +68,41 @@ const colors = {
     splashMuted: '#9FB3CC',
 
     // Editorial surfaces used for quiet hierarchy and premium depth
-    surfaceRaised: '#FFFEFB',
-    surfaceTint: '#EFEEE9',
+    surfaceRaised: '#FFFFFF',
+    surfaceTint: '#F3F6F8',
     surfaceDeep: '#0B1F3A',
     shadow: '#071428',
-    focusRing: '#b98d45',
+    focusRing: '#19C3B1',
 
     // Premium selected-state treatment for category/filter/tab/chip controls
-    selectionBackground: '#F8F6F0',
-    selectionTint: '#EDEAE1',
-    selectionBorder: '#0B1F3A',
+    selectionBackground: '#EAF9F7',
+    selectionTint: '#D9F4F0',
+    selectionBorder: '#19C3B1',
     selectionForeground: '#0B1F3A',
 
     // Secondary / less-emphasis interactive surfaces
-    secondary: '#EFEEE9',
-    secondaryForeground: '#15243A',
+    secondary: '#F3F6F8',
+    secondaryForeground: '#0B1F3A',
 
     // Muted / subdued elements (dividers, timestamps, placeholders)
-    muted: '#EAE8E1',
-    mutedForeground: '#6E7782',
+    muted: '#EEF2F5',
+    mutedForeground: '#5B6875',
 
     // Accent highlights (badges, selected items, focus rings)
-    accent: '#F0E6CE',
-    accentForeground: '#70572E',
+    accent: '#E6F8F5',
+    accentForeground: '#0B1F3A',
 
     // Destructive actions (delete, error states)
     destructive: '#b94b42',
     destructiveForeground: '#ffffff',
-    success: '#33745A',
+    success: '#0F766E',
     successForeground: '#ffffff',
     warning: '#b9822b',
     warningForeground: '#ffffff',
 
     // Borders and input outlines
-    border: '#E3DFD6',
-    input: '#D9D5CC',
+    border: '#E1E8EE',
+    input: '#CBD5DF',
   },
 
   // Shared layout tokens. Keeping these beside the semantic palette prevents

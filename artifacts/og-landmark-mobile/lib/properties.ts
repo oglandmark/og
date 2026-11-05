@@ -848,7 +848,7 @@ function resolveImageUrl(url: string): string {
 
 // ─── Neutral branded image for live listings without seller-uploaded photos ───
 const LIVE_PROPERTY_NO_IMAGE: ImageSourcePropType =
-  require('@/assets/images/og-landmark-logo-square.png');
+  require('@/assets/images/og-landmark-app-icon.png');
 
 /**
  * Convert an ApiProperty (from the backend) to the Property shape used

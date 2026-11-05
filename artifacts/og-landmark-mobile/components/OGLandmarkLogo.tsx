@@ -1,9 +1,9 @@
-/** OG Landmark brand assets supplied by the product owner. */
+/** OG Landmark roof-and-OG brand mark in teal and landmark gold. */
 import React from 'react';
 import { Image } from 'expo-image';
 
-const logoAsset = require('@/assets/images/og-landmark-brand-mark.png');
-const inverseLogoAsset = require('@/assets/images/og-landmark-brand-mark-white.png');
+const logoAsset = require('@/assets/images/og-landmark-brand-mark-color.png');
+const inverseLogoAsset = require('@/assets/images/og-landmark-brand-mark-inverse.png');
 
 export function OGLandmarkLogo({
   size = 80,

@@ -367,7 +367,7 @@ export function StartupSplash({
             { color: colors.splashMuted },
           ]}
         >
-          REAL ESTATE
+          REAL ESTATE · HOMES · PROPERTIES
         </Animated.Text>
 
         <View style={styles.progressTrack}>

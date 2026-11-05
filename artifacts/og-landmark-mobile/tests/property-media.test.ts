@@ -113,6 +113,6 @@ test('only bundled demo galleries are padded with bundled sample photos', () => 
 });
 
 test('live listings without photos use a branded placeholder, not a demo property image', () => {
-  assert.match(propertyModelSource, /LIVE_PROPERTY_NO_IMAGE[\s\S]*og-landmark-logo-square\.png/);
+  assert.match(propertyModelSource, /LIVE_PROPERTY_NO_IMAGE[\s\S]*og-landmark-app-icon\.png/);
   assert.match(propertyModelSource, /imgs\[0\][\s\S]*LIVE_PROPERTY_NO_IMAGE/);
 });

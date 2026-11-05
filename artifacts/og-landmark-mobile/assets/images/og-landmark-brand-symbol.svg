@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="160" viewBox="0 0 220 160">
+  <defs>
+    <linearGradient id="ogBrandGradient" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#19C3B1"/>
+      <stop offset="0.52" stop-color="#72D9BF"/>
+      <stop offset="1" stop-color="#F2B84B"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M60 38 110 5 160 38" stroke="#F2B84B" stroke-width="12"/>
+    <circle cx="70" cy="100" r="40" stroke="url(#ogBrandGradient)" stroke-width="16"/>
+    <path d="M182.8 77.1A40 40 0 1 0 190 100h-38" stroke="url(#ogBrandGradient)" stroke-width="16"/>
+  </g>
+</svg>

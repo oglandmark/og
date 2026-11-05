@@ -36,12 +36,16 @@ test('startup keeps the 7-second animated splash and removes the static native l
   assert.match(layout, /STARTUP_SPLASH_MIN_DURATION_MS = 7000/);
   assert.match(layout, /splashDurationElapsed/);
   assert.match(layout, /<StartupSplash colors=\{colors\} overlay fontsReady=\{fontsReady\} \/>/);
+  assert.match(colorTokens, /background: '#FFFFFF'/);
+  assert.match(colorTokens, /teal: '#19C3B1'/);
+  assert.match(colorTokens, /gold: '#F2B84B'/);
+  assert.match(colorTokens, /splashBackground: '#0B1F3A'/);
 });
 
 test('startup splash uses the new animated roof mark and replaces only its old logo', () => {
   assert.doesNotMatch(layout, /OGLandmarkLogo/);
   assert.match(startupSplash, /accessibilityLabel="OG Landmark roof logo"/);
-  assert.match(startupSplash, /REAL ESTATE/);
+  assert.match(startupSplash, /REAL ESTATE · HOMES · PROPERTIES/);
   assert.match(startupSplash, /Find your next landmark/);
   assert.match(startupSplash, /useReducedMotion/);
   assert.match(colorTokens, /splashTeal: '#19C3B1'/);

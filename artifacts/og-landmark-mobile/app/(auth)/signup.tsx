@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useColors } from '@/hooks/useColors';
 import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { useFacebookAuth } from '@/lib/facebookAuth';
 import { Button } from '@/components/PolishedUI';
@@ -28,6 +29,7 @@ const BORDER = '#e4e6ea';
 
 export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
+  const colors = useColors();
   const { registerAPI, verifySignupEmail, resendSignupEmail, loginSocial } = useAuth();
   const { tr, isRTL } = useLanguage();
   const [name, setName] = useState('');
@@ -39,6 +41,10 @@ export default function SignUpScreen() {
   const [error, setError] = useState('');
   const [verificationEmail, setVerificationEmail] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
+  const [verificationNotice, setVerificationNotice] = useState('');
+  const [isCodeFocused, setIsCodeFocused] = useState(false);
+  const [resending, setResending] = useState(false);
+  const verificationCodeInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
 
   const rtl = isRTL ? 'right' as const : 'left' as const;
   const identifierValue = identifier.trim();
@@ -131,6 +137,8 @@ export default function SignUpScreen() {
 
   async function handleVerifyEmail() {
     if (!/^\d{6}$/.test(verificationCode)) { setError('Enter the six-digit code from your email.'); return; }
+    setError('');
+    setVerificationNotice('');
     setLoading(true);
     const result = await verifySignupEmail(verificationEmail, verificationCode);
     setLoading(false);
@@ -140,10 +148,13 @@ export default function SignUpScreen() {
   }
 
   async function handleResendEmail() {
-    setLoading(true);
+    setError('');
+    setVerificationNotice('');
+    setResending(true);
     const result = await resendSignupEmail(verificationEmail);
-    setLoading(false);
-    setError(result.success ? 'A new code has been sent.' : result.error ?? 'Unable to resend the code.');
+    setResending(false);
+    if (result.success) setVerificationNotice('A new code has been sent.');
+    else setError(result.error ?? 'Unable to resend the code.');
   }
 
   return (
@@ -153,33 +164,150 @@ export default function SignUpScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
-          <Feather name="chevron-left" size={26} color={ACTION} />
+        <Pressable
+          onPress={() => router.back()}
+          style={[
+            styles.backBtn,
+            verificationEmail && styles.otpBackBtn,
+            verificationEmail && { borderColor: colors.border, backgroundColor: colors.card },
+          ]}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
+          <Feather name="chevron-left" size={verificationEmail ? 20 : 26} color={verificationEmail ? colors.foreground : ACTION} />
         </Pressable>
-        <View style={styles.logoWrap}>
-          <OGLandmarkLogo size={104} />
+        <View style={[styles.logoWrap, verificationEmail && styles.otpLogoWrap]}>
+          <OGLandmarkLogo size={verificationEmail ? 72 : 104} />
           <Text style={styles.logoName}>OG Landmark</Text>
           <Text style={styles.logoSub}>REAL ESTATE</Text>
         </View>
 
-        <View style={styles.content}>
-          <Text style={styles.title}>{verificationEmail ? 'Verify your email' : 'Create Account'}</Text>
+        <View style={[styles.content, verificationEmail && styles.otpContent]}>
+          {verificationEmail ? (
+            <View style={styles.otpEyebrow}>
+              <Feather name="shield" size={13} color={colors.teal} />
+              <Text style={[styles.otpEyebrowText, { color: colors.teal }]}>ACCOUNT VERIFICATION</Text>
+            </View>
+          ) : null}
+          <Text style={[styles.title, verificationEmail && styles.otpTitle, verificationEmail && { color: colors.foreground }]}>
+            {verificationEmail ? 'Verify your email' : 'Create Account'}
+          </Text>
           {verificationEmail ? (
             <>
-              <Text style={styles.footerText}>Enter the six-digit code sent to {verificationEmail}. The code expires in 10 minutes.</Text>
-              {!!error && <Text style={[styles.errorText, { textAlign: 'center', marginVertical: 16 }]}>{error}</Text>}
-              <View style={styles.fieldWrap}>
-                <Text style={[styles.label, { textAlign: 'center' }]}>VERIFICATION CODE</Text>
-                <TextInput value={verificationCode} onChangeText={(value) => { setVerificationCode(value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
-                  keyboardType="number-pad" maxLength={6} placeholder="000000" placeholderTextColor={MUTED}
-                  textAlign="center" style={[styles.underlineInput, { letterSpacing: 8, fontSize: 22 }]} />
+              <Text style={[styles.otpIntro, { color: colors.mutedForeground }]}>
+                Enter the six-digit code we sent to your email.
+              </Text>
+              <View style={[styles.otpEmailCard, { backgroundColor: colors.surfaceTint, borderColor: colors.glassBorder }]}>
+                <View style={[styles.otpMailIcon, { backgroundColor: colors.tealSoft }]}>
+                  <Feather name="mail" size={18} color={colors.teal} />
+                </View>
+                <View style={styles.otpEmailCopy}>
+                  <Text style={[styles.otpEmailLabel, { color: colors.mutedForeground }]}>CODE SENT TO</Text>
+                  <Text style={[styles.otpEmail, { color: colors.foreground }]} numberOfLines={2}>{verificationEmail}</Text>
+                </View>
               </View>
-              <Button onPress={() => { void handleVerifyEmail(); }} loading={loading} style={styles.submitBtn}>
+
+              <Text style={[styles.otpCodeLabel, { color: colors.mutedForeground }]}>VERIFICATION CODE</Text>
+              <View
+                style={styles.otpCodeInputWrap}
+                accessibilityLabel="Six-digit email verification code"
+              >
+                <View
+                  pointerEvents="none"
+                  style={styles.otpDigitRow}
+                >
+                  {Array.from({ length: 6 }, (_, index) => {
+                    const digit = verificationCode[index] ?? '';
+                    const active = isCodeFocused && index === Math.min(verificationCode.length, 5);
+                    return (
+                      <View
+                        key={index}
+                        style={[
+                          styles.otpDigit,
+                          { backgroundColor: colors.card, borderColor: colors.border },
+                          digit ? { borderColor: `${colors.teal}88` } : null,
+                          active ? { borderColor: colors.teal, backgroundColor: colors.tealSoft } : null,
+                          error ? { borderColor: colors.destructive, backgroundColor: `${colors.destructive}0D` } : null,
+                        ]}
+                      >
+                        <Text style={[styles.otpDigitText, { color: colors.foreground }]}>{digit}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+                <TextInput
+                  ref={verificationCodeInputRef}
+                  value={verificationCode}
+                  onChangeText={(value) => {
+                    setVerificationCode(value.replace(/\D/g, '').slice(0, 6));
+                    setError('');
+                    setVerificationNotice('');
+                  }}
+                  onFocus={() => setIsCodeFocused(true)}
+                  onBlur={() => setIsCodeFocused(false)}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  autoComplete="one-time-code"
+                  textContentType="oneTimeCode"
+                  accessibilityLabel="Six-digit email verification code"
+                  accessibilityHint="Enter the six-digit code from your email."
+                  selectionColor={colors.teal}
+                  style={styles.otpCodeInput}
+                />
+              </View>
+              <Text style={[styles.otpExpiry, { color: colors.mutedForeground }]}>
+                The code expires in 10 minutes.
+              </Text>
+
+              {(!!error || !!verificationNotice) && (
+                <View
+                  style={[
+                    styles.otpMessage,
+                    { backgroundColor: error ? `${colors.destructive}0D` : colors.tealSoft },
+                    { borderColor: error ? `${colors.destructive}30` : `${colors.teal}40` },
+                  ]}
+                  accessibilityLiveRegion="polite"
+                  accessibilityRole={error ? 'alert' : 'text'}
+                >
+                  <Feather
+                    name={error ? 'alert-circle' : 'check-circle'}
+                    size={15}
+                    color={error ? colors.destructive : colors.teal}
+                  />
+                  <Text style={[styles.otpMessageText, { color: error ? colors.destructive : colors.teal }]}>
+                    {error || verificationNotice}
+                  </Text>
+                </View>
+              )}
+
+              <Button
+                onPress={() => { void handleVerifyEmail(); }}
+                loading={loading}
+                icon="arrow-right"
+                accessibilityLabel="Verify email"
+                style={[styles.submitBtn, styles.otpSubmitBtn]}
+              >
                 Verify email
               </Button>
-              <Pressable onPress={() => { void handleResendEmail(); }} disabled={loading} style={{ alignItems: 'center', marginBottom: 24 }}>
-                <Text style={styles.footerLink}>Resend code</Text>
-              </Pressable>
+              <View style={styles.otpResendRow}>
+                <Text style={[styles.otpResendPrompt, { color: colors.mutedForeground }]}>Didn’t receive a code?</Text>
+                <Pressable
+                  onPress={() => { void handleResendEmail(); }}
+                  disabled={loading || resending}
+                  accessibilityRole="button"
+                  accessibilityLabel="Resend verification code"
+                  style={styles.otpResendButton}
+                >
+                  {resending
+                    ? <ActivityIndicator size="small" color={colors.teal} />
+                    : <Text style={[styles.otpResendText, { color: colors.teal }]}>Resend code</Text>}
+                </Pressable>
+              </View>
+              <View style={styles.otpTrustRow}>
+                <Feather name="lock" size={13} color={colors.teal} />
+                <Text style={[styles.otpTrustText, { color: colors.mutedForeground }]}>Your details stay protected</Text>
+              </View>
             </>
           ) : (
             <>
@@ -264,10 +392,38 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#fff' },
   backBtn: { marginLeft: 16, marginBottom: 4, width: 40, height: 40, justifyContent: 'center' },
+  otpBackBtn: { alignItems: 'center', borderWidth: 1, borderRadius: 14, marginBottom: 0 },
   logoWrap: { alignItems: 'center', marginBottom: 28, marginTop: 4, gap: 10 },
+  otpLogoWrap: { marginTop: 14, marginBottom: 24, gap: 4 },
   logoName: { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 18, letterSpacing: 0.4, color: ACTION },
   logoSub: { fontFamily: 'Inter_500Medium', fontSize: 9, letterSpacing: 3, color: GOLD, marginTop: -4 },
   content: { paddingHorizontal: 24 },
+  otpContent: { alignSelf: 'center', maxWidth: 440, width: '100%', paddingBottom: 8 },
+  otpEyebrow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 10 },
+  otpEyebrowText: { fontFamily: 'Inter_600SemiBold', fontSize: 10, letterSpacing: 1.4 },
+  otpTitle: { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 31, lineHeight: 38, marginBottom: 9, letterSpacing: -0.5 },
+  otpIntro: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21, textAlign: 'center', paddingHorizontal: 6 },
+  otpEmailCard: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 21, marginBottom: 24, paddingVertical: 13, paddingHorizontal: 14, borderWidth: 1, borderRadius: 16 },
+  otpMailIcon: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  otpEmailCopy: { flex: 1, minWidth: 0 },
+  otpEmailLabel: { fontFamily: 'Inter_600SemiBold', fontSize: 10, letterSpacing: 1, marginBottom: 4 },
+  otpEmail: { fontFamily: 'Inter_600SemiBold', fontSize: 13, lineHeight: 18, writingDirection: 'ltr', textAlign: 'left' },
+  otpCodeLabel: { fontFamily: 'Inter_600SemiBold', fontSize: 10, letterSpacing: 1.3, textAlign: 'center', marginBottom: 10 },
+  otpCodeInputWrap: { height: 58, position: 'relative', justifyContent: 'center' },
+  otpDigitRow: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
+  otpDigit: { flex: 1, maxWidth: 52, height: 54, borderWidth: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  otpDigitText: { fontFamily: 'Inter_700Bold', fontSize: 21, lineHeight: 27 },
+  otpCodeInput: { ...StyleSheet.absoluteFill, zIndex: 2, opacity: 0.02, color: 'transparent', textAlign: 'center', fontSize: 24 },
+  otpExpiry: { fontFamily: 'Inter_400Regular', fontSize: 12, textAlign: 'center', marginTop: 10 },
+  otpMessage: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, paddingVertical: 10, paddingHorizontal: 12, borderWidth: 1, borderRadius: 12 },
+  otpMessageText: { flex: 1, fontFamily: 'Inter_500Medium', fontSize: 12, lineHeight: 17 },
+  otpSubmitBtn: { height: 54, borderRadius: 15, marginTop: 21, marginBottom: 0, flexDirection: 'row', gap: 8 },
+  otpResendRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 5, marginTop: 16 },
+  otpResendPrompt: { fontFamily: 'Inter_400Regular', fontSize: 12 },
+  otpResendButton: { minHeight: 34, justifyContent: 'center', paddingHorizontal: 3 },
+  otpResendText: { fontFamily: 'Inter_700Bold', fontSize: 12 },
+  otpTrustRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 24 },
+  otpTrustText: { fontFamily: 'Inter_500Medium', fontSize: 11 },
   title: { fontFamily: 'Inter_700Bold', fontSize: 22, color: '#1c2024', marginBottom: 24, letterSpacing: -0.3, textAlign: 'center' },
   errorBox: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#b94b4212', borderRadius: 10, borderWidth: 1, borderColor: '#b94b4230', padding: 11, marginBottom: 16 },
   errorText: { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#b94b42', flex: 1 },

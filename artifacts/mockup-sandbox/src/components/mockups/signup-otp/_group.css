@@ -1,0 +1,136 @@
+:root {
+  --otp-navy: #0b1f3a;
+  --otp-gold: #f2b84b;
+  --otp-muted: #8a8f98;
+  --otp-border: #e4e6ea;
+  --otp-text: #1c2024;
+}
+
+.otp-current,
+.otp-current * {
+  box-sizing: border-box;
+}
+
+.otp-current {
+  min-height: 844px;
+  width: 100%;
+  padding: 62px 24px 28px;
+  background: #fff;
+  color: var(--otp-text);
+  font-family: Inter, Arial, sans-serif;
+}
+
+.otp-current__back {
+  position: absolute;
+  top: 60px;
+  left: 14px;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  color: var(--otp-navy);
+}
+
+.otp-current__brand {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px auto 28px;
+}
+
+.otp-current__brand img {
+  width: 104px;
+  height: 104px;
+  object-fit: contain;
+}
+
+.otp-current__brand-name {
+  color: var(--otp-navy);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: .4px;
+}
+
+.otp-current__brand-sub {
+  margin-top: -4px;
+  color: var(--otp-gold);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 3px;
+}
+
+.otp-current__content {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.otp-current__title {
+  margin: 0 0 24px;
+  color: var(--otp-text);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -.3px;
+  text-align: center;
+}
+
+.otp-current__instruction {
+  margin: 0 0 20px;
+  color: var(--otp-text);
+  font-size: 13px;
+  line-height: 19px;
+  text-align: center;
+}
+
+.otp-current__label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--otp-muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .5px;
+  text-align: center;
+}
+
+.otp-current__input {
+  display: block;
+  width: 100%;
+  height: 42px;
+  border: 0;
+  border-bottom: 1px solid var(--otp-border);
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  color: var(--otp-text);
+  font-size: 22px;
+  letter-spacing: 8px;
+  text-align: center;
+}
+
+.otp-current__verify {
+  width: 100%;
+  height: 44px;
+  margin-top: 28px;
+  border: 1px solid var(--otp-navy);
+  border-radius: 12px;
+  background: var(--otp-navy);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.otp-current__resend {
+  display: block;
+  margin: 16px auto 24px;
+  border: 0;
+  background: transparent;
+  color: var(--otp-gold);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 360px) {
+  .otp-current { padding-right: 20px; padding-left: 20px; }
+}

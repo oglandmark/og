@@ -27,6 +27,8 @@ test('guest profile uses the light welcome-card layout and three locked activity
   assert.equal((profile.match(/label: 'Saved Properties'|label: 'Saved Searches'|label: 'Search Alerts'/g) || []).length, 3);
   assert.ok(!profile.includes("label: 'Visits'"));
   assert.match(profile, /guest-settings/);
+  assert.match(profile, /guestScrollRef\.current\?\.scrollTo\(\{ y: 0, animated: false \}\)/);
+  assert.match(profile, /ref=\{scrollRef\}/);
   assert.match(profile, /guest-sign-in/);
   assert.match(profile, /guest-create-account/);
   assert.ok(profile.includes("router.push('/(auth)/login'"));

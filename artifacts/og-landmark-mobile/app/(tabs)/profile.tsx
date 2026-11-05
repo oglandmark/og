@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert, AppState, Image, Linking, Modal, Platform, Pressable,
   ScrollView, StyleSheet, View,
@@ -875,10 +875,10 @@ function SectionHeader({ title, colors }: { title: string; colors: ReturnType<ty
 // ── Guest screen ───────────────────────────────────────────────────────────────
 
 function GuestScreen({
-  colors, router, topInset, tabBarHeight,
+  colors, router, topInset, tabBarHeight, scrollRef,
 }: {
   colors: ReturnType<typeof useColors>; router: ReturnType<typeof useRouter>;
-  topInset: number; tabBarHeight: number;
+  topInset: number; tabBarHeight: number; scrollRef: React.RefObject<ScrollView | null>;
 }) {
   const onScroll = useTabBarScrollHandler();
   const LOCKED_ITEMS: { icon: keyof typeof Feather.glyphMap; label: string; sub: string; tint: string }[] = [
@@ -889,6 +889,7 @@ function GuestScreen({
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={[styles.screen, { backgroundColor: colors.surfaceTint }]}
       contentContainerStyle={{ paddingTop: topInset + 18, paddingBottom: tabBarHeight + 24, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
@@ -973,6 +974,7 @@ export default function ProfileScreen() {
   const { tr }  = useLanguage();
   const { savedIds } = useSaved();
   const onScroll = useTabBarScrollHandler();
+  const guestScrollRef = useRef<ScrollView>(null);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [profileContent, setProfileContent] = useState<any>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermissionState | null>(null);
@@ -1023,13 +1025,16 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!isLoggedIn) {
+        const scrollResetFrame = requestAnimationFrame(() => {
+          guestScrollRef.current?.scrollTo({ y: 0, animated: false });
+        });
         setPhotoUri(null);
         setListingsCount(0);
         setAgentLeadsCount(0);
         setInquiries([]);
         setSavedSearches([]);
         setMyVisits([]);
-        return;
+        return () => cancelAnimationFrame(scrollResetFrame);
       }
 
       void refreshNotificationPermission();
@@ -1213,7 +1218,7 @@ export default function ProfileScreen() {
 
   // ── Guest: show dedicated screen with no activity counts ─────────────────
   if (!isLoggedIn) {
-    return <GuestScreen colors={colors} router={router} topInset={topInset} tabBarHeight={tabBarHeight} />;
+    return <GuestScreen colors={colors} router={router} topInset={topInset} tabBarHeight={tabBarHeight} scrollRef={guestScrollRef} />;
   }
 
   // ── Profile card values (logged-in only) ─────────────────────────────────

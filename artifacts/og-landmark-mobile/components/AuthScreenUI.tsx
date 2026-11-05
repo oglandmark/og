@@ -36,11 +36,10 @@ export function AuthScreenFrame({
   contentGap?: number;
 }) {
   const colors = useColors();
-  const { tr } = useLanguage();
+  const { tr, isRTL } = useLanguage();
   const { width, height } = useWindowDimensions();
   const brandTop = Math.max(topInset, 44);
   const houseWidth = Math.min(width - 48, 330);
-  const showHomeLabel = width >= 360;
 
   return (
     <View style={[styles.root, { backgroundColor: colors.splashBackground }]}>
@@ -69,24 +68,6 @@ export function AuthScreenFrame({
           <Text style={{ color: colors.splashWhite, fontFamily: 'Inter_600SemiBold' }}> LANDMARK</Text>
         </Text>
       </View>
-      <Pressable
-        onPress={() => router.replace('/(tabs)')}
-        accessibilityRole="button"
-        accessibilityLabel={tr('backToHome')}
-        hitSlop={8}
-        style={[
-          styles.homeButton,
-          {
-            top: brandTop + 5,
-            borderColor: `${colors.splashWhite}55`,
-            backgroundColor: `${colors.splashWhite}14`,
-            paddingHorizontal: showHomeLabel ? 11 : 9,
-          },
-        ]}
-      >
-        <Feather name="home" size={15} color={colors.splashWhite} />
-        {showHomeLabel ? <Text style={[styles.homeButtonText, { color: colors.splashWhite }]}>{tr('backToHome')}</Text> : null}
-      </Pressable>
       <Image
         source={HOUSE}
         resizeMode="contain"
@@ -116,6 +97,30 @@ export function AuthScreenFrame({
               },
             ]}
           >
+            <Pressable
+              onPress={() => router.replace('/(tabs)')}
+              accessibilityRole="button"
+              accessibilityLabel={tr('backToHome')}
+              testID="auth-back-home"
+              hitSlop={8}
+              style={({ pressed }) => [
+                styles.backArrowButton,
+                {
+                  backgroundColor: `${colors.surfaceTint}B8`,
+                  borderColor: `${colors.splashGold}66`,
+                  shadowColor: colors.action,
+                },
+                pressed && { opacity: 0.72 },
+              ]}
+            >
+              <LinearGradient
+                colors={[`${colors.splashWhite}E8`, `${colors.surfaceTint}B8`]}
+                start={{ x: 0.2, y: 0 }}
+                end={{ x: 0.8, y: 1 }}
+                style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}
+              />
+              <Feather name={isRTL ? 'arrow-right' : 'arrow-left'} size={18} color={colors.authGoldText} />
+            </Pressable>
             <View style={[styles.content, { gap: contentGap }, contentMaxWidth ? { maxWidth: contentMaxWidth } : null]}>
               {children}
             </View>
@@ -232,18 +237,22 @@ const styles = StyleSheet.create({
   heroDetails: { position: 'absolute', top: 0, left: 0 },
   brand: { position: 'absolute', left: 24, flexDirection: 'row', alignItems: 'center', gap: 10 },
   wordmark: { fontFamily: 'Inter_600SemiBold', fontSize: 13, letterSpacing: 3 },
-  homeButton: {
+  backArrowButton: {
     position: 'absolute',
-    right: 24,
-    minHeight: 32,
-    flexDirection: 'row',
+    top: 10,
+    left: 24,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: 18,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  homeButtonText: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   house: { position: 'absolute', top: 78 },
   keyboardFrame: { flex: 1 },
   scroll: { flex: 1 },

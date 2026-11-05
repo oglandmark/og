@@ -57,7 +57,7 @@ test('Android tab background uses the premium glass blur treatment', () => {
   assert.ok(androidBackground, 'Android must have a dedicated tab background');
   assert.match(androidBackground[1], /<BlurView/);
   assert.match(androidBackground[1], /blurMethod="dimezisBlurView"/);
-  assert.match(androidBackground[1], /backgroundColor: colors\.glassOverlay/);
+  assert.match(androidBackground[1], /backgroundColor: `\$\{colors\.surfaceRaised\}F2`/);
   assert.match(androidBackground[1], /colors\.actionGlassHighlight/);
 });
 
@@ -70,7 +70,7 @@ test('the listing form does not mount its native map until the user opens the lo
 test('all navigation tabs render full labels with wrapping instead of truncating', () => {
   assert.match(tabLayoutSource, /numberOfLines=\{2\}/);
   assert.equal(
-    (tabLayoutSource.match(/tabBarLabel:\s*\(\{\s*color\s*\}\)\s*=>\s*<FullTabLabel/g) ?? []).length,
+    (tabLayoutSource.match(/tabBarLabel:\s*\(\{\s*color,\s*focused\s*\}\)\s*=>\s*<FullTabLabel/g) ?? []).length,
     10,
     'buyer, professional, and profile tabs must all use the full-label component',
   );

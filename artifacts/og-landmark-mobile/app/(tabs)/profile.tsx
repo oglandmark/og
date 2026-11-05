@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -883,14 +884,13 @@ function GuestScreen({
   const LOCKED_ITEMS: { icon: keyof typeof Feather.glyphMap; label: string; sub: string; tint: string }[] = [
     { icon: 'heart', label: 'Saved Properties', sub: 'Your shortlisted homes', tint: colors.gold },
     { icon: 'search', label: 'Saved Searches', sub: 'Quick-access filters', tint: colors.teal },
-    { icon: 'bell', label: 'Search Alerts', sub: 'Alerts on new matches', tint: colors.teal },
-    { icon: 'calendar', label: 'Visits', sub: 'Schedule property tours', tint: colors.gold },
+    { icon: 'bell', label: 'Search Alerts', sub: 'Get notified on new matches', tint: colors.primary },
   ];
 
   return (
     <ScrollView
-      style={[styles.screen, { backgroundColor: colors.splashBackground }]}
-      contentContainerStyle={{ paddingTop: topInset + 12, paddingBottom: tabBarHeight + 20, paddingHorizontal: 20 }}
+      style={[styles.screen, { backgroundColor: colors.surfaceTint }]}
+      contentContainerStyle={{ paddingTop: topInset + 18, paddingBottom: tabBarHeight + 24, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
       scrollEventThrottle={16}
@@ -898,57 +898,66 @@ function GuestScreen({
       {/* Header */}
       <AnimatedReveal>
         <View style={gst.brandHeader}>
-          <BrandMark inverse />
-          <View style={gst.headerRight}>
-            <View style={gst.guestBadge}><Text style={gst.guestBadgeText}>Guest</Text></View>
-            <Pressable testID="guest-settings" accessibilityLabel="Settings" onPress={() => router.push('/settings' as any)}
-              style={gst.settingsButton}>
-              <Feather name="settings" size={17} color={colors.background} />
-            </Pressable>
+          <BrandMark />
+          <Pressable testID="guest-settings" accessibilityLabel="Settings" onPress={() => router.push('/settings' as any)}
+            style={[gst.settingsButton, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
+            <Feather name="settings" size={19} color={colors.foreground} />
+          </Pressable>
+        </View>
+      </AnimatedReveal>
+
+      <AnimatedReveal delay={70}>
+        <View style={[gst.welcomeCard, { borderColor: colors.glassBorder }]}>
+          <LinearGradient
+            colors={[colors.splashNavy, colors.actionDeep, '#10565F']}
+            start={{ x: 0, y: 0.15 }}
+            end={{ x: 1, y: 0.85 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={gst.welcomeAvatar}>
+            <Feather name="user" size={31} color={colors.background} />
           </View>
+          <Text style={[gst.welcomeEyebrow, { color: colors.splashMint }]}>WELCOME</Text>
+          <Text style={[gst.welcomeName, { color: colors.splashWhite }]}>Guest</Text>
+          <Text style={[gst.welcomeCopy, { color: colors.splashMuted }]}>
+            Sign in to unlock your profile, saved searches, visits and instant alerts.
+          </Text>
+          <Pressable testID="guest-sign-in" onPress={() => router.push('/(auth)/login' as any)}
+            style={({ pressed }) => [gst.loginBtn, { backgroundColor: colors.gold, opacity: pressed ? 0.86 : 1 }]}>
+            <Text style={[gst.loginBtnText, { color: colors.goldForeground }]}>Sign In</Text>
+            <Feather name="arrow-right" size={17} color={colors.goldForeground} />
+          </Pressable>
+          <Pressable testID="guest-create-account" onPress={() => router.push('/(auth)/signup' as any)}
+            accessibilityRole="button" accessibilityLabel="Create Account"
+            style={({ pressed }) => [gst.registerBtn, { borderColor: colors.actionGlassBorder, opacity: pressed ? 0.82 : 1 }]}>
+            <Text style={[gst.registerBtnText, { color: colors.splashWhite }]}>Create Account</Text>
+          </Pressable>
         </View>
       </AnimatedReveal>
 
-      <AnimatedReveal delay={60}>
-        <View style={gst.intro}>
-          <Text style={[gst.eyebrow, { color: colors.teal }]}>YOUR PROFILE</Text>
-          <Text style={[gst.headline, { color: colors.background }]}>Your next home{'\n'}starts here.</Text>
-          <Text style={[gst.welcomeSub, { color: colors.splashMuted }]}>Sign in to save properties, track searches and book visits in one place.</Text>
-        </View>
-      </AnimatedReveal>
-
-      <AnimatedReveal delay={130}>
-        <View style={gst.shortcutGrid}>
+      <AnimatedReveal delay={140}>
+        <Text style={[gst.activityTitle, { color: colors.foreground }]}>Your Activity</Text>
+        <View style={gst.activityList}>
           {LOCKED_ITEMS.map((item) => (
             <Pressable key={item.label} accessibilityRole="button" accessibilityLabel={`${item.label}, sign in required`}
               testID={`guest-shortcut-${item.label.toLowerCase().replaceAll(' ', '-')}`}
               onPress={() => router.push('/(auth)/login' as any)}
-              style={({ pressed }) => [gst.shortcut, { backgroundColor: colors.surfaceDeep, borderColor: colors.glassBorder, opacity: pressed ? 0.82 : 1 }]}>
-              <View style={gst.shortcutTop}>
-                <Feather name={item.icon} size={23} color={item.tint} />
-                <Feather name="lock" size={13} color={colors.splashMuted} />
+              style={({ pressed }) => [gst.activityRow, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, opacity: pressed ? 0.83 : 1 }]}>
+              <View style={[gst.activityIcon, { backgroundColor: item.label === 'Saved Properties' ? colors.gold + '24' : item.label === 'Saved Searches' ? colors.tealSoft : colors.surfaceTint }]}>
+                <Feather name={item.icon} size={22} color={item.tint} />
               </View>
-              <Text style={[gst.shortcutTitle, { color: colors.background }]}>{item.label}</Text>
-              <Text style={[gst.shortcutSub, { color: colors.splashMuted }]}>{item.sub}</Text>
+              <View style={gst.activityCopy}>
+                <Text style={[gst.activityLabel, { color: colors.foreground }]}>{item.label}</Text>
+                <Text style={[gst.activitySub, { color: colors.mutedForeground }]}>{item.sub}</Text>
+              </View>
+              <View style={[gst.signInPill, { backgroundColor: colors.secondary }]}>
+                <Feather name="lock" size={12} color={colors.foreground} />
+                <Text style={[gst.signInPillText, { color: colors.foreground }]}>Sign in</Text>
+              </View>
             </Pressable>
           ))}
         </View>
       </AnimatedReveal>
-
-      <AnimatedReveal delay={220}>
-        <Pressable testID="guest-sign-in" onPress={() => router.push('/(auth)/login' as any)}
-          style={({ pressed }) => [gst.loginBtn, { backgroundColor: colors.gold, opacity: pressed ? 0.86 : 1 }]}>
-          <Text style={[gst.loginBtnText, { color: colors.goldForeground }]}>Sign In</Text>
-          <Feather name="arrow-right" size={17} color={colors.goldForeground} />
-        </Pressable>
-        <Pressable testID="guest-create-account" onPress={() => router.push('/(auth)/signup' as any)}
-          accessibilityRole="button" accessibilityLabel="Create Account"
-          style={({ pressed }) => [gst.registerBtn, { borderColor: colors.glassBorder, opacity: pressed ? 0.82 : 1 }]}>
-          <Text style={[gst.registerBtnText, { color: colors.background }]}>Create Account</Text>
-        </Pressable>
-      </AnimatedReveal>
-
-      <Text style={[styles.version, { color: colors.splashMuted }]}>OG Landmark · Guest Mode</Text>
     </ScrollView>
   );
 }
@@ -1454,24 +1463,26 @@ export default function ProfileScreen() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const gst = StyleSheet.create({
-  brandHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 38 },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 9 },
-  guestBadge: { borderWidth: 1, borderColor: '#ffffff35', borderRadius: 18, paddingHorizontal: 13, paddingVertical: 7 },
-  guestBadgeText: { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#F4F2EC' },
-  settingsButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#ffffff14', alignItems: 'center', justifyContent: 'center' },
-  intro: { marginBottom: 25 },
-  eyebrow: { fontFamily: 'Inter_700Bold', fontSize: 11, letterSpacing: 2.3, marginBottom: 10 },
-  headline: { fontFamily: 'Inter_700Bold', fontSize: 34, lineHeight: 42, letterSpacing: -0.6 },
-  welcomeSub: { fontFamily: 'Inter_400Regular', fontSize: 15, lineHeight: 23, marginTop: 13, maxWidth: 380 },
-  shortcutGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
-  shortcut: { flexGrow: 1, flexBasis: '47%', minHeight: 139, borderWidth: 1, borderRadius: 24, padding: 15, justifyContent: 'space-between' },
-  shortcutTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  shortcutTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 15, marginBottom: 5 },
-  shortcutSub: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17 },
-  loginBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 18, minHeight: 58, width: '100%', justifyContent: 'center', marginTop: 0 },
-  loginBtnText: { fontFamily: 'Inter_700Bold', fontSize: 16 },
-  registerBtn: { borderWidth: 1, borderRadius: 18, minHeight: 56, width: '100%', alignItems: 'center', justifyContent: 'center', marginTop: 10 },
-  registerBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 15 },
+  brandHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  settingsButton: { width: 48, height: 48, borderRadius: 17, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  welcomeCard: { borderWidth: 1, borderRadius: 28, paddingHorizontal: 23, paddingTop: 26, paddingBottom: 22, alignItems: 'center', overflow: 'hidden', marginBottom: 22 },
+  welcomeAvatar: { width: 78, height: 78, borderRadius: 25, borderWidth: 1, borderColor: '#ffffff40', backgroundColor: '#ffffff18', alignItems: 'center', justifyContent: 'center', marginBottom: 17 },
+  welcomeEyebrow: { fontFamily: 'Inter_500Medium', fontSize: 12, letterSpacing: 2.1, marginBottom: 6 },
+  welcomeName: { fontFamily: 'Inter_700Bold', fontSize: 34, lineHeight: 41, letterSpacing: -0.5 },
+  welcomeCopy: { fontFamily: 'Inter_400Regular', fontSize: 15, lineHeight: 22, textAlign: 'center', marginTop: 11, marginBottom: 21, maxWidth: 330 },
+  loginBtn: { flexDirection: 'row', alignItems: 'center', gap: 9, borderRadius: 17, minHeight: 58, width: '100%', justifyContent: 'center' },
+  loginBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 16 },
+  registerBtn: { borderWidth: 1, borderRadius: 17, minHeight: 57, width: '100%', alignItems: 'center', justifyContent: 'center', marginTop: 11, backgroundColor: '#ffffff12' },
+  registerBtnText: { fontFamily: 'Inter_500Medium', fontSize: 15 },
+  activityTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 19, letterSpacing: -0.25, marginBottom: 12 },
+  activityList: { gap: 9 },
+  activityRow: { minHeight: 76, borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 13 },
+  activityIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  activityCopy: { flex: 1 },
+  activityLabel: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  activitySub: { fontFamily: 'Inter_400Regular', fontSize: 12, marginTop: 4 },
+  signInPill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 18, paddingHorizontal: 10, paddingVertical: 7 },
+  signInPillText: { fontFamily: 'Inter_500Medium', fontSize: 11 },
 });
 
 const styles = StyleSheet.create({

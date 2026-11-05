@@ -17,13 +17,13 @@ import { useMobileContent } from '@/hooks/useMobileContent';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { POST_AD_LISTING_ROUTE } from '@/lib/postAdEntry';
 
-function FullTabLabel({ label, color }: { label: string; color: ColorValue }) {
+function FullTabLabel({ label, color, focused }: { label: string; color: ColorValue; focused: boolean }) {
   return (
     <Text
       numberOfLines={2}
       adjustsFontSizeToFit
       minimumFontScale={0.82}
-      style={[styles.tabLabel, { color }]}
+      style={[styles.tabLabel, { color, fontFamily: focused ? 'Inter_600SemiBold' : 'Inter_500Medium' }]}
     >
       {label}
     </Text>
@@ -49,12 +49,20 @@ function TabIcon({
 }
 
 // ── Plus icon (post-ad) keeps its own raised circle treatment ────────────────
-function PostAdIcon({ color, focused }: { color: ColorValue; focused: boolean }) {
+function PostAdIcon() {
   const colors = useColors();
 
   return (
-       <View style={[styles.postIcon, { backgroundColor: focused ? colors.gold : colors.action, borderColor: colors.background }]}>
-       <Feather name="plus" size={focused ? 23 : 21} color={focused ? colors.goldForeground : colors.actionForeground} />
+       <View style={[styles.postIcon, {
+         backgroundColor: colors.actionDeep,
+         borderColor: colors.surfaceRaised,
+         shadowColor: colors.shadow,
+         shadowOffset: { width: 0, height: 8 },
+         shadowOpacity: 0.22,
+         shadowRadius: 12,
+         elevation: 8,
+       }]}>
+       <Feather name="plus" size={23} color={colors.gold} />
     </View>
   );
 }
@@ -108,7 +116,7 @@ export default function TabLayout() {
       left: 12,
       right: 12,
       bottom: isWeb ? 8 : insets.bottom + 6,
-      borderColor: colors.glassBorder,
+          borderColor: colors.border,
     },
     Platform.OS === 'ios'
       ? {
@@ -165,7 +173,7 @@ export default function TabLayout() {
                   blurMethod="dimezisBlurView"
                   style={tabDockStyle}
                 >
-                  <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
+                   <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: `${colors.surfaceRaised}F2` }]} />
                   <LinearGradient
                     colors={[colors.actionGlassHighlight, 'transparent']}
                     style={[styles.tabGlassHighlight, { pointerEvents: 'none' } as any]}
@@ -176,7 +184,7 @@ export default function TabLayout() {
             if (Platform.OS === 'web') {
               return (
                 <View style={tabDockStyle}>
-                  <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: `${colors.surfaceRaised}F2` }]} />
                   <LinearGradient
                     colors={[colors.actionGlassHighlight, 'transparent']}
                     style={[styles.tabGlassHighlight, { pointerEvents: 'none' } as any]}
@@ -190,7 +198,7 @@ export default function TabLayout() {
                 tint="light"
                 style={tabDockStyle}
               >
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: `${colors.surfaceRaised}F2` }]} />
                 <LinearGradient
                   colors={[colors.actionGlassHighlight, 'transparent']}
                   style={[styles.tabGlassHighlight, { pointerEvents: 'none' } as any]}
@@ -203,22 +211,22 @@ export default function TabLayout() {
       {/* ── BUYER TABS ──────────────────── */}
       <Tabs.Screen name="index" options={{
         title: navLabels.home || tr('tabHome'),
-        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.home || tr('tabHome')} color={color} />,
+        tabBarLabel: ({ color, focused }) => <FullTabLabel label={navLabels.home || tr('tabHome')} color={color} focused={focused} />,
         href: isVisible('home', isBuyer) ? undefined : null,
         tabBarIcon: ({ color, size, focused }) => <TabIcon name="home" color={color} size={size} focused={focused} />,
       }} />
       <Tabs.Screen name="explore" options={{
         title: navLabels.explore || tr('tabExplore'),
-        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.explore || tr('tabExplore')} color={color} />,
+        tabBarLabel: ({ color, focused }) => <FullTabLabel label={navLabels.explore || tr('tabExplore')} color={color} focused={focused} />,
         href: isVisible('explore', isBuyer) ? undefined : null,
         tabBarIcon: ({ color, size, focused }) => <TabIcon name="search" color={color} size={size} focused={focused} />,
       }} />
       <Tabs.Screen name="post-ad" options={{
         title: navLabels.postAd || tr('tabPostAd'),
-        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.postAd || tr('tabPostAd')} color={color} />,
+        tabBarLabel: ({ color, focused }) => <FullTabLabel label={navLabels.postAd || tr('tabPostAd')} color={color} focused={focused} />,
         href: isVisible('postAd', isBuyer) ? undefined : null,
         tabBarActiveTintColor: colors.action,
-        tabBarIcon: ({ color, focused }) => <PostAdIcon color={color} focused={focused} />,
+        tabBarIcon: () => <PostAdIcon />,
       }} listeners={{
         tabPress: (event) => {
           if (isLoading || !isLoggedIn) return;
@@ -228,7 +236,7 @@ export default function TabLayout() {
       }} />
       <Tabs.Screen name="saved" options={{
         title: navLabels.saved || tr('tabSaved'),
-        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.saved || tr('tabSaved')} color={color} />,
+        tabBarLabel: ({ color, focused }) => <FullTabLabel label={navLabels.saved || tr('tabSaved')} color={color} focused={focused} />,
         href: isVisible('saved', isBuyer) ? undefined : null,
         tabBarIcon: ({ color, size, focused }) => <TabIcon name="heart" color={color} size={size} focused={focused} />,
       }} />
@@ -236,31 +244,31 @@ export default function TabLayout() {
       {/* ── PROFESSIONAL TABS ───────────── */}
       <Tabs.Screen name="dashboard" options={{
         title: navLabels.dashboard || tr('tabDashboard'),
-        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.dashboard || tr('tabDashboard')} color={color} />,
+        tabBarLabel: ({ color, focused }) => <FullTabLabel label={navLabels.dashboard || tr('tabDashboard')} color={color} focused={focused} />,
         href: isVisible('agentPortal', isProfessional) ? undefined : null,
         tabBarIcon: ({ color, size, focused }) => <TabIcon name="bar-chart-2" color={color} size={size} focused={focused} />,
       }} />
       <Tabs.Screen name="listings" options={{
         title: navLabels.listings || tr('tabListings'),
-        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.listings || tr('tabListings')} color={color} />,
+        tabBarLabel: ({ color, focused }) => <FullTabLabel label={navLabels.listings || tr('tabListings')} color={color} focused={focused} />,
         href: isVisible('agentPortal', isAgent) ? undefined : null,
         tabBarIcon: ({ color, size, focused }) => <TabIcon name="home" color={color} size={size} focused={focused} />,
       }} />
       <Tabs.Screen name="projects" options={{
         title: navLabels.projects || tr('tabProjects'),
-        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.projects || tr('tabProjects')} color={color} />,
+        tabBarLabel: ({ color, focused }) => <FullTabLabel label={navLabels.projects || tr('tabProjects')} color={color} focused={focused} />,
         href: isVisible('developerPortal', isDeveloper) ? undefined : null,
         tabBarIcon: ({ color, size, focused }) => <TabIcon name="layers" color={color} size={size} focused={focused} />,
       }} />
       <Tabs.Screen name="leads" options={{
         title: navLabels.leads || tr('tabLeads'),
-        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.leads || tr('tabLeads')} color={color} />,
+        tabBarLabel: ({ color, focused }) => <FullTabLabel label={navLabels.leads || tr('tabLeads')} color={color} focused={focused} />,
         href: isVisible('agentPortal', isProfessional) ? undefined : null,
         tabBarIcon: ({ color, size, focused }) => <TabIcon name="users" color={color} size={size} focused={focused} />,
       }} />
       <Tabs.Screen name="messages" options={{
         title: navLabels.messages || tr('tabMessages'),
-        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.messages || tr('tabMessages')} color={color} />,
+        tabBarLabel: ({ color, focused }) => <FullTabLabel label={navLabels.messages || tr('tabMessages')} color={color} focused={focused} />,
         href: isVisible('agentPortal', isProfessional) ? undefined : null,
         tabBarIcon: ({ color, size, focused }) => <TabIcon name="message-circle" color={color} size={size} focused={focused} />,
       }} />
@@ -270,7 +278,7 @@ export default function TabLayout() {
       <Tabs.Screen name="calculator" options={{ href: null }} />
       <Tabs.Screen name="profile" options={{
         title: navLabels.profile || tr('tabProfile'),
-        tabBarLabel: ({ color }) => <FullTabLabel label={navLabels.profile || tr('tabProfile')} color={color} />,
+        tabBarLabel: ({ color, focused }) => <FullTabLabel label={navLabels.profile || tr('tabProfile')} color={color} focused={focused} />,
         href: visibility.profile === false ? null : undefined,
         tabBarIcon: ({ color, size, focused }) => <TabIcon name="user" color={color} size={size} focused={focused} />,
       }} />
@@ -285,7 +293,7 @@ const styles = StyleSheet.create({
   tabGlass: {
     overflow: 'hidden',
     borderWidth: 1,
-    borderRadius: 30,
+    borderRadius: 28,
   },
   tabGlassHighlight: {
     position: 'absolute',
@@ -306,11 +314,10 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 1,
     marginTop: 2,
-    fontFamily: 'Inter_600SemiBold',
     fontSize: 10,
-    lineHeight: 11,
-    letterSpacing: 0.15,
+    lineHeight: 12,
+    letterSpacing: 0.05,
     textAlign: 'center',
   },
-  postIcon:  { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginTop: -13, borderWidth: 3 },
+  postIcon:  { width: 56, height: 56, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginTop: -21, borderWidth: 4 },
 });

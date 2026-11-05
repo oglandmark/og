@@ -7,11 +7,11 @@ Use the shared semantic tokens and reusable controls for new mobile UI. The curr
 
 For property-listing selection UI, use premium flat 2D Feather line icons rather than emoji glyphs, with restrained navy/gold treatments.
 
-Keep the existing bottom tab navigation unchanged during Profile redesigns unless the user explicitly asks to change it.
+Preserve existing bottom-tab destinations, order, and behavior during Profile redesigns; restyle the bar when explicitly requested.
 
 **Why:** The user asked to retain the current navigation while updating the Profile screen.
 
-**How to apply:** Update Profile content and route Settings to its own screen without rebuilding or rearranging the tab bar.
+**How to apply:** Update Profile content without rebuilding or rearranging the tabs; apply only requested visual changes to the shared bar.
 
 **Why:** The user asked to polish property listing and use premium 2D icons.
 

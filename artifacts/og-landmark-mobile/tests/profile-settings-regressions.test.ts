@@ -7,18 +7,25 @@ const read = (path: string) => readFileSync(new URL(path, base), 'utf8');
 
 test('profile redesign keeps the existing bottom tab configuration intact', () => {
   const tabs = read('app/(tabs)/_layout.tsx');
-  for (const name of ['index', 'explore', 'post-ad', 'saved', 'dashboard', 'listings', 'projects', 'leads', 'messages', 'calculator', 'profile']) {
-    assert.match(tabs, new RegExp(`<Tabs\\.Screen name="${name}"`), `missing existing tab route ${name}`);
-  }
+  const names = [...tabs.matchAll(/<Tabs\.Screen name="([^"]+)"/g)].map((match) => match[1]);
+  assert.deepEqual(names, ['index', 'explore', 'post-ad', 'saved', 'dashboard', 'listings', 'projects', 'leads', 'messages', 'calculator', 'profile']);
   assert.match(tabs, /function AnimatedTabBar/);
   assert.match(tabs, /<BottomTabBar \{\.\.\.props\} \/>/);
+  assert.match(tabs, /router\.replace\(POST_AD_LISTING_ROUTE\)/);
+  assert.match(tabs, /backgroundColor: `\$\{colors\.surfaceRaised\}F2`/);
+  assert.match(tabs, /postIcon:  \{ width: 56/);
+  assert.match(tabs, /Inter_500Medium/);
 });
 
-test('guest profile presents the four locked shortcuts and real auth actions', () => {
+test('guest profile uses the light welcome-card layout and three locked activity rows', () => {
   const profile = read('app/(tabs)/profile.tsx');
-  for (const text of ['Saved Properties', 'Saved Searches', 'Search Alerts', 'Visits', 'Your next home', 'starts here.', 'YOUR PROFILE']) {
+  for (const text of ['Saved Properties', 'Saved Searches', 'Search Alerts', 'Your Activity', 'Sign in to unlock your profile']) {
     assert.ok(profile.includes(text), `guest profile is missing ${text}`);
   }
+  assert.match(profile, /backgroundColor: colors\.surfaceTint/);
+  assert.match(profile, /<LinearGradient/);
+  assert.equal((profile.match(/label: 'Saved Properties'|label: 'Saved Searches'|label: 'Search Alerts'/g) || []).length, 3);
+  assert.ok(!profile.includes("label: 'Visits'"));
   assert.match(profile, /guest-settings/);
   assert.match(profile, /guest-sign-in/);
   assert.match(profile, /guest-create-account/);

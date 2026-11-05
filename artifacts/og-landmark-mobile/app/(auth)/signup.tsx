@@ -156,6 +156,7 @@ export default function SignUpScreen() {
     <AuthScreenFrame
       topInset={insets.top + (Platform.OS === 'web' ? 67 : 0)}
       bottomInset={insets.bottom + (Platform.OS === 'web' ? 34 : 0)}
+      contentGap={6}
     >
       {verificationEmail ? (
         <View style={styles.otpContent}>

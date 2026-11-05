@@ -18,15 +18,20 @@ import { LocalizedText as Text } from '@/components/LocalizedText';
 import { useColors } from '@/hooks/useColors';
 
 const HOUSE = require('../assets/images/auth-house.png');
+const AUTH_SHEET_TOP = 295;
 
 export function AuthScreenFrame({
   children,
   topInset,
   bottomInset,
+  contentMaxWidth,
+  contentGap = 9,
 }: {
   children: ReactNode;
   topInset: number;
   bottomInset: number;
+  contentMaxWidth?: number;
+  contentGap?: number;
 }) {
   const colors = useColors();
   const { width, height } = useWindowDimensions();
@@ -75,7 +80,7 @@ export function AuthScreenFrame({
       >
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={{ paddingTop: 262, paddingBottom: bottomInset, flexGrow: 1 }}
+          contentContainerStyle={{ paddingTop: AUTH_SHEET_TOP, flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -83,13 +88,15 @@ export function AuthScreenFrame({
             style={[
               styles.sheet,
               {
-                minHeight: Math.max(height - 262, 520),
+                minHeight: Math.max(height - AUTH_SHEET_TOP, 520),
                 paddingBottom: Math.max(bottomInset, 16) + 18,
                 backgroundColor: colors.background,
               },
             ]}
           >
-            {children}
+            <View style={[styles.content, { gap: contentGap }, contentMaxWidth ? { maxWidth: contentMaxWidth } : null]}>
+              {children}
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -160,7 +167,7 @@ export function AuthSocialButtons({
         accessibilityLabel="Continue with Google"
         style={[styles.socialButton, { backgroundColor: colors.background, borderColor: colors.authBorder, shadowColor: colors.action }]}
       >
-        <FontAwesome5 name="google" size={22} color="#4285F4" />
+        <FontAwesome5 name="google" size={18} color="#4285F4" />
       </Pressable>
       <Pressable
         onPress={() => onUnavailable('Apple')}
@@ -169,7 +176,7 @@ export function AuthSocialButtons({
         accessibilityLabel="Continue with Apple"
         style={[styles.socialButton, { backgroundColor: colors.background, borderColor: colors.authBorder, shadowColor: colors.action }]}
       >
-        <FontAwesome5 name="apple" size={24} color="#000000" />
+        <FontAwesome5 name="apple" size={20} color="#000000" />
       </Pressable>
       <Pressable
         onPress={onFacebook}
@@ -180,7 +187,7 @@ export function AuthSocialButtons({
       >
         {facebookLoading
           ? <ActivityIndicator size="small" color="#1877F2" />
-          : <FontAwesome5 name="facebook" size={22} color="#1877F2" />}
+          : <FontAwesome5 name="facebook" size={18} color="#1877F2" />}
       </Pressable>
     </View>
   );
@@ -212,6 +219,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 32,
     paddingTop: 46,
     paddingHorizontal: 24,
+  },
+  content: {
+    flexGrow: 1,
+    width: '100%',
+    alignSelf: 'center',
     gap: 9,
   },
   primaryButton: {

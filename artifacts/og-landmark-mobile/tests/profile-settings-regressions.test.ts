@@ -46,6 +46,12 @@ test('guest profile keeps six activity rows and five Settings options on the pag
   assert.ok(profile.includes("router.push('/(auth)/signup'"));
 });
 
+test('guest Profile calls to action match the shared button sizing', () => {
+  const profile = read('app/(tabs)/profile.tsx');
+  assert.match(profile, /loginBtn: \{[^}]*minHeight: 46, width: '82%', maxWidth: 280, alignSelf: 'center'/);
+  assert.match(profile, /registerBtn: \{[^}]*minHeight: 46, width: '82%', maxWidth: 280, alignSelf: 'center'/);
+});
+
 test('guest and signed-in Profile headers animate the shared logo in web preview', () => {
   const profile = read('app/(tabs)/profile.tsx');
   const brandMark = read('components/BrandMark.tsx');

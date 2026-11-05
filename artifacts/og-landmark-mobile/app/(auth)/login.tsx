@@ -18,6 +18,7 @@ export default function LoginScreen() {
   const { tr, isRTL } = useLanguage();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [focusedField, setFocusedField] = useState<'identifier' | 'password' | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -81,11 +82,24 @@ export default function LoginScreen() {
         </View>
       )}
 
-      <View style={[styles.inputField, styles.emailField, { borderColor: colors.splashGold, backgroundColor: colors.background }]}>
-        <Feather name="mail" size={19} color={colors.authGoldText} />
+      <View
+        style={[
+          styles.inputField,
+          focusedField === 'identifier' && styles.inputFieldFocused,
+          {
+            borderColor: focusedField === 'identifier' ? colors.splashGold : colors.authBorder,
+            backgroundColor: focusedField === 'identifier' ? colors.background : colors.authFieldSurface,
+            shadowColor: colors.splashGold,
+          },
+        ]}
+      >
+        <Feather name="mail" size={19} color={focusedField === 'identifier' ? colors.authGoldText : colors.authMuted} />
         <TextInput
+          testID="login-identifier-input"
           value={identifier}
-          onChangeText={(value) => { setIdentifier(value); setError(''); }}
+          onChangeText={(value) => { setFocusedField('identifier'); setIdentifier(value); setError(''); }}
+          onFocus={() => setFocusedField('identifier')}
+          onBlur={() => setFocusedField((current) => current === 'identifier' ? null : current)}
           keyboardType={isMobileIdentifier ? 'phone-pad' : 'email-address'}
           autoCapitalize="none"
           autoComplete="email"
@@ -96,11 +110,24 @@ export default function LoginScreen() {
         />
       </View>
 
-      <View style={[styles.inputField, { borderColor: colors.authBorder, backgroundColor: colors.authFieldSurface }]}>
-        <Feather name="lock" size={19} color={colors.authMuted} />
+      <View
+        style={[
+          styles.inputField,
+          focusedField === 'password' && styles.inputFieldFocused,
+          {
+            borderColor: focusedField === 'password' ? colors.splashGold : colors.authBorder,
+            backgroundColor: focusedField === 'password' ? colors.background : colors.authFieldSurface,
+            shadowColor: colors.splashGold,
+          },
+        ]}
+      >
+        <Feather name="lock" size={19} color={focusedField === 'password' ? colors.authGoldText : colors.authMuted} />
         <TextInput
+          testID="login-password-input"
           value={password}
-          onChangeText={(value) => { setPassword(value); setError(''); }}
+          onChangeText={(value) => { setFocusedField('password'); setPassword(value); setError(''); }}
+          onFocus={() => setFocusedField('password')}
+          onBlur={() => setFocusedField((current) => current === 'password' ? null : current)}
           secureTextEntry={!showPassword}
           autoComplete="current-password"
           placeholder={tr('authPasswordPlaceholder')}
@@ -142,8 +169,8 @@ const styles = StyleSheet.create({
   errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 12, padding: 11 },
   errorText: { fontFamily: 'Inter_500Medium', fontSize: 12, flex: 1 },
   inputField: { minHeight: 56, borderRadius: 16, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
-  emailField: { borderWidth: 1.5 },
-  input: { flex: 1, minWidth: 0, fontFamily: 'Inter_400Regular', fontSize: 14, paddingVertical: 0 },
+  inputFieldFocused: { borderWidth: 1.5, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 2 },
+  input: { flex: 1, minWidth: 0, borderWidth: 0, outlineWidth: 0, outlineColor: 'transparent', backgroundColor: 'transparent', fontFamily: 'Inter_400Regular', fontSize: 14, paddingVertical: 0 },
   forgotLink: { alignSelf: 'flex-end', paddingVertical: 2, marginTop: -4 },
   forgotText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   footerRow: { flexDirection: 'row', justifyContent: 'center', gap: 4, flexWrap: 'wrap', marginTop: 'auto', paddingTop: 12 },

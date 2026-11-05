@@ -35,49 +35,15 @@ function TabIcon({
   name,
   color,
   size,
-  focused,
 }: {
   name: React.ComponentProps<typeof Feather>['name'];
   color: ColorValue;
   size: number;
   focused: boolean;
 }) {
-  const colors = useColors();
   return (
-    <View
-      style={[
-        styles.tabIconHalo,
-        focused && {
-          ...(Platform.OS === 'ios'
-            ? {
-                shadowColor: colors.teal,
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.14,
-                shadowRadius: 6,
-              }
-            : Platform.OS === 'android'
-              ? { elevation: 3 }
-              : {}),
-        },
-      ]}
-    >
-      <View
-        style={[
-          styles.tabIconWrap,
-          focused && { borderColor: colors.selectionBorder + '66' },
-        ]}
-      >
-        {focused && (
-          <LinearGradient
-            pointerEvents="none"
-            colors={[colors.glassOverlay, colors.selectionTint + 'B8']}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-        )}
-        <Feather name={name} size={Math.min(size, 21)} color={color as string} />
-      </View>
+    <View style={styles.tabIconWrap}>
+      <Feather name={name} size={Math.min(size, 21)} color={color as string} />
     </View>
   );
 }
@@ -177,7 +143,7 @@ export default function TabLayout() {
           headerShown: false,
           animation: Platform.OS === 'ios' ? 'fade' : 'none',
           tabBarHideOnKeyboard: true,
-          tabBarActiveTintColor:   colors.action,
+          tabBarActiveTintColor:   colors.teal,
           tabBarInactiveTintColor: colors.mutedForeground,
           tabBarItemStyle: { paddingTop: 3, minWidth: 0 },
           tabBarStyle: {
@@ -331,16 +297,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 29,
   },
   tabIconWrap: {
-    width: 44,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'transparent',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabIconHalo: {
     width: 44,
     height: 32,
     alignItems: 'center',

@@ -73,6 +73,19 @@ test('Find Agents loads the public Admin-managed directory and maps records to m
   assert.match(agentData, /agency: agent\.agency \|\| agent\.title \|\| agent\.specialization/);
 });
 
+test('Agent cards omit empty specialty chips and keep View Profile visible', () => {
+  assert.match(
+    agentData,
+    /specialties: Array\.isArray\(agent\.specialties\)[\s\S]*?\.filter\(\(specialty\) => typeof specialty === 'string' && specialty\.trim\(\)\.length > 0\)[\s\S]*?\.map\(\(specialty\) => specialty\.trim\(\)\)/,
+  );
+  assert.match(
+    homeScreen,
+    /const primarySpecialty = agent\.specialties\.find\(\(specialty\) => specialty\.trim\(\)\.length > 0\);/,
+  );
+  assert.match(homeScreen, /\{primarySpecialty \? \([\s\S]*?\{primarySpecialty\}[\s\S]*?\) : null\}/);
+  assert.match(homeScreen, /cta:\s*\{[^}]*\bflex:\s*1/);
+});
+
 test('Mobile profiles retain Admin-edited profile details without changing official contact actions', () => {
   assert.match(agentData, /profilePhone: agent\.phone \|\| undefined/);
   assert.match(agentData, /email: agent\.email \|\| undefined/);

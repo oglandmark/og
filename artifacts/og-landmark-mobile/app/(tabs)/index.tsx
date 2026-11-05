@@ -795,6 +795,8 @@ function AgentCarousel({ agents, colors, onAgentPress }: { agents: SampleAgent[]
 }
 
 function AgentCard({ agent, colors, onPress }: { agent: SampleAgent; colors: Colors; onPress: () => void }) {
+  const primarySpecialty = agent.specialties.find((specialty) => specialty.trim().length > 0);
+
   return (
     <Pressable
       onPress={onPress}
@@ -866,11 +868,13 @@ function AgentCard({ agent, colors, onPress }: { agent: SampleAgent; colors: Col
           </View>
 
           <View style={ac.footerRow}>
-            <View style={[ac.chip, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
-              <Text style={[ac.chipText, { color: colors.mutedForeground }]} numberOfLines={1}>
-                {agent.specialties[0]}
-              </Text>
-            </View>
+            {primarySpecialty ? (
+              <View style={[ac.chip, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+                <Text style={[ac.chipText, { color: colors.mutedForeground }]} numberOfLines={1}>
+                  {primarySpecialty}
+                </Text>
+              </View>
+            ) : null}
             <Pressable onPress={onPress} style={[ac.cta, { backgroundColor: colors.action }]}>
               <Text style={[ac.ctaText, { color: colors.actionForeground }]}>View profile</Text>
               <Feather name="arrow-up-right" size={13} color={colors.actionForeground} />
@@ -914,7 +918,7 @@ const ac = StyleSheet.create({
   footerRow:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
   chip:         { flex: 1, borderRadius: 9, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 8 },
   chipText:     { fontFamily: 'Inter_600SemiBold', fontSize: 9, textAlign: 'center' },
-  cta:          { minHeight: 36, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
+  cta:          { flex: 1, minHeight: 36, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
   ctaText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 });
 

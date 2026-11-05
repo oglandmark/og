@@ -83,7 +83,11 @@ export function apiAgentToSample(agent: ManagedAgentRecord): SampleAgent {
     areas,
     color: agent.color || '#0B1F3A',
     phone: PUBLIC_CONTACT_PHONE,
-    specialties: Array.isArray(agent.specialties) ? agent.specialties : [],
+    specialties: Array.isArray(agent.specialties)
+      ? agent.specialties
+          .filter((specialty) => typeof specialty === 'string' && specialty.trim().length > 0)
+          .map((specialty) => specialty.trim())
+      : [],
     about: agent.about || '',
   };
 }

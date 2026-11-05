@@ -32,3 +32,4 @@ test('startup keeps the 7-second animated splash and removes the static native l
   assert.match(layout, /splashDurationElapsed/);
   assert.match(layout, /<StartupSplash colors=\{colors\} overlay fontsReady=\{fontsReady\} \/>/);
 });
+

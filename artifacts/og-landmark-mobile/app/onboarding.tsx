@@ -124,7 +124,7 @@ export default function OnboardingScreen() {
       >
         {slides.map((slide, index) => (
           <View key={slide.key} style={{ width, height: pageHeight }}>
-            <View style={[styles.hero, { height: heroHeight }]}>
+            <View style={[styles.hero, { height: heroHeight, backgroundColor: colors.splashNavy }]}>
               <Image
                 source={slide.image}
                 contentFit="cover"
@@ -133,32 +133,44 @@ export default function OnboardingScreen() {
                 accessibilityLabel={slide.key}
               />
               <LinearGradient
-                colors={['rgba(6, 19, 37, 0.22)', 'rgba(6, 19, 37, 0.08)', 'rgba(6, 19, 37, 0.76)']}
+                colors={[`${colors.splashNavy}38`, `${colors.splashNavy}14`, `${colors.splashNavy}C7`]}
                 locations={[0, 0.42, 1]}
                 style={StyleSheet.absoluteFill}
               />
               <View style={[styles.heroHeader, { paddingTop: 16 }]}>
                 <View style={styles.brandLockup}>
                   <OGLandmarkLogo size={34} inverse />
-                  <Text style={styles.brandName}>OG LANDMARK</Text>
+                  <Text style={[styles.brandName, { color: colors.splashWhite }]}>OG LANDMARK</Text>
                 </View>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={skipLabel}
                   disabled={isCompleting}
                   onPress={() => void completeOnboarding()}
-                  style={({ pressed }) => [styles.skipButton, pressed && styles.pressed]}
+                  style={({ pressed }) => [
+                    styles.skipButton,
+                    { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder },
+                    pressed && styles.pressed,
+                  ]}
                 >
-                  <Text style={styles.skipText}>{skipLabel}</Text>
-                  <Feather name={isUrdu ? 'arrow-left' : 'arrow-right'} size={14} color="#fff" />
+                  <Text style={[styles.skipText, { color: colors.splashWhite }]}>{skipLabel}</Text>
+                  <Feather name={isUrdu ? 'arrow-left' : 'arrow-right'} size={14} color={colors.splashWhite} />
                 </Pressable>
               </View>
               <View style={[styles.heroFooter, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
-                <View style={styles.categoryPill}>
+                <View style={[
+                  styles.categoryPill,
+                  { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder },
+                ]}>
                   <View style={[styles.pillDot, { backgroundColor: colors.gold }]} />
-                  <Text style={styles.categoryLabel}>{slide.eyebrow[isUrdu ? 'ur' : 'en']}</Text>
+                  <Text style={[styles.categoryLabel, { color: colors.splashWhite }]}>
+                    {slide.eyebrow[isUrdu ? 'ur' : 'en']}
+                  </Text>
                 </View>
-                <Text style={[styles.slideCount, { alignSelf: isRTL ? 'flex-end' : 'flex-start' }]}>
+                <Text style={[
+                  styles.slideCount,
+                  { color: colors.splashWhite, alignSelf: isRTL ? 'flex-end' : 'flex-start' },
+                ]}>
                   {String(index + 1).padStart(2, '0')}  /  03
                 </Text>
               </View>
@@ -185,7 +197,7 @@ export default function OnboardingScreen() {
               </Text>
 
               <View style={[styles.noteRow, { borderTopColor: colors.border }]}>
-                <Feather name={index === 0 ? 'home' : index === 1 ? 'briefcase' : 'sun'} size={15} color={colors.primary} />
+                <Feather name={index === 0 ? 'home' : index === 1 ? 'briefcase' : 'sun'} size={15} color={colors.teal} />
                 <Text style={[styles.noteText, { color: colors.accentForeground }, isUrdu && styles.urduText]}>
                   {slide.note[isUrdu ? 'ur' : 'en']}
                 </Text>
@@ -201,7 +213,7 @@ export default function OnboardingScreen() {
                       onPress={() => goToSlide(dotIndex)}
                       style={[
                         styles.progressDot,
-                        { backgroundColor: dotIndex === activeIndex ? colors.action : colors.border },
+                        { backgroundColor: dotIndex === activeIndex ? colors.teal : colors.border },
                         dotIndex === activeIndex && styles.progressDotActive,
                       ]}
                     />
@@ -214,13 +226,15 @@ export default function OnboardingScreen() {
                   onPress={advance}
                   style={({ pressed }) => [
                     styles.continueButton,
-                    { backgroundColor: colors.action },
+                    { backgroundColor: colors.action, shadowColor: colors.shadow },
                     pressed && styles.pressed,
                     isCompleting && styles.disabled,
                   ]}
                 >
-                  <Text style={[styles.continueText, isUrdu && styles.urduText]}>{actionLabel}</Text>
-                  <Feather name={isUrdu ? 'arrow-left' : 'arrow-right'} size={17} color="#fff" />
+                  <Text style={[styles.continueText, { color: colors.splashWhite }, isUrdu && styles.urduText]}>
+                    {actionLabel}
+                  </Text>
+                  <Feather name={isUrdu ? 'arrow-left' : 'arrow-right'} size={17} color={colors.splashWhite} />
                 </Pressable>
               </View>
             </View>
@@ -237,7 +251,6 @@ const styles = StyleSheet.create({
   hero: {
     position: 'relative',
     overflow: 'hidden',
-    backgroundColor: '#132A43',
   },
   heroHeader: {
     paddingHorizontal: 24,
@@ -247,7 +260,6 @@ const styles = StyleSheet.create({
   },
   brandLockup: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   brandName: {
-    color: '#fff',
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 1.8,
@@ -259,11 +271,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 999,
-    backgroundColor: 'rgba(9, 25, 45, 0.42)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.28)',
   },
-  skipText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  skipText: { fontSize: 12, fontWeight: '600' },
   heroFooter: {
     position: 'absolute',
     left: 24,
@@ -278,13 +288,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
     paddingVertical: 7,
     borderRadius: 999,
-    backgroundColor: 'rgba(9, 25, 45, 0.56)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.24)',
   },
   pillDot: { width: 6, height: 6, borderRadius: 3 },
-  categoryLabel: { color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 1.2 },
-  slideCount: { color: '#fff', fontSize: 11, fontWeight: '700', letterSpacing: 2 },
+  categoryLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2 },
+  slideCount: { fontSize: 11, fontWeight: '700', letterSpacing: 2 },
   content: {
     flex: 1,
     paddingHorizontal: 28,
@@ -326,13 +334,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    shadowColor: '#071428',
     shadowOpacity: 0.16,
     shadowOffset: { width: 0, height: 5 },
     shadowRadius: 12,
     elevation: 4,
   },
-  continueText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  continueText: { fontSize: 14, fontWeight: '700' },
   pressed: { opacity: 0.78, transform: [{ scale: 0.98 }] },
   disabled: { opacity: 0.65 },
   urduText: { fontFamily: 'Inter_500Medium' },

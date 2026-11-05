@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import Svg, {
@@ -44,6 +45,9 @@ export function StartupSplash({
   const { width, height } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
   const scale = Math.min(width / DESIGN_WIDTH, height / DESIGN_HEIGHT);
+  const splashAudioPlayer = useAudioPlayer(
+    require('@/assets/audio/splash-brand-intro.mp3'),
+  );
 
   const outerRotation = useSharedValue(0);
   const innerRotation = useSharedValue(0);
@@ -84,6 +88,32 @@ export function StartupSplash({
   const hintStyle = useAnimatedStyle(() => ({
     opacity: hintProgress.value,
   }));
+
+  useEffect(() => {
+    if (Platform.OS === 'web') return undefined;
+
+    let active = true;
+    void setAudioModeAsync({
+      playsInSilentMode: true,
+      allowsRecording: false,
+      shouldPlayInBackground: false,
+    }).then(() => {
+      if (!active) return;
+      splashAudioPlayer.volume = 0.32;
+      splashAudioPlayer.play();
+    }).catch(() => {
+      // Audio setup must never block the app from opening.
+    });
+
+    return () => {
+      active = false;
+      try {
+        splashAudioPlayer.pause();
+      } catch {
+        // The audio player may already be released during teardown.
+      }
+    };
+  }, [splashAudioPlayer]);
 
   const oAnimatedProps = useAnimatedProps(() => ({
     strokeDashoffset: 251.3 * (1 - logoOProgress.value),

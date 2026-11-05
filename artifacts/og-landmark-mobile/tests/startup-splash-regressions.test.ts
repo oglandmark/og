@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 const appConfig = JSON.parse(
@@ -7,6 +7,7 @@ const appConfig = JSON.parse(
 ) as {
   expo: {
     plugins: unknown[];
+    assetBundlePatterns?: string[];
   };
 };
 const layout = readFileSync(new URL('../app/_layout.tsx', import.meta.url), 'utf8');
@@ -50,5 +51,15 @@ test('startup splash uses the new animated roof mark and replaces only its old l
   assert.match(startupSplash, /useReducedMotion/);
   assert.match(colorTokens, /splashTeal: '#19C3B1'/);
   assert.match(colorTokens, /splashGold: '#F2B84B'/);
+});
+
+test('startup splash plays the bundled intro sound once and releases it on exit', () => {
+  assert.ok(existsSync(new URL('../assets/audio/splash-brand-intro.mp3', import.meta.url)));
+  assert.ok(appConfig.expo.assetBundlePatterns?.includes('assets/audio/*'));
+  assert.match(startupSplash, /useAudioPlayer/);
+  assert.match(startupSplash, /splashAudioPlayer\.volume = 0\.32/);
+  assert.match(startupSplash, /splashAudioPlayer\.play\(\)/);
+  assert.match(startupSplash, /splashAudioPlayer\.pause\(\)/);
+  assert.match(startupSplash, /Platform\.OS === 'web'/);
 });
 

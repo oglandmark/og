@@ -33,7 +33,7 @@ import { getOnboardingCompletion } from '@/lib/onboarding';
 
 SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
-const STARTUP_SPLASH_MIN_DURATION_MS = 7000;
+const STARTUP_SPLASH_MIN_DURATION_MS = 8000;
 
 function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
   const colors = useColors();

@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
-import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import Svg, {
@@ -29,6 +28,13 @@ import { useColors } from '@/hooks/useColors';
 
 const DESIGN_WIDTH = 390;
 const DESIGN_HEIGHT = 844;
+const SKYLINE_HEIGHTS = [0.52, 0.82, 0.61, 1, 0.73, 0.91, 0.57, 0.96, 0.68, 0.86, 0.62, 1, 0.76, 0.54];
+const SPLASH_STARS = Array.from({ length: 26 }, (_, index) => ({
+  x: (index * 137 + 23) % DESIGN_WIDTH,
+  y: 90 + ((index * 191 + 31) % 540),
+  radius: 0.8 + (index % 4) * 0.45,
+  opacity: 0.18 + (index % 5) * 0.07,
+}));
 
 export function StartupSplash({
   colors,
@@ -45,11 +51,11 @@ export function StartupSplash({
   const splashAudioPlayer = useAudioPlayer(
     require('@/assets/audio/splash-brand-intro.mp3'),
   );
-  const [webAudioEnabled, setWebAudioEnabled] = useState(false);
 
   const outerRotation = useSharedValue(0);
   const innerRotation = useSharedValue(0);
   const logoProgress = useSharedValue(reduceMotion ? 1 : 0);
+  const glintProgress = useSharedValue(0);
   const wordmarkProgress = useSharedValue(reduceMotion ? 1 : 0);
   const dividerProgress = useSharedValue(reduceMotion ? 1 : 0);
   const categoryProgress = useSharedValue(reduceMotion ? 1 : 0);
@@ -70,6 +76,13 @@ export function StartupSplash({
     opacity: logoProgress.value,
     transform: [{ scale: 0.94 + logoProgress.value * 0.06 }],
   }));
+  const glintStyle = useAnimatedStyle(() => {
+    const progressValue = glintProgress.value;
+    return {
+      opacity: progressValue > 0 && progressValue < 1 ? Math.sin(progressValue * Math.PI) * 0.8 : 0,
+      transform: [{ translateX: -90 + progressValue * 300 }, { skewX: '-18deg' }],
+    };
+  });
   const wordmarkStyle = useAnimatedStyle(() => ({
     opacity: wordmarkProgress.value,
     transform: [{ translateY: (1 - wordmarkProgress.value) * 12 }],
@@ -90,20 +103,30 @@ export function StartupSplash({
   }));
 
   useEffect(() => {
-    if (Platform.OS === 'web') return undefined;
-
     let active = true;
-    void setAudioModeAsync({
-      playsInSilentMode: true,
-      allowsRecording: false,
-      shouldPlayInBackground: false,
-    }).then(() => {
+    const playIntro = () => {
       if (!active) return;
       splashAudioPlayer.volume = 0.7;
       splashAudioPlayer.play();
-    }).catch(() => {
-      // Audio setup must never block the app from opening.
-    });
+    };
+
+    if (Platform.OS === 'web') {
+      // Try autoplay on web too. Some browsers still require an earlier user
+      // gesture; a blocked sound must never hold up the splash or show a prompt.
+      try {
+        playIntro();
+      } catch {
+        // Browser autoplay restrictions can reject unprompted playback.
+      }
+    } else {
+      void setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: false,
+        shouldPlayInBackground: false,
+      }).then(playIntro).catch(() => {
+        // Audio setup must never block the app from opening.
+      });
+    }
 
     return () => {
       active = false;
@@ -114,14 +137,6 @@ export function StartupSplash({
       }
     };
   }, [splashAudioPlayer]);
-
-  function enableSplashAudio() {
-    // Web browsers block audio autoplay until a visitor taps a control.
-    // Keep play() directly in this press handler to preserve that gesture.
-    splashAudioPlayer.volume = 0.7;
-    splashAudioPlayer.play();
-    setWebAudioEnabled(true);
-  }
 
   useEffect(() => {
     if (reduceMotion) return undefined;
@@ -140,16 +155,18 @@ export function StartupSplash({
       250,
       withTiming(1, { duration: 850, easing: Easing.out(Easing.quad) }),
     );
-    wordmarkProgress.value = withDelay(2600, withTiming(1, { duration: 650 }));
-    dividerProgress.value = withDelay(3400, withTiming(1, { duration: 550 }));
-    categoryProgress.value = withDelay(3900, withTiming(1, { duration: 550 }));
-    progress.value = withTiming(1, { duration: 7000, easing: Easing.out(Easing.quad) });
+    glintProgress.value = withDelay(2950, withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) }));
+    wordmarkProgress.value = withDelay(3500, withTiming(1, { duration: 650 }));
+    dividerProgress.value = withDelay(3900, withTiming(1, { duration: 550 }));
+    categoryProgress.value = withDelay(4200, withTiming(1, { duration: 550 }));
+    progress.value = withTiming(1, { duration: 8000, easing: Easing.out(Easing.quad) });
     hintProgress.value = withDelay(5000, withTiming(1, { duration: 450 }));
 
     return () => {
       cancelAnimation(outerRotation);
       cancelAnimation(innerRotation);
       cancelAnimation(logoProgress);
+      cancelAnimation(glintProgress);
       cancelAnimation(wordmarkProgress);
       cancelAnimation(dividerProgress);
       cancelAnimation(categoryProgress);
@@ -161,6 +178,7 @@ export function StartupSplash({
     dividerProgress,
     hintProgress,
     innerRotation,
+    glintProgress,
     logoProgress,
     outerRotation,
     progress,
@@ -196,8 +214,51 @@ export function StartupSplash({
             <Stop offset="0.58" stopColor={colors.splashNavy} />
             <Stop offset="1" stopColor={colors.splashBackground} />
           </RadialGradient>
+        <SvgLinearGradient id="cityFade" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor={colors.splashNavy} stopOpacity={0.2} />
+          <Stop offset="1" stopColor={colors.splashBackground} stopOpacity={0.92} />
+        </SvgLinearGradient>
         </Defs>
         <Rect width={DESIGN_WIDTH} height={DESIGN_HEIGHT} fill="url(#splashBackground)" />
+        {SPLASH_STARS.map((star, index) => (
+          <Circle
+            key={`star-${index}`}
+            cx={star.x}
+            cy={star.y}
+            r={star.radius}
+            fill={index % 3 === 0 ? colors.splashGold : colors.splashWhite}
+            opacity={star.opacity}
+          />
+        ))}
+        <Rect x={0} y={680} width={DESIGN_WIDTH} height={164} fill="url(#cityFade)" />
+        {SKYLINE_HEIGHTS.map((buildingHeight, index) => {
+          const buildingWidth = DESIGN_WIDTH / SKYLINE_HEIGHTS.length;
+          const buildingX = index * buildingWidth;
+          const buildingY = 844 - buildingHeight * 126;
+          return (
+            <React.Fragment key={`building-${index}`}>
+              <Rect
+                x={buildingX + 1}
+                y={buildingY}
+                width={buildingWidth - 2}
+                height={844 - buildingY}
+                fill={colors.splashNavy}
+                opacity={0.55}
+              />
+              {[0, 1, 2].map((windowIndex) => (
+                <Rect
+                  key={`window-${windowIndex}`}
+                  x={buildingX + 5 + (windowIndex % 2) * 8}
+                  y={buildingY + 13 + Math.floor(windowIndex / 2) * 14}
+                  width={3}
+                  height={4}
+                  fill={windowIndex % 2 === 0 ? colors.splashGold : colors.splashTeal}
+                  opacity={0.35}
+                />
+              ))}
+            </React.Fragment>
+          );
+        })}
       </Svg>
 
       <View
@@ -350,6 +411,13 @@ export function StartupSplash({
             />
           </Svg>
         </Animated.View>
+        <Animated.View pointerEvents="none" style={[styles.logoGlint, glintStyle]}>
+          <LinearGradient
+            colors={['transparent', colors.splashWhite, colors.splashGold, 'transparent']}
+            locations={[0, 0.42, 0.58, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
 
         <Animated.View style={[styles.wordmark, wordmarkStyle]}>
           <Animated.Text
@@ -407,6 +475,16 @@ export function StartupSplash({
             />
           </Animated.View>
         </View>
+        <Animated.Text
+          style={[
+            styles.loadingLabel,
+            hintStyle,
+            { fontFamily: Platform.OS === 'web' ? 'Arial' : fontsReady ? 'Inter_600SemiBold' : 'sans-serif' },
+            { color: colors.splashMuted },
+          ]}
+        >
+          LOADING
+        </Animated.Text>
 
         <Animated.Text
           style={[
@@ -419,22 +497,6 @@ export function StartupSplash({
           Find your next landmark
         </Animated.Text>
 
-        {Platform.OS === 'web' && !webAudioEnabled && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Enable splash screen sound"
-            onPress={enableSplashAudio}
-            style={[
-              styles.audioButton,
-              { backgroundColor: `${colors.splashTeal}20`, borderColor: `${colors.splashTeal}70` },
-            ]}
-          >
-            <Feather name="volume-2" size={14} color={colors.splashTeal} />
-            <Animated.Text style={[styles.audioButtonText, { color: colors.splashWhite }]}>
-              Tap for sound
-            </Animated.Text>
-          </Pressable>
-        )}
       </View>
     </Animated.View>
   );
@@ -492,6 +554,14 @@ const styles = StyleSheet.create({
     left: 85,
     top: 250,
   },
+  logoGlint: {
+    position: 'absolute',
+    left: 85,
+    top: 238,
+    width: 50,
+    height: 184,
+    overflow: 'hidden',
+  },
   wordmark: {
     position: 'absolute',
     left: 0,
@@ -540,7 +610,7 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     position: 'absolute',
-    top: 738,
+    top: 730,
     left: 135,
     width: 120,
     height: 4,
@@ -557,29 +627,21 @@ const styles = StyleSheet.create({
   },
   hint: {
     position: 'absolute',
-    top: 760,
+    top: 778,
     left: 0,
     right: 0,
     textAlign: 'center',
     fontSize: 12,
     letterSpacing: 0.96,
   },
-  audioButton: {
+  loadingLabel: {
     position: 'absolute',
-    bottom: 22,
-    alignSelf: 'center',
-    minHeight: 38,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  audioButtonText: {
-    fontSize: 11,
+    top: 750,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    fontSize: 9,
     fontWeight: '600',
-    letterSpacing: 0.5,
+    letterSpacing: 4.5,
   },
 });

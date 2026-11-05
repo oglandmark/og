@@ -28,19 +28,19 @@ const splashPlugin = appConfig.expo.plugins.find(
     Array.isArray(plugin) && plugin[0] === 'expo-splash-screen',
 );
 
-test('startup keeps the 7-second animated splash and removes the static native logo', () => {
+test('startup keeps the 8-second animated splash and removes the static native logo', () => {
   assert.ok(splashPlugin);
   assert.equal(splashPlugin[1].image, undefined);
   assert.equal(splashPlugin[1].dark?.image, undefined);
   assert.equal(splashPlugin[1].android?.drawable?.icon, './plugins/splash-transparent.xml');
   assert.equal(splashPlugin[1].android?.drawable?.darkIcon, './plugins/splash-transparent.xml');
-  assert.match(layout, /STARTUP_SPLASH_MIN_DURATION_MS = 7000/);
+  assert.match(layout, /STARTUP_SPLASH_MIN_DURATION_MS = 8000/);
   assert.match(layout, /splashDurationElapsed/);
   assert.match(layout, /<StartupSplash colors=\{colors\} overlay fontsReady=\{fontsReady\} \/>/);
   assert.match(colorTokens, /background: '#FFFFFF'/);
   assert.match(colorTokens, /teal: '#19C3B1'/);
   assert.match(colorTokens, /gold: '#F2B84B'/);
-  assert.match(colorTokens, /splashBackground: '#0B1F3A'/);
+  assert.match(colorTokens, /splashBackground: '#040C1A'/);
 });
 
 test('startup splash uses the new animated roof mark and replaces only its old logo', () => {
@@ -50,19 +50,19 @@ test('startup splash uses the new animated roof mark and replaces only its old l
   assert.match(startupSplash, /Find your next landmark/);
   assert.match(startupSplash, /useReducedMotion/);
   assert.match(colorTokens, /splashTeal: '#19C3B1'/);
-  assert.match(colorTokens, /splashGold: '#F2B84B'/);
+  assert.match(colorTokens, /splashGold: '#C9A55C'/);
 });
 
-test('startup splash plays intro sound natively and offers web gesture playback', () => {
+test('startup splash attempts automatic intro playback on native and web without a tap prompt', () => {
   assert.ok(existsSync(new URL('../assets/audio/splash-brand-intro.mp3', import.meta.url)));
   assert.ok(appConfig.expo.assetBundlePatterns?.includes('assets/audio/*'));
   assert.match(startupSplash, /useAudioPlayer/);
   assert.match(startupSplash, /splashAudioPlayer\.volume = 0\.7/);
   assert.match(startupSplash, /splashAudioPlayer\.play\(\)/);
   assert.match(startupSplash, /splashAudioPlayer\.pause\(\)/);
-  assert.match(startupSplash, /if \(Platform\.OS === 'web'\) return undefined/);
-  assert.match(startupSplash, /Platform\.OS === 'web' && !webAudioEnabled/);
-  assert.match(startupSplash, /onPress=\{enableSplashAudio\}/);
+  assert.match(startupSplash, /if \(Platform\.OS === 'web'\)/);
+  assert.match(startupSplash, /playIntro\(\)/);
+  assert.doesNotMatch(startupSplash, /Tap for sound|enableSplashAudio|webAudioEnabled/);
 });
 
 test('splash keeps rotating rings composited and avoids frame-by-frame SVG path drawing', () => {

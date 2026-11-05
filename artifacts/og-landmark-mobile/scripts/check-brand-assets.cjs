@@ -278,7 +278,7 @@ if (
 ) {
   fail("The in-app startup splash must render the new roof logo and OG Landmark name.");
 }
-if (!/STARTUP_SPLASH_MIN_DURATION_MS\s*=\s*7000\b/.test(startupLayout)) {
-  fail("The branded startup splash must stay visible for at least seven seconds.");
+if (!/STARTUP_SPLASH_MIN_DURATION_MS\s*=\s*8000\b/.test(startupLayout)) {
+  fail("The branded startup splash must stay visible for at least eight seconds.");
 }
-console.log("✓ Native splash is color-only; the animated in-app splash keeps the new roof logo, name, and seven-second minimum.");
+console.log("✓ Native splash is color-only; the animated in-app splash keeps the new roof logo, name, and eight-second minimum.");

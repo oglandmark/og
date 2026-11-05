@@ -68,7 +68,6 @@ export default function LoginScreen() {
     <AuthScreenFrame
       topInset={insets.top + (Platform.OS === 'web' ? 67 : 0)}
       bottomInset={insets.bottom + (Platform.OS === 'web' ? 34 : 0)}
-      contentMaxWidth={326}
     >
       <View style={styles.heading}>
         <Text style={[styles.title, { color: colors.foreground }]}>{tr('authLoginHeading')}</Text>

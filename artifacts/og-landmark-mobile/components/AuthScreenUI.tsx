@@ -26,13 +26,11 @@ export function AuthScreenFrame({
   children,
   topInset,
   bottomInset,
-  contentMaxWidth,
   contentGap = 9,
 }: {
   children: ReactNode;
   topInset: number;
   bottomInset: number;
-  contentMaxWidth?: number;
   contentGap?: number;
 }) {
   const colors = useColors();
@@ -121,7 +119,7 @@ export function AuthScreenFrame({
               />
               <Feather name={isRTL ? 'arrow-right' : 'arrow-left'} size={18} color={colors.authGoldText} />
             </Pressable>
-            <View style={[styles.content, { gap: contentGap }, contentMaxWidth ? { maxWidth: contentMaxWidth } : null]}>
+            <View style={[styles.content, { gap: contentGap }]}>
               {children}
             </View>
           </View>

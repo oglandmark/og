@@ -107,9 +107,30 @@ export default function TabLayout() {
   }, [tabBarHidden]);
 
   // Keep the visible navigation compact and let only the safe-area inset extend
-  // behind the Android system navigation / iOS home indicator.
+  // below the floating glass dock into the Android / iOS system area.
   const tabBarHeight     = isWeb ? 92 : 68 + insets.bottom;
   const tabBarPadBottom  = isWeb ? 30 : 6 + insets.bottom;
+  const tabDockStyle = [
+    StyleSheet.absoluteFill,
+    styles.tabGlass,
+    {
+      top: 6,
+      left: 12,
+      right: 12,
+      bottom: isWeb ? 8 : insets.bottom + 6,
+      borderColor: colors.glassBorder,
+    },
+    Platform.OS === 'ios'
+      ? {
+          shadowColor: colors.shadow,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.12,
+          shadowRadius: 18,
+        }
+      : Platform.OS === 'android'
+        ? { elevation: 12 }
+        : {},
+  ];
 
   const isBuyer      = !role || role === 'user' || role === 'buyer';
   const isAgent      = role === 'agent';
@@ -134,12 +155,12 @@ export default function TabLayout() {
           tabBarHideOnKeyboard: true,
           tabBarActiveTintColor:   colors.action,
           tabBarInactiveTintColor: colors.mutedForeground,
-          tabBarItemStyle: { paddingTop: 2, minWidth: 0 },
+          tabBarItemStyle: { paddingTop: 3, minWidth: 0 },
           tabBarStyle: {
             position: 'absolute',
             bottom: 0,
             height: tabBarHeight,
-            paddingTop: 5,
+            paddingTop: 6,
             paddingBottom: tabBarPadBottom,
             backgroundColor: 'transparent',
             borderTopWidth: 0,
@@ -149,10 +170,10 @@ export default function TabLayout() {
             if (Platform.OS === 'android') {
               return (
                 <BlurView
-                  intensity={76}
+                  intensity={84}
                   tint="light"
                   blurMethod="dimezisBlurView"
-                  style={[StyleSheet.absoluteFill, styles.tabGlass, { borderTopColor: colors.glassBorder }]}
+                  style={tabDockStyle}
                 >
                   <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
                   <LinearGradient
@@ -164,8 +185,7 @@ export default function TabLayout() {
             }
             if (Platform.OS === 'web') {
               return (
-                <View style={[StyleSheet.absoluteFill, styles.tabGlass, { borderTopColor: colors.glassBorder }]}>
-                  <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceRaised + '20' }]} />
+                <View style={tabDockStyle}>
                   <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
                   <LinearGradient
                     colors={[colors.actionGlassHighlight, 'transparent']}
@@ -176,9 +196,9 @@ export default function TabLayout() {
             }
             return (
               <BlurView
-                intensity={76}
+                intensity={84}
                 tint="light"
-                style={[StyleSheet.absoluteFill, styles.tabGlass, { borderTopColor: colors.glassBorder }]}
+                style={tabDockStyle}
               >
                 <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
                 <LinearGradient
@@ -272,8 +292,20 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   animatedTabBarFrame: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 20 },
-  tabGlass: { overflow: 'hidden', borderTopWidth: 1, borderTopLeftRadius: 28, borderTopRightRadius: 28 },
-  tabGlassHighlight: { position: 'absolute', top: 0, left: 0, right: 0, height: 34, borderTopLeftRadius: 28, borderTopRightRadius: 28 },
+  tabGlass: {
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderRadius: 30,
+  },
+  tabGlassHighlight: {
+    position: 'absolute',
+    top: 1,
+    left: 1,
+    right: 1,
+    height: 28,
+    borderTopLeftRadius: 29,
+    borderTopRightRadius: 29,
+  },
   tabIconWrap: {
     width: 44,
     height: 32,

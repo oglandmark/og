@@ -48,8 +48,15 @@ test('guest profile keeps six activity rows and five Settings options on the pag
 
 test('guest Profile calls to action match the shared button sizing', () => {
   const profile = read('app/(tabs)/profile.tsx');
-  assert.match(profile, /loginBtn: \{[^}]*borderRadius: 17, minHeight: 58, width: '55%', maxWidth: 180, alignSelf: 'center'/);
-  assert.match(profile, /registerBtn: \{[^}]*borderRadius: 17, minHeight: 57, width: '55%', maxWidth: 180, alignSelf: 'center'/);
+  const loginStyle = profile.match(/^\s+loginBtn: \{([^}]*)\}/m)?.[1] ?? '';
+  const registerStyle = profile.match(/^\s+registerBtn: \{([^}]*)\}/m)?.[1] ?? '';
+  for (const style of [loginStyle, registerStyle]) {
+    assert.match(style, /borderRadius: 14/);
+    assert.match(style, /minHeight: 46/);
+    assert.match(style, /alignSelf: 'center'/);
+    assert.match(style, /paddingHorizontal: 20/);
+    assert.doesNotMatch(style, /width:|maxWidth:/);
+  }
 });
 
 test('guest and signed-in Profile headers animate the shared logo in web preview', () => {

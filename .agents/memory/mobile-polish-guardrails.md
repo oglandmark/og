@@ -13,6 +13,12 @@ Preserve existing bottom-tab destinations, order, and behavior during Profile re
 
 **How to apply:** Update Profile content without rebuilding or rearranging the tabs; apply only requested visual changes to the shared bar.
 
+Guest Profile keeps six locked activity shortcuts and the five public Settings links inline on the same page.
+
+**Why:** The user supplied the desired Profile layout and clarified those options should remain on the page.
+
+**How to apply:** Keep Saved Properties, Saved Searches, Search Alerts, Scheduled Visits, My Inquiries, and Recently Viewed in Your Activity; preserve Language, Help & Support, About, Privacy & Security, and Terms & Privacy below Settings.
+
 **Why:** The user asked to polish property listing and use premium 2D icons.
 
 **How to apply:** Keep iconography consistent across property-type categories, selection tiles, and listing progress, and use semantic colors instead of one-off hardcoded palettes.
@@ -23,7 +29,9 @@ Preserve existing bottom-tab destinations, order, and behavior during Profile re
 
 **Why:** The user requested a looping animation on the OG-and-roof mark in the mobile app, starting ten seconds after each page opens.
 
-**How to apply:** Keep this motion on the shared logo mark, restart its delay when a page gains focus, stop it when focus leaves, and leave the separate wordmark unanimated.
+**How to apply:** Keep this motion on the shared logo mark, restart its delay when a page gains focus, stop it when focus leaves, and leave the separate wordmark unanimated. Nested tab headers should receive the parent screen's focus state explicitly; enable the web animation opt-in where the Replit preview should show it.
+
+**Why:** The Profile header's nested logo stayed static when its own focus hook did not start reliably, and web animation is opt-in for the shared mark.
 
 Native status-bar icons do not support an arbitrary brand tint on iOS or Android; use the OS dark-content mode on a light status-bar area, and preserve intentional hiding in immersive full-screen media.
 

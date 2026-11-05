@@ -703,7 +703,7 @@ const rl = StyleSheet.create({
   row:       { flexDirection: 'row', alignItems: 'center', gap: 13, padding: 14, borderRadius: 16, borderWidth: 1 },
   iconBox:   { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   copy:      { flex: 1 },
-  label:     { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  label:     { fontFamily: 'Inter_500Medium', fontSize: 14 },
   sub:       { fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 1 },
   badge:     { borderRadius: 8, paddingHorizontal: 9, paddingVertical: 4 },
   badgeText: { fontFamily: 'Inter_700Bold', fontSize: 10 },
@@ -876,15 +876,27 @@ function SectionHeader({ title, colors }: { title: string; colors: ReturnType<ty
 
 function GuestScreen({
   colors, router, topInset, tabBarHeight, scrollRef,
+  focused,
 }: {
   colors: ReturnType<typeof useColors>; router: ReturnType<typeof useRouter>;
   topInset: number; tabBarHeight: number; scrollRef: React.RefObject<ScrollView | null>;
+  focused: boolean;
 }) {
   const onScroll = useTabBarScrollHandler();
-  const LOCKED_ITEMS: { icon: keyof typeof Feather.glyphMap; label: string; sub: string; tint: string }[] = [
-    { icon: 'heart', label: 'Saved Properties', sub: 'Your shortlisted homes', tint: colors.gold },
-    { icon: 'search', label: 'Saved Searches', sub: 'Quick-access filters', tint: colors.teal },
-    { icon: 'bell', label: 'Search Alerts', sub: 'Get notified on new matches', tint: colors.primary },
+  const LOCKED_ITEMS: { icon: keyof typeof Feather.glyphMap; label: string; sub: string }[] = [
+    { icon: 'heart', label: 'Saved Properties', sub: 'Your shortlisted properties' },
+    { icon: 'search', label: 'Saved Searches', sub: 'Quick-access search filters' },
+    { icon: 'bell', label: 'Search Alerts', sub: 'Get notified on new matches' },
+    { icon: 'calendar', label: 'Scheduled Visits', sub: 'Track your booked viewings' },
+    { icon: 'message-circle', label: 'My Inquiries', sub: 'Your property inquiries' },
+    { icon: 'eye', label: 'Recently Viewed', sub: 'Properties you have opened' },
+  ];
+  const SETTINGS_ITEMS: { icon: keyof typeof Feather.glyphMap; label: string; sub: string; route: string }[] = [
+    { icon: 'globe', label: 'Language', sub: 'English / اردو', route: '/settings/language' },
+    { icon: 'help-circle', label: 'Help & Support', sub: 'FAQs, contact us', route: '/settings/help' },
+    { icon: 'info', label: 'About OG Landmark', sub: 'Version 1.0', route: '/settings/legal?section=about' },
+    { icon: 'shield', label: 'Privacy & Security', sub: 'How we protect your account', route: '/settings/legal?section=security' },
+    { icon: 'file-text', label: 'Terms & Privacy', sub: 'Legal information', route: '/settings/legal?section=legal' },
   ];
 
   return (
@@ -899,7 +911,7 @@ function GuestScreen({
       {/* Header */}
       <AnimatedReveal>
         <View style={gst.brandHeader}>
-          <BrandMark />
+          <BrandMark animateOnWeb focused={focused} />
           <Pressable testID="guest-settings" accessibilityLabel="Settings" onPress={() => router.push('/settings' as any)}
             style={[gst.settingsButton, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
             <Feather name="settings" size={19} color={colors.foreground} />
@@ -944,8 +956,8 @@ function GuestScreen({
               testID={`guest-shortcut-${item.label.toLowerCase().replaceAll(' ', '-')}`}
               onPress={() => router.push('/(auth)/login' as any)}
               style={({ pressed }) => [gst.activityRow, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, opacity: pressed ? 0.83 : 1 }]}>
-              <View style={[gst.activityIcon, { backgroundColor: item.label === 'Saved Properties' ? colors.gold + '24' : item.label === 'Saved Searches' ? colors.tealSoft : colors.surfaceTint }]}>
-                <Feather name={item.icon} size={22} color={item.tint} />
+              <View style={[gst.activityIcon, { backgroundColor: colors.muted }]}>
+                <Feather name={item.icon} size={22} color={colors.mutedForeground} />
               </View>
               <View style={gst.activityCopy}>
                 <Text style={[gst.activityLabel, { color: colors.foreground }]}>{item.label}</Text>
@@ -953,12 +965,39 @@ function GuestScreen({
               </View>
               <View style={[gst.signInPill, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                 <Feather name="lock" size={12} color={colors.foreground} />
-                <Text style={[gst.signInPillText, { color: colors.foreground }]}>Sign in</Text>
+                <Text style={[gst.signInPillText, { color: colors.foreground }]}>Sign In</Text>
               </View>
             </Pressable>
           ))}
         </View>
       </AnimatedReveal>
+
+      <AnimatedReveal delay={220}>
+        <Text style={[gst.settingsTitle, { color: colors.foreground }]}>Settings</Text>
+        <View style={gst.activityList}>
+          {SETTINGS_ITEMS.map((item) => (
+            <Pressable
+              key={item.label}
+              testID={`guest-setting-${item.label.toLowerCase().replaceAll(' ', '-')}`}
+              accessibilityRole="button"
+              accessibilityLabel={item.label}
+              onPress={() => router.push(item.route as any)}
+              style={({ pressed }) => [gst.activityRow, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, opacity: pressed ? 0.83 : 1 }]}
+            >
+              <View style={[gst.activityIcon, { backgroundColor: colors.muted }]}>
+                <Feather name={item.icon} size={21} color={colors.foreground} />
+              </View>
+              <View style={gst.activityCopy}>
+                <Text style={[gst.activityLabel, { color: colors.foreground }]}>{item.label}</Text>
+                <Text style={[gst.activitySub, { color: colors.mutedForeground }]}>{item.sub}</Text>
+              </View>
+              <Feather name="chevron-right" size={17} color={colors.mutedForeground} />
+            </Pressable>
+          ))}
+        </View>
+      </AnimatedReveal>
+
+      <Text style={[gst.footer, { color: colors.mutedForeground }]}>OG Landmark v1.0 · Guest Mode</Text>
     </ScrollView>
   );
 }
@@ -975,6 +1014,12 @@ export default function ProfileScreen() {
   const { savedIds } = useSaved();
   const onScroll = useTabBarScrollHandler();
   const guestScrollRef = useRef<ScrollView>(null);
+  const [profileFocused, setProfileFocused] = useState(false);
+
+  useFocusEffect(useCallback(() => {
+    setProfileFocused(true);
+    return () => setProfileFocused(false);
+  }, []));
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [profileContent, setProfileContent] = useState<any>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermissionState | null>(null);
@@ -1218,7 +1263,7 @@ export default function ProfileScreen() {
 
   // ── Guest: show dedicated screen with no activity counts ─────────────────
   if (!isLoggedIn) {
-    return <GuestScreen colors={colors} router={router} topInset={topInset} tabBarHeight={tabBarHeight} scrollRef={guestScrollRef} />;
+    return <GuestScreen colors={colors} router={router} topInset={topInset} tabBarHeight={tabBarHeight} scrollRef={guestScrollRef} focused={profileFocused} />;
   }
 
   // ── Profile card values (logged-in only) ─────────────────────────────────
@@ -1259,7 +1304,7 @@ export default function ProfileScreen() {
       <AnimatedReveal>
         <View style={styles.header}>
           <View>
-            <BrandMark />
+            <BrandMark animateOnWeb focused={profileFocused} />
             <Text style={[styles.profileSubtitle, { color: colors.mutedForeground }]}>{profileContent?.subtitle || 'Manage your account and preferences'}</Text>
           </View>
           <View style={styles.headerActions}>
@@ -1480,14 +1525,16 @@ const gst = StyleSheet.create({
   registerBtn: { borderWidth: 1, borderRadius: 17, minHeight: 57, width: '100%', alignItems: 'center', justifyContent: 'center', marginTop: 11, backgroundColor: '#ffffff12' },
   registerBtnText: { fontFamily: 'Inter_500Medium', fontSize: 15 },
   activityTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 19, letterSpacing: -0.25, marginBottom: 12 },
+  settingsTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 19, letterSpacing: -0.25, marginTop: 27, marginBottom: 12 },
   activityList: { gap: 9 },
   activityRow: { minHeight: 78, borderWidth: 1, borderRadius: 18, paddingHorizontal: 13, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12 },
   activityIcon: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   activityCopy: { flex: 1 },
-  activityLabel: { fontFamily: 'Inter_500Medium', fontSize: 14 },
+  activityLabel: { fontFamily: 'Inter_400Regular', fontSize: 14 },
   activitySub: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, marginTop: 4 },
   signInPill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 18, paddingHorizontal: 10, paddingVertical: 7 },
-  signInPillText: { fontFamily: 'Inter_500Medium', fontSize: 11 },
+  signInPillText: { fontFamily: 'Inter_400Regular', fontSize: 11 },
+  footer: { fontFamily: 'Inter_400Regular', fontSize: 11, textAlign: 'center', marginTop: 27, marginBottom: 8 },
 });
 
 const styles = StyleSheet.create({

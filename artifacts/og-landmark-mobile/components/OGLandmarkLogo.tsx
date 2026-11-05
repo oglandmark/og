@@ -1,5 +1,5 @@
 /** OG Landmark roof-and-OG brand mark in teal and landmark gold. */
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Defs, G, LinearGradient, Path, Stop, Svg } from 'react-native-svg';
 import { useFocusEffect } from 'expo-router';
 import { Platform } from 'react-native';
@@ -39,41 +39,55 @@ export function OGLandmarkLogo({
   size = 80,
   inverse = false,
   animateOnWeb = false,
+  focused,
 }: {
   size?: number;
   inverse?: boolean;
   animateOnWeb?: boolean;
+  focused?: boolean;
 }) {
   const colors = useColors();
   const reduceMotion = useReducedMotion();
   const timeline = useSharedValue(8);
   const gradientId = React.useId().replace(/:/g, '');
 
+  const startAnimation = useCallback(() => {
+    cancelAnimation(timeline);
+    timeline.value = 8;
+    if ((Platform.OS === 'web' && !animateOnWeb) || reduceMotion) return;
+    timeline.value = withDelay(
+      10_000,
+      withRepeat(
+        withSequence(
+          withTiming(0, { duration: 1 }),
+          withTiming(8, { duration: 8000, easing: Easing.linear }),
+        ),
+        -1,
+        false,
+      ),
+    );
+  }, [animateOnWeb, reduceMotion, timeline]);
+  const stopAnimation = useCallback(() => {
+    cancelAnimation(timeline);
+    timeline.value = 8;
+  }, [timeline]);
+
   useFocusEffect(
     useCallback(() => {
-      cancelAnimation(timeline);
-      timeline.value = 8;
-
-      if ((Platform.OS === 'web' && !animateOnWeb) || reduceMotion) return undefined;
-
-      timeline.value = withDelay(
-        10_000,
-        withRepeat(
-          withSequence(
-            withTiming(0, { duration: 1 }),
-            withTiming(8, { duration: 8000, easing: Easing.linear }),
-          ),
-          -1,
-          false,
-        ),
-      );
-
-      return () => {
-        cancelAnimation(timeline);
-        timeline.value = 8;
-      };
-    }, [animateOnWeb, reduceMotion, timeline]),
+      if (focused !== undefined) return undefined;
+      startAnimation();
+      return stopAnimation;
+    }, [focused, startAnimation, stopAnimation]),
   );
+  useEffect(() => {
+    if (focused === undefined) return undefined;
+    if (!focused) {
+      stopAnimation();
+      return undefined;
+    }
+    startAnimation();
+    return stopAnimation;
+  }, [focused, startAnimation, stopAnimation]);
 
   const oAnimatedProps = useAnimatedProps(() => ({
     strokeDashoffset:

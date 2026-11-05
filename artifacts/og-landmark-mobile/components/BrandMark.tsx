@@ -9,15 +9,24 @@ export function BrandMark({
   inverse = false,
   size = 'default',
   showName = true,
+  animateOnWeb = false,
+  focused,
 }: {
   inverse?: boolean;
   size?: 'default' | 'hero';
   showName?: boolean;
+  animateOnWeb?: boolean;
+  focused?: boolean;
 }) {
   const colors = useColors();
   return (
     <View style={[styles.container, size === 'hero' && styles.heroContainer]}>
-      <OGLandmarkLogo size={size === 'hero' ? (!showName ? 116 : 68) : 46} inverse={inverse} />
+      <OGLandmarkLogo
+        size={size === 'hero' ? (!showName ? 116 : 68) : 46}
+        inverse={inverse}
+        animateOnWeb={animateOnWeb}
+        focused={focused}
+      />
       {showName && (
         <View>
           <Text style={[styles.title, { color: inverse ? colors.background : colors.action }, size === 'hero' && styles.heroTitle]}>OG Landmark</Text>

@@ -17,15 +17,26 @@ test('profile redesign keeps the existing bottom tab configuration intact', () =
   assert.match(tabs, /Inter_500Medium/);
 });
 
-test('guest profile uses the light welcome-card layout and three locked activity rows', () => {
+test('guest profile keeps six activity rows and five Settings options on the page', () => {
   const profile = read('app/(tabs)/profile.tsx');
-  for (const text of ['Saved Properties', 'Saved Searches', 'Search Alerts', 'Your Activity', 'Sign in to unlock your profile']) {
+  for (const text of [
+    'Saved Properties', 'Saved Searches', 'Search Alerts', 'Scheduled Visits',
+    'My Inquiries', 'Recently Viewed', 'Your Activity', 'Settings',
+    'Language', 'Help & Support', 'About OG Landmark', 'Privacy & Security', 'Terms & Privacy',
+    'OG Landmark v1.0 · Guest Mode',
+  ]) {
     assert.ok(profile.includes(text), `guest profile is missing ${text}`);
   }
   assert.match(profile, /backgroundColor: colors\.surfaceTint/);
   assert.match(profile, /<LinearGradient/);
-  assert.equal((profile.match(/label: 'Saved Properties'|label: 'Saved Searches'|label: 'Search Alerts'/g) || []).length, 3);
-  assert.ok(!profile.includes("label: 'Visits'"));
+  const activityItems = profile.match(/const LOCKED_ITEMS:[\s\S]*?\n  \];/)?.[0] ?? '';
+  const settingsItems = profile.match(/const SETTINGS_ITEMS:[\s\S]*?\n  \];/)?.[0] ?? '';
+  assert.equal((activityItems.match(/^\s+\{ icon:/gm) || []).length, 6);
+  assert.equal((settingsItems.match(/^\s+\{ icon:/gm) || []).length, 5);
+  for (const route of ['/settings/language', '/settings/help', '/settings/legal?section=about', '/settings/legal?section=security', '/settings/legal?section=legal']) {
+    assert.ok(settingsItems.includes(route), `guest Settings is missing ${route}`);
+  }
+  assert.match(profile, /router\.push\(item\.route as any\)/);
   assert.match(profile, /guest-settings/);
   assert.match(profile, /guestScrollRef\.current\?\.scrollTo\(\{ y: 0, animated: false \}\)/);
   assert.match(profile, /ref=\{scrollRef\}/);
@@ -35,10 +46,23 @@ test('guest profile uses the light welcome-card layout and three locked activity
   assert.ok(profile.includes("router.push('/(auth)/signup'"));
 });
 
+test('guest and signed-in Profile headers animate the shared logo in web preview', () => {
+  const profile = read('app/(tabs)/profile.tsx');
+  const brandMark = read('components/BrandMark.tsx');
+  assert.equal((profile.match(/<BrandMark animateOnWeb focused=\{profileFocused\} \/>/g) || []).length, 1);
+  assert.equal((profile.match(/<BrandMark animateOnWeb focused=\{focused\} \/>/g) || []).length, 1);
+  assert.match(profile, /setProfileFocused\(true\)/);
+  assert.match(brandMark, /animateOnWeb\?: boolean/);
+  assert.match(brandMark, /animateOnWeb=\{animateOnWeb\}/);
+  assert.match(brandMark, /focused=\{focused\}/);
+});
+
 test('activity and Settings options use a restrained, professional card hierarchy', () => {
   const profile = read('app/(tabs)/profile.tsx');
   const settings = read('app/settings/index.tsx');
-  assert.match(profile, /activityLabel: \{ fontFamily: 'Inter_500Medium'/);
+  assert.match(profile, /activityLabel: \{ fontFamily: 'Inter_400Regular'/);
+  assert.match(profile, /label:\s+\{ fontFamily: 'Inter_500Medium', fontSize: 14 \}/);
+  assert.match(profile, /signInPillText: \{ fontFamily: 'Inter_400Regular'/);
   assert.match(profile, /signInPill: \{[^}]*borderWidth: 1/);
   assert.match(settings, /backgroundColor: colors\.surfaceTint/);
   assert.match(settings, /rowTitle: \{ fontFamily: 'Inter_500Medium'/);

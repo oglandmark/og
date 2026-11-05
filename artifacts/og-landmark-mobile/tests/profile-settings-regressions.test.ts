@@ -53,7 +53,7 @@ test('guest Profile calls to action match the shared button sizing', () => {
   for (const style of [loginStyle, registerStyle]) {
     assert.match(style, /borderRadius: 14/);
     assert.match(style, /minHeight: 46/);
-    assert.match(style, /width: 170/);
+    assert.match(style, /width: 270/);
     assert.match(style, /alignSelf: 'center'/);
     assert.match(style, /paddingHorizontal: 20/);
   }

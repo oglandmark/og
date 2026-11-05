@@ -57,14 +57,14 @@ export function StartupSplash({
   const hintProgress = useSharedValue(reduceMotion ? 1 : 0);
 
   const outerRingStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${outerRotation.value}deg` }],
+    transform: [{ rotate: `${outerRotation.value}deg` }, { scale: 0.88 }],
   }));
   const innerRingStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${innerRotation.value}deg` }],
+    transform: [{ rotate: `${innerRotation.value}deg` }, { scale: 0.84 }],
   }));
   const haloStyle = useAnimatedStyle(() => ({
     opacity: 0.3 + Math.min(0.45, roofProgress.value * 0.45),
-    transform: [{ scale: 0.78 + Math.min(0.32, roofProgress.value * 0.32) }],
+    transform: [{ scale: 0.78 + Math.min(0.2, roofProgress.value * 0.2) }],
   }));
   const wordmarkStyle = useAnimatedStyle(() => ({
     opacity: wordmarkProgress.value,
@@ -271,20 +271,20 @@ export function StartupSplash({
         </Animated.View>
 
         <Animated.View style={[styles.halo, haloStyle]}>
-          <Svg width={220} height={220} viewBox="0 0 220 220">
+          <Svg width={190} height={190} viewBox="0 0 190 190">
             <Defs>
-              <RadialGradient id="splashHalo" cx="110" cy="110" r="110" gradientUnits="userSpaceOnUse">
+              <RadialGradient id="splashHalo" cx="95" cy="95" r="95" gradientUnits="userSpaceOnUse">
                 <Stop offset="0" stopColor={colors.splashTeal} stopOpacity={0.3} />
                 <Stop offset="1" stopColor={colors.splashTeal} stopOpacity={0} />
               </RadialGradient>
             </Defs>
-            <Circle cx={110} cy={110} r={110} fill="url(#splashHalo)" />
+            <Circle cx={95} cy={95} r={95} fill="url(#splashHalo)" />
           </Svg>
         </Animated.View>
 
         <Svg
-          width={260}
-          height={189}
+          width={220}
+          height={160}
           viewBox="0 -8 220 160"
           accessibilityLabel="OG Landmark roof logo"
           style={styles.logo}
@@ -443,15 +443,15 @@ const styles = StyleSheet.create({
   },
   halo: {
     position: 'absolute',
-    left: 85,
-    top: 220,
-    width: 220,
-    height: 220,
+    left: 100,
+    top: 235,
+    width: 190,
+    height: 190,
   },
   logo: {
     position: 'absolute',
-    left: 65,
-    top: 236,
+    left: 85,
+    top: 250,
   },
   wordmark: {
     position: 'absolute',
@@ -464,19 +464,19 @@ const styles = StyleSheet.create({
     height: 34,
   },
   wordmarkOg: {
-    fontSize: 27,
+    fontSize: 24,
     fontWeight: '800',
     letterSpacing: 1,
-    lineHeight: 30,
+    lineHeight: 27,
   },
   wordmarkGap: {
-    width: 14,
+    width: 12,
   },
   wordmarkLandmark: {
-    fontSize: 27,
+    fontSize: 24,
     fontWeight: '600',
     letterSpacing: 1.2,
-    lineHeight: 30,
+    lineHeight: 27,
   },
   divider: {
     position: 'absolute',

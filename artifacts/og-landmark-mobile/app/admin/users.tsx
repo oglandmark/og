@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import {
   createAdminUser,
@@ -23,8 +24,8 @@ import {
   ApiUser,
 } from '@/lib/api';
 
-const NAVY = '#0B1F3A';
-const GOLD = '#C8A45A';
+const NAVY = brandColors.light.action;
+const GOLD = brandColors.light.gold;
 
 const ROLE_COLORS: Record<string, string> = {
   Admin: '#7c3aed', Agent: '#1e40af', Developer: '#0e7490', User: '#15803d',

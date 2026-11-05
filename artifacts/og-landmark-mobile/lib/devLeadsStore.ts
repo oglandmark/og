@@ -4,6 +4,7 @@
  * Leads are persisted to the authenticated backend account.
  */
 import { apiRequest } from '@/lib/api';
+import brandColors from '@/constants/colors';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -49,7 +50,7 @@ export type DevLead = {
 export const DEV_STAGE_CONFIG: Record<DevLeadStatus, { color: string; label: string }> = {
   new:         { color: '#059669', label: 'New' },
   contacted:   { color: '#0B1F3A', label: 'Contacted' },
-  interested:  { color: '#c8a45a', label: 'Interested' },
+  interested:  { color: brandColors.light.gold, label: 'Interested' },
   site_visit:  { color: '#7c3aed', label: 'Site Visit' },
   negotiation: { color: '#0891b2', label: 'Negotiation' },
   booking:     { color: '#f59e0b', label: 'Booking' },

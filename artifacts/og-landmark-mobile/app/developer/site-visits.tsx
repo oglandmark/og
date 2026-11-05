@@ -174,9 +174,9 @@ export default function SiteVisitsScreen() {
             <View style={[sv.actions, { marginTop: 12 }]}>
               {canConfirm && (
                 <Pressable onPress={() => { void handleAction(visit, 'confirm'); }}
-                  style={[sv.actionBtn, { backgroundColor: '#183B6018' }]}>
-                  <Feather name="check" size={12} color="#183B60" />
-                  <Text style={[sv.actionBtnText, { color: '#183B60' }]}>{tr('visitActionConfirm')}</Text>
+                  style={[sv.actionBtn, { backgroundColor: colors.selectionBackground }]}>
+                  <Feather name="check" size={12} color={colors.action} />
+                  <Text style={[sv.actionBtnText, { color: colors.action }]}>{tr('visitActionConfirm')}</Text>
                 </Pressable>
               )}
               {canReschedule && (
@@ -188,9 +188,9 @@ export default function SiteVisitsScreen() {
               )}
               {canComplete && (
                 <Pressable onPress={() => { void handleAction(visit, 'complete'); }}
-                  style={[sv.actionBtn, { backgroundColor: '#c8a45a18' }]}>
-                  <Feather name="check-circle" size={12} color="#c8a45a" />
-                  <Text style={[sv.actionBtnText, { color: '#c8a45a' }]}>{tr('visitActionComplete')}</Text>
+                  style={[sv.actionBtn, { backgroundColor: colors.gold + '18' }]}>
+                  <Feather name="check-circle" size={12} color={colors.goldForeground} />
+                  <Text style={[sv.actionBtnText, { color: colors.goldForeground }]}>{tr('visitActionComplete')}</Text>
                 </Pressable>
               )}
               {canReject && (

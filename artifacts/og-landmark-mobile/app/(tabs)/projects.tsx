@@ -13,6 +13,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // BlurView removed — crashes Android GPU
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
@@ -109,8 +110,8 @@ function ProjectCard({
       <View style={card.statsRow}>
         {[
           { label: tr('unitsTotal'),    value: project.totalUnits,     color: colors.foreground },
-          { label: tr('availableLabel'),value: project.availableUnits, color: '#183B60' },
-          { label: tr('reservedLabel'), value: project.reservedUnits,  color: '#c8a45a' },
+          { label: tr('availableLabel'),value: project.availableUnits, color: brandColors.light.action },
+          { label: tr('reservedLabel'), value: project.reservedUnits,  color: brandColors.light.gold },
           { label: tr('soldLabel'),     value: project.soldUnits,      color: '#0B1F3A' },
         ].map((stat) => (
           <View key={stat.label} style={card.stat}>

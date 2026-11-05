@@ -1,6 +1,8 @@
 export const MAP_AREA_RANGE_STEPS = [0.4, 0.9, 4, 10] as const;
-export const MAP_AREA_BLUE = '#2F6F9F';
-export const MAP_AREA_BLUE_FILL = 'rgba(47,111,159,0.14)';
+import brandColors from '@/constants/colors';
+
+export const MAP_AREA_COLOR = brandColors.light.teal;
+export const MAP_AREA_COLOR_FILL = `${brandColors.light.teal}24`;
 export const MAP_AREA_MIN_KM = MAP_AREA_RANGE_STEPS[0];
 export const MAP_AREA_MAX_KM = MAP_AREA_RANGE_STEPS[MAP_AREA_RANGE_STEPS.length - 1];
 export const MAP_AREA_DEFAULT_KM = 4;

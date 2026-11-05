@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import {
   getAdminStats, AdminStats,
   getDeveloperAdminAnalytics, DeveloperAdminAnalytics,
@@ -275,7 +276,7 @@ export default function AdminDashboard() {
 const s = StyleSheet.create({
   root:         { flex: 1 },
   header:       { paddingHorizontal: 22, paddingBottom: 24, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
-  greeting:     { fontFamily: 'Inter_600SemiBold', fontSize: 10, color: '#D9C99E', letterSpacing: 1.3, textTransform: 'uppercase' },
+  greeting:     { fontFamily: 'Inter_600SemiBold', fontSize: 10, color: brandColors.light.gold, letterSpacing: 1.3, textTransform: 'uppercase' },
   adminName:    { fontFamily: 'PlayfairDisplay_500Medium', fontSize: 23, color: '#FFFEFB', marginTop: 4 },
   logoutBtn:    { width: 40, height: 40, borderRadius: 13, backgroundColor: '#FFFEFB18', alignItems: 'center', justifyContent: 'center' },
   statsGrid:    { flexDirection: 'row', flexWrap: 'wrap', padding: 16, gap: 10 },

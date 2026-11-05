@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import brandColors from '@/constants/colors';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import {
   TeamMember, TeamRole, TEAM_ROLES, newMemberId, roleColor,
@@ -245,9 +246,9 @@ export default function TeamScreen() {
                     {/* Actions */}
                     <View style={[tm.memberActions, { borderTopColor: colors.border }]}>
                       <Pressable onPress={() => { void handleToggle(m.id); }}
-                        style={[tm.memberActionBtn, { backgroundColor: m.active ? colors.secondary : '#183B6018' }]}>
-                        <Feather name={m.active ? 'pause-circle' : 'play-circle'} size={13} color={m.active ? colors.mutedForeground : '#183B60'} />
-                        <Text style={[tm.memberActionText, { color: m.active ? colors.mutedForeground : '#183B60' }]}>
+                        style={[tm.memberActionBtn, { backgroundColor: m.active ? colors.secondary : brandColors.light.selectionBackground }]}>
+                        <Feather name={m.active ? 'pause-circle' : 'play-circle'} size={13} color={m.active ? colors.mutedForeground : colors.action} />
+                        <Text style={[tm.memberActionText, { color: m.active ? colors.mutedForeground : colors.action }]}>
                           {m.active ? tr('teamInactiveLabel') : tr('teamActiveLabel')}
                         </Text>
                       </Pressable>

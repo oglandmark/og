@@ -3,6 +3,7 @@
  * Site visits are persisted to the authenticated backend account.
  */
 import { apiRequest } from '@/lib/api';
+import brandColors from '@/constants/colors';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -39,8 +40,8 @@ export type SiteVisit = {
 
 export function visitStatusColor(status: VisitStatus): { bg: string; text: string } {
   switch (status) {
-    case 'Requested':    return { bg: '#c8a45a18', text: '#c8a45a' };
-    case 'Confirmed':    return { bg: '#183B6018', text: '#183B60' };
+    case 'Requested':    return { bg: brandColors.light.gold + '18', text: brandColors.light.goldForeground };
+    case 'Confirmed':    return { bg: brandColors.light.selectionBackground, text: brandColors.light.action };
     case 'Rescheduled':  return { bg: '#0891b218', text: '#0891b2' };
     case 'Completed':    return { bg: '#10293818', text: '#0B1F3A' };
     case 'Cancelled':    return { bg: '#dc262618', text: '#dc2626' };

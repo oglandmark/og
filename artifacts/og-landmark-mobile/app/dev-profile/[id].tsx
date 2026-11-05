@@ -11,6 +11,7 @@ import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { DeveloperProject, formatPKR, getDevProjectById, getDevProjects, statusColor } from '@/lib/developerStore';
 
@@ -168,7 +169,7 @@ export default function DeveloperProfileScreen() {
         </View>
 
         <View style={styles.verifiedRow}>
-          <Feather name="check-circle" size={13} color="#c8a45a" />
+          <Feather name="check-circle" size={13} color={colors.gold} />
           <Text style={styles.verifiedText}>Verified Developer</Text>
         </View>
         <Text style={styles.devName}>{devInfo.companyName}</Text>
@@ -242,10 +243,10 @@ export default function DeveloperProfileScreen() {
       </View>
 
       {/* ── VERIFICATION CARD ─────────────────────────────────────────── */}
-      <View style={[styles.verCard, { backgroundColor: '#183B6008', borderColor: '#183B6020' }]}>
+      <View style={[styles.verCard, { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder + '33' }]}>
         <View style={styles.verHeader}>
-          <Feather name="shield" size={16} color="#183B60" />
-          <Text style={[styles.verTitle, { color: '#183B60' }]}>Why is this developer verified?</Text>
+          <Feather name="shield" size={16} color={colors.action} />
+          <Text style={[styles.verTitle, { color: colors.action }]}>Why is this developer verified?</Text>
         </View>
         {[
           'Company information reviewed',
@@ -254,7 +255,7 @@ export default function DeveloperProfileScreen() {
           'Legal & NOC status checked',
         ].map((c) => (
           <View key={c} style={styles.verItem}>
-            <Feather name="check-circle" size={12} color="#183B60" />
+            <Feather name="check-circle" size={12} color={colors.action} />
             <Text style={[styles.verItemText, { color: colors.foreground }]}>{c}</Text>
           </View>
         ))}
@@ -313,11 +314,11 @@ const styles = StyleSheet.create({
   logoWrap:    { width: 88, height: 88, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: 'rgba(255,255,255,0.3)', marginBottom: 12, marginTop: 8 },
   logoInitials:{ fontFamily: 'Inter_700Bold', fontSize: 32, color: '#1c2024' },
   verifiedRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 6 },
-  verifiedText:{ fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#c8a45a' },
+  verifiedText:{ fontFamily: 'Inter_600SemiBold', fontSize: 11, color: brandColors.light.gold },
   devName:     { fontFamily: 'Inter_700Bold', fontSize: 22, color: '#ffffff', textAlign: 'center', letterSpacing: -0.3 },
   devType:     { fontFamily: 'Inter_400Regular', fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
-  sampleBadge: { marginTop: 10, backgroundColor: 'rgba(200,164,90,0.3)', borderRadius: 5, paddingHorizontal: 10, paddingVertical: 4 },
-  sampleText:  { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1, color: '#c8a45a' },
+  sampleBadge: { marginTop: 10, backgroundColor: brandColors.light.gold + '4D', borderRadius: 5, paddingHorizontal: 10, paddingVertical: 4 },
+  sampleText:  { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1, color: brandColors.light.gold },
   // Stats
   statsCard:   { flexDirection: 'row', margin: 18, borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
   statItem:    { flex: 1, alignItems: 'center', paddingVertical: 16 },

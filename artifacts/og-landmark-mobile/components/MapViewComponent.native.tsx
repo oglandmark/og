@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { ExpoGoMapFallback } from '@/components/ExpoGoMapFallback';
 import { getCurrentPosition } from '@/lib/locationService';
+import brandColors from '@/constants/colors';
 
 interface StaticMapProps {
   latitude?: number;
@@ -139,7 +140,7 @@ export function InteractiveMap({
           accessibilityRole="button"
           accessibilityLabel="Center map on my location"
         >
-          <Feather name="crosshair" size={18} color="#c8a45a" />
+          <Feather name="crosshair" size={18} color={brandColors.light.gold} />
         </Pressable>
       )}
     </View>
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
   myLocBtn: {
     position: 'absolute', bottom: 16, right: 12, width: 42, height: 42,
     borderRadius: 21, backgroundColor: '#ffffff', borderWidth: 1.5,
-    borderColor: '#c8a45a', alignItems: 'center', justifyContent: 'center',
+    borderColor: brandColors.light.gold, alignItems: 'center', justifyContent: 'center',
     shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 }, elevation: 5,
   },

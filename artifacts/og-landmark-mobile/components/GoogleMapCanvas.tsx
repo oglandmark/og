@@ -5,6 +5,7 @@ import MapView, { Circle, Marker, PROVIDER_GOOGLE, type Region } from 'react-nat
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { MapViewModeControl, type MapViewMode } from '@/components/MapViewModeControl';
 import { getCurrentPosition } from '@/lib/locationService';
+import brandColors from '@/constants/colors';
 
 export interface GoogleMapPoint {
   id?: string | number;
@@ -324,7 +325,7 @@ export function GoogleMapCanvas({
           accessibilityRole="button"
           accessibilityLabel="Center map on my location"
         >
-          <Feather name="crosshair" size={18} color="#c8a45a" />
+          <Feather name="crosshair" size={18} color={brandColors.light.gold} />
         </Pressable>
       )}
     </View>
@@ -360,7 +361,7 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     backgroundColor: '#ffffff',
     borderWidth: 1.5,
-    borderColor: '#c8a45a',
+    borderColor: brandColors.light.gold,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -411,7 +412,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: 9,
     borderWidth: 1.5,
-    borderColor: '#c8a45a',
+    borderColor: brandColors.light.gold,
     backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
@@ -430,7 +431,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 8,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderTopColor: '#c8a45a',
+    borderTopColor: brandColors.light.gold,
     marginTop: -1,
   },
 });

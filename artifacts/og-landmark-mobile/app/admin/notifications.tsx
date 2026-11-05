@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import {
   createAdminAnnouncement,
   getAdminAnnouncements,
@@ -12,8 +13,8 @@ import {
   type AdminAnnouncement,
 } from '@/lib/api';
 
-const NAVY = '#0B1F3A';
-const GOLD = '#C8A45A';
+const NAVY = brandColors.light.action;
+const GOLD = brandColors.light.gold;
 
 export default function AdminNotifications() {
   const colors = useColors();

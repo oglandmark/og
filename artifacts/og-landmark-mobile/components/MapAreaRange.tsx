@@ -4,8 +4,8 @@ import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import {
   formatMapAreaRange,
-  MAP_AREA_BLUE,
-  MAP_AREA_BLUE_FILL,
+  MAP_AREA_COLOR,
+  MAP_AREA_COLOR_FILL,
   MAP_AREA_MAX_KM,
   MAP_AREA_MIN_KM,
   MAP_AREA_RANGE_STEPS,
@@ -14,8 +14,8 @@ import {
 
 export {
   formatMapAreaRange,
-  MAP_AREA_BLUE,
-  MAP_AREA_BLUE_FILL,
+  MAP_AREA_COLOR,
+  MAP_AREA_COLOR_FILL,
   MAP_AREA_MAX_KM,
   MAP_AREA_MIN_KM,
   MAP_AREA_RANGE_STEPS,
@@ -69,16 +69,16 @@ export function MapAreaRange({ value, onChange, onChangeEnd, onApply, resultCoun
     ]}>
         <View style={styles.header}>
         <View style={styles.labelWrap}>
-            <View style={[styles.iconWrap, { backgroundColor: `${MAP_AREA_BLUE}16` }]}>
-              <Feather name="map-pin" size={13} color={MAP_AREA_BLUE} />
+            <View style={[styles.iconWrap, { backgroundColor: `${MAP_AREA_COLOR}16` }]}>
+              <Feather name="map-pin" size={13} color={MAP_AREA_COLOR} />
             </View>
             <View>
               <Text style={[styles.label, { color: colors.foreground }]}>Area Range</Text>
               <Text style={[styles.helper, { color: colors.mutedForeground }]}>Drag to expand the search area</Text>
             </View>
         </View>
-          <View style={[styles.valuePill, { backgroundColor: `${MAP_AREA_BLUE}10`, borderColor: `${MAP_AREA_BLUE}28` }]}>
-            <Text style={[styles.value, { color: MAP_AREA_BLUE }]}>{formatMapAreaRange(safeValue)}</Text>
+          <View style={[styles.valuePill, { backgroundColor: `${MAP_AREA_COLOR}10`, borderColor: `${MAP_AREA_COLOR}28` }]}>
+            <Text style={[styles.value, { color: MAP_AREA_COLOR }]}>{formatMapAreaRange(safeValue)}</Text>
           </View>
       </View>
       <View
@@ -111,7 +111,7 @@ export function MapAreaRange({ value, onChange, onChangeEnd, onApply, resultCoun
                 styles.tick,
                 {
                   left: `${((step - MAP_AREA_MIN_KM) / (MAP_AREA_MAX_KM - MAP_AREA_MIN_KM)) * 100}%`,
-                  backgroundColor: step <= safeValue ? MAP_AREA_BLUE : colors.border,
+                  backgroundColor: step <= safeValue ? MAP_AREA_COLOR : colors.border,
                 },
               ]}
             />
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   value: { fontFamily: 'Inter_700Bold', fontSize: 11 },
   trackHitArea: { paddingTop: 14, paddingBottom: 5, position: 'relative' },
   track: { height: 6, borderRadius: 4, position: 'relative' },
-  fill: { height: 6, borderRadius: 4, backgroundColor: MAP_AREA_BLUE },
+  fill: { height: 6, borderRadius: 4, backgroundColor: MAP_AREA_COLOR },
   tick: {
     position: 'absolute',
     top: 0,
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: MAP_AREA_BLUE,
+    backgroundColor: MAP_AREA_COLOR,
     borderWidth: 3,
     borderColor: '#FFFFFF',
     shadowColor: '#0B1F3A',

@@ -3,7 +3,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { LocalizedText as Text } from '@/components/LocalizedText';
-import { MapAreaRange, MAP_AREA_BLUE } from '@/components/MapAreaRange';
+import { MapAreaRange, MAP_AREA_COLOR } from '@/components/MapAreaRange';
+import brandColors from '@/constants/colors';
 import {
   countPointsWithinRadius,
   MAP_AREA_DEFAULT_KM,
@@ -154,7 +155,7 @@ export function ExploreMapView({
         >
           <FontAwesome5 name="map-marked-alt" size={16} color="#0B1F3A" />
           <View>
-            <Text style={[styles.mapContextKicker, { color: '#987332' }]}>LIVE LISTINGS</Text>
+            <Text style={[styles.mapContextKicker, { color: colors?.goldForeground ?? brandColors.light.goldForeground }]}>LIVE LISTINGS</Text>
             <Text style={[styles.mapContextTitle, { color: '#0B1F3A' }]}>Explore the area</Text>
           </View>
         </View>
@@ -167,7 +168,7 @@ export function ExploreMapView({
           borderColor: colors?.border ?? '#d6e0e8',
         }]}
       >
-        <View style={[styles.countDot, { backgroundColor: MAP_AREA_BLUE }]} />
+        <View style={[styles.countDot, { backgroundColor: MAP_AREA_COLOR }]} />
         <Text style={[styles.countText, { color: colors?.foreground ?? '#0B1F3A' }]}>
           {areaPropertyCount} on map
         </Text>
@@ -179,7 +180,7 @@ export function ExploreMapView({
             backgroundColor: colors?.card ?? '#ffffff',
             borderColor: colors?.border ?? '#d6e0e8',
           }]}>
-            <Feather name="map-pin" size={18} color={colors?.primary ?? '#c8a45a'} />
+            <Feather name="map-pin" size={18} color={colors?.primary ?? brandColors.light.primary} />
             <Text style={[styles.mapEmptyTitle, { color: colors?.foreground ?? '#0B1F3A' }]}>
               No listings in this area
             </Text>

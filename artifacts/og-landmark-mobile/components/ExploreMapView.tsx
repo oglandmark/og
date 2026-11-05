@@ -17,7 +17,7 @@ import { MapAreaRange } from '@/components/MapAreaRange';
 import {
   createMapAreaRadiusMessage,
   MAP_AREA_DEFAULT_KM,
-  MAP_AREA_BLUE,
+  MAP_AREA_COLOR,
   mapAreaRadiusMeters,
   normalizeMapAreaRange,
 } from '@/components/mapRadius';
@@ -26,6 +26,7 @@ import {
   setMapViewModeForFrame,
 } from '@/components/MapViewModes';
 import { MapViewModeControl, type MapViewMode } from '@/components/MapViewModeControl';
+import brandColors from '@/constants/colors';
 
 const MAPBOX_ACCESS_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
 
@@ -97,6 +98,7 @@ function buildExploreHtml(
   channel = 'og-explore-map',
   mapGlass = 'rgba(255, 255, 255, 0.78)',
   mapGlassBorder = 'rgba(255, 255, 255, 0.88)',
+  palette = brandColors.light,
 ) {
   const validProps = properties.filter(
     (p) => p.lat && p.lng && isFinite(p.lat!) && isFinite(p.lng!)
@@ -183,12 +185,12 @@ function buildExploreHtml(
       position:absolute;left:50%;bottom:7px;transform:translateX(-50%);
       background:#ffffff;color:#0B1F3A;font-size:11px;font-weight:700;
       padding:4px 8px;border-radius:10px;white-space:nowrap;
-      box-shadow:0 2px 6px rgba(0,0,0,0.4);border:1.5px solid #c8a45a;cursor:pointer;
+      box-shadow:0 2px 6px rgba(0,0,0,0.4);border:1.5px solid ${palette.gold};cursor:pointer;
     }
     .og-pin-tip{
       position:absolute;top:calc(100% - 1px);left:50%;transform:translateX(-50%);
       width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;
-      border-top:8px solid #c8a45a;
+      border-top:8px solid ${palette.gold};
     }
     .og-pin-tip:after{
       content:'';position:absolute;left:-5.5px;top:-8px;width:0;height:0;
@@ -196,11 +198,11 @@ function buildExploreHtml(
       border-top:6px solid #ffffff;
     }
     .og-pin-sel{
-      background:#c8a45a;color:#0B1F3A;border-color:#e8c870;
-      box-shadow:0 3px 10px rgba(200,164,90,0.5);
+      background:${palette.gold};color:${palette.goldForeground};border-color:${palette.goldGlassBorder};
+      box-shadow:0 3px 10px ${palette.gold}80;
     }
-    .og-pin-sel .og-pin-tip{border-top-color:#e8c870;}
-    .og-pin-sel .og-pin-tip:after{border-top-color:#c8a45a;}
+    .og-pin-sel .og-pin-tip{border-top-color:${palette.goldGlassBorder};}
+    .og-pin-sel .og-pin-tip:after{border-top-color:${palette.gold};}
     .og-user{
       width:18px;height:18px;border-radius:9px;background:rgba(66,133,244,0.3);
       display:flex;align-items:center;justify-content:center;
@@ -210,7 +212,7 @@ function buildExploreHtml(
     }
     .og-cluster{
       width:42px;height:42px;border-radius:21px;display:flex;align-items:center;justify-content:center;
-      background:#c8a45a;color:#0B1F3A;border:3px solid #f2d996;
+      background:${palette.gold};color:${palette.goldForeground};border:3px solid ${palette.goldGlassBorder};
       font-size:12px;font-weight:900;box-shadow:0 7px 18px rgba(0,0,0,.45);
     }
     .og-popup .leaflet-popup-content-wrapper{
@@ -223,16 +225,16 @@ function buildExploreHtml(
      .og-pop-title{font-size:14px;font-weight:800;color:#0B1F3A;margin-bottom:6px;}
     .og-pop-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
     .og-pop-tag{
-      font-size:10px;font-weight:700;color:#c8a45a;background:rgba(200,164,90,0.12);
-      border:1px solid rgba(200,164,90,0.4);border-radius:8px;padding:2px 7px;
+      font-size:10px;font-weight:700;color:${palette.goldForeground};background:${palette.gold}1F;
+      border:1px solid ${palette.gold}66;border-radius:8px;padding:2px 7px;
     }
      .og-pop-loc{font-size:11px;color:#587089;margin-bottom:8px;}
-    .og-pop-price{font-size:13px;font-weight:800;color:#c8a45a;margin-bottom:10px;}
+    .og-pop-price{font-size:13px;font-weight:800;color:${palette.goldForeground};margin-bottom:10px;}
     .og-pop-btn{
-      width:100%;background:#c8a45a;color:#0B1F3A;border:none;border-radius:10px;
+      width:100%;background:${palette.gold};color:${palette.goldForeground};border:none;border-radius:10px;
       padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer;
     }
-    .og-pop-btn:hover{background:#e8c870;}
+    .og-pop-btn:hover{background:${palette.goldGlassBorder};}
      .leaflet-control-attribution{display:none;}
        .leaflet-bar{background:${mapGlass}!important;border:1px solid ${mapGlassBorder}!important;border-radius:12px!important;overflow:hidden;box-shadow:0 8px 20px rgba(16,42,67,.2)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
        .leaflet-bar a{width:30px;height:30px;line-height:30px;background:transparent;color:#0B1F3A;border-bottom-color:${mapGlassBorder};}
@@ -289,11 +291,11 @@ function buildExploreHtml(
   ${userJs}
    var areaCircle = L.circle([${centerLat},${centerLng}], {
      radius: ${mapAreaRadiusMeters(MAP_AREA_DEFAULT_KM)},
-    color: '${MAP_AREA_BLUE}',
+    color: '${MAP_AREA_COLOR}',
      weight: 2,
      opacity: 0.82,
      dashArray: '6 8',
-    fillColor: '${MAP_AREA_BLUE}',
+    fillColor: '${MAP_AREA_COLOR}',
      fillOpacity: 0.10,
      interactive: false
   }).addTo(map);
@@ -405,8 +407,8 @@ export function ExploreMapView({
   const mapGlass = colors?.mapGlass ?? 'rgba(255, 255, 255, 0.78)';
   const mapGlassBorder = colors?.mapGlassBorder ?? 'rgba(255, 255, 255, 0.88)';
   const html = useMemo(
-    () => buildExploreHtml(properties, selectedId, userLat, userLng, centerLat, centerLng, channel, mapGlass, mapGlassBorder),
-    [properties, selectedId, userLat, userLng, centerLat, centerLng, channel, mapGlass, mapGlassBorder],
+    () => buildExploreHtml(properties, selectedId, userLat, userLng, centerLat, centerLng, channel, mapGlass, mapGlassBorder, colors ?? brandColors.light),
+    [properties, selectedId, userLat, userLng, centerLat, centerLng, channel, mapGlass, mapGlassBorder, colors],
   );
 
   // Listen for postMessage from iframe on web
@@ -503,7 +505,7 @@ export function ExploreMapView({
         >
           <FontAwesome5 name="map-marked-alt" size={16} color="#0B1F3A" />
           <View>
-            <Text style={[s.mapContextKicker, { color: '#987332' }]}>LIVE LISTINGS</Text>
+            <Text style={[s.mapContextKicker, { color: colors?.goldForeground ?? brandColors.light.goldForeground }]}>LIVE LISTINGS</Text>
             <Text style={[s.mapContextTitle, { color: '#0B1F3A' }]}>Explore the area</Text>
           </View>
         </View>
@@ -512,7 +514,7 @@ export function ExploreMapView({
         backgroundColor: colors?.card ?? '#ffffff',
         borderColor: colors?.border ?? '#d6e0e8',
       }]} pointerEvents="none">
-        <View style={[s.countDot, { backgroundColor: MAP_AREA_BLUE }]} />
+        <View style={[s.countDot, { backgroundColor: MAP_AREA_COLOR }]} />
         <Text style={[s.countText, { color: colors?.foreground ?? '#0B1F3A' }]}>
           {areaPropertyCount} on map
         </Text>
@@ -520,7 +522,7 @@ export function ExploreMapView({
       {properties.filter((property) => property.lat && property.lng).length === 0 && (
         <View pointerEvents="none" style={s.mapEmpty}>
           <View style={[s.mapEmptyCard, { backgroundColor: colors?.card ?? '#ffffff', borderColor: colors?.border ?? '#d6e0e8' }]}>
-            <Feather name="map-pin" size={18} color={colors?.primary ?? '#c8a45a'} />
+            <Feather name="map-pin" size={18} color={colors?.primary ?? brandColors.light.primary} />
         <Text style={[s.mapEmptyTitle, { color: colors?.foreground ?? '#0B1F3A' }]}>No listings in this area</Text>
             <Text style={[s.mapEmptyText, { color: colors?.mutedForeground ?? '#587089' }]}>Move the map or expand the range to explore more.</Text>
           </View>

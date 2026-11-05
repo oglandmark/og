@@ -157,8 +157,8 @@ function UnitRow({
             </View>
           )}
           {unit.isParkFacing && (
-            <View style={[row.badge, { backgroundColor: '#183B6015' }]}>
-              <Text style={[row.badgeText, { color: '#183B60' }]}>Park Facing</Text>
+            <View style={[row.badge, { backgroundColor: colors.selectionBackground }]}>
+              <Text style={[row.badgeText, { color: colors.primary }]}>Park Facing</Text>
             </View>
           )}
           {unit.facing && (
@@ -356,9 +356,9 @@ export default function InventoryScreen() {
           <AnimatedReveal>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, marginBottom: 20 }}>
               <Chip label="Total Units"  value={stats.totalUnits}  color={colors.foreground}   bg={colors.secondary} />
-              <Chip label="Available"    value={stats.available}   color="#183B60"             bg="#183B6018" />
-              <Chip label="Reserved"     value={stats.reserved}    color="#c8a45a"             bg="#c8a45a18" />
-              <Chip label="Booked"       value={stats.booked}      color="#0B1F3A"             bg="#0B1F3A18" />
+              <Chip label="Available"    value={stats.available}   color={colors.primary}      bg={colors.selectionBackground} />
+              <Chip label="Reserved"     value={stats.reserved}    color={colors.goldForeground} bg={colors.gold + '18'} />
+              <Chip label="Booked"       value={stats.booked}      color={colors.primary}      bg={colors.primary + '18'} />
               <Chip label="Sold"         value={stats.sold}        color="#0a8c62"             bg="#0a8c6218" />
               <Chip label="Blocked"      value={stats.blocked}     color={colors.mutedForeground} bg={colors.secondary} />
             </ScrollView>
@@ -370,10 +370,10 @@ export default function InventoryScreen() {
           <AnimatedReveal delay={60}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, marginBottom: 20 }}>
               {stats.availableValue > 0 && (
-                <Chip label="Available Value" value={`PKR ${formatPKR(stats.availableValue)}`} color="#183B60" bg="#183B6012" />
+                <Chip label="Available Value" value={`PKR ${formatPKR(stats.availableValue)}`} color={colors.primary} bg={colors.selectionBackground} />
               )}
               {stats.reservedValue > 0 && (
-                <Chip label="Reserved Value" value={`PKR ${formatPKR(stats.reservedValue)}`} color="#c8a45a" bg="#c8a45a12" />
+                <Chip label="Reserved Value" value={`PKR ${formatPKR(stats.reservedValue)}`} color={colors.goldForeground} bg={colors.gold + '18'} />
               )}
               {stats.soldValue > 0 && (
                 <Chip label="Sold Value" value={`PKR ${formatPKR(stats.soldValue)}`} color="#0a8c62" bg="#0a8c6212" />

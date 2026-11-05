@@ -108,9 +108,9 @@ function VisitCard({
         <View style={[vc.actions, { borderTopColor: colors.border }]}>
           {visit.status === 'Requested' && (
             <Pressable onPress={() => onStatusChange(visit.id, 'Confirmed')}
-              style={[vc.actionBtn, { backgroundColor: '#183B6018' }]}>
-              <Feather name="check" size={13} color="#183B60" />
-              <Text style={[vc.actionBtnText, { color: '#183B60' }]}>Confirm</Text>
+              style={[vc.actionBtn, { backgroundColor: colors.selectionBackground }]}>
+              <Feather name="check" size={13} color={colors.action} />
+              <Text style={[vc.actionBtnText, { color: colors.action }]}>Confirm</Text>
             </Pressable>
           )}
           {visit.status === 'Confirmed' && (

@@ -25,6 +25,7 @@ import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/compon
 import { Feather } from '@expo/vector-icons';
 import type { useColors } from '@/hooks/useColors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import brandColors from '@/constants/colors';
 import { InteractiveMap, StaticMap } from '@/components/MapViewComponent';
 import {
   fetchAutocompleteSuggestions,
@@ -172,10 +173,10 @@ export function PinnedMapCard({
           {showDirections && (
             <Pressable
               onPress={handleDirections}
-              style={({ pressed }) => [pmc.actionBtn, { backgroundColor: '#183B6015', opacity: pressed ? 0.7 : 1 }]}
+              style={({ pressed }) => [pmc.actionBtn, { backgroundColor: colors.selectionBackground, opacity: pressed ? 0.7 : 1 }]}
             >
-              <Feather name="navigation" size={13} color="#183B60" />
-              <Text style={[pmc.actionBtnText, { color: '#183B60' }]}>Get Directions</Text>
+              <Feather name="navigation" size={13} color={colors.action} />
+              <Text style={[pmc.actionBtnText, { color: colors.action }]}>Get Directions</Text>
             </Pressable>
           )}
         </View>
@@ -704,7 +705,7 @@ export function LocationPicker({
                   hitSlop={8}
                   style={lp.changeLocationButton}
                 >
-                  <Feather name="map-pin" size={14} color="#183B60" />
+                  <Feather name="map-pin" size={14} color={brandColors.light.action} />
                   <Text style={lp.changeLocationText}>Change</Text>
                 </Pressable>
                 {hasPin && !addressLoading && (
@@ -1059,7 +1060,7 @@ const lp = StyleSheet.create({
     transform: [{ translateX: -14 }, { translateY: -34 }],
   },
   brandPinBody: {
-    width: 28, height: 28, backgroundColor: '#183B60', borderWidth: 3,
+    width: 28, height: 28, backgroundColor: brandColors.light.action, borderWidth: 3,
     borderColor: '#ffffff', borderTopLeftRadius: 14, borderTopRightRadius: 14,
     borderBottomRightRadius: 14, borderBottomLeftRadius: 2,
     transform: [{ rotate: '-45deg' }],
@@ -1082,7 +1083,7 @@ const lp = StyleSheet.create({
   selectedCardSub: { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 4 },
   addressLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
   changeLocationButton: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6 },
-  changeLocationText: { fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#183B60' },
+  changeLocationText: { fontFamily: 'Inter_600SemiBold', fontSize: 13, color: brandColors.light.action },
   selectedCardCoordinates: { position: 'absolute', left: 14, bottom: 5, fontFamily: 'Inter_400Regular', fontSize: 8 },
   fullMapHint: { position: 'absolute', left: 0, right: 0, bottom: 16, alignItems: 'center' },
   fullMapHintPill: {

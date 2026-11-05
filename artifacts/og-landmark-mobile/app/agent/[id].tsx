@@ -564,9 +564,9 @@ const styles = StyleSheet.create({
   verifiedDot:    { position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: brandColors.light.teal, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#ffffff' },
   agentName:      { fontFamily: 'Inter_700Bold', fontSize: 22, color: '#ffffff', textAlign: 'center', letterSpacing: -0.3 },
   agentAgency:    { fontFamily: 'Inter_400Regular', fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
-  verifiedBadge:  { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 10, backgroundColor: 'rgba(200,164,90,0.2)', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
+  verifiedBadge:  { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 10, backgroundColor: brandColors.light.gold + '33', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
   verifiedText:   { fontFamily: 'Inter_600SemiBold', fontSize: 11, color: brandColors.light.gold },
-  sampleBadge:    { marginTop: 8, backgroundColor: 'rgba(200,164,90,0.3)', borderRadius: 5, paddingHorizontal: 10, paddingVertical: 4 },
+  sampleBadge:    { marginTop: 8, backgroundColor: brandColors.light.gold + '4D', borderRadius: 5, paddingHorizontal: 10, paddingVertical: 4 },
   sampleText:     { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1, color: brandColors.light.gold },
   // Actions
   actionsRow:     { flexDirection: 'row', borderBottomWidth: 1, paddingVertical: 14 },

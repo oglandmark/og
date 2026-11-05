@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
+import brandColors from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { saveSiteVisit, newVisitId as newSiteVisitId } from '@/lib/siteVisitStore';
@@ -163,8 +164,8 @@ export default function VisitSchedulerModal({
           {submitted ? (
             /* ── Success screen ─────────────────────────────────────────── */
             <ScrollView contentContainerStyle={vs.successWrap} showsVerticalScrollIndicator={false}>
-              <View style={[vs.successIcon, { backgroundColor: '#183B6015' }]}>
-                <Feather name="check-circle" size={40} color="#183B60" />
+              <View style={[vs.successIcon, { backgroundColor: brandColors.light.selectionBackground }]}>
+                <Feather name="check-circle" size={40} color={brandColors.light.action} />
               </View>
               <Text style={[vs.successTitle, { color: colors.foreground }]}>Visit Requested!</Text>
               <Text style={[vs.successSub, { color: colors.mutedForeground }]}>
@@ -201,11 +202,11 @@ export default function VisitSchedulerModal({
                 </View>
                 <View style={[vs.confirmDivider, { backgroundColor: colors.border }]} />
                 <View style={vs.confirmRow}>
-                  <Feather name="user-check" size={13} color="#c8a45a" />
+                  <Feather name="user-check" size={13} color={brandColors.light.gold} />
                   <Text style={[vs.confirmVal, { color: colors.foreground }]}>Contact: {contactPerson}</Text>
                 </View>
                 <View style={vs.confirmRow}>
-                  <Feather name="phone" size={13} color="#c8a45a" />
+                  <Feather name="phone" size={13} color={brandColors.light.gold} />
                   <Text style={[vs.confirmVal, { color: colors.foreground }]}>{contactPhone}</Text>
                 </View>
               </View>

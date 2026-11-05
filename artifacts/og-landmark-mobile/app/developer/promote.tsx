@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import brandColors from '@/constants/colors';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import {
   DeveloperProject, getDevProjects, formatPKR,
@@ -147,12 +148,12 @@ const pc = StyleSheet.create({
   card:        { borderRadius: 20, overflow: 'hidden' },
   topBand:     { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6 },
   brandRow:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  brandDot:    { width: 8, height: 8, borderRadius: 4, backgroundColor: '#c8a45a' },
+  brandDot:    { width: 8, height: 8, borderRadius: 4, backgroundColor: brandColors.light.gold },
   brandText:   { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 2, color: '#ffffffbb' },
   statusPill:  { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, marginLeft: 'auto' },
   statusText:  { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1, color: '#ffffffcc' },
   body:        { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 14, gap: 4 },
-  projectType: { fontFamily: 'Inter_500Medium', fontSize: 10, color: '#c8a45a', letterSpacing: 1, textTransform: 'uppercase' },
+  projectType: { fontFamily: 'Inter_500Medium', fontSize: 10, color: brandColors.light.goldForeground, letterSpacing: 1, textTransform: 'uppercase' },
   projectName: { fontFamily: 'Inter_700Bold', fontSize: 26, color: '#ffffff', letterSpacing: -0.5, lineHeight: 30, marginTop: 2 },
   tagline:     { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#ffffffaa', fontStyle: 'italic', marginTop: 2 },
   locRow:      { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 8 },
@@ -268,7 +269,7 @@ export default function PromoteScreen() {
   const tipData = [
     { icon: 'message-circle' as const, color: '#25d366', text: tr('promoteTip1') },
     { icon: 'facebook'        as const, color: '#1877f2', text: tr('promoteTip2') },
-    { icon: 'users'           as const, color: '#c8a45a', text: tr('promoteTip3') },
+    { icon: 'users'           as const, color: colors.gold, text: tr('promoteTip3') },
   ];
 
   return (
@@ -314,14 +315,14 @@ export default function PromoteScreen() {
                       backgroundColor: active ? colors.action : colors.card,
                       borderColor: active ? colors.action : colors.border,
                     }]}>
-                    <View style={[pr.projChipDot, { backgroundColor: active ? '#c8a45a' : colors.mutedForeground }]} />
+                    <View style={[pr.projChipDot, { backgroundColor: active ? colors.gold : colors.mutedForeground }]} />
                     <View>
                       <Text style={[pr.projChipName, { color: active ? '#ffffff' : colors.foreground }]} numberOfLines={1}>
                         {p.name}
                       </Text>
                       <Text style={[pr.projChipType, { color: active ? '#ffffffaa' : colors.mutedForeground }]}>{p.type}</Text>
                     </View>
-                    {active && <Feather name="check-circle" size={14} color="#c8a45a" style={{ marginLeft: 6 }} />}
+                    {active && <Feather name="check-circle" size={14} color={colors.goldForeground} style={{ marginLeft: 6 }} />}
                   </Pressable>
                 );
               })}
@@ -405,7 +406,7 @@ export default function PromoteScreen() {
                   {/* Copy button overlay */}
                   <Pressable
                     onPress={() => { void copyToClipboard(); }}
-                    style={[pr.copyBtn, { backgroundColor: copied ? '#183B60' : colors.action }]}
+                    style={[pr.copyBtn, { backgroundColor: copied ? colors.actionPressed : colors.action }]}
                   >
                     <Feather name={copied ? 'check' : 'copy'} size={13} color="#ffffff" />
                     <Text style={pr.copyBtnText}>{copied ? tr('promoteCopied') : tr('promoteCopyText')}</Text>

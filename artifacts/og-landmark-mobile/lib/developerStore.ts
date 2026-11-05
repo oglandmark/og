@@ -3,6 +3,7 @@
  * Developer projects are persisted to the authenticated backend account.
  */
 import { apiRequest } from '@/lib/api';
+import brandColors from '@/constants/colors';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -187,11 +188,11 @@ export function migrateProject(p: Partial<DeveloperProject> & { id: string; deve
 
 export function statusColor(status: ProjectStatus): { bg: string; text: string } {
   switch (status) {
-    case 'Live':             return { bg: '#183B6018', text: '#183B60' };
-    case 'Approved':         return { bg: '#183B6012', text: '#183B60' };
-    case 'Draft':            return { bg: '#c8a45a18', text: '#c8a45a' };
+    case 'Live':             return { bg: brandColors.light.selectionBackground, text: brandColors.light.action };
+    case 'Approved':         return { bg: brandColors.light.selectionBackground, text: brandColors.light.action };
+    case 'Draft':            return { bg: brandColors.light.gold + '18', text: brandColors.light.goldForeground };
     case 'Pending Review':   return { bg: '#0B1F3A18', text: '#0B1F3A' };
-    case 'Under Development':return { bg: '#183B6012', text: '#183B60' };
+    case 'Under Development':return { bg: brandColors.light.selectionBackground, text: brandColors.light.action };
     case 'Coming Soon':      return { bg: '#6b3a1a18', text: '#6b3a1a' };
     case 'Completed':        return { bg: '#0a8c6218', text: '#0a8c62' };
     case 'Paused':           return { bg: '#b94b4218', text: '#b94b42' };

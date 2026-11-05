@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { useAuth } from '@/context/AuthContext';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { getAgentAdminThreads, sendAgentAdminMessage, type AgentAdminThread } from '@/lib/api';
 
 export function AgentAdminInbox({ admin = false }: { admin?: boolean }) {
@@ -112,7 +113,7 @@ const s = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingBottom: 18 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   backButton: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
-  eyebrow: { color: '#e7d5a8', fontSize: 10, fontWeight: '800', letterSpacing: 1.2 },
+  eyebrow: { color: brandColors.light.gold, fontSize: 10, fontWeight: '800', letterSpacing: 1.2 },
   title: { color: '#fff', fontSize: 23, fontWeight: '800', marginTop: 6 },
   subtitle: { color: '#ffffffcc', fontSize: 13, lineHeight: 19, marginTop: 5 },
   threadStrip: { maxHeight: 82, borderBottomWidth: StyleSheet.hairlineWidth },

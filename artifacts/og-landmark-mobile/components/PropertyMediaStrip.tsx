@@ -440,7 +440,7 @@ const s = StyleSheet.create({
     height: STRIP_H,
     backgroundColor: '#0b1d2e',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(200,164,90,0.15)',
+    borderBottomColor: brandColors.light.gold + '26',
     position: 'relative',
   },
   compactStrip: { height: 58 },
@@ -460,7 +460,7 @@ const s = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: 'rgba(7,21,33,0.88)',
     borderWidth: 1,
-    borderColor: 'rgba(216,184,108,0.65)',
+    borderColor: brandColors.light.gold + 'A6',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 6,
@@ -488,7 +488,7 @@ const s = StyleSheet.create({
   },
   thumbOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(200,164,90,0.15)',
+    backgroundColor: brandColors.light.gold + '26',
   },
 
   /* Video tile */
@@ -579,8 +579,8 @@ const fs = StyleSheet.create({
   /* Mute / Unmute pill button */
   muteBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(200,164,90,0.12)',
-    borderWidth: 1.5, borderColor: 'rgba(200,164,90,0.4)',
+    backgroundColor: brandColors.light.gold + '1F',
+    borderWidth: 1.5, borderColor: brandColors.light.gold + '66',
     borderRadius: 20,
     minHeight: 36,
     paddingHorizontal: 14, paddingVertical: 4,

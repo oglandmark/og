@@ -11,6 +11,7 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Step = 'credentials' | 'otp';
@@ -67,7 +68,7 @@ export default function AdminLoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[s.root, { backgroundColor: '#052e26' }]}
+      style={[s.root, { backgroundColor: colors.actionDeep }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
@@ -77,20 +78,20 @@ export default function AdminLoginScreen() {
       >
         {/* Back */}
         <Pressable onPress={() => router.back()} style={s.back} hitSlop={10}>
-          <Feather name="arrow-left" size={20} color="#8a9ab5" />
+          <Feather name="arrow-left" size={20} color={colors.splashMuted} />
         </Pressable>
 
         {/* Logo area */}
         <View style={s.logoWrap}>
           <View style={s.shield}>
-            <Feather name="shield" size={36} color="#C8A45A" />
+            <Feather name="shield" size={36} color={colors.gold} />
           </View>
           <Text style={s.brand}>OG Landmark</Text>
           <Text style={s.sub}>Admin Panel</Text>
         </View>
 
         {/* Card */}
-        <View style={[s.card, { backgroundColor: '#ffffff08', borderColor: '#ffffff14' }]}>
+        <View style={[s.card, { backgroundColor: colors.actionGlassSoft, borderColor: colors.actionGlassBorder }]}>
           {step === 'credentials' ? (
             <>
               <Text style={s.title}>Admin Sign In</Text>
@@ -98,9 +99,9 @@ export default function AdminLoginScreen() {
 
               <Text style={s.label}>Email Address</Text>
               <TextInput
-                style={[s.input, { color: '#fff', borderColor: '#ffffff22', backgroundColor: '#ffffff0a' }]}
+                style={[s.input, { color: colors.primaryForeground, borderColor: colors.actionGlassBorder, backgroundColor: colors.actionGlassSoft }]}
                 placeholder="admin@oglandmark.com"
-                placeholderTextColor="#8a9ab5"
+                placeholderTextColor={colors.splashMuted}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -112,9 +113,9 @@ export default function AdminLoginScreen() {
               <Text style={s.label}>Password</Text>
               <View style={s.pwdWrap}>
                 <TextInput
-                  style={[s.input, s.pwdInput, { color: '#fff', borderColor: '#ffffff22', backgroundColor: '#ffffff0a' }]}
+                  style={[s.input, s.pwdInput, { color: colors.primaryForeground, borderColor: colors.actionGlassBorder, backgroundColor: colors.actionGlassSoft }]}
                   placeholder="••••••••"
-                  placeholderTextColor="#8a9ab5"
+                  placeholderTextColor={colors.splashMuted}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPwd}
@@ -122,18 +123,18 @@ export default function AdminLoginScreen() {
                   onSubmitEditing={handleVerify}
                 />
                 <Pressable style={s.eyeBtn} onPress={() => setShowPwd(v => !v)} hitSlop={8}>
-                  <Feather name={showPwd ? 'eye-off' : 'eye'} size={18} color="#8a9ab5" />
+                  <Feather name={showPwd ? 'eye-off' : 'eye'} size={18} color={colors.splashMuted} />
                 </Pressable>
               </View>
 
               <Pressable
-                style={({ pressed }) => [s.btn, { backgroundColor: '#C8A45A', opacity: pressed ? 0.85 : 1 }]}
+                style={({ pressed }) => [s.btn, { backgroundColor: colors.gold, opacity: pressed ? 0.85 : 1 }]}
                 onPress={handleVerify}
                 disabled={loading}
               >
                 {loading
-                  ? <ActivityIndicator color="#052e26" />
-                  : <><Text style={s.btnText}>Send OTP</Text><Feather name="arrow-right" size={18} color="#052e26" /></>
+                  ? <ActivityIndicator color={colors.goldForeground} />
+                  : <><Text style={[s.btnText, { color: colors.goldForeground }]}>Send OTP</Text><Feather name="arrow-right" size={18} color={colors.goldForeground} /></>
                 }
               </Pressable>
             </>
@@ -142,15 +143,15 @@ export default function AdminLoginScreen() {
               <Text style={s.title}>Enter OTP</Text>
               <Text style={s.hint}>
                 A 6-digit code was sent to{'\n'}
-                <Text style={{ color: '#C8A45A' }}>{email}</Text>
+                <Text style={{ color: colors.gold }}>{email}</Text>
               </Text>
 
               <Text style={s.label}>One-Time Password</Text>
               <TextInput
                 ref={otpRef}
-                style={[s.input, s.otpInput, { color: '#fff', borderColor: '#C8A45A55', backgroundColor: '#ffffff0a', letterSpacing: 10 }]}
+                style={[s.input, s.otpInput, { color: colors.primaryForeground, borderColor: colors.goldGlassBorder, backgroundColor: colors.actionGlassSoft, letterSpacing: 10 }]}
                 placeholder="— — — — — —"
-                placeholderTextColor="#8a9ab5"
+                placeholderTextColor={colors.splashMuted}
                 value={otp}
                 onChangeText={setOtp}
                 keyboardType="number-pad"
@@ -161,13 +162,13 @@ export default function AdminLoginScreen() {
               <Text style={s.otpNote}>Code valid for 5 minutes · check server logs if email is not configured</Text>
 
               <Pressable
-                style={({ pressed }) => [s.btn, { backgroundColor: '#C8A45A', opacity: pressed ? 0.85 : 1 }]}
+                style={({ pressed }) => [s.btn, { backgroundColor: colors.gold, opacity: pressed ? 0.85 : 1 }]}
                 onPress={handleOtp}
                 disabled={loading}
               >
                 {loading
-                  ? <ActivityIndicator color="#052e26" />
-                  : <><Text style={s.btnText}>Verify &amp; Sign In</Text><Feather name="check" size={18} color="#052e26" /></>
+                  ? <ActivityIndicator color={colors.goldForeground} />
+                  : <><Text style={[s.btnText, { color: colors.goldForeground }]}>Verify &amp; Sign In</Text><Feather name="check" size={18} color={colors.goldForeground} /></>
                 }
               </Pressable>
 
@@ -175,7 +176,7 @@ export default function AdminLoginScreen() {
                 style={s.resend}
                 onPress={() => { setStep('credentials'); setOtp(''); }}
               >
-                <Text style={{ color: '#8a9ab5', fontSize: 13 }}>← Change email or resend OTP</Text>
+                <Text style={{ color: colors.splashMuted, fontSize: 13 }}>← Change email or resend OTP</Text>
               </Pressable>
             </>
           )}
@@ -190,20 +191,20 @@ const s = StyleSheet.create({
   scroll:   { flexGrow: 1, padding: 20 },
   back:     { marginBottom: 16 },
   logoWrap: { alignItems: 'center', marginBottom: 28 },
-  shield:   { width: 72, height: 72, borderRadius: 22, backgroundColor: '#C8A45A18', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  brand:    { fontFamily: 'Inter_700Bold', fontSize: 22, color: '#C8A45A', letterSpacing: 0.5 },
-  sub:      { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#8a9ab5', letterSpacing: 2, marginTop: 3, textTransform: 'uppercase' },
+  shield:   { width: 72, height: 72, borderRadius: 22, backgroundColor: brandColors.light.gold + '18', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  brand:    { fontFamily: 'Inter_700Bold', fontSize: 22, color: brandColors.light.gold, letterSpacing: 0.5 },
+  sub:      { fontFamily: 'Inter_400Regular', fontSize: 12, color: brandColors.light.splashMuted, letterSpacing: 2, marginTop: 3, textTransform: 'uppercase' },
   card:     { borderRadius: 22, borderWidth: 1, padding: 22 },
-  title:    { fontFamily: 'Inter_700Bold', fontSize: 20, color: '#ffffff', marginBottom: 6 },
-  hint:     { fontFamily: 'Inter_400Regular', fontSize: 13, color: '#8a9ab5', marginBottom: 20, lineHeight: 19 },
-  label:    { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#8a9ab5', marginBottom: 6, letterSpacing: 0.5 },
+  title:    { fontFamily: 'Inter_700Bold', fontSize: 20, color: brandColors.light.primaryForeground, marginBottom: 6 },
+  hint:     { fontFamily: 'Inter_400Regular', fontSize: 13, color: brandColors.light.splashMuted, marginBottom: 20, lineHeight: 19 },
+  label:    { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: brandColors.light.splashMuted, marginBottom: 6, letterSpacing: 0.5 },
   input:    { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, fontFamily: 'Inter_400Regular', fontSize: 15, marginBottom: 14 },
   pwdWrap:  { position: 'relative' },
   pwdInput: { paddingRight: 44 },
   eyeBtn:   { position: 'absolute', right: 14, top: 14 },
   otpInput: { textAlign: 'center', fontSize: 22, letterSpacing: 14 },
-  otpNote:  { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#8a9ab5', textAlign: 'center', marginBottom: 16, lineHeight: 16 },
+  otpNote:  { fontFamily: 'Inter_400Regular', fontSize: 11, color: brandColors.light.splashMuted, textAlign: 'center', marginBottom: 16, lineHeight: 16 },
   btn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, paddingVertical: 8, marginTop: 4, minHeight: 44 },
-  btnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#052e26' },
+  btnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: brandColors.light.goldForeground },
   resend:   { alignItems: 'center', marginTop: 14 },
 });

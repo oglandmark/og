@@ -3,6 +3,7 @@
  * Replace with oglandmark.com API response when live.
  */
 import type { ImageSourcePropType } from 'react-native';
+import brandColors from '@/constants/colors';
 import { PUBLIC_CONTACT_PHONE } from './publicContact';
 
 export type SampleAgent = {
@@ -106,7 +107,7 @@ export const SAMPLE_AGENTS: SampleAgent[] = [
     years: 12,
     listings: 48,
     areas: ['Okara City', 'Depalpur'],
-    color: '#183B60',
+    color: brandColors.light.action,
     phone: PUBLIC_CONTACT_PHONE,
     specialties: ['Residential', 'Agricultural Land', 'Plots'],
     about:

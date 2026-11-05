@@ -3,6 +3,7 @@ import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type * as Notifications from 'expo-notifications';
 import { updatePushToken } from '@/lib/api';
+import brandColors from '@/constants/colors';
 
 export type PushNotificationData = {
   type?: 'property' | 'announcement' | 'listing' | string;
@@ -144,7 +145,7 @@ export async function getExpoPushToken(): Promise<string | null> {
         name,
         importance,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#C8A45A',
+        lightColor: brandColors.light.gold,
         sound: 'default',
       }),
     ));

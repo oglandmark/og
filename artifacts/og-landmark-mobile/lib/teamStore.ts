@@ -3,6 +3,7 @@
  * Team members are persisted to the authenticated backend account.
  */
 import { apiRequest } from '@/lib/api';
+import brandColors from '@/constants/colors';
 
 export type TeamRole = 'Sales Rep' | 'Agent' | 'Manager' | 'Admin';
 export const TEAM_ROLES: TeamRole[] = ['Sales Rep', 'Agent', 'Manager', 'Admin'];
@@ -27,8 +28,8 @@ export function roleColor(role: TeamRole): { bg: string; text: string } {
   switch (role) {
     case 'Admin':    return { bg: '#0B1F3A18', text: '#0B1F3A' };
     case 'Manager':  return { bg: '#7c3aed18', text: '#7c3aed' };
-    case 'Agent':    return { bg: '#c8a45a18', text: '#c8a45a' };
-    case 'Sales Rep':return { bg: '#183B6018', text: '#183B60' };
+    case 'Agent':    return { bg: brandColors.light.gold + '18', text: brandColors.light.goldForeground };
+    case 'Sales Rep':return { bg: brandColors.light.selectionBackground, text: brandColors.light.action };
   }
 }
 

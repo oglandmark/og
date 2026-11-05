@@ -18,9 +18,10 @@ import { useLanguage } from '@/context/LanguageContext';
 import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { useFacebookAuth } from '@/lib/facebookAuth';
 import { Button } from '@/components/PolishedUI';
+import brandColors from '@/constants/colors';
 
 const ACTION = '#0B1F3A';
-const GOLD   = '#c8a45a';
+const GOLD   = brandColors.light.gold;
 const MUTED  = '#8a8f98';
 const BORDER = '#e4e6ea';
 const BG     = '#ffffff';

@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { MapViewModeControl, type MapViewMode } from '@/components/MapViewModeControl';
 import { MAP_VIEW_MODE_SWITCH_SCRIPT } from '@/components/MapViewModes';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 
 const MAPBOX_ACCESS_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN?.trim() ?? '';
 
@@ -55,6 +56,8 @@ function buildMapHtml({
   interactive,
   satellite,
 }: Required<Pick<Props, 'latitude' | 'longitude'>> & Omit<Props, 'latitude' | 'longitude'>) {
+  const palette = brandColors.light;
+  const mapAreaColor = palette.teal;
   const pointsJson = toSafeJson(points ?? []);
   const radius = Math.min(10, Math.max(0.4, Math.round(Number(radiusKm ?? 0) * 10) / 10));
   const mapboxToken = toSafeJson(MAPBOX_ACCESS_TOKEN);
@@ -73,7 +76,7 @@ function buildMapHtml({
     .pin, .user-pin {
       position: relative;
       width: 28px; height: 28px; border-radius: 50% 50% 50% 0;
-      background: #183B60; border: 3px solid #ffffff;
+      background: ${palette.action}; border: 3px solid #ffffff;
       box-shadow: 0 2px 7px rgba(16,42,67,.45);
       transform: rotate(-45deg);
     }
@@ -82,14 +85,14 @@ function buildMapHtml({
     .price-pill {
       position: absolute; left: 50%; bottom: 7px; transform: translateX(-50%);
       display: inline-block; padding: 5px 8px; border-radius: 9px;
-      color: #0B1F3A; background: #fff; border: 1.5px solid #c8a45a;
+      color: ${palette.goldForeground}; background: #fff; border: 1.5px solid ${palette.gold};
       box-shadow: 0 2px 7px rgba(16,42,67,.28); font: 700 11px Arial, sans-serif;
       white-space: nowrap;
     }
     .price-pill-tip {
       position: absolute; top: calc(100% - 1px); left: 50%; transform: translateX(-50%);
       width: 0; height: 0; border-left: 7px solid transparent;
-      border-right: 7px solid transparent; border-top: 8px solid #c8a45a;
+      border-right: 7px solid transparent; border-top: 8px solid ${palette.gold};
     }
     .price-pill-tip::after {
       content: ''; position: absolute; left: -5.5px; top: -8px; width: 0; height: 0;
@@ -172,8 +175,8 @@ function buildMapHtml({
         var nextRadius = nextRadiusKmSafe * 1000;
         if (!areaCircle) {
           areaCircle = L.circle([nextLatitude, nextLongitude], {
-            radius: nextRadius, color: '#2f6f9f', weight: 2, opacity: .82,
-            dashArray: '6 8', fillColor: '#2f6f9f', fillOpacity: .10,
+            radius: nextRadius, color: '${mapAreaColor}', weight: 2, opacity: .82,
+            dashArray: '6 8', fillColor: '${mapAreaColor}', fillOpacity: .10,
             interactive: false
           }).addTo(map);
         } else {

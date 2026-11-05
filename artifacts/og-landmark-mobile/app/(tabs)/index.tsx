@@ -713,7 +713,7 @@ const fp = StyleSheet.create({
   fsBuffer:     { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.35)', zIndex: 10 },
   fsPauseIcon:  { position: 'absolute', alignSelf: 'center', top: '50%', marginTop: -30, width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', zIndex: 10 },
   fsBar:        { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 32, paddingTop: 14, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 20, gap: 12 },
-  fsMuteBtn:    { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(200,164,90,0.12)', borderWidth: 1.5, borderColor: 'rgba(200,164,90,0.4)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
+  fsMuteBtn:    { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: brandColors.light.gold + '1F', borderWidth: 1.5, borderColor: brandColors.light.gold + '66', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
   fsMuteLabel:  { fontSize: 12, fontWeight: '700', letterSpacing: 0.3 },
   fsTitleWrap:  { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'flex-end' },
   fsTitleText:  { color: '#fff', fontWeight: '600', fontSize: 12, flex: 1, textAlign: 'right', opacity: 0.85 },
@@ -778,7 +778,7 @@ function AgentCard({ agent, colors, onPress }: { agent: SampleAgent; colors: Col
           <View style={ac.photoAccent} />
           {agent.verified && (
             <View style={ac.verifiedBadge}>
-              <Feather name="shield" size={10} color="#d9b85f" />
+              <Feather name="shield" size={10} color={brandColors.light.gold} />
               <Text style={ac.badgeText}>VERIFIED</Text>
             </View>
           )}
@@ -795,7 +795,7 @@ function AgentCard({ agent, colors, onPress }: { agent: SampleAgent; colors: Col
           <View style={ac.ratingRow}>
             <View style={ac.stars}>
               {Array.from({ length: 5 }).map((_, index) => (
-                <FontAwesome key={index} name="star" size={12} color="#d3aa4e" />
+                <FontAwesome key={index} name="star" size={12} color={brandColors.light.gold} />
               ))}
             </View>
             <Text style={[ac.ratingValue, { color: colors.foreground }]}>{agent.rating.toFixed(1)}</Text>
@@ -856,7 +856,7 @@ const ac = StyleSheet.create({
   avatar:       { flex: 1, alignItems: 'center', justifyContent: 'center' },
   initials:     { fontFamily: 'Inter_700Bold', fontSize: 34, color: '#ffffff' },
   verifiedBadge:{ position: 'absolute', top: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 4,
-                  borderWidth: 1, borderColor: 'rgba(216,184,108,0.52)', backgroundColor: 'rgba(10,30,47,0.76)',
+                  borderWidth: 1, borderColor: brandColors.light.gold + '85', backgroundColor: 'rgba(10,30,47,0.76)',
                   borderRadius: 12, paddingHorizontal: 8, paddingVertical: 5 },
   badgeText:    { fontFamily: 'Inter_700Bold', fontSize: 8, color: '#ffffff', letterSpacing: 0.7 },
   photoMeta:    { position: 'absolute', left: 13, bottom: 11, flexDirection: 'row', alignItems: 'center', gap: 6 },

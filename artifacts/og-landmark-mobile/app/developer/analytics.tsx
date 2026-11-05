@@ -122,15 +122,15 @@ export default function AnalyticsScreen() {
     }, 0);
 
   const topCards = [
-    { label: 'Total Leads',         value: String(total),         icon: 'users'       as const, color: '#0B1F3A' },
-    { label: tr('conversionRate'),   value: `${convRate}%`,        icon: 'trending-up' as const, color: '#183B60' },
+    { label: 'Total Leads',         value: String(total),         icon: 'users'       as const, color: colors.action },
+    { label: tr('conversionRate'),   value: `${convRate}%`,        icon: 'trending-up' as const, color: colors.action },
     { label: tr('funnelVisits'),     value: String(siteVisitCount),icon: 'calendar'    as const, color: '#7c3aed' },
     { label: tr('wonDealsLabel'),    value: String(wonCount),      icon: 'check-circle'as const, color: '#059669' },
   ];
 
   const funnelRows = [
-    { label: tr('funnelLeads'),     count: total,          color: '#0B1F3A' },
-    { label: tr('funnelContacted'), count: contactedCount, color: '#c8a45a' },
+    { label: tr('funnelLeads'),     count: total,          color: colors.action },
+    { label: tr('funnelContacted'), count: contactedCount, color: colors.gold },
     { label: tr('funnelVisits'),    count: siteVisitCount, color: '#7c3aed' },
     { label: tr('funnelWon'),       count: wonCount,       color: '#059669' },
   ];
@@ -240,11 +240,11 @@ export default function AnalyticsScreen() {
                 <View style={{ gap: 0, marginTop: 8 }}>
                   {[
                     { label: 'Total Leads',    value: total,               icon: 'users'       as const, color: colors.foreground },
-                    { label: 'Active Pipeline',value: total - stageCountMap.won - stageCountMap.lost, icon: 'activity' as const, color: '#c8a45a' },
+                    { label: 'Active Pipeline',value: total - stageCountMap.won - stageCountMap.lost, icon: 'activity' as const, color: colors.gold },
                     { label: tr('wonDealsLabel'), value: stageCountMap.won,  icon: 'check-circle'as const, color: '#059669' },
                     { label: tr('lostDealsLabel'),value: stageCountMap.lost, icon: 'x-circle'   as const, color: '#dc2626' },
                     { label: 'Site Visits',    value: siteVisitCount,       icon: 'calendar'    as const, color: '#7c3aed' },
-                    { label: 'Projects',       value: projects.length,      icon: 'layers'      as const, color: '#0B1F3A' },
+                    { label: 'Projects',       value: projects.length,      icon: 'layers'      as const, color: colors.action },
                   ].map((row, i, arr) => (
                     <View
                       key={row.label}

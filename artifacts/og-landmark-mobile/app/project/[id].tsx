@@ -787,7 +787,7 @@ const styles = StyleSheet.create({
   heroBottom:      { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 18, paddingBottom: 20 },
   sampleBadge:     { alignSelf: 'flex-start', backgroundColor: brandColors.light.gold, borderRadius: 5, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 8 },
   sampleText:      { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1, color: '#1c2024' },
-  typeBadge:       { alignSelf: 'flex-start', backgroundColor: 'rgba(200,164,90,0.28)', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 8 },
+  typeBadge:       { alignSelf: 'flex-start', backgroundColor: brandColors.light.gold + '47', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 8 },
   typeBadgeText:   { fontFamily: 'Inter_700Bold', fontSize: 10, color: brandColors.light.gold, letterSpacing: 0.5 },
   heroName:        { fontFamily: 'Inter_700Bold', fontSize: 26, color: '#ffffff', letterSpacing: -0.5, marginBottom: 6 },
   heroDevRow:      { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 5 },

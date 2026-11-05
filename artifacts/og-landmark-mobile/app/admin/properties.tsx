@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { LocationPicker } from '@/components/LocationPicker';
 import { openGoogleMaps, type LocationData } from '@/lib/locationService';
 import { formatPropertyCoordinates, getPropertyCoordinates } from '@/lib/propertyCoordinates';
@@ -24,8 +25,8 @@ import {
 } from '@/lib/api';
 import { formatPrice, properties as bundledDemoProperties, Property as DemoProperty } from '@/lib/properties';
 
-const NAVY = '#0B1F3A';
-const GOLD = '#C8A45A';
+const NAVY = brandColors.light.action;
+const GOLD = brandColors.light.gold;
 
 const STATUS_TABS = ['Pending', 'Changes Requested', 'Active', 'Rejected', 'All', 'Demos'] as const;
 type StatusTab = typeof STATUS_TABS[number];
@@ -572,7 +573,7 @@ export default function AdminProperties() {
                 disabled={savingLocation || !editConfirmed}
                 style={[s.modalSave, { backgroundColor: GOLD, opacity: savingLocation || !editConfirmed ? 0.55 : 1 }]}
               >
-                {savingLocation ? <ActivityIndicator size="small" color="#0B1F3A" /> : <Feather name="check" size={15} color="#0B1F3A" />}
+                {savingLocation ? <ActivityIndicator size="small" color={colors.action} /> : <Feather name="check" size={15} color={colors.action} />}
                 <Text style={s.modalSaveText}>{savingLocation ? 'Saving…' : 'Save Location'}</Text>
               </Pressable>
             </View>
@@ -757,7 +758,7 @@ const s = StyleSheet.create({
   modalCancel: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, paddingVertical: 8, minHeight: 36 },
   modalCancelText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   modalSave: { flex: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, paddingVertical: 8, minHeight: 40 },
-  modalSaveText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#0B1F3A' },
+  modalSaveText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: brandColors.light.action },
   rejectSheet: { margin: 20, borderRadius: 18, padding: 18 },
   rejectInput: { minHeight: 110, borderWidth: 1, borderRadius: 11, padding: 12, marginTop: 16, fontFamily: 'Inter_400Regular', fontSize: 14 },
   reviewSheet: { maxHeight: '92%', borderTopLeftRadius: 22, borderTopRightRadius: 22, overflow: 'hidden' },
@@ -765,7 +766,7 @@ const s = StyleSheet.create({
   reviewImages: { gap: 8, paddingBottom: 16 },
   reviewImage: { width: 138, height: 96, borderRadius: 10, backgroundColor: '#dfe5eb' },
   reviewGrid: { gap: 1, marginBottom: 18 },
-  reviewRow: { flexDirection: 'row', gap: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#0B1F3A12' },
+  reviewRow: { flexDirection: 'row', gap: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: brandColors.light.action + '12' },
   reviewLabel: { width: 76, fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   reviewValue: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12 },
   reviewSectionTitle: { fontFamily: 'Inter_700Bold', fontSize: 14, marginTop: 8, marginBottom: 6 },

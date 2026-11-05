@@ -139,20 +139,20 @@ export default function AnalyticsScreen() {
   const conversionRate = leads.length > 0 ? Math.round((closedLeads / leads.length) * 100) : 0;
 
   const kpis = [
-    { label: 'Active Listings',  value: lstats.active,  icon: 'home'       as const, color: '#0B1F3A', change: 0 },
-    { label: 'Total Leads',      value: leads.length,   icon: 'users'      as const, color: '#183B60', change: 0 },
-    { label: 'New Leads',        value: newLeads,       icon: 'user-plus'  as const, color: '#c8a45a', change: 0 },
+    { label: 'Active Listings',  value: lstats.active,  icon: 'home'       as const, color: colors.primary, change: 0 },
+    { label: 'Total Leads',      value: leads.length,   icon: 'users'      as const, color: colors.primary, change: 0 },
+    { label: 'New Leads',        value: newLeads,       icon: 'user-plus'  as const, color: colors.gold, change: 0 },
     { label: 'Deals Closed',     value: wonDeals,       icon: 'check-circle'as const,color: '#7c3aed', change: 0 },
-    { label: 'Total Views',      value: totalViews,     icon: 'eye'        as const, color: '#183B60', change: 0 },
-    { label: 'Saves',            value: totalSaves,     icon: 'bookmark'   as const, color: '#c8a45a', change: 0 },
+    { label: 'Total Views',      value: totalViews,     icon: 'eye'        as const, color: colors.primary, change: 0 },
+    { label: 'Saves',            value: totalSaves,     icon: 'bookmark'   as const, color: colors.goldForeground, change: 0 },
     { label: 'Visits Done',      value: visits,         icon: 'calendar'   as const, color: '#7c3aed', change: 0 },
     { label: 'Conversion %',     value: conversionRate, icon: 'trending-up'as const, color: '#059669', change: 0 },
   ];
 
   const funnelRows = [
-    { label: 'Listings',  value: lstats.total,                                   color: '#0B1F3A' },
-    { label: 'Views',     value: totalViews,                                      color: '#183B60' },
-    { label: 'Leads',     value: leads.length,                                   color: '#c8a45a' },
+    { label: 'Listings',  value: lstats.total,                                   color: colors.primary },
+    { label: 'Views',     value: totalViews,                                      color: colors.primary },
+    { label: 'Leads',     value: leads.length,                                   color: colors.gold },
     { label: 'Interested',value: leads.filter((l) => l.status === 'interested').length, color: '#7c3aed' },
     { label: 'Closed',    value: closedLeads,                                    color: '#059669' },
   ];
@@ -227,7 +227,7 @@ export default function AnalyticsScreen() {
           <View style={[st.chartCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[st.chartTitle, { color: colors.foreground }]}>Listings Posted</Text>
             <Text style={[st.chartSub, { color: colors.mutedForeground }]}>Last {PERIOD_LABELS[period]}</Text>
-            <BarChart data={chartListings} color="#0B1F3A" />
+            <BarChart data={chartListings} color={colors.primary} />
           </View>
         </AnimatedReveal>
       )}
@@ -265,8 +265,8 @@ export default function AnalyticsScreen() {
               <View key={l.id}>
                 {i > 0 && <View style={[st.divider, { backgroundColor: colors.border }]} />}
                 <View style={st.listingRow}>
-                  <View style={[st.rankBadge, { backgroundColor: i === 0 ? '#c8a45a22' : colors.secondary }]}>
-                    <Text style={[st.rankText, { color: i === 0 ? '#c8a45a' : colors.mutedForeground }]}>#{i + 1}</Text>
+                  <View style={[st.rankBadge, { backgroundColor: i === 0 ? colors.gold + '22' : colors.secondary }]}>
+                    <Text style={[st.rankText, { color: i === 0 ? colors.goldForeground : colors.mutedForeground }]}>#{i + 1}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[st.listingTitle, { color: colors.foreground }]} numberOfLines={1}>{l.title}</Text>
@@ -278,7 +278,7 @@ export default function AnalyticsScreen() {
                       <Text style={[st.miniStatText, { color: colors.foreground }]}>{l.views ?? 0}</Text>
                     </View>
                     <View style={st.miniStat}>
-                      <Feather name="users" size={10} color="#183B60" />
+                      <Feather name="users" size={10} color={colors.primary} />
                       <Text style={[st.miniStatText, { color: colors.foreground }]}>{l.leadsCount ?? 0}</Text>
                     </View>
                   </View>
@@ -307,9 +307,9 @@ export default function AnalyticsScreen() {
         <Text style={[st.sectionLabel, { color: colors.mutedForeground }]}>LEAD STATUS BREAKDOWN</Text>
         <View style={[st.listingsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {[
-            { label: 'New',        count: leads.filter((l) => l.status === 'new').length,        color: '#183B60' },
-            { label: 'Contacted',  count: leads.filter((l) => l.status === 'contacted').length,  color: '#0B1F3A' },
-            { label: 'Interested', count: leads.filter((l) => l.status === 'interested').length, color: '#c8a45a' },
+            { label: 'New',        count: leads.filter((l) => l.status === 'new').length,        color: colors.primary },
+            { label: 'Contacted',  count: leads.filter((l) => l.status === 'contacted').length,  color: colors.primary },
+            { label: 'Interested', count: leads.filter((l) => l.status === 'interested').length, color: colors.goldForeground },
             { label: 'Viewing',    count: leads.filter((l) => l.status === 'viewing').length,    color: '#7c3aed' },
             { label: 'Closed',     count: closedLeads,                                           color: '#059669' },
           ].map((row, i) => (

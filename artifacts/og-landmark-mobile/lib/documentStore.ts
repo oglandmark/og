@@ -3,6 +3,7 @@
  * Stores document metadata against the authenticated backend account.
  */
 import { apiRequest } from '@/lib/api';
+import brandColors from '@/constants/colors';
 
 export type DocType =
   | 'NOC'
@@ -35,9 +36,9 @@ export function newDocId(): string {
 
 export function docTypeColor(type: DocType): { bg: string; text: string; icon: string } {
   switch (type) {
-    case 'NOC':            return { bg: '#183B6018', text: '#183B60', icon: 'shield' };
+    case 'NOC':            return { bg: brandColors.light.selectionBackground, text: brandColors.light.action, icon: 'shield' };
     case 'Layout Plan':    return { bg: '#0B1F3A18', text: '#0B1F3A', icon: 'map' };
-    case 'Title Deed':     return { bg: '#c8a45a18', text: '#c8a45a', icon: 'award' };
+    case 'Title Deed':     return { bg: brandColors.light.gold + '18', text: brandColors.light.goldForeground, icon: 'award' };
     case 'Registration':   return { bg: '#7c3aed18', text: '#7c3aed', icon: 'file-text' };
     case 'NTN Certificate':return { bg: '#0891b218', text: '#0891b2', icon: 'credit-card' };
     case 'ID Card':        return { bg: '#059669' + '18', text: '#059669', icon: 'user' };

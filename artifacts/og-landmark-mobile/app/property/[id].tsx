@@ -15,6 +15,7 @@ import { isDemoPropertyHidden } from '@/lib/demoPropertyVisibility';
 import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import { getProperty, incrementView, submitInquiry, bookAppointment, type ApiProperty } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useSaved } from '@/context/SavedContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -1340,9 +1341,9 @@ const styles = StyleSheet.create({
   topActions: { flexDirection: 'row', gap: 8 },
   roundButton: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
   shareButton: { shadowColor: '#0B1F3A', shadowOpacity: 0.28, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
-  favoriteButton: { shadowColor: '#d9b96d', shadowOpacity: 0.35, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
-  imageLabel: { position: 'absolute', bottom: 18, left: 20, backgroundColor: '#f1e6c9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
-  imageStatusBadge: { backgroundColor: '#f1e6c9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
+  favoriteButton: { shadowColor: brandColors.light.gold, shadowOpacity: 0.35, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
+  imageLabel: { position: 'absolute', bottom: 18, left: 20, backgroundColor: brandColors.light.gold, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
+  imageStatusBadge: { backgroundColor: brandColors.light.gold, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
   imageLabelText: { color: '#1c2024', fontFamily: 'Inter_700Bold', fontSize: 10, letterSpacing: 0.5 },
   content: { paddingHorizontal: 20, paddingTop: 23 },
   detailTop: { gap: 13 },
@@ -1366,13 +1367,13 @@ const styles = StyleSheet.create({
   amenityText: { flex: 1, fontFamily: 'Inter_500Medium', fontSize: 10, lineHeight: 14 },
   intelligenceCard: { borderRadius: 18, padding: 16, marginTop: 24 },
   intelligenceTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  intelligenceEyebrow: { color: '#f1e6c9', fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1, marginBottom: 7 },
+  intelligenceEyebrow: { color: brandColors.light.gold, fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1, marginBottom: 7 },
   intelligenceTitle: { color: '#ffffff', fontFamily: 'Inter_700Bold', fontSize: 16 },
   scoreCircle: { width: 58, height: 58, borderRadius: 29, alignItems: 'center', justifyContent: 'center' },
   scoreNumber: { fontFamily: 'Inter_700Bold', fontSize: 18 },
   scoreOutOf: { fontFamily: 'Inter_500Medium', fontSize: 9, marginTop: -2 },
   intelligenceCopy: { color: '#ffffffcc', fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 15, marginTop: 13 },
-  landSize: { color: '#f1e6c9', fontFamily: 'Inter_600SemiBold', fontSize: 10, lineHeight: 16, marginTop: 12 },
+  landSize: { color: brandColors.light.gold, fontFamily: 'Inter_600SemiBold', fontSize: 10, lineHeight: 16, marginTop: 12 },
   listingMeta: { borderTopWidth: 1, borderBottomWidth: 1, paddingVertical: 14, marginTop: 23, flexDirection: 'row', justifyContent: 'space-between', gap: 9 },
   metaLabel: { fontFamily: 'Inter_700Bold', fontSize: 7, letterSpacing: 0.9, marginBottom: 5 },
   metaValue: { fontFamily: 'Inter_600SemiBold', fontSize: 10, maxWidth: 100 },

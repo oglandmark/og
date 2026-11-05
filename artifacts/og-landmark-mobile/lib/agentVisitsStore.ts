@@ -3,6 +3,7 @@
  * Agent visits are persisted to the authenticated backend account.
  */
 import { apiRequest } from '@/lib/api';
+import brandColors from '@/constants/colors';
 
 export type VisitStatus = 'Requested' | 'Confirmed' | 'Completed' | 'Cancelled' | 'No Show' | 'Rescheduled';
 
@@ -64,8 +65,8 @@ export function isTodayVisit(v: AgentVisit): boolean { return isToday(v.date) &&
 
 export function visitStatusColor(status: VisitStatus): { bg: string; text: string } {
   switch (status) {
-    case 'Confirmed':    return { bg: '#183B6018', text: '#183B60' };
-    case 'Requested':    return { bg: '#c8a45a18', text: '#c8a45a' };
+    case 'Confirmed':    return { bg: brandColors.light.selectionBackground, text: brandColors.light.action };
+    case 'Requested':    return { bg: brandColors.light.gold + '18', text: brandColors.light.goldForeground };
     case 'Completed':    return { bg: '#0B1F3A18', text: '#0B1F3A' };
     case 'Cancelled':    return { bg: '#b94b4218', text: '#b94b42' };
     case 'No Show':      return { bg: '#b94b4218', text: '#b94b42' };

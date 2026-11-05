@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 // BlurView removed — crashes Android GPU
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { createProperty } from '@/lib/api';
 import { okaraDistrict } from '@/lib/cities';
@@ -106,9 +107,9 @@ export default function BuyerRequestScreen() {
         <Text style={[st.successBody, { color: colors.mutedForeground }]}>
           Verified agents and sellers will reach out with matching properties via your preferred contact method.
         </Text>
-        <View style={[st.statusBadge, { backgroundColor: '#183B6014', borderColor: '#183B6033' }]}>
-          <Feather name="radio" size={12} color="#183B60" />
-          <Text style={[st.statusText, { color: '#183B60' }]}>ACTIVE REQUEST</Text>
+        <View style={[st.statusBadge, { backgroundColor: brandColors.light.selectionBackground, borderColor: brandColors.light.selectionBorder + '55' }]}>
+          <Feather name="radio" size={12} color={brandColors.light.action} />
+          <Text style={[st.statusText, { color: brandColors.light.action }]}>ACTIVE REQUEST</Text>
         </View>
         <AnimatedPressable onPress={() => router.push('/(tabs)/listings')} style={[st.successBtn, { backgroundColor: colors.action, marginTop: 24 }]}>
           <Text style={[st.successBtnText, { color: colors.actionForeground }]}>View My Requests</Text>

@@ -8,6 +8,7 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
@@ -24,7 +25,7 @@ import {
 const statusConfig: Record<LeadStatus, { color: string; label: string }> = {
   new:        { color: '#059669', label: 'New' },
   contacted:  { color: '#0B1F3A', label: 'Contacted' },
-  interested: { color: '#c8a45a', label: 'Interested' },
+  interested: { color: brandColors.light.gold, label: 'Interested' },
   viewing:    { color: '#7c3aed', label: 'Viewing' },
   closed:     { color: '#6b7280', label: 'Closed' },
 };
@@ -246,9 +247,9 @@ function DeveloperCRM() {
                             </View>
                           ) : null}
                           {lead.nextFollowUp ? (
-                            <View style={[d.infoChip, { backgroundColor: '#c8a45a18' }]}>
-                              <Feather name="calendar" size={10} color="#c8a45a" />
-                              <Text style={[d.infoChipText, { color: '#c8a45a' }]}>{lead.nextFollowUp}</Text>
+                            <View style={[d.infoChip, { backgroundColor: brandColors.light.gold + '18' }]}>
+                              <Feather name="calendar" size={10} color={brandColors.light.goldForeground} />
+                              <Text style={[d.infoChipText, { color: brandColors.light.goldForeground }]}>{lead.nextFollowUp}</Text>
                             </View>
                           ) : null}
                         </View>

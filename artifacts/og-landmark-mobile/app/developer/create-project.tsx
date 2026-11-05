@@ -17,6 +17,7 @@ import { LocationPicker } from '@/components/LocationPicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import {
@@ -366,9 +367,9 @@ function Step3({ data, set, tr, colors }: StepProps) {
             min={6} max={120} step={6}
             hint="Total duration of payment plan in months" onChange={(n) => set({ installmentMonths: n })} colors={colors} />
           {/* Summary badge */}
-          <View style={[pp.wrap, { backgroundColor: '#183B6012', borderColor: '#183B6030' }]}>
-            <Feather name="credit-card" size={13} color="#183B60" />
-            <Text style={[pp.text, { color: '#183B60' }]}>
+          <View style={[pp.wrap, { backgroundColor: brandColors.light.selectionBackground, borderColor: brandColors.light.selectionBorder + '55' }]}>
+            <Feather name="credit-card" size={13} color={brandColors.light.action} />
+            <Text style={[pp.text, { color: brandColors.light.action }]}>
               {data.downPaymentPct}% down · {data.installmentMonths} months plan
             </Text>
           </View>
@@ -524,7 +525,7 @@ function Step6Media({ data, set, colors }: StepProps) {
                 <Feather name="edit-2" size={14} color="#ffffff" />
               </Pressable>
             </View>
-            <View style={[md.coverBadge, { backgroundColor: '#183B60cc' }]}>
+            <View style={[md.coverBadge, { backgroundColor: brandColors.light.action + 'cc' }]}>
               <Feather name="check" size={10} color="#ffffff" />
               <Text style={md.coverBadgeText}>Cover Photo Set</Text>
             </View>
@@ -658,8 +659,8 @@ function Step6Media({ data, set, colors }: StepProps) {
                 ) : null}
                 {value ? (
                   <Pressable onPress={() => Linking.openURL(value).catch(() => {})} hitSlop={8}
-                    style={[md.videoClearBtn, { backgroundColor: '#183B6018' }]}>
-                    <Feather name="external-link" size={14} color="#183B60" />
+                    style={[md.videoClearBtn, { backgroundColor: brandColors.light.selectionBackground }]}>
+                    <Feather name="external-link" size={14} color={brandColors.light.action} />
                   </Pressable>
                 ) : null}
               </View>
@@ -771,9 +772,9 @@ function Step6Review({ data, tr, colors }: StepProps) {
           )}
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
             {data.coverImageUri && (
-              <View style={[rv.amenityChip, { backgroundColor: '#183B6015', borderColor: '#183B6030' }]}>
-                <Feather name="image" size={10} color="#183B60" />
-                <Text style={[rv.amenityText, { color: '#183B60' }]}>Cover photo set</Text>
+              <View style={[rv.amenityChip, { backgroundColor: brandColors.light.selectionBackground, borderColor: brandColors.light.selectionBorder + '55' }]}>
+                <Feather name="image" size={10} color={brandColors.light.action} />
+                <Text style={[rv.amenityText, { color: brandColors.light.action }]}>Cover photo set</Text>
               </View>
             )}
             {(data.photos?.length ?? 0) > 0 && (

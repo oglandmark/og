@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import {
@@ -20,16 +21,16 @@ import {
 } from '@/lib/leadsStore';
 
 const STATUSES: { key: LeadStatus; label: string; color: string }[] = [
-  { key: 'new',        label: 'New',       color: '#0B1F3A' },
-  { key: 'contacted',  label: 'Contacted', color: '#c8a45a' },
-  { key: 'interested', label: 'Interested',color: '#183B60' },
+  { key: 'new',        label: 'New',       color: brandColors.light.action },
+  { key: 'contacted',  label: 'Contacted', color: brandColors.light.gold },
+  { key: 'interested', label: 'Interested',color: brandColors.light.action },
   { key: 'viewing',    label: 'Viewing',   color: '#7c3aed' },
 ];
 
 const PRIORITIES: { key: LeadPriority; label: string; color: string }[] = [
   { key: 'high',   label: '🔴 High',   color: '#b94b42' },
-  { key: 'medium', label: '🟡 Medium', color: '#c8a45a' },
-  { key: 'low',    label: '🟢 Low',    color: '#183B60' },
+  { key: 'medium', label: '🟡 Medium', color: brandColors.light.gold },
+  { key: 'low',    label: '🟢 Low',    color: brandColors.light.action },
 ];
 
 function FieldLabel({ label, required }: { label: string; required?: boolean }) {

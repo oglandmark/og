@@ -1,4 +1,4 @@
-import React, { type ReactNode } from 'react';
+import React, { type ReactNode, useEffect } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -14,12 +14,25 @@ import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { useLanguage } from '@/context/LanguageContext';
 import { useColors } from '@/hooks/useColors';
 
-const HOUSE = require('../assets/images/auth-house.png');
+const HOUSE_BACKGROUND = require('../assets/images/auth-house-background.png');
+const PALM_TREE = require('../assets/images/auth-palm-tree.png');
+const AnimatedImage = Animated.createAnimatedComponent(Image);
 const AUTH_SHEET_TOP = 295;
 
 export function AuthScreenFrame({
@@ -38,6 +51,48 @@ export function AuthScreenFrame({
   const { width, height } = useWindowDimensions();
   const brandTop = Math.max(topInset, 44);
   const houseWidth = Math.min(width - 48, 330);
+  const houseLeft = (width - houseWidth) / 2;
+  const imageScale = houseWidth / 720;
+  const treeWidth = 235 * imageScale;
+  const treeHeight = 300 * imageScale;
+  const reduceMotion = useReducedMotion();
+  const treeSway = useSharedValue(0);
+
+  useEffect(() => {
+    cancelAnimation(treeSway);
+    treeSway.value = 0;
+    if (reduceMotion) return undefined;
+
+    treeSway.value = withDelay(
+      350,
+      withRepeat(
+        withSequence(
+          withTiming(-2.2, { duration: 2300, easing: Easing.inOut(Easing.sin) }),
+          withTiming(1.5, { duration: 2700, easing: Easing.inOut(Easing.sin) }),
+          withTiming(-0.8, { duration: 2100, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+        ),
+        -1,
+        false,
+      ),
+    );
+
+    return () => cancelAnimation(treeSway);
+  }, [reduceMotion, treeSway]);
+
+  const treeAnimatedStyle = useAnimatedStyle(() => {
+    const pivotX = treeWidth * 116 / 235;
+    const pivotY = treeHeight * 265 / 300;
+    return {
+      transform: [
+        { translateX: pivotX },
+        { translateY: pivotY },
+        { rotate: `${treeSway.value}deg` },
+        { translateX: -pivotX },
+        { translateY: -pivotY },
+      ],
+    };
+  }, [treeWidth, treeHeight]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.splashBackground }]}>
@@ -67,13 +122,23 @@ export function AuthScreenFrame({
         </Text>
       </View>
       <Image
-        source={HOUSE}
+        source={HOUSE_BACKGROUND}
         resizeMode="contain"
         style={[
           styles.house,
-          { left: (width - houseWidth) / 2, width: houseWidth, height: houseWidth * 230 / 360 },
+          { left: houseLeft, width: houseWidth, height: houseWidth * 230 / 360 },
         ]}
         accessibilityLabel="OG Landmark luxury home illustration"
+      />
+      <AnimatedImage
+        source={PALM_TREE}
+        resizeMode="stretch"
+        style={[
+          styles.tree,
+          { left: houseLeft, top: 78 + 130 * imageScale, width: treeWidth, height: treeHeight },
+          treeAnimatedStyle,
+        ]}
+        accessible={false}
       />
       <KeyboardAvoidingView
         style={styles.keyboardFrame}
@@ -252,6 +317,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   house: { position: 'absolute', top: 78 },
+  tree: { position: 'absolute' },
   keyboardFrame: { flex: 1 },
   scroll: { flex: 1 },
   sheet: {

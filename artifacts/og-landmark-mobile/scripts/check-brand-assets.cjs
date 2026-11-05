@@ -249,28 +249,36 @@ if (splashOptions?.backgroundColor !== "#F5F4F0" || splashOptions?.dark?.backgro
   fail("Native splash backgrounds must match the app's startup surface color.");
 }
 
-const logoComponent = fs.readFileSync(
+const sharedLogoComponent = fs.readFileSync(
   path.resolve(projectRoot, "components/OGLandmarkLogo.tsx"),
   "utf8"
 );
-const primaryLogo = logoComponent.match(
+const primaryLogo = sharedLogoComponent.match(
   /const logoAsset\s*=\s*require\(['"]@\/assets\/images\/([^'"]+)['"]\)/
 );
 if (!primaryLogo) {
-  fail("Could not identify the primary logo used by the in-app startup splash.");
+  fail("Could not identify the shared primary app logo.");
 }
-const startupLogo = path.resolve(projectRoot, "assets/images", primaryLogo[1]);
-if (!fs.existsSync(startupLogo)) {
-  fail(`In-app startup logo does not exist: ${primaryLogo[1]}`);
+const sharedLogo = path.resolve(projectRoot, "assets/images", primaryLogo[1]);
+if (!fs.existsSync(sharedLogo)) {
+  fail(`Shared app logo does not exist: ${primaryLogo[1]}`);
 }
 const startupLayout = fs.readFileSync(
   path.resolve(projectRoot, "app/_layout.tsx"),
   "utf8"
 );
-if (!/<OGLandmarkLogo\s+size=\{\d+\}\s*\/>/.test(startupLayout) || !startupLayout.includes("OG Landmark")) {
-  fail("The in-app startup splash must retain both the logo and OG Landmark name.");
+const startupSplash = fs.readFileSync(
+  path.resolve(projectRoot, "components/StartupSplash.tsx"),
+  "utf8"
+);
+if (
+  !/<StartupSplash\s+colors=\{colors\}\s+overlay\s+fontsReady=\{fontsReady\}\s*\/>/.test(startupLayout) ||
+  !startupSplash.includes('accessibilityLabel="OG Landmark roof logo"') ||
+  !startupSplash.includes("LANDMARK")
+) {
+  fail("The in-app startup splash must render the new roof logo and OG Landmark name.");
 }
 if (!/STARTUP_SPLASH_MIN_DURATION_MS\s*=\s*7000\b/.test(startupLayout)) {
   fail("The branded startup splash must stay visible for at least seven seconds.");
 }
-console.log("✓ Native splash is color-only; the animated in-app splash keeps the logo, name, and seven-second minimum.");
+console.log("✓ Native splash is color-only; the animated in-app splash keeps the new roof logo, name, and seven-second minimum.");

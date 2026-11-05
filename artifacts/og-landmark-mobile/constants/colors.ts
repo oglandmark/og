@@ -54,6 +54,15 @@ const colors = {
     actionGlassBorder: '#ffffff55',
     actionGlassHighlight: '#ffffff24',
     actionGlow: '#9AAFC2',
+    // Palette supplied with the updated OG Landmark animated splash.
+    splashBackground: '#06122A',
+    splashNavy: '#0B1F3A',
+    splashGlow: '#1A4A7A',
+    splashTeal: '#19C3B1',
+    splashMint: '#7FE0D4',
+    splashGold: '#F2B84B',
+    splashWhite: '#FFFFFF',
+    splashMuted: '#9FB3CC',
 
     // Editorial surfaces used for quiet hierarchy and premium depth
     surfaceRaised: '#FFFEFB',

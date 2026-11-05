@@ -46,14 +46,38 @@ function TabIcon({
   return (
     <View
       style={[
-        styles.tabIconWrap,
+        styles.tabIconHalo,
         focused && {
-          backgroundColor: colors.selectionTint,
-          borderColor: colors.selectionBorder + '55',
+          ...(Platform.OS === 'ios'
+            ? {
+                shadowColor: colors.teal,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.14,
+                shadowRadius: 6,
+              }
+            : Platform.OS === 'android'
+              ? { elevation: 3 }
+              : {}),
         },
       ]}
     >
-      <Feather name={name} size={Math.min(size, 21)} color={color as string} />
+      <View
+        style={[
+          styles.tabIconWrap,
+          focused && { borderColor: colors.selectionBorder + '66' },
+        ]}
+      >
+        {focused && (
+          <LinearGradient
+            pointerEvents="none"
+            colors={[colors.glassOverlay, colors.selectionTint + 'B8']}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+        <Feather name={name} size={Math.min(size, 21)} color={color as string} />
+      </View>
     </View>
   );
 }
@@ -312,6 +336,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'transparent',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabIconHalo: {
+    width: 44,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },

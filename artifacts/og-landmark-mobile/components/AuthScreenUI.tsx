@@ -13,8 +13,10 @@ import {
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { LocalizedText as Text } from '@/components/LocalizedText';
+import { useLanguage } from '@/context/LanguageContext';
 import { useColors } from '@/hooks/useColors';
 
 const HOUSE = require('../assets/images/auth-house.png');
@@ -34,9 +36,11 @@ export function AuthScreenFrame({
   contentGap?: number;
 }) {
   const colors = useColors();
+  const { tr } = useLanguage();
   const { width, height } = useWindowDimensions();
   const brandTop = Math.max(topInset, 44);
   const houseWidth = Math.min(width - 48, 330);
+  const showHomeLabel = width >= 360;
 
   return (
     <View style={[styles.root, { backgroundColor: colors.splashBackground }]}>
@@ -59,12 +63,30 @@ export function AuthScreenFrame({
         <Circle cx={22} cy={206} r={1} fill={colors.splashWhite} />
       </Svg>
       <View style={[styles.brand, { top: brandTop }]}>
-        <OGLandmarkLogo size={42} />
+        <OGLandmarkLogo size={42} animateOnWeb />
         <Text style={styles.wordmark}>
           <Text style={{ color: colors.splashGold, fontFamily: 'Inter_700Bold' }}>OG</Text>
           <Text style={{ color: colors.splashWhite, fontFamily: 'Inter_600SemiBold' }}> LANDMARK</Text>
         </Text>
       </View>
+      <Pressable
+        onPress={() => router.replace('/(tabs)')}
+        accessibilityRole="button"
+        accessibilityLabel={tr('backToHome')}
+        hitSlop={8}
+        style={[
+          styles.homeButton,
+          {
+            top: brandTop + 5,
+            borderColor: `${colors.splashWhite}55`,
+            backgroundColor: `${colors.splashWhite}14`,
+            paddingHorizontal: showHomeLabel ? 11 : 9,
+          },
+        ]}
+      >
+        <Feather name="home" size={15} color={colors.splashWhite} />
+        {showHomeLabel ? <Text style={[styles.homeButtonText, { color: colors.splashWhite }]}>{tr('backToHome')}</Text> : null}
+      </Pressable>
       <Image
         source={HOUSE}
         resizeMode="contain"
@@ -210,6 +232,18 @@ const styles = StyleSheet.create({
   heroDetails: { position: 'absolute', top: 0, left: 0 },
   brand: { position: 'absolute', left: 24, flexDirection: 'row', alignItems: 'center', gap: 10 },
   wordmark: { fontFamily: 'Inter_600SemiBold', fontSize: 13, letterSpacing: 3 },
+  homeButton: {
+    position: 'absolute',
+    right: 24,
+    minHeight: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 16,
+  },
+  homeButtonText: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   house: { position: 'absolute', top: 78 },
   keyboardFrame: { flex: 1 },
   scroll: { flex: 1 },

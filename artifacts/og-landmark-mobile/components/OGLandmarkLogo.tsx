@@ -38,9 +38,11 @@ function easedProgress(value: number, start: number, end: number, easeOut = fals
 export function OGLandmarkLogo({
   size = 80,
   inverse = false,
+  animateOnWeb = false,
 }: {
   size?: number;
   inverse?: boolean;
+  animateOnWeb?: boolean;
 }) {
   const colors = useColors();
   const reduceMotion = useReducedMotion();
@@ -52,7 +54,7 @@ export function OGLandmarkLogo({
       cancelAnimation(timeline);
       timeline.value = 8;
 
-      if (Platform.OS === 'web' || reduceMotion) return undefined;
+      if ((Platform.OS === 'web' && !animateOnWeb) || reduceMotion) return undefined;
 
       timeline.value = withDelay(
         10_000,
@@ -70,7 +72,7 @@ export function OGLandmarkLogo({
         cancelAnimation(timeline);
         timeline.value = 8;
       };
-    }, [reduceMotion, timeline]),
+    }, [animateOnWeb, reduceMotion, timeline]),
   );
 
   const oAnimatedProps = useAnimatedProps(() => ({

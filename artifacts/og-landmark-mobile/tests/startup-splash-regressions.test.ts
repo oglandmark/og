@@ -57,12 +57,18 @@ test('startup splash plays intro sound natively and offers web gesture playback'
   assert.ok(existsSync(new URL('../assets/audio/splash-brand-intro.mp3', import.meta.url)));
   assert.ok(appConfig.expo.assetBundlePatterns?.includes('assets/audio/*'));
   assert.match(startupSplash, /useAudioPlayer/);
-  assert.match(startupSplash, /useAudioPlayerStatus/);
   assert.match(startupSplash, /splashAudioPlayer\.volume = 0\.7/);
   assert.match(startupSplash, /splashAudioPlayer\.play\(\)/);
   assert.match(startupSplash, /splashAudioPlayer\.pause\(\)/);
   assert.match(startupSplash, /if \(Platform\.OS === 'web'\) return undefined/);
-  assert.match(startupSplash, /Platform\.OS === 'web' && !splashAudioStatus\.playing/);
+  assert.match(startupSplash, /Platform\.OS === 'web' && !webAudioEnabled/);
   assert.match(startupSplash, /onPress=\{enableSplashAudio\}/);
+});
+
+test('splash keeps rotating rings composited and avoids frame-by-frame SVG path drawing', () => {
+  assert.match(startupSplash, /renderToHardwareTextureAndroid/);
+  assert.match(startupSplash, /shouldRasterizeIOS/);
+  assert.match(startupSplash, /const logoRevealStyle = useAnimatedStyle/);
+  assert.doesNotMatch(startupSplash, /useAnimatedProps|strokeDashoffset/);
 });
 

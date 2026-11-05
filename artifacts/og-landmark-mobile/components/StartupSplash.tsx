@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
@@ -18,7 +18,6 @@ import Animated, {
   FadeIn,
   FadeOut,
   cancelAnimation,
-  useAnimatedProps,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -27,9 +26,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useColors } from '@/hooks/useColors';
-
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const DESIGN_WIDTH = 390;
 const DESIGN_HEIGHT = 844;
@@ -49,13 +45,11 @@ export function StartupSplash({
   const splashAudioPlayer = useAudioPlayer(
     require('@/assets/audio/splash-brand-intro.mp3'),
   );
-  const splashAudioStatus = useAudioPlayerStatus(splashAudioPlayer);
+  const [webAudioEnabled, setWebAudioEnabled] = useState(false);
 
   const outerRotation = useSharedValue(0);
   const innerRotation = useSharedValue(0);
-  const logoOProgress = useSharedValue(reduceMotion ? 1 : 0);
-  const logoGProgress = useSharedValue(reduceMotion ? 1 : 0);
-  const roofProgress = useSharedValue(reduceMotion ? 1 : 0);
+  const logoProgress = useSharedValue(reduceMotion ? 1 : 0);
   const wordmarkProgress = useSharedValue(reduceMotion ? 1 : 0);
   const dividerProgress = useSharedValue(reduceMotion ? 1 : 0);
   const categoryProgress = useSharedValue(reduceMotion ? 1 : 0);
@@ -69,8 +63,12 @@ export function StartupSplash({
     transform: [{ rotate: `${innerRotation.value}deg` }, { scale: 0.84 }],
   }));
   const haloStyle = useAnimatedStyle(() => ({
-    opacity: 0.3 + Math.min(0.45, roofProgress.value * 0.45),
-    transform: [{ scale: 0.78 + Math.min(0.2, roofProgress.value * 0.2) }],
+    opacity: 0.3 + Math.min(0.45, logoProgress.value * 0.45),
+    transform: [{ scale: 0.78 + Math.min(0.2, logoProgress.value * 0.2) }],
+  }));
+  const logoRevealStyle = useAnimatedStyle(() => ({
+    opacity: logoProgress.value,
+    transform: [{ scale: 0.94 + logoProgress.value * 0.06 }],
   }));
   const wordmarkStyle = useAnimatedStyle(() => ({
     opacity: wordmarkProgress.value,
@@ -122,20 +120,8 @@ export function StartupSplash({
     // Keep play() directly in this press handler to preserve that gesture.
     splashAudioPlayer.volume = 0.7;
     splashAudioPlayer.play();
+    setWebAudioEnabled(true);
   }
-
-  const oAnimatedProps = useAnimatedProps(() => ({
-    strokeDashoffset: 251.3 * (1 - logoOProgress.value),
-    opacity: logoOProgress.value,
-  }));
-  const gAnimatedProps = useAnimatedProps(() => ({
-    strokeDashoffset: 330 * (1 - logoGProgress.value),
-    opacity: logoGProgress.value,
-  }));
-  const roofAnimatedProps = useAnimatedProps(() => ({
-    strokeDashoffset: 120 * (1 - roofProgress.value),
-    opacity: roofProgress.value,
-  }));
 
   useEffect(() => {
     if (reduceMotion) return undefined;
@@ -150,13 +136,8 @@ export function StartupSplash({
       -1,
       false,
     );
-    logoOProgress.value = withTiming(1, { duration: 1200, easing: Easing.out(Easing.quad) });
-    logoGProgress.value = withDelay(
-      650,
-      withTiming(1, { duration: 1200, easing: Easing.out(Easing.quad) }),
-    );
-    roofProgress.value = withDelay(
-      1650,
+    logoProgress.value = withDelay(
+      250,
       withTiming(1, { duration: 850, easing: Easing.out(Easing.quad) }),
     );
     wordmarkProgress.value = withDelay(2600, withTiming(1, { duration: 650 }));
@@ -168,9 +149,7 @@ export function StartupSplash({
     return () => {
       cancelAnimation(outerRotation);
       cancelAnimation(innerRotation);
-      cancelAnimation(logoOProgress);
-      cancelAnimation(logoGProgress);
-      cancelAnimation(roofProgress);
+      cancelAnimation(logoProgress);
       cancelAnimation(wordmarkProgress);
       cancelAnimation(dividerProgress);
       cancelAnimation(categoryProgress);
@@ -182,12 +161,10 @@ export function StartupSplash({
     dividerProgress,
     hintProgress,
     innerRotation,
-    logoGProgress,
-    logoOProgress,
+    logoProgress,
     outerRotation,
     progress,
     reduceMotion,
-    roofProgress,
     wordmarkProgress,
   ]);
 
@@ -230,7 +207,11 @@ export function StartupSplash({
           { transform: [{ translateX: -DESIGN_WIDTH / 2 }, { translateY: -DESIGN_HEIGHT / 2 }, { scale }] },
         ]}
       >
-        <Animated.View style={[styles.orbit, outerRingStyle]}>
+        <Animated.View
+          renderToHardwareTextureAndroid
+          shouldRasterizeIOS
+          style={[styles.orbit, outerRingStyle]}
+        >
           <Svg width={400} height={400} viewBox="0 0 400 400">
             <Circle cx={200} cy={200} r={190} fill="none" stroke={colors.splashWhite} strokeOpacity={0.07} />
             <Circle
@@ -269,7 +250,11 @@ export function StartupSplash({
           </Svg>
         </Animated.View>
 
-        <Animated.View style={[styles.orbit, styles.innerOrbit, innerRingStyle]}>
+        <Animated.View
+          renderToHardwareTextureAndroid
+          shouldRasterizeIOS
+          style={[styles.orbit, styles.innerOrbit, innerRingStyle]}
+        >
           <Svg width={400} height={400} viewBox="0 0 400 400">
             <Circle cx={200} cy={200} r={150} fill="none" stroke={colors.splashWhite} strokeOpacity={0.09} />
             <Circle
@@ -321,52 +306,50 @@ export function StartupSplash({
           </Svg>
         </Animated.View>
 
-        <Svg
-          width={220}
-          height={160}
-          viewBox="0 -8 220 160"
-          accessibilityLabel="OG Landmark roof logo"
-          style={styles.logo}
-        >
-          <Defs>
-            <SvgLinearGradient id="splashLogoGradient" x1="0" y1="0" x2="1" y2="0">
-              <Stop offset="0" stopColor={colors.splashTeal} />
-              <Stop offset="0.5" stopColor={colors.splashMint} />
-              <Stop offset="1" stopColor={colors.splashGold} />
-            </SvgLinearGradient>
-          </Defs>
-          <AnimatedCircle
-            cx={70}
-            cy={100}
-            r={40}
-            fill="none"
-            stroke="url(#splashLogoGradient)"
-            strokeWidth={16}
-            strokeLinecap="round"
-            strokeDasharray="251.3"
-            animatedProps={oAnimatedProps}
-          />
-          <AnimatedPath
-            d="M182.8 77.1 A40 40 0 1 0 190 100 L152 100"
-            fill="none"
-            stroke="url(#splashLogoGradient)"
-            strokeWidth={16}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeDasharray="330"
-            animatedProps={gAnimatedProps}
-          />
-          <AnimatedPath
-            d="M60 38 L110 5 L160 38"
-            fill="none"
-            stroke={colors.splashGold}
-            strokeWidth={12}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeDasharray="120"
-            animatedProps={roofAnimatedProps}
-          />
-        </Svg>
+        <Animated.View style={[styles.logo, logoRevealStyle]}>
+          <Svg
+            width={220}
+            height={160}
+            viewBox="0 -8 220 160"
+            accessibilityLabel="OG Landmark roof logo"
+          >
+            <Defs>
+              <SvgLinearGradient id="splashLogoGradient" x1="0" y1="0" x2="1" y2="0">
+                <Stop offset="0" stopColor={colors.splashTeal} />
+                <Stop offset="0.5" stopColor={colors.splashMint} />
+                <Stop offset="1" stopColor={colors.splashGold} />
+              </SvgLinearGradient>
+            </Defs>
+            <Circle
+              cx={70}
+              cy={100}
+              r={40}
+              fill="none"
+              stroke="url(#splashLogoGradient)"
+              strokeWidth={16}
+              strokeLinecap="round"
+              strokeDasharray="251.3"
+            />
+            <Path
+              d="M182.8 77.1 A40 40 0 1 0 190 100 L152 100"
+              fill="none"
+              stroke="url(#splashLogoGradient)"
+              strokeWidth={16}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="330"
+            />
+            <Path
+              d="M60 38 L110 5 L160 38"
+              fill="none"
+              stroke={colors.splashGold}
+              strokeWidth={12}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="120"
+            />
+          </Svg>
+        </Animated.View>
 
         <Animated.View style={[styles.wordmark, wordmarkStyle]}>
           <Animated.Text
@@ -436,7 +419,7 @@ export function StartupSplash({
           Find your next landmark
         </Animated.Text>
 
-        {Platform.OS === 'web' && !splashAudioStatus.playing && (
+        {Platform.OS === 'web' && !webAudioEnabled && (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Enable splash screen sound"

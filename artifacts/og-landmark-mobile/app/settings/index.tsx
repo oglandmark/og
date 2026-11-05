@@ -124,7 +124,7 @@ export default function SettingsHomeScreen() {
   );
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <View style={[styles.root, { backgroundColor: colors.surfaceTint }]}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) + 12, paddingHorizontal: 20, paddingBottom: insets.bottom + 35 }} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Pressable testID="settings-back" accessibilityLabel="Back to profile" onPress={() => router.back()} style={[styles.back, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -141,13 +141,13 @@ export default function SettingsHomeScreen() {
 
         {isLoggedIn ? (
           <>
-            <View style={[styles.identity, { backgroundColor: colors.action, borderColor: colors.action }]}>
-              <View style={[styles.identityMark, { backgroundColor: colors.gold }]}><Feather name="user" size={18} color={colors.goldForeground} /></View>
+            <View style={[styles.identity, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.identityMark, { backgroundColor: colors.selectionBackground }]}><Feather name="user" size={18} color={colors.action} /></View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.identityName}>{user?.name || 'Your account'}</Text>
-                <Text style={styles.identityEmail}>{user?.email || user?.phone || 'Manage your OG Landmark account'}</Text>
+                <Text style={[styles.identityName, { color: colors.foreground }]}>{user?.name || 'Your account'}</Text>
+                <Text style={[styles.identityEmail, { color: colors.mutedForeground }]}>{user?.email || user?.phone || 'Manage your OG Landmark account'}</Text>
               </View>
-              <Pressable accessibilityLabel="Edit account details" onPress={() => router.push('/settings/account' as any)}><Feather name="edit-2" size={16} color={colors.background} /></Pressable>
+              <Pressable accessibilityLabel="Edit account details" onPress={() => router.push('/settings/account' as any)}><Feather name="edit-2" size={16} color={colors.action} /></Pressable>
             </View>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>ACCOUNT</Text>
             <View style={styles.group}>{privateItems.map(renderItem)}</View>
@@ -173,7 +173,7 @@ export default function SettingsHomeScreen() {
             ) : null}
           </>
         ) : (
-          <View style={[styles.guestNote, { backgroundColor: colors.selectionBackground, borderColor: colors.border }]}>
+          <View style={[styles.guestNote, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Feather name="lock" size={17} color={colors.action} />
             <Text style={[styles.guestCopy, { color: colors.foreground }]}>Sign in to manage account details and notification preferences.</Text>
             <Pressable onPress={() => router.push('/(auth)/login' as any)}><Text style={[styles.signInLink, { color: colors.action }]}>Sign in</Text></Pressable>
@@ -203,31 +203,31 @@ export default function SettingsHomeScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 24 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 22 },
   back: { width: 40, height: 40, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   eyebrow: { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.6 },
   title: { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 27, marginTop: 1 },
   mark: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  identity: { borderRadius: 20, borderWidth: 1, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 },
+  identity: { borderRadius: 19, borderWidth: 1, padding: 15, flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 6 },
   identityMark: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  identityName: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#F4F2EC' },
-  identityEmail: { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#D5DFEA', marginTop: 3 },
-  sectionTitle: { fontFamily: 'Inter_700Bold', fontSize: 10, letterSpacing: 1.4, marginTop: 24, marginBottom: 10 },
+  identityName: { fontFamily: 'Inter_600SemiBold', fontSize: 15 },
+  identityEmail: { fontFamily: 'Inter_400Regular', fontSize: 12, marginTop: 4 },
+  sectionTitle: { fontFamily: 'Inter_500Medium', fontSize: 11, letterSpacing: 1.1, marginTop: 23, marginBottom: 10 },
   group: { gap: 8 },
-  row: { borderWidth: 1, borderRadius: 15, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  row: { minHeight: 72, borderWidth: 1, borderRadius: 17, paddingHorizontal: 14, paddingVertical: 11, flexDirection: 'row', alignItems: 'center', gap: 12 },
   firstRow: {},
-  icon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  icon: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   copy: { flex: 1 },
-  rowTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  detail: { fontFamily: 'Inter_400Regular', fontSize: 11, marginTop: 3 },
+  rowTitle: { fontFamily: 'Inter_500Medium', fontSize: 14 },
+  detail: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, marginTop: 4 },
   notice: { fontFamily: 'Inter_500Medium', fontSize: 12, lineHeight: 18, marginTop: 10 },
-  notificationPanel: { borderWidth: 1, borderRadius: 15, padding: 14, gap: 12, marginTop: 9 },
-  notificationButton: { minHeight: 42, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  notificationPanel: { borderWidth: 1, borderRadius: 18, padding: 15, gap: 12, marginTop: 9 },
+  notificationButton: { minHeight: 44, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   notificationButtonText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
-  preferenceButton: { minHeight: 42, borderWidth: 1, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  preferenceButton: { minHeight: 44, borderWidth: 1, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   preferenceText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
-  guestNote: { borderWidth: 1, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 2 },
+  guestNote: { borderWidth: 1, borderRadius: 18, padding: 15, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 2 },
   guestCopy: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18 },
-  signInLink: { fontFamily: 'Inter_700Bold', fontSize: 12 },
+  signInLink: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   footer: { fontFamily: 'Inter_400Regular', fontSize: 11, textAlign: 'center', marginTop: 28 },
 });

@@ -33,6 +33,16 @@ test('guest profile uses the light welcome-card layout and three locked activity
   assert.ok(profile.includes("router.push('/(auth)/signup'"));
 });
 
+test('activity and Settings options use a restrained, professional card hierarchy', () => {
+  const profile = read('app/(tabs)/profile.tsx');
+  const settings = read('app/settings/index.tsx');
+  assert.match(profile, /activityLabel: \{ fontFamily: 'Inter_500Medium'/);
+  assert.match(profile, /signInPill: \{[^}]*borderWidth: 1/);
+  assert.match(settings, /backgroundColor: colors\.surfaceTint/);
+  assert.match(settings, /rowTitle: \{ fontFamily: 'Inter_500Medium'/);
+  assert.match(settings, /row: \{ minHeight: 72, borderWidth: 1, borderRadius: 17/);
+});
+
 test('settings home is reachable and retains public, account, notification and deletion actions', () => {
   const profile = read('app/(tabs)/profile.tsx');
   const settings = read('app/settings/index.tsx');

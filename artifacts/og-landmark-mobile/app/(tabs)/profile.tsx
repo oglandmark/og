@@ -950,7 +950,7 @@ function GuestScreen({
                 <Text style={[gst.activityLabel, { color: colors.foreground }]}>{item.label}</Text>
                 <Text style={[gst.activitySub, { color: colors.mutedForeground }]}>{item.sub}</Text>
               </View>
-              <View style={[gst.signInPill, { backgroundColor: colors.secondary }]}>
+              <View style={[gst.signInPill, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                 <Feather name="lock" size={12} color={colors.foreground} />
                 <Text style={[gst.signInPillText, { color: colors.foreground }]}>Sign in</Text>
               </View>
@@ -1476,12 +1476,12 @@ const gst = StyleSheet.create({
   registerBtnText: { fontFamily: 'Inter_500Medium', fontSize: 15 },
   activityTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 19, letterSpacing: -0.25, marginBottom: 12 },
   activityList: { gap: 9 },
-  activityRow: { minHeight: 76, borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 13 },
-  activityIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  activityRow: { minHeight: 78, borderWidth: 1, borderRadius: 18, paddingHorizontal: 13, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  activityIcon: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   activityCopy: { flex: 1 },
-  activityLabel: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
-  activitySub: { fontFamily: 'Inter_400Regular', fontSize: 12, marginTop: 4 },
-  signInPill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 18, paddingHorizontal: 10, paddingVertical: 7 },
+  activityLabel: { fontFamily: 'Inter_500Medium', fontSize: 14 },
+  activitySub: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, marginTop: 4 },
+  signInPill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 18, paddingHorizontal: 10, paddingVertical: 7 },
   signInPillText: { fontFamily: 'Inter_500Medium', fontSize: 11 },
 });
 

@@ -16,6 +16,10 @@ const startupSplash = readFileSync(
   new URL('../components/StartupSplash.tsx', import.meta.url),
   'utf8',
 );
+const sharedLogo = readFileSync(
+  new URL('../components/OGLandmarkLogo.tsx', import.meta.url),
+  'utf8',
+);
 const splashReference = readFileSync(
   new URL('../assets/splash/og-landmark-intro.html', import.meta.url),
   'utf8',
@@ -71,5 +75,15 @@ test('autoplay adapter removes the controls and starts the embedded sound automa
   assert.doesNotMatch(preparedHtml, /\$\('rp'\)\.onclick/);
   assert.match(startupSplash, /allowsInlineMediaPlayback/);
   assert.doesNotMatch(startupSplash, /Tap for sound/);
+});
+
+test('shared OG and roof mark loops after ten focused seconds on each mobile page', () => {
+  assert.match(sharedLogo, /useFocusEffect/);
+  assert.match(sharedLogo, /withDelay\(\s*10_000/);
+  assert.match(sharedLogo, /withRepeat/);
+  assert.match(sharedLogo, /cancelAnimation\(markPulse\)/);
+  assert.match(sharedLogo, /useReducedMotion/);
+  assert.match(sharedLogo, /Platform\.OS === 'web'/);
+  assert.match(sharedLogo, /OG Landmark logo/);
 });
 

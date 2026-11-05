@@ -15,6 +15,10 @@ For property-listing selection UI, use premium flat 2D Feather line icons rather
 
 **How to apply:** Extend `PolishedUI` and the semantic color/layout tokens before adding one-off controls. Use the official roof/house + OG mark in #0B1F3A on light surfaces and its white inverse on dark surfaces. Keep the three-pillar artwork out of active app, web, portal, legal-page, and icon assets. For cards, make the body the detail target and leave media/action controls as sibling press targets. Respect reduced-motion settings in shared animations.
 
+**Why:** The user requested a looping animation on the OG-and-roof mark in the mobile app, starting ten seconds after each page opens.
+
+**How to apply:** Keep this motion on the shared logo mark, restart its delay when a page gains focus, stop it when focus leaves, and leave the separate wordmark unanimated.
+
 Native status-bar icons do not support an arbitrary brand tint on iOS or Android; use the OS dark-content mode on a light status-bar area, and preserve intentional hiding in immersive full-screen media.
 
 **Why:** The user requested navy system icons, but native status-bar APIs expose dark/light treatments rather than an exact custom icon color. Dark icons need a light area behind them to remain legible.

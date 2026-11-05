@@ -81,9 +81,18 @@ test('shared OG and roof mark loops after ten focused seconds on each mobile pag
   assert.match(sharedLogo, /useFocusEffect/);
   assert.match(sharedLogo, /withDelay\(\s*10_000/);
   assert.match(sharedLogo, /withRepeat/);
-  assert.match(sharedLogo, /cancelAnimation\(markPulse\)/);
+  assert.match(sharedLogo, /cancelAnimation\(timeline\)/);
   assert.match(sharedLogo, /useReducedMotion/);
   assert.match(sharedLogo, /Platform\.OS === 'web'/);
-  assert.match(sharedLogo, /OG Landmark logo/);
+  assert.match(sharedLogo, /OG Landmark roof and OG logo/);
+  assert.match(sharedLogo, /M110 100 A40 40 0 0 0 30 100/);
+  assert.match(sharedLogo, /M182\.8 77\.1 A40 40 0 1 0 190 100/);
+  assert.match(sharedLogo, /M60 38 L110 5 L160 38/);
+  assert.match(sharedLogo, /easedProgress\(timeline\.value, 0\.5, 1\.75\)/);
+  assert.match(sharedLogo, /easedProgress\(timeline\.value, 1\.25, 2\.55\)/);
+  assert.match(sharedLogo, /easedProgress\(timeline\.value, 2\.45, 3\.1, true\)/);
+  assert.match(sharedLogo, /withTiming\(8, \{ duration: 8000/);
+  assert.match(sharedLogo, /strokeDashoffset/);
+  assert.doesNotMatch(sharedLogo, /markPulse|scale: 1 \+ markPulse/);
 });
 

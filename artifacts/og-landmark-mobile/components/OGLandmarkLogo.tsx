@@ -1,12 +1,12 @@
 /** OG Landmark roof-and-OG brand mark in teal and landmark gold. */
 import React, { useCallback } from 'react';
-import { Image } from 'expo-image';
+import { Defs, G, LinearGradient, Path, Stop, Svg } from 'react-native-svg';
 import { useFocusEffect } from 'expo-router';
 import { Platform } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
-  useAnimatedStyle,
+  useAnimatedProps,
   useReducedMotion,
   useSharedValue,
   withDelay,
@@ -14,9 +14,26 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+import { useColors } from '@/hooks/useColors';
 
-const logoAsset = require('@/assets/images/og-landmark-brand-mark-color.png');
-const inverseLogoAsset = require('@/assets/images/og-landmark-brand-mark-inverse.png');
+const O_PATH = 'M110 100 A40 40 0 0 0 30 100 A40 40 0 0 0 110 100';
+const G_PATH = 'M182.8 77.1 A40 40 0 1 0 190 100 L152 100';
+const ROOF_PATH = 'M60 38 L110 5 L160 38';
+const O_LENGTH = 2 * Math.PI * 40;
+const G_LENGTH = 265;
+const ROOF_LENGTH = 120;
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+const AnimatedGroup = Animated.createAnimatedComponent(G);
+
+function easedProgress(value: number, start: number, end: number, easeOut = false) {
+  'worklet';
+  const progress = Math.min(1, Math.max(0, (value - start) / (end - start)));
+  if (easeOut) return 1 - Math.pow(1 - progress, 3);
+  return progress < 0.5
+    ? 4 * progress * progress * progress
+    : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+}
 
 export function OGLandmarkLogo({
   size = 80,
@@ -25,50 +42,153 @@ export function OGLandmarkLogo({
   size?: number;
   inverse?: boolean;
 }) {
-  const markPulse = useSharedValue(0);
+  const colors = useColors();
   const reduceMotion = useReducedMotion();
+  const timeline = useSharedValue(8);
+  const gradientId = React.useId().replace(/:/g, '');
 
   useFocusEffect(
     useCallback(() => {
-      cancelAnimation(markPulse);
-      markPulse.value = 0;
+      cancelAnimation(timeline);
+      timeline.value = 8;
 
       if (Platform.OS === 'web' || reduceMotion) return undefined;
 
-      markPulse.value = withDelay(
+      timeline.value = withDelay(
         10_000,
         withRepeat(
           withSequence(
-            withTiming(1, { duration: 550, easing: Easing.out(Easing.cubic) }),
-            withTiming(0, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-            withDelay(2200, withTiming(0, { duration: 1 })),
+            withTiming(0, { duration: 1 }),
+            withTiming(8, { duration: 8000, easing: Easing.linear }),
           ),
           -1,
           false,
         ),
       );
 
-      return () => cancelAnimation(markPulse);
-    }, [markPulse, reduceMotion]),
+      return () => {
+        cancelAnimation(timeline);
+        timeline.value = 8;
+      };
+    }, [reduceMotion, timeline]),
   );
 
-  const motionStyle = useAnimatedStyle(() => ({
-    opacity: 1 - markPulse.value * 0.04,
-    transform: [
-      { scale: 1 + markPulse.value * 0.035 },
-      { translateY: -markPulse.value * 0.8 },
-    ],
+  const oAnimatedProps = useAnimatedProps(() => ({
+    strokeDashoffset:
+      O_LENGTH * (1 - easedProgress(timeline.value, 0.5, 1.75)),
   }));
+  const gAnimatedProps = useAnimatedProps(() => ({
+    strokeDashoffset:
+      G_LENGTH * (1 - easedProgress(timeline.value, 1.25, 2.55)),
+  }));
+  const roofAnimatedProps = useAnimatedProps(() => {
+    const progress = easedProgress(timeline.value, 2.45, 3.1, true);
+    return {
+      transform: `translate(0, ${-16 * (1 - progress)})`,
+    };
+  });
+  const roofStrokeAnimatedProps = useAnimatedProps(() => {
+    const progress = easedProgress(timeline.value, 2.45, 3.1, true);
+    return {
+      strokeDashoffset: ROOF_LENGTH * (1 - progress),
+    };
+  });
+
+  const markStroke = inverse
+    ? colors.splashWhite
+    : `url(#${gradientId})`;
 
   return (
-    <Animated.View style={motionStyle}>
-      <Image
-        source={inverse ? inverseLogoAsset : logoAsset}
-        style={{ width: size, height: size }}
-        contentFit="contain"
-        transition={0}
-        accessibilityLabel="OG Landmark logo"
+    <Svg
+      width={size}
+      height={size}
+      viewBox="15 0 190 150"
+      preserveAspectRatio="xMidYMid meet"
+      accessibilityLabel="OG Landmark roof and OG logo"
+    >
+      <Defs>
+        <LinearGradient
+          id={gradientId}
+          x1="30"
+          y1="0"
+          x2="198"
+          y2="0"
+          gradientUnits="userSpaceOnUse"
+        >
+          <Stop offset="0" stopColor={inverse ? colors.splashWhite : colors.splashTeal} />
+          <Stop offset="0.5" stopColor={inverse ? colors.splashWhite : colors.splashMint} />
+          <Stop offset="1" stopColor={inverse ? colors.splashWhite : colors.splashGold} />
+        </LinearGradient>
+      </Defs>
+
+      <AnimatedPath
+        d={O_PATH}
+        fill="none"
+        stroke={markStroke}
+        strokeWidth={18}
+        strokeOpacity={0.18}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray={`${O_LENGTH} ${O_LENGTH}`}
+        animatedProps={oAnimatedProps}
       />
-    </Animated.View>
+      <AnimatedPath
+        d={G_PATH}
+        fill="none"
+        stroke={markStroke}
+        strokeWidth={18}
+        strokeOpacity={0.18}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray={`${G_LENGTH} ${G_LENGTH}`}
+        animatedProps={gAnimatedProps}
+      />
+      <AnimatedGroup animatedProps={roofAnimatedProps}>
+        <AnimatedPath
+          d={ROOF_PATH}
+          fill="none"
+          stroke={colors.splashGold}
+          strokeWidth={14}
+          strokeOpacity={0.2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeDasharray={`${ROOF_LENGTH} ${ROOF_LENGTH}`}
+          animatedProps={roofStrokeAnimatedProps}
+        />
+      </AnimatedGroup>
+
+      <AnimatedPath
+        d={O_PATH}
+        fill="none"
+        stroke={markStroke}
+        strokeWidth={16}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray={`${O_LENGTH} ${O_LENGTH}`}
+        animatedProps={oAnimatedProps}
+      />
+      <AnimatedPath
+        d={G_PATH}
+        fill="none"
+        stroke={markStroke}
+        strokeWidth={16}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray={`${G_LENGTH} ${G_LENGTH}`}
+        animatedProps={gAnimatedProps}
+      />
+      <AnimatedGroup animatedProps={roofAnimatedProps}>
+        <AnimatedPath
+          d={ROOF_PATH}
+          fill="none"
+          stroke={colors.splashGold}
+          strokeWidth={12}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeDasharray={`${ROOF_LENGTH} ${ROOF_LENGTH}`}
+          animatedProps={roofStrokeAnimatedProps}
+        />
+      </AnimatedGroup>
+    </Svg>
   );
 }

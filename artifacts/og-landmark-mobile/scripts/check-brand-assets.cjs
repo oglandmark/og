@@ -253,15 +253,13 @@ const sharedLogoComponent = fs.readFileSync(
   path.resolve(projectRoot, "components/OGLandmarkLogo.tsx"),
   "utf8"
 );
-const primaryLogo = sharedLogoComponent.match(
-  /const logoAsset\s*=\s*require\(['"]@\/assets\/images\/([^'"]+)['"]\)/
-);
-if (!primaryLogo) {
-  fail("Could not identify the shared primary app logo.");
-}
-const sharedLogo = path.resolve(projectRoot, "assets/images", primaryLogo[1]);
-if (!fs.existsSync(sharedLogo)) {
-  fail(`Shared app logo does not exist: ${primaryLogo[1]}`);
+if (
+  !sharedLogoComponent.includes("M110 100 A40 40 0 0 0 30 100") ||
+  !sharedLogoComponent.includes("M182.8 77.1 A40 40 0 1 0 190 100") ||
+  !sharedLogoComponent.includes("M60 38 L110 5 L160 38") ||
+  !sharedLogoComponent.includes("strokeDashoffset")
+) {
+  fail("The shared app logo must preserve the animated OG and roof mark.");
 }
 const startupLayout = fs.readFileSync(
   path.resolve(projectRoot, "app/_layout.tsx"),

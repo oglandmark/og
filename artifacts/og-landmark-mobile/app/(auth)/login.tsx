@@ -1,47 +1,30 @@
 import React, { useCallback, useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
-import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
-import { Feather, FontAwesome5 } from '@expo/vector-icons';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
+import { AuthDivider, AuthPrimaryButton, AuthScreenFrame, AuthSocialButtons } from '@/components/AuthScreenUI';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
+import { useColors } from '@/hooks/useColors';
 import { useFacebookAuth } from '@/lib/facebookAuth';
-import { Button } from '@/components/PolishedUI';
-import brandColors from '@/constants/colors';
-
-const ACTION = '#0B1F3A';
-const GOLD   = brandColors.light.gold;
-const MUTED  = '#8a8f98';
-const BORDER = '#e4e6ea';
-const BG     = '#ffffff';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
+  const colors = useColors();
   const { loginAPI, loginSocial } = useAuth();
   const { tr, isRTL } = useLanguage();
-
   const [identifier, setIdentifier] = useState('');
-  const [password, setPassword]   = useState('');
-  const [showPass, setShowPass]   = useState(false);
-  const [rememberMe, setRemember] = useState(false);
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const rtl = isRTL ? 'right' as const : 'left' as const;
   const identifierValue = identifier.trim();
-  const isMobileIdentifier = identifierValue.length > 0
-    && /^[+\d\s().-]+$/.test(identifierValue);
+  const isMobileIdentifier = identifierValue.length > 0 && /^[+\d\s().-]+$/.test(identifierValue);
+  const rtl = isRTL ? 'right' as const : 'left' as const;
 
   const handleFacebookLogin = useCallback(async (accessToken: string) => {
     const result = await loginSocial('facebook', accessToken);
@@ -61,7 +44,7 @@ export default function LoginScreen() {
     if (!isMobileIdentifier && !value.includes('@') && !/^[A-Za-z][A-Za-z0-9._-]{2,29}$/.test(value)) {
       setError(tr('loginErrUsername')); return;
     }
-    if (!password || password.length < 4)       { setError(tr('loginErrPassword')); return; }
+    if (!password || password.length < 4) { setError(tr('loginErrPassword')); return; }
     setError('');
     setLoading(true);
     const normalizedIdentifier = isMobileIdentifier ? value : value.toLowerCase();
@@ -76,181 +59,93 @@ export default function LoginScreen() {
     router.replace('/(tabs)');
   };
 
+  const unavailableProvider = (provider: 'Google' | 'Apple') => {
+    setError(`${provider} sign-in is not configured yet. Use email or Facebook.`);
+  };
+
   return (
-    <KeyboardAvoidingView
-      style={[styles.screen, { backgroundColor: BG }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AuthScreenFrame
+      topInset={insets.top + (Platform.OS === 'web' ? 67 : 0)}
+      bottomInset={insets.bottom + (Platform.OS === 'web' ? 34 : 0)}
     >
-      <ScrollView
-        contentContainerStyle={{ paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) + 12, paddingBottom: insets.bottom + 32 }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Back arrow */}
-        <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
-          <Feather name="chevron-left" size={26} color={ACTION} />
+      <View style={styles.heading}>
+        <Text style={[styles.title, { color: colors.foreground }]}>{tr('authLoginHeading')}</Text>
+        <Text style={[styles.subtitle, { color: colors.authMuted }]}>{tr('authLoginSubtitle')}</Text>
+      </View>
+
+      {!!(error || facebook.error) && (
+        <View style={[styles.errorBox, { backgroundColor: `${colors.destructive}0D`, borderColor: `${colors.destructive}30` }]}>
+          <Feather name="alert-circle" size={15} color={colors.destructive} />
+          <Text style={[styles.errorText, { color: colors.destructive, textAlign: rtl }]}>{error || facebook.error}</Text>
+        </View>
+      )}
+
+      <View style={[styles.inputField, styles.emailField, { borderColor: colors.splashGold, backgroundColor: colors.background }]}>
+        <Feather name="mail" size={19} color={colors.authGoldText} />
+        <TextInput
+          value={identifier}
+          onChangeText={(value) => { setIdentifier(value); setError(''); }}
+          keyboardType={isMobileIdentifier ? 'phone-pad' : 'email-address'}
+          autoCapitalize="none"
+          autoComplete="email"
+          placeholder={tr('authEmailPlaceholder')}
+          placeholderTextColor={colors.authMuted}
+          textAlign={rtl}
+          style={[styles.input, { color: colors.foreground }]}
+        />
+      </View>
+
+      <View style={[styles.inputField, { borderColor: colors.authBorder, backgroundColor: colors.authFieldSurface }]}>
+        <Feather name="lock" size={19} color={colors.authMuted} />
+        <TextInput
+          value={password}
+          onChangeText={(value) => { setPassword(value); setError(''); }}
+          secureTextEntry={!showPassword}
+          autoComplete="current-password"
+          placeholder={tr('authPasswordPlaceholder')}
+          placeholderTextColor={colors.authMuted}
+          textAlign={rtl}
+          style={[styles.input, { color: colors.foreground }]}
+        />
+        <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+          <Feather name={showPassword ? 'eye' : 'eye-off'} size={19} color={colors.authMuted} />
         </Pressable>
+      </View>
 
-        {/* Brand logo */}
-        <View style={styles.logoWrap}>
-          <OGLandmarkLogo size={104} />
-          <Text style={styles.logoName}>OG Landmark</Text>
-          <Text style={styles.logoSub}>REAL ESTATE</Text>
-        </View>
+      <Pressable onPress={() => router.push('/(auth)/forgot-password')} style={styles.forgotLink} accessibilityRole="button">
+        <Text style={[styles.forgotText, { color: colors.authGoldText }]}>{tr('forgotPassword')}</Text>
+      </Pressable>
 
-        <View style={styles.content}>
-          <Text style={[styles.title, { textAlign: 'center' }]}>{tr('loginTitle')}</Text>
-
-          {/* Error banner */}
-          {!!(error || facebook.error) && (
-            <View style={styles.errorBox}>
-              <Feather name="alert-circle" size={13} color="#b94b42" />
-              <Text style={[styles.errorText, { textAlign: rtl }]}>{error || facebook.error}</Text>
-            </View>
-          )}
-
-          {/* Identifier */}
-          <View style={styles.fieldWrap}>
-            <Text style={[styles.label, { textAlign: rtl }]}>{tr('loginIdentifierLabel')}</Text>
-            <TextInput
-              value={identifier}
-              onChangeText={(v) => { setIdentifier(v); setError(''); }}
-              keyboardType={isMobileIdentifier ? 'phone-pad' : 'default'}
-              autoCapitalize="none"
-              placeholder={tr('loginIdentifierLabel')}
-              placeholderTextColor={MUTED}
-              textAlign="left"
-              style={[styles.underlineInput, styles.identifierInput]}
-            />
-          </View>
-
-          {/* Password */}
-          <View style={styles.fieldWrap}>
-            <Text style={[styles.label, { textAlign: rtl }]}>{tr('passwordLabel')}</Text>
-            <View style={styles.passRow}>
-              <TextInput
-                value={password}
-                onChangeText={(v) => { setPassword(v); setError(''); }}
-                secureTextEntry={!showPass}
-                placeholder={tr('passwordPlaceholderLogin')}
-                placeholderTextColor={MUTED}
-                textAlign={rtl}
-                style={[styles.underlineInput, { flex: 1, borderBottomWidth: 0 }]}
-              />
-              <Pressable onPress={() => setShowPass(!showPass)} hitSlop={8} style={styles.eyeBtn}>
-                <Feather name={showPass ? 'eye' : 'eye-off'} size={18} color={MUTED} />
-              </Pressable>
-            </View>
-            <View style={[styles.underlineLine, { borderColor: BORDER }]} />
-          </View>
-
-          {/* Remember Me + Forgot Password */}
-          <View style={[styles.remRow, isRTL && { flexDirection: 'row-reverse' }]}>
-            <Pressable
-              onPress={() => setRemember(!rememberMe)}
-              style={[styles.remRowInner, isRTL && { flexDirection: 'row-reverse' }]}
-              hitSlop={6}
-            >
-              <View style={[styles.checkbox, rememberMe && { backgroundColor: ACTION, borderColor: ACTION }]}>
-                {rememberMe && <Feather name="check" size={10} color="#fff" />}
-              </View>
-              <Text style={styles.remText}>{tr('rememberMe')}</Text>
-            </Pressable>
-            <Pressable onPress={() => router.push('/(auth)/forgot-password')} hitSlop={8}>
-              <Text style={styles.forgotText}>{tr('forgotPassword')}</Text>
-            </Pressable>
-          </View>
-
-          {/* Login button */}
-          <Button
-            onPress={() => { void handleLogin(); }}
-            loading={loading}
-            accessibilityLabel={tr('loginBtn')}
-            style={styles.loginBtn}
-          >
-            {tr('loginBtn')}
-          </Button>
-
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>{tr('orContinueWith')}</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          <View style={styles.socialRow}>
-            <Pressable
-              onPress={() => { void facebook.signIn(); }}
-              disabled={loading || facebook.loading}
-              style={({ pressed }) => [styles.socialBtn, { opacity: pressed || facebook.loading ? 0.5 : 1 }]}
-            >
-              {facebook.loading
-                ? <ActivityIndicator size="small" color="#1877f2" />
-                : <FontAwesome5 name="facebook" size={18} color="#1877f2" />}
-              <Text style={styles.socialText}>Facebook</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>{tr('noAccount')}</Text>
-            <Pressable onPress={() => router.push('/(auth)/signup')} hitSlop={6}>
-              <Text style={styles.footerLink}> {tr('signUpWithEmail')}</Text>
-            </Pressable>
-          </View>
-
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <AuthPrimaryButton label={tr('authSignInButton')} accessibilityLabel={tr('loginBtn')} loading={loading} onPress={() => { void handleLogin(); }} />
+      <AuthDivider label={tr('authLoginDivider')} />
+      <AuthSocialButtons
+        facebookLoading={facebook.loading}
+        disabled={loading}
+        onFacebook={() => { void facebook.signIn(); }}
+        onUnavailable={unavailableProvider}
+      />
+      <View style={styles.footerRow}>
+        <Text style={[styles.footerText, { color: colors.authMuted }]}>{tr('noAccount')}</Text>
+        <Pressable onPress={() => router.push('/(auth)/signup')} accessibilityRole="button">
+          <Text style={[styles.footerLink, { color: colors.authGoldText }]}>{tr('signUpWithEmail')}</Text>
+        </Pressable>
+      </View>
+    </AuthScreenFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  screen:        { flex: 1 },
-  backBtn:       { marginLeft: 16, marginBottom: 4, width: 40, height: 40, justifyContent: 'center' },
-
-  logoWrap:      { alignItems: 'center', marginBottom: 28, marginTop: 4, gap: 10 },
-  logoName:      { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 18, letterSpacing: 0.4, color: ACTION },
-  logoSub:       { fontFamily: 'Inter_500Medium', fontSize: 9, letterSpacing: 3, color: GOLD, marginTop: -4 },
-
-  content:       { paddingHorizontal: 24 },
-  title:         { fontFamily: 'Inter_700Bold', fontSize: 22, color: '#1c2024', marginBottom: 24, letterSpacing: -0.3 },
-
-  errorBox:      { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#b94b4212',
-                   borderRadius: 10, borderWidth: 1, borderColor: '#b94b4230', padding: 11, marginBottom: 16 },
-  errorText:     { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#b94b42', flex: 1 },
-
-  fieldWrap:     { marginBottom: 20 },
-  label:         { fontFamily: 'Inter_500Medium', fontSize: 12, color: MUTED, marginBottom: 8 },
-  underlineInput:{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#1c2024',
-                   borderBottomWidth: 1, borderBottomColor: BORDER, paddingBottom: 10, paddingTop: 2 },
-  identifierInput: { writingDirection: 'ltr' },
-  passRow:       { flexDirection: 'row', alignItems: 'center' },
-  eyeBtn:        { paddingLeft: 8 },
-  underlineLine: { borderBottomWidth: 1, marginTop: 0 },
-
-  remRow:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 },
-  remRowInner:   { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  checkbox:      { width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, borderColor: BORDER,
-                   alignItems: 'center', justifyContent: 'center' },
-  remText:       { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#1c2024' },
-  forgotText:    { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: GOLD },
-
-  loginBtn:      { height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
-  loginBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#fff', letterSpacing: 0.3 },
-
-  dividerRow:    { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
-  dividerLine:   { flex: 1, height: 1, backgroundColor: BORDER },
-  dividerText:   { fontFamily: 'Inter_400Regular', fontSize: 12, color: MUTED },
-
-  socialRow:     { flexDirection: 'row', gap: 10, marginBottom: 30 },
-  socialBtn:     { flex: 1, height: 44, borderRadius: 10, borderWidth: 1, borderColor: BORDER,
-                   flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-                   backgroundColor: '#fff' },
-  socialText:    { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#1c2024' },
-
-  footerRow:     { flexDirection: 'row', justifyContent: 'center', marginBottom: 20, flexWrap: 'wrap' },
-  footerText:    { fontFamily: 'Inter_400Regular', fontSize: 13, color: '#1c2024' },
-  footerLink:    { fontFamily: 'Inter_700Bold', fontSize: 13, color: GOLD },
-
-  langBtn:       { alignItems: 'center', paddingVertical: 6, flexDirection: 'row', justifyContent: 'center', gap: 5 },
-  langText:      { fontFamily: 'Inter_400Regular', fontSize: 12, color: MUTED },
+  heading: { gap: 5, marginBottom: 4 },
+  title: { fontFamily: 'Inter_700Bold', fontSize: 24, lineHeight: 31 },
+  subtitle: { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 19 },
+  errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 12, padding: 11 },
+  errorText: { fontFamily: 'Inter_500Medium', fontSize: 12, flex: 1 },
+  inputField: { minHeight: 56, borderRadius: 16, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
+  emailField: { borderWidth: 1.5 },
+  input: { flex: 1, minWidth: 0, fontFamily: 'Inter_400Regular', fontSize: 14, paddingVertical: 0 },
+  forgotLink: { alignSelf: 'flex-end', paddingVertical: 2, marginTop: -4 },
+  forgotText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  footerRow: { flexDirection: 'row', justifyContent: 'center', gap: 4, flexWrap: 'wrap', marginTop: 'auto', paddingTop: 12 },
+  footerText: { fontFamily: 'Inter_400Regular', fontSize: 14 },
+  footerLink: { fontFamily: 'Inter_700Bold', fontSize: 14 },
 });

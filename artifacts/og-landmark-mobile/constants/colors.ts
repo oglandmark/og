@@ -66,6 +66,12 @@ const colors = {
     splashGold: '#C9A55C',
     splashWhite: '#FFFFFF',
     splashMuted: '#9FB3CC',
+    authFieldSurface: '#F7F4ED',
+    authBorder: '#E6DFD0',
+    authMuted: '#5A6B80',
+    authGoldText: '#8A6A1F',
+    authGoldHighlight: '#EBD39B',
+    authGoldShadow: '#B58F45',
 
     // Editorial surfaces used for quiet hierarchy and premium depth
     surfaceRaised: '#FFFFFF',

@@ -2,30 +2,21 @@ import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
-import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
-import { Feather, FontAwesome5 } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
+import { AuthDivider, AuthPrimaryButton, AuthScreenFrame, AuthSocialButtons } from '@/components/AuthScreenUI';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useColors } from '@/hooks/useColors';
-import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { useFacebookAuth } from '@/lib/facebookAuth';
-import { Button } from '@/components/PolishedUI';
-import brandColors from '@/constants/colors';
-
-const ACTION = '#0B1F3A';
-const GOLD = brandColors.light.gold;
-const MUTED = '#8a8f98';
-const BORDER = '#e4e6ea';
 
 export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
@@ -36,7 +27,8 @@ export default function SignUpScreen() {
   const [identifier, setIdentifier] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
   const [password, setPassword] = useState('');
-  const [showPwd, setShowPwd] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [verificationEmail, setVerificationEmail] = useState('');
@@ -45,7 +37,6 @@ export default function SignUpScreen() {
   const [isCodeFocused, setIsCodeFocused] = useState(false);
   const [resending, setResending] = useState(false);
   const verificationCodeInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
-
   const rtl = isRTL ? 'right' as const : 'left' as const;
   const identifierValue = identifier.trim();
   const isMobileIdentifier = identifierValue.length > 0 && /^[+\d\s().-]+$/.test(identifierValue);
@@ -54,6 +45,11 @@ export default function SignUpScreen() {
   const isValidSignupPhone = signupPhoneDigits.length >= 10 && signupPhoneDigits.length <= 15;
 
   const handleFacebookSignup = useCallback(async (accessToken: string) => {
+    if (!termsAccepted) {
+      const message = tr('authAcceptTermsError');
+      setError(message);
+      return { success: false, error: message };
+    }
     if (!signupPhone) {
       const message = tr('signupMobileRequired');
       setError(message);
@@ -70,10 +66,11 @@ export default function SignUpScreen() {
       router.replace('/(tabs)');
     }
     return result;
-  }, [isValidSignupPhone, loginSocial, signupPhone, tr]);
+  }, [isValidSignupPhone, loginSocial, signupPhone, termsAccepted, tr]);
   const facebook = useFacebookAuth(handleFacebookSignup);
 
   const startFacebookSignup = () => {
+    if (!termsAccepted) { setError(tr('authAcceptTermsError')); return; }
     if (!signupPhone) { setError(tr('signupMobileRequired')); return; }
     if (!isValidSignupPhone) { setError(tr('signupMobileError')); return; }
     setError('');
@@ -81,17 +78,12 @@ export default function SignUpScreen() {
   };
 
   async function handleRegister() {
+    if (!termsAccepted) { setError(tr('authAcceptTermsError')); return; }
     if (!name.trim()) { setError('Full name is required.'); return; }
     const value = identifier.trim();
     if (!value) { setError(tr('signupIdentifierRequired')); return; }
-    if (isMobileIdentifier || !value.includes('@') || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    if (isMobileIdentifier || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       setError('Enter a valid email address to receive your verification code.'); return;
-    }
-    if (!isMobileIdentifier && value.includes('@') && !value.includes('.')) {
-      setError(tr('signupEmailError')); return;
-    }
-    if (!isMobileIdentifier && !value.includes('@') && !/^[A-Za-z][A-Za-z0-9._-]{2,29}$/.test(value)) {
-      setError(tr('signupUsernameError')); return;
     }
     if (!signupPhone) { setError(tr('signupMobileRequired')); return; }
     if (!isValidSignupPhone) { setError(tr('signupMobileError')); return; }
@@ -104,14 +96,12 @@ export default function SignUpScreen() {
     setLoading(true);
     const result = await registerAPI({
       name: name.trim(),
-      email: !isMobileIdentifier && value.includes('@') ? value.toLowerCase() : undefined,
-      username: !isMobileIdentifier && !value.includes('@') ? value.toLowerCase() : undefined,
+      email: value.toLowerCase(),
       phone: signupPhone,
       password,
       role: 'user',
     });
     setLoading(false);
-
     if (result.pendingApproval) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       Alert.alert(
@@ -157,291 +147,209 @@ export default function SignUpScreen() {
     else setError(result.error ?? 'Unable to resend the code.');
   }
 
+  const unavailableProvider = (provider: 'Google' | 'Apple') => {
+    setError(`${provider} sign-in is not configured yet. Use email or Facebook.`);
+  };
+  const openLegal = () => router.push('/settings/legal?section=legal' as any);
+
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView
-        contentContainerStyle={{ paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) + 12, paddingBottom: insets.bottom + 32 }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <Pressable
-          onPress={() => router.back()}
-          style={[
-            styles.backBtn,
-            verificationEmail && styles.otpBackBtn,
-            verificationEmail && { borderColor: colors.border, backgroundColor: colors.card },
-          ]}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Feather name="chevron-left" size={verificationEmail ? 20 : 26} color={verificationEmail ? colors.foreground : ACTION} />
-        </Pressable>
-        <View style={[styles.logoWrap, verificationEmail && styles.otpLogoWrap]}>
-          <OGLandmarkLogo size={verificationEmail ? 72 : 104} />
-          <Text style={styles.logoName}>OG Landmark</Text>
-          <Text style={styles.logoSub}>REAL ESTATE</Text>
-        </View>
-
-        <View style={[styles.content, verificationEmail && styles.otpContent]}>
-          {verificationEmail ? (
-            <View style={styles.otpEyebrow}>
-              <Feather name="shield" size={13} color={colors.teal} />
-              <Text style={[styles.otpEyebrowText, { color: colors.teal }]}>ACCOUNT VERIFICATION</Text>
+    <AuthScreenFrame
+      topInset={insets.top + (Platform.OS === 'web' ? 67 : 0)}
+      bottomInset={insets.bottom + (Platform.OS === 'web' ? 34 : 0)}
+    >
+      {verificationEmail ? (
+        <View style={styles.otpContent}>
+          <View style={styles.otpEyebrow}>
+            <Feather name="shield" size={14} color={colors.teal} />
+            <Text style={[styles.otpEyebrowText, { color: colors.teal }]}>ACCOUNT VERIFICATION</Text>
+          </View>
+          <Text style={[styles.otpTitle, { color: colors.foreground }]}>Verify your email</Text>
+          <Text style={[styles.otpIntro, { color: colors.authMuted }]}>Enter the six-digit code we sent to your email.</Text>
+          <View style={[styles.otpEmailCard, { backgroundColor: colors.surfaceTint, borderColor: colors.glassBorder }]}>
+            <View style={[styles.otpMailIcon, { backgroundColor: colors.tealSoft }]}>
+              <Feather name="mail" size={18} color={colors.teal} />
             </View>
-          ) : null}
-          <Text style={[styles.title, verificationEmail && styles.otpTitle, verificationEmail && { color: colors.foreground }]}>
-            {verificationEmail ? 'Verify your email' : 'Create Account'}
-          </Text>
-          {verificationEmail ? (
-            <>
-              <Text style={[styles.otpIntro, { color: colors.mutedForeground }]}>
-                Enter the six-digit code we sent to your email.
-              </Text>
-              <View style={[styles.otpEmailCard, { backgroundColor: colors.surfaceTint, borderColor: colors.glassBorder }]}>
-                <View style={[styles.otpMailIcon, { backgroundColor: colors.tealSoft }]}>
-                  <Feather name="mail" size={18} color={colors.teal} />
-                </View>
-                <View style={styles.otpEmailCopy}>
-                  <Text style={[styles.otpEmailLabel, { color: colors.mutedForeground }]}>CODE SENT TO</Text>
-                  <Text style={[styles.otpEmail, { color: colors.foreground }]} numberOfLines={2}>{verificationEmail}</Text>
-                </View>
-              </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[styles.otpEmailLabel, { color: colors.mutedForeground }]}>CODE SENT TO</Text>
+              <Text style={[styles.otpEmail, { color: colors.foreground }]} numberOfLines={2}>{verificationEmail}</Text>
+            </View>
+          </View>
+          <Text style={[styles.otpCodeLabel, { color: colors.mutedForeground }]}>VERIFICATION CODE</Text>
+          <View style={styles.otpCodeInputWrap} accessibilityLabel="Six-digit email verification code">
+            <View pointerEvents="none" style={styles.otpDigitRow}>
+              {Array.from({ length: 6 }, (_, index) => {
+                const digit = verificationCode[index] ?? '';
+                const active = isCodeFocused && index === Math.min(verificationCode.length, 5);
+                return (
+                  <View
+                    key={index}
+                    style={[
+                      styles.otpDigit,
+                      { backgroundColor: colors.card, borderColor: colors.border },
+                      digit ? { borderColor: `${colors.teal}88` } : null,
+                      active ? { borderColor: colors.teal, backgroundColor: colors.tealSoft } : null,
+                      error ? { borderColor: colors.destructive, backgroundColor: `${colors.destructive}0D` } : null,
+                    ]}
+                  >
+                    <Text style={[styles.otpDigitText, { color: colors.foreground }]}>{digit}</Text>
+                  </View>
+                );
+              })}
+            </View>
+            <TextInput
+              ref={verificationCodeInputRef}
+              value={verificationCode}
+              onChangeText={(value) => {
+                setVerificationCode(value.replace(/\D/g, '').slice(0, 6));
+                setError('');
+                setVerificationNotice('');
+              }}
+              onFocus={() => setIsCodeFocused(true)}
+              onBlur={() => setIsCodeFocused(false)}
+              keyboardType="number-pad"
+              maxLength={6}
+              autoComplete="one-time-code"
+              textContentType="oneTimeCode"
+              accessibilityLabel="Six-digit email verification code"
+              accessibilityHint="Enter the six-digit code from your email."
+              selectionColor={colors.teal}
+              style={styles.otpCodeInput}
+            />
+          </View>
+          <Text style={[styles.otpExpiry, { color: colors.mutedForeground }]}>The code expires in 10 minutes.</Text>
+          {(!!error || !!verificationNotice) && (
+            <View
+              style={[
+                styles.otpMessage,
+                { backgroundColor: error ? `${colors.destructive}0D` : colors.tealSoft },
+                { borderColor: error ? `${colors.destructive}30` : `${colors.teal}40` },
+              ]}
+              accessibilityLiveRegion="polite"
+              accessibilityRole={error ? 'alert' : 'text'}
+            >
+              <Feather name={error ? 'alert-circle' : 'check-circle'} size={15} color={error ? colors.destructive : colors.teal} />
+              <Text style={[styles.otpMessageText, { color: error ? colors.destructive : colors.teal }]}>{error || verificationNotice}</Text>
+            </View>
+          )}
+          <AuthPrimaryButton label="Verify email" accessibilityLabel="Verify email" loading={loading} onPress={() => { void handleVerifyEmail(); }} />
+          <View style={styles.otpResendRow}>
+            <Text style={[styles.footerText, { color: colors.authMuted }]}>Didn’t receive a code?</Text>
+            <Pressable onPress={() => { void handleResendEmail(); }} disabled={loading || resending} accessibilityRole="button">
+              {resending ? <ActivityIndicator size="small" color={colors.teal} /> : <Text style={[styles.footerLink, { color: colors.teal }]}>Resend code</Text>}
+            </Pressable>
+          </View>
+          <View style={styles.otpTrustRow}>
+            <Feather name="lock" size={13} color={colors.teal} />
+            <Text style={[styles.otpTrustText, { color: colors.mutedForeground }]}>Your details stay protected</Text>
+          </View>
+        </View>
+      ) : (
+        <>
+          <View style={styles.heading}>
+            <Text style={[styles.title, { color: colors.foreground }]}>{tr('authCreateHeading')}</Text>
+            <Text style={[styles.subtitle, { color: colors.authMuted }]}>{tr('authCreateSubtitle')}</Text>
+          </View>
 
-              <Text style={[styles.otpCodeLabel, { color: colors.mutedForeground }]}>VERIFICATION CODE</Text>
-              <View
-                style={styles.otpCodeInputWrap}
-                accessibilityLabel="Six-digit email verification code"
-              >
-                <View
-                  pointerEvents="none"
-                  style={styles.otpDigitRow}
-                >
-                  {Array.from({ length: 6 }, (_, index) => {
-                    const digit = verificationCode[index] ?? '';
-                    const active = isCodeFocused && index === Math.min(verificationCode.length, 5);
-                    return (
-                      <View
-                        key={index}
-                        style={[
-                          styles.otpDigit,
-                          { backgroundColor: colors.card, borderColor: colors.border },
-                          digit ? { borderColor: `${colors.teal}88` } : null,
-                          active ? { borderColor: colors.teal, backgroundColor: colors.tealSoft } : null,
-                          error ? { borderColor: colors.destructive, backgroundColor: `${colors.destructive}0D` } : null,
-                        ]}
-                      >
-                        <Text style={[styles.otpDigitText, { color: colors.foreground }]}>{digit}</Text>
-                      </View>
-                    );
-                  })}
-                </View>
-                <TextInput
-                  ref={verificationCodeInputRef}
-                  value={verificationCode}
-                  onChangeText={(value) => {
-                    setVerificationCode(value.replace(/\D/g, '').slice(0, 6));
-                    setError('');
-                    setVerificationNotice('');
-                  }}
-                  onFocus={() => setIsCodeFocused(true)}
-                  onBlur={() => setIsCodeFocused(false)}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  autoComplete="one-time-code"
-                  textContentType="oneTimeCode"
-                  accessibilityLabel="Six-digit email verification code"
-                  accessibilityHint="Enter the six-digit code from your email."
-                  selectionColor={colors.teal}
-                  style={styles.otpCodeInput}
-                />
-              </View>
-              <Text style={[styles.otpExpiry, { color: colors.mutedForeground }]}>
-                The code expires in 10 minutes.
-              </Text>
-
-              {(!!error || !!verificationNotice) && (
-                <View
-                  style={[
-                    styles.otpMessage,
-                    { backgroundColor: error ? `${colors.destructive}0D` : colors.tealSoft },
-                    { borderColor: error ? `${colors.destructive}30` : `${colors.teal}40` },
-                  ]}
-                  accessibilityLiveRegion="polite"
-                  accessibilityRole={error ? 'alert' : 'text'}
-                >
-                  <Feather
-                    name={error ? 'alert-circle' : 'check-circle'}
-                    size={15}
-                    color={error ? colors.destructive : colors.teal}
-                  />
-                  <Text style={[styles.otpMessageText, { color: error ? colors.destructive : colors.teal }]}>
-                    {error || verificationNotice}
-                  </Text>
-                </View>
-              )}
-
-              <Button
-                onPress={() => { void handleVerifyEmail(); }}
-                loading={loading}
-                icon="arrow-right"
-                accessibilityLabel="Verify email"
-                style={[styles.submitBtn, styles.otpSubmitBtn]}
-              >
-                Verify email
-              </Button>
-              <View style={styles.otpResendRow}>
-                <Text style={[styles.otpResendPrompt, { color: colors.mutedForeground }]}>Didn’t receive a code?</Text>
-                <Pressable
-                  onPress={() => { void handleResendEmail(); }}
-                  disabled={loading || resending}
-                  accessibilityRole="button"
-                  accessibilityLabel="Resend verification code"
-                  style={styles.otpResendButton}
-                >
-                  {resending
-                    ? <ActivityIndicator size="small" color={colors.teal} />
-                    : <Text style={[styles.otpResendText, { color: colors.teal }]}>Resend code</Text>}
-                </Pressable>
-              </View>
-              <View style={styles.otpTrustRow}>
-                <Feather name="lock" size={13} color={colors.teal} />
-                <Text style={[styles.otpTrustText, { color: colors.mutedForeground }]}>Your details stay protected</Text>
-              </View>
-            </>
-          ) : (
-            <>
           {!!(error || facebook.error) && (
-            <View style={styles.errorBox}>
-              <Feather name="alert-circle" size={13} color="#b94b42" />
-              <Text style={[styles.errorText, { textAlign: rtl }]}>{error || facebook.error}</Text>
+            <View style={[styles.errorBox, { backgroundColor: `${colors.destructive}0D`, borderColor: `${colors.destructive}30` }]}>
+              <Feather name="alert-circle" size={15} color={colors.destructive} />
+              <Text style={[styles.errorText, { color: colors.destructive, textAlign: rtl }]}>{error || facebook.error}</Text>
             </View>
           )}
 
-          <View style={styles.fieldWrap}>
-            <Text style={[styles.label, { textAlign: rtl }]}>FULL NAME</Text>
-            <TextInput value={name} onChangeText={(v) => { setName(v); setError(''); }}
-              placeholder="Muhammad Ali" placeholderTextColor={MUTED} textAlign={rtl}
-              autoCapitalize="words" style={styles.underlineInput} />
+          <View style={[styles.inputField, styles.nameField, { backgroundColor: colors.background, borderColor: colors.splashGold }]}>
+            <Feather name="user" size={19} color={colors.authGoldText} />
+            <TextInput value={name} onChangeText={(value) => { setName(value); setError(''); }} placeholder={tr('authFullNamePlaceholder')} placeholderTextColor={colors.authMuted} autoCapitalize="words" textAlign={rtl} style={[styles.input, { color: colors.foreground }]} />
           </View>
-
-          <View style={styles.fieldWrap}>
-            <Text style={[styles.label, { textAlign: rtl }]}>{tr('signupIdentifierLabel')}</Text>
-            <TextInput value={identifier} onChangeText={(v) => { setIdentifier(v); setError(''); }}
-              keyboardType={isMobileIdentifier ? 'phone-pad' : 'default'} autoCapitalize="none"
-              placeholder={tr('signupEmailPlaceholder')} placeholderTextColor={MUTED}
-              textAlign="left" style={[styles.underlineInput, styles.identifierInput]} />
+          <View style={[styles.inputField, { backgroundColor: colors.authFieldSurface, borderColor: colors.authBorder }]}>
+            <Feather name="mail" size={19} color={colors.authMuted} />
+            <TextInput value={identifier} onChangeText={(value) => { setIdentifier(value); setError(''); }} keyboardType="email-address" autoCapitalize="none" autoComplete="email" placeholder={tr('authEmailPlaceholder')} placeholderTextColor={colors.authMuted} textAlign="left" style={[styles.input, { color: colors.foreground }]} />
           </View>
-
-          {!isMobileIdentifier && (
-            <View style={styles.fieldWrap}>
-              <Text style={[styles.label, { textAlign: rtl }]}>{tr('signupMobileLabel')} *</Text>
-              <TextInput value={mobileNumber} onChangeText={(v) => { setMobileNumber(v); setError(''); }}
-                keyboardType="phone-pad" placeholder={tr('signupMobilePlaceholder')}
-                placeholderTextColor={MUTED} textAlign="left"
-                style={[styles.underlineInput, styles.identifierInput]} />
-            </View>
-          )}
-
-          <View style={styles.fieldWrap}>
-            <Text style={[styles.label, { textAlign: rtl }]}>PASSWORD</Text>
-            <View style={styles.passRow}>
-              <TextInput value={password} onChangeText={(v) => { setPassword(v); setError(''); }}
-                secureTextEntry={!showPwd} placeholder="Min. 8 characters"
-                placeholderTextColor={MUTED} textAlign={rtl}
-                style={[styles.underlineInput, { flex: 1, borderBottomWidth: 0 }]} />
-              <Pressable onPress={() => setShowPwd((v) => !v)} hitSlop={8} style={styles.eyeBtn}>
-                <Feather name={showPwd ? 'eye' : 'eye-off'} size={18} color={MUTED} />
-              </Pressable>
-            </View>
-            <View style={styles.underlineLine} />
+          <View style={[styles.inputField, { backgroundColor: colors.authFieldSurface, borderColor: colors.authBorder }]}>
+            <Feather name="smartphone" size={19} color={colors.authMuted} />
+            <TextInput value={mobileNumber} onChangeText={(value) => { setMobileNumber(value); setError(''); }} keyboardType="phone-pad" autoComplete="tel" placeholder={tr('authPhonePlaceholder')} placeholderTextColor={colors.authMuted} textAlign="left" style={[styles.input, { color: colors.foreground }]} />
           </View>
-
-          <Button onPress={() => { void handleRegister(); }} loading={loading}
-            accessibilityLabel="Create Account" style={styles.submitBtn}>
-            Create Account
-          </Button>
-
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or continue with</Text>
-            <View style={styles.dividerLine} />
-          </View>
-          <View style={styles.socialRow}>
-            <Pressable onPress={startFacebookSignup} disabled={loading || facebook.loading}
-              style={({ pressed }) => [styles.socialBtn, { opacity: pressed || facebook.loading ? 0.5 : 1 }]}>
-              {facebook.loading ? <ActivityIndicator size="small" color="#1877f2" />
-                : <FontAwesome5 name="facebook" size={18} color="#1877f2" />}
-              <Text style={styles.socialText}>Facebook</Text>
+          <View style={[styles.inputField, { backgroundColor: colors.authFieldSurface, borderColor: colors.authBorder }]}>
+            <Feather name="lock" size={19} color={colors.authMuted} />
+            <TextInput value={password} onChangeText={(value) => { setPassword(value); setError(''); }} secureTextEntry={!showPassword} autoComplete="new-password" placeholder={tr('authCreatePasswordPlaceholder')} placeholderTextColor={colors.authMuted} textAlign={rtl} style={[styles.input, { color: colors.foreground }]} />
+            <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+              <Feather name={showPassword ? 'eye' : 'eye-off'} size={19} color={colors.authMuted} />
             </Pressable>
           </View>
+
+          <View style={styles.termsRow}>
+            <Pressable
+              onPress={() => { setTermsAccepted((value) => !value); setError(''); }}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: termsAccepted }}
+              accessibilityLabel="Agree to the Terms and Privacy Policy"
+              style={[styles.checkbox, { borderColor: termsAccepted ? colors.splashGold : colors.authBorder, backgroundColor: termsAccepted ? colors.splashGold : colors.background }]}
+            >
+              {termsAccepted && <Feather name="check" size={14} color={colors.action} />}
+            </Pressable>
+            <Text style={[styles.termsText, { color: colors.authMuted }]}>
+              {tr('authTermsPrefix')}{' '}
+              <Text onPress={openLegal} style={[styles.termsLink, { color: colors.authGoldText }]}>{tr('authTermsLink')}</Text>
+              {' & '}
+              <Text onPress={openLegal} style={[styles.termsLink, { color: colors.authGoldText }]}>{tr('authPrivacyLink')}</Text>
+            </Text>
+          </View>
+
+          <AuthPrimaryButton label={tr('createAccountBtn')} accessibilityLabel={tr('createAccountBtn')} loading={loading} onPress={() => { void handleRegister(); }} />
+          <AuthDivider label={tr('authSignupDivider')} />
+          <AuthSocialButtons
+            facebookLoading={facebook.loading}
+            disabled={loading}
+            onFacebook={startFacebookSignup}
+            onUnavailable={unavailableProvider}
+          />
           <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Already have an account?</Text>
-            <Pressable onPress={() => router.push('/(auth)/login')} hitSlop={6}>
-              <Text style={styles.footerLink}> Sign In</Text>
+            <Text style={[styles.footerText, { color: colors.authMuted }]}>{tr('authAlreadyHaveAccount')}</Text>
+            <Pressable onPress={() => router.push('/(auth)/login')} accessibilityRole="button">
+              <Text style={[styles.footerLink, { color: colors.authGoldText }]}>{tr('authSignInButton')}</Text>
             </Pressable>
           </View>
-            </>
-          )}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </>
+      )}
+    </AuthScreenFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#fff' },
-  backBtn: { marginLeft: 16, marginBottom: 4, width: 40, height: 40, justifyContent: 'center' },
-  otpBackBtn: { alignItems: 'center', borderWidth: 1, borderRadius: 14, marginBottom: 0 },
-  logoWrap: { alignItems: 'center', marginBottom: 28, marginTop: 4, gap: 10 },
-  otpLogoWrap: { marginTop: 14, marginBottom: 24, gap: 4 },
-  logoName: { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 18, letterSpacing: 0.4, color: ACTION },
-  logoSub: { fontFamily: 'Inter_500Medium', fontSize: 9, letterSpacing: 3, color: GOLD, marginTop: -4 },
-  content: { paddingHorizontal: 24 },
-  otpContent: { alignSelf: 'center', maxWidth: 440, width: '100%', paddingBottom: 8 },
-  otpEyebrow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 10 },
-  otpEyebrowText: { fontFamily: 'Inter_600SemiBold', fontSize: 10, letterSpacing: 1.4 },
-  otpTitle: { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 31, lineHeight: 38, marginBottom: 9, letterSpacing: -0.5 },
-  otpIntro: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21, textAlign: 'center', paddingHorizontal: 6 },
-  otpEmailCard: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 21, marginBottom: 24, paddingVertical: 13, paddingHorizontal: 14, borderWidth: 1, borderRadius: 16 },
+  heading: { gap: 4, marginBottom: 2 },
+  title: { fontFamily: 'Inter_700Bold', fontSize: 24, lineHeight: 31 },
+  subtitle: { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 19 },
+  errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 12, padding: 11 },
+  errorText: { fontFamily: 'Inter_500Medium', fontSize: 12, flex: 1 },
+  inputField: { minHeight: 48, borderRadius: 16, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
+  nameField: { borderWidth: 1.5 },
+  input: { flex: 1, minWidth: 0, fontFamily: 'Inter_400Regular', fontSize: 14, paddingVertical: 0 },
+  termsRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 1 },
+  checkbox: { width: 20, height: 20, borderWidth: 1, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+  termsText: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18 },
+  termsLink: { fontFamily: 'Inter_700Bold' },
+  footerRow: { flexDirection: 'row', justifyContent: 'center', gap: 4, flexWrap: 'wrap', marginTop: 'auto', paddingTop: 8 },
+  footerText: { fontFamily: 'Inter_400Regular', fontSize: 13 },
+  footerLink: { fontFamily: 'Inter_700Bold', fontSize: 13 },
+  otpContent: { alignSelf: 'center', maxWidth: 440, width: '100%', gap: 14 },
+  otpEyebrow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: -4 },
+  otpEyebrowText: { fontFamily: 'Inter_600SemiBold', fontSize: 10, letterSpacing: 1.3 },
+  otpTitle: { fontFamily: 'Inter_700Bold', fontSize: 28, lineHeight: 36, textAlign: 'center' },
+  otpIntro: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21, textAlign: 'center' },
+  otpEmailCard: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: 14, borderWidth: 1, borderRadius: 16 },
   otpMailIcon: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  otpEmailCopy: { flex: 1, minWidth: 0 },
   otpEmailLabel: { fontFamily: 'Inter_600SemiBold', fontSize: 10, letterSpacing: 1, marginBottom: 4 },
   otpEmail: { fontFamily: 'Inter_600SemiBold', fontSize: 13, lineHeight: 18, writingDirection: 'ltr', textAlign: 'left' },
-  otpCodeLabel: { fontFamily: 'Inter_600SemiBold', fontSize: 10, letterSpacing: 1.3, textAlign: 'center', marginBottom: 10 },
+  otpCodeLabel: { fontFamily: 'Inter_600SemiBold', fontSize: 10, letterSpacing: 1.3, textAlign: 'center', marginBottom: -8 },
   otpCodeInputWrap: { height: 58, position: 'relative', justifyContent: 'center' },
   otpDigitRow: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
   otpDigit: { flex: 1, maxWidth: 52, height: 54, borderWidth: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   otpDigitText: { fontFamily: 'Inter_700Bold', fontSize: 21, lineHeight: 27 },
   otpCodeInput: { ...StyleSheet.absoluteFill, zIndex: 2, opacity: 0.02, color: 'transparent', textAlign: 'center', fontSize: 24 },
-  otpExpiry: { fontFamily: 'Inter_400Regular', fontSize: 12, textAlign: 'center', marginTop: 10 },
-  otpMessage: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, paddingVertical: 10, paddingHorizontal: 12, borderWidth: 1, borderRadius: 12 },
+  otpExpiry: { fontFamily: 'Inter_400Regular', fontSize: 12, textAlign: 'center', marginTop: -8 },
+  otpMessage: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 12, borderWidth: 1, borderRadius: 12 },
   otpMessageText: { flex: 1, fontFamily: 'Inter_500Medium', fontSize: 12, lineHeight: 17 },
-  otpSubmitBtn: { height: 54, borderRadius: 15, marginTop: 21, marginBottom: 0, flexDirection: 'row', gap: 8 },
-  otpResendRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 5, marginTop: 16 },
-  otpResendPrompt: { fontFamily: 'Inter_400Regular', fontSize: 12 },
-  otpResendButton: { minHeight: 34, justifyContent: 'center', paddingHorizontal: 3 },
-  otpResendText: { fontFamily: 'Inter_700Bold', fontSize: 12 },
-  otpTrustRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 24 },
+  otpResendRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 5 },
+  otpTrustRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 8 },
   otpTrustText: { fontFamily: 'Inter_500Medium', fontSize: 11 },
-  title: { fontFamily: 'Inter_700Bold', fontSize: 22, color: '#1c2024', marginBottom: 24, letterSpacing: -0.3, textAlign: 'center' },
-  errorBox: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#b94b4212', borderRadius: 10, borderWidth: 1, borderColor: '#b94b4230', padding: 11, marginBottom: 16 },
-  errorText: { fontFamily: 'Inter_400Regular', fontSize: 12, color: '#b94b42', flex: 1 },
-  fieldWrap: { marginBottom: 20 },
-  label: { fontFamily: 'Inter_500Medium', fontSize: 12, color: MUTED, marginBottom: 8, letterSpacing: 0.5 },
-  underlineInput: { fontFamily: 'Inter_400Regular', fontSize: 14, color: '#1c2024', borderBottomWidth: 1, borderBottomColor: BORDER, paddingBottom: 10, paddingTop: 2 },
-  identifierInput: { writingDirection: 'ltr' },
-  passRow: { flexDirection: 'row', alignItems: 'center' },
-  eyeBtn: { paddingLeft: 8 },
-  underlineLine: { borderBottomWidth: 1, borderColor: BORDER },
-  submitBtn: { height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: BORDER },
-  dividerText: { fontFamily: 'Inter_400Regular', fontSize: 12, color: MUTED },
-  socialRow: { flexDirection: 'row', gap: 10, marginBottom: 30 },
-  socialBtn: { flex: 1, height: 44, borderRadius: 10, borderWidth: 1, borderColor: BORDER, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#fff' },
-  socialText: { fontFamily: 'Inter_500Medium', fontSize: 12, color: '#1c2024' },
-  footerRow: { flexDirection: 'row', justifyContent: 'center', marginBottom: 20, flexWrap: 'wrap' },
-  footerText: { fontFamily: 'Inter_400Regular', fontSize: 13, color: '#1c2024' },
-  footerLink: { fontFamily: 'Inter_700Bold', fontSize: 13, color: GOLD },
 });

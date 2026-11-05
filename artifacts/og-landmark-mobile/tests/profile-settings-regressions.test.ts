@@ -59,21 +59,16 @@ test('guest Profile calls to action match the shared button sizing', () => {
   }
 });
 
-test('login and signup share a gentle reduced-motion-aware palm sway', () => {
+test('login and signup keep the original static house illustration', () => {
   const auth = read('components/AuthScreenUI.tsx');
   const login = read('app/(auth)/login.tsx');
   const signup = read('app/(auth)/signup.tsx');
   assert.match(login, /AuthScreenFrame/);
   assert.match(signup, /AuthScreenFrame/);
-  assert.match(auth, /HOUSE_BACKGROUND = require\('\.\.\/assets\/images\/auth-house-background\.png'\)/);
-  assert.match(auth, /PALM_TREE = require\('\.\.\/assets\/images\/auth-palm-tree\.png'\)/);
-  assert.match(auth, /useReducedMotion/);
-  assert.match(auth, /withRepeat\(/);
-  assert.match(auth, /treeSway\.value\}deg/);
-  assert.match(auth, /cancelAnimation\(treeSway\)/);
-  for (const asset of ['assets/images/auth-house-background.png', 'assets/images/auth-palm-tree.png']) {
-    assert.doesNotThrow(() => readFileSync(new URL(asset, base)), `${asset} should exist`);
-  }
+  assert.match(auth, /const HOUSE = require\('\.\.\/assets\/images\/auth-house\.png'\)/);
+  assert.match(auth, /source=\{HOUSE\}/);
+  assert.doesNotMatch(auth, /PALM_TREE|treeSway|treeAnimatedStyle|AnimatedImage/);
+  assert.doesNotThrow(() => readFileSync(new URL('assets/images/auth-house.png', base)));
 });
 
 test('dedicated mobile actions use 46px heights without shrinking fields or rows', () => {

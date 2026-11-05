@@ -196,3 +196,17 @@ mtime_ms = 1793785031970
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/f2cfa367-1162-4b8f-8504-f3196be60c15/b969295b-2885-4d42-b0db-84bbf6e80bae"
 storage_version_token = "1793785073331218"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "472tDJOSeVNOkvTr9qCG5"
+uri = "file://generated-artifacts/og-landmark-mobile-latest-source.zip"
+type = "unspecified"
+title = "OG Landmark Mobile — Latest Source ZIP"
+description = "Complete current mobile app source, shared API client, and workspace package files. Excludes dependencies, Expo cache, and secret files."
+logical_id = "a71fd8f6-680e-4bdd-a3ab-23fa99557d83"
+content_hash = "sha256:38763a0b28f60044429e30901af4d5d6bccc3179fa288bc0bd89e76b91186411"
+size = 36932493
+mtime_ms = 1793905398487
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/a71fd8f6-680e-4bdd-a3ab-23fa99557d83/19cf7c58-2721-4d7f-bc23-e6858b12b0d3"
+storage_version_token = "1793905420429853"
+content_type = "application/octet-stream"

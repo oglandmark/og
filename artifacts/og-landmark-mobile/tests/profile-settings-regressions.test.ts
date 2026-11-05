@@ -13,7 +13,7 @@ test('profile redesign keeps the existing bottom tab configuration intact', () =
   assert.match(tabs, /<BottomTabBar \{\.\.\.props\} \/>/);
   assert.match(tabs, /router\.replace\(POST_AD_LISTING_ROUTE\)/);
   assert.match(tabs, /backgroundColor: `\$\{colors\.surfaceRaised\}F2`/);
-  assert.match(tabs, /postIcon:  \{ width: 56/);
+  assert.match(tabs, /postIcon:  \{ width: 46/);
   assert.match(tabs, /Inter_500Medium/);
 });
 
@@ -57,6 +57,49 @@ test('guest Profile calls to action match the shared button sizing', () => {
     assert.match(style, /alignSelf: 'center'/);
     assert.match(style, /paddingHorizontal: 20/);
   }
+});
+
+test('dedicated mobile actions use 46px heights without shrinking fields or rows', () => {
+  const getStyle = (file: string, name: string) => {
+    const match = read(file).match(new RegExp(`\\b${name}:\\s*\\{([^}]*)\\}`));
+    assert.ok(match, `${file} is missing ${name}`);
+    return match[1];
+  };
+  const controls: [string, string, 'height' | 'minHeight'][] = [
+    ['components/AuthScreenUI.tsx', 'primaryButton', 'height'],
+    ['components/AuthScreenUI.tsx', 'socialButton', 'height'],
+    ['app/onboarding.tsx', 'continueButton', 'minHeight'],
+    ['app/post/listing.tsx', 'submitBtn', 'minHeight'],
+    ['app/(tabs)/post-ad.tsx', 'unitChip', 'height'],
+    ['app/(tabs)/post-ad.tsx', 'submit', 'height'],
+    ['app/(tabs)/explore.tsx', 'filterBtn', 'height'],
+    ['app/(tabs)/explore.tsx', 'mapAction', 'height'],
+    ['app/(tabs)/profile.tsx', 'settingsButton', 'height'],
+    ['app/(tabs)/messages.tsx', 'sendBtn', 'height'],
+    ['components/PropertyGalleryModal.tsx', 'arrowButton', 'height'],
+    ['app/(tabs)/_layout.tsx', 'postIcon', 'height'],
+    ['app/(tabs)/projects.tsx', 'fab', 'height'],
+    ['app/(tabs)/leads.tsx', 'fab', 'height'],
+  ];
+  for (const [file, name, dimension] of controls) {
+    assert.match(getStyle(file, name), new RegExp(`\\b${dimension}:\\s*46\\b`), `${name} should be 46px`);
+  }
+
+  for (const [file, name] of [
+    ['app/(tabs)/explore.tsx', 'filterBtn'],
+    ['app/(tabs)/profile.tsx', 'settingsButton'],
+    ['app/(tabs)/messages.tsx', 'sendBtn'],
+    ['components/PropertyGalleryModal.tsx', 'arrowButton'],
+    ['app/(tabs)/_layout.tsx', 'postIcon'],
+    ['app/(tabs)/projects.tsx', 'fab'],
+    ['app/(tabs)/leads.tsx', 'fab'],
+  ]) {
+    assert.match(getStyle(file, name), /\bwidth:\s*46\b/, `${name} should stay square`);
+  }
+
+  assert.match(getStyle('app/(tabs)/post-ad.tsx', 'dropdownShell'), /\bheight:\s*52\b/);
+  assert.match(getStyle('app/(tabs)/profile.tsx', 'activityRow'), /\bminHeight:\s*78\b/);
+  assert.match(getStyle('components/PropertyToolsScreen.tsx', 'irrigationItem'), /\bminHeight:\s*48\b/);
 });
 
 test('guest and signed-in Profile headers animate the shared logo in web preview', () => {

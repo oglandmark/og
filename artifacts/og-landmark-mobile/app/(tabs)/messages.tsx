@@ -361,5 +361,5 @@ const styles = StyleSheet.create({
   bubbleTime: { fontFamily: 'Inter_400Regular', fontSize: 9, textAlign: 'right' },
   inputRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, paddingTop: 12, borderTopWidth: 1 },
   msgInput: { flex: 1, height: 48, borderRadius: 16, borderWidth: 1, paddingHorizontal: 16, fontFamily: 'Inter_400Regular', fontSize: 13 },
-  sendBtn: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  sendBtn: { width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
 });

@@ -319,5 +319,5 @@ const styles = StyleSheet.create({
     letterSpacing: 0.05,
     textAlign: 'center',
   },
-  postIcon:  { width: 56, height: 56, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginTop: -21, borderWidth: 4 },
+  postIcon:  { width: 46, height: 46, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginTop: -21, borderWidth: 4 },
 });

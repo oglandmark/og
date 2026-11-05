@@ -1391,7 +1391,7 @@ const styles = StyleSheet.create({
   sizeInputWrap: { flex: 1.2, height: 52, borderWidth: 1, borderRadius: 13, overflow: 'hidden' },
   sizeInput: { flex: 1, paddingHorizontal: 14, fontFamily: 'Inter_700Bold', fontSize: 15 },
   unitChips: { flex: 1.8, flexDirection: 'row', gap: 6, alignItems: 'center' },
-  unitChip: { flex: 1, height: 52, borderRadius: 13, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+   unitChip: { flex: 1, height: 46, borderRadius: 13, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   unitChipText: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
   sizeConvert: { fontFamily: 'Inter_400Regular', fontSize: 11, marginBottom: 12, marginTop: -2 },
   // section divider
@@ -1442,7 +1442,7 @@ const styles = StyleSheet.create({
   uploadText: { fontFamily: 'Inter_400Regular', fontSize: 10 },
   // submit
   submit: {
-    height: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center',
+     height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center',
     flexDirection: 'row', gap: 8, marginTop: 20,
     shadowColor: brandColors.light.action, shadowOpacity: 0.2, shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 }, elevation: 6,

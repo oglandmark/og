@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   progressDot: { width: 7, height: 7, borderRadius: 4 },
   progressDotActive: { width: 22, borderRadius: 5 },
   continueButton: {
-    minHeight: 52,
+    minHeight: 46,
     paddingHorizontal: 19,
     borderRadius: 16,
     flexDirection: 'row',

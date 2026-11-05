@@ -612,7 +612,7 @@ const d = StyleSheet.create({
   stageChipText:{ fontFamily: 'Inter_600SemiBold', fontSize: 10 },
   deleteBtn:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 10, borderWidth: 1, paddingVertical: 8 },
   deleteBtnText:{ fontFamily: 'Inter_600SemiBold', fontSize: 12 },
-  fab:          { position: 'absolute', right: 20, width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
+  fab:          { position: 'absolute', right: 20, width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

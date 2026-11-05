@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     gap: 9,
   },
   primaryButton: {
-    height: 56,
+    height: 46,
     borderRadius: 18,
     overflow: 'hidden',
     marginTop: 2,
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   socialRow: { flexDirection: 'row', gap: 12 },
   socialButton: {
     flex: 1,
-    height: 56,
+    height: 46,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'transparent',

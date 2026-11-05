@@ -1514,7 +1514,7 @@ export default function ProfileScreen() {
 
 const gst = StyleSheet.create({
   brandHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  settingsButton: { width: 48, height: 48, borderRadius: 17, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  settingsButton: { width: 46, height: 46, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   welcomeCard: { borderWidth: 1, borderRadius: 28, paddingHorizontal: 23, paddingTop: 26, paddingBottom: 22, alignItems: 'center', overflow: 'hidden', marginBottom: 22 },
   welcomeAvatar: { width: 78, height: 78, borderRadius: 25, borderWidth: 1, borderColor: '#ffffff40', backgroundColor: '#ffffff18', alignItems: 'center', justifyContent: 'center', marginBottom: 17 },
   welcomeEyebrow: { fontFamily: 'Inter_500Medium', fontSize: 12, letterSpacing: 2.1, marginBottom: 6 },

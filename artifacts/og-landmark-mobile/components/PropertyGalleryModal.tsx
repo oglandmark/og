@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   topBar: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   counter: { fontFamily: 'Inter_700Bold', fontSize: 13, letterSpacing: 0.5 },
   closeButton: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-  arrowButton: { position: 'absolute', top: '50%', marginTop: -24, width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  arrowButton: { position: 'absolute', top: '50%', marginTop: -23, width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   leftArrow: { left: 14 },
   rightArrow: { right: 14 },
   hint: { position: 'absolute', alignSelf: 'center', left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },

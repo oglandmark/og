@@ -2426,7 +2426,7 @@ const s = StyleSheet.create({
   submitIcon:           { width: 46, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   submitTitle:          { fontFamily: 'Inter_700Bold', fontSize: 18, marginBottom: 6 },
   submitHint:           { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 17, textAlign: 'center', marginBottom: 16 },
-  submitBtn:            { width: '100%', minHeight: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14 },
+  submitBtn:            { width: '100%', minHeight: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14 },
   submitBtnText:        { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
   submitFootnote:        { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 10 },
   // Hint

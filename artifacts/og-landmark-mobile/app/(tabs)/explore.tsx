@@ -2134,10 +2134,10 @@ const ex = StyleSheet.create({
   searchBar:       { flex: 1, height: 50, borderRadius: 17, borderWidth: 1, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', paddingRight: 10 },
   searchIcon:      { paddingHorizontal: 12, zIndex: 1 },
   searchInput:     { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, zIndex: 1, paddingVertical: 0 },
-  filterBtn:       { width: 50, height: 50, borderRadius: 17, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  filterBtn:       { width: 46, height: 46, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   filterDot:       { position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   filterDotText:   { fontFamily: 'Inter_700Bold', fontSize: 8 },
-  mapAction:       { width: 72, height: 50, borderRadius: 17, borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  mapAction:       { width: 72, height: 46, borderRadius: 17, borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   mapActionText:   { fontFamily: 'Inter_600SemiBold', fontSize: 12, letterSpacing: 0.2 },
   // Recent searches
   recentDropdown:  { borderRadius: 14, borderWidth: 1, marginBottom: 6, overflow: 'hidden' },

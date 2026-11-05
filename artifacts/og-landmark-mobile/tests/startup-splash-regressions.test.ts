@@ -53,13 +53,16 @@ test('startup splash uses the new animated roof mark and replaces only its old l
   assert.match(colorTokens, /splashGold: '#F2B84B'/);
 });
 
-test('startup splash plays the bundled intro sound once and releases it on exit', () => {
+test('startup splash plays intro sound natively and offers web gesture playback', () => {
   assert.ok(existsSync(new URL('../assets/audio/splash-brand-intro.mp3', import.meta.url)));
   assert.ok(appConfig.expo.assetBundlePatterns?.includes('assets/audio/*'));
   assert.match(startupSplash, /useAudioPlayer/);
-  assert.match(startupSplash, /splashAudioPlayer\.volume = 0\.32/);
+  assert.match(startupSplash, /useAudioPlayerStatus/);
+  assert.match(startupSplash, /splashAudioPlayer\.volume = 0\.7/);
   assert.match(startupSplash, /splashAudioPlayer\.play\(\)/);
   assert.match(startupSplash, /splashAudioPlayer\.pause\(\)/);
-  assert.match(startupSplash, /Platform\.OS === 'web'/);
+  assert.match(startupSplash, /if \(Platform\.OS === 'web'\) return undefined/);
+  assert.match(startupSplash, /Platform\.OS === 'web' && !splashAudioStatus\.playing/);
+  assert.match(startupSplash, /onPress=\{enableSplashAudio\}/);
 });
 

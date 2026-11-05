@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
+import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import Svg, {
@@ -48,6 +49,7 @@ export function StartupSplash({
   const splashAudioPlayer = useAudioPlayer(
     require('@/assets/audio/splash-brand-intro.mp3'),
   );
+  const splashAudioStatus = useAudioPlayerStatus(splashAudioPlayer);
 
   const outerRotation = useSharedValue(0);
   const innerRotation = useSharedValue(0);
@@ -99,7 +101,7 @@ export function StartupSplash({
       shouldPlayInBackground: false,
     }).then(() => {
       if (!active) return;
-      splashAudioPlayer.volume = 0.32;
+      splashAudioPlayer.volume = 0.7;
       splashAudioPlayer.play();
     }).catch(() => {
       // Audio setup must never block the app from opening.
@@ -114,6 +116,13 @@ export function StartupSplash({
       }
     };
   }, [splashAudioPlayer]);
+
+  function enableSplashAudio() {
+    // Web browsers block audio autoplay until a visitor taps a control.
+    // Keep play() directly in this press handler to preserve that gesture.
+    splashAudioPlayer.volume = 0.7;
+    splashAudioPlayer.play();
+  }
 
   const oAnimatedProps = useAnimatedProps(() => ({
     strokeDashoffset: 251.3 * (1 - logoOProgress.value),
@@ -426,6 +435,23 @@ export function StartupSplash({
         >
           Find your next landmark
         </Animated.Text>
+
+        {Platform.OS === 'web' && !splashAudioStatus.playing && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Enable splash screen sound"
+            onPress={enableSplashAudio}
+            style={[
+              styles.audioButton,
+              { backgroundColor: `${colors.splashTeal}20`, borderColor: `${colors.splashTeal}70` },
+            ]}
+          >
+            <Feather name="volume-2" size={14} color={colors.splashTeal} />
+            <Animated.Text style={[styles.audioButtonText, { color: colors.splashWhite }]}>
+              Tap for sound
+            </Animated.Text>
+          </Pressable>
+        )}
       </View>
     </Animated.View>
   );
@@ -554,5 +580,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     letterSpacing: 0.96,
+  },
+  audioButton: {
+    position: 'absolute',
+    bottom: 22,
+    alignSelf: 'center',
+    minHeight: 38,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  audioButtonText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
 });

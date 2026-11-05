@@ -61,20 +61,22 @@ test('startup splash uses the supplied HTML scene and its complete animation tim
   assert.match(splashReference, /PT\.forEach/);
   assert.match(splashReference, /requestAnimationFrame\(loop\)/);
   assert.match(startupSplash, /og-landmark-intro\.html/);
-  assert.match(startupSplash, /mediaPlaybackRequiresUserAction=\{false\}/);
+  assert.match(startupSplash, /mediaPlaybackRequiresUserAction/);
   assert.match(startupSplash, /srcDoc: html/);
   assert.match(colorTokens, /splashTeal: '#19C3B1'/);
   assert.match(colorTokens, /splashGold: '#C9A55C'/);
 });
 
-test('autoplay adapter removes the controls and starts the embedded sound automatically', () => {
+test('startup splash removes embedded audio and stays silent', () => {
   const preparedHtml = prepareSplashHtml(splashReference);
-  assert.match(preparedHtml, /let snd=true,prev=0/);
+  assert.match(preparedHtml, /let snd=false,prev=0/);
+  assert.doesNotMatch(preparedHtml, /<audio id="au"/);
+  assert.doesNotMatch(preparedHtml, /data:audio\/mpeg;base64/);
   assert.doesNotMatch(preparedHtml, /<div id="ui">/);
   assert.doesNotMatch(preparedHtml, /\$\('sd'\)\.onclick/);
   assert.doesNotMatch(preparedHtml, /\$\('rp'\)\.onclick/);
-  assert.match(startupSplash, /allowsInlineMediaPlayback/);
-  assert.doesNotMatch(startupSplash, /Tap for sound/);
+  assert.match(startupSplash, /mediaPlaybackRequiresUserAction/);
+  assert.doesNotMatch(startupSplash, /allow: 'autoplay; fullscreen'/);
 });
 
 test('shared OG and roof mark loops after ten focused seconds on each mobile page', () => {

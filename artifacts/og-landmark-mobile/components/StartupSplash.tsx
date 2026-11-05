@@ -59,7 +59,7 @@ export function StartupSplash({
         ? React.createElement('iframe' as never, {
             title: 'OG Landmark animated splash',
             srcDoc: html,
-            allow: 'autoplay; fullscreen',
+            allow: 'fullscreen',
             frameBorder: '0',
             style: {
               position: 'absolute',
@@ -76,7 +76,7 @@ export function StartupSplash({
                 originWhitelist={['*']}
                 javaScriptEnabled
                 domStorageEnabled
-                mediaPlaybackRequiresUserAction={false}
+                mediaPlaybackRequiresUserAction
                 allowsInlineMediaPlayback
                 scrollEnabled={false}
                 bounces={false}

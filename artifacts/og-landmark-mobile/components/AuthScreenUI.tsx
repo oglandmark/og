@@ -1,8 +1,9 @@
-import React, { type ReactNode } from 'react';
+import React, { type ReactNode, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -171,50 +172,82 @@ export function AuthPrimaryButton({
   );
 }
 
-export function AuthSocialButtons({
-  facebookLoading,
-  disabled,
-  onFacebook,
-  onUnavailable,
-}: {
-  facebookLoading: boolean;
-  disabled: boolean;
-  onFacebook: () => void;
-  onUnavailable: (provider: 'Google' | 'Apple') => void;
-}) {
+type SocialProvider = 'Google' | 'Apple' | 'Facebook';
+
+export function AuthSocialButtons({ disabled }: { disabled: boolean }) {
   const colors = useColors();
+  const { tr } = useLanguage();
+  const [comingSoonProvider, setComingSoonProvider] = useState<SocialProvider | null>(null);
+  const closeComingSoon = () => setComingSoonProvider(null);
+
   return (
-    <View style={styles.socialRow}>
-      <Pressable
-        onPress={() => onUnavailable('Google')}
-        disabled={disabled}
-        accessibilityRole="button"
-        accessibilityLabel="Continue with Google"
-        style={[styles.socialButton, { backgroundColor: colors.background, borderColor: colors.authBorder, shadowColor: colors.action }]}
+    <>
+      <View style={styles.socialRow}>
+        <Pressable
+          onPress={() => setComingSoonProvider('Google')}
+          disabled={disabled}
+          accessibilityRole="button"
+          accessibilityLabel="Continue with Google"
+          style={[styles.socialButton, { backgroundColor: colors.background, borderColor: colors.authBorder, shadowColor: colors.action }]}
+        >
+          <FontAwesome5 name="google" size={18} color="#4285F4" />
+        </Pressable>
+        <Pressable
+          onPress={() => setComingSoonProvider('Apple')}
+          disabled={disabled}
+          accessibilityRole="button"
+          accessibilityLabel="Continue with Apple"
+          style={[styles.socialButton, { backgroundColor: colors.background, borderColor: colors.authBorder, shadowColor: colors.action }]}
+        >
+          <FontAwesome5 name="apple" size={20} color="#000000" />
+        </Pressable>
+        <Pressable
+          onPress={() => setComingSoonProvider('Facebook')}
+          disabled={disabled}
+          accessibilityRole="button"
+          accessibilityLabel="Continue with Facebook"
+          style={[styles.socialButton, { backgroundColor: colors.background, borderColor: colors.authBorder, shadowColor: colors.action }]}
+        >
+          <FontAwesome5 name="facebook" size={18} color="#1877F2" />
+        </Pressable>
+      </View>
+
+      <Modal
+        visible={comingSoonProvider !== null}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={closeComingSoon}
       >
-        <FontAwesome5 name="google" size={18} color="#4285F4" />
-      </Pressable>
-      <Pressable
-        onPress={() => onUnavailable('Apple')}
-        disabled={disabled}
-        accessibilityRole="button"
-        accessibilityLabel="Continue with Apple"
-        style={[styles.socialButton, { backgroundColor: colors.background, borderColor: colors.authBorder, shadowColor: colors.action }]}
-      >
-        <FontAwesome5 name="apple" size={20} color="#000000" />
-      </Pressable>
-      <Pressable
-        onPress={onFacebook}
-        disabled={disabled || facebookLoading}
-        accessibilityRole="button"
-        accessibilityLabel="Continue with Facebook"
-        style={[styles.socialButton, { backgroundColor: colors.background, borderColor: colors.authBorder, shadowColor: colors.action }]}
-      >
-        {facebookLoading
-          ? <ActivityIndicator size="small" color="#1877F2" />
-          : <FontAwesome5 name="facebook" size={18} color="#1877F2" />}
-      </Pressable>
-    </View>
+        <View style={[styles.socialModalBackdrop, { backgroundColor: `${colors.splashNavy}B8` }]}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={closeComingSoon}
+            accessibilityRole="button"
+            accessibilityLabel={tr('continueBtn')}
+          />
+          <View
+            accessibilityViewIsModal
+            style={[styles.socialModalCard, { backgroundColor: colors.background, borderColor: colors.authBorder }]}
+          >
+            <View style={[styles.socialModalIcon, { backgroundColor: `${colors.splashGold}1A`, borderColor: `${colors.splashGold}55` }]}>
+              <Feather name="clock" size={23} color={colors.splashGold} />
+            </View>
+            <Text style={[styles.socialModalTitle, { color: colors.foreground }]}>{tr('statusComingSoon')}</Text>
+            <Text style={[styles.socialModalMessage, { color: colors.authMuted }]}>
+              {tr('authSocialComingSoon').replace('{provider}', comingSoonProvider ?? '')}
+            </Text>
+            <Pressable
+              onPress={closeComingSoon}
+              accessibilityRole="button"
+              style={[styles.socialModalClose, { backgroundColor: colors.action }]}
+            >
+              <Text style={[styles.socialModalCloseText, { color: colors.actionForeground }]}>{tr('continueBtn')}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -300,4 +333,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  socialModalBackdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  socialModalCard: { width: '100%', maxWidth: 360, alignItems: 'center', borderWidth: 1, borderRadius: 24, padding: 24, gap: 12, elevation: 8 },
+  socialModalIcon: { width: 56, height: 56, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 18 },
+  socialModalTitle: { fontFamily: 'Inter_700Bold', fontSize: 19, textAlign: 'center' },
+  socialModalMessage: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 21, textAlign: 'center' },
+  socialModalClose: { width: '100%', minHeight: 46, alignItems: 'center', justifyContent: 'center', borderRadius: 14, marginTop: 4 },
+  socialModalCloseText: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 });

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -9,12 +9,11 @@ import { AuthDivider, AuthPrimaryButton, AuthScreenFrame, AuthSocialButtons } fr
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useColors } from '@/hooks/useColors';
-import { useFacebookAuth } from '@/lib/facebookAuth';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
-  const { loginAPI, loginSocial } = useAuth();
+  const { loginAPI } = useAuth();
   const { tr, isRTL } = useLanguage();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -26,16 +25,6 @@ export default function LoginScreen() {
   const identifierValue = identifier.trim();
   const isMobileIdentifier = identifierValue.length > 0 && /^[+\d\s().-]+$/.test(identifierValue);
   const rtl = isRTL ? 'right' as const : 'left' as const;
-
-  const handleFacebookLogin = useCallback(async (accessToken: string) => {
-    const result = await loginSocial('facebook', accessToken);
-    if (result.success) {
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace('/(tabs)');
-    }
-    return result;
-  }, [loginSocial]);
-  const facebook = useFacebookAuth(handleFacebookLogin);
 
   const handleLogin = async () => {
     const value = identifier.trim();
@@ -60,10 +49,6 @@ export default function LoginScreen() {
     router.replace('/(tabs)');
   };
 
-  const unavailableProvider = (provider: 'Google' | 'Apple') => {
-    setError(`${provider} sign-in is not configured yet. Use email or Facebook.`);
-  };
-
   return (
     <AuthScreenFrame
       topInset={insets.top + (Platform.OS === 'web' ? 67 : 0)}
@@ -74,10 +59,10 @@ export default function LoginScreen() {
         <Text style={[styles.subtitle, { color: colors.authMuted }]}>{tr('authLoginSubtitle')}</Text>
       </View>
 
-      {!!(error || facebook.error) && (
+      {!!error && (
         <View style={[styles.errorBox, { backgroundColor: `${colors.destructive}0D`, borderColor: `${colors.destructive}30` }]}>
           <Feather name="alert-circle" size={15} color={colors.destructive} />
-          <Text style={[styles.errorText, { color: colors.destructive, textAlign: rtl }]}>{error || facebook.error}</Text>
+          <Text style={[styles.errorText, { color: colors.destructive, textAlign: rtl }]}>{error}</Text>
         </View>
       )}
 
@@ -145,12 +130,7 @@ export default function LoginScreen() {
 
       <AuthPrimaryButton label={tr('authSignInButton')} accessibilityLabel={tr('loginBtn')} loading={loading} onPress={() => { void handleLogin(); }} />
       <AuthDivider label={tr('authLoginDivider')} />
-      <AuthSocialButtons
-        facebookLoading={facebook.loading}
-        disabled={loading}
-        onFacebook={() => { void facebook.signIn(); }}
-        onUnavailable={unavailableProvider}
-      />
+      <AuthSocialButtons disabled={loading} />
       <View style={styles.footerRow}>
         <Text style={[styles.footerText, { color: colors.authMuted }]}>{tr('noAccount')}</Text>
         <Pressable onPress={() => router.push('/(auth)/signup')} accessibilityRole="button">

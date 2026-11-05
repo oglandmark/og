@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -16,12 +16,11 @@ import { AuthDivider, AuthPrimaryButton, AuthScreenFrame, AuthSocialButtons } fr
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useColors } from '@/hooks/useColors';
-import { useFacebookAuth } from '@/lib/facebookAuth';
 
 export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
-  const { registerAPI, verifySignupEmail, resendSignupEmail, loginSocial } = useAuth();
+  const { registerAPI, verifySignupEmail, resendSignupEmail } = useAuth();
   const { tr, isRTL } = useLanguage();
   const [name, setName] = useState('');
   const [identifier, setIdentifier] = useState('');
@@ -44,39 +43,6 @@ export default function SignUpScreen() {
   const signupPhone = isMobileIdentifier ? identifierValue : mobileNumber.trim();
   const signupPhoneDigits = signupPhone.replace(/\D/g, '');
   const isValidSignupPhone = signupPhoneDigits.length >= 10 && signupPhoneDigits.length <= 15;
-
-  const handleFacebookSignup = useCallback(async (accessToken: string) => {
-    if (!termsAccepted) {
-      const message = tr('authAcceptTermsError');
-      setError(message);
-      return { success: false, error: message };
-    }
-    if (!signupPhone) {
-      const message = tr('signupMobileRequired');
-      setError(message);
-      return { success: false, error: message };
-    }
-    if (!isValidSignupPhone) {
-      const message = tr('signupMobileError');
-      setError(message);
-      return { success: false, error: message };
-    }
-    const result = await loginSocial('facebook', accessToken, signupPhone);
-    if (result.success) {
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace('/(tabs)');
-    }
-    return result;
-  }, [isValidSignupPhone, loginSocial, signupPhone, termsAccepted, tr]);
-  const facebook = useFacebookAuth(handleFacebookSignup);
-
-  const startFacebookSignup = () => {
-    if (!termsAccepted) { setError(tr('authAcceptTermsError')); return; }
-    if (!signupPhone) { setError(tr('signupMobileRequired')); return; }
-    if (!isValidSignupPhone) { setError(tr('signupMobileError')); return; }
-    setError('');
-    void facebook.signIn();
-  };
 
   async function handleRegister() {
     if (!termsAccepted) { setError(tr('authAcceptTermsError')); return; }
@@ -148,9 +114,6 @@ export default function SignUpScreen() {
     else setError(result.error ?? 'Unable to resend the code.');
   }
 
-  const unavailableProvider = (provider: 'Google' | 'Apple') => {
-    setError(`${provider} sign-in is not configured yet. Use email or Facebook.`);
-  };
   const openLegal = () => router.push('/settings/legal?section=legal' as any);
 
   return (
@@ -252,10 +215,10 @@ export default function SignUpScreen() {
             <Text style={[styles.subtitle, { color: colors.authMuted }]}>{tr('authCreateSubtitle')}</Text>
           </View>
 
-          {!!(error || facebook.error) && (
+          {!!error && (
             <View style={[styles.errorBox, { backgroundColor: `${colors.destructive}0D`, borderColor: `${colors.destructive}30` }]}>
               <Feather name="alert-circle" size={15} color={colors.destructive} />
-              <Text style={[styles.errorText, { color: colors.destructive, textAlign: rtl }]}>{error || facebook.error}</Text>
+              <Text style={[styles.errorText, { color: colors.destructive, textAlign: rtl }]}>{error}</Text>
             </View>
           )}
 
@@ -299,12 +262,7 @@ export default function SignUpScreen() {
 
           <AuthPrimaryButton label={tr('createAccountBtn')} accessibilityLabel={tr('createAccountBtn')} loading={loading} onPress={() => { void handleRegister(); }} />
           <AuthDivider label={tr('authSignupDivider')} />
-          <AuthSocialButtons
-            facebookLoading={facebook.loading}
-            disabled={loading}
-            onFacebook={startFacebookSignup}
-            onUnavailable={unavailableProvider}
-          />
+          <AuthSocialButtons disabled={loading} />
           <View style={styles.footerRow}>
             <Text style={[styles.footerText, { color: colors.authMuted }]}>{tr('authAlreadyHaveAccount')}</Text>
             <Pressable onPress={() => router.push('/(auth)/login')} accessibilityRole="button">

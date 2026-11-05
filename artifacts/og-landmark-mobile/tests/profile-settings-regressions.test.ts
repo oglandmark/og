@@ -71,6 +71,24 @@ test('login and signup keep the original static house illustration', () => {
   assert.doesNotThrow(() => readFileSync(new URL('assets/images/auth-house.png', base)));
 });
 
+test('Google, Apple and Facebook show a localized Coming Soon popup', () => {
+  const authUI = read('components/AuthScreenUI.tsx');
+  const login = read('app/(auth)/login.tsx');
+  const signup = read('app/(auth)/signup.tsx');
+  const translations = read('lib/i18n.ts');
+  for (const provider of ['Google', 'Apple', 'Facebook']) {
+    assert.ok(authUI.includes(`setComingSoonProvider('${provider}')`), `${provider} should open the popup`);
+  }
+  assert.match(authUI, /visible=\{comingSoonProvider !== null\}/);
+  assert.match(authUI, /tr\('statusComingSoon'\)/);
+  assert.match(authUI, /tr\('authSocialComingSoon'\)\.replace\('\{provider\}'/);
+  assert.match(login, /<AuthSocialButtons disabled=\{loading\} \/>/);
+  assert.match(signup, /<AuthSocialButtons disabled=\{loading\} \/>/);
+  assert.doesNotMatch(`${login}\n${signup}`, /useFacebookAuth|facebook\.signIn|loginSocial/);
+  assert.match(translations, /authSocialComingSoon: '\{provider\} sign-in and sign-up will be available soon/);
+  assert.match(translations, /authSocialComingSoon: '‏\{provider\} کے ذریعے سائن اِن اور سائن اپ جلد دستیاب ہوں گے/);
+});
+
 test('dedicated mobile actions use 46px heights without shrinking fields or rows', () => {
   const getStyle = (file: string, name: string) => {
     const match = read(file).match(new RegExp(`\\b${name}:\\s*\\{([^}]*)\\}`));

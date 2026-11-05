@@ -184,7 +184,7 @@ export default function TabLayout() {
             if (Platform.OS === 'web') {
               return (
                 <View style={tabDockStyle}>
-                  <View style={[StyleSheet.absoluteFill, { backgroundColor: `${colors.surfaceRaised}F2` }]} />
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceRaised }]} />
                   <LinearGradient
                     colors={[colors.actionGlassHighlight, 'transparent']}
                     style={[styles.tabGlassHighlight, { pointerEvents: 'none' } as any]}

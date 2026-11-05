@@ -12,3 +12,9 @@ When a mobile preview screenshot remains on the splash screen or renders blank, 
 **Why:** the user asked that Expo and Replit preview be updated alongside mobile changes. Metro reported reloads disabled in CI mode, and a title-based demo guess hid the user's two active Admin listings, so neither an old bundle nor labels alone are reliable evidence.
 
 **How to apply:** Keep `CI` unset for the managed Expo dev command, verify the live feed after server changes, and present the mobile artifact. If a second Metro process occupies the fixed preview port, check which process owns it and restart the managed workflow so the preview isn't left on a stale bundle. Use explicit demo metadata plus approval/listing status; if screenshots do not reach Home or Explore, state that visual verification is incomplete.
+
+Expo web previews should load the app's bundled Inter and Playfair fonts too; an empty web font map makes declared font families fall back to browser defaults. First-visit screenshots may also land on onboarding instead of the requested tab.
+
+**Why:** The profile preview looked unstyled until web font loading was enabled, and reaching the requested guest Profile required completing onboarding and selecting its tab.
+
+**How to apply:** Load the same bundled font definitions on web and native. For a visual check, wait through startup, skip onboarding if shown, select Profile, and inspect the actual rendered page rather than relying on a direct URL alone.

@@ -238,9 +238,9 @@ function DirectionalApp({ fontsReady }: { fontsReady: boolean }) {
 }
 
 export default function RootLayout() {
-  // Load bundled fonts in the background; the animated splash uses a system
-  // fallback until the branded font is ready.
-  const fontDefinitions: Record<string, FontSource> = Platform.OS === 'web' ? {} : {
+  // Load bundled fonts on native and web so previews use the same brand
+  // typography. The animated splash uses a system fallback while they load.
+  const fontDefinitions: Record<string, FontSource> = {
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
     PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold,
   };

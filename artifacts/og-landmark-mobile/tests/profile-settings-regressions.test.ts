@@ -43,6 +43,16 @@ test('activity and Settings options use a restrained, professional card hierarch
   assert.match(settings, /row: \{ minHeight: 72, borderWidth: 1, borderRadius: 17/);
 });
 
+test('web preview loads brand fonts and keeps the tab dock opaque', () => {
+  const root = read('app/_layout.tsx');
+  const tabs = read('app/(tabs)/_layout.tsx');
+  assert.match(root, /const fontDefinitions: Record<string, FontSource> = \{/);
+  assert.ok(!root.includes("Platform.OS === 'web' ? {} :"));
+  const webBackground = tabs.match(/if \(Platform\.OS === 'web'\) \{([\s\S]*?)\n            \}/);
+  assert.ok(webBackground, 'web tab dock background should be defined');
+  assert.match(webBackground[1], /backgroundColor: colors\.surfaceRaised/);
+});
+
 test('settings home is reachable and retains public, account, notification and deletion actions', () => {
   const profile = read('app/(tabs)/profile.tsx');
   const settings = read('app/settings/index.tsx');

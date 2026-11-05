@@ -271,14 +271,20 @@ const startupSplash = fs.readFileSync(
   path.resolve(projectRoot, "components/StartupSplash.tsx"),
   "utf8"
 );
+const splashReference = fs.readFileSync(
+  path.resolve(projectRoot, "assets/splash/og-landmark-intro.html"),
+  "utf8"
+);
 if (
   !/<StartupSplash\s+colors=\{colors\}\s+overlay\s+fontsReady=\{fontsReady\}\s*\/>/.test(startupLayout) ||
-  !startupSplash.includes('accessibilityLabel="OG Landmark roof logo"') ||
-  !startupSplash.includes("LANDMARK")
+  !startupSplash.includes("og-landmark-intro.html") ||
+  !startupSplash.includes("prepareSplashHtml") ||
+  !splashReference.includes("LANDMARK") ||
+  !splashReference.includes("requestAnimationFrame(loop)")
 ) {
-  fail("The in-app startup splash must render the new roof logo and OG Landmark name.");
+  fail("The in-app startup splash must load the supplied animated OG Landmark HTML.");
 }
 if (!/STARTUP_SPLASH_MIN_DURATION_MS\s*=\s*8000\b/.test(startupLayout)) {
   fail("The branded startup splash must stay visible for at least eight seconds.");
 }
-console.log("✓ Native splash is color-only; the animated in-app splash keeps the new roof logo, name, and eight-second minimum.");
+console.log("✓ Native splash is color-only; the in-app splash loads the supplied animated scene and keeps the eight-second minimum.");

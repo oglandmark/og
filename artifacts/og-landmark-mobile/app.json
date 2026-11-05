@@ -37,7 +37,8 @@
     "assetBundlePatterns": [
       "assets/images/*",
       "assets/videos/*",
-      "assets/audio/*"
+      "assets/audio/*",
+      "assets/splash/*"
     ],
     "plugins": [
       [

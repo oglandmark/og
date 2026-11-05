@@ -18,6 +18,7 @@ import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { SkeletonShimmer } from '@/components/SkeletonShimmer';
 import { PropertyCard } from '@/components/PropertyCard';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import { BrandMark } from '@/components/BrandMark';
@@ -55,6 +56,7 @@ import { PlotMeasurementCalculator } from '@/components/PlotMeasurementCalculato
 import { StatusNotice } from '@/components/PolishedUI';
 
 type Transaction = 'Buy' | 'Rent';
+const HOME_REFRESH_INTERVAL_MS = 60_000;
 
 // ─── Drawer types & data ──────────────────────────────────────────────────────
 
@@ -164,16 +166,16 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
                     <Pressable
                       key={item.label}
                       onPress={() => { onClose(); drawerRouter.push(item.route as any); }}
-                      style={({ pressed }) => [s.drawerItem, { borderColor: '#C8A45A33', backgroundColor: pressed ? '#C8A45A0f' : 'transparent', opacity: pressed ? 0.88 : 1 }]}
+                      style={({ pressed }) => [s.drawerItem, { borderColor: colors.gold + '33', backgroundColor: pressed ? colors.gold + '0f' : 'transparent', opacity: pressed ? 0.88 : 1 }]}
                     >
-                      <View style={[s.drawerItemIcon, { backgroundColor: '#C8A45A18' }]}>
-                        <Feather name={item.icon} size={18} color="#C8A45A" />
+                      <View style={[s.drawerItemIcon, { backgroundColor: colors.gold + '18' }]}>
+                        <Feather name={item.icon} size={18} color={colors.gold} />
                       </View>
                       <View style={s.drawerItemCopy}>
                         <Text style={[s.drawerItemLabel, { color: colors.foreground }]}>{item.label}</Text>
                         <Text style={[s.drawerItemDetail, { color: colors.mutedForeground }]}>{item.detail}</Text>
                       </View>
-                      <Feather name="chevron-right" size={16} color="#C8A45A" />
+                      <Feather name="chevron-right" size={16} color={colors.gold} />
                     </Pressable>
                   ))}
                 </View>
@@ -541,11 +543,11 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
 
         {/* ── Top row: type badge + verified + save ── */}
         <View style={fp.topRow}>
-          <View style={[fp.badge, { backgroundColor: '#c8a45acc' }]}>
+          <View style={[fp.badge, { backgroundColor: colors.gold + 'cc' }]}>
             <Text style={fp.badgeText}>{property.type.toUpperCase()}</Text>
           </View>
           <PropertyDemoBadge visible={property.isDemo === true} compact />
-          <View style={[fp.badge, { backgroundColor: '#183B60cc', flexDirection: 'row', gap: 4, alignItems: 'center' }]}>
+          <View style={[fp.badge, { backgroundColor: colors.teal + 'cc', flexDirection: 'row', gap: 4, alignItems: 'center' }]}>
             <Feather name="check-circle" size={9} color="#fff" />
             <Text style={fp.badgeText}>VERIFIED</Text>
           </View>
@@ -615,7 +617,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
 
         {hasError ? (
           <View style={fp.fsError}>
-            <Feather name="alert-circle" size={36} color="#c8a45a" />
+            <Feather name="alert-circle" size={36} color={colors.gold} />
             <Text style={fp.fsErrorText}>Video load nahi ho saka</Text>
             <Pressable onPress={closeVideo} style={fp.fsErrorBtn}>
               <Text style={fp.fsErrorBtnText}>Close</Text>
@@ -639,7 +641,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
 
             {isBuffering && (
               <View style={fp.fsBuffer} pointerEvents="none">
-                <ActivityIndicator size="large" color="#c8a45a" />
+                <ActivityIndicator size="large" color={colors.gold} />
               </View>
             )}
 
@@ -652,13 +654,13 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
             {/* Control bar */}
             <View style={fp.fsBar}>
               <Pressable onPress={toggleMute} style={fp.fsMuteBtn}>
-                <Feather name={isMutedV ? 'volume-x' : 'volume-2'} size={18} color={isMutedV ? '#888' : '#c8a45a'} />
-                <Text style={[fp.fsMuteLabel, { color: isMutedV ? '#888' : '#c8a45a' }]}>
+                <Feather name={isMutedV ? 'volume-x' : 'volume-2'} size={18} color={isMutedV ? '#888' : colors.gold} />
+                <Text style={[fp.fsMuteLabel, { color: isMutedV ? '#888' : colors.gold }]}>
                   {isMutedV ? 'Unmute' : 'Sound On'}
                 </Text>
               </Pressable>
               <View style={fp.fsTitleWrap}>
-                <Feather name="video" size={12} color="#c8a45a" />
+                <Feather name="video" size={12} color={colors.gold} />
                 <Text style={fp.fsTitleText} numberOfLines={1}>{property.title}</Text>
               </View>
             </View>
@@ -677,7 +679,7 @@ const fp = StyleSheet.create({
   galleryStatus:{ position: 'absolute', top: 56, right: 14, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#071521aa', borderWidth: 1, borderColor: '#ffffff33', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 5 },
   galleryDots:  { flexDirection: 'row', alignItems: 'center', gap: 3 },
   galleryDot:   { width: 4, height: 4, borderRadius: 2, backgroundColor: '#ffffff66' },
-  galleryDotActive:{ width: 10, backgroundColor: '#c8a45a' },
+  galleryDotActive:{ width: 10, backgroundColor: brandColors.light.gold },
   galleryCount: { color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 9 },
   topRow:       { position: 'absolute', top: 14, left: 14, right: 14, flexDirection: 'row', alignItems: 'center', gap: 8 },
   badge:        { borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 },
@@ -690,12 +692,12 @@ const fp = StyleSheet.create({
   meta:         { fontFamily: 'Inter_400Regular', fontSize: 11, color: '#ffffffaa' },
   metaDot:      { width: 3, height: 3, borderRadius: 1.5, backgroundColor: '#ffffff55' },
   agentRow:     { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  agentDot:     { width: 26, height: 26, borderRadius: 13, backgroundColor: '#c8a45a', alignItems: 'center', justifyContent: 'center' },
+  agentDot:     { width: 26, height: 26, borderRadius: 13, backgroundColor: brandColors.light.gold, alignItems: 'center', justifyContent: 'center' },
   agentInitial: { fontFamily: 'Inter_700Bold', fontSize: 11, color: '#ffffff' },
   agentName:    { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#ffffffcc', flex: 1 },
 
   // Video Tour pill
-  videoTourBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#c8a45a', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5 },
+  videoTourBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: brandColors.light.gold, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5 },
   videoTourIcon: { width: 16, height: 16, borderRadius: 8, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
   videoTourText: { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#0B1F3A', letterSpacing: 0.3 },
 
@@ -716,8 +718,8 @@ const fp = StyleSheet.create({
   fsTitleWrap:  { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'flex-end' },
   fsTitleText:  { color: '#fff', fontWeight: '600', fontSize: 12, flex: 1, textAlign: 'right', opacity: 0.85 },
   fsError:      { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
-  fsErrorText:  { color: '#c8a45a', fontWeight: '700', fontSize: 15 },
-  fsErrorBtn:   { marginTop: 8, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: '#c8a45a', borderRadius: 10 },
+  fsErrorText:  { color: brandColors.light.gold, fontWeight: '700', fontSize: 15 },
+  fsErrorBtn:   { marginTop: 8, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: brandColors.light.gold, borderRadius: 10 },
   fsErrorBtnText:{ color: '#0B1F3A', fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });
 
@@ -727,35 +729,9 @@ function AgentCarousel({ agents, colors, onAgentPress }: { agents: SampleAgent[]
   const visibleAgents = agents.length
     ? agents
     : [];
-  const scrollRef = useRef<ScrollView>(null);
-  const offsetRef = useRef(0);
-  const loopWidthRef = useRef(0);
-  const pausedRef = useRef(false);
-  const marqueeAgents = visibleAgents.length > 1
-    ? [...visibleAgents, ...visibleAgents]
-    : visibleAgents;
-
-  useEffect(() => {
-    if (visibleAgents.length < 2) return;
-
-    const timer = setInterval(() => {
-      if (pausedRef.current || !loopWidthRef.current) return;
-
-      let nextOffset = offsetRef.current + 0.55;
-      if (nextOffset >= loopWidthRef.current) {
-        nextOffset -= loopWidthRef.current;
-      }
-
-      offsetRef.current = nextOffset;
-      scrollRef.current?.scrollTo({ x: nextOffset, animated: false });
-    }, 32);
-
-    return () => clearInterval(timer);
-  }, [visibleAgents.length]);
 
   return (
     <ScrollView
-      ref={scrollRef}
       horizontal
       nestedScrollEnabled
       directionalLockEnabled
@@ -763,28 +739,13 @@ function AgentCarousel({ agents, colors, onAgentPress }: { agents: SampleAgent[]
       decelerationRate="fast"
       keyboardShouldPersistTaps="handled"
       scrollEventThrottle={16}
-      onContentSizeChange={(width) => {
-        loopWidthRef.current = visibleAgents.length > 1 ? width / 2 : 0;
-      }}
-      onScroll={(event) => {
-        offsetRef.current = event.nativeEvent.contentOffset.x;
-      }}
-      onScrollBeginDrag={() => {
-        pausedRef.current = true;
-      }}
-      onMomentumScrollEnd={() => {
-        pausedRef.current = false;
-      }}
-      onScrollEndDrag={() => {
-        pausedRef.current = false;
-      }}
       style={s.agentCarouselViewport}
       contentContainerStyle={[s.agentTrack, s.hRow]}
       showsHorizontalScrollIndicator={false}
     >
-      {marqueeAgents.map((agent, index) => (
+      {visibleAgents.map((agent) => (
           <AgentCard
-            key={`${agent.id}-${index}`}
+            key={agent.id}
             agent={agent}
             colors={colors}
             onPress={() => onAgentPress(agent.id)}
@@ -843,14 +804,14 @@ function AgentCard({ agent, colors, onPress }: { agent: SampleAgent; colors: Col
 
           <View style={ac.stats}>
             <View style={[ac.stat, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
-              <Feather name="award" size={13} color="#c8a45a" />
+              <Feather name="award" size={13} color={colors.gold} />
               <View>
                 <Text style={[ac.statVal, { color: colors.foreground }]}>{agent.years}+ years</Text>
                 <Text style={[ac.statLabel, { color: colors.mutedForeground }]}>Experience</Text>
               </View>
             </View>
             <View style={[ac.stat, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
-              <Feather name="home" size={13} color="#c8a45a" />
+              <Feather name="home" size={13} color={colors.gold} />
               <View>
                 <Text style={[ac.statVal, { color: colors.foreground }]}>{agent.listings}</Text>
                 <Text style={[ac.statLabel, { color: colors.mutedForeground }]}>Active listings</Text>
@@ -891,7 +852,7 @@ const ac = StyleSheet.create({
                   shadowColor: '#0B1F3A', shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
   photoWrap:    { height: 142, backgroundColor: '#0B1F3A', overflow: 'hidden' },
   photo:        { width: '100%', height: '100%' },
-  photoAccent:  { position: 'absolute', left: 0, bottom: 0, width: 4, height: 46, backgroundColor: '#c8a45a' },
+  photoAccent:  { position: 'absolute', left: 0, bottom: 0, width: 4, height: 46, backgroundColor: brandColors.light.gold },
   avatar:       { flex: 1, alignItems: 'center', justifyContent: 'center' },
   initials:     { fontFamily: 'Inter_700Bold', fontSize: 34, color: '#ffffff' },
   verifiedBadge:{ position: 'absolute', top: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 4,
@@ -937,10 +898,10 @@ function ProjectShowcaseCard({ project, colors, onPress }: { project: typeof pro
         <Image source={project.image} style={pc.image} resizeMode="cover" />
         <LinearGradient colors={['#00000000', '#00000099']} style={pc.gradient} />
         <View style={pc.topRow}>
-          <View style={[pc.typeBadge, { backgroundColor: '#c8a45acc' }]}>
+          <View style={[pc.typeBadge, { backgroundColor: colors.gold + 'cc' }]}>
             <Text style={pc.typeBadgeText}>{project.category}</Text>
           </View>
-          <View style={[pc.verifiedBadge, { backgroundColor: '#183B60cc' }]}>
+          <View style={[pc.verifiedBadge, { backgroundColor: colors.teal + 'cc' }]}>
             <Feather name="check-circle" size={9} color="#ffffff" />
             <Text style={pc.verifiedText}>VERIFIED</Text>
           </View>
@@ -984,7 +945,7 @@ const pc = StyleSheet.create({
   metaText:     { fontFamily: 'Inter_400Regular', fontSize: 10, color: '#ffffffaa', flex: 1 },
   progressWrap: { gap: 5, marginBottom: 12 },
   progressBg:   { height: 3, backgroundColor: '#ffffff33', borderRadius: 2, overflow: 'hidden' },
-  progressFill: { height: 3, backgroundColor: '#c8a45a', borderRadius: 2 },
+  progressFill: { height: 3, backgroundColor: brandColors.light.gold, borderRadius: 2 },
   progressText: { fontFamily: 'Inter_400Regular', fontSize: 9, color: '#ffffffaa' },
   priceRow:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   price:        { fontFamily: 'Inter_700Bold', fontSize: 14, color: '#ffffff', flex: 1 },
@@ -1006,7 +967,7 @@ function DevProjectCard({ project, colors, onPress }: { project: DeveloperProjec
         </View>
       )}
       <LinearGradient colors={['#00000000', '#00000088']} style={dpc.gradient} />
-      <View style={[dpc.statusBadge, { backgroundColor: '#c8a45acc' }]}>
+      <View style={[dpc.statusBadge, { backgroundColor: colors.gold + 'cc' }]}>
         <Text style={dpc.statusText}>{project.status}</Text>
       </View>
       <View style={dpc.info}>
@@ -1030,7 +991,7 @@ const dpc = StyleSheet.create({
   name:             { fontFamily: 'Inter_700Bold', fontSize: 15, color: '#ffffff', marginBottom: 3 },
   type:             { fontFamily: 'Inter_400Regular', fontSize: 10, color: '#ffffffbb', marginBottom: 8 },
   progressBg:       { height: 3, backgroundColor: '#ffffff33', borderRadius: 2, overflow: 'hidden', marginBottom: 5 },
-  progressFill:     { height: 3, backgroundColor: '#c8a45a', borderRadius: 2 },
+  progressFill:     { height: 3, backgroundColor: brandColors.light.gold, borderRadius: 2 },
   units:            { fontFamily: 'Inter_400Regular', fontSize: 9, color: '#ffffffaa' },
 });
 
@@ -1057,7 +1018,7 @@ function RecommendedCard({ property, colors, onPress }: { property: Property; co
         </Pressable>
 
         {/* AI match chip */}
-        <View style={[rc.matchChip, { backgroundColor: '#c8a45acc' }]}>
+        <View style={[rc.matchChip, { backgroundColor: colors.gold + 'cc' }]}>
           <Feather name="zap" size={8} color="#ffffff" />
           <Text style={rc.matchText}>RECOMMENDED</Text>
         </View>
@@ -1099,7 +1060,7 @@ const rc = StyleSheet.create({
 function AgriCommCard({ property, colors, isAgri, onPress }: {
   property: Property; colors: Colors; isAgri: boolean; onPress: () => void;
 }) {
-  const accentColor = isAgri ? '#183B60' : '#0B1F3A';
+  const accentColor = isAgri ? colors.teal : colors.action;
   return (
     <Pressable
       onPress={onPress}
@@ -1447,7 +1408,7 @@ export default function HomeScreen() {
     return unsub;
   }, [navigation]);
 
-  const [query,            setQuery]            = useState('');
+  const queryRef = useRef('');
   const [transaction,      setTransaction]      = useState<Transaction>('Buy');
   const [drawerOpen,       setDrawerOpen]       = useState(false);
   const [locationOpen,     setLocationOpen]     = useState(false);
@@ -1458,6 +1419,7 @@ export default function HomeScreen() {
   const [managedAgents,    setManagedAgents]    = useState<SampleAgent[]>([]);
   const [managedAgentsLoading, setManagedAgentsLoading] = useState(true);
   const [managedAgentsLoadError, setManagedAgentsLoadError] = useState(false);
+  const managedAgentsLoadedRef = useRef(false);
   const [mobileContent,    setMobileContent]    = useState<MobileContent | null>(null);
   const homeContent = mobileContent?.homepage;
   const homeSections = homeContent?.sections ?? {};
@@ -1465,11 +1427,11 @@ export default function HomeScreen() {
   const featuredTitle = configuredFeaturedTitle.toLowerCase() === 'featured properti'
     ? 'Featured Properties'
     : configuredFeaturedTitle || 'Featured Properties';
-  const colors = {
+  const colors = useMemo(() => ({
     ...baseColors,
     primary: homeContent?.theme?.primary || baseColors.primary,
     action: homeContent?.theme?.action || baseColors.action,
-  };
+  }), [baseColors, homeContent?.theme?.primary, homeContent?.theme?.action]);
 
   // ── Static toggle pill ────────────────────────────────────────────────────
   const [switcherW,   setSwitcherW]   = useState(0);
@@ -1523,7 +1485,7 @@ export default function HomeScreen() {
     void refreshSettings();
     const interval = setInterval(() => {
       if (AppState.currentState === 'active') void refreshSettings();
-    }, 15_000);
+    }, HOME_REFRESH_INTERVAL_MS);
     const appStateSubscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') void refreshSettings();
     });
@@ -1557,7 +1519,7 @@ export default function HomeScreen() {
     void refreshBanners();
     const interval = setInterval(() => {
       if (AppState.currentState === 'active') void refreshBanners();
-    }, 15_000);
+    }, HOME_REFRESH_INTERVAL_MS);
     const appStateSubscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') void refreshBanners();
     });
@@ -1574,21 +1536,18 @@ export default function HomeScreen() {
     const refreshAgents = async () => {
       if (!active || loading) return;
       loading = true;
-      if (managedAgents.length === 0) setManagedAgentsLoading(true);
+      if (!managedAgentsLoadedRef.current) setManagedAgentsLoading(true);
       try {
-        let lastRecords: Awaited<ReturnType<typeof getAgents>> | null = null;
         let lastError: unknown;
         for (let attempt = 0; attempt < 3; attempt += 1) {
           if (!active) return;
           try {
             const records = await getAgents();
-            lastRecords = records;
-            if (records.length > 0) {
-              if (!active) return;
-              setManagedAgents(records.map(apiAgentToSample));
-              setManagedAgentsLoadError(false);
-              return;
-            }
+            if (!active) return;
+            managedAgentsLoadedRef.current = true;
+            setManagedAgents(records.map(apiAgentToSample));
+            setManagedAgentsLoadError(false);
+            return;
           } catch (error: unknown) {
             lastError = error;
           }
@@ -1597,22 +1556,19 @@ export default function HomeScreen() {
           }
         }
         if (!active) return;
-        if (lastRecords) {
-          setManagedAgents(lastRecords.map(apiAgentToSample));
-          setManagedAgentsLoadError(false);
-        } else if (lastError) {
+        if (lastError) {
           setManagedAgentsLoadError(true);
         }
       } catch {
         if (!active) return;
         setManagedAgentsLoadError(true);
       } finally {
-        if (active && managedAgents.length === 0) setManagedAgentsLoading(false);
+        if (active && !managedAgentsLoadedRef.current) setManagedAgentsLoading(false);
         loading = false;
       }
     };
     void refreshAgents();
-    const interval = setInterval(() => void refreshAgents(), 15_000);
+    const interval = setInterval(() => void refreshAgents(), HOME_REFRESH_INTERVAL_MS);
     const appStateSubscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') void refreshAgents();
     });
@@ -1621,7 +1577,7 @@ export default function HomeScreen() {
       clearInterval(interval);
       appStateSubscription.remove();
     };
-  }, [managedAgents.length]));
+  }, []));
 
   // Keep the Home property feed fresh across Admin edits while the app is open.
   useFocusEffect(useCallback(() => {
@@ -1662,7 +1618,7 @@ export default function HomeScreen() {
     void refreshProperties();
     const interval = setInterval(() => {
       if (AppState.currentState === 'active') void refreshProperties();
-    }, 15_000);
+    }, HOME_REFRESH_INTERVAL_MS);
     const appStateSubscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') void refreshProperties();
     });
@@ -1683,15 +1639,27 @@ export default function HomeScreen() {
   const handleDrawerInfo = (_info: DrawerInfo) => { setDrawerOpen(true); };
 
   // Use API properties when available, fall back to local mock
-  const propertySource = selectHomePropertySource(apiProps);
-  const allProps = filterVisibleDemoProperties(propertySource, hiddenDemoPropertyIds);
+  const propertySource = useMemo(() => selectHomePropertySource(apiProps), [apiProps]);
+  const allProps = useMemo(
+    () => filterVisibleDemoProperties(propertySource, hiddenDemoPropertyIds),
+    [propertySource, hiddenDemoPropertyIds],
+  );
 
-  // Data slices — all driven from live API data (or local fallback)
-  const featuredProps    = allProps.filter((p) => p.featured);
-  const agriProps        = allProps.filter((p) => p.type === 'Agriculture Land').slice(0, 6);
-  const commercialProps  = allProps.filter((p) => p.type === 'Commercial').slice(0, 6);
-  const latestProps = selectLatestProperties(allProps);
-  const recommendedProps = selectRecommendedProperties(allProps, transaction);
+  // Keep the Home viewport light; the complete catalogue remains available in Explore.
+  const featuredProps = useMemo(() => allProps.filter((p) => p.featured).slice(0, 8), [allProps]);
+  const agriProps = useMemo(
+    () => allProps.filter((p) => p.type === 'Agriculture Land').slice(0, 6),
+    [allProps],
+  );
+  const commercialProps = useMemo(
+    () => allProps.filter((p) => p.type === 'Commercial').slice(0, 6),
+    [allProps],
+  );
+  const latestProps = useMemo(() => selectLatestProperties(allProps), [allProps]);
+  const recommendedProps = useMemo(
+    () => selectRecommendedProperties(allProps, transaction),
+    [allProps, transaction],
+  );
   const visibleAgents = managedAgents;
 
   const ctaContent = role === 'agent'
@@ -1751,7 +1719,7 @@ export default function HomeScreen() {
               key={item}
               onPress={() => {
                 setTransaction(item);
-                setQuery('');
+                queryRef.current = '';
               }}
               style={({ pressed }) => [s.switchItem, { opacity: pressed ? 0.72 : 1 }]}
             >
@@ -1763,7 +1731,7 @@ export default function HomeScreen() {
         {/* Smart Search */}
         <View style={[s.searchRow, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, shadowColor: colors.shadow }]}>
           <Pressable
-            onPress={() => router.push({ pathname: '/explore', params: { type: transaction, search: query } })}
+            onPress={() => router.push({ pathname: '/explore', params: { type: transaction, search: queryRef.current } })}
             accessibilityRole="button"
             accessibilityLabel={`Search ${transaction === 'Buy' ? 'properties to buy' : 'properties to rent'}`}
           >
@@ -1772,13 +1740,14 @@ export default function HomeScreen() {
             </View>
           </Pressable>
           <TextInput
-            value={query}
-            onChangeText={setQuery}
+            key={transaction}
+            defaultValue=""
+            onChangeText={(value) => { queryRef.current = value; }}
             placeholder={`Search ${transaction === 'Buy' ? 'properties' : 'rentals in Okara District'}`}
             placeholderTextColor={colors.mutedForeground}
             style={[s.searchInput, { color: colors.foreground }]}
             returnKeyType="search"
-            onSubmitEditing={() => router.push({ pathname: '/explore', params: { type: transaction, search: query } })}
+            onSubmitEditing={() => router.push({ pathname: '/explore', params: { type: transaction, search: queryRef.current } })}
           />
           <Pressable
             onPress={() => setLocationOpen(true)}
@@ -1909,14 +1878,14 @@ export default function HomeScreen() {
           <View style={[s.acHeader, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {/* Agricultural */}
             <Pressable onPress={() => router.push({ pathname: '/explore', params: { propertyType: 'Agriculture Land' } })} style={[s.acTab, { borderRightColor: colors.border }]}>
-              <View style={[s.acTabIcon, { backgroundColor: '#183B6018' }]}>
-                <Feather name="sun" size={16} color="#183B60" />
+                <View style={[s.acTabIcon, { backgroundColor: colors.tealSoft }]}>
+                  <Feather name="sun" size={16} color={colors.teal} />
               </View>
               <View>
-                <Text style={[s.acTabEyebrow, { color: '#183B60' }]}>AGRICULTURE</Text>
+                  <Text style={[s.acTabEyebrow, { color: colors.teal }]}>AGRICULTURE</Text>
                 <Text style={[s.acTabTitle, { color: colors.foreground }]}>Farm & Land</Text>
               </View>
-              <Feather name="arrow-up-right" size={14} color="#183B60" style={{ marginLeft: 'auto' }} />
+                <Feather name="arrow-up-right" size={14} color={colors.teal} style={{ marginLeft: 'auto' }} />
             </Pressable>
             {/* Commercial */}
             <Pressable onPress={() => router.push({ pathname: '/explore', params: { propertyType: 'Commercial' } })} style={s.acTab}>
@@ -2036,7 +2005,7 @@ export default function HomeScreen() {
             {TRUST_POINTS.map((pt) => (
               <View key={pt.label} style={s.trustPoint}>
                 <View style={s.trustIconWrap}>
-                  <Feather name={pt.icon} size={13} color="#c8a45a" />
+                  <Feather name={pt.icon} size={13} color={colors.gold} />
                 </View>
                 <Text style={s.trustLabel}>{pt.label}</Text>
               </View>
@@ -2143,9 +2112,9 @@ const s = StyleSheet.create({
   heroTitle:        { color: '#ffffff', fontFamily: 'Inter_700Bold', fontSize: 26, lineHeight: 31, marginBottom: 22 },
   trustGrid:        { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
   trustPoint:       { flexDirection: 'row', alignItems: 'center', gap: 8, width: '47%' },
-  trustIconWrap:    { width: 28, height: 28, borderRadius: 9, backgroundColor: '#c8a45a22', alignItems: 'center', justifyContent: 'center' },
+  trustIconWrap:    { width: 28, height: 28, borderRadius: 9, backgroundColor: brandColors.light.gold + '22', alignItems: 'center', justifyContent: 'center' },
   trustLabel:       { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#ffffffcc', flex: 1 },
-  heroButton:       { alignSelf: 'flex-start', minHeight: 40, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 13, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#c8a45a' },
+  heroButton:       { alignSelf: 'flex-start', minHeight: 40, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 13, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: brandColors.light.gold },
   heroButtonText:   { color: '#ffffff', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 
   // Smart CTA

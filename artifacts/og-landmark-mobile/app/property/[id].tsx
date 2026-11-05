@@ -207,8 +207,8 @@ function InquiryModal({
           {sent ? (
             /* ── Success State ── */
             <View style={iq.successWrap}>
-              <View style={[iq.successIcon, { backgroundColor: '#183B6018' }]}>
-                <Feather name="check-circle" size={36} color="#183B60" />
+              <View style={[iq.successIcon, { backgroundColor: colors.tealSoft }]}>
+                <Feather name="check-circle" size={36} color={colors.teal} />
               </View>
               <Text style={[iq.successTitle, { color: colors.foreground }]}>
                 {sentAppt ? 'Viewing Booked!' : 'Inquiry Sent!'}
@@ -260,8 +260,8 @@ function InquiryModal({
                   <Text style={[iq.agentName, { color: colors.foreground }]}>{property.agent}</Text>
                   <Text style={[iq.agentTitle, { color: colors.mutedForeground }]}>{property.agentTitle}</Text>
                 </View>
-                <View style={[iq.verifiedBadge, { backgroundColor: '#183B6015' }]}>
-                  <Feather name="check-circle" size={10} color="#183B60" />
+                <View style={[iq.verifiedBadge, { backgroundColor: colors.tealSoft }]}>
+                  <Feather name="check-circle" size={10} color={colors.teal} />
                   <Text style={iq.verifiedText}>Verified</Text>
                 </View>
               </View>
@@ -438,8 +438,8 @@ function AppointmentModal({
 
           {booked ? (
             <View style={iq.successWrap}>
-              <View style={[iq.successIcon, { backgroundColor: '#183B6018' }]}>
-                <Feather name="calendar" size={36} color="#183B60" />
+              <View style={[iq.successIcon, { backgroundColor: colors.tealSoft }]}>
+                <Feather name="calendar" size={36} color={colors.teal} />
               </View>
               <Text style={[iq.successTitle, { color: colors.foreground }]}>Visit Booked!</Text>
               <Text style={[iq.successDesc, { color: colors.mutedForeground }]}>
@@ -580,7 +580,7 @@ const iq = StyleSheet.create({
   agentName:       { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   agentTitle:      { fontFamily: 'Inter_400Regular', fontSize: 10, marginTop: 1 },
   verifiedBadge:   { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 5 },
-  verifiedText:    { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#183B60' },
+  verifiedText:    { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#19C3B1' },
   fieldLabel:      { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1, marginBottom: 8 },
   inputSingle:     { borderWidth: 1, borderRadius: 12, paddingHorizontal: 13, paddingVertical: 11, fontFamily: 'Inter_400Regular', fontSize: 13, marginBottom: 14 },
   input:           { borderWidth: 1, borderRadius: 14, padding: 13, fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 20, minHeight: 80, textAlignVertical: 'top', marginBottom: 14 },
@@ -946,10 +946,10 @@ function PropertyDetailScreen() {
         <View style={styles.sectionSpacer} />
 
         {/* Document & verification status */}
-        <View style={[styles.docCard, { backgroundColor: colors.secondary, borderColor: '#183B6033' }]}>
+        <View style={[styles.docCard, { backgroundColor: colors.secondary, borderColor: colors.teal + '33' }]}>
           <View style={styles.docHeader}>
-            <Feather name="shield" size={14} color="#183B60" />
-            <Text style={[styles.docTitle, { color: '#183B60' }]}>Property Verification</Text>
+            <Feather name="shield" size={14} color={colors.teal} />
+            <Text style={[styles.docTitle, { color: colors.teal }]}>Property Verification</Text>
           </View>
           {[
             'Listing reviewed by OG Landmark',
@@ -958,11 +958,11 @@ function PropertyDetailScreen() {
             'Contact information confirmed',
           ].map((doc) => (
             <View key={doc} style={styles.docItem}>
-              <Feather name="check-circle" size={11} color="#183B60" />
+              <Feather name="check-circle" size={11} color={colors.teal} />
               <Text style={[styles.docItemText, { color: colors.foreground }]}>{doc}</Text>
             </View>
           ))}
-          <View style={[styles.docNote, { borderTopColor: '#183B6022' }]}>
+          <View style={[styles.docNote, { borderTopColor: colors.teal + '22' }]}>
             <Feather name="info" size={10} color={colors.mutedForeground} />
             <Text style={[styles.docNoteText, { color: colors.mutedForeground }]}>
               Title deed verification and full legal due diligence available on request. Contact agent.
@@ -993,24 +993,24 @@ function PropertyDetailScreen() {
         {/* ── Agricultural Land Details ── */}
         {property.agriDetails && (
           <>
-            <View style={[styles.agriHeader, { borderColor: '#183B6044' }]}>
-              <View style={[styles.agriHeaderIcon, { backgroundColor: '#183B6018' }]}>
+            <View style={[styles.agriHeader, { borderColor: colors.teal + '44' }]}>
+              <View style={[styles.agriHeaderIcon, { backgroundColor: colors.tealSoft }]}>
                 <Text style={styles.agriEmoji}>🌾</Text>
               </View>
               <View>
-                <Text style={[styles.agriHeaderEyebrow, { color: '#183B60' }]}>LAND DETAILS</Text>
+                <Text style={[styles.agriHeaderEyebrow, { color: colors.teal }]}>LAND DETAILS</Text>
                 <Text style={[styles.agriHeaderTitle, { color: colors.foreground }]}>Agricultural Information</Text>
               </View>
             </View>
 
-            <View style={[styles.agriGrid, { borderColor: '#183B6022', backgroundColor: '#183B6008' }]}>
+            <View style={[styles.agriGrid, { borderColor: colors.teal + '22', backgroundColor: colors.tealSoft }]}>
               {/* Size */}
               <AgriRow
                 icon="maximize"
                 label="Land Size"
                 value={`${property.agriDetails.sizeAcres} Acres · ${property.agriDetails.sizeKanal} Kanal`}
                 colors={colors}
-                accent="#183B60"
+                accent={colors.teal}
               />
               {/* Main Crop */}
               <AgriRow
@@ -1018,7 +1018,7 @@ function PropertyDetailScreen() {
                 label="Main Crop"
                 value={property.agriDetails.mainCrop}
                 colors={colors}
-                accent="#183B60"
+                accent={colors.teal}
               />
               {/* Nehri Water */}
               <AgriRow
@@ -1026,7 +1026,7 @@ function PropertyDetailScreen() {
                 label="Nehri (Canal) Water"
                 value={property.agriDetails.nehriWater ? '✅ Available' : '❌ Not available'}
                 colors={colors}
-                accent={property.agriDetails.nehriWater ? '#183B60' : '#b94b42'}
+                accent={property.agriDetails.nehriWater ? colors.teal : '#b94b42'}
               />
               {/* Tube Well */}
               <AgriRow
@@ -1034,7 +1034,7 @@ function PropertyDetailScreen() {
                 label="Tube Well"
                 value={property.agriDetails.tubeWell ? '✅ Installed' : '❌ Not installed'}
                 colors={colors}
-                accent={property.agriDetails.tubeWell ? '#183B60' : '#b94b42'}
+                accent={property.agriDetails.tubeWell ? colors.teal : '#b94b42'}
               />
               {/* Soil Type */}
               <AgriRow
@@ -1042,23 +1042,23 @@ function PropertyDetailScreen() {
                 label="Soil Type"
                 value={property.agriDetails.soilType}
                 colors={colors}
-                accent="#183B60"
+                accent={colors.teal}
               />
               {/* Village */}
               {property.agriDetails.village && (
-                <AgriRow icon="map-pin" label="Village / Mauza" value={property.agriDetails.village} colors={colors} accent="#183B60" />
+                <AgriRow icon="map-pin" label="Village / Mauza" value={property.agriDetails.village} colors={colors} accent={colors.teal} />
               )}
               {/* Tehsil */}
               {property.agriDetails.tehsil && (
-                <AgriRow icon="map" label="Tehsil" value={property.agriDetails.tehsil} colors={colors} accent="#183B60" />
+                <AgriRow icon="map" label="Tehsil" value={property.agriDetails.tehsil} colors={colors} accent={colors.teal} />
               )}
               {/* Union Council */}
               {property.agriDetails.unionCouncil && (
-                <AgriRow icon="users" label="Union Council" value={property.agriDetails.unionCouncil} colors={colors} accent="#183B60" />
+                <AgriRow icon="users" label="Union Council" value={property.agriDetails.unionCouncil} colors={colors} accent={colors.teal} />
               )}
               {/* GPS */}
               {property.agriDetails.gpsBoundary && (
-                <AgriRow icon="crosshair" label="GPS Boundary" value={property.agriDetails.gpsBoundary} colors={colors} accent="#183B60" isLast />
+                <AgriRow icon="crosshair" label="GPS Boundary" value={property.agriDetails.gpsBoundary} colors={colors} accent={colors.teal} isLast />
               )}
             </View>
           </>
@@ -1295,11 +1295,11 @@ function PropertyDetailMap({
             onPress={() => openDirections(latitude, longitude)}
             style={({ pressed }) => [
               styles.detailMapAction,
-              { flex: 1, backgroundColor: '#183B6015', opacity: pressed ? 0.72 : 1 },
+              { flex: 1, backgroundColor: colors.tealSoft, opacity: pressed ? 0.72 : 1 },
             ]}
           >
-            <Feather name="navigation" size={13} color="#183B60" />
-            <Text style={[styles.detailMapActionText, { color: '#183B60' }]}>Get Directions</Text>
+            <Feather name="navigation" size={13} color={colors.teal} />
+            <Text style={[styles.detailMapActionText, { color: colors.teal }]}>Get Directions</Text>
           </Pressable>
         </View>
       )}
@@ -1320,7 +1320,7 @@ function AgriRow({ icon, label, value, colors, accent, isLast }: {
   colors: ReturnType<typeof useColors>; accent: string; isLast?: boolean;
 }) {
   return (
-    <View style={[styles.agriRow, !isLast && { borderBottomWidth: 1, borderBottomColor: '#183B6018' }]}>
+    <View style={[styles.agriRow, !isLast && { borderBottomWidth: 1, borderBottomColor: colors.teal + '18' }]}>
       <View style={[styles.agriRowIcon, { backgroundColor: accent + '18' }]}>
         <Feather name={icon} size={14} color={accent} />
       </View>

@@ -6,6 +6,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // BlurView removed — crashes Android GPU
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { useMobileContent } from '@/hooks/useMobileContent';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -25,9 +26,9 @@ import type { MobileContent } from '@/lib/api';
 
 // ── Lead status display map ───────────────────────────────────────────────────
 const LEAD_STATUS_MAP: Record<string, { label: string; color: string }> = {
-  new:        { label: 'New',       color: '#183B60' },
+  new:        { label: 'New',       color: brandColors.light.teal },
   contacted:  { label: 'Contacted', color: '#0B1F3A' },
-  interested: { label: 'Interested',color: '#c8a45a' },
+  interested: { label: 'Interested',color: brandColors.light.gold },
   viewing:    { label: 'Viewing',   color: '#7c3aed' },
   closed:     { label: 'Closed',   color: '#888888' },
 };
@@ -74,17 +75,17 @@ function DeveloperDashboard({
 
   const kpiCards = [
     { key: 'totalProjects', label: portal?.kpiLabels?.totalProjects || tr('totalProjects'), value: String(stats.totalProjects), icon: 'layers' as const, color: '#0B1F3A' },
-    { key: 'activeProjects', label: portal?.kpiLabels?.activeProjects || tr('activeProjects'), value: String(stats.activeProjects), icon: 'activity' as const, color: '#183B60' },
-    { key: 'availableUnits', label: portal?.kpiLabels?.availableUnits || tr('availableUnits'), value: String(stats.availableUnits), icon: 'grid' as const, color: '#c8a45a' },
+    { key: 'activeProjects', label: portal?.kpiLabels?.activeProjects || tr('activeProjects'), value: String(stats.activeProjects), icon: 'activity' as const, color: colors.teal },
+    { key: 'availableUnits', label: portal?.kpiLabels?.availableUnits || tr('availableUnits'), value: String(stats.availableUnits), icon: 'grid' as const, color: colors.gold },
     { key: 'reservedUnits', label: portal?.kpiLabels?.reservedUnits || tr('reservedUnits'), value: String(stats.reservedUnits), icon: 'lock' as const, color: '#6b3a1a' },
     { key: 'newLeads', label: portal?.kpiLabels?.newLeads || tr('devNewLeads'), value: String(devLeadStats.newCount), icon: 'users' as const, color: '#0B1F3A' },
-    { key: 'siteVisits', label: portal?.kpiLabels?.siteVisits || tr('devSiteVisits'), value: String(visitCount), icon: 'calendar' as const, color: '#183B60' },
+    { key: 'siteVisits', label: portal?.kpiLabels?.siteVisits || tr('devSiteVisits'), value: String(visitCount), icon: 'calendar' as const, color: colors.teal },
   ].filter((card) => portal?.statVisibility?.[card.key] !== false);
 
   const financialCards = [
     { key: 'totalListed', label: portal?.financialLabels?.totalListed || tr('totalListedValue'), value: stats.totalListedValue > 0 ? `PKR ${formatPKR(stats.totalListedValue)}` : '—', icon: 'trending-up' as const, color: '#0B1F3A' },
-    { key: 'reserved', label: portal?.financialLabels?.reserved || tr('reservedValue'), value: stats.reservedValue > 0 ? `PKR ${formatPKR(stats.reservedValue)}` : '—', icon: 'lock' as const, color: '#c8a45a' },
-    { key: 'sold', label: portal?.financialLabels?.sold || tr('soldValue'), value: stats.soldValue > 0 ? `PKR ${formatPKR(stats.soldValue)}` : '—', icon: 'check-circle' as const, color: '#183B60' },
+    { key: 'reserved', label: portal?.financialLabels?.reserved || tr('reservedValue'), value: stats.reservedValue > 0 ? `PKR ${formatPKR(stats.reservedValue)}` : '—', icon: 'lock' as const, color: colors.gold },
+    { key: 'sold', label: portal?.financialLabels?.sold || tr('soldValue'), value: stats.soldValue > 0 ? `PKR ${formatPKR(stats.soldValue)}` : '—', icon: 'check-circle' as const, color: colors.teal },
   ];
 
   const quickActions = [
@@ -130,14 +131,14 @@ function DeveloperDashboard({
             </Text>
             <View style={ds.badgeRow}>
               {isVerified ? (
-                <View style={[ds.badge, { backgroundColor: '#183B6018' }]}>
-                  <Feather name="shield" size={9} color="#183B60" />
-                  <Text style={[ds.badgeText, { color: '#183B60' }]}>{tr('verifiedBadge')}</Text>
+                <View style={[ds.badge, { backgroundColor: colors.tealSoft }]}>
+                  <Feather name="shield" size={9} color={colors.teal} />
+                  <Text style={[ds.badgeText, { color: colors.teal }]}>{tr('verifiedBadge')}</Text>
                 </View>
               ) : isPending ? (
-                <View style={[ds.badge, { backgroundColor: '#c8a45a18' }]}>
-                  <Feather name="clock" size={9} color="#c8a45a" />
-                  <Text style={[ds.badgeText, { color: '#c8a45a' }]}>{tr('pendingBadge')}</Text>
+                <View style={[ds.badge, { backgroundColor: colors.gold + '18' }]}>
+                  <Feather name="clock" size={9} color={colors.gold} />
+                  <Text style={[ds.badgeText, { color: colors.gold }]}>{tr('pendingBadge')}</Text>
                 </View>
               ) : (
                 <View style={[ds.badge, { backgroundColor: colors.secondary }]}>
@@ -183,8 +184,8 @@ function DeveloperDashboard({
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}>
             {[
             { label: `${portal?.inventoryLabels?.total || tr('unitsTotal')}: ${stats.totalInventory}`, color: colors.foreground, bg: colors.secondary },
-            { label: `${portal?.inventoryLabels?.available || tr('availableLabel')}: ${stats.availableUnits}`, color: '#183B60', bg: '#183B6018' },
-            { label: `${portal?.inventoryLabels?.reserved || tr('reservedLabel')}: ${stats.reservedUnits}`, color: '#c8a45a', bg: '#c8a45a18' },
+            { label: `${portal?.inventoryLabels?.available || tr('availableLabel')}: ${stats.availableUnits}`, color: colors.teal, bg: colors.tealSoft },
+            { label: `${portal?.inventoryLabels?.reserved || tr('reservedLabel')}: ${stats.reservedUnits}`, color: colors.gold, bg: colors.gold + '18' },
             { label: `${portal?.inventoryLabels?.sold || tr('soldLabel')}: ${stats.soldUnits}`, color: colors.mutedForeground, bg: colors.secondary },
           ].map((chip) => (
             <View key={chip.label} style={[ds.chip, { backgroundColor: chip.bg }]}>
@@ -221,7 +222,7 @@ function DeveloperDashboard({
         >
           <View style={ds.promoteBannerLeft}>
             <View style={ds.promoteBannerIconWrap}>
-              <Feather name="zap" size={20} color="#c8a45a" />
+              <Feather name="zap" size={20} color={colors.gold} />
             </View>
             <View>
               <Text style={ds.promoteBannerTitle}>{portal?.promotionLabel || tr('promoteBannerLabel')}</Text>
@@ -394,9 +395,9 @@ export default function DashboardScreen() {
   // ── Agent / other dashboard ──────────────────────────────────────
   const agentStats = [
     { key: 'activeListings', label: agentPortal?.statLabels?.activeListings || tr('activeListings'), value: String(activeListingsCount), icon: 'home' as const, color: '#0B1F3A', route: '/(tabs)/listings' },
-    { key: 'totalViews', label: agentPortal?.statLabels?.totalViews || tr('totalViews'), value: String(totalViews), icon: 'eye' as const, color: '#183B60', route: '/settings/analytics' },
-    { key: 'newLeads', label: agentPortal?.statLabels?.newLeads || tr('newLeads'), value: String(newLeadsCount), icon: 'users' as const, color: '#c8a45a', route: '/(tabs)/leads' },
-    { key: 'totalLeads', label: agentPortal?.statLabels?.totalLeads || agentPortal?.totalLeadsLabel || 'Total Leads', value: String(totalLeadsCount), icon: 'user-check' as const, color: '#183B60', route: '/(tabs)/leads' },
+    { key: 'totalViews', label: agentPortal?.statLabels?.totalViews || tr('totalViews'), value: String(totalViews), icon: 'eye' as const, color: colors.teal, route: '/settings/analytics' },
+    { key: 'newLeads', label: agentPortal?.statLabels?.newLeads || tr('newLeads'), value: String(newLeadsCount), icon: 'users' as const, color: colors.gold, route: '/(tabs)/leads' },
+    { key: 'totalLeads', label: agentPortal?.statLabels?.totalLeads || agentPortal?.totalLeadsLabel || 'Total Leads', value: String(totalLeadsCount), icon: 'user-check' as const, color: colors.teal, route: '/(tabs)/leads' },
     { key: 'todayVisits', label: agentPortal?.statLabels?.todayVisits || agentPortal?.todayVisitsLabel || "Today's Visits", value: String(todayVisits), icon: 'calendar' as const, color: '#7c3aed', route: '/agent/visits' },
     { key: 'upcomingVisits', label: agentPortal?.statLabels?.upcomingVisits || agentPortal?.upcomingVisitsLabel || 'Upcoming Visits', value: String(upcomingVisits), icon: 'clock' as const, color: '#b94b42', route: '/agent/visits' },
   ].filter((card) => agentPortal?.statVisibility?.[card.key] !== false);

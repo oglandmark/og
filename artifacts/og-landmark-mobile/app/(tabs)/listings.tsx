@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import React, { useCallback, useState } from 'react';
@@ -30,8 +31,8 @@ type FilterTab = 'All' | 'Active' | 'Pending' | 'Draft' | 'Paused' | 'Sold' | 'R
 const FILTER_TABS: FilterTab[] = ['All', 'Active', 'Pending', 'Draft', 'Paused', 'Sold', 'Rented'];
 
 const STATUS_BADGE: Record<ListingStatus, { bg: string; text: string }> = {
-  Active:  { bg: '#183B6018', text: '#183B60' },
-  Pending: { bg: '#c8a45a18', text: '#c8a45a' },
+  Active:  { bg: brandColors.light.teal + '18', text: brandColors.light.teal },
+  Pending: { bg: brandColors.light.gold + '18', text: brandColors.light.gold },
   Draft:   { bg: '#88888818', text: '#888888' },
   Paused:  { bg: '#7c3aed18', text: '#7c3aed' },
   Sold:    { bg: '#0B1F3A18', text: '#0B1F3A' },

@@ -40,7 +40,7 @@ const colors = {
     // Official OG Landmark navy for interactive controls and CTAs
     action: '#0B1F3A',
     actionDeep: '#071428',
-    actionSoft: '#183B60',
+    actionSoft: '#19C3B1',
     actionForeground: '#FFFFFF',
     actionPressed: '#082036',
     // Premium glass control tokens

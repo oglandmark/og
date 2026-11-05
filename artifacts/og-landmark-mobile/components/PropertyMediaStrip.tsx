@@ -19,6 +19,7 @@ import { VideoView, useVideoPlayer, type VideoPlayer, type VideoSource } from 'e
 import { Feather } from '@expo/vector-icons';
 import { propertyImages, type Property } from '@/lib/properties';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { VideoWatermark } from '@/components/VideoWatermark';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -202,7 +203,7 @@ export function PropertyMediaStrip({
             <View style={s.videoScrim} />
             {/* Play button */}
             <View style={s.playBtn}>
-              <Feather name="play" size={14} color="#c8a45a" />
+              <Feather name="play" size={14} color={colors.gold} />
             </View>
             <Text style={s.videoLabel}>Video</Text>
           </Pressable>
@@ -257,7 +258,7 @@ export function PropertyMediaStrip({
 
           {hasError ? (
             <View style={fs.errorBox}>
-              <Feather name="alert-circle" size={36} color="#c8a45a" />
+              <Feather name="alert-circle" size={36} color={colors.gold} />
               <Text style={fs.errorText}>Video load nahi ho saka</Text>
               <Pressable onPress={closeVideo} style={fs.errorClose}>
                 <Text style={fs.errorCloseText}>Close</Text>
@@ -282,7 +283,7 @@ export function PropertyMediaStrip({
               {/* Buffering spinner */}
               {isBuffering && (
                 <View style={fs.bufferOverlay} pointerEvents="none">
-                  <ActivityIndicator size="large" color="#c8a45a" />
+                  <ActivityIndicator size="large" color={colors.gold} />
                 </View>
               )}
 
@@ -305,16 +306,16 @@ export function PropertyMediaStrip({
                   <Feather
                     name={isMuted ? 'volume-x' : 'volume-2'}
                     size={18}
-                    color={isMuted ? '#888' : '#c8a45a'}
+                    color={isMuted ? '#888' : colors.gold}
                   />
-                  <Text style={[fs.muteBtnLabel, { color: isMuted ? '#888' : '#c8a45a' }]}>
+                  <Text style={[fs.muteBtnLabel, { color: isMuted ? '#888' : colors.gold }]}>
                     {isMuted ? 'Unmute' : 'Sound On'}
                   </Text>
                 </TouchableOpacity>
 
                 {/* Property title */}
                 <View style={fs.titleWrap}>
-                  <Feather name="video" size={12} color="#c8a45a" />
+                  <Feather name="video" size={12} color={colors.gold} />
                   <Text style={fs.titleText} numberOfLines={1}>{property.title}</Text>
                 </View>
               </View>
@@ -368,7 +369,7 @@ export function PropertyVideoModal({
 
         {hasError ? (
           <View style={fs.errorBox}>
-            <Feather name="alert-circle" size={36} color="#c8a45a" />
+            <Feather name="alert-circle" size={36} color={brandColors.light.gold} />
             <Text style={fs.errorText}>Video load nahi ho saka</Text>
             <Pressable onPress={closeVideo} style={fs.errorClose}>
               <Text style={fs.errorCloseText}>Close</Text>
@@ -395,7 +396,7 @@ export function PropertyVideoModal({
 
             {isBuffering && (
               <View style={fs.bufferOverlay} pointerEvents="none">
-                <ActivityIndicator size="large" color="#c8a45a" />
+                <ActivityIndicator size="large" color={brandColors.light.gold} />
               </View>
             )}
 
@@ -416,13 +417,13 @@ export function PropertyVideoModal({
                 activeOpacity={0.8}
                 accessibilityLabel={isMuted ? 'Unmute video' : 'Mute video'}
               >
-                <Feather name={isMuted ? 'volume-x' : 'volume-2'} size={18} color={isMuted ? '#888' : '#c8a45a'} />
-                <Text style={[fs.muteBtnLabel, { color: isMuted ? '#888' : '#c8a45a' }]}>
+                <Feather name={isMuted ? 'volume-x' : 'volume-2'} size={18} color={isMuted ? '#888' : brandColors.light.gold} />
+                <Text style={[fs.muteBtnLabel, { color: isMuted ? '#888' : brandColors.light.gold }]}>
                   {isMuted ? 'Unmute' : 'Sound On'}
                 </Text>
               </TouchableOpacity>
               <View style={fs.titleWrap}>
-                <Feather name="video" size={12} color="#c8a45a" />
+                <Feather name="video" size={12} color={brandColors.light.gold} />
                 <Text style={fs.titleText} numberOfLines={1}>{property.title}</Text>
               </View>
             </View>
@@ -478,7 +479,7 @@ const s = StyleSheet.create({
     borderColor: 'transparent',
   },
   thumbSelected: {
-    borderColor: '#c8a45a',
+    borderColor: brandColors.light.gold,
   },
   compactThumb: { width: 42, height: 42, borderRadius: 7 },
   thumbImg: {
@@ -517,7 +518,7 @@ const s = StyleSheet.create({
     borderRadius: 15,
     backgroundColor: 'rgba(14,34,54,0.85)',
     borderWidth: 1.5,
-    borderColor: '#c8a45a',
+    borderColor: brandColors.light.gold,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -600,7 +601,7 @@ const fs = StyleSheet.create({
 
   /* Error state */
   errorBox:       { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
-  errorText:      { color: '#c8a45a', fontWeight: '700', fontSize: 15 },
-  errorClose:     { marginTop: 8, minHeight: 36, paddingHorizontal: 24, paddingVertical: 6, backgroundColor: '#c8a45a', borderRadius: 10 },
+  errorText:      { color: brandColors.light.gold, fontWeight: '700', fontSize: 15 },
+  errorClose:     { marginTop: 8, minHeight: 36, paddingHorizontal: 24, paddingVertical: 6, backgroundColor: brandColors.light.gold, borderRadius: 10 },
   errorCloseText: { color: '#0B1F3A', fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });

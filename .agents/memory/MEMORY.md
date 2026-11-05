@@ -60,3 +60,4 @@
 - [Local admin session bridge](local-admin-session-bridge.md) — cache successful local token validation briefly to avoid Express auth rate limits; still enforce Laravel permissions.
 - [Admin project lifecycle](admin-project-lifecycle.md) — project admin edits should stay in the admin audit pipeline and archive projects to preserve linked inventory.
 - [Admin-managed mobile directories](mobile-agent-directory.md) — Admin Agents and Live/Approved Projects must refresh into public mobile feeds without reviving deleted or draft records.
+- [Mobile performance budget](mobile-performance.md) — avoid short polling, JS-driven idle animations, and unbounded Home carousels; keep focus/resume refresh intact.

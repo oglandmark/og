@@ -13,6 +13,7 @@ import { BrandMark } from '@/components/BrandMark';
 import { NotificationBell } from '@/components/NotificationBell';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useSaved } from '@/context/SavedContext';
@@ -96,7 +97,7 @@ const sh = StyleSheet.create({
 
 function StatusBadge({ status }: { status: Inquiry['status'] }) {
   const map: Record<Inquiry['status'], { label: string; bg: string; fg: string }> = {
-    sent:    { label: 'Inquiry Sent',    bg: '#183B6015', fg: '#183B60' },
+    sent:    { label: 'Inquiry Sent',    bg: brandColors.light.teal + '15', fg: brandColors.light.teal },
     replied: { label: 'Agent Replied',   bg: '#1a43b315', fg: '#1a43b3' },
     closed:  { label: 'Closed',          bg: '#64748b15', fg: '#64748b' },
   };
@@ -469,11 +470,11 @@ type MyVisitEntry = {
 
 function visitStatusCfg(status: string): { label: string; bg: string; fg: string; icon: keyof typeof Feather.glyphMap } {
   switch (status) {
-    case 'Confirmed':   return { label: 'Confirmed',   bg: '#183B6015', fg: '#183B60', icon: 'check-circle' };
+    case 'Confirmed':   return { label: 'Confirmed',   bg: brandColors.light.teal + '15', fg: brandColors.light.teal, icon: 'check-circle' };
     case 'Rescheduled': return { label: 'Rescheduled', bg: '#0891b215', fg: '#0891b2', icon: 'refresh-cw' };
     case 'Completed':   return { label: 'Completed',   bg: '#10293815', fg: '#102938', icon: 'check' };
     case 'Cancelled':   return { label: 'Cancelled',   bg: '#dc262615', fg: '#dc2626', icon: 'x-circle' };
-    default:            return { label: 'Requested',   bg: '#c8a45a15', fg: '#c8a45a', icon: 'clock' };
+    default:            return { label: 'Requested',   bg: brandColors.light.gold + '15', fg: brandColors.light.gold, icon: 'clock' };
   }
 }
 
@@ -839,8 +840,8 @@ function ProfileCompletionCard({
           {steps.map((s) => (
             <View key={s.label} style={pc.step}>
               <Feather name={s.done ? 'check-circle' : 'circle'} size={13}
-                color={s.done ? '#183B60' : colors.mutedForeground} />
-              <Text style={[pc.stepText, { color: s.done ? '#183B60' : colors.mutedForeground,
+                color={s.done ? colors.teal : colors.mutedForeground} />
+              <Text style={[pc.stepText, { color: s.done ? colors.teal : colors.mutedForeground,
                 textDecorationLine: s.done ? 'line-through' : 'none' }]}>
                 {s.label}
               </Text>
@@ -1354,10 +1355,10 @@ export default function ProfileScreen() {
                 value={String(myVisits.length)}
                 caption={myVisits.filter((v) => v.status === 'Confirmed').length > 0
                   ? `${myVisits.filter((v) => v.status === 'Confirmed').length} CONFIRMED` : undefined}
-                onPress={() => setVisitsOpen(true)} colors={colors} accentColor="#183B60" />
+                onPress={() => setVisitsOpen(true)} colors={colors} accentColor={colors.teal} />
               <ActivityTile icon="bookmark" label="Searches"
                 value={String(savedSearches.length)} caption="SAVED"
-                onPress={() => setSearchesOpen(true)} colors={colors} accentColor="#c8a45a" />
+                onPress={() => setSearchesOpen(true)} colors={colors} accentColor={colors.gold} />
             </View>
           </AnimatedReveal>
 
@@ -1375,7 +1376,7 @@ export default function ProfileScreen() {
                 onPress={() => setHistoryOpen(true)} colors={colors} iconColor={colors.action} />}
               {profileContent?.showSavedSearches !== false && <RowLink icon="search" label="Saved Searches"
                 sublabel={savedSearches.length > 0 ? `${savedSearches.length} searches saved` : 'Quick-access search filters'}
-                onPress={() => setSearchesOpen(true)} colors={colors} iconColor="#c8a45a" />}
+                onPress={() => setSearchesOpen(true)} colors={colors} iconColor={colors.gold} />}
               <RowLink icon="tool" label="Tools & Calculators"
                 sublabel="Area calc · Price estimator · ROI"
                 onPress={() => router.push('/tools' as any)} colors={colors} iconColor={colors.action} />
@@ -1408,10 +1409,10 @@ export default function ProfileScreen() {
                 onPress={() => router.push('/(tabs)/listings' as any)} colors={colors} iconColor={colors.action} />
               <RowLink icon="users" label="Leads"
                 sublabel={`${agentLeadsCount} lead${agentLeadsCount !== 1 ? 's' : ''}`}
-                onPress={() => router.push('/(tabs)/leads' as any)} colors={colors} iconColor="#183B60" />
+                onPress={() => router.push('/(tabs)/leads' as any)} colors={colors} iconColor={colors.teal} />
               <RowLink icon="message-circle" label="Inquiries"
                 sublabel={`${inquiries.length} inquiry${inquiries.length !== 1 ? 'ies' : 'y'}`}
-                onPress={() => setInquiriesOpen(true)} colors={colors} iconColor="#c8a45a" />
+                onPress={() => setInquiriesOpen(true)} colors={colors} iconColor={colors.gold} />
               <RowLink icon="calendar" label="Scheduled Visits"
                 sublabel={`${myVisits.length} visit${myVisits.length !== 1 ? 's' : ''} booked`}
                 onPress={() => setVisitsOpen(true)} colors={colors} iconColor="#0891b2" />
@@ -1445,10 +1446,10 @@ export default function ProfileScreen() {
                 onPress={() => router.push('/(tabs)/projects' as any)} colors={colors} iconColor={colors.action} />
               <RowLink icon="users" label="Leads & Enquiries"
                 sublabel={`${agentLeadsCount} lead${agentLeadsCount !== 1 ? 's' : ''}`}
-                onPress={() => router.push('/(tabs)/leads' as any)} colors={colors} iconColor="#183B60" />
+                onPress={() => router.push('/(tabs)/leads' as any)} colors={colors} iconColor={colors.teal} />
               <RowLink icon="bar-chart-2" label="Project Analytics"
                 sublabel="Views, inquiries, performance"
-                onPress={() => router.push('/settings/analytics' as any)} colors={colors} iconColor="#c8a45a" />
+                onPress={() => router.push('/settings/analytics' as any)} colors={colors} iconColor={colors.gold} />
               <RowLink icon="tool" label="Tools & Calculators"
                 sublabel="Area calc · Price estimator · ROI"
                 onPress={() => router.push('/tools' as any)} colors={colors} iconColor={colors.action} />
@@ -1548,7 +1549,7 @@ const gst = StyleSheet.create({
   welcomeGreeting:{ fontFamily: 'Inter_400Regular', fontSize: 13, color: 'rgba(255,255,255,0.7)' },
   welcomeName:   { fontFamily: 'Inter_700Bold', fontSize: 28, color: '#ffffff', letterSpacing: -0.5 },
   welcomeSub:    { fontFamily: 'Inter_400Regular', fontSize: 13, color: 'rgba(255,255,255,0.65)', textAlign: 'center', lineHeight: 19, paddingHorizontal: 10, marginTop: 4 },
-  loginBtn:      { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#c8a45a', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 9, marginTop: 14, width: '100%', justifyContent: 'center' },
+  loginBtn:      { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: brandColors.light.gold, borderRadius: 14, paddingHorizontal: 28, paddingVertical: 9, marginTop: 14, width: '100%', justifyContent: 'center' },
   loginBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#0B1F3A' },
   registerBtn:   { backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 9, width: '100%', alignItems: 'center' },
   registerBtnText: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#ffffff' },
@@ -1564,7 +1565,7 @@ const styles = StyleSheet.create({
   iconButton:    { width: 42, height: 42, borderRadius: 21, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   // Profile card
   profileCard:   { borderRadius: 22, padding: 18, flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginBottom: 10 },
-  avatar:        { width: 60, height: 60, borderRadius: 20, backgroundColor: '#c8a45a', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatar:        { width: 60, height: 60, borderRadius: 20, backgroundColor: brandColors.light.gold, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarPhoto:   { width: 60, height: 60, borderRadius: 20 },
   avatarText:    { fontFamily: 'Inter_700Bold', fontSize: 20, color: '#0B1F3A' },
   profileCopy:   { flex: 1 },

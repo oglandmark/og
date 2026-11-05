@@ -11,6 +11,7 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { apiAgentToSample, SampleAgent } from '@/lib/agentsData';
 import { getAgents } from '@/lib/api';
@@ -73,8 +74,8 @@ function ContactModal({
           <View style={[cm.handle, { backgroundColor: colors.border }]} />
           {sent ? (
             <View style={cm.successWrap}>
-              <View style={[cm.successIcon, { backgroundColor: '#183B6018' }]}>
-                <Feather name="check-circle" size={36} color="#183B60" />
+              <View style={[cm.successIcon, { backgroundColor: colors.tealSoft }]}>
+                <Feather name="check-circle" size={36} color={colors.teal} />
               </View>
               <Text style={[cm.successTitle, { color: colors.foreground }]}>Inquiry Sent!</Text>
               <Text style={[cm.successDesc, { color: colors.mutedForeground }]}>
@@ -333,7 +334,7 @@ export default function AgentProfileScreen() {
 
         {agent.verified && (
           <View style={styles.verifiedBadge}>
-            <Feather name="check-circle" size={12} color="#c8a45a" />
+            <Feather name="check-circle" size={12} color={colors.gold} />
             <Text style={styles.verifiedText}>Verified Agent</Text>
           </View>
         )}
@@ -356,9 +357,9 @@ export default function AgentProfileScreen() {
       {/* ── ACTION BUTTONS ─────────────────────────────────────────────── */}
       <View style={[styles.actionsRow, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         {[
-          { icon: 'phone',    label: 'Call',     color: '#183B60', onPress: () => Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`) },
+          { icon: 'phone',    label: 'Call',     color: colors.teal, onPress: () => Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`) },
           { icon: 'message-circle', label: 'WhatsApp', color: '#25d366', onPress: () => Linking.openURL(publicWhatsAppUrl(`Hello, I found your profile on OG Landmark.`)) },
-          { icon: 'calendar', label: 'Schedule', color: '#c8a45a', onPress: () => setVisitOpen(true) },
+          { icon: 'calendar', label: 'Schedule', color: colors.gold, onPress: () => setVisitOpen(true) },
           { icon: 'send',     label: 'Enquire',  color: '#0B1F3A', onPress: () => setContactOpen(true) },
         ].map((a) => (
           <Pressable key={a.label} onPress={a.onPress} style={({ pressed }) => [styles.actionBtn, { opacity: pressed ? 0.8 : 1 }]}>
@@ -379,7 +380,7 @@ export default function AgentProfileScreen() {
           { value: '< 1hr', label: 'Response\nTime' },
         ].map((s, i, arr) => (
           <View key={s.label} style={[styles.statItem, i < arr.length - 1 ? { borderRightWidth: 1, borderRightColor: colors.border } : {}]}>
-            <Text style={[styles.statVal, { color: i === 3 ? '#183B60' : colors.foreground }]}>{s.value}</Text>
+            <Text style={[styles.statVal, { color: i === 3 ? colors.teal : colors.foreground }]}>{s.value}</Text>
             <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{s.label}</Text>
           </View>
         ))}
@@ -427,14 +428,14 @@ export default function AgentProfileScreen() {
 
       {/* ── VERIFICATION INFO ─────────────────────────────────────────── */}
       {agent.verified && (
-        <View style={[styles.verCard, { backgroundColor: '#183B6008', borderColor: '#183B6020' }]}>
+        <View style={[styles.verCard, { backgroundColor: colors.tealSoft, borderColor: colors.teal + '20' }]}>
           <View style={styles.verHeader}>
-            <Feather name="shield" size={16} color="#183B60" />
-            <Text style={[styles.verTitle, { color: '#183B60' }]}>Why is this agent verified?</Text>
+            <Feather name="shield" size={16} color={colors.teal} />
+            <Text style={[styles.verTitle, { color: colors.teal }]}>Why is this agent verified?</Text>
           </View>
           {['Identity verified', 'Contact information verified', 'Agency information reviewed', 'Professional credentials reviewed', 'Listings quality checked'].map((c) => (
             <View key={c} style={styles.verItem}>
-              <Feather name="check-circle" size={12} color="#183B60" />
+              <Feather name="check-circle" size={12} color={colors.teal} />
               <Text style={[styles.verItemText, { color: colors.foreground }]}>{c}</Text>
             </View>
           ))}
@@ -460,7 +461,7 @@ export default function AgentProfileScreen() {
               </View>
               <View style={styles.starRow}>
                 {Array.from({ length: 5 }).map((_, s) => (
-                  <Feather key={s} name="star" size={10} color={s < rev.rating ? '#c8a45a' : colors.border} />
+                  <Feather key={s} name="star" size={10} color={s < rev.rating ? colors.gold : colors.border} />
                 ))}
               </View>
             </View>
@@ -560,13 +561,13 @@ const styles = StyleSheet.create({
   avatar:         { width: 88, height: 88, borderRadius: 28, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: 'rgba(255,255,255,0.3)' },
   avatarImage:    { width: '100%', height: '100%', borderRadius: 25 },
   avatarInitials: { fontFamily: 'Inter_700Bold', fontSize: 32, color: '#ffffff' },
-  verifiedDot:    { position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: '#183B60', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#ffffff' },
+  verifiedDot:    { position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: brandColors.light.teal, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#ffffff' },
   agentName:      { fontFamily: 'Inter_700Bold', fontSize: 22, color: '#ffffff', textAlign: 'center', letterSpacing: -0.3 },
   agentAgency:    { fontFamily: 'Inter_400Regular', fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
   verifiedBadge:  { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 10, backgroundColor: 'rgba(200,164,90,0.2)', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
-  verifiedText:   { fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#c8a45a' },
+  verifiedText:   { fontFamily: 'Inter_600SemiBold', fontSize: 11, color: brandColors.light.gold },
   sampleBadge:    { marginTop: 8, backgroundColor: 'rgba(200,164,90,0.3)', borderRadius: 5, paddingHorizontal: 10, paddingVertical: 4 },
-  sampleText:     { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1, color: '#c8a45a' },
+  sampleText:     { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1, color: brandColors.light.gold },
   // Actions
   actionsRow:     { flexDirection: 'row', borderBottomWidth: 1, paddingVertical: 14 },
   actionBtn:      { flex: 1, alignItems: 'center', gap: 6 },

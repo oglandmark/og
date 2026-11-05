@@ -159,17 +159,17 @@ export default function FindAgentScreen() {
           style={({ pressed }) => [
             st.verifiedToggle,
             {
-              backgroundColor: verifiedOnly ? '#183B6012' : colors.glassCard,
-              borderColor: verifiedOnly ? '#183B6055' : colors.glassBorder,
+              backgroundColor: verifiedOnly ? colors.tealSoft : colors.glassCard,
+              borderColor: verifiedOnly ? colors.teal + '55' : colors.glassBorder,
               opacity: pressed ? 0.85 : 1,
             },
           ]}
         >
-          <View style={[st.verifiedDot, { backgroundColor: verifiedOnly ? '#183B60' : colors.mutedForeground }]}>
+          <View style={[st.verifiedDot, { backgroundColor: verifiedOnly ? colors.teal : colors.mutedForeground }]}>
             {verifiedOnly && <Feather name="check" size={9} color="#ffffff" />}
           </View>
-          <Feather name="check-circle" size={14} color={verifiedOnly ? '#183B60' : colors.mutedForeground} />
-          <Text style={[st.verifiedToggleText, { color: verifiedOnly ? '#183B60' : colors.mutedForeground }]}>
+          <Feather name="check-circle" size={14} color={verifiedOnly ? colors.teal : colors.mutedForeground} />
+          <Text style={[st.verifiedToggleText, { color: verifiedOnly ? colors.teal : colors.mutedForeground }]}>
             Verified agents only
           </Text>
         </Pressable>
@@ -330,9 +330,9 @@ function AgentListCard({
               {agent.displayName}
             </Text>
             {agent.verified && (
-              <View style={[lc.verifiedBadge, { backgroundColor: '#183B6012', borderColor: '#183B6033' }]}>
-                <Feather name="check-circle" size={9} color="#183B60" />
-                <Text style={[lc.verifiedText, { color: '#183B60' }]}>VERIFIED</Text>
+              <View style={[lc.verifiedBadge, { backgroundColor: colors.tealSoft, borderColor: colors.teal + '33' }]}>
+                <Feather name="check-circle" size={9} color={colors.teal} />
+                <Text style={[lc.verifiedText, { color: colors.teal }]}>VERIFIED</Text>
               </View>
             )}
           </View>
@@ -384,11 +384,11 @@ function AgentListCard({
       <View style={[lc.ctaRow, { borderColor: colors.border }]}>
         <Pressable
           onPress={(e) => { e.stopPropagation(); Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`); }}
-          style={[lc.callBtn, { backgroundColor: '#183B6012', borderColor: '#183B6033' }]}
+          style={[lc.callBtn, { backgroundColor: colors.tealSoft, borderColor: colors.teal + '33' }]}
           hitSlop={6}
         >
-          <Feather name="phone" size={13} color="#183B60" />
-          <Text style={[lc.callBtnText, { color: '#183B60' }]}>Call</Text>
+          <Feather name="phone" size={13} color={colors.teal} />
+          <Text style={[lc.callBtnText, { color: colors.teal }]}>Call</Text>
         </Pressable>
         <Pressable
           onPress={(e) => { e.stopPropagation(); Linking.openURL(publicWhatsAppUrl(`Hello, I found your profile on OG Landmark.`)); }}

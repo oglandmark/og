@@ -52,7 +52,8 @@ test('Agent details refresh managed profiles whenever the route regains focus', 
   assert.match(agentProfileScreen, /key=\{JSON\.stringify\(agent\.profileImage\)\}/);
   assert.match(agentProfileScreen, /onError=\{\(\) => setFailedPhotoSourceKey\(JSON\.stringify\(agent\.profileImage\)\)\}/);
   assert.match(agentProfileScreen, /agent\.profileImage && failedPhotoSourceKey !== JSON\.stringify\(agent\.profileImage\)/);
-  assert.match(homeScreen, /setInterval\(\(\) => void refreshAgents\(\), 15_000\)/);
+  assert.match(homeScreen, /setInterval\(\(\) => void refreshAgents\(\), HOME_REFRESH_INTERVAL_MS\)/);
+  assert.match(homeScreen, /const HOME_REFRESH_INTERVAL_MS = 60_000/);
   assert.match(homeScreen, /AppState\.addEventListener\('change', \(nextState\) => \{\s*if \(nextState === 'active'\) void refreshAgents\(\);/);
   assert.match(homeScreen, /appStateSubscription\.remove\(\)/);
 });

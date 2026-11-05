@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 // BlurView removed — crashes Android GPU
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
@@ -397,7 +398,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
           <View style={styles.headerRow}>
             <BrandMark />
           </View>
-          <Text style={[styles.eyebrow, { color: isAgri ? '#183B60' : isIndustrial ? INDUSTRIAL_COLOR : colors.primary, textAlign: rtl }]}>
+          <Text style={[styles.eyebrow, { color: isAgri ? colors.teal : isIndustrial ? INDUSTRIAL_COLOR : colors.primary, textAlign: rtl }]}>
             {isAgri ? 'AGRICULTURAL LISTING' : isIndustrial ? 'INDUSTRIAL LISTING' : 'AGENT PORTAL'}
           </Text>
           <Text style={[styles.pageTitle, { color: colors.foreground, textAlign: rtl }]}>
@@ -433,12 +434,12 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 onPress={() => handleCategoryChange(c)}
                 style={[styles.pill, {
                   borderColor: category === c
-                    ? c === 'Agricultural' ? '#183B60'
+                    ? c === 'Agricultural' ? colors.teal
                     : c === 'Industrial' ? INDUSTRIAL_COLOR
                      : colors.selectionBorder
                     : colors.border,
                   backgroundColor: category === c
-                    ? c === 'Agricultural' ? '#183B60'
+                    ? c === 'Agricultural' ? colors.teal
                     : c === 'Industrial' ? INDUSTRIAL_COLOR
                      : colors.selectionBackground
                     : colors.glassCard,
@@ -473,9 +474,9 @@ function AgentForm({ colors, topInset, user, router }: any) {
         {isAgri ? (
           <>
             <AnimatedReveal delay={100}>
-              <View style={[styles.agriNotice, { backgroundColor: '#183B6014', borderColor: '#183B6044' }]}>
+              <View style={[styles.agriNotice, { backgroundColor: colors.tealSoft, borderColor: colors.teal + '44' }]}>
                 <Text style={styles.agriNoticeIcon}>🌾</Text>
-                <Text style={[styles.agriNoticeText, { color: '#183B60', textAlign: rtl }]}>
+                <Text style={[styles.agriNoticeText, { color: colors.teal, textAlign: rtl }]}>
                   Specialized form for Okara District agricultural land. These details help farmers and investors find the right land.
                 </Text>
               </View>
@@ -500,8 +501,8 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 <View style={styles.unitChips}>
                   {AGRI_SIZE_UNITS.map((u) => (
                     <Pressable key={u} onPress={() => setAgriUnit(u)}
-                      style={[styles.unitChip, { borderColor: agriUnit === u ? '#183B60' : colors.border, backgroundColor: agriUnit === u ? '#183B6018' : 'transparent' }]}>
-                      <Text style={[styles.unitChipText, { color: agriUnit === u ? '#183B60' : colors.mutedForeground }]}>{u}</Text>
+                      style={[styles.unitChip, { borderColor: agriUnit === u ? colors.teal : colors.border, backgroundColor: agriUnit === u ? colors.tealSoft : 'transparent' }]}>
+                      <Text style={[styles.unitChipText, { color: agriUnit === u ? colors.teal : colors.mutedForeground }]}>{u}</Text>
                     </Pressable>
                   ))}
                 </View>
@@ -523,9 +524,9 @@ function AgentForm({ colors, topInset, user, router }: any) {
             <AnimatedReveal delay={140}>
               <SectionDivider label="WATER ACCESS" colors={colors} />
               <ToggleField label="Nehri (Canal) Water" subtitle="Government irrigation channel access"
-                icon="droplet" value={nehriWater} onChange={setNehriWater} colors={colors} accentColor="#183B60" />
+                icon="droplet" value={nehriWater} onChange={setNehriWater} colors={colors} accentColor={colors.teal} />
               <ToggleField label="Tube Well" subtitle="Electric or diesel pump installed"
-                icon="zap" value={tubeWell} onChange={setTubeWell} colors={colors} accentColor="#183B60" />
+                icon="zap" value={tubeWell} onChange={setTubeWell} colors={colors} accentColor={colors.teal} />
             </AnimatedReveal>
 
             {/* Soil Type */}
@@ -536,10 +537,10 @@ function AgentForm({ colors, topInset, user, router }: any) {
                   const sel = soilType === s.key;
                   return (
                     <Pressable key={s.key} onPress={() => setSoilType(s.key)}
-                      style={[styles.soilCard, { borderColor: sel ? '#183B60' : colors.border, backgroundColor: sel ? '#183B6018' : colors.card }]}>
-                      <Text style={[styles.soilName, { color: sel ? '#183B60' : colors.foreground }]}>{s.key}</Text>
-                      <Text style={[styles.soilDesc, { color: sel ? '#183B60cc' : colors.mutedForeground }]}>{s.desc}</Text>
-                      {sel && <View style={styles.soilCheck}><Feather name="check" size={10} color="#183B60" /></View>}
+                      style={[styles.soilCard, { borderColor: sel ? colors.teal : colors.border, backgroundColor: sel ? colors.tealSoft : colors.card }]}>
+                      <Text style={[styles.soilName, { color: sel ? colors.teal : colors.foreground }]}>{s.key}</Text>
+                      <Text style={[styles.soilDesc, { color: sel ? colors.teal : colors.mutedForeground }]}>{s.desc}</Text>
+                      {sel && <View style={styles.soilCheck}><Feather name="check" size={10} color={colors.teal} /></View>}
                     </Pressable>
                   );
                 })}
@@ -554,7 +555,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                   const sel = mainCrop === c;
                   return (
                     <Pressable key={c} onPress={() => setMainCrop(c)}
-                      style={[styles.cropChip, { borderColor: sel ? '#183B60' : colors.border, backgroundColor: sel ? '#183B60' : 'transparent' }]}>
+                      style={[styles.cropChip, { borderColor: sel ? colors.teal : colors.border, backgroundColor: sel ? colors.teal : 'transparent' }]}>
                       <Text style={[styles.cropChipText, { color: sel ? '#ffffff' : colors.mutedForeground }]}>{c}</Text>
                     </Pressable>
                   );
@@ -570,8 +571,8 @@ function AgentForm({ colors, topInset, user, router }: any) {
               <View style={styles.tehsilRow}>
                 {okaraDistrict.tehsils.map((t) => (
                   <Pressable key={t} onPress={() => setTehsil(t)}
-                    style={[styles.tehsilChip, { borderColor: tehsil === t ? '#183B60' : colors.border, backgroundColor: tehsil === t ? '#183B6018' : 'transparent' }]}>
-                    <Text style={[styles.tehsilChipText, { color: tehsil === t ? '#183B60' : colors.mutedForeground }]}>{t}</Text>
+                    style={[styles.tehsilChip, { borderColor: tehsil === t ? colors.teal : colors.border, backgroundColor: tehsil === t ? colors.tealSoft : 'transparent' }]}>
+                    <Text style={[styles.tehsilChipText, { color: tehsil === t ? colors.teal : colors.mutedForeground }]}>{t}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -592,7 +593,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                     <Pressable key={v} onPress={() => { setVillage(v); setShowVillages(false); }}
                       style={[styles.dropdownItem, { borderBottomColor: colors.border }]}>
                       <Text style={[styles.dropdownItemText, { color: colors.foreground }]}>{v}</Text>
-                      {village === v && <Feather name="check" size={13} color="#183B60" />}
+                      {village === v && <Feather name="check" size={13} color={colors.teal} />}
                     </Pressable>
                   ))}
                 </View>
@@ -613,7 +614,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                   setSelectedLocation(null); setLocationConfirmed(false);
                 }}
                 colors={colors}
-                accentColor="#183B60"
+                accentColor={colors.teal}
                 requireConfirm
                 fullScreen
                 onConfirmationChange={setLocationConfirmed}
@@ -653,7 +654,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 onPickVideo={pickVideo}
                 onRemoveVideo={() => setVideo(null)}
                 colors={colors}
-                accentColor="#183B60"
+                accentColor={colors.teal}
                 photoHint="Boundary, water channel, soil, access road"
               />
             </AnimatedReveal>
@@ -661,7 +662,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
             {/* Submit */}
             <AnimatedReveal delay={280}>
               <AnimatedPressable onPress={submit}
-                style={[styles.submit, { backgroundColor: '#183B60', opacity: submitting ? 0.7 : 1 }]}>
+                style={[styles.submit, { backgroundColor: colors.action, opacity: submitting ? 0.7 : 1 }]}>
                 <Text style={styles.submitText}>{submitting ? 'Posting…' : 'Post Agricultural Listing'}</Text>
                 <Feather name="arrow-up-right" size={18} color="#ffffff" />
               </AnimatedPressable>
@@ -1410,7 +1411,7 @@ const styles = StyleSheet.create({
   soilCard: { width: '47%', borderRadius: 13, borderWidth: 1.5, padding: 12, position: 'relative' },
   soilName: { fontFamily: 'Inter_700Bold', fontSize: 13, marginBottom: 3 },
   soilDesc: { fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 14 },
-  soilCheck: { position: 'absolute', top: 9, right: 9, width: 18, height: 18, borderRadius: 9, backgroundColor: '#183B6022', alignItems: 'center', justifyContent: 'center' },
+  soilCheck: { position: 'absolute', top: 9, right: 9, width: 18, height: 18, borderRadius: 9, backgroundColor: brandColors.light.teal + '22', alignItems: 'center', justifyContent: 'center' },
   // crop chips
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
   cropChip: { borderRadius: 20, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 9 },
@@ -1443,7 +1444,7 @@ const styles = StyleSheet.create({
   submit: {
     height: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center',
     flexDirection: 'row', gap: 8, marginTop: 20,
-    shadowColor: '#183B60', shadowOpacity: 0.2, shadowRadius: 14,
+    shadowColor: brandColors.light.action, shadowOpacity: 0.2, shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 }, elevation: 6,
   },
   submitText: { color: '#ffffff', fontFamily: 'Inter_600SemiBold', fontSize: 14 },

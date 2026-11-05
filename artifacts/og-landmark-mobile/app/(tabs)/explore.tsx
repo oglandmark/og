@@ -27,6 +27,7 @@ import {
 } from '@/lib/demoPropertyVisibility';
 import { getPropertiesPage } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
+import brandColors from '@/constants/colors';
 import { GlassCard } from '@/components/GlassCard';
 import { projects as staticProjects } from '@/lib/projects';
 import { getAllPublicProjects, type DeveloperProject } from '@/lib/developerStore';
@@ -400,6 +401,7 @@ const QUICK_FILTERS: QuickFilter[] = [
 ];
 
 const EXPLORE_PAGE_SIZE = 12;
+const LIVE_REFRESH_INTERVAL_MS = 60_000;
 
 function paginationItems(currentPage: number, totalPages: number): Array<number | 'ellipsis'> {
   if (totalPages <= 5) {
@@ -495,6 +497,7 @@ export default function ExploreScreen() {
   const [devProjects, setDevProjects]         = useState<DeveloperProject[]>([]);
   const [devProjectsLoading, setDevProjectsLoading] = useState(true);
   const [devProjectsLoadError, setDevProjectsLoadError] = useState(false);
+  const devProjectsLoadedRef = useRef(false);
   const [projectRetryKey, setProjectRetryKey] = useState(0);
   const [isProjectsMode, setIsProjectsMode]   = useState(
     params.category === 'Projects' || params.propertyType === 'Project',
@@ -565,31 +568,25 @@ export default function ExploreScreen() {
     const refreshProjects = async (showLoading: boolean) => {
       if (!active || loading) return;
       loading = true;
-      if (showLoading && devProjects.length === 0) setDevProjectsLoading(true);
+      if (showLoading && !devProjectsLoadedRef.current) setDevProjectsLoading(true);
       try {
-        let lastRecords: DeveloperProject[] | null = null;
         let lastError: unknown;
         for (let attempt = 0; attempt < 3; attempt += 1) {
           if (!active) return;
           try {
             const records = await getAllPublicProjects();
-            lastRecords = records;
-            if (records.length > 0) {
-              if (!active) return;
-              setDevProjects(records);
-              setDevProjectsLoadError(false);
-              return;
-            }
+            if (!active) return;
+            devProjectsLoadedRef.current = true;
+            setDevProjects(records);
+            setDevProjectsLoadError(false);
+            return;
           } catch (error: unknown) {
             lastError = error;
           }
           if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 700));
         }
         if (!active) return;
-        if (lastRecords) {
-          setDevProjects(lastRecords);
-          setDevProjectsLoadError(false);
-        } else if (lastError) {
+        if (lastError) {
           setDevProjectsLoadError(true);
         }
       } finally {
@@ -599,7 +596,7 @@ export default function ExploreScreen() {
     };
 
     void refreshProjects(true);
-    const interval = setInterval(() => void refreshProjects(false), 15_000);
+    const interval = setInterval(() => void refreshProjects(false), LIVE_REFRESH_INTERVAL_MS);
     const appStateSubscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') void refreshProjects(false);
     });
@@ -608,7 +605,7 @@ export default function ExploreScreen() {
       clearInterval(interval);
       appStateSubscription.remove();
     };
-  }, [devProjects.length, projectRetryKey]));
+  }, [projectRetryKey]));
 
   useEffect(() => {
     if (!isExploreFocused) return;
@@ -665,7 +662,7 @@ export default function ExploreScreen() {
     });
     const interval = setInterval(() => {
       if (AppState.currentState === 'active') void refreshProperties();
-    }, 15_000);
+    }, LIVE_REFRESH_INTERVAL_MS);
     const appStateSubscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') void refreshProperties();
     });
@@ -1690,35 +1687,35 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
                 <View style={fs.checkGrid}>
                   {AGRI_WATER.map((w) => (
                     <CheckChip key={w} label={w} selected={draft.agriWater.includes(w)}
-                      onToggle={() => toggleArr('agriWater', w)} colors={colors} accentColor="#183B60" />
+                      onToggle={() => toggleArr('agriWater', w)} colors={colors} accentColor={colors.teal} />
                   ))}
                 </View>
                 <Text style={[fs.subLabel, { color: colors.mutedForeground, marginTop: 10 }]}>Electricity</Text>
                 <View style={fs.checkGrid}>
                   {AGRI_ELECTRICITY.map((e) => (
                     <CheckChip key={e} label={e} selected={draft.agriElectricity.includes(e)}
-                      onToggle={() => toggleArr('agriElectricity', e)} colors={colors} accentColor="#183B60" />
+                      onToggle={() => toggleArr('agriElectricity', e)} colors={colors} accentColor={colors.teal} />
                   ))}
                 </View>
                 <Text style={[fs.subLabel, { color: colors.mutedForeground, marginTop: 10 }]}>Road Access</Text>
                 <View style={fs.checkGrid}>
                   {AGRI_ROAD.map((r) => (
                     <CheckChip key={r} label={r} selected={draft.agriRoad.includes(r)}
-                      onToggle={() => toggleArr('agriRoad', r)} colors={colors} accentColor="#183B60" />
+                      onToggle={() => toggleArr('agriRoad', r)} colors={colors} accentColor={colors.teal} />
                   ))}
                 </View>
                 <Text style={[fs.subLabel, { color: colors.mutedForeground, marginTop: 10 }]}>Land Features</Text>
                 <View style={fs.checkGrid}>
                   {AGRI_LAND_FEATS.map((feat) => (
                     <CheckChip key={feat} label={feat} selected={draft.agriLandFeatures.includes(feat)}
-                      onToggle={() => toggleArr('agriLandFeatures', feat)} colors={colors} accentColor="#183B60" />
+                      onToggle={() => toggleArr('agriLandFeatures', feat)} colors={colors} accentColor={colors.teal} />
                   ))}
                 </View>
                 <Text style={[fs.subLabel, { color: colors.mutedForeground, marginTop: 10 }]}>Crop Type</Text>
                 <View style={fs.checkGrid}>
                   {AGRI_CROPS.map((c) => (
                     <CheckChip key={c} label={c} selected={draft.agriCrop.includes(c)}
-                      onToggle={() => toggleArr('agriCrop', c)} colors={colors} accentColor="#183B60" />
+                      onToggle={() => toggleArr('agriCrop', c)} colors={colors} accentColor={colors.teal} />
                   ))}
                 </View>
               </Section>
@@ -1799,7 +1796,7 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
 function Section({ label, icon, expanded, onToggle, children }: {
   label: string; icon: string; expanded?: boolean; onToggle: () => void; children: React.ReactNode;
 }) {
-  const colors = { foreground: '#1c2024', mutedForeground: '#6c757d', border: '#e8e3d9' };
+  const colors = useColors();
   return (
     <View style={fs.section}>
       <Pressable onPress={onToggle} style={fs.sectionHeader}>
@@ -2197,7 +2194,7 @@ const fs = StyleSheet.create({
   root:          { flex: 1, justifyContent: 'flex-end', backgroundColor: '#0B1F3A66' },
   backdrop:      { ...StyleSheet.absoluteFill },
   sheet:         { maxHeight: '92%', borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 24 },
-  handle:        { alignSelf: 'center', width: 42, height: 4, borderRadius: 2, backgroundColor: '#c8a45a', opacity: 0.7, marginBottom: 18 },
+  handle:        { alignSelf: 'center', width: 42, height: 4, borderRadius: 2, backgroundColor: brandColors.light.gold, opacity: 0.7, marginBottom: 18 },
   header:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 },
   eyebrow:       { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.6, marginBottom: 4 },
   title:         { fontFamily: 'Inter_700Bold', fontSize: 22 },

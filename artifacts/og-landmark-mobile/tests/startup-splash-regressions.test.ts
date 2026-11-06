@@ -24,6 +24,14 @@ const sharedLogo = readFileSync(
   new URL('../components/OGLandmarkLogo.tsx', import.meta.url),
   'utf8',
 );
+const brandMark = readFileSync(
+  new URL('../components/BrandMark.tsx', import.meta.url),
+  'utf8',
+);
+const homeScreen = readFileSync(
+  new URL('../app/(tabs)/index.tsx', import.meta.url),
+  'utf8',
+);
 const splashReference = readFileSync(
   new URL('../assets/splash/og-landmark-intro.html', import.meta.url),
   'utf8',
@@ -111,5 +119,12 @@ test('shared OG and roof mark loops after ten focused seconds on each mobile pag
   assert.match(sharedLogo, /withTiming\(8, \{ duration: 8000/);
   assert.match(sharedLogo, /strokeDashoffset/);
   assert.doesNotMatch(sharedLogo, /markPulse|scale: 1 \+ markPulse/);
+});
+
+test('Home brand mark shows the full OG Landmark wordmark', () => {
+  assert.match(homeScreen, /<BrandMark showName \/>/);
+  assert.match(brandMark, /accessibilityLabel="OG Landmark"/);
+  assert.match(brandMark, /OG Landmark\s*<\/NativeText>/);
+  assert.match(brandMark, /flexShrink: 0/);
 });
 

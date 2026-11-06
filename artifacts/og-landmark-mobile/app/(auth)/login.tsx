@@ -152,7 +152,15 @@ const styles = StyleSheet.create({
   input: { flex: 1, minWidth: 0, borderWidth: 0, outlineWidth: 0, outlineColor: 'transparent', backgroundColor: 'transparent', fontFamily: 'Inter_400Regular', fontSize: 14, paddingVertical: 0 },
   forgotLink: { alignSelf: 'flex-end', paddingVertical: 2, marginTop: -4 },
   forgotText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
-  footerRow: { flexDirection: 'row', justifyContent: 'center', gap: 4, flexWrap: 'wrap', marginTop: 'auto', paddingTop: 12 },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 4,
+    flexWrap: 'wrap',
+    marginTop: 'auto',
+    marginBottom: Platform.OS === 'android' ? 20 : 0,
+    paddingTop: 12,
+  },
   footerText: { fontFamily: 'Inter_400Regular', fontSize: 14 },
   footerLink: { fontFamily: 'Inter_700Bold', fontSize: 14 },
 });

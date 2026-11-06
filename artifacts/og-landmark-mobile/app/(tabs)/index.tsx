@@ -1422,6 +1422,7 @@ export default function HomeScreen() {
   const [managedAgentsLoading, setManagedAgentsLoading] = useState(true);
   const [managedAgentsLoadError, setManagedAgentsLoadError] = useState(false);
   const managedAgentsLoadedRef = useRef(false);
+  const homePropertiesRequestedRef = useRef(false);
   const [mobileContent,    setMobileContent]    = useState<MobileContent | null>(null);
   const homeContent = mobileContent?.homepage;
   const homeSections = homeContent?.sections ?? {};
@@ -1566,7 +1567,6 @@ export default function HomeScreen() {
     const refreshAgents = async () => {
       if (!active || loading) return;
       loading = true;
-      if (!managedAgentsLoadedRef.current) setManagedAgentsLoading(true);
       try {
         let lastError: unknown;
         for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -1618,7 +1618,8 @@ export default function HomeScreen() {
     const refreshProperties = async () => {
       if (!active || loading) return;
       loading = true;
-      if (firstLoad) {
+      if (firstLoad && !homePropertiesRequestedRef.current) {
+        homePropertiesRequestedRef.current = true;
         setApiLoading(true);
         setPropertyError('');
       }

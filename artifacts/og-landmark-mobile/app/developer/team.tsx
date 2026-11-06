@@ -16,6 +16,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import brandColors from '@/constants/colors';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import {
   TeamMember, TeamRole, TEAM_ROLES, newMemberId, roleColor,
   getTeamMembers, saveTeamMember, toggleMemberActive, deleteTeamMember,
@@ -36,6 +37,7 @@ export default function TeamScreen() {
   const [leadCounts, setLeadCounts]   = useState<Record<string, number>>({});
   const [showForm, setShowForm]       = useState(false);
   const [saving, setSaving]           = useState(false);
+  const [refreshing, setRefreshing]   = useState(false);
 
   // Form state
   const [name, setName]   = useState('');
@@ -57,6 +59,28 @@ export default function TeamScreen() {
   }, [user?.id]);
 
   useFocusEffect(reload);
+
+  const refreshTeam = async () => {
+    setRefreshing(true);
+    try {
+      const [nextMembers, leads] = await Promise.all([
+        getTeamMembers(user?.id ?? ''),
+        getDevLeads(user?.id ?? ''),
+      ]);
+      setMembers(nextMembers);
+      const counts: Record<string, number> = {};
+      leads.forEach((lead) => {
+        if (lead.assignedTo && lead.assignedTo !== 'Self') {
+          counts[lead.assignedTo] = (counts[lead.assignedTo] ?? 0) + 1;
+        }
+      });
+      setLeadCounts(counts);
+    } catch {
+      // Preserve the currently visible team data if the API is unavailable.
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const resetForm = () => { setName(''); setPhone(''); setEmail(''); setRole('Sales Rep'); };
 
@@ -101,6 +125,7 @@ export default function TeamScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: botPad + 100 }}
         keyboardShouldPersistTaps="handled"
+        refreshControl={!showForm ? <BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshTeam(); }} /> : undefined}
       >
         {/* ── Header ────────────────────────────────────── */}
         <AnimatedReveal>

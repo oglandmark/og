@@ -54,6 +54,7 @@ import {
 } from '@/lib/plotCalculator';
 import { PlotMeasurementCalculator } from '@/components/PlotMeasurementCalculator';
 import { StatusNotice } from '@/components/PolishedUI';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 
 type Transaction = 'Buy' | 'Rent';
 const HOME_REFRESH_INTERVAL_MS = 60_000;
@@ -1415,6 +1416,7 @@ export default function HomeScreen() {
   const [selectedLocation, setSelectedLocation] = useState('Okara District');
   const [apiProps,         setApiProps]         = useState<Property[]>([]);
   const [apiLoading,       setApiLoading]       = useState(true);
+  const [refreshing,       setRefreshing]       = useState(false);
   const [devProjects,      setDevProjects]      = useState<DeveloperProject[]>([]);
   const [managedAgents,    setManagedAgents]    = useState<SampleAgent[]>([]);
   const [managedAgentsLoading, setManagedAgentsLoading] = useState(true);
@@ -1454,6 +1456,34 @@ export default function HomeScreen() {
   }, []);
 
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
+  const loadHomeSettings = getMobileSettings;
+  const loadHomeBanners = getBanners;
+
+  const refreshHome = useCallback(async () => {
+    setRefreshing(true);
+    const jobs: Promise<unknown>[] = [
+      loadHomeSettings().then((settings) => setMobileContent(settings.content)).catch(() => undefined),
+      loadHomeBanners().then((raw) => {
+        setHomeBannerSlides(raw.map(mapApiBanner).filter(
+          (slide): slide is HomeCategoryBannerSlide => slide !== null,
+        ));
+      }).catch(() => undefined),
+      getAgents().then((records) => {
+        setManagedAgents(records.map(apiAgentToSample));
+        setManagedAgentsLoadError(false);
+        managedAgentsLoadedRef.current = true;
+      }).catch(() => setManagedAgentsLoadError(true)),
+      getProperties({ limit: 60, sort: 'latest' }).then((items) => {
+        setApiProps(items.map(apiPropertyToProperty));
+        setPropertyError('');
+      }).catch(() => undefined),
+    ];
+    if (user && role === 'developer') {
+      jobs.push(getDevProjects(user.id).then(setDevProjects).catch(() => undefined));
+    }
+    await Promise.all(jobs);
+    setRefreshing(false);
+  }, [role, user]);
 
   // ── Tab focus → pause banner auto-advance while Home is inactive ──────────
   useFocusEffect(useCallback(() => {
@@ -1679,6 +1709,7 @@ export default function HomeScreen() {
         tabBarScrollHandler(event);
       }}
       scrollEventThrottle={16}
+      refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshHome(); }} />}
     >
 
       {/* ─── HEADER ─────────────────────────────────────────────────────── */}

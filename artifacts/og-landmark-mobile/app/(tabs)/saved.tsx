@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,8 @@ import { useColors } from '@/hooks/useColors';
 import { GlassCard } from '@/components/GlassCard';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { useRouter } from 'expo-router';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
+import { useState } from 'react';
 
 export default function SavedScreen() {
   const colors = useColors();
@@ -21,7 +23,8 @@ export default function SavedScreen() {
   const { hiddenDemoPropertyIds } = useDemoPropertyVisibility();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useTabBarHeight();
-  const { savedIds } = useSaved();
+  const { savedIds, refreshSaved } = useSaved();
+  const [refreshing, setRefreshing] = useState(false);
   const onScroll = useTabBarScrollHandler();
   const propertyChoices = [
     ...properties,
@@ -40,6 +43,10 @@ export default function SavedScreen() {
       showsVerticalScrollIndicator={false}
       onScroll={onScroll}
       scrollEventThrottle={16}
+      refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => {
+        setRefreshing(true);
+        void refreshSaved().finally(() => setRefreshing(false));
+      }} />}
     >
       <AnimatedReveal>
         <View style={styles.headingRow}>

@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View,
+  ActivityIndicator, FlatList, Platform, Pressable, ScrollView, StyleSheet, View,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { useAuth } from '@/context/AuthContext';
 import { useColors } from '@/hooks/useColors';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import {
   deleteNotification,
   getNotifications,
@@ -59,8 +60,8 @@ export default function NotificationsScreen() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const load = useCallback(async (nextPage = 1, replace = true) => {
-    if (nextPage === 1) setLoading(true);
+  const load = useCallback(async (nextPage = 1, replace = true, showLoading = true) => {
+    if (nextPage === 1 && showLoading) setLoading(true);
     else setLoadingMore(true);
     try {
       const result = await getNotifications(undefined, { page: nextPage, category: filter });
@@ -189,7 +190,7 @@ export default function NotificationsScreen() {
           data={items}
           keyExtractor={(item) => item.notificationId || String(item.id)}
           contentContainerStyle={[styles.list, items.length === 0 && styles.emptyList, { paddingBottom: insets.bottom + 24 }]}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(1, true); }} tintColor={colors.action} />}
+          refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load(1, true, false); }} />}
           onEndReached={() => {
             if (hasMore && !loadingMore) void load(page + 1, false);
           }}

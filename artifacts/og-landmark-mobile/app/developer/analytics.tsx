@@ -12,6 +12,7 @@ import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import {
   DevLead, DevLeadStatus, DEV_STAGE_CONFIG, DEV_STAGES,
   getDevLeads, calcDevLeadStats,
@@ -88,12 +89,31 @@ export default function AnalyticsScreen() {
   const [leads, setLeads]       = useState<DevLead[]>([]);
   const [visits, setVisits]     = useState<SiteVisit[]>([]);
   const [projects, setProjects] = useState<DeveloperProject[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(useCallback(() => {
     void getDevLeads(user?.id ?? '').then(setLeads);
     void getSiteVisits(user?.id ?? '').then(setVisits);
     void getDevProjects(user?.id ?? '').then(setProjects);
   }, [user?.id]));
+
+  const refreshAnalytics = async () => {
+    setRefreshing(true);
+    try {
+      const [nextLeads, nextVisits, nextProjects] = await Promise.all([
+        getDevLeads(user?.id ?? ''),
+        getSiteVisits(user?.id ?? ''),
+        getDevProjects(user?.id ?? ''),
+      ]);
+      setLeads(nextLeads);
+      setVisits(nextVisits);
+      setProjects(nextProjects);
+    } catch {
+      // Preserve current analytics when a refresh cannot reach the API.
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // ── Computed values ──────────────────────────────────────────────────────
   const stats = calcDevLeadStats(leads);
@@ -140,6 +160,7 @@ export default function AnalyticsScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: botPad + 100 }}
+        refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshAnalytics(); }} />}
       >
         {/* ── Header ────────────────────────────────────── */}
         <AnimatedReveal>

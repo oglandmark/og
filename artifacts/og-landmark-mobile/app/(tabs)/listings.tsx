@@ -4,6 +4,7 @@ import { useColors } from '@/hooks/useColors';
 import brandColors from '@/constants/colors';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator, Alert, Linking, Platform, Pressable,
@@ -52,22 +53,27 @@ export default function ListingsScreen() {
   const [activeTab, setActiveTab]     = useState<FilterTab>('All');
   const [myListings, setMyListings]   = useState<UserListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState('');
 
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const botPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
 
-  const reload = useCallback(() => {
+  const reload = useCallback((showLoading = true) => {
     if (!isLoggedIn || !user) {
       setLoading(false);
+      setRefreshing(false);
       return;
     }
-    setLoading(true);
+    if (showLoading) setLoading(true);
     setLoadError('');
     void getMyListings(user.id)
       .then(setMyListings)
       .catch((cause: unknown) => setLoadError(cause instanceof Error ? cause.message : 'Could not load your listings. Check the API connection and try again.'))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setRefreshing(false);
+      });
   }, [isLoggedIn, user]);
 
   useFocusEffect(reload);
@@ -156,6 +162,10 @@ export default function ListingsScreen() {
       showsVerticalScrollIndicator={false}
       onScroll={tabBarScrollHandler}
       scrollEventThrottle={16}
+      refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => {
+        setRefreshing(true);
+        reload(false);
+      }} />}
     >
       {/* Header */}
       <AnimatedReveal>
@@ -227,7 +237,7 @@ export default function ListingsScreen() {
             <Feather name="alert-circle" size={36} color={colors.mutedForeground} />
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Could not load listings</Text>
             <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>{loadError}</Text>
-            <Pressable onPress={reload} style={[styles.emptyBtn, { backgroundColor: colors.action }]}>
+            <Pressable onPress={() => reload()} style={[styles.emptyBtn, { backgroundColor: colors.action }]}>
               <Text style={[styles.emptyBtnText, { color: colors.actionForeground }]}>Try again</Text>
             </Pressable>
           </View>

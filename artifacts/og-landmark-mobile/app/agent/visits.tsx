@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import {
   AgentVisit, VisitStatus,
   deleteAgentVisit, formatVisitDate, getAgentVisits,
@@ -246,12 +247,24 @@ export default function AgentVisitsScreen() {
   const [visits, setVisits]     = useState<AgentVisit[]>([]);
   const [tab, setTab]           = useState<TabKey>('Today');
   const [showForm, setShowForm] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const reload = useCallback(() => {
     void getAgentVisits(user?.id ?? '').then(setVisits);
   }, [user?.id]);
 
   useFocusEffect(reload);
+
+  const refreshVisits = async () => {
+    setRefreshing(true);
+    try {
+      setVisits(await getAgentVisits(user?.id ?? ''));
+    } catch {
+      // Keep the current visits if refreshing fails.
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleStatusChange = async (id: string, status: VisitStatus) => {
     const updated = await updateVisitStatus(id, status);
@@ -280,7 +293,8 @@ export default function AgentVisitsScreen() {
     <View style={[sc.screen, { backgroundColor: colors.background }]}>
       <ScrollView showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: botPad + 100 }}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+        refreshControl={!showForm ? <BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshVisits(); }} /> : undefined}>
 
         {/* Header */}
         <AnimatedReveal>

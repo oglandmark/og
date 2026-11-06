@@ -12,6 +12,7 @@ import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { PUBLIC_CONTACT_PHONE_E164, publicWhatsAppUrl } from '@/lib/publicContact';
 import { GlassCard } from '@/components/GlassCard';
 import { useColors } from '@/hooks/useColors';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import { apiAgentToSample, SampleAgent } from '@/lib/agentsData';
 import { getAgents } from '@/lib/api';
 
@@ -47,6 +48,7 @@ export default function FindAgentScreen() {
   const [verifiedOnly, setVerifiedOnly] = useState(true);
   const [agents, setAgents] = useState<SampleAgent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState('');
   const requestInFlight = useRef(false);
 
@@ -112,6 +114,10 @@ export default function FindAgentScreen() {
       contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: insets.bottom + 96, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
+      refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => {
+        setRefreshing(true);
+        void loadAgents(false).finally(() => setRefreshing(false));
+      }} />}
     >
       {/* ── Header ── */}
       <AnimatedReveal>

@@ -16,6 +16,7 @@ import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import {
   PaymentPlan, calcPlanSummary, fmtPKR, newPlanId,
   getPaymentPlans, savePaymentPlan, deletePaymentPlan,
@@ -157,6 +158,7 @@ export default function PaymentPlansScreen() {
   const [projectNames, setProjectNames] = useState<{ id: string; name: string }[]>([]);
   const [showForm, setShowForm]   = useState(false);
   const [saving, setSaving]       = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [form, setForm]           = useState<PaymentPlan>(() => blankPlan(user?.id ?? ''));
 
   const setF = (partial: Partial<PaymentPlan>) => setForm((prev) => ({ ...prev, ...partial }));
@@ -167,6 +169,22 @@ export default function PaymentPlansScreen() {
   }, [user?.id]));
 
   const reload = () => void getPaymentPlans(user?.id ?? '').then(setPlans);
+
+  const refreshPlans = async () => {
+    setRefreshing(true);
+    try {
+      const [nextPlans, projects] = await Promise.all([
+        getPaymentPlans(user?.id ?? ''),
+        getDevProjects(user?.id ?? ''),
+      ]);
+      setPlans(nextPlans);
+      setProjectNames(projects.map((project) => ({ id: project.id, name: project.name })));
+    } catch {
+      // Keep the current plans if the API is unavailable.
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!form.planName.trim()) { Alert.alert('', 'Plan name is required.'); return; }
@@ -210,6 +228,7 @@ export default function PaymentPlansScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: botPad + 100 }}
         keyboardShouldPersistTaps="handled"
+        refreshControl={!showForm ? <BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshPlans(); }} /> : undefined}
       >
         {/* ── Header ────────────────────────────────────── */}
         <AnimatedReveal>

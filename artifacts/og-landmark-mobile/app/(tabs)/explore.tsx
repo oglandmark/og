@@ -17,6 +17,7 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 // BlurView removed — crashes Android
 import { PropertyCard } from '@/components/PropertyCard';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import { properties, apiPropertyToProperty } from '@/lib/properties';
 import {
   filterDeletedDemoProjects,
@@ -519,8 +520,55 @@ export default function ExploreScreen() {
   const [remoteHasMore, setRemoteHasMore]       = useState(false);
   const [remoteLoadingMore, setRemoteLoadingMore] = useState(false);
   const [currentPage, setCurrentPage]           = useState(1);
+  const [refreshing, setRefreshing]             = useState(false);
   const searchRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const initialParamsCleared = useRef(false);
+
+  const refreshExplore = useCallback(async () => {
+    setRefreshing(true);
+    setCurrentPage(1);
+    try {
+      if (isProjectsMode) {
+        const records = await getAllPublicProjects();
+        setDevProjects(records);
+        setDevProjectsLoadError(false);
+        devProjectsLoadedRef.current = true;
+        return;
+      }
+      const radiusLocation = searchedPlace ?? mapAreaSearch;
+      const page = radiusLocation
+        ? await getPropertiesPage({
+            lat: radiusLocation.lat,
+            lng: radiusLocation.lng,
+            radiusKm: radiusLocation.radiusKm,
+            limit: 24,
+            offset: 0,
+          })
+        : mapBoundsFilter
+          ? await getPropertiesPage({
+              minLat: mapBoundsFilter.south,
+              maxLat: mapBoundsFilter.north,
+              minLng: mapBoundsFilter.west,
+              maxLng: mapBoundsFilter.east,
+              limit: 24,
+              offset: 0,
+            })
+          : await getPropertiesPage({ limit: 24, offset: 0 });
+      const remote = uniqueProperties(page.items
+        .filter(isAdminApprovedProperty)
+        .map(apiPropertyToProperty));
+      setAllProperties((current) => {
+        if ((radiusLocation || mapBoundsFilter) && remote.length === 0) return current;
+        return replacePropertiesFromSuccessfulPublicFeed(current, remote);
+      });
+      setRemoteOffset(page.items.length);
+      setRemoteHasMore(page.hasMore);
+    } catch {
+      // Keep the current results visible when a manual refresh is offline.
+    } finally {
+      setRefreshing(false);
+    }
+  }, [isProjectsMode, searchedPlace, mapAreaSearch, mapBoundsFilter]);
 
   useEffect(() => {
     if (initialParamsCleared.current) return;
@@ -1210,6 +1258,7 @@ export default function ExploreScreen() {
         scrollEnabled={viewMode !== 'map'}
         onScroll={tabBarScrollHandler}
         scrollEventThrottle={16}
+        refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshExplore(); }} />}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarHeight, paddingTop: 14 }}
         ListHeaderComponent={
           <>

@@ -14,6 +14,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import {
   InventoryBlock, InventoryUnit, InventoryStats,
@@ -297,6 +298,7 @@ export default function InventoryScreen() {
   const [units,        setUnits]        = useState<InventoryUnit[]>([]);
   const [stats,        setStats]        = useState<InventoryStats | null>(null);
   const [showAddBlock, setShowAddBlock] = useState(false);
+  const [refreshing,   setRefreshing]   = useState(false);
 
   const load = useCallback(() => {
     if (!projectId) return;
@@ -305,6 +307,21 @@ export default function InventoryScreen() {
       setUnits(u);
       setStats(calcInventoryStats(b, u));
     });
+  }, [projectId]);
+
+  const refreshInventory = useCallback(async () => {
+    if (!projectId) return;
+    setRefreshing(true);
+    try {
+      const [nextBlocks, nextUnits] = await Promise.all([getBlocks(projectId), getUnits(projectId)]);
+      setBlocks(nextBlocks);
+      setUnits(nextUnits);
+      setStats(calcInventoryStats(nextBlocks, nextUnits));
+    } catch {
+      // Keep the current inventory visible if the API is unavailable.
+    } finally {
+      setRefreshing(false);
+    }
   }, [projectId]);
 
   useFocusEffect(load);
@@ -350,6 +367,7 @@ export default function InventoryScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: botPad + 100 }}
+        refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshInventory(); }} />}
       >
         {/* ── Stats overview ─────────────────────────────────── */}
         {stats && (

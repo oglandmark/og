@@ -18,6 +18,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import {
   DeveloperProject, ProjectStatus, getDevProjects, deleteDevProject,
   formatPKR, statusColor,
@@ -159,9 +160,21 @@ export default function ProjectsScreen() {
   const botPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
 
   const [projects, setProjects] = useState<DeveloperProject[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const reload = useCallback(() => {
     void getDevProjects(user?.id ?? '').then(setProjects);
+  }, [user?.id]);
+
+  const refreshProjects = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      setProjects(await getDevProjects(user?.id ?? ''));
+    } catch {
+      // Preserve the current project cards if the connection is unavailable.
+    } finally {
+      setRefreshing(false);
+    }
   }, [user?.id]);
 
   useFocusEffect(reload);
@@ -188,6 +201,7 @@ export default function ProjectsScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={tabBarScrollHandler}
         scrollEventThrottle={16}
+        refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshProjects(); }} />}
       >
         {/* ── Header ────────────────────────────────────── */}
         <AnimatedReveal>

@@ -4,7 +4,6 @@ import {
   Alert,
   Platform,
   Pressable,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   View,
@@ -15,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { useColors } from '@/hooks/useColors';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import { BannerSlide, createBanner, deleteBanner, getAdminBanners, toggleBanner } from '@/lib/api';
 
 const CATEGORIES = ['homes', 'commercial', 'agriculture', 'plots', 'projects'] as const;
@@ -123,7 +123,7 @@ export default function AdminBannersScreen() {
         contentContainerStyle={{ paddingBottom: bottomInset + 24 }}
         keyboardShouldPersistTaps="handled"
         bottomOffset={50}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { void load(); }} />}
+        refreshControl={<BrandedRefreshControl refreshing={loading} onRefresh={() => { void load(); }} />}
       >
         <View style={[styles.form, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Update an image category</Text>

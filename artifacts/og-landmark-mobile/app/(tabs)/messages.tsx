@@ -7,6 +7,7 @@ import { useColors } from '@/hooks/useColors';
 import { useLanguage } from '@/context/LanguageContext';
 import { BrandMark } from '@/components/BrandMark';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { useAuth } from '@/context/AuthContext';
 import { getConversations, getMessages, sendMessage as sendMessageAPI, type ApiConversation, type ApiMessage } from '@/lib/api';
@@ -61,6 +62,7 @@ export default function MessagesScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [messagesError, setMessagesError] = useState<string | null>(null);
@@ -97,8 +99,8 @@ export default function MessagesScreen() {
   // FlatList content only needs a small gap at the bottom — it scrolls independently above inputRow.
   const listPadBottom = 16;
 
-  const loadConversations = async () => {
-    setLoading(true);
+  const loadConversations = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError(null);
     try {
       const result = await getConversations();
@@ -107,6 +109,7 @@ export default function MessagesScreen() {
       setError(err instanceof Error ? err.message : 'Unable to load conversations.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -253,6 +256,10 @@ export default function MessagesScreen() {
         contentContainerStyle={{ paddingBottom: botPad + 96 }}
         onScroll={onScroll}
         scrollEventThrottle={16}
+        refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => {
+          setRefreshing(true);
+          void loadConversations(false);
+        }} />}
       >
         <AnimatedReveal>
           <View style={[styles.listHeader, { paddingTop: topPad + 12, paddingHorizontal: 20, paddingBottom: 8 }]}>

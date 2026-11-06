@@ -16,6 +16,7 @@ import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import {
   DeveloperDocument, DocType, DOC_TYPES, docTypeColor, newDocId,
   getDocuments, saveDocument, deleteDocument,
@@ -36,6 +37,7 @@ export default function DocumentsScreen() {
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving]     = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Form state
   const [docTitle, setDocTitle]   = useState('');
@@ -51,6 +53,22 @@ export default function DocumentsScreen() {
   }, [user?.id]);
 
   useFocusEffect(reload);
+
+  const refreshDocuments = async () => {
+    setRefreshing(true);
+    try {
+      const [nextDocs, nextProjects] = await Promise.all([
+        getDocuments(user?.id ?? ''),
+        getDevProjects(user?.id ?? ''),
+      ]);
+      setDocs(nextDocs);
+      setProjects(nextProjects.map((project) => ({ id: project.id, name: project.name })));
+    } catch {
+      // Preserve the currently visible documents if the API is unavailable.
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const resetForm = () => {
     setDocTitle(''); setDocType('NOC'); setDocProject('');
@@ -114,6 +132,7 @@ export default function DocumentsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: botPad + 100 }}
         keyboardShouldPersistTaps="handled"
+        refreshControl={!showForm ? <BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshDocuments(); }} /> : undefined}
       >
         {/* ── Header ────────────────────────────────────── */}
         <AnimatedReveal>

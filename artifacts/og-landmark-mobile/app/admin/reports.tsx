@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Pressable,
   Platform,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   View,
@@ -13,6 +12,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { useColors } from '@/hooks/useColors';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import { AdminReport, getAdminReports, updateAdminReport } from '@/lib/api';
 
 const FILTERS = ['All', 'Pending', 'Resolved', 'Dismissed'] as const;
@@ -71,7 +71,7 @@ export default function AdminReportsScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { void load(); }} />}
+        refreshControl={<BrandedRefreshControl refreshing={loading} onRefresh={() => { void load(); }} />}
         contentContainerStyle={{ paddingBottom: bottomInset + 24 }}
       >
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>

@@ -13,6 +13,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import { BrandMark } from '@/components/BrandMark';
 import { type Lead, type LeadStatus, getLeads, updateLeadStatus, updateLeadNotes } from '@/lib/leadsStore';
 import {
@@ -64,10 +65,18 @@ function DeveloperCRM() {
   const [expanded, setExpanded]   = useState<string | null>(null);
   const [noteEditId, setNoteEditId] = useState<string | null>(null);
   const [noteText, setNoteText]   = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(useCallback(() => {
     void getDevLeads(user?.id ?? '').then(setLeads);
   }, [user?.id]));
+
+  const refreshDeveloperLeads = async () => {
+    setRefreshing(true);
+    try { setLeads(await getDevLeads(user?.id ?? '')); }
+    catch { /* Keep the currently visible leads when the API is unavailable. */ }
+    finally { setRefreshing(false); }
+  };
 
   const handleUpdateStage = async (id: string, status: DevLeadStatus) => {
     const updated = await updateDevLeadStatus(id, status, user?.id ?? '');
@@ -114,6 +123,7 @@ function DeveloperCRM() {
         contentContainerStyle={{ paddingBottom: botPad + 96 }}
         onScroll={tabBarScrollHandler}
         scrollEventThrottle={16}
+        refreshControl={!noteEditId ? <BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshDeveloperLeads(); }} /> : undefined}
       >
 
         {/* ── Header ───────────────────────────────────── */}
@@ -379,12 +389,20 @@ export default function LeadsScreen() {
   const [leads, setLeads]             = useState<Lead[]>([]);
   const [noteEditId, setNoteEditId]   = useState<number | null>(null);
   const [noteText, setNoteText]       = useState('');
+  const [refreshing, setRefreshing]   = useState(false);
 
   const topPad = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const botPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
   const rtl = isRTL ? 'right' as const : 'left' as const;
 
   useEffect(() => { getLeads().then(setLeads); }, []);
+
+  const refreshAgentLeads = async () => {
+    setRefreshing(true);
+    try { setLeads(await getLeads()); }
+    catch { /* Keep the currently visible leads when the API is unavailable. */ }
+    finally { setRefreshing(false); }
+  };
 
   const handleUpdateStatus = async (id: number, status: LeadStatus) => {
     setLeads(await updateLeadStatus(id, status));
@@ -415,6 +433,7 @@ export default function LeadsScreen() {
         contentContainerStyle={{ paddingBottom: botPad + 96 }}
         onScroll={tabBarScrollHandler}
         scrollEventThrottle={16}
+        refreshControl={noteEditId === null ? <BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshAgentLeads(); }} /> : undefined}
       >
         <AnimatedReveal>
           <View style={[styles.header, { paddingTop: topPad + 12, paddingHorizontal: 20, paddingBottom: 8 }]}>

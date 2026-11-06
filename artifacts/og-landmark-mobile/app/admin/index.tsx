@@ -3,7 +3,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Modal, Platform, Pressable, RefreshControl,
+  ActivityIndicator, Alert, Modal, Platform, Pressable,
   ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { useColors } from '@/hooks/useColors';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import brandColors from '@/constants/colors';
 import {
   getAdminStats, AdminStats,
@@ -131,7 +132,7 @@ export default function AdminDashboard() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.gold} />}
+        refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
         contentContainerStyle={{ paddingBottom: 40 }}
       >
         {loading ? (

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getSaved, toggleSavedAPI } from '@/lib/api';
 
@@ -7,6 +7,7 @@ type SavedContextValue = {
   savedIds: number[];
   isSaved: (id: number) => boolean;
   toggleSaved: (id: number) => void;
+  refreshSaved: () => Promise<void>;
 };
 
 const SavedContext = createContext<SavedContextValue | null>(null);
@@ -16,28 +17,29 @@ export function SavedProvider({ children }: { children: React.ReactNode }) {
   const [savedIds, setSavedIds] = useState<number[]>([]);
   const { user, isLoggedIn } = useAuth();
 
-  // Load from AsyncStorage on first mount (guest or logged-in)
-  useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((value) => { if (value) setSavedIds(JSON.parse(value) as number[]); })
-      .catch(() => undefined);
-  }, []);
-
-  // When user logs in, sync saved IDs from the backend and merge with local
-  useEffect(() => {
-    if (!isLoggedIn || !user) return;
-    const numId = Number(user.id);
-    if (!numId) return;
-    getSaved(numId)
-      .then((apiIds) => {
-        setSavedIds((local) => {
-          const merged = Array.from(new Set([...local, ...apiIds]));
-          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged)).catch(() => undefined);
-          return merged;
-        });
-      })
-      .catch(() => undefined);
+  const refreshSaved = useCallback(async () => {
+    const stored = await AsyncStorage.getItem(STORAGE_KEY).catch(() => null);
+    let localIds: number[] = [];
+    try {
+      if (stored) localIds = JSON.parse(stored) as number[];
+    } catch {
+      localIds = [];
+    }
+    let nextIds = localIds;
+    const numId = Number(user?.id);
+    if (isLoggedIn && numId) {
+      try {
+        const apiIds = await getSaved(numId);
+        nextIds = Array.from(new Set([...localIds, ...apiIds]));
+      } catch {
+        // Keep locally saved properties available when the API is offline.
+      }
+    }
+    setSavedIds(nextIds);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(nextIds)).catch(() => undefined);
   }, [isLoggedIn, user?.id]);
+
+  useEffect(() => { void refreshSaved(); }, [refreshSaved]);
 
   const toggleSaved = (id: number) => {
     setSavedIds((current) => {
@@ -55,8 +57,8 @@ export function SavedProvider({ children }: { children: React.ReactNode }) {
   };
 
   const value = useMemo(
-    () => ({ savedIds, isSaved: (id: number) => savedIds.includes(id), toggleSaved }),
-    [savedIds],
+    () => ({ savedIds, isSaved: (id: number) => savedIds.includes(id), toggleSaved, refreshSaved }),
+    [savedIds, refreshSaved],
   );
 
   return <SavedContext.Provider value={value}>{children}</SavedContext.Provider>;

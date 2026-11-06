@@ -15,6 +15,7 @@ import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import {
   SiteVisit, VisitStatus, getSiteVisits, saveSiteVisit,
   updateVisitStatus, visitStatusColor, isUpcoming, formatVisitDate, newVisitId,
@@ -46,6 +47,7 @@ export default function SiteVisitsScreen() {
   const [formCount, setFormCount]   = useState('1');
   const [formMsg, setFormMsg]       = useState('');
   const [saving, setSaving]         = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(useCallback(() => {
     void getSiteVisits(user?.id ?? '').then(setVisits);
@@ -53,6 +55,22 @@ export default function SiteVisitsScreen() {
   }, [user?.id]));
 
   const reload = () => void getSiteVisits(user?.id ?? '').then(setVisits);
+
+  const refreshVisits = async () => {
+    setRefreshing(true);
+    try {
+      const [nextVisits, projects] = await Promise.all([
+        getSiteVisits(user?.id ?? ''),
+        getDevProjects(user?.id ?? ''),
+      ]);
+      setVisits(nextVisits);
+      setProjectNames(projects.map((project) => project.name));
+    } catch {
+      // Keep the current visits if the API is unavailable.
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleAction = async (visit: SiteVisit, action: 'confirm' | 'reject' | 'complete' | 'reschedule') => {
     if (action === 'reschedule') {
@@ -213,6 +231,7 @@ export default function SiteVisitsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: botPad + 100 }}
         keyboardShouldPersistTaps="handled"
+        refreshControl={!showForm ? <BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshVisits(); }} /> : undefined}
       >
         {/* ── Header ────────────────────────────────────── */}
         <AnimatedReveal>

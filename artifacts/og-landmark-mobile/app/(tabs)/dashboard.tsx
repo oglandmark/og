@@ -13,6 +13,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { BrandMark } from '@/components/BrandMark';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import { getMyListings, calcListingStats } from '@/lib/listingsStore';
 import { getLeads, Lead } from '@/lib/leadsStore';
 import { getAgentVisits, isTodayVisit } from '@/lib/agentVisitsStore';
@@ -61,12 +62,30 @@ function DeveloperDashboard({
   });
   const [devLeadStats, setDevLeadStats] = useState({ total: 0, newCount: 0, wonCount: 0, lostCount: 0 });
   const [visitCount, setVisitCount]     = useState(0);
+  const [refreshing, setRefreshing]     = useState(false);
+
+  const reloadDashboard = useCallback(async (manual = false) => {
+    if (manual) setRefreshing(true);
+    try {
+      const [nextProjects, leads, visits] = await Promise.all([
+        getDevProjects(user?.id ?? ''),
+        getDevLeads(user?.id ?? ''),
+        getSiteVisits(user?.id ?? ''),
+      ]);
+      setProjects(nextProjects);
+      setStats(calcDevStats(nextProjects));
+      setDevLeadStats(calcDevLeadStats(leads));
+      setVisitCount(visits.filter(isUpcoming).length);
+    } catch {
+      // Keep the last successful dashboard snapshot if a refresh fails.
+    } finally {
+      if (manual) setRefreshing(false);
+    }
+  }, [user?.id]);
 
   useFocusEffect(useCallback(() => {
-    void getDevProjects(user?.id ?? '').then((p) => { setProjects(p); setStats(calcDevStats(p)); });
-    void getDevLeads(user?.id ?? '').then((l) => setDevLeadStats(calcDevLeadStats(l)));
-    void getSiteVisits(user?.id ?? '').then((v) => setVisitCount(v.filter(isUpcoming).length));
-  }, [user?.id]));
+    void reloadDashboard();
+  }, [reloadDashboard]));
 
   const isVerified = user?.verificationStatus === 'verified';
   const isPending  = user?.verificationStatus === 'pending';
@@ -108,6 +127,7 @@ function DeveloperDashboard({
       showsVerticalScrollIndicator={false}
       onScroll={tabBarScrollHandler}
       scrollEventThrottle={16}
+      refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void reloadDashboard(true); }} />}
     >
       {/* ── Top bar ──────────────────────────────────────────────── */}
       <AnimatedReveal>
@@ -346,35 +366,38 @@ export default function DashboardScreen() {
   const [recentLeads, setRecentLeads]                 = useState<Lead[]>([]);
   const [dashboardLoading, setDashboardLoading]       = useState(false);
   const [dashboardError, setDashboardError]           = useState('');
+  const [refreshing, setRefreshing]                   = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!isAgent) return;
-      void (async () => {
-        setDashboardLoading(true);
-        setDashboardError('');
-        try {
-          const [myListings, leads, visits] = await Promise.all([
-            getMyListings(user?.id ?? ''),
-            getLeads(),
-            getAgentVisits(user?.id ?? ''),
-          ]);
-          const lstats = calcListingStats(myListings);
-          setActiveListingsCount(lstats.active);
-          setTotalViews(lstats.totalViews);
-          setNewLeadsCount(leads.filter((l) => l.status === 'new').length);
-          setTotalLeadsCount(leads.length);
-          setTodayVisits(visits.filter(isTodayVisit).length);
-          setUpcomingVisits(visits.filter((v) => !isTodayVisit(v) && (v.status === 'Confirmed' || v.status === 'Requested')).length);
-          setRecentLeads(leads.slice(0, 4));
-        } catch {
-          setDashboardError('We could not refresh your portal data. Please try again.');
-        } finally {
-          setDashboardLoading(false);
-        }
-      })();
-    }, [isAgent, user?.id]),
-  );
+  const reloadAgentDashboard = useCallback(async (manual = false) => {
+    if (!isAgent) return;
+    if (manual) setRefreshing(true);
+    setDashboardLoading(true);
+    setDashboardError('');
+    try {
+      const [myListings, leads, visits] = await Promise.all([
+        getMyListings(user?.id ?? ''),
+        getLeads(),
+        getAgentVisits(user?.id ?? ''),
+      ]);
+      const lstats = calcListingStats(myListings);
+      setActiveListingsCount(lstats.active);
+      setTotalViews(lstats.totalViews);
+      setNewLeadsCount(leads.filter((lead) => lead.status === 'new').length);
+      setTotalLeadsCount(leads.length);
+      setTodayVisits(visits.filter(isTodayVisit).length);
+      setUpcomingVisits(visits.filter((visit) => !isTodayVisit(visit) && (visit.status === 'Confirmed' || visit.status === 'Requested')).length);
+      setRecentLeads(leads.slice(0, 4));
+    } catch {
+      setDashboardError('We could not refresh your portal data. Please try again.');
+    } finally {
+      setDashboardLoading(false);
+      if (manual) setRefreshing(false);
+    }
+  }, [isAgent, user?.id]);
+
+  useFocusEffect(useCallback(() => {
+    void reloadAgentDashboard();
+  }, [reloadAgentDashboard]));
 
   // ── Developer dashboard ──────────────────────────────────────────
   if (isDeveloper) {
@@ -419,6 +442,7 @@ export default function DashboardScreen() {
       showsVerticalScrollIndicator={false}
       onScroll={tabBarScrollHandler}
       scrollEventThrottle={16}
+      refreshControl={<BrandedRefreshControl refreshing={refreshing || dashboardLoading} onRefresh={() => { void reloadAgentDashboard(true); }} />}
     >
       <AnimatedReveal>
         <View style={[styles.header, { paddingHorizontal: 20 }]}>

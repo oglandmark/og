@@ -5,13 +5,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert, FlatList, Image, Linking, Modal, Platform, Pressable,
-  RefreshControl, ScrollView, StyleSheet, View,
+  ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import brandColors from '@/constants/colors';
 import { LocationPicker } from '@/components/LocationPicker';
 import { openGoogleMaps, type LocationData } from '@/lib/locationService';
@@ -478,7 +479,7 @@ export default function AdminProperties() {
           keyExtractor={item => `demo-${item.id}`}
           renderItem={renderDemoItem}
           contentContainerStyle={{ padding: 14, gap: 10, paddingBottom: 40 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={GOLD} />}
+          refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
           ListHeaderComponent={
             <View style={s.demoHeader}>
               <Text style={[s.demoDescription, { color: colors.mutedForeground }]}>
@@ -511,7 +512,7 @@ export default function AdminProperties() {
           keyExtractor={i => String(i.id)}
           renderItem={renderItem}
           contentContainerStyle={{ padding: 14, gap: 10, paddingBottom: 40 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={GOLD} />}
+          refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
           ListEmptyComponent={
             <View style={s.empty}>
               <Feather name="check-circle" size={40} color={colors.mutedForeground} />

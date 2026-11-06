@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import brandColors from '@/constants/colors';
 import {
   createAdminAnnouncement,
@@ -21,6 +22,7 @@ export default function AdminNotifications() {
   const { top } = useSafeAreaInsets();
   const [items, setItems] = useState<AdminAnnouncement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState('');
@@ -41,6 +43,18 @@ export default function AdminNotifications() {
       .finally(() => setLoading(false));
   }, []);
   useEffect(load, [load]);
+
+  const refreshAnnouncements = async () => {
+    setRefreshing(true);
+    try {
+      setItems(await getAdminAnnouncements());
+      setLoadError('');
+    } catch (cause: unknown) {
+      setLoadError(cause instanceof Error ? cause.message : 'Could not refresh announcements.');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const submit = async (sendNow: boolean) => {
     if (!title.trim() || !message.trim()) {
@@ -77,7 +91,11 @@ export default function AdminNotifications() {
         </View>
         <Feather name="send" size={18} color={GOLD} />
       </View>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 50 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ padding: 16, paddingBottom: 50 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshAnnouncements(); }} />}
+      >
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Create announcement</Text>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.label, { color: colors.mutedForeground }]}>Title</Text>

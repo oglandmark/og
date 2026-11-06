@@ -76,13 +76,13 @@ id = "CcWljg9BeNte0vWpxZKfq"
 uri = "file://generated-artifacts/og-landmark-website-frontend.zip"
 type = "unspecified"
 title = "OG Landmark Website Frontend ZIP"
-description = "Current static website frontend, including the OTP signup update and Hostinger .htaccess rules."
+description = "Website ke static frontend pages, assets aur build scripts. Backend, private data, secrets aur user-uploaded media shamil nahi hain."
 logical_id = "66b9c30f-5e16-4571-8661-5d14096c6ffb"
-content_hash = "sha256:04555bca7c08761686aefc190ba93f4befe057537b6a7d280860d022ad2465b2"
-size = 13188932
-mtime_ms = 1793711255408
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/66b9c30f-5e16-4571-8661-5d14096c6ffb/457985a1-bbdd-418a-9e53-8ad4eaf2d0d0"
-storage_version_token = "1793711332590441"
+content_hash = "sha256:dd556491d1ee60bfc0775ea9669a71d594a81f88fbb3cb8582af80f807ec3502"
+size = 23128800
+mtime_ms = 1793990473502
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/66b9c30f-5e16-4571-8661-5d14096c6ffb/fc47acb9-f5ac-41f9-8833-829228969fad"
+storage_version_token = "1793990485594031"
 content_type = "application/octet-stream"
 
 [[outputs]]

@@ -14,3 +14,9 @@ After transferring an Expo project, the app config's `owner` can still name the 
 **Why:** A transferred project can retain its project ID while its account slug changes; checking both identifiers avoids changing the ID based only on the visible project name.
 
 **How to apply:** Align `owner` with the account slug in the project URL, verify the ID/full-name pair with build history, and if `mcpExpo_buildRun` still says `No repository found for appId`, stop repeating the dispatch. Confirm the Expo GitHub App installation and repository binding for that exact project; a UI status alone does not explain the dispatch-service mismatch.
+
+`mcpExpo_buildRun` builds the requested GitHub ref, not the current local workspace. If the latest local commit is not present on an EAS-visible ref, create and push a dedicated build branch, then verify the returned build's commit hash before treating its artifact as current.
+
+**Why:** The workspace's active release branch can lag or diverge from the branch used by the last successful EAS build, so rebuilding that old ref can silently omit recent mobile changes.
+
+**How to apply:** Compare local HEAD with the latest successful EAS build commit; push the intended source to a dedicated branch when needed, and confirm `gitCommitHash`, app version, and Android build number from build metadata.

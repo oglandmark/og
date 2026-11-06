@@ -56,6 +56,12 @@ test('the shared refresh animation uses OG Landmark brand colors', () => {
   assert.match(control, /title=\{Platform\.OS === 'ios' \? label : undefined\}/);
 });
 
+test('Home keeps its refresh control native-only for the Replit web preview', () => {
+  const home = read('app/(tabs)/index.tsx');
+  assert.match(home, /refreshControl=\{Platform\.OS === 'web' \? undefined : \(/);
+  assert.match(home, /<BrandedRefreshControl refreshing=\{refreshing\}/);
+});
+
 test('Home only shows its full-feed loader for the first property request', () => {
   const home = read('app/(tabs)/index.tsx');
   assert.match(home, /homePropertiesRequestedRef = useRef\(false\)/);

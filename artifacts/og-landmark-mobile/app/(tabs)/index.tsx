@@ -1710,7 +1710,9 @@ export default function HomeScreen() {
         tabBarScrollHandler(event);
       }}
       scrollEventThrottle={16}
-      refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshHome(); }} />}
+      refreshControl={Platform.OS === 'web' ? undefined : (
+        <BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshHome(); }} />
+      )}
     >
 
       {/* ─── HEADER ─────────────────────────────────────────────────────── */}

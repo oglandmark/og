@@ -7,6 +7,12 @@ Use the shared semantic tokens and reusable controls for new mobile UI. The curr
 
 For property-listing selection UI, use premium flat 2D Feather line icons rather than emoji glyphs, with restrained navy/gold treatments.
 
+Render the branded native `RefreshControl` only on iOS and Android; omit it on web.
+
+**Why:** In the Replit Expo browser preview, passing the native refresh control to Home's `ScrollView` left the Home screen blank while its tab bar remained visible. Guarding the prop on web restored Home and the onboarding-to-Home flow.
+
+**How to apply:** For shared list screens, keep pull-to-refresh on native platforms and set the `ScrollView` refresh control to `undefined` on web.
+
 Preserve existing bottom-tab destinations, order, and behavior during Profile redesigns; restyle the bar when explicitly requested.
 
 **Why:** The user asked to retain the current navigation while updating the Profile screen.

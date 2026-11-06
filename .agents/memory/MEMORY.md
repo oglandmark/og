@@ -19,6 +19,7 @@
 - [Expo preview native libraries](expo-preview-native-libraries.md) — Replit Expo preview needs the desktop libraries used by React Native DevTools; keep the root pnpm pin unset locally.
 - [Expo dependency alignment](expo-dependency-alignment.md) — package fixes can trigger mid-install Metro resolution errors; verify module resolution and the final bundle after installation finishes.
 - [Expo preview bundle routing](expo-preview-bundle-resolver.md) — use Expo host for Metro and local property media; avoid routing unrelated APIs to the incomplete local backend.
+- [Expo Go tunnel routing](expo-go-tunnel.md) — use a short tunnel subdomain for physical devices while retaining Replit's Expo-domain host overrides.
 - [Expo preview CLI prompt](expo-preview-cli-prompt.md) — Expo-domain mobile previews use the domain root; test after the splash before diagnosing route reloads.
 - [Mobile preview verification](mobile-preview-verification.md) — splash-only screenshots do not verify app content; inspect the live feed and report visual-check limits.
 - [Native splash provider order](native-splash-provider-order.md) — native-only startup overlays must render inside every context provider they consume; web previews may hide this class of crash.

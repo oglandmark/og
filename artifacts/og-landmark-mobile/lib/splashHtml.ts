@@ -21,7 +21,7 @@ export function prepareSplashHtml(source: string): string {
     throw new Error('Splash reference is missing its expected control panel.');
   }
   if (
-    !source.includes('let snd=false,prev=0;') ||
+    !source.includes('let snd=false;') ||
     !controlHandlers.test(source) ||
     !audioElementMarkup.test(source)
   ) {

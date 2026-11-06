@@ -40,3 +40,9 @@ test('skip or completion persists onboarding so later launches go to Home', () =
   assert.match(onboarding, /router\.replace\('\/\(tabs\)'\)/);
   assert.match(rootIndex, /Redirect href="\/\(tabs\)"/);
 });
+
+test('onboarding storage reads cannot keep startup splash open indefinitely', () => {
+  assert.match(storage, /ONBOARDING_STORAGE_READ_TIMEOUT_MS = 5_000/);
+  assert.match(storage, /Promise\.race/);
+  assert.match(storage, /setTimeout\(\(\) => resolve\(true\)/);
+});

@@ -90,9 +90,15 @@ test('startup splash uses the supplied HTML scene and its complete animation tim
   assert.match(colorTokens, /splashGold: '#C9A55C'/);
 });
 
+test('startup splash plays once and holds its final frame instead of restarting', () => {
+  assert.match(splashReference, /cur=Math\.min\(D,\(now-t0\)\/1000\)/);
+  assert.match(splashReference, /if\(cur<D\)requestAnimationFrame\(loop\)/);
+  assert.doesNotMatch(splashReference, /\)%D/);
+});
+
 test('startup splash removes embedded audio and stays silent', () => {
   const preparedHtml = prepareSplashHtml(splashReference);
-  assert.match(preparedHtml, /let snd=false,prev=0/);
+  assert.match(preparedHtml, /let snd=false/);
   assert.doesNotMatch(preparedHtml, /<audio id="au"/);
   assert.doesNotMatch(preparedHtml, /data:audio\/mpeg;base64/);
   assert.doesNotMatch(preparedHtml, /<div id="ui">/);

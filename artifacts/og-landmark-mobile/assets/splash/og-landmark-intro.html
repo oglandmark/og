@@ -104,10 +104,10 @@ function fit(){const {W,H}=C,uh=RENDER?0:56,k=Math.min(innerWidth/W,(innerHeight
 addEventListener('resize',()=>C&&fit());
 function setF(f){build(f);document.querySelectorAll('#ui [data-f]').forEach(b=>b.classList.toggle('on',b.dataset.f==f));t0=performance.now();playAu()}
 document.querySelectorAll('#ui [data-f]').forEach(b=>b.onclick=()=>setF(b.dataset.f));
-let snd=false,prev=0;const au=$('au');
+let snd=false;const au=$('au');
 function playAu(){if(!snd)return;try{au.currentTime=0;au.play().catch(()=>{})}catch(e){}}
 $('sd').onclick=()=>{snd=!snd;$('sd').textContent=snd?'🔊 Sound on':'🔈 Sound off';$('sd').classList.toggle('on',snd);if(snd){t0=performance.now();playAu()}else au.pause()};
 $('rp').onclick=()=>{t0=performance.now();playAu()};
 if(RENDER){$('ui').style.display='none';build(F=P.get('f')||'app');window.seek=t=>{render(t)};window.ready=true}
-else{setF(P.get('f')||'app');(function loop(now){cur=((now-t0)/1000)%D;if(cur<prev)playAu();prev=cur;render(cur);requestAnimationFrame(loop)})(performance.now())}
+else{setF(P.get('f')||'app');(function loop(now){cur=Math.min(D,(now-t0)/1000);render(cur);if(cur<D)requestAnimationFrame(loop)})(performance.now())}
 </script></body></html>

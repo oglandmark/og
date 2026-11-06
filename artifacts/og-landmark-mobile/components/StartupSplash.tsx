@@ -52,7 +52,6 @@ export function StartupSplash({
     const loadSplash = async () => {
       let sourceUri = splashHtmlAsset.uri;
       try {
-        await splashHtmlAsset.downloadAsync();
         let source: string;
         if (Platform.OS === 'web') {
           sourceUri = resolveSplashAssetUri(splashHtmlAsset.uri, window.location.origin);
@@ -62,6 +61,7 @@ export function StartupSplash({
           }
           source = await response.text();
         } else {
+          await splashHtmlAsset.downloadAsync();
           sourceUri = splashHtmlAsset.localUri ?? splashHtmlAsset.uri;
           source = await FileSystem.readAsStringAsync(sourceUri);
         }

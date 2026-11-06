@@ -11,11 +11,11 @@ Native startup must not depend indefinitely on the API session check. Restore a 
 
 ## Startup screen
 
-Keep the JavaScript animated splash visible for one complete 8-second HTML cycle after its WebView or iframe reports ready, and until auth and navigation are ready. Render a branded fallback immediately while the HTML loads; keep the native launch screen logo-free. Load branded fonts in the background with a system-font fallback, and render the animated overlay inside its required providers.
+Keep the JavaScript animated splash visible for one complete, non-repeating 8-second HTML cycle after its WebView or iframe reports ready, and until auth and navigation are ready. Hold the final frame if readiness is delayed, and bound onboarding-storage reads so they cannot keep the overlay open indefinitely. On web, fetch the same-origin splash asset once; keep the native launch screen logo-free.
 
-**Why:** The user wants the full animation to finish before onboarding or Home appears. Starting the duration timer at root mount can cut off the animation while the local HTML asset is still loading. In Replit's Expo web preview, Metro assets need the same-origin `/assets/?unstable_path=...` endpoint; a direct `/assets/...` URL can return 404.
+**Why:** The full animation must finish before onboarding or Home appears, but the HTML timeline previously wrapped back to its start while readiness gates were unresolved. A slow or stuck onboarding-storage read could keep the splash visible long enough to replay. On web, downloading the Expo asset before fetching its Metro URL also delayed the animation unnecessarily.
 
-**How to apply:** Start the animation timer from the WebView/iframe ready callback, preserve auth and route readiness gates, and use a bounded fallback if the asset cannot load. Resolve web asset URLs through the active Expo preview origin.
+**How to apply:** Start the duration timer from the WebView/iframe ready callback; clamp the HTML timeline at its end; bound auth and onboarding hydration; use a branded fallback if the asset cannot load. Resolve web asset URLs through the active Expo preview origin.
 
 ## First-install onboarding
 

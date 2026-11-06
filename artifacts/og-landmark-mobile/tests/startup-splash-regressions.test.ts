@@ -61,10 +61,10 @@ test('startup keeps the complete 8-second animated splash and removes the static
 test('web splash assets use the active preview origin instead of localhost', () => {
   assert.equal(
     resolveSplashAssetUri(
-      'http://localhost:18115/assets/og-landmark-intro.html?platform=web',
+      'http://localhost:18115/assets/splash/og-landmark-intro.html?platform=web&hash=abc123',
       'https://preview.example',
     ),
-    'https://preview.example/assets/og-landmark-intro.html?platform=web',
+    'https://preview.example/assets/?unstable_path=.%2Fassets%2Fsplash%2Fog-landmark-intro.html&platform=web&hash=abc123',
   );
 });
 

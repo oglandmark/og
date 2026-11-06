@@ -7,6 +7,12 @@ const audioElementMarkup = /<audio id="au"[^>]*><\/audio>/;
 export function resolveSplashAssetUri(uri: string, origin: string): string {
   const asset = new URL(uri, origin);
   const appOrigin = new URL(origin);
+  if (asset.pathname.startsWith('/assets/')) {
+    const metroAsset = new URL('/assets/', appOrigin);
+    metroAsset.searchParams.set('unstable_path', `.${asset.pathname}`);
+    asset.searchParams.forEach((value, key) => metroAsset.searchParams.set(key, value));
+    return metroAsset.href;
+  }
   return new URL(`${asset.pathname}${asset.search}${asset.hash}`, appOrigin).href;
 }
 

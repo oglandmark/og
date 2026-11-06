@@ -24,7 +24,7 @@
 - [Mobile preview verification](mobile-preview-verification.md) — splash-only screenshots do not verify app content; inspect the live feed and report visual-check limits.
 - [Native splash provider order](native-splash-provider-order.md) — native-only startup overlays must render inside every context provider they consume; web previews may hide this class of crash.
 - [Color-only native splash](native-splash-color-only.md) — keep the native pre-JS splash logo-free; Android still needs transparent splash drawables for resource linking.
-- [Expo startup hydration](expo-startup-hydration.md) — cached auth plus a bounded startup watchdog prevents slow session checks from trapping Expo Go on the splash screen.
+- [Expo startup hydration](expo-startup-hydration.md) — show fallback immediately and wait for one full splash cycle plus auth and route readiness.
 - [Android video compositing](android-video-compositing.md) — stacked Expo video surfaces can blank sibling content; use texture views and mount only the active banner video.
 - [GitHub connector write fallback](github-connector-write-fallback.md) — use Git data API on write blocks; stage large Base64 batches to disk and verify hashes.
 - [Android reveal lifecycle](android-reveal-lifecycle.md) — nested tab focus callbacks can miss; animated content must start visible to avoid blank Home sections.

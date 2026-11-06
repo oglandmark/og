@@ -37,7 +37,7 @@
 - [Expo web image preview](expo-web-image-preview.md) — use an explicit expo-image layer for reliable full-bleed local media in the proxied Expo web preview.
 - [Notification delivery pipeline](notification-system.md) — preserve per-user delivery and normalize Laravel array responses alongside the older paginated client contract.
 - [Admin-only Agent cover access](agent-cover-access.md) — only explicitly admin-enabled Agent IDs can manage cover photos; enforce the allowlist in both mobile UI and API.
-- [Mobile polish guardrails](mobile-polish-guardrails.md) — use the official roof/house + OG mark in theme navy, keep inverse white on dark surfaces, and remove three pillars.
+- [Official OG logo](mobile-polish-guardrails.md) — the supplied navy rounded-square, gold roof, and teal-to-gold OG monogram is the official website logo.
 - [Listing edit media](listing-edit-media.md) — treat stored media URLs as remote and send explicit null when an editor removes optional media.
 - [Local auth test fixtures](local-auth-fixtures.md) — local JSON server fixtures must seed passwords in the server's PBKDF2 format before login tests.
 - [Post-merge setup](post-merge-setup.md) — this workspace needs a non-frozen pnpm install and the scoped @workspace/db filter.

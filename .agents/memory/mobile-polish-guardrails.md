@@ -33,6 +33,12 @@ Guest Profile keeps six locked activity shortcuts and the five public Settings l
 
 **How to apply:** Extend `PolishedUI` and the semantic color/layout tokens before adding one-off controls. Use the official roof/house + OG mark in #0B1F3A on light surfaces and its white inverse on dark surfaces. Keep the three-pillar artwork out of active app, web, portal, legal-page, and icon assets. For cards, make the body the detail target and leave media/action controls as sibling press targets. Respect reduced-motion settings in shared animations.
 
+The user-provided navy rounded-square logo with a gold roof and turquoise-to-gold OG monogram is the official website logo. Use this master mark consistently in public pages, account portals, admin areas, and browser icons; do not substitute older logo variants.
+
+**Why:** The user identified this specific image as the official logo on November 6, 2026.
+
+**How to apply:** When updating website branding, use the supplied master mark as-is and preserve its square silhouette. Keep unrelated website assets and page layouts unchanged.
+
 **Why:** The user requested a looping animation on the OG-and-roof mark in the mobile app, starting ten seconds after each page opens.
 
 **How to apply:** Keep this motion on the shared logo mark, restart its delay when a page gains focus, stop it when focus leaves, and leave the separate wordmark unanimated. Nested tab headers should receive the parent screen's focus state explicitly; enable the web animation opt-in where the Replit preview should show it.

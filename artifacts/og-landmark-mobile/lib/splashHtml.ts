@@ -1,6 +1,14 @@
+export const STARTUP_SPLASH_ANIMATION_DURATION_MS = 8_000;
+
 const controlPanelMarkup = /<div id="ui">[\s\S]*?<\/div>/;
 const controlHandlers = /\$\('sd'\)\.onclick=[\s\S]*?\$\('rp'\)\.onclick=[\s\S]*?playAu\(\)\};/;
 const audioElementMarkup = /<audio id="au"[^>]*><\/audio>/;
+
+export function resolveSplashAssetUri(uri: string, origin: string): string {
+  const asset = new URL(uri, origin);
+  const appOrigin = new URL(origin);
+  return new URL(`${asset.pathname}${asset.search}${asset.hash}`, appOrigin).href;
+}
 
 export function prepareSplashHtml(source: string): string {
   if (!controlPanelMarkup.test(source)) {

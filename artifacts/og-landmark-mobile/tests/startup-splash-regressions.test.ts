@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { prepareSplashHtml } from '../lib/splashHtml';
+import {
+  prepareSplashHtml,
+  resolveSplashAssetUri,
+  STARTUP_SPLASH_ANIMATION_DURATION_MS,
+} from '../lib/splashHtml';
 
 const appConfig = JSON.parse(
   readFileSync(new URL('../app.json', import.meta.url), 'utf8'),
@@ -37,20 +41,31 @@ const splashPlugin = appConfig.expo.plugins.find(
     Array.isArray(plugin) && plugin[0] === 'expo-splash-screen',
 );
 
-test('startup keeps the 8-second animated splash and removes the static native logo', () => {
+test('startup keeps the complete 8-second animated splash and removes the static native logo', () => {
+  assert.equal(STARTUP_SPLASH_ANIMATION_DURATION_MS, 8000);
   assert.ok(splashPlugin);
   assert.equal(splashPlugin[1].image, undefined);
   assert.equal(splashPlugin[1].dark?.image, undefined);
   assert.equal(splashPlugin[1].android?.drawable?.icon, './plugins/splash-transparent.xml');
   assert.equal(splashPlugin[1].android?.drawable?.darkIcon, './plugins/splash-transparent.xml');
-  assert.match(layout, /STARTUP_SPLASH_MIN_DURATION_MS = 8000/);
   assert.match(layout, /splashDurationElapsed/);
-  assert.match(layout, /<StartupSplash colors=\{colors\} overlay fontsReady=\{fontsReady\} \/>/);
+  assert.match(layout, /onAnimationReady=\{handleSplashReady\}/);
+  assert.match(startupSplash, /onLoadEnd=\{\(\) => reportAnimationReady\(true\)\}/);
   assert.ok(appConfig.expo.assetBundlePatterns?.includes('assets/splash/*'));
   assert.match(colorTokens, /background: '#FFFFFF'/);
   assert.match(colorTokens, /teal: '#19C3B1'/);
   assert.match(colorTokens, /gold: '#F2B84B'/);
   assert.match(colorTokens, /splashBackground: '#040C1A'/);
+});
+
+test('web splash assets use the active preview origin instead of localhost', () => {
+  assert.equal(
+    resolveSplashAssetUri(
+      'http://localhost:18115/assets/og-landmark-intro.html?platform=web',
+      'https://preview.example',
+    ),
+    'https://preview.example/assets/og-landmark-intro.html?platform=web',
+  );
 });
 
 test('startup splash uses the supplied HTML scene and its complete animation timeline', () => {

@@ -7,7 +7,8 @@ const onboarding = readFileSync(new URL('../app/onboarding.tsx', import.meta.url
 const storage = readFileSync(new URL('../lib/onboarding.ts', import.meta.url), 'utf8');
 
 test('first launch routes through three category onboarding slides after the animated splash', () => {
-  assert.match(layout, /STARTUP_SPLASH_MIN_DURATION_MS = 8000/);
+  assert.match(layout, /STARTUP_SPLASH_ANIMATION_DURATION_MS/);
+  assert.match(layout, /onAnimationReady=\{handleSplashReady\}/);
   assert.match(layout, /getOnboardingCompletion\(\)/);
   assert.match(layout, /router\.replace\('\/onboarding'\)/);
   assert.match(onboarding, /key: 'homes'/);

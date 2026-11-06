@@ -30,10 +30,10 @@ import {
 } from '@/lib/pushNotifications';
 import { markNotificationRead } from '@/lib/api';
 import { getOnboardingCompletion } from '@/lib/onboarding';
+import { STARTUP_SPLASH_ANIMATION_DURATION_MS } from '@/lib/splashHtml';
 
 SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
-const STARTUP_SPLASH_MIN_DURATION_MS = 8000;
 
 function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
   const colors = useColors();
@@ -43,14 +43,24 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
   const router = useRouter();
   const [navigationReady, setNavigationReady] = React.useState(false);
   const [splashDurationElapsed, setSplashDurationElapsed] = React.useState(false);
+  const splashShownAt = React.useRef(Date.now());
+  const splashDurationTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const handledNotificationResponses = React.useRef(new Set<string>());
 
-  useEffect(() => {
-    const timeout = setTimeout(
+  const handleSplashReady = React.useCallback((animated: boolean) => {
+    if (splashDurationTimer.current) return;
+    const elapsed = Date.now() - splashShownAt.current;
+    const remaining = animated
+      ? STARTUP_SPLASH_ANIMATION_DURATION_MS
+      : Math.max(0, STARTUP_SPLASH_ANIMATION_DURATION_MS - elapsed);
+    splashDurationTimer.current = setTimeout(
       () => setSplashDurationElapsed(true),
-      STARTUP_SPLASH_MIN_DURATION_MS,
+      remaining,
     );
-    return () => clearTimeout(timeout);
+  }, []);
+
+  useEffect(() => () => {
+    if (splashDurationTimer.current) clearTimeout(splashDurationTimer.current);
   }, []);
 
   useEffect(() => {
@@ -222,7 +232,12 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
       </Stack>
       {(isLoading || !navigationReady || !splashDurationElapsed) && (
-        <StartupSplash colors={colors} overlay fontsReady={fontsReady} />
+        <StartupSplash
+          colors={colors}
+          overlay
+          fontsReady={fontsReady}
+          onAnimationReady={handleSplashReady}
+        />
       )}
     </View>
   );

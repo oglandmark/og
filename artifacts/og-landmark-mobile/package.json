@@ -8,7 +8,7 @@
     "build": "node scripts/build.js",
     "eas-build-pre-install": "node scripts/check-mapbox-build.cjs",
     "serve": "node server/serve.js",
-    "test:location": "../../scripts/node_modules/.bin/tsx --test tests/location-regressions.test.ts tests/listing-lifecycle.integration.test.ts tests/property-media.test.ts tests/api-base.test.ts tests/media-upload-regressions.test.ts tests/notification-regressions.test.ts tests/startup-splash-regressions.test.ts tests/onboarding-regressions.test.ts tests/public-contact.test.ts tests/property-coordinates.test.ts tests/demo-property-visibility.test.ts tests/post-ad-entry.test.ts tests/plot-calculator.test.ts tests/featured-properties.test.ts tests/recommended-properties.test.ts tests/latest-properties.test.ts tests/home-banner-playback.test.ts",
+    "test:location": "../../scripts/node_modules/.bin/tsx --test tests/location-regressions.test.ts tests/listing-lifecycle.integration.test.ts tests/property-media.test.ts tests/api-base.test.ts tests/media-upload-regressions.test.ts tests/auth-keyboard-regressions.test.ts tests/notification-regressions.test.ts tests/startup-splash-regressions.test.ts tests/onboarding-regressions.test.ts tests/public-contact.test.ts tests/property-coordinates.test.ts tests/demo-property-visibility.test.ts tests/post-ad-entry.test.ts tests/plot-calculator.test.ts tests/featured-properties.test.ts tests/recommended-properties.test.ts tests/latest-properties.test.ts tests/home-banner-playback.test.ts",
     "check:brand-assets": "node scripts/check-brand-assets.cjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

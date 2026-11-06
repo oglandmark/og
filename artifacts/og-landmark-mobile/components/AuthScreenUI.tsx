@@ -2,11 +2,9 @@ import React, { type ReactNode, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
   useWindowDimensions,
@@ -17,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { LocalizedText as Text } from '@/components/LocalizedText';
+import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { useLanguage } from '@/context/LanguageContext';
 import { useColors } from '@/hooks/useColors';
 
@@ -76,22 +75,20 @@ export function AuthScreenFrame({
         ]}
         accessibilityLabel="OG Landmark luxury home illustration"
       />
-      <KeyboardAvoidingView
+      <KeyboardAwareScrollViewCompat
         style={styles.keyboardFrame}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        bottomOffset={Platform.OS === 'android' ? 32 : 24}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={{ paddingTop: AUTH_SHEET_TOP, flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={[styles.scrollContent, { paddingTop: AUTH_SHEET_TOP }]}>
           <View
             style={[
               styles.sheet,
               {
                 minHeight: Math.max(height - AUTH_SHEET_TOP, 520),
-                paddingBottom: Math.max(bottomInset, 16) + 18,
+                paddingBottom: Math.max(bottomInset, Platform.OS === 'android' ? 24 : 16) + 24,
                 backgroundColor: colors.background,
               },
             ]}
@@ -124,8 +121,8 @@ export function AuthScreenFrame({
               {children}
             </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </View>
+      </KeyboardAwareScrollViewCompat>
     </View>
   );
 }
@@ -286,7 +283,7 @@ const styles = StyleSheet.create({
   },
   house: { position: 'absolute', top: 78 },
   keyboardFrame: { flex: 1 },
-  scroll: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
   sheet: {
     flexGrow: 1,
     borderTopLeftRadius: 32,

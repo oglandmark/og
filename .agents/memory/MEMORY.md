@@ -35,7 +35,7 @@
 - [Mobile Mapbox provider](mobile-mapbox-provider.md) — native map screens use Mapbox; the selected EAS build environment must provide its public token.
 - [Web map iframe mode switching](web-map-mode-switching.md) — update loaded same-origin map frames through their setter; use channel-scoped messages only before load.
 - [Expo web image preview](expo-web-image-preview.md) — use an explicit expo-image layer for reliable full-bleed local media in the proxied Expo web preview.
-- [Notification delivery pipeline](notification-system.md) — all broadcasts and lifecycle events must use per-user records, recipient-scoped dedupe keys, and the same push/preferences pipeline.
+- [Notification delivery pipeline](notification-system.md) — preserve per-user delivery and normalize Laravel array responses alongside the older paginated client contract.
 - [Admin-only Agent cover access](agent-cover-access.md) — only explicitly admin-enabled Agent IDs can manage cover photos; enforce the allowlist in both mobile UI and API.
 - [Mobile polish guardrails](mobile-polish-guardrails.md) — use the official roof/house + OG mark in theme navy, keep inverse white on dark surfaces, and remove three pillars.
 - [Listing edit media](listing-edit-media.md) — treat stored media URLs as remote and send explicit null when an editor removes optional media.

@@ -20,6 +20,19 @@ import {
   normalizePropertyMedia,
   resolveMediaUrl as resolveMediaUrlForBase,
 } from './propertyMedia';
+import { normalizeNotificationPage } from './notificationData';
+import type {
+  AppNotification,
+  NotificationCategory,
+  NotificationPage,
+  NotificationPreferences,
+} from './notificationData';
+export type {
+  AppNotification,
+  NotificationCategory,
+  NotificationPage,
+  NotificationPreferences,
+} from './notificationData';
 
 // ─── Base URL ──────────────────────────────────────────────────────────────────
 // Mobile API reads and writes intentionally use the live Laravel API in every
@@ -636,53 +649,6 @@ export async function toggleSavedAPI(userId: number, propertyId: number): Promis
 }
 
 // ─── Notifications ─────────────────────────────────────────────────────────────
-export type NotificationCategory = 'properties' | 'projects' | 'announcements' | 'promotional' | 'account' | 'system';
-export type AppNotification = {
-  id: number;
-  notificationId: string;
-  recipientUserId: number;
-  type: string;
-  category: NotificationCategory;
-  title: string;
-  message: string;
-  body: string;
-  imageUrl?: string | null;
-  entityType?: string | null;
-  entityId?: string | number | null;
-  propertyId?: string | number | null;
-  projectId?: string | number | null;
-  announcementId?: string | number | null;
-  deepLink?: string | null;
-  priority?: 'NORMAL' | 'HIGH' | 'URGENT';
-  isRead: boolean;
-  read: boolean;
-  readAt?: string | null;
-  createdAt: string;
-  expiresAt?: string | null;
-  metadata?: Record<string, unknown>;
-};
-
-export type NotificationPage = {
-  items: AppNotification[];
-  page: number;
-  limit: number;
-  total: number;
-  hasMore: boolean;
-  unreadCount: number;
-};
-
-export type NotificationPreferences = {
-  properties: boolean;
-  projects: boolean;
-  announcements: boolean;
-  promotional: boolean;
-  account: boolean;
-  system: boolean;
-  frequency: 'immediate' | 'daily' | 'weekly';
-  cities?: string[];
-  propertyTypes?: string[];
-};
-
 export async function getNotifications(
   _userId?: number,
   options: { page?: number; limit?: number; category?: NotificationCategory | 'all' } = {},
@@ -692,7 +658,8 @@ export async function getNotifications(
     limit: String(options.limit ?? 25),
     category: options.category ?? 'all',
   });
-  return apiFetch<NotificationPage>(`/api/notifications?${params.toString()}`);
+  const response = await apiFetch<unknown>(`/api/notifications?${params.toString()}`);
+  return normalizeNotificationPage(response, options);
 }
 
 export async function getNotificationUnreadCount(): Promise<number> {

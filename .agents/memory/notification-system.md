@@ -9,6 +9,12 @@ All notification sources, including legacy admin broadcasts, should pass through
 
 **How to apply:** When adding a new property, project, announcement, or account event, resolve recipients first, create one durable record per recipient, then send push only when that recipient's preferences and delivery frequency allow it.
 
+The mobile notifications client must accept both Laravel's user-scoped bare array and the older Node API's paginated `{ items, ... }` response. Normalize both at the API boundary so a valid Laravel response cannot make the notification screen render with an undefined list.
+
+**Why:** The mobile app uses the Laravel API, whose current notifications endpoint returns an array, while the older Node endpoint returns pagination metadata.
+
+**How to apply:** Keep response-shape handling in a pure, tested normalization helper and preserve category filtering and pagination for array responses.
+
 When API traffic is proxied to Laravel, Laravel must own scheduled announcement delivery against the canonical `app_data` document. Do not run the legacy Node scheduler at the same time; both runtimes can overwrite the same JSON snapshot.
 
 **Why:** A second scheduler or database-backed startup path can race Laravel API writes and lose notification or listing updates.

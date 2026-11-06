@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { normalizeNotificationPage } from '../lib/notificationData';
 
 const server = readFileSync(new URL('../../og-landmark-web/server.js', import.meta.url), 'utf8');
 const api = readFileSync(new URL('../lib/api.ts', import.meta.url), 'utf8');
@@ -29,9 +30,38 @@ test('mobile notification contract includes pagination, preferences and deep lin
   assert.match(api, /getNotificationUnreadCount/);
   assert.match(api, /markAllNotificationsRead/);
   assert.match(api, /updateNotificationPreferences/);
+  assert.match(api, /normalizeNotificationPage\(response, options\)/);
   assert.match(center, /onEndReached/);
   assert.match(center, /\/property\/\[id\]/);
   assert.match(center, /\/announcements\/\[id\]/);
+});
+
+test('notification center accepts Laravel array responses and paginates safely', () => {
+  const result = normalizeNotificationPage([
+    { id: 11, userId: 7, message: 'Older property update', category: 'properties', read: true },
+    { id: 12, userId: 7, message: 'New project update', category: 'projects', read: false },
+    { id: 13, userId: 7, message: 'New property update', category: 'properties', read: false },
+  ], { page: 1, limit: 1, category: 'properties' });
+
+  assert.equal(result.items.length, 1);
+  assert.equal(result.items[0].notificationId, '11');
+  assert.equal(result.items[0].title, 'Older property update');
+  assert.equal(result.items[0].body, 'Older property update');
+  assert.equal(result.total, 2);
+  assert.equal(result.hasMore, true);
+  assert.equal(result.unreadCount, 1);
+
+  const paginated = normalizeNotificationPage({
+    items: [{ id: 14, title: 'Account update', category: 'account', isRead: false }],
+    page: 3,
+    limit: 10,
+    total: 23,
+    hasMore: true,
+    unreadCount: 4,
+  }, { page: 3, limit: 10 });
+  assert.equal(paginated.page, 3);
+  assert.equal(paginated.total, 23);
+  assert.equal(paginated.unreadCount, 4);
 });
 
 test('home notification bell and notification center remain accessible to guests', () => {

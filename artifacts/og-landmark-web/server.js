@@ -716,8 +716,30 @@ function ensureMobileAgents(data) {
   return false;
 }
 
+function isAdminManagedMobileAgent(agent, data) {
+  if (agent.createdByAdmin === true) return true;
+  const id = String(agent.id ?? '');
+  if ((data.adminAudit || []).some(entry =>
+    entry.action === 'mobile_agent_created' && String(entry.entityId ?? '') === id
+  )) return true;
+  return (data.users || []).some(user =>
+    user.role === 'Agent'
+    && user.createdByAdmin === true
+    && (
+      (agent.authUserId != null && String(user.id) === String(agent.authUserId))
+      || (agent.email && String(user.email || '').trim().toLowerCase() === String(agent.email).trim().toLowerCase())
+    )
+  );
+}
+
 function safeMobileAgent(agent, includePrivate = false) {
-  const { password: _password, email: _email, authUserId: _authUserId, ...safe } = agent;
+  const {
+    password: _password,
+    email: _email,
+    authUserId: _authUserId,
+    createdByAdmin: _createdByAdmin,
+    ...safe
+  } = agent;
   return {
     ...safe,
     displayName: safe.displayName || safe.name || '',
@@ -2625,7 +2647,8 @@ app.get('/api/mobile-agents', async (req, res) => {
   try {
     const data = await readData();
     let agents = (data.mobileAgents || []).filter(a =>
-      a.visible !== false
+      isAdminManagedMobileAgent(a, data)
+      && a.visible !== false
       && String(a.status || '').toLowerCase() === 'active'
       && String(a.approvalStatus || '').toLowerCase() === 'approved'
     );
@@ -2675,6 +2698,7 @@ app.post('/api/admin/mobile-agents', requireAdmin, async (req, res) => {
       id: agentId,
       name,
       displayName: name,
+      createdByAdmin: true,
       initials: String(body.initials || name.split(/\s+/).map(part => part[0]).join('').slice(0, 2)).toUpperCase(),
       agency: String(body.agency || '').trim(),
       verified: body.verified !== false,
@@ -2861,8 +2885,12 @@ app.get('/api/agents', async (req, res) => {
     // Include the admin-managed mobile directory there as well, without
     // changing the admin account list returned when no approval filter exists.
     if (req.query.approvalStatus === 'Approved') {
+      agents = agents.filter(a =>
+        a.createdByAdmin === true && a.status === 'Active' && a.visible !== false
+      );
       agents = agents.concat((data.mobileAgents || []).filter(a =>
-        a.approvalStatus === 'Approved' && a.status === 'Active' && a.visible !== false
+        isAdminManagedMobileAgent(a, data)
+        && a.approvalStatus === 'Approved' && a.status === 'Active' && a.visible !== false
       ));
     }
     res.json(agents.map(safeMobileAgent));

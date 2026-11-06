@@ -1235,6 +1235,7 @@ final class AdminController extends Controller
                 'status' => 'Active',
                 'approvalStatus' => 'Approved',
                 'visible' => true,
+                'createdByAdmin' => true,
                 'createdAt' => $now,
                 'updatedAt' => $now,
             ], $validated);

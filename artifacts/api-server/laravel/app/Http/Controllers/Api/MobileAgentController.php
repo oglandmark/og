@@ -11,9 +11,18 @@ final class MobileAgentController extends Controller
 {
     public function index(Request $request, LegacyDataStore $store): JsonResponse
     {
+        $data = $store->read();
+        $adminCreatedIds = [];
+        foreach ($data['adminAudit'] ?? [] as $entry) {
+            if (($entry['action'] ?? '') === 'mobile_agent_created') {
+                $adminCreatedIds[(string) ($entry['entityId'] ?? '')] = true;
+            }
+        }
         $agents = array_values(array_filter(
-            $store->read()['mobileAgents'] ?? [],
-            fn (array $agent): bool => ($agent['visible'] ?? true) !== false
+            $data['mobileAgents'] ?? [],
+            fn (array $agent): bool => (($agent['createdByAdmin'] ?? false) === true
+                    || isset($adminCreatedIds[(string) ($agent['id'] ?? '')]))
+                && ($agent['visible'] ?? true) !== false
                 && strtolower((string) ($agent['status'] ?? '')) === 'active'
                 && strtolower((string) ($agent['approvalStatus'] ?? '')) === 'approved',
         ));
@@ -30,7 +39,7 @@ final class MobileAgentController extends Controller
 
         // Keep the mobile directory's established safe response fields.
         $agents = array_map(function (array $agent): array {
-            unset($agent['password'], $agent['email'], $agent['authUserId'], $agent['loginEmail']);
+            unset($agent['password'], $agent['email'], $agent['authUserId'], $agent['loginEmail'], $agent['createdByAdmin']);
             unset($agent['sourcePreviewId']);
             $agent['displayName'] = $agent['displayName'] ?? $agent['name'] ?? '';
             $agent['profilePhoto'] = $agent['photo'] ?? $agent['profilePhoto'] ?? null;

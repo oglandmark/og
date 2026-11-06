@@ -87,10 +87,13 @@ final class OgLandmarkApiTest extends TestCase
                     'listingStatus' => 'Draft',
                 ]],
                 'mobileAgents' => [
-                    ['id' => 1, 'name' => 'Approved Agent', 'status' => 'Active', 'approvalStatus' => 'Approved', 'visible' => true, 'areas' => ['Okara'], 'specialties' => ['Residential']],
+                    ['id' => 1, 'name' => 'Approved Agent', 'createdByAdmin' => true, 'status' => 'Active', 'approvalStatus' => 'Approved', 'visible' => true, 'areas' => ['Okara'], 'specialties' => ['Residential']],
                     ['id' => 2, 'name' => 'Pending Agent', 'status' => 'Active', 'approvalStatus' => 'Pending', 'visible' => true],
                     ['id' => 3, 'name' => 'Hidden Agent', 'status' => 'Active', 'approvalStatus' => 'Approved', 'visible' => false],
+                    ['id' => 4, 'name' => 'Legacy Demo Agent', 'status' => 'Active', 'approvalStatus' => 'Approved', 'visible' => true],
+                    ['id' => 5, 'name' => 'Audited Admin Agent', 'status' => 'Active', 'approvalStatus' => 'Approved', 'visible' => true],
                 ],
+                'adminAudit' => [['action' => 'mobile_agent_created', 'entityId' => 5]],
             ], JSON_THROW_ON_ERROR),
             'updated_at' => now(),
         ]);
@@ -426,9 +429,15 @@ final class OgLandmarkApiTest extends TestCase
         }
     }
 
-    public function test_mobile_agent_directory_returns_only_approved_active_visible_agents(): void
+    public function test_mobile_agent_directory_returns_only_admin_created_approved_active_visible_agents(): void
     {
-        $this->getJson('/api/mobile-agents')->assertOk()->assertJsonCount(1)->assertJsonPath('0.displayName', 'Approved Agent');
+        $this->getJson('/api/mobile-agents')
+            ->assertOk()
+            ->assertJsonCount(2)
+            ->assertJsonPath('0.displayName', 'Approved Agent')
+            ->assertJsonPath('1.displayName', 'Audited Admin Agent')
+            ->assertJsonMissing(['displayName' => 'Legacy Demo Agent'])
+            ->assertJsonMissingPath('0.createdByAdmin');
     }
 
     public function test_my_properties_is_scoped_and_listing_updates_require_ownership(): void
@@ -613,7 +622,7 @@ final class OgLandmarkApiTest extends TestCase
     {
         DB::table('app_data')->update(['data' => json_encode(array_replace_recursive(
             json_decode(DB::table('app_data')->where('id', 1)->value('data'), true),
-            ['mobileAgents' => [['id' => 9, 'name' => 'Managed Agent', 'status' => 'Pending', 'approvalStatus' => 'Pending', 'visible' => false]]],
+            ['mobileAgents' => [['id' => 9, 'name' => 'Managed Agent', 'createdByAdmin' => true, 'status' => 'Pending', 'approvalStatus' => 'Pending', 'visible' => false]]],
         ), JSON_THROW_ON_ERROR)]);
         $token = $this->postJson('/api/auth/login', [
             'identifier' => 'testadmin',

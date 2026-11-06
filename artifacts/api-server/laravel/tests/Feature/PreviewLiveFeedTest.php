@@ -86,7 +86,7 @@ final class PreviewLiveFeedTest extends TestCase
         DB::table('app_data')->where('id', 1)->update(['data' => json_encode([
             'mobileAgents' => [
                 [
-                    'id' => 1001, 'name' => 'Local Admin Agent', 'city' => 'Okara',
+                    'id' => 1001, 'name' => 'Local Admin Agent', 'createdByAdmin' => true, 'city' => 'Okara',
                     'status' => 'Active', 'approvalStatus' => 'Approved', 'visible' => true,
                     'email' => 'private@example.test', 'password' => 'never-return-this',
                 ],
@@ -99,7 +99,7 @@ final class PreviewLiveFeedTest extends TestCase
                     'approvalStatus' => 'Approved', 'visible' => false,
                 ],
                 [
-                    'id' => 1004, 'name' => 'Edited Live Agent', 'sourcePreviewId' => '28',
+                    'id' => 1004, 'name' => 'Edited Live Agent', 'createdByAdmin' => true, 'sourcePreviewId' => '28',
                     'city' => 'Okara', 'status' => 'Active', 'approvalStatus' => 'Approved', 'visible' => true,
                 ],
             ],
@@ -120,6 +120,7 @@ final class PreviewLiveFeedTest extends TestCase
             ->assertJsonPath('0.displayName', 'Local Admin Agent')
             ->assertJsonMissingPath('0.email')
             ->assertJsonMissingPath('0.password')
+            ->assertJsonMissingPath('0.createdByAdmin')
             ->assertJsonPath('1.id', 1004)
             ->assertJsonMissingPath('1.sourcePreviewId')
             ->assertJsonPath('2.id', 27);

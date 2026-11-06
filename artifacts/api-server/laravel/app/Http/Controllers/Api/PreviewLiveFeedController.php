@@ -44,9 +44,17 @@ final class PreviewLiveFeedController extends Controller
     {
         $liveResponse = $this->forward('mobile-agents', $request->only(['city', 'limit']));
         $data = $store->read();
+        $adminCreatedIds = [];
+        foreach ($data['adminAudit'] ?? [] as $entry) {
+            if (($entry['action'] ?? '') === 'mobile_agent_created') {
+                $adminCreatedIds[(string) ($entry['entityId'] ?? '')] = true;
+            }
+        }
         $localRecords = array_values(array_filter(
             $data['mobileAgents'] ?? [],
-            fn (array $agent): bool => ($agent['visible'] ?? true) !== false
+            fn (array $agent): bool => (($agent['createdByAdmin'] ?? false) === true
+                    || isset($adminCreatedIds[(string) ($agent['id'] ?? '')]))
+                && ($agent['visible'] ?? true) !== false
                 && strtolower((string) ($agent['status'] ?? '')) === 'active'
                 && strtolower((string) ($agent['approvalStatus'] ?? '')) === 'approved',
         ));
@@ -57,7 +65,7 @@ final class PreviewLiveFeedController extends Controller
         ), true);
         $overriddenIds = array_fill_keys(array_values(array_filter(array_map(
             fn (array $agent): string => trim((string) ($agent['sourcePreviewId'] ?? '')),
-            $data['mobileAgents'] ?? [],
+            $localRecords,
         ))), true);
         $livePayload = $liveResponse->getData(true);
         $liveRecords = $liveResponse->getStatusCode() < 300 && is_array($livePayload)
@@ -105,7 +113,7 @@ final class PreviewLiveFeedController extends Controller
                 $agent['id'] = 'local-agent-'.(string) $agent['id'];
             }
 
-            unset($agent['password'], $agent['email'], $agent['authUserId'], $agent['loginEmail'], $agent['sourcePreviewId']);
+            unset($agent['password'], $agent['email'], $agent['authUserId'], $agent['loginEmail'], $agent['sourcePreviewId'], $agent['createdByAdmin']);
             $agent['displayName'] = $agent['displayName'] ?? $agent['name'] ?? '';
             $agent['profilePhoto'] = $agent['photo'] ?? $agent['profilePhoto'] ?? null;
             $agent['coverPhoto'] = $agent['coverPhoto'] ?? null;

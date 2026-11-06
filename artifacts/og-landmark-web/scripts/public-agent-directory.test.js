@@ -19,14 +19,16 @@ test('public Agent cards are replaced from the current managed directory, includ
 });
 
 test('only active, visible Admin-managed records are shown; React sample profiles are removed', () => {
-  assert.match(page, /var REACT_AGENTS=\['Ahmed Hassan','Fatima Khan','Bilal Rashid','Sara Ali','Imran Malik','Ayesha Siddiqui'\]/);
+  assert.match(page, /var REACT_AGENTS=\['Ahmed Property Consultants','Malik Properties','Ch\. Property Services','Baig Property Advisors','Raza Industrial & Commercial'\]/);
   assert.match(page, /function removeReactAgentCards\(grid\)/);
   assert.match(page, /_agents=Array\.isArray\(agentsData\)[\s\S]*?a\.status==='Active'&&a\.visible!==false/);
   assert.match(page, /\/agents\?approvalStatus=Approved/);
+  assert.match(page, /window\.__OG_ADMIN_LARAVEL_LOCAL__[\s\S]*?\/api\/preview\/live\/mobile-agents/);
 });
 
 test('public Agent directory refreshes while open and when the visitor returns', () => {
-  assert.match(page, /\/agents\?approvalStatus=Approved', \{ cache: 'no-store' \}/);
+  assert.match(page, /var directoryUrl=window\.__OG_ADMIN_LARAVEL_LOCAL__[\s\S]*?\/agents\?approvalStatus=Approved/);
+  assert.match(page, /fetch\(directoryUrl, \{ cache: 'no-store' \}/);
   assert.match(page, /setInterval\(refreshAgentDirectory, 15_000\)/);
   assert.match(page, /document\.addEventListener\('visibilitychange'/);
 });

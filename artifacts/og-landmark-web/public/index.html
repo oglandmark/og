@@ -704,9 +704,9 @@
       'use strict';
       var _agents=null;
 
-      // These are legacy profiles baked into the React bundle. The directory
-      // below removes them and renders only records returned by the Admin API.
-      var REACT_AGENTS=['Ahmed Hassan','Fatima Khan','Bilal Rashid','Sara Ali','Imran Malik','Ayesha Siddiqui'];
+      // These are demo profiles baked into the React bundle. Remove them and
+      // render only profiles that were explicitly created by an Admin.
+      var REACT_AGENTS=['Ahmed Property Consultants','Malik Properties','Ch. Property Services','Baig Property Advisors','Raza Industrial & Commercial'];
 
       function esc(s){ var d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
 
@@ -830,7 +830,10 @@
 
       // Refresh while the page stays open so Admin edits and deletions show up.
       function refreshAgentDirectory(){
-        fetch((window.__OG_API_BASE__||'/api')+'/agents?approvalStatus=Approved', { cache: 'no-store' })
+        var directoryUrl=window.__OG_ADMIN_LARAVEL_LOCAL__
+          ? '/api/preview/live/mobile-agents'
+          : (window.__OG_API_BASE__||'/api')+'/agents?approvalStatus=Approved';
+        fetch(directoryUrl, { cache: 'no-store' })
           .then(function(r){return r.ok?r.json():null;})
           .catch(function(){return null;})
           .then(function(agentsData){

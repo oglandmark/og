@@ -24,6 +24,12 @@ test('onboarding uses the current navy, teal, and gold brand tokens', () => {
   assert.doesNotMatch(onboarding, /#132A43|rgba\(6, 19, 37/);
 });
 
+test('onboarding slide snapping uses the measured preview viewport width', () => {
+  assert.match(onboarding, /layoutMeasurement\.width \|\| pageWidth/);
+  assert.match(onboarding, /scrollTo\(\{ x: index \* pageWidth/);
+  assert.match(onboarding, /width: pageWidth/);
+});
+
 test('skip or completion persists onboarding so later launches go to Home', () => {
   assert.match(onboarding, /markOnboardingComplete\(\)/);
   assert.match(onboarding, /completeOnboarding/);

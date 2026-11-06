@@ -63,6 +63,7 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
+  const [pageWidth, setPageWidth] = useState(width);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isCompleting, setIsCompleting] = useState(false);
   const isUrdu = lang === 'ur';
@@ -87,12 +88,13 @@ export default function OnboardingScreen() {
   }, [isCompleting, isUrdu, router]);
 
   const onScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+    const viewportWidth = event.nativeEvent.layoutMeasurement.width || pageWidth;
+    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / viewportWidth);
     setActiveIndex(Math.max(0, Math.min(slides.length - 1, nextIndex)));
   };
 
   const goToSlide = (index: number) => {
-    scrollRef.current?.scrollTo({ x: index * width, animated: true });
+    scrollRef.current?.scrollTo({ x: index * pageWidth, animated: true });
     setActiveIndex(index);
   };
 
@@ -121,9 +123,15 @@ export default function OnboardingScreen() {
         style={styles.pager}
         contentContainerStyle={{ direction: 'ltr' }}
         accessibilityLabel={isUrdu ? 'تعارفی صفحات' : 'Introduction screens'}
+        onLayout={(event) => {
+          const measuredWidth = event.nativeEvent.layout.width;
+          if (measuredWidth > 0 && Math.abs(measuredWidth - pageWidth) > 0.5) {
+            setPageWidth(measuredWidth);
+          }
+        }}
       >
         {slides.map((slide, index) => (
-          <View key={slide.key} style={{ width, height: pageHeight }}>
+          <View key={slide.key} style={{ width: pageWidth, height: pageHeight }}>
             <View style={[styles.hero, { height: heroHeight, backgroundColor: colors.splashNavy }]}>
               <Image
                 source={slide.image}

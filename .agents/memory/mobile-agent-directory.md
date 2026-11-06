@@ -11,7 +11,7 @@ Agent cards can share a public contact phone. Do not use that phone alone as a u
 
 **Why:** The user clarified that Admin Agents is specifically for Mobile app Agents; website-only profiles in that list are misleading and can be mistaken for app profiles.
 
-**How to apply:** Build Admin Agents rows from the Mobile directory and the Mobile app's public feed. Use website profiles only to fill missing city/contact details for a linked Mobile Agent, never as standalone rows or assignment options. Keep `/api/mobile-agents` restricted to mobile records and `/api/agents` inclusive of both sources. Apply status, approval, and visibility gates on every public Website and Mobile surface. Use a one-time sample-import marker; never re-import deleted profiles. Refresh app data on focus, and treat API failure or an empty directory as no public Agents.
+**How to apply:** Build Admin Agents rows from the Mobile directory and the Mobile app's public feed. Use website profiles only to fill missing city/contact details for a linked Mobile Agent, never as standalone rows or assignment options. Keep `/api/mobile-agents` restricted to mobile records and `/api/agents` inclusive of both sources. Publish only Admin-created records; legacy seed/demo profiles stay private. Apply status, approval, and visibility gates on every public Website and Mobile surface. Use a one-time sample-import marker; never re-import deleted profiles. Refresh app data on focus, and treat API failure or an empty directory as no public Agents.
 
 ## Admin-managed Projects
 

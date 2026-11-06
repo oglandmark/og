@@ -19,7 +19,7 @@ test('public Agent cards are replaced from the current managed directory, includ
 });
 
 test('only active, visible Admin-managed records are shown; React sample profiles are removed', () => {
-  assert.match(page, /var REACT_AGENTS=\['Ahmed Property Consultants','Malik Properties','Ch\. Property Services','Baig Property Advisors','Raza Industrial & Commercial'\]/);
+  assert.match(page, /var REACT_AGENTS=\['Ahmed Hassan','Fatima Khan','Bilal Rashid'\]/);
   assert.match(page, /function removeReactAgentCards\(grid\)/);
   assert.match(page, /_agents=Array\.isArray\(agentsData\)[\s\S]*?a\.status==='Active'&&a\.visible!==false/);
   assert.match(page, /\/agents\?approvalStatus=Approved/);

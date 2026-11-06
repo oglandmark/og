@@ -55,3 +55,9 @@ test('the shared refresh animation uses OG Landmark brand colors', () => {
   assert.match(control, /colors=\{\[colors\.teal, colors\.gold, colors\.action\]\}/);
   assert.match(control, /title=\{Platform\.OS === 'ios' \? label : undefined\}/);
 });
+
+test('Home only shows its full-feed loader for the first property request', () => {
+  const home = read('app/(tabs)/index.tsx');
+  assert.match(home, /homePropertiesRequestedRef = useRef\(false\)/);
+  assert.match(home, /firstLoad && !homePropertiesRequestedRef\.current/);
+});

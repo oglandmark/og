@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.oglandmark.app"
+      "bundleIdentifier": "com.oglandmark.app",
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.oglandmark.app",

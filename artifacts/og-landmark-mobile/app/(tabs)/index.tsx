@@ -3,6 +3,7 @@ import {
   ActivityIndicator, AppState, Image, ImageBackground,
   Modal, PanResponder, Platform, Pressable, ScrollView, StatusBar,
   StyleSheet, View, useWindowDimensions,
+  type ScrollViewInstance,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { setAudioModeAsync } from 'expo-audio';
@@ -26,6 +27,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { BrowseDiscoveryModule } from '@/components/BrowseDiscoveryModule';
 import HomeCategoryBannerCarousel, { type HomeCategoryBannerSlide } from '@/components/HomeCategoryBannerCarousel';
 import { shouldUseBundledHomeBanner } from '@/lib/homeBannerImageSource';
+import { toExpoImageSource } from '@/lib/expoImageSource';
 import { PropertyDemoBadge } from '@/components/PropertyDemoBadge';
 import { VideoWatermark } from '@/components/VideoWatermark';
 import { getAgents, getBanners, getMobileSettings, getProperties, API_BASE, type BannerSlide as ApiBannerSlide, type MobileContent } from '@/lib/api';
@@ -522,7 +524,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
     >
       <View style={fp.card} {...imageSwipeResponder.panHandlers}>
         <ExpoImage
-          source={images[activeImage] ?? property.image}
+          source={toExpoImageSource(images[activeImage] ?? property.image)}
           style={[fp.image, { backgroundColor: '#1a2e42' }]}
           contentFit="cover"
           cachePolicy="memory-disk"
@@ -1401,7 +1403,7 @@ export default function HomeScreen() {
   const { toggleSaved } = useSaved();
 
   // Scroll-to-top when user taps the Home tab icon while already on this screen
-  const mainScrollRef = useRef<ScrollView>(null);
+  const mainScrollRef = useRef<ScrollViewInstance>(null);
   useEffect(() => {
     const unsub = navigation.addListener('tabPress' as any, () => {
       mainScrollRef.current?.scrollTo({ y: 0, animated: true });

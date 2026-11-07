@@ -206,7 +206,7 @@ export default function NotificationsScreen() {
               </Text>
             </View>
           )}
-          ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.action} style={{ marginVertical: 14 }} /> : null}
+          ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.action} style={{ marginVertical: 14 }} /> : undefined}
           renderItem={({ item }) => (
             <Pressable
               onPress={() => { void openNotification(item); }}

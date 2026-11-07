@@ -15,9 +15,11 @@ import {
   Text,
   useWindowDimensions,
   View,
+  type ScrollViewInstance,
 } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
 import { useColors } from '@/hooks/useColors';
+import { toExpoImageSource } from '@/lib/expoImageSource';
 import {
   getHomeBannerAutoplayMode,
   HOME_BANNER_IMAGE_AUTOPLAY_MS,
@@ -105,7 +107,7 @@ function BannerVideo({
       {!isPlaying ? (
         <>
           <Image
-            source={poster}
+            source={toExpoImageSource(poster)}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
             accessibilityIgnoresInvertColors
@@ -136,7 +138,7 @@ export default function HomeCategoryBannerCarousel({
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
   const slideHeight = Math.round(Math.min(192, Math.max(176, windowWidth * 0.46)));
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const activeIndexRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [carouselWidth, setCarouselWidth] = useState(windowWidth);
@@ -299,7 +301,7 @@ export default function HomeCategoryBannerCarousel({
               />
             ) : (
               <Image
-                source={slide.image}
+                source={toExpoImageSource(slide.image)}
                 style={StyleSheet.absoluteFill}
                 contentFit="cover"
                 transition={reduceMotion ? 0 : 350}

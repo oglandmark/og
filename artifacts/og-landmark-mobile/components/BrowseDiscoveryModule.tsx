@@ -7,7 +7,7 @@
  */
 import React, { useMemo, useRef, useState } from 'react';
 import {
-  Pressable, ScrollView, StyleSheet, View,
+  Pressable, ScrollView, StyleSheet, View, type ScrollViewInstance,
 } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
@@ -461,7 +461,7 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
   const [activeCat, setActiveCat] = useState<CategoryKey>('Houses');
   const [activeTab, setActiveTab] = useState<TabKey>('Popular');
   const [pagerWidth, setPagerWidth] = useState(0);
-  const pagerRef = useRef<ScrollView>(null);
+  const pagerRef = useRef<ScrollViewInstance>(null);
 
   const catDef     = CATEGORIES.find((c) => c.key === activeCat) ?? CATEGORIES[0];
   const catCatalog = CATALOG[activeCat] ?? CATALOG.Houses;

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert, AppState, Dimensions, Image, Linking, Modal, Platform, Pressable,
-  ScrollView, StyleSheet, View,
+  ScrollView, StyleSheet, View, type ScrollViewInstance,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
@@ -651,7 +651,7 @@ function PropertyDetailScreen() {
   const [galleryVisible, setGalleryVisible] = useState(false);
   const [inquiryOpen,    setInquiryOpen]    = useState(false);
   const [bookingOpen,    setBookingOpen]    = useState(false);
-  const galleryScrollRef = useRef<ScrollView>(null);
+  const galleryScrollRef = useRef<ScrollViewInstance>(null);
   const images = propertyImages(property);
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const demoWasRemoved = numId < 0

@@ -39,7 +39,7 @@ export default function ForgotPasswordScreen() {
   const [error, setError]             = useState('');
   const [resendSecs, setResendSecs]   = useState(0);
 
-  const digitRefs = useRef<(React.ElementRef<typeof TextInput> | null)[]>([]);
+  const digitRefs = useRef<(import('react-native').TextInputInstance | null)[]>([]);
   const scrollRef = useRef<any>(null);
 
   const revealPasswordActions = () => {

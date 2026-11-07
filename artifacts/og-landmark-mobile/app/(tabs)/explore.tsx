@@ -6,7 +6,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Alert, AppState, FlatList, Image, InteractionManager, Modal, Platform, Pressable,
+  ActivityIndicator, Alert, AppState, FlatList, Image, Modal, Platform, Pressable,
   ScrollView, StyleSheet, View,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
@@ -522,7 +522,7 @@ export default function ExploreScreen() {
   const [remoteLoadingMore, setRemoteLoadingMore] = useState(false);
   const [currentPage, setCurrentPage]           = useState(1);
   const [refreshing, setRefreshing]             = useState(false);
-  const searchRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const searchRef = useRef<import('react-native').TextInputInstance>(null);
   const initialParamsCleared = useRef(false);
 
   const refreshExplore = useCallback(async () => {
@@ -601,7 +601,7 @@ export default function ExploreScreen() {
 
   useEffect(() => {
     let cancelled = false;
-    const interactionTask = InteractionManager.runAfterInteractions(() => {
+    const idleTask = requestIdleCallback(() => {
       getRecentSearches().then((items) => { if (!cancelled) setRecentSearches(items); }).catch(() => {});
       getSavedSearches()
         .then((ss) => { if (!cancelled) setSavedSearchLabels(ss.slice(0, 4).map((s) => s.label)); })
@@ -612,7 +612,7 @@ export default function ExploreScreen() {
     });
     return () => {
       cancelled = true;
-      interactionTask.cancel();
+      cancelIdleCallback(idleTask);
     };
   }, []);
 
@@ -716,7 +716,7 @@ export default function ExploreScreen() {
         loading = false;
       }
     };
-    const interactionTask = InteractionManager.runAfterInteractions(() => {
+    const idleTask = requestIdleCallback(() => {
       void refreshProperties();
     });
     const interval = setInterval(() => {
@@ -730,7 +730,7 @@ export default function ExploreScreen() {
       cancelled = true;
       clearInterval(interval);
       appStateSubscription.remove();
-      interactionTask.cancel();
+      cancelIdleCallback(idleTask);
     };
   }, [isExploreFocused, searchedPlace, mapAreaSearch, mapBoundsFilter]);
 
@@ -1367,7 +1367,7 @@ export default function ExploreScreen() {
             <View style={{ paddingVertical: 18 }}>
               <ActivityIndicator size="small" color={colors.action} />
             </View>
-          ) : null
+          ) : undefined
         }
         ListEmptyComponent={
           !isProjectsMode && viewMode === 'list' ? (
@@ -1394,7 +1394,7 @@ export default function ExploreScreen() {
             ) : (
               <NoResultsView colors={colors} onAdjust={() => openFilterSheet()} onClear={resetAllFilters} />
             )
-          ) : null
+            ) : undefined
         }
       />
 

@@ -32,7 +32,8 @@
       "backgroundColor": "#FFFFFF"
     },
     "web": {
-      "favicon": "./assets/images/og-landmark-app-icon.png"
+      "favicon": "./assets/images/og-landmark-app-icon.png",
+      "output": "static"
     },
     "assetBundlePatterns": [
       "assets/images/*",

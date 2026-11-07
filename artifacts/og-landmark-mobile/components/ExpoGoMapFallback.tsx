@@ -312,7 +312,7 @@ function buildMapHtml({
 
 export function ExpoGoMapFallback(props: Props) {
   const colors = useColors();
-  const webViewRef = useRef<WebView>(null);
+  const webViewRef = useRef<WebView<{}>>(null);
   const readyRef = useRef(false);
   const [mapReady, setMapReady] = useState(false);
   const [mapMode, setMapMode] = useState<MapViewMode>(props.satellite ? 'satellite' : 'map');
@@ -426,7 +426,7 @@ export function ExpoGoMapFallback(props: Props) {
 
   return (
     <View style={styles.container}>
-       <WebView
+       <WebView<{}>
          ref={webViewRef}
         originWhitelist={['*']}
          source={{ html: initialHtmlRef.current }}

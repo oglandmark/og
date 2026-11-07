@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { AppState, InteractionManager, Platform, View } from 'react-native';
+import { AppState, Platform, View } from 'react-native';
 import { setAudioModeAsync } from 'expo-audio';
 import type { NotificationResponse } from 'expo-notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -97,7 +97,7 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
       }
     };
 
-    const interactionTask = InteractionManager.runAfterInteractions(() => {
+    const idleTask = requestIdleCallback(() => {
       void configurePushNotifications().catch((error: unknown) => {
         console.warn('[push] Could not configure push notifications.', error);
       });
@@ -115,7 +115,7 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
 
     return () => {
       mounted = false;
-      interactionTask.cancel();
+      cancelIdleCallback(idleTask);
       unsubscribe();
     };
   }, [router]);
@@ -139,7 +139,7 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
       }
     };
 
-    const interactionTask = InteractionManager.runAfterInteractions(() => {
+    const idleTask = requestIdleCallback(() => {
       void syncPushTokenIfAllowed();
     });
 
@@ -150,7 +150,7 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
 
     return () => {
       mounted = false;
-      interactionTask.cancel();
+      cancelIdleCallback(idleTask);
       appStateSubscription.remove();
     };
   }, [user?.id]);
@@ -261,14 +261,14 @@ export default function RootLayout() {
   // even when iOS silent switch is off or no explicit user interaction yet.
   useEffect(() => {
     if (Platform.OS === 'web') return;
-    const interactionTask = InteractionManager.runAfterInteractions(() => {
+    const idleTask = requestIdleCallback(() => {
       setAudioModeAsync({
         playsInSilentMode: true, // ignore iOS silent/mute switch
         allowsRecording: false,
         shouldPlayInBackground: false,
       }).catch(() => undefined);
     });
-    return () => interactionTask.cancel();
+    return () => cancelIdleCallback(idleTask);
   }, []);
   return (
     <>

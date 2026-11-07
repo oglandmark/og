@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
+import { toExpoImageSource } from '@/lib/expoImageSource';
 import { formatAreaDisplay, formatPrice, Property } from '@/lib/properties';
 import { useSaved } from '@/context/SavedContext';
 import { PropertyVideoModal } from '@/components/PropertyMediaStrip';
@@ -111,7 +112,7 @@ function PropertyCardInner({
             testID={`property-image-${property.id}`}
           >
             <ExpoImage
-              source={images[activeImage] ?? images[0]}
+              source={toExpoImageSource(images[activeImage] ?? images[0])}
               style={[styles.image, { backgroundColor: colors.actionDeep }]}
               contentFit="cover"
               cachePolicy="memory-disk"

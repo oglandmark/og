@@ -334,7 +334,7 @@ export default function AdminUsers() {
           }
         />
       )}
-      <Modal visible={editorOpen} transparent animationType="slide" onRequestClose={() => !savingUser && setEditorOpen(false)}>
+      <Modal visible={editorOpen} transparent animationType="slide" onRequestClose={() => { if (!savingUser) setEditorOpen(false); }}>
         <View style={s.modalBackdrop}>
           <View style={[s.editorSheet, { backgroundColor: colors.background }]}>
             <View style={s.editorHeader}>

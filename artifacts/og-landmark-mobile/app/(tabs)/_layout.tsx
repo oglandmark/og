@@ -144,7 +144,9 @@ export default function TabLayout() {
 
   return (
     <TabBarVisibilityContext.Provider value={setTabBarHidden}>
-      <ErrorBoundary>
+      <ErrorBoundary onError={(error, stackTrace) => {
+        console.error('[Tabs] Screen render failed', error, stackTrace);
+      }}>
       <Tabs
         tabBar={(props) => <AnimatedTabBar {...props} height={tabBarHeight} hidden={tabBarHidden} />}
         screenOptions={{

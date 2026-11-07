@@ -1306,7 +1306,9 @@ export default function ExploreScreen() {
         scrollEnabled={viewMode !== 'map'}
         onScroll={tabBarScrollHandler}
         scrollEventThrottle={16}
-        refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshExplore(); }} />}
+        refreshControl={__DEV__ && Platform.OS === 'android' ? undefined : (
+          <BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshExplore(); }} />
+        )}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarHeight, paddingTop: 14 }}
         ListHeaderComponent={
           <>

@@ -194,10 +194,12 @@ export default function ListingsScreen() {
       }}
       onScroll={tabBarScrollHandler}
       scrollEventThrottle={16}
-      refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => {
-        setRefreshing(true);
-        reload(false);
-      }} />}
+      refreshControl={__DEV__ && Platform.OS === 'android' ? undefined : (
+        <BrandedRefreshControl refreshing={refreshing} onRefresh={() => {
+          setRefreshing(true);
+          reload(false);
+        }} />
+      )}
     >
       <ScreenPaintProbe label="MY PROPERTIES" />
       {/* Header */}

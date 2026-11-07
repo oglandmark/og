@@ -7,7 +7,9 @@ import Svg, { Circle, G, Path, Rect } from 'react-native-svg';
 import Animated, {
   cancelAnimation,
   Easing,
+  useAnimatedProps,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withRepeat,
   withTiming,
@@ -24,20 +26,134 @@ const promisePoints = [
   { label: 'Professional Experience', icon: 'star' as const },
 ];
 
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const AnimatedRect = Animated.createAnimatedComponent(Rect);
+
+function PromisePoint({
+  point,
+  index,
+  colors,
+  drawCycle,
+  pulse,
+  pingCycle,
+}: {
+  point: (typeof promisePoints)[number];
+  index: number;
+  colors: ReturnType<typeof useColors>;
+  drawCycle: { value: number };
+  pulse: { value: number };
+  pingCycle: { value: number };
+}) {
+  const drawProps = useAnimatedProps(() => {
+    const progress = Math.min(drawCycle.value / 0.4, 1);
+    const eased = progress < 0.5
+      ? 4 * progress * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+    return { strokeDashoffset: 60 * (1 - eased) };
+  });
+  const pulseStyle = useAnimatedStyle(() => ({
+    shadowColor: colors.gold,
+    shadowOpacity: pulse.value * 0.38,
+    shadowRadius: pulse.value * 16,
+    elevation: 2 + pulse.value * 4,
+  }));
+  const pingStyle = useAnimatedStyle(() => {
+    const stagger = index % 2 === 0 ? 1.6 / 3.6 : 0;
+    const progress = (pingCycle.value + stagger) % 1;
+    return {
+      opacity: progress < 0.75 ? 0.75 * (1 - progress / 0.75) : 0,
+      transform: [{ scale: 0.85 + progress * 1.05 }],
+    };
+  });
+
+  const iconShapes = (() => {
+    switch (point.icon) {
+      case 'check-circle':
+        return (
+          <>
+            <AnimatedCircle cx="12" cy="12" r="9" animatedProps={drawProps} />
+            <AnimatedPath d="m8 12 2.5 2.5L16.5 8" animatedProps={drawProps} />
+          </>
+        );
+      case 'award':
+        return (
+          <>
+            <AnimatedCircle cx="12" cy="8" r="6" animatedProps={drawProps} />
+            <AnimatedPath d="m8.2 13.1-1.2 8 5-3 5 3-1.2-8" animatedProps={drawProps} />
+          </>
+        );
+      case 'layers':
+        return (
+          <>
+            <AnimatedPath d="m12 3 9 5-9 5-9-5 9-5Z" animatedProps={drawProps} />
+            <AnimatedPath d="m3 12 9 5 9-5M3 16l9 5 9-5" animatedProps={drawProps} />
+          </>
+        );
+      case 'eye':
+        return (
+          <>
+            <AnimatedPath d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" animatedProps={drawProps} />
+            <AnimatedCircle cx="12" cy="12" r="3" animatedProps={drawProps} />
+          </>
+        );
+      case 'lock':
+        return (
+          <>
+            <AnimatedRect x="5" y="11" width="14" height="10" rx="2" animatedProps={drawProps} />
+            <AnimatedPath d="M8 11V8a4 4 0 0 1 8 0v3" animatedProps={drawProps} />
+          </>
+        );
+      case 'star':
+        return (
+          <AnimatedPath d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3Z" animatedProps={drawProps} />
+        );
+    }
+  })();
+
+  return (
+    <View style={styles.point}>
+      <View style={[styles.pointCard, { borderColor: colors.actionGlassBorder }]}>
+        <Animated.View style={[styles.iconWrap, { borderColor: colors.goldGlassBorder, backgroundColor: colors.goldGlass }, pulseStyle]}>
+          <Animated.View pointerEvents="none" style={[styles.pingRing, { borderColor: colors.gold }, pingStyle]} />
+          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.gold} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
+            {iconShapes}
+          </Svg>
+        </Animated.View>
+        <Text style={[styles.pointLabel, { color: colors.actionForeground }]}>
+          {point.label}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 export function PromiseSection({ onExplore }: { onExplore: () => void }) {
   const colors = useColors();
   const { width } = useWindowDimensions();
+  const reduceMotion = useReducedMotion();
   const orbitRotation = useSharedValue(0);
   const shineOffset = useSharedValue(-120);
+  const arrowProgress = useSharedValue(0);
+  const drawCycle = useSharedValue(0);
+  const pulse = useSharedValue(0);
+  const pingCycle = useSharedValue(0);
   const orbitStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${orbitRotation.value}deg` }],
   }));
   const shineStyle = useAnimatedStyle(() => ({
     transform: [{ skewX: '-18deg' }, { translateX: shineOffset.value }],
   }));
+  const arrowStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: arrowProgress.value * 3 },
+      { translateY: arrowProgress.value * -3 },
+    ],
+  }));
 
   useFocusEffect(
     useCallback(() => {
+      if (reduceMotion) return undefined;
       orbitRotation.value = withRepeat(
         withTiming(360, { duration: 70_000, easing: Easing.linear }),
         -1,
@@ -48,11 +164,35 @@ export function PromiseSection({ onExplore }: { onExplore: () => void }) {
         -1,
         false,
       );
+      arrowProgress.value = withRepeat(
+        withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true,
+      );
+      drawCycle.value = withRepeat(
+        withTiming(1, { duration: 6000, easing: Easing.linear }),
+        -1,
+        false,
+      );
+      pulse.value = withRepeat(
+        withTiming(1, { duration: 2250, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true,
+      );
+      pingCycle.value = withRepeat(
+        withTiming(1, { duration: 3600, easing: Easing.linear }),
+        -1,
+        false,
+      );
       return () => {
         cancelAnimation(orbitRotation);
         cancelAnimation(shineOffset);
+        cancelAnimation(arrowProgress);
+        cancelAnimation(drawCycle);
+        cancelAnimation(pulse);
+        cancelAnimation(pingCycle);
       };
-    }, [orbitRotation, shineOffset, width]),
+    }, [arrowProgress, drawCycle, orbitRotation, pingCycle, pulse, reduceMotion, shineOffset, width]),
   );
 
   return (
@@ -104,17 +244,16 @@ export function PromiseSection({ onExplore }: { onExplore: () => void }) {
           </View>
 
           <View style={styles.pointsGrid}>
-            {promisePoints.map((point) => (
-              <View key={point.label} style={styles.point}>
-                <View style={[styles.pointCard, { borderColor: colors.actionGlassBorder }]}>
-                  <View style={[styles.iconWrap, { borderColor: colors.goldGlassBorder, backgroundColor: colors.goldGlass }]}>
-                    <Feather name={point.icon} size={20} color={colors.gold} />
-                  </View>
-                  <Text style={[styles.pointLabel, { color: colors.actionForeground }]}>
-                    {point.label}
-                  </Text>
-                </View>
-              </View>
+            {promisePoints.map((point, index) => (
+              <PromisePoint
+                key={point.label}
+                point={point}
+                index={index}
+                colors={colors}
+                drawCycle={drawCycle}
+                pulse={pulse}
+                pingCycle={pingCycle}
+              />
             ))}
           </View>
 
@@ -135,7 +274,9 @@ export function PromiseSection({ onExplore }: { onExplore: () => void }) {
             />
             <Animated.View pointerEvents="none" style={[styles.buttonShine, shineStyle]} />
             <Text style={[styles.buttonText, { color: colors.foreground }]}>Explore listings</Text>
-            <Feather name="arrow-up-right" size={20} color={colors.foreground} />
+            <Animated.View style={arrowStyle}>
+              <Feather name="arrow-up-right" size={20} color={colors.foreground} />
+            </Animated.View>
           </Pressable>
         </View>
       </View>
@@ -237,12 +378,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
   iconWrap: {
+    position: 'relative',
     width: 36,
     height: 36,
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
+    borderRadius: 12,
+  },
+  pingRing: {
+    position: 'absolute',
+    top: -1,
+    right: -1,
+    bottom: -1,
+    left: -1,
+    borderWidth: 1.5,
     borderRadius: 12,
   },
   pointLabel: {

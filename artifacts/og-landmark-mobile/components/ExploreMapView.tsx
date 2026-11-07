@@ -231,10 +231,10 @@ function buildExploreHtml(
      .og-pop-loc{font-size:11px;color:#587089;margin-bottom:8px;}
     .og-pop-price{font-size:13px;font-weight:800;color:${palette.goldForeground};margin-bottom:10px;}
     .og-pop-btn{
-      width:100%;background:${palette.gold};color:${palette.goldForeground};border:none;border-radius:10px;
+      width:100%;background:${palette.splashGold};color:${palette.goldForeground};border:none;border-radius:10px;
       padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer;
     }
-    .og-pop-btn:hover{background:${palette.goldGlassBorder};}
+    .og-pop-btn:hover{background:${palette.splashGold};}
      .leaflet-control-attribution{display:none;}
        .leaflet-bar{background:${mapGlass}!important;border:1px solid ${mapGlassBorder}!important;border-radius:12px!important;overflow:hidden;box-shadow:0 8px 20px rgba(16,42,67,.2)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
        .leaflet-bar a{width:30px;height:30px;line-height:30px;background:transparent;color:#0B1F3A;border-bottom-color:${mapGlassBorder};}

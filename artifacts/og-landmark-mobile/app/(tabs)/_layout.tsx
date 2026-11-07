@@ -62,7 +62,7 @@ function PostAdIcon() {
          shadowRadius: 12,
          elevation: 8,
        }]}>
-       <Feather name="plus" size={23} color={colors.gold} />
+       <Feather name="plus" size={23} color={colors.splashGold} />
     </View>
   );
 }

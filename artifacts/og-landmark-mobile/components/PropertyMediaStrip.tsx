@@ -203,7 +203,7 @@ export function PropertyMediaStrip({
             <View style={s.videoScrim} />
             {/* Play button */}
             <View style={s.playBtn}>
-              <Feather name="play" size={14} color={colors.gold} />
+              <Feather name="play" size={14} color={colors.splashGold} />
             </View>
             <Text style={s.videoLabel}>Video</Text>
           </Pressable>
@@ -306,9 +306,9 @@ export function PropertyMediaStrip({
                   <Feather
                     name={isMuted ? 'volume-x' : 'volume-2'}
                     size={18}
-                    color={isMuted ? '#888' : colors.gold}
+                    color={isMuted ? '#888' : colors.splashGold}
                   />
-                  <Text style={[fs.muteBtnLabel, { color: isMuted ? '#888' : colors.gold }]}>
+                  <Text style={[fs.muteBtnLabel, { color: isMuted ? '#888' : colors.splashGold }]}>
                     {isMuted ? 'Unmute' : 'Sound On'}
                   </Text>
                 </TouchableOpacity>
@@ -460,7 +460,7 @@ const s = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: 'rgba(7,21,33,0.88)',
     borderWidth: 1,
-    borderColor: brandColors.light.gold + 'A6',
+    borderColor: brandColors.light.splashGold + 'A6',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 6,
@@ -479,7 +479,7 @@ const s = StyleSheet.create({
     borderColor: 'transparent',
   },
   thumbSelected: {
-    borderColor: brandColors.light.gold,
+    borderColor: brandColors.light.splashGold,
   },
   compactThumb: { width: 42, height: 42, borderRadius: 7 },
   thumbImg: {
@@ -488,7 +488,7 @@ const s = StyleSheet.create({
   },
   thumbOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: brandColors.light.gold + '26',
+    backgroundColor: brandColors.light.splashGold + '26',
   },
 
   /* Video tile */
@@ -579,8 +579,8 @@ const fs = StyleSheet.create({
   /* Mute / Unmute pill button */
   muteBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: brandColors.light.gold + '1F',
-    borderWidth: 1.5, borderColor: brandColors.light.gold + '66',
+    backgroundColor: brandColors.light.splashGold + '1F',
+    borderWidth: 1.5, borderColor: brandColors.light.splashGold + '66',
     borderRadius: 20,
     minHeight: 36,
     paddingHorizontal: 14, paddingVertical: 4,
@@ -602,6 +602,6 @@ const fs = StyleSheet.create({
   /* Error state */
   errorBox:       { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
   errorText:      { color: brandColors.light.gold, fontWeight: '700', fontSize: 15 },
-  errorClose:     { marginTop: 8, minHeight: 36, paddingHorizontal: 24, paddingVertical: 6, backgroundColor: brandColors.light.gold, borderRadius: 10 },
+  errorClose:     { marginTop: 8, minHeight: 36, paddingHorizontal: 24, paddingVertical: 6, backgroundColor: brandColors.light.splashGold, borderRadius: 10 },
   errorCloseText: { color: '#0B1F3A', fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });

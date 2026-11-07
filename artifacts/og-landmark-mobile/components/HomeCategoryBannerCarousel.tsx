@@ -377,7 +377,7 @@ export default function HomeCategoryBannerCarousel({
                 style={({ pressed }) => [
                   styles.cta,
                   {
-                    backgroundColor: colors.gold,
+                    backgroundColor: colors.splashGold,
                     opacity: pressed ? 0.88 : 1,
                     transform: [{ scale: pressed ? 0.985 : 1 }],
                   },

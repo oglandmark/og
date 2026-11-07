@@ -128,7 +128,7 @@ export default function AdminLoginScreen() {
               </View>
 
               <Pressable
-                style={({ pressed }) => [s.btn, { backgroundColor: colors.gold, opacity: pressed ? 0.85 : 1 }]}
+                style={({ pressed }) => [s.btn, { backgroundColor: colors.splashGold, opacity: pressed ? 0.85 : 1 }]}
                 onPress={handleVerify}
                 disabled={loading}
               >
@@ -162,7 +162,7 @@ export default function AdminLoginScreen() {
               <Text style={s.otpNote}>Code valid for 5 minutes · check server logs if email is not configured</Text>
 
               <Pressable
-                style={({ pressed }) => [s.btn, { backgroundColor: colors.gold, opacity: pressed ? 0.85 : 1 }]}
+                style={({ pressed }) => [s.btn, { backgroundColor: colors.splashGold, opacity: pressed ? 0.85 : 1 }]}
                 onPress={handleOtp}
                 disabled={loading}
               >

@@ -1249,7 +1249,7 @@ export default function ExploreScreen() {
         {activeChips.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={ex.chipRow}>
             {activeChips.map((chip) => (
-              <Pressable key={chip.key} onPress={() => removeChip(chip.key)} style={[ex.chip, { backgroundColor: colors.goldGlass, borderColor: colors.goldGlassBorder }]}>
+              <Pressable key={chip.key} onPress={() => removeChip(chip.key)} style={[ex.chip, { backgroundColor: `${colors.splashGold}26`, borderColor: `${colors.splashGold}66` }]}>
                 <Text style={[ex.chipText, { color: colors.goldForeground }]}>{chip.label}</Text>
                 <Feather name="x" size={11} color={colors.goldForeground} />
               </Pressable>
@@ -1830,7 +1830,7 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
               <PillRow options={SELLER_TYPES} selected={draft.sellerType || 'Any'}
                 onSelect={(v) => set({ sellerType: v })} colors={colors} />
               <Pressable onPress={() => set({ verifiedOnly: !draft.verifiedOnly })}
-                style={[fs.toggleRow, { backgroundColor: draft.verifiedOnly ? colors.goldGlass : colors.glassCard, borderColor: draft.verifiedOnly ? colors.goldGlassBorder : colors.glassBorder, marginTop: 12 }]}>
+                style={[fs.toggleRow, { backgroundColor: draft.verifiedOnly ? `${colors.splashGold}26` : colors.glassCard, borderColor: draft.verifiedOnly ? `${colors.splashGold}66` : colors.glassBorder, marginTop: 12 }]}>
                 <Feather name="shield" size={16} color={draft.verifiedOnly ? colors.goldForeground : colors.mutedForeground} />
                 <View style={{ flex: 1 }}>
                   <Text style={[fs.toggleLabel, { color: draft.verifiedOnly ? colors.goldForeground : colors.foreground }]}>Verified Listings Only</Text>
@@ -1920,8 +1920,8 @@ function CheckChip({ label, selected, onToggle, colors, accentColor }: { label: 
   const accent = accentColor ?? colors.goldForeground;
   return (
     <Pressable onPress={onToggle} style={[fs.checkChip, {
-      backgroundColor: selected ? (accentColor ? accentColor + '18' : colors.goldGlass) : colors.glassCard,
-      borderColor: selected ? (accentColor ?? colors.goldGlassBorder) : colors.glassBorder,
+      backgroundColor: selected ? (accentColor ? accentColor + '18' : `${colors.splashGold}26`) : colors.glassCard,
+      borderColor: selected ? (accentColor ?? `${colors.splashGold}66`) : colors.glassBorder,
     }]}>
       <Feather name={selected ? 'check-circle' : 'circle'} size={12} color={selected ? accent : colors.mutedForeground} />
       <Text style={[fs.checkChipText, { color: selected ? accent : colors.foreground }]}>{label}</Text>

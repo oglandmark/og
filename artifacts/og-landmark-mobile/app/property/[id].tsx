@@ -833,7 +833,7 @@ function PropertyDetailScreen() {
             </Pressable>
             <Pressable
               onPress={() => toggleSaved(property.id)}
-              style={[styles.roundButton, { backgroundColor: isSaved(property.id) ? colors.gold : 'rgba(15,25,35,0.68)' }]}
+              style={[styles.roundButton, { backgroundColor: isSaved(property.id) ? colors.splashGold : 'rgba(15,25,35,0.68)' }]}
               hitSlop={10}
               accessibilityRole="button"
               accessibilityLabel={`${isSaved(property.id) ? 'Remove from' : 'Add to'} favorites: ${property.title}`}

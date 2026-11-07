@@ -206,7 +206,7 @@ export default function SiteVisitsScreen() {
               )}
               {canComplete && (
                 <Pressable onPress={() => { void handleAction(visit, 'complete'); }}
-                  style={[sv.actionBtn, { backgroundColor: colors.gold + '18' }]}>
+                  style={[sv.actionBtn, { backgroundColor: colors.splashGold + '26' }]}>
                   <Feather name="check-circle" size={12} color={colors.goldForeground} />
                   <Text style={[sv.actionBtnText, { color: colors.goldForeground }]}>{tr('visitActionComplete')}</Text>
                 </Pressable>

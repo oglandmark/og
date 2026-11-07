@@ -937,7 +937,7 @@ function GuestScreen({
             Sign in to unlock your profile, saved searches, visits and instant alerts.
           </Text>
           <Pressable testID="guest-sign-in" onPress={() => router.push('/(auth)/login' as any)}
-            style={({ pressed }) => [gst.loginBtn, { backgroundColor: colors.gold, opacity: pressed ? 0.86 : 1 }]}>
+            style={({ pressed }) => [gst.loginBtn, { backgroundColor: colors.splashGold, opacity: pressed ? 0.86 : 1 }]}>
             <Text style={[gst.loginBtnText, { color: colors.goldForeground }]}>Sign In</Text>
             <Feather name="arrow-right" size={17} color={colors.goldForeground} />
           </Pressable>

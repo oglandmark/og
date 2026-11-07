@@ -119,15 +119,15 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
               </Pressable>
             </View>
             <Pressable onPress={() => onNavigate('/(auth)/login')} style={({ pressed }) => [s.drawerAccount, { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder, opacity: pressed ? 0.78 : 1 }]} accessibilityRole="button" accessibilityLabel="Sign in to your account">
-              <View style={[s.drawerAccountIcon, { backgroundColor: colors.goldGlass }]}><Feather name="user" size={18} color={colors.goldForeground} /></View>
+              <View style={[s.drawerAccountIcon, { backgroundColor: `${colors.splashGold}26` }]}><Feather name="user" size={18} color={colors.goldForeground} /></View>
               <View style={s.drawerAccountCopy}><Text style={[s.drawerAccountTitle, { color: colors.actionForeground }]}>Welcome to OG Landmark</Text><Text style={[s.drawerAccountDetail, { color: colors.actionForeground }]}>Sign in to manage your properties</Text></View>
-              <Feather name="arrow-up-right" size={16} color={colors.gold} />
+              <Feather name="arrow-up-right" size={16} color={colors.splashGold} />
             </Pressable>
             <Text style={[s.drawerSectionLabel, { color: colors.mutedForeground }]}>EXPLORE</Text>
             <View style={s.drawerList}>
               {drawerItems.map((item, i) => (
-                <Pressable key={item.label} onPress={() => item.info ? onInfo(item.info) : onNavigate(item.route)} style={({ pressed }) => [s.drawerItem, i === 0 && { backgroundColor: colors.goldGlass }, { borderColor: i === 0 ? colors.goldGlassBorder : colors.glassBorder, opacity: pressed ? 0.72 : 1 }]} accessibilityRole="button" accessibilityLabel={item.label}>
-                  <View style={[s.drawerItemIcon, { backgroundColor: i === 0 ? colors.goldGlass : colors.glassOverlay }]}><Feather name={item.icon} size={18} color={i === 0 ? colors.goldForeground : colors.action} /></View>
+                <Pressable key={item.label} onPress={() => item.info ? onInfo(item.info) : onNavigate(item.route)} style={({ pressed }) => [s.drawerItem, i === 0 && { backgroundColor: `${colors.splashGold}26` }, { borderColor: i === 0 ? `${colors.splashGold}66` : colors.glassBorder, opacity: pressed ? 0.72 : 1 }]} accessibilityRole="button" accessibilityLabel={item.label}>
+                  <View style={[s.drawerItemIcon, { backgroundColor: i === 0 ? `${colors.splashGold}26` : colors.glassOverlay }]}><Feather name={item.icon} size={18} color={i === 0 ? colors.goldForeground : colors.action} /></View>
                   <View style={s.drawerItemCopy}><Text style={[s.drawerItemLabel, { color: colors.foreground }]}>{item.label}</Text><Text style={[s.drawerItemDetail, { color: colors.mutedForeground }]}>{item.detail}</Text></View>
                   <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
                 </Pressable>
@@ -170,16 +170,16 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
                     <Pressable
                       key={item.label}
                       onPress={() => { onClose(); drawerRouter.push(item.route as any); }}
-                      style={({ pressed }) => [s.drawerItem, { borderColor: colors.gold + '33', backgroundColor: pressed ? colors.gold + '0f' : 'transparent', opacity: pressed ? 0.88 : 1 }]}
+                      style={({ pressed }) => [s.drawerItem, { borderColor: colors.splashGold + '55', backgroundColor: pressed ? colors.splashGold + '18' : 'transparent', opacity: pressed ? 0.88 : 1 }]}
                     >
-                      <View style={[s.drawerItemIcon, { backgroundColor: colors.gold + '18' }]}>
-                        <Feather name={item.icon} size={18} color={colors.gold} />
+                      <View style={[s.drawerItemIcon, { backgroundColor: colors.splashGold + '26' }]}>
+                        <Feather name={item.icon} size={18} color={colors.splashGold} />
                       </View>
                       <View style={s.drawerItemCopy}>
                         <Text style={[s.drawerItemLabel, { color: colors.foreground }]}>{item.label}</Text>
                         <Text style={[s.drawerItemDetail, { color: colors.mutedForeground }]}>{item.detail}</Text>
                       </View>
-                      <Feather name="chevron-right" size={16} color={colors.gold} />
+                      <Feather name="chevron-right" size={16} color={colors.splashGold} />
                     </Pressable>
                   ))}
                 </View>
@@ -647,8 +647,8 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
             {/* Control bar */}
             <View style={fp.fsBar}>
               <Pressable onPress={toggleMute} style={fp.fsMuteBtn}>
-                <Feather name={isMutedV ? 'volume-x' : 'volume-2'} size={18} color={isMutedV ? '#888' : colors.gold} />
-                <Text style={[fp.fsMuteLabel, { color: isMutedV ? '#888' : colors.gold }]}>
+                <Feather name={isMutedV ? 'volume-x' : 'volume-2'} size={18} color={isMutedV ? '#888' : colors.splashGold} />
+                <Text style={[fp.fsMuteLabel, { color: isMutedV ? '#888' : colors.splashGold }]}>
                   {isMutedV ? 'Unmute' : 'Sound On'}
                 </Text>
               </Pressable>
@@ -690,7 +690,7 @@ const fp = StyleSheet.create({
   agentName:    { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#ffffffcc', flex: 1 },
 
   // Video Tour pill
-  videoTourBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: brandColors.light.gold, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5 },
+  videoTourBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: brandColors.light.splashGold, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5 },
   videoTourIcon: { width: 16, height: 16, borderRadius: 8, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
   videoTourText: { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#0B1F3A', letterSpacing: 0.3 },
 
@@ -706,13 +706,13 @@ const fp = StyleSheet.create({
   fsBuffer:     { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.35)', zIndex: 10 },
   fsPauseIcon:  { position: 'absolute', alignSelf: 'center', top: '50%', marginTop: -30, width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', zIndex: 10 },
   fsBar:        { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 32, paddingTop: 14, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 20, gap: 12 },
-  fsMuteBtn:    { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: brandColors.light.gold + '1F', borderWidth: 1.5, borderColor: brandColors.light.gold + '66', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
+  fsMuteBtn:    { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: brandColors.light.splashGold + '1F', borderWidth: 1.5, borderColor: brandColors.light.splashGold + '66', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
   fsMuteLabel:  { fontSize: 12, fontWeight: '700', letterSpacing: 0.3 },
   fsTitleWrap:  { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'flex-end' },
   fsTitleText:  { color: '#fff', fontWeight: '600', fontSize: 12, flex: 1, textAlign: 'right', opacity: 0.85 },
   fsError:      { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
   fsErrorText:  { color: brandColors.light.gold, fontWeight: '700', fontSize: 15 },
-  fsErrorBtn:   { marginTop: 8, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: brandColors.light.gold, borderRadius: 10 },
+  fsErrorBtn:   { marginTop: 8, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: brandColors.light.splashGold, borderRadius: 10 },
   fsErrorBtnText:{ color: '#0B1F3A', fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });
 

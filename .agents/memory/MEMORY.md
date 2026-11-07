@@ -63,5 +63,6 @@
 - [Admin-managed mobile directories](mobile-agent-directory.md) — Admin Agents and Live/Approved Projects must refresh into public mobile feeds without reviving deleted or draft records.
 - [Mobile performance budget](mobile-performance.md) — avoid short polling, JS-driven idle animations, and unbounded Home carousels; keep focus/resume refresh intact.
 - [Promise section visual reference](promise-section-design.md) — the Expo Promise card must follow the supplied portrait artwork with its abstract background, not a landscape photo card.
+- [Mobile button gold](mobile-button-brand-colors.md) — app ke yellow buttons official logo gold use karein, bright yellow/orange nahi.
 - [Android tab refresh rendering](android-tab-refresh.md) — on the user's Android Expo Go preview, native pull-to-refresh blanked buyer tab content even with plain props.
 - [Silent startup splash](splash-audio-autoplay.md) — keep the startup animation silent while preserving unrelated app audio, such as listing videos.

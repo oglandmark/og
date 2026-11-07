@@ -63,7 +63,7 @@ export function MapViewModeControl({
                 styles.firstHorizontalButton,
                 { borderRightColor: '#d6e0e8' },
               ],
-              { borderBottomColor: selected ? colors.gold : 'transparent' },
+              { borderBottomColor: selected ? colors.splashGold : 'transparent' },
             ]}
           >
             <View style={styles.optionContent}>

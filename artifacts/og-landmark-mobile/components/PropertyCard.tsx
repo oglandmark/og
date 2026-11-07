@@ -206,8 +206,8 @@ function PropertyCardInner({
                 styles.circleAction,
                 compact && styles.compactCircleAction,
                 {
-                  backgroundColor: colors.goldGlass,
-                  borderColor: saved ? colors.gold : colors.goldGlassBorder,
+                  backgroundColor: saved ? colors.splashGold : `${colors.splashGold}26`,
+                  borderColor: saved ? colors.splashGold : `${colors.splashGold}66`,
                   opacity: pressed ? 0.78 : 1,
                 },
               ]}
@@ -219,7 +219,7 @@ function PropertyCardInner({
               <Feather
                 name="heart"
                 size={17}
-                color={saved ? colors.gold : colors.goldForeground}
+                color={saved ? colors.goldForeground : colors.splashGold}
               />
             </Pressable>
           </View>

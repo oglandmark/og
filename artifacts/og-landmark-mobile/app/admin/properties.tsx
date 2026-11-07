@@ -425,9 +425,9 @@ export default function AdminProperties() {
             </Pressable>
           </>
         )}
-        <Pressable style={[s.actBtn, { backgroundColor: item.featured ? GOLD : colors.secondary, borderWidth: 1, borderColor: GOLD }]} onPress={() => doFeature(item)}>
-          <Feather name="star" size={13} color={item.featured ? '#fff' : GOLD} />
-          <Text style={[s.actText, { color: item.featured ? '#fff' : GOLD }]}>
+        <Pressable style={[s.actBtn, { backgroundColor: item.featured ? colors.splashGold : colors.secondary, borderWidth: 1, borderColor: colors.splashGold }]} onPress={() => doFeature(item)}>
+          <Feather name="star" size={13} color={item.featured ? '#fff' : colors.splashGold} />
+          <Text style={[s.actText, { color: item.featured ? '#fff' : colors.splashGold }]}>
             {item.featured ? 'Unfeature' : 'Feature'}
           </Text>
         </Pressable>
@@ -455,10 +455,10 @@ export default function AdminProperties() {
         {STATUS_TABS.map(t => (
           <Pressable
             key={t}
-            style={[s.tabItem, tab === t && { borderBottomColor: GOLD, borderBottomWidth: 2 }]}
+            style={[s.tabItem, tab === t && { borderBottomColor: colors.splashGold, borderBottomWidth: 2 }]}
             onPress={() => setTab(t)}
           >
-            <Text style={[s.tabText, { color: tab === t ? GOLD : colors.mutedForeground }]}>{t}</Text>
+            <Text style={[s.tabText, { color: tab === t ? colors.splashGold : colors.mutedForeground }]}>{t}</Text>
           </Pressable>
         ))}
       </View>
@@ -469,7 +469,7 @@ export default function AdminProperties() {
         <View style={s.empty}>
           <Feather name="wifi-off" size={40} color="#dc2626" />
           <Text style={[s.emptyText, { color: colors.foreground }]}>{loadError}</Text>
-          <Pressable style={[s.actBtn, { backgroundColor: GOLD }]} onPress={() => { setLoading(true); load(); }}>
+          <Pressable style={[s.actBtn, { backgroundColor: colors.splashGold }]} onPress={() => { setLoading(true); load(); }}>
             <Text style={[s.actText, { color: NAVY }]}>Retry</Text>
           </Pressable>
         </View>
@@ -572,7 +572,7 @@ export default function AdminProperties() {
               <Pressable
                 onPress={saveLocationEdit}
                 disabled={savingLocation || !editConfirmed}
-                style={[s.modalSave, { backgroundColor: GOLD, opacity: savingLocation || !editConfirmed ? 0.55 : 1 }]}
+                style={[s.modalSave, { backgroundColor: colors.splashGold, opacity: savingLocation || !editConfirmed ? 0.55 : 1 }]}
               >
                 {savingLocation ? <ActivityIndicator size="small" color={colors.action} /> : <Feather name="check" size={15} color={colors.action} />}
                 <Text style={s.modalSaveText}>{savingLocation ? 'Saving…' : 'Save Location'}</Text>

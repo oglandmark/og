@@ -66,6 +66,7 @@ export function StartupSplash({
 }) {
   const [html, setHtml] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const webViewRef = useRef<WebView<{}>>(null);
   const readyReported = useRef(false);
   const loadWatchdog = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -73,6 +74,17 @@ export function StartupSplash({
     if (Platform.OS !== 'android') return;
     NavigationBar.setHidden(true);
     return () => NavigationBar.setHidden(false);
+  }, []);
+
+  const startSplashAnimation = useCallback(() => {
+    if (Platform.OS === 'web') {
+      const frameWindow = iframeRef.current?.contentWindow as
+        | (Window & { startSplashAnimation?: () => void })
+        | null;
+      frameWindow?.startSplashAnimation?.();
+      return;
+    }
+    webViewRef.current?.injectJavaScript('window.startSplashAnimation?.(); true;');
   }, []);
 
   const reportAnimationReady = useCallback((animated: boolean) => {
@@ -84,8 +96,11 @@ export function StartupSplash({
     }
     void SplashScreen.hideAsync()
       .catch(() => undefined)
-      .then(() => onAnimationReady?.(animated));
-  }, [onAnimationReady]);
+      .then(() => {
+        if (animated) startSplashAnimation();
+        onAnimationReady?.(animated);
+      });
+  }, [onAnimationReady, startSplashAnimation]);
 
   useEffect(() => {
     let active = true;
@@ -167,7 +182,8 @@ export function StartupSplash({
             },
           })
           : (
-              <WebView
+              <WebView<{}>
+                ref={webViewRef}
                 source={{ html }}
                 originWhitelist={['*']}
                 javaScriptEnabled

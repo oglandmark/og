@@ -11,11 +11,11 @@ Native startup must not depend indefinitely on the API session check. Restore a 
 
 ## Startup screen
 
-Keep the JavaScript animated splash visible for one complete, non-repeating 7-second HTML cycle after its WebView or iframe reports ready, and until auth and navigation are ready. Start it as soon as the bundled scene is ready (target 50 ms after app startup) and show no spinner or interim loading UI. Hold the final frame if readiness is delayed, and bound onboarding-storage reads so they cannot keep the overlay open indefinitely. Keep the native launch screen color-only until the animation is ready.
+Keep the JavaScript animated splash visible for one complete, non-repeating 7-second HTML cycle after its WebView or iframe reports ready, and until auth and navigation are ready. Keep the HTML timeline paused until the native launch screen is hidden, then start the HTML animation and React's 7-second visibility timer together. Show no spinner or interim loading UI. Hold the final frame if readiness is delayed, and bound onboarding-storage reads so they cannot keep the overlay open indefinitely. Keep the native launch screen color-only until the animation is ready.
 
-**Why:** The user requested a 7-second animation that begins within 50 ms, with no loading screen before it. The HTML timeline previously wrapped back to its start while readiness gates were unresolved, and the asset-loading fallback exposed a spinner before the animation.
+**Why:** The user requested a 7-second animation that begins within 50 ms, with no loading screen before it. The HTML timeline previously wrapped back to its start while readiness gates were unresolved, the asset-loading fallback exposed a spinner before the animation, and native WebView autoplay could consume the first frames behind the static launch screen.
 
-**How to apply:** Preload the HTML as the startup module is evaluated; start the duration timer when the WebView/iframe first frame is ready; clamp the HTML timeline at its end; keep auth and navigation hydration bounded; omit visible loading indicators. Resolve web asset URLs through the active Expo preview origin.
+**How to apply:** Preload the HTML as the startup module is evaluated; start the HTML timeline only after hiding the native launch screen, then start the duration timer; clamp the HTML timeline at its end; keep auth and navigation hydration bounded; omit visible loading indicators. Resolve web asset URLs through the active Expo preview origin.
 
 ## First-install onboarding
 

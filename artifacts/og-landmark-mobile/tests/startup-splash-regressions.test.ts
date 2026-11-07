@@ -78,9 +78,15 @@ test('startup splash uses the full viewport and hides Android system bars tempor
   const preparedHtml = prepareSplashHtml(splashReference);
   assert.ok(preparedHtml.includes('const {W,H}=C,k=Math.min(innerWidth/W,innerHeight/H);'));
   assert.doesNotMatch(preparedHtml, /uh=RENDER\?0:56/);
+  assert.match(preparedHtml, /window\.startSplashAnimation=\(\)=>/);
   assert.match(startupSplash, /NavigationBar\.setHidden\(true\)/);
   assert.match(startupSplash, /NavigationBar\.setHidden\(false\)/);
   assert.match(startupSplash, /hidden=\{Platform\.OS !== 'web'\}/);
+});
+
+test('startup animation starts only after the native splash is hidden', () => {
+  assert.match(startupSplash, /injectJavaScript\('window\.startSplashAnimation\?\.\(\); true;'\)/);
+  assert.match(startupSplash, /SplashScreen\.hideAsync\(\)[\s\S]*startSplashAnimation\(\)/);
 });
 
 test('web splash assets use the active preview origin instead of localhost', () => {

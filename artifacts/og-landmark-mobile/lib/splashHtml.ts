@@ -8,6 +8,10 @@ const insetSplashFit =
   "function fit(){const {W,H}=C,uh=RENDER?0:56,k=Math.min(innerWidth/W,(innerHeight-uh)/H);$('wrap').style.transform=`translate(-50%,-50%) translateY(${-uh/2}px) scale(${k})`}";
 const fullScreenSplashFit =
   "function fit(){const {W,H}=C,k=Math.min(innerWidth/W,innerHeight/H);$('wrap').style.transform=`translate(-50%,-50%) scale(${k})`}";
+const autoStartAnimation =
+  "else{setF(P.get('f')||'app');(function loop(now){cur=Math.min(D,(now-t0)/1000);render(cur);if(cur<D)requestAnimationFrame(loop)})(performance.now())}";
+const readyGatedAnimation =
+  "else{setF(P.get('f')||'app');window.startSplashAnimation=()=>{t0=performance.now();cur=0;render(0);(function loop(now){cur=Math.min(D,(now-t0)/1000);render(cur);if(cur<D)requestAnimationFrame(loop)})(performance.now())}}";
 
 export function resolveSplashAssetUri(uri: string, origin: string): string {
   const asset = new URL(uri, origin);
@@ -29,7 +33,8 @@ export function prepareSplashHtml(source: string): string {
     !source.includes('let snd=false;') ||
     !controlHandlers.test(source) ||
     !audioElementMarkup.test(source) ||
-    !source.includes(insetSplashFit)
+    !source.includes(insetSplashFit) ||
+    !source.includes(autoStartAnimation)
   ) {
     throw new Error('Splash reference changed; update the splash adapter.');
   }
@@ -38,5 +43,6 @@ export function prepareSplashHtml(source: string): string {
     .replace(controlPanelMarkup, '')
     .replace(audioElementMarkup, '')
     .replace(controlHandlers, '')
-    .replace(insetSplashFit, fullScreenSplashFit);
+    .replace(insetSplashFit, fullScreenSplashFit)
+    .replace(autoStartAnimation, readyGatedAnimation);
 }

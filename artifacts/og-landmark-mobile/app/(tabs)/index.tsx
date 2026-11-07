@@ -16,6 +16,7 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { ScreenPaintProbe } from '@/components/ScreenPaintProbe';
 import { SkeletonShimmer } from '@/components/SkeletonShimmer';
 import { PropertyCard } from '@/components/PropertyCard';
 import { useColors } from '@/hooks/useColors';
@@ -1705,12 +1706,18 @@ export default function HomeScreen() {
         latestProperties: latestProps.length,
         bannerSlides: homeBannerSlides.length,
         propertyError: Boolean(propertyError),
+        background: colors.background,
+        foreground: colors.foreground,
+        mutedForeground: colors.mutedForeground,
       });
     }
   }, [
     apiLoading,
     apiProps.length,
     bannerVisible,
+    colors.background,
+    colors.foreground,
+    colors.mutedForeground,
     featuredProps.length,
     homeBannerSlides.length,
     latestProps.length,
@@ -1745,6 +1752,7 @@ export default function HomeScreen() {
         <BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshHome(); }} />
       )}
     >
+      <ScreenPaintProbe label="HOME" />
 
       {/* ─── HEADER ─────────────────────────────────────────────────────── */}
       <View style={[s.header, { paddingTop: topInset + 12 }]}>

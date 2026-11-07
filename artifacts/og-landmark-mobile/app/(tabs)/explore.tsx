@@ -17,6 +17,7 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 // BlurView removed — crashes Android
 import { PropertyCard } from '@/components/PropertyCard';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { ScreenPaintProbe } from '@/components/ScreenPaintProbe';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import { properties, apiPropertyToProperty } from '@/lib/properties';
 import {
@@ -811,10 +812,16 @@ export default function ExploreScreen() {
         sourceProperties: allProperties.length,
         filteredProperties: filteredProperties.length,
         visibleProperties: visibleProperties.length,
+        background: colors.background,
+        foreground: colors.foreground,
+        mutedForeground: colors.mutedForeground,
       });
     }
   }, [
     allProperties.length,
+    colors.background,
+    colors.foreground,
+    colors.mutedForeground,
     filteredProperties.length,
     isExploreFocused,
     isProjectsMode,
@@ -1082,6 +1089,7 @@ export default function ExploreScreen() {
         if (__DEV__) console.warn('[screen-debug] Explore viewport', event.nativeEvent.layout);
       }}
     >
+      <ScreenPaintProbe label="EXPLORE" />
       {/* ── Search and filter tools ── */}
       <View style={[ex.stickyHeader, { paddingTop: topInset + 10, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         {/* Buy / Rent toggle */}

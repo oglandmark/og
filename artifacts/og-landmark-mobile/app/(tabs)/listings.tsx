@@ -4,6 +4,7 @@ import { useColors } from '@/hooks/useColors';
 import brandColors from '@/constants/colors';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { ScreenPaintProbe } from '@/components/ScreenPaintProbe';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -93,9 +94,21 @@ export default function ListingsScreen() {
         listings: myListings.length,
         filteredListings: filtered.length,
         loadError: Boolean(loadError),
+        background: colors.background,
+        foreground: colors.foreground,
+        mutedForeground: colors.mutedForeground,
       });
     }
-  }, [filtered.length, isLoggedIn, loading, loadError, myListings.length]);
+  }, [
+    colors.background,
+    colors.foreground,
+    colors.mutedForeground,
+    filtered.length,
+    isLoggedIn,
+    loading,
+    loadError,
+    myListings.length,
+  ]);
 
   const handleStatusChange = (id: string, status: ListingStatus, confirmMsg?: string) => {
     const doIt = async () => {
@@ -146,6 +159,7 @@ export default function ListingsScreen() {
   if (!isLoggedIn) {
     return (
       <View style={[styles.screen, { backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: 32 }]}>
+        <ScreenPaintProbe label="MY PROPERTIES" />
         <Feather name="lock" size={40} color={colors.mutedForeground} />
         <Text style={[styles.emptyTitle, { color: colors.foreground, marginTop: 16 }]}>{tr('listingsEyebrow')}</Text>
         <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>{tr('listingsSubtitle')}</Text>
@@ -185,6 +199,7 @@ export default function ListingsScreen() {
         reload(false);
       }} />}
     >
+      <ScreenPaintProbe label="MY PROPERTIES" />
       {/* Header */}
       <AnimatedReveal>
         <View style={[styles.header, { paddingHorizontal: 20 }, isRTL && { flexDirection: 'row-reverse' }]}>

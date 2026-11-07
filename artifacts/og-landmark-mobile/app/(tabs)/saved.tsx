@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { PropertyCard } from '@/components/PropertyCard';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
+import { ScreenPaintProbe } from '@/components/ScreenPaintProbe';
 import { apiPropertyToProperty, properties, type Property } from '@/lib/properties';
 import { getProperty } from '@/lib/api';
 import { getLiveSavedPropertyIds, selectSavedProperties } from '@/lib/savedProperties';
@@ -61,9 +62,19 @@ export default function SavedScreen() {
         savedIds: savedIds.length,
         liveProperties: liveSavedProperties.length,
         visibleProperties: savedProperties.length,
+        background: colors.background,
+        foreground: colors.foreground,
+        mutedForeground: colors.mutedForeground,
       });
     }
-  }, [liveSavedProperties.length, savedIds.length, savedProperties.length]);
+  }, [
+    colors.background,
+    colors.foreground,
+    colors.mutedForeground,
+    liveSavedProperties.length,
+    savedIds.length,
+    savedProperties.length,
+  ]);
 
   return (
     <ScrollView
@@ -83,6 +94,7 @@ export default function SavedScreen() {
         void refreshSaved().finally(() => setRefreshing(false));
       }} />}
     >
+      <ScreenPaintProbe label="FAVORITES" />
       <AnimatedReveal>
         <View style={styles.headingRow}>
           <View>

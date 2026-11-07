@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, AppState, Image, ImageBackground,
+  ActivityIndicator, AppState, Image,
   Modal, PanResponder, Platform, Pressable, ScrollView, StatusBar,
   StyleSheet, View, useWindowDimensions,
   type ScrollViewInstance,
@@ -57,6 +57,7 @@ import {
 import { PlotMeasurementCalculator } from '@/components/PlotMeasurementCalculator';
 import { StatusNotice } from '@/components/PolishedUI';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
+import { PromiseSection } from '@/components/PromiseSection';
 
 type Transaction = 'Buy' | 'Rent';
 const HOME_REFRESH_INTERVAL_MS = 60_000;
@@ -366,17 +367,6 @@ const LOCATION_AREAS = [
   { label: 'Basirpur',               value: 'Basirpur',            icon: 'map-pin'   as const },
   { label: 'Haveli Lakha',           value: 'Haveli Lakha',        icon: 'map-pin'   as const },
   { label: 'Select on Map',          value: '__map__',             icon: 'navigation' as const },
-];
-
-// ─── Trust points ─────────────────────────────────────────────────────────────
-
-const TRUST_POINTS = [
-  { icon: 'check-circle' as const, label: 'Verified Listings' },
-  { icon: 'award'        as const, label: 'Verified Agents' },
-  { icon: 'layers'       as const, label: 'Verified Developers' },
-  { icon: 'eye'          as const, label: 'Transparent Info' },
-  { icon: 'lock'         as const, label: 'Secure Inquiries' },
-  { icon: 'star'         as const, label: 'Professional Experience' },
 ];
 
 // ─── Helper types ─────────────────────────────────────────────────────────────
@@ -2031,27 +2021,7 @@ export default function HomeScreen() {
       </AnimatedReveal>
 
       {/* ─── OG LANDMARK PROMISE ──────────────────────────────────────────── */}
-      <AnimatedReveal delay={290}>
-        <ImageBackground source={require('@/assets/images/hero-bg.jpg')} imageStyle={s.heroImage} style={s.hero}>
-          <View style={s.heroShade} />
-          <Text style={s.heroKicker}>THE OG LANDMARK PROMISE</Text>
-          <Text style={s.heroTitle}>Property decisions{'\n'}made with confidence.</Text>
-          <View style={s.trustGrid}>
-            {TRUST_POINTS.map((pt) => (
-              <View key={pt.label} style={s.trustPoint}>
-                <View style={s.trustIconWrap}>
-                  <Feather name={pt.icon} size={13} color={colors.gold} />
-                </View>
-                <Text style={s.trustLabel}>{pt.label}</Text>
-              </View>
-            ))}
-          </View>
-          <Pressable onPress={() => router.push('/explore')} style={({ pressed }) => [s.heroButton, { opacity: pressed ? 0.82 : 1 }]}>
-            <Text style={s.heroButtonText}>Explore listings</Text>
-            <Feather name="arrow-up-right" size={15} color="#ffffff" />
-          </Pressable>
-        </ImageBackground>
-      </AnimatedReveal>
+      <PromiseSection onExplore={() => router.push('/explore')} />
 
       {/* ─── SMART POST-AN-AD CTA ─────────────────────────────────────────── */}
       <AnimatedReveal delay={310}>
@@ -2138,19 +2108,6 @@ const s = StyleSheet.create({
   toolTileIcon:     { width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   toolTileLabel:    { fontFamily: 'Inter_700Bold', fontSize: 13, lineHeight: 17 },
   toolTileSub:      { fontFamily: 'Inter_400Regular', fontSize: 10, lineHeight: 13 },
-
-  // Hero / Trust
-  hero:             { marginHorizontal: 18, marginTop: 36, borderRadius: 22, overflow: 'hidden', paddingHorizontal: 22, paddingTop: 26, paddingBottom: 24 },
-  heroImage:        { borderRadius: 22 },
-  heroShade:        { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(12, 20, 28, 0.75)' },
-  heroKicker:       { color: '#bcebd4', fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.8, marginBottom: 10 },
-  heroTitle:        { color: '#ffffff', fontFamily: 'Inter_700Bold', fontSize: 26, lineHeight: 31, marginBottom: 22 },
-  trustGrid:        { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
-  trustPoint:       { flexDirection: 'row', alignItems: 'center', gap: 8, width: '47%' },
-  trustIconWrap:    { width: 28, height: 28, borderRadius: 9, backgroundColor: brandColors.light.gold + '22', alignItems: 'center', justifyContent: 'center' },
-  trustLabel:       { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#ffffffcc', flex: 1 },
-  heroButton:       { alignSelf: 'flex-start', minHeight: 40, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 13, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: brandColors.light.gold },
-  heroButtonText:   { color: '#ffffff', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
 
   // Smart CTA
   ctaCard:          { marginHorizontal: 18, marginTop: 36, borderRadius: 24, borderWidth: 1, padding: 24 },

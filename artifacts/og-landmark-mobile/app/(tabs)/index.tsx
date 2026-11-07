@@ -1748,7 +1748,7 @@ export default function HomeScreen() {
         tabBarScrollHandler(event);
       }}
       scrollEventThrottle={16}
-      refreshControl={Platform.OS === 'web' || (__DEV__ && Platform.OS === 'android') ? undefined : (
+      refreshControl={Platform.OS === 'web' ? undefined : (
         <BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshHome(); }} />
       )}
     >

@@ -54,11 +54,12 @@ test('the shared refresh animation uses OG Landmark brand colors', () => {
   assert.match(control, /tintColor=\{colors\.teal\}/);
   assert.match(control, /colors=\{\[colors\.teal, colors\.gold, colors\.action\]\}/);
   assert.match(control, /title=\{Platform\.OS === 'ios' \? label : undefined\}/);
+  assert.match(control, /if \(Platform\.OS === 'android'\)\s*\{\s*return <RefreshControl refreshing=\{refreshing\} onRefresh=\{onRefresh\} \/>;/);
 });
 
-test('Home disables refresh in web and Android development previews', () => {
+test('Home keeps its refresh control native-only for the Replit web preview', () => {
   const home = read('app/(tabs)/index.tsx');
-  assert.match(home, /refreshControl=\{Platform\.OS === 'web' \|\| \(__DEV__ && Platform\.OS === 'android'\) \? undefined : \(/);
+  assert.match(home, /refreshControl=\{Platform\.OS === 'web' \? undefined : \(/);
   assert.match(home, /<BrandedRefreshControl refreshing=\{refreshing\}/);
 });
 

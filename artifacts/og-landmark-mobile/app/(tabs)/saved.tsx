@@ -89,12 +89,10 @@ export default function SavedScreen() {
       }}
       onScroll={onScroll}
       scrollEventThrottle={16}
-      refreshControl={__DEV__ && Platform.OS === 'android' ? undefined : (
-        <BrandedRefreshControl refreshing={refreshing} onRefresh={() => {
-          setRefreshing(true);
-          void refreshSaved().finally(() => setRefreshing(false));
-        }} />
-      )}
+      refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => {
+        setRefreshing(true);
+        void refreshSaved().finally(() => setRefreshing(false));
+      }} />}
     >
       <ScreenPaintProbe label="FAVORITES" />
       <AnimatedReveal>

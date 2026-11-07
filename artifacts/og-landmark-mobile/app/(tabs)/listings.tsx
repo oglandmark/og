@@ -5,7 +5,7 @@ import brandColors from '@/constants/colors';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert, Linking, Platform, Pressable,
   ScrollView, Share, StyleSheet, View,
@@ -85,6 +85,18 @@ export default function ListingsScreen() {
 
   const stats = calcListingStats(myListings);
 
+  useEffect(() => {
+    if (__DEV__) {
+      console.warn('[screen-debug] My Properties content state', {
+        isLoggedIn,
+        loading,
+        listings: myListings.length,
+        filteredListings: filtered.length,
+        loadError: Boolean(loadError),
+      });
+    }
+  }, [filtered.length, isLoggedIn, loading, loadError, myListings.length]);
+
   const handleStatusChange = (id: string, status: ListingStatus, confirmMsg?: string) => {
     const doIt = async () => {
       try {
@@ -160,6 +172,12 @@ export default function ListingsScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topPad + 12, paddingBottom: botPad + 96 }}
       showsVerticalScrollIndicator={false}
+      onLayout={(event) => {
+        if (__DEV__) console.warn('[screen-debug] My Properties viewport', event.nativeEvent.layout);
+      }}
+      onContentSizeChange={(width, height) => {
+        if (__DEV__) console.warn('[screen-debug] My Properties content size', { width, height });
+      }}
       onScroll={tabBarScrollHandler}
       scrollEventThrottle={16}
       refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => {

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
@@ -55,11 +55,27 @@ export default function SavedScreen() {
   );
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
+  useEffect(() => {
+    if (__DEV__) {
+      console.warn('[screen-debug] Favorites content state', {
+        savedIds: savedIds.length,
+        liveProperties: liveSavedProperties.length,
+        visibleProperties: savedProperties.length,
+      });
+    }
+  }, [liveSavedProperties.length, savedIds.length, savedProperties.length]);
+
   return (
     <ScrollView
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: tabBarHeight, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
+      onLayout={(event) => {
+        if (__DEV__) console.warn('[screen-debug] Favorites viewport', event.nativeEvent.layout);
+      }}
+      onContentSizeChange={(width, height) => {
+        if (__DEV__) console.warn('[screen-debug] Favorites content size', { width, height });
+      }}
       onScroll={onScroll}
       scrollEventThrottle={16}
       refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => {

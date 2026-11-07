@@ -1695,6 +1695,29 @@ export default function HomeScreen() {
   );
   const visibleAgents = managedAgents;
 
+  useEffect(() => {
+    if (__DEV__) {
+      console.warn('[screen-debug] Home content state', {
+        tabFocused,
+        apiLoading,
+        liveProperties: apiProps.length,
+        featuredProperties: featuredProps.length,
+        latestProperties: latestProps.length,
+        bannerSlides: homeBannerSlides.length,
+        propertyError: Boolean(propertyError),
+      });
+    }
+  }, [
+    apiLoading,
+    apiProps.length,
+    bannerVisible,
+    featuredProps.length,
+    homeBannerSlides.length,
+    latestProps.length,
+    propertyError,
+    tabFocused,
+  ]);
+
   const ctaContent = role === 'agent'
     ? { eyebrow: 'AGENT PORTAL', title: 'Manage your\nlistings', desc: 'Add new properties or track your existing listings.', btn1: 'Add Property', btn1Route: '/(tabs)/post-ad', btn2: 'My Listings', btn2Route: '/(tabs)/listings' }
     : role === 'developer'
@@ -1707,6 +1730,12 @@ export default function HomeScreen() {
       style={[s.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingBottom: tabBarHeight }}
       showsVerticalScrollIndicator={false}
+      onLayout={(event) => {
+        if (__DEV__) console.warn('[screen-debug] Home viewport', event.nativeEvent.layout);
+      }}
+      onContentSizeChange={(width, height) => {
+        if (__DEV__) console.warn('[screen-debug] Home content size', { width, height });
+      }}
       onScroll={(event) => {
         handleMainScroll(event);
         tabBarScrollHandler(event);

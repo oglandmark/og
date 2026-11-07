@@ -803,6 +803,26 @@ export default function ExploreScreen() {
   );
 
   useEffect(() => {
+    if (__DEV__) {
+      console.warn('[screen-debug] Explore content state', {
+        focused: isExploreFocused,
+        feedState: propertyFeedState,
+        projectsMode: isProjectsMode,
+        sourceProperties: allProperties.length,
+        filteredProperties: filteredProperties.length,
+        visibleProperties: visibleProperties.length,
+      });
+    }
+  }, [
+    allProperties.length,
+    filteredProperties.length,
+    isExploreFocused,
+    isProjectsMode,
+    propertyFeedState,
+    visibleProperties.length,
+  ]);
+
+  useEffect(() => {
     setCurrentPage(1);
   }, [query, filters, searchedPlace, mapAreaSearch, mapBoundsFilter, viewMode]);
 
@@ -1056,7 +1076,12 @@ export default function ExploreScreen() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <View style={[ex.screen, { backgroundColor: colors.background }]}>
+    <View
+      style={[ex.screen, { backgroundColor: colors.background }]}
+      onLayout={(event) => {
+        if (__DEV__) console.warn('[screen-debug] Explore viewport', event.nativeEvent.layout);
+      }}
+    >
       {/* ── Search and filter tools ── */}
       <View style={[ex.stickyHeader, { paddingTop: topInset + 10, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         {/* Buy / Rent toggle */}
@@ -1265,6 +1290,9 @@ export default function ExploreScreen() {
       <FlatList
         ref={flatListRef}
         data={isProjectsMode ? [] : (viewMode === 'list' ? visibleProperties : [])}
+        onContentSizeChange={(width, height) => {
+          if (__DEV__) console.warn('[screen-debug] Explore list size', { width, height });
+        }}
         keyExtractor={(p, index) => `${p.id}-${index}`}
         showsVerticalScrollIndicator={false}
         scrollEnabled={viewMode !== 'map'}

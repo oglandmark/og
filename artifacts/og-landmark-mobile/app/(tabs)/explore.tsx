@@ -515,6 +515,7 @@ export default function ExploreScreen() {
   const [placeSuggestionsLoading, setPlaceSuggestionsLoading] = useState(false);
   const [mapBoundsFilter, setMapBoundsFilter] = useState<MapBounds | null>(null);
   const [geoLoading, setGeoLoading]             = useState(false);
+  const [propertyFeedState, setPropertyFeedState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [isExploreFocused, setIsExploreFocused] = useState(false);
   const [remoteOffset, setRemoteOffset]         = useState(0);
   const [remoteHasMore, setRemoteHasMore]       = useState(false);
@@ -554,6 +555,7 @@ export default function ExploreScreen() {
               offset: 0,
             })
           : await getPropertiesPage({ limit: 24, offset: 0 });
+      setPropertyFeedState('ready');
       const remote = uniqueProperties(page.items
         .filter(isAdminApprovedProperty)
         .map(apiPropertyToProperty));
@@ -563,8 +565,12 @@ export default function ExploreScreen() {
       });
       setRemoteOffset(page.items.length);
       setRemoteHasMore(page.hasMore);
-    } catch {
+    } catch (error) {
       // Keep the current results visible when a manual refresh is offline.
+      if (!isProjectsMode) {
+        setPropertyFeedState('error');
+        console.warn('[Explore] Could not load the live property feed.', error);
+      }
     } finally {
       setRefreshing(false);
     }
@@ -687,6 +693,9 @@ export default function ExploreScreen() {
       try {
         const page = await fetchPage();
         if (!cancelled) {
+        setPropertyFeedState('ready');
+        // Empty successful responses are authoritative for the public feed;
+        // only filtered searches may preserve cached nearby results.
         const remote = uniqueProperties(page.items
           .filter(isAdminApprovedProperty)
           .map(apiPropertyToProperty));
@@ -696,9 +705,11 @@ export default function ExploreScreen() {
           setRemoteOffset(page.items.length);
           setRemoteHasMore(page.hasMore);
         }
-      } catch {
-        // Keep the current catalogue when the request fails; empty successful
-        // responses are handled above as authoritative for the public feed.
+      } catch (error) {
+        if (!cancelled) {
+          setPropertyFeedState('error');
+          console.warn('[Explore] Could not load the live property feed.', error);
+        }
       } finally {
         if (!cancelled && firstLoad) setGeoLoading(false);
         firstLoad = false;
@@ -947,6 +958,7 @@ export default function ExploreScreen() {
     setSearchFocused(false);
     setMapSearchFocused(false);
     setGeoLoading(false);
+    setPropertyFeedState('loading');
     setRemoteOffset(0);
     setRemoteHasMore(false);
     setRemoteLoadingMore(false);
@@ -1359,7 +1371,29 @@ export default function ExploreScreen() {
         }
         ListEmptyComponent={
           !isProjectsMode && viewMode === 'list' ? (
-            <NoResultsView colors={colors} onAdjust={() => openFilterSheet()} onClear={resetAllFilters} />
+            propertyFeedState === 'loading' ? (
+              <View style={{ alignItems: 'center', paddingVertical: 32, gap: 10 }}>
+                <ActivityIndicator size="small" color={colors.action} />
+                <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>Loading properties…</Text>
+              </View>
+            ) : propertyFeedState === 'error' ? (
+              <View style={{ alignItems: 'center', paddingVertical: 28, gap: 10 }}>
+                <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: '600' }}>Properties could not be loaded</Text>
+                <Text style={{ color: colors.mutedForeground, fontSize: 13, textAlign: 'center' }}>
+                  Check your connection and try again.
+                </Text>
+                <Pressable
+                  testID="explore-properties-retry"
+                  accessibilityRole="button"
+                  onPress={() => { void refreshExplore(); }}
+                  style={{ paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10, backgroundColor: colors.action }}
+                >
+                  <Text style={{ color: colors.actionForeground, fontSize: 13, fontWeight: '600' }}>Retry</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <NoResultsView colors={colors} onAdjust={() => openFilterSheet()} onClear={resetAllFilters} />
+            )
           ) : null
         }
       />

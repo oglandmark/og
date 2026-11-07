@@ -12,6 +12,14 @@ const autoStartAnimation =
   "else{setF(P.get('f')||'app');(function loop(now){cur=Math.min(D,(now-t0)/1000);render(cur);if(cur<D)requestAnimationFrame(loop)})(performance.now())}";
 const readyGatedAnimation =
   "else{setF(P.get('f')||'app');window.startSplashAnimation=()=>{t0=performance.now();cur=0;render(0);(function loop(now){cur=Math.min(D,(now-t0)/1000);render(cur);if(cur<D)requestAnimationFrame(loop)})(performance.now())}}";
+const directElementLookup = 'const $=id=>document.getElementById(id);';
+const cachedElementLookup =
+  'const E=new Map(),$=id=>{let e=E.get(id);if(!e){e=document.getElementById(id);if(e)E.set(id,e)}return e};';
+const buildStart = 'function build(f){';
+const cachedBuildStart = 'function build(f){E.clear();';
+const defaultParticleMarkup = 'pts+=`<circle id="p${i}" r="2" fill="${PT[i].c}"/>`';
+const sizedParticleMarkup = 'pts+=`<circle id="p${i}" r="${PT[i].r}" fill="${PT[i].c}"/>`';
+const dynamicParticleRadius = "e.setAttribute('r',p.r);";
 
 export function resolveSplashAssetUri(uri: string, origin: string): string {
   const asset = new URL(uri, origin);
@@ -34,7 +42,11 @@ export function prepareSplashHtml(source: string): string {
     !controlHandlers.test(source) ||
     !audioElementMarkup.test(source) ||
     !source.includes(insetSplashFit) ||
-    !source.includes(autoStartAnimation)
+    !source.includes(autoStartAnimation) ||
+    !source.includes(directElementLookup) ||
+    !source.includes(buildStart) ||
+    !source.includes(defaultParticleMarkup) ||
+    !source.includes(dynamicParticleRadius)
   ) {
     throw new Error('Splash reference changed; update the splash adapter.');
   }
@@ -44,5 +56,9 @@ export function prepareSplashHtml(source: string): string {
     .replace(audioElementMarkup, '')
     .replace(controlHandlers, '')
     .replace(insetSplashFit, fullScreenSplashFit)
-    .replace(autoStartAnimation, readyGatedAnimation);
+    .replace(autoStartAnimation, readyGatedAnimation)
+    .replace(directElementLookup, cachedElementLookup)
+    .replace(buildStart, cachedBuildStart)
+    .replace(defaultParticleMarkup, sizedParticleMarkup)
+    .replace(dynamicParticleRadius, '');
 }

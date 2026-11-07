@@ -79,6 +79,10 @@ test('startup splash uses the full viewport and hides Android system bars tempor
   assert.ok(preparedHtml.includes('const {W,H}=C,k=Math.min(innerWidth/W,innerHeight/H);'));
   assert.doesNotMatch(preparedHtml, /uh=RENDER\?0:56/);
   assert.match(preparedHtml, /window\.startSplashAnimation=\(\)=>/);
+  assert.match(preparedHtml, /const E=new Map\(\),\$=id=>/);
+  assert.match(preparedHtml, /function build\(f\)\{E\.clear\(\);/);
+  assert.match(preparedHtml, /r="\$\{PT\[i\]\.r\}"/);
+  assert.doesNotMatch(preparedHtml, /e\.setAttribute\('r',p\.r\);/);
   assert.match(startupSplash, /NavigationBar\.setHidden\(true\)/);
   assert.match(startupSplash, /NavigationBar\.setHidden\(false\)/);
   assert.match(startupSplash, /hidden=\{Platform\.OS !== 'web'\}/);

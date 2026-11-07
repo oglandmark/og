@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
@@ -6,7 +6,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { PropertyCard } from '@/components/PropertyCard';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
-import { properties } from '@/lib/properties';
+import { apiPropertyToProperty, properties, type Property } from '@/lib/properties';
+import { getProperty } from '@/lib/api';
+import { getLiveSavedPropertyIds, selectSavedProperties } from '@/lib/savedProperties';
 import { filterVisibleDemoProperties } from '@/lib/demoPropertyVisibility';
 import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import { useSaved } from '@/context/SavedContext';
@@ -25,13 +27,30 @@ export default function SavedScreen() {
   const tabBarHeight = useTabBarHeight();
   const { savedIds, refreshSaved } = useSaved();
   const [refreshing, setRefreshing] = useState(false);
+  const [liveSavedProperties, setLiveSavedProperties] = useState<Property[]>([]);
   const onScroll = useTabBarScrollHandler();
-  const propertyChoices = [
-    ...properties,
-    ...properties.map((property) => ({ ...property, id: -Math.abs(property.id), demoId: property.id })),
-  ];
+  useEffect(() => {
+    let active = true;
+    const ids = getLiveSavedPropertyIds(savedIds);
+    if (ids.length === 0) {
+      setLiveSavedProperties([]);
+      return () => { active = false; };
+    }
+
+    void Promise.allSettled(ids.map((id) => getProperty(id))).then((results) => {
+      if (!active) return;
+      setLiveSavedProperties(
+        results.flatMap((result) =>
+          result.status === 'fulfilled' ? [apiPropertyToProperty(result.value)] : [],
+        ),
+      );
+    });
+
+    return () => { active = false; };
+  }, [savedIds]);
+
   const savedProperties = filterVisibleDemoProperties(
-    propertyChoices.filter((property) => savedIds.includes(property.id)),
+    selectSavedProperties(savedIds, properties, liveSavedProperties),
     hiddenDemoPropertyIds,
   );
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);

@@ -185,7 +185,7 @@ test('Home, Explore, saved, detail, and Agent views use the shared visibility ru
     {
       name: 'saved properties',
       source: readScreen('app', '(tabs)', 'saved.tsx'),
-      expected: /filterVisibleDemoProperties\(\s*propertyChoices\.filter\(\(property\) => savedIds\.includes\(property\.id\)\),\s*hiddenDemoPropertyIds/,
+      expected: /filterVisibleDemoProperties\(\s*selectSavedProperties\(savedIds,\s*properties,\s*liveSavedProperties\),\s*hiddenDemoPropertyIds/,
     },
     {
       name: 'property detail',

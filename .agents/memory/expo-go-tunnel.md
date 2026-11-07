@@ -8,3 +8,9 @@ Replit's Expo host is HTTPS-only, while Expo Go's standard `exp://` URL can try 
 **Why:** An automatically generated `exp.direct` name failed DNS validation because a Replit private account slug made one label too long. A short ngrok subdomain returned an Expo iOS manifest over HTTP. Removing the Replit host overrides also made the screenshot service disconnect from the Replit Expo domain.
 
 **How to apply:** Verify the short tunnel's HTTP iOS manifest and the Replit Expo domain's HTTPS `/status` endpoint separately. Restart the managed mobile workflow and use the tunnel QR/URL for physical Expo Go.
+
+For SDK 58, `create-launch login --session` returning an unexpected Expo server response indicates the managed session is stale. The CLI may then prompt to log in or proceed anonymously, which a non-interactive workflow cannot answer. Although `--tunnel ngrok` can connect and produce a QR, it does not repair the unverified-app/authentication prompt.
+
+**Why:** A fresh Replit-managed Expo session is required to authenticate the project; changing tunnel providers only bypasses URL creation and leaves Expo Go unable to trust the project.
+
+**How to apply:** Keep the guarded login step and original tunnel settings. If the login reports an unexpected response, ask the user to refresh the workspace page so Replit reprovisions the session, then restart the managed mobile workflow.

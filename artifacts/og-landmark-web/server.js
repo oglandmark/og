@@ -16,6 +16,7 @@ const nodemailer = require('nodemailer');
 const multer = require('multer');
 const patchDashboardAuth = require('./scripts/patch-dashboard-auth');
 const patchPublicContacts = require('./scripts/patch-public-contacts');
+const patchPromiseSection = require('./scripts/patch-promise-section');
 const {
   canAccessAgentVisit,
   normalizeAgentVisitCreate,
@@ -6233,7 +6234,9 @@ app.get('/assets/index-CXxrK7KP.js', (_req, res, next) => {
       const contactPatchedBundle = patchPublicContacts(
         fs.readFileSync(path.join(publicDir, 'assets', 'index-CXxrK7KP.js'), 'utf8'),
       ).replaceAll('info@oglandmark.com', 'support@oglandmark.com');
-      patchedWebsiteBundleCache = patchDashboardAuth(contactPatchedBundle);
+      patchedWebsiteBundleCache = patchPromiseSection(
+        patchDashboardAuth(contactPatchedBundle),
+      );
     }
     res.setHeader('Cache-Control', 'no-store');
     res.type('application/javascript').send(patchedWebsiteBundleCache);

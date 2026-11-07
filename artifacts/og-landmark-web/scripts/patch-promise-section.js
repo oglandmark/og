@@ -23,7 +23,7 @@ function patchPromiseSection(source) {
     path.join(__dirname, '..', 'public', 'promise-section.html'),
     'utf8',
   ).trim();
-  const replacement = `i.jsx("section",{className:"py-20 bg-background",dangerouslySetInnerHTML:{__html:${JSON.stringify(markup)}}}),`;
+  const replacement = `i.jsx("section",{className:"py-10 bg-background",dangerouslySetInnerHTML:{__html:${JSON.stringify(markup)}}}),`;
   return `${source.slice(0, startIndex)}${replacement}${source.slice(endIndex)}`;
 }
 

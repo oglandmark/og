@@ -8,6 +8,10 @@ const bundle = fs.readFileSync(
   path.join(__dirname, '..', 'public', 'assets', 'index-CXxrK7KP.js'),
   'utf8',
 );
+const styles = fs.readFileSync(
+  path.join(__dirname, '..', 'public', 'promise-section.css'),
+  'utf8',
+);
 
 test('the homepage replaces its old trust section with the animated Promise section', () => {
   const patched = patchPromiseSection(bundle);
@@ -16,7 +20,10 @@ test('the homepage replaces its old trust section with the animated Promise sect
   assert.ok(patched.includes('The OG Landmark Promise'));
   assert.ok(patched.includes('Verified Developers'));
   assert.ok(patched.includes('href=\\"/properties\\"'));
+  assert.ok(patched.includes('className:"py-10 bg-background"'));
   assert.ok(patched.includes('i.jsx("section",{className:"py-20 bg-muted"'));
+  assert.match(styles, /url\("\/images\/hero-bg\.jpg"\)/);
+  assert.match(styles, /aspect-ratio: 1\.12/);
 });
 
 test('the Promise section patch fails explicitly if the expected homepage section changes', () => {

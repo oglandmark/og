@@ -17,7 +17,6 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 // BlurView removed — crashes Android
 import { PropertyCard } from '@/components/PropertyCard';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
-import { ScreenPaintProbe } from '@/components/ScreenPaintProbe';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import { properties, apiPropertyToProperty } from '@/lib/properties';
 import {
@@ -804,32 +803,6 @@ export default function ExploreScreen() {
   );
 
   useEffect(() => {
-    if (__DEV__) {
-      console.warn('[screen-debug] Explore content state', {
-        focused: isExploreFocused,
-        feedState: propertyFeedState,
-        projectsMode: isProjectsMode,
-        sourceProperties: allProperties.length,
-        filteredProperties: filteredProperties.length,
-        visibleProperties: visibleProperties.length,
-        background: colors.background,
-        foreground: colors.foreground,
-        mutedForeground: colors.mutedForeground,
-      });
-    }
-  }, [
-    allProperties.length,
-    colors.background,
-    colors.foreground,
-    colors.mutedForeground,
-    filteredProperties.length,
-    isExploreFocused,
-    isProjectsMode,
-    propertyFeedState,
-    visibleProperties.length,
-  ]);
-
-  useEffect(() => {
     setCurrentPage(1);
   }, [query, filters, searchedPlace, mapAreaSearch, mapBoundsFilter, viewMode]);
 
@@ -1083,13 +1056,7 @@ export default function ExploreScreen() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <View
-      style={[ex.screen, { backgroundColor: colors.background }]}
-      onLayout={(event) => {
-        if (__DEV__) console.warn('[screen-debug] Explore viewport', event.nativeEvent.layout);
-      }}
-    >
-      <ScreenPaintProbe label="EXPLORE" />
+    <View style={[ex.screen, { backgroundColor: colors.background }]}>
       {/* ── Search and filter tools ── */}
       <View style={[ex.stickyHeader, { paddingTop: topInset + 10, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         {/* Buy / Rent toggle */}
@@ -1298,15 +1265,14 @@ export default function ExploreScreen() {
       <FlatList
         ref={flatListRef}
         data={isProjectsMode ? [] : (viewMode === 'list' ? visibleProperties : [])}
-        onContentSizeChange={(width, height) => {
-          if (__DEV__) console.warn('[screen-debug] Explore list size', { width, height });
-        }}
         keyExtractor={(p, index) => `${p.id}-${index}`}
         showsVerticalScrollIndicator={false}
         scrollEnabled={viewMode !== 'map'}
         onScroll={tabBarScrollHandler}
         scrollEventThrottle={16}
-        refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshExplore(); }} />}
+        refreshControl={Platform.OS === 'web' || Platform.OS === 'android' ? undefined : (
+          <BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshExplore(); }} />
+        )}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarHeight, paddingTop: 14 }}
         ListHeaderComponent={
           <>

@@ -4,7 +4,6 @@ import { useColors } from '@/hooks/useColors';
 import brandColors from '@/constants/colors';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
-import { ScreenPaintProbe } from '@/components/ScreenPaintProbe';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -86,30 +85,6 @@ export default function ListingsScreen() {
 
   const stats = calcListingStats(myListings);
 
-  useEffect(() => {
-    if (__DEV__) {
-      console.warn('[screen-debug] My Properties content state', {
-        isLoggedIn,
-        loading,
-        listings: myListings.length,
-        filteredListings: filtered.length,
-        loadError: Boolean(loadError),
-        background: colors.background,
-        foreground: colors.foreground,
-        mutedForeground: colors.mutedForeground,
-      });
-    }
-  }, [
-    colors.background,
-    colors.foreground,
-    colors.mutedForeground,
-    filtered.length,
-    isLoggedIn,
-    loading,
-    loadError,
-    myListings.length,
-  ]);
-
   const handleStatusChange = (id: string, status: ListingStatus, confirmMsg?: string) => {
     const doIt = async () => {
       try {
@@ -159,7 +134,6 @@ export default function ListingsScreen() {
   if (!isLoggedIn) {
     return (
       <View style={[styles.screen, { backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: 32 }]}>
-        <ScreenPaintProbe label="MY PROPERTIES" />
         <Feather name="lock" size={40} color={colors.mutedForeground} />
         <Text style={[styles.emptyTitle, { color: colors.foreground, marginTop: 16 }]}>{tr('listingsEyebrow')}</Text>
         <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>{tr('listingsSubtitle')}</Text>
@@ -186,20 +160,15 @@ export default function ListingsScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topPad + 12, paddingBottom: botPad + 96 }}
       showsVerticalScrollIndicator={false}
-      onLayout={(event) => {
-        if (__DEV__) console.warn('[screen-debug] My Properties viewport', event.nativeEvent.layout);
-      }}
-      onContentSizeChange={(width, height) => {
-        if (__DEV__) console.warn('[screen-debug] My Properties content size', { width, height });
-      }}
       onScroll={tabBarScrollHandler}
       scrollEventThrottle={16}
-      refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => {
-        setRefreshing(true);
-        reload(false);
-      }} />}
+      refreshControl={Platform.OS === 'web' || Platform.OS === 'android' ? undefined : (
+        <BrandedRefreshControl refreshing={refreshing} onRefresh={() => {
+          setRefreshing(true);
+          reload(false);
+        }} />
+      )}
     >
-      <ScreenPaintProbe label="MY PROPERTIES" />
       {/* Header */}
       <AnimatedReveal>
         <View style={[styles.header, { paddingHorizontal: 20 }, isRTL && { flexDirection: 'row-reverse' }]}>

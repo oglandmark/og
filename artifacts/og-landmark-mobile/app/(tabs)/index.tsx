@@ -16,7 +16,6 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
-import { ScreenPaintProbe } from '@/components/ScreenPaintProbe';
 import { SkeletonShimmer } from '@/components/SkeletonShimmer';
 import { PropertyCard } from '@/components/PropertyCard';
 import { useColors } from '@/hooks/useColors';
@@ -1696,35 +1695,6 @@ export default function HomeScreen() {
   );
   const visibleAgents = managedAgents;
 
-  useEffect(() => {
-    if (__DEV__) {
-      console.warn('[screen-debug] Home content state', {
-        tabFocused,
-        apiLoading,
-        liveProperties: apiProps.length,
-        featuredProperties: featuredProps.length,
-        latestProperties: latestProps.length,
-        bannerSlides: homeBannerSlides.length,
-        propertyError: Boolean(propertyError),
-        background: colors.background,
-        foreground: colors.foreground,
-        mutedForeground: colors.mutedForeground,
-      });
-    }
-  }, [
-    apiLoading,
-    apiProps.length,
-    bannerVisible,
-    colors.background,
-    colors.foreground,
-    colors.mutedForeground,
-    featuredProps.length,
-    homeBannerSlides.length,
-    latestProps.length,
-    propertyError,
-    tabFocused,
-  ]);
-
   const ctaContent = role === 'agent'
     ? { eyebrow: 'AGENT PORTAL', title: 'Manage your\nlistings', desc: 'Add new properties or track your existing listings.', btn1: 'Add Property', btn1Route: '/(tabs)/post-ad', btn2: 'My Listings', btn2Route: '/(tabs)/listings' }
     : role === 'developer'
@@ -1737,23 +1707,15 @@ export default function HomeScreen() {
       style={[s.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingBottom: tabBarHeight }}
       showsVerticalScrollIndicator={false}
-      onLayout={(event) => {
-        if (__DEV__) console.warn('[screen-debug] Home viewport', event.nativeEvent.layout);
-      }}
-      onContentSizeChange={(width, height) => {
-        if (__DEV__) console.warn('[screen-debug] Home content size', { width, height });
-      }}
       onScroll={(event) => {
         handleMainScroll(event);
         tabBarScrollHandler(event);
       }}
       scrollEventThrottle={16}
-      refreshControl={Platform.OS === 'web' ? undefined : (
+      refreshControl={Platform.OS === 'web' || Platform.OS === 'android' ? undefined : (
         <BrandedRefreshControl refreshing={refreshing} onRefresh={() => { void refreshHome(); }} />
       )}
     >
-      <ScreenPaintProbe label="HOME" />
-
       {/* ─── HEADER ─────────────────────────────────────────────────────── */}
       <View style={[s.header, { paddingTop: topInset + 12 }]}>
         <View style={s.topBar}>

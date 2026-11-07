@@ -9,10 +9,6 @@ type Props = Pick<RefreshControlProps, 'refreshing' | 'onRefresh'> & {
 export function BrandedRefreshControl({ refreshing, onRefresh, label = 'OG Landmark' }: Props) {
   const colors = useColors();
 
-  if (Platform.OS === 'android') {
-    return <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />;
-  }
-
   return (
     <RefreshControl
       refreshing={refreshing}

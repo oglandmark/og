@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { PropertyCard } from '@/components/PropertyCard';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
-import { ScreenPaintProbe } from '@/components/ScreenPaintProbe';
 import { apiPropertyToProperty, properties, type Property } from '@/lib/properties';
 import { getProperty } from '@/lib/api';
 import { getLiveSavedPropertyIds, selectSavedProperties } from '@/lib/savedProperties';
@@ -16,9 +15,9 @@ import { useSaved } from '@/context/SavedContext';
 import { useColors } from '@/hooks/useColors';
 import { GlassCard } from '@/components/GlassCard';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 export default function SavedScreen() {
   const colors = useColors();
@@ -30,6 +29,13 @@ export default function SavedScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [liveSavedProperties, setLiveSavedProperties] = useState<Property[]>([]);
   const onScroll = useTabBarScrollHandler();
+  const hasOpenedBeforeRef = useRef(false);
+
+  useFocusEffect(useCallback(() => {
+    if (hasOpenedBeforeRef.current) void refreshSaved();
+    hasOpenedBeforeRef.current = true;
+  }, [refreshSaved]));
+
   useEffect(() => {
     let active = true;
     const ids = getLiveSavedPropertyIds(savedIds);
@@ -56,45 +62,20 @@ export default function SavedScreen() {
   );
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
 
-  useEffect(() => {
-    if (__DEV__) {
-      console.warn('[screen-debug] Favorites content state', {
-        savedIds: savedIds.length,
-        liveProperties: liveSavedProperties.length,
-        visibleProperties: savedProperties.length,
-        background: colors.background,
-        foreground: colors.foreground,
-        mutedForeground: colors.mutedForeground,
-      });
-    }
-  }, [
-    colors.background,
-    colors.foreground,
-    colors.mutedForeground,
-    liveSavedProperties.length,
-    savedIds.length,
-    savedProperties.length,
-  ]);
-
   return (
     <ScrollView
       style={[styles.screen, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: tabBarHeight, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
-      onLayout={(event) => {
-        if (__DEV__) console.warn('[screen-debug] Favorites viewport', event.nativeEvent.layout);
-      }}
-      onContentSizeChange={(width, height) => {
-        if (__DEV__) console.warn('[screen-debug] Favorites content size', { width, height });
-      }}
       onScroll={onScroll}
       scrollEventThrottle={16}
-      refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={() => {
+      refreshControl={Platform.OS === 'web' || Platform.OS === 'android' ? undefined : (
+        <BrandedRefreshControl refreshing={refreshing} onRefresh={() => {
         setRefreshing(true);
         void refreshSaved().finally(() => setRefreshing(false));
-      }} />}
+        }} />
+      )}
     >
-      <ScreenPaintProbe label="FAVORITES" />
       <AnimatedReveal>
         <View style={styles.headingRow}>
           <View>

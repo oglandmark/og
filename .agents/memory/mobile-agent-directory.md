@@ -15,11 +15,11 @@ Agent cards can share a public contact phone. Do not use that phone alone as a u
 
 ## Admin-managed Projects
 
-Admin-created developer projects intended for the public mobile app should default to `Live`; keep `Draft` and `Pending Review` as explicit private states. The Explore Projects feed must refresh on focus/resume and distinguish loading, empty, and failed states.
+Admin-created developer projects intended for the public mobile app should default to `Live`; keep `Draft` and `Pending Review` as explicit private states. The public feed may include `Live`, `Approved`, `Coming Soon`, and `Under Development` projects. Home and Explore should use that Admin-managed feed, never bundled project samples. When Home has no public project data, show the OG Landmark branded Coming Soon card instead of an old sample project. Explore must refresh on focus/resume and distinguish loading, empty, and failed states.
 
 **Why:** The product owner expects Admin-managed Agents and Projects to be discoverable in the mobile app. Draft projects are intentionally excluded from the public API, and a one-time client fetch can leave newly published projects stale.
 
-**How to apply:** Keep the public project API restricted to `Live` or `Approved` records, default new Admin entries to `Live`, and require existing Draft/Pending entries to be explicitly published before they appear.
+**How to apply:** Keep the public project API restricted to `Live`, `Approved`, `Coming Soon`, or `Under Development` records; default new Admin entries to `Live`; require Draft/Pending entries to be explicitly published; refresh Home and Explore after focus/resume; and use branded Coming Soon rather than bundled projects when Home has no public records.
 
 Public project detail screens must render the core project response without waiting for developer-only inventory or payment-plan requests. Treat those supplementary requests as optional for buyer access.
 

@@ -60,7 +60,7 @@
 - [Admin trusted-device policy](admin-trusted-device.md) — keep OTP on non-local environments; the local Replit preview may use password-only admin login.
 - [Local admin session bridge](local-admin-session-bridge.md) — cache successful local token validation briefly to avoid Express auth rate limits; still enforce Laravel permissions.
 - [Admin project lifecycle](admin-project-lifecycle.md) — project admin edits should stay in the admin audit pipeline and archive projects to preserve linked inventory.
-- [Admin-managed mobile directories](mobile-agent-directory.md) — Admin Agents and Live/Approved Projects must refresh into public mobile feeds without reviving deleted or draft records.
+- [Admin-managed mobile directories](mobile-agent-directory.md) — Admin Agents and public projects refresh into mobile feeds; Home shows branded Coming Soon instead of bundled project samples.
 - [Mobile performance budget](mobile-performance.md) — avoid short polling, JS-driven idle animations, and unbounded Home carousels; keep focus/resume refresh intact.
 - [Promise section visual reference](promise-section-design.md) — the Expo Promise card must follow the supplied portrait artwork with its abstract background, not a landscape photo card.
 - [Mobile button gold](mobile-button-brand-colors.md) — app ke yellow buttons official logo gold use karein, bright yellow/orange nahi.

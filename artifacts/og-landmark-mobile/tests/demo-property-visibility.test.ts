@@ -110,6 +110,16 @@ test('Home does not show bundled examples while loading, offline, or after an em
   assert.deepEqual(selectHomePropertySource([]), []);
 });
 
+test('Home replaces bundled project samples with a branded empty state', () => {
+  const home = readScreen('app', '(tabs)', 'index.tsx');
+  assert.match(home, /getAllPublicProjects/);
+  assert.match(home, /homeProjects\.length > 0/);
+  assert.match(home, /ProjectComingSoonCard/);
+  assert.match(home, /testID="home-projects-coming-soon"/);
+  assert.doesNotMatch(home, /import \{ projects \} from '@\/lib\/projects'/);
+  assert.doesNotMatch(home, /ProjectShowcaseCard/);
+});
+
 test('successful public feeds show live listings only, without adding bundled demos', () => {
   const live = [{ id: 1, isDemo: false, title: 'Live listing' }];
   const catalog = [

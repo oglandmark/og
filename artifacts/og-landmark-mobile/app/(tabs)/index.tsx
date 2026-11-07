@@ -43,8 +43,7 @@ import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { formatPrice, properties, propertyImages, Property } from '@/lib/properties';
 import { useAuth } from '@/context/AuthContext';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
-import { getDevProjects, DeveloperProject } from '@/lib/developerStore';
-import { projects } from '@/lib/projects';
+import { getAllPublicProjects, DeveloperProject } from '@/lib/developerStore';
 import { apiAgentToSample, SampleAgent } from '@/lib/agentsData';
 import { useSaved } from '@/context/SavedContext';
 import {
@@ -878,72 +877,90 @@ const ac = StyleSheet.create({
 
 // ─── Project Showcase Card ────────────────────────────────────────────────────
 
-function ProjectShowcaseCard({ project, colors, onPress }: { project: typeof projects[number]; colors: Colors; onPress: () => void }) {
-  const units = project.units.length;
-  const totalUnits = units * 18;
-  const available = Math.floor(totalUnits * 0.62);
-  const progress = 1 - (available / totalUnits);
+function ProjectComingSoonCard({ colors }: { colors: Colors }) {
   return (
-    <Pressable
-      onPress={onPress}
+    <View
+      accessibilityRole="summary"
+      accessibilityLabel="OG Landmark projects are coming soon"
+      testID="home-projects-coming-soon"
+      style={pcs.card}
     >
-      <View style={pc.card}>
-        <Image source={project.image} style={pc.image} resizeMode="cover" />
-        <LinearGradient colors={['#00000000', '#00000099']} style={pc.gradient} />
-        <View style={pc.topRow}>
-          <View style={[pc.typeBadge, { backgroundColor: colors.gold + 'cc' }]}>
-            <Text style={pc.typeBadgeText}>{project.category}</Text>
-          </View>
-          <View style={[pc.verifiedBadge, { backgroundColor: colors.teal + 'cc' }]}>
-            <Feather name="check-circle" size={9} color="#ffffff" />
-            <Text style={pc.verifiedText}>VERIFIED</Text>
-          </View>
+      <LinearGradient
+        colors={[colors.splashNavy, colors.action, colors.splashNavy]}
+        locations={[0, 0.58, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+      <View pointerEvents="none" style={[pcs.goldGlow, { backgroundColor: `${colors.splashGold}20` }]} />
+      <View pointerEvents="none" style={[pcs.tealGlow, { backgroundColor: `${colors.splashTeal}18` }]} />
+      <BrandMark inverse size="default" />
+      <View style={pcs.message}>
+        <View style={[pcs.iconWrap, { borderColor: `${colors.splashGold}70`, backgroundColor: `${colors.splashGold}18` }]}>
+          <Feather name="layers" size={22} color={colors.splashGold} />
         </View>
-        <View style={pc.info}>
-          <Text style={pc.projectName} numberOfLines={1}>{project.name}</Text>
-          <Text style={pc.developerName} numberOfLines={1}>{project.developer}</Text>
-          <View style={pc.metaRow}>
-            <Feather name="map-pin" size={10} color="#ffffffaa" />
-            <Text style={pc.metaText} numberOfLines={1}>{project.location.split(',')[0]}</Text>
-          </View>
-        <View style={pc.progressWrap}>
-          <View style={pc.progressBg}>
-            <View style={[pc.progressFill, { width: `${Math.round(progress * 100)}%` as any }]} />
-          </View>
-          <Text style={pc.progressText}>{available} units available</Text>
-        </View>
-        <View style={pc.priceRow}>
-          <Text style={pc.price} numberOfLines={1}>{project.priceRange.split(' to ')[0]}</Text>
-          <View style={pc.viewBtn}><Text style={pc.viewBtnText}>View</Text><Feather name="arrow-up-right" size={11} color="#ffffff" /></View>
-        </View>
+        <Text style={[pcs.eyebrow, { color: colors.splashGold }]}>OG LANDMARK PROJECTS</Text>
+        <Text style={[pcs.title, { color: colors.splashWhite }]}>Coming soon</Text>
+        <Text style={[pcs.description, { color: colors.splashMuted }]}>
+          New developments are being prepared. Approved projects will appear here soon.
+        </Text>
       </View>
+      <View style={[pcs.footer, { borderTopColor: colors.actionGlassBorder }]}>
+        <View style={[pcs.footerDot, { backgroundColor: colors.splashTeal }]} />
+        <Text style={[pcs.footerText, { color: colors.splashWhite }]}>A better way to discover property</Text>
       </View>
-    </Pressable>
+    </View>
   );
 }
 
-const pc = StyleSheet.create({
-  card:         { width: 290, height: 320, borderRadius: 22, overflow: 'hidden', marginRight: 16, position: 'relative' },
-  image:        { ...StyleSheet.absoluteFill },
-  gradient:     { ...StyleSheet.absoluteFill },
-  topRow:       { position: 'absolute', top: 14, left: 14, right: 14, flexDirection: 'row', gap: 8 },
-  typeBadge:    { borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 },
-  typeBadgeText:{ fontFamily: 'Inter_700Bold', fontSize: 9, color: '#ffffff', letterSpacing: 0.4 },
-  verifiedBadge:{ borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 4 },
-  verifiedText: { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#ffffff', letterSpacing: 0.4 },
-  info:         { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 18 },
-  projectName:  { fontFamily: 'Inter_700Bold', fontSize: 18, color: '#ffffff', marginBottom: 3 },
-  developerName:{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#ffffffbb', marginBottom: 7 },
-  metaRow:      { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 10 },
-  metaText:     { fontFamily: 'Inter_400Regular', fontSize: 10, color: '#ffffffaa', flex: 1 },
-  progressWrap: { gap: 5, marginBottom: 12 },
-  progressBg:   { height: 3, backgroundColor: '#ffffff33', borderRadius: 2, overflow: 'hidden' },
-  progressFill: { height: 3, backgroundColor: brandColors.light.gold, borderRadius: 2 },
-  progressText: { fontFamily: 'Inter_400Regular', fontSize: 9, color: '#ffffffaa' },
-  priceRow:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  price:        { fontFamily: 'Inter_700Bold', fontSize: 14, color: '#ffffff', flex: 1 },
-  viewBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#ffffff22', borderWidth: 1, borderColor: '#ffffff44', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
-  viewBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#ffffff' },
+const pcs = StyleSheet.create({
+  card: {
+    width: 250,
+    height: 270,
+    marginRight: 14,
+    padding: 17,
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#ffffff28',
+    borderRadius: 22,
+  },
+  goldGlow: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    top: 42,
+    right: -62,
+  },
+  tealGlow: {
+    position: 'absolute',
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    bottom: 20,
+    left: -66,
+  },
+  message: { gap: 8 },
+  iconWrap: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderRadius: 14,
+    marginBottom: 4,
+  },
+  eyebrow: { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 1.25 },
+  title: { fontFamily: 'Inter_700Bold', fontSize: 25, letterSpacing: -0.4 },
+  description: { fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 16 },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    borderTopWidth: 1,
+    paddingTop: 11,
+  },
+  footerDot: { width: 6, height: 6, borderRadius: 3 },
+  footerText: { fontFamily: 'Inter_500Medium', fontSize: 9, letterSpacing: 0.15 },
 });
 
 // ─── Dev Project Card ──────────────────────────────────────────────────────────
@@ -1409,7 +1426,9 @@ export default function HomeScreen() {
   const [apiProps,         setApiProps]         = useState<Property[]>([]);
   const [apiLoading,       setApiLoading]       = useState(true);
   const [refreshing,       setRefreshing]       = useState(false);
-  const [devProjects,      setDevProjects]      = useState<DeveloperProject[]>([]);
+  const [homeProjects,     setHomeProjects]     = useState<DeveloperProject[]>([]);
+  const [homeProjectsLoading, setHomeProjectsLoading] = useState(true);
+  const homeProjectsRequestRef = useRef(false);
   const [managedAgents,    setManagedAgents]    = useState<SampleAgent[]>([]);
   const [managedAgentsLoading, setManagedAgentsLoading] = useState(true);
   const [managedAgentsLoadError, setManagedAgentsLoadError] = useState(false);
@@ -1452,9 +1471,23 @@ export default function HomeScreen() {
   const loadHomeSettings = getMobileSettings;
   const loadHomeBanners = getBanners;
 
+  const refreshHomeProjects = useCallback(async () => {
+    if (homeProjectsRequestRef.current) return;
+    homeProjectsRequestRef.current = true;
+    try {
+      setHomeProjects(await getAllPublicProjects());
+    } catch {
+      // The home uses the branded Coming Soon state when no public feed is available.
+    } finally {
+      setHomeProjectsLoading(false);
+      homeProjectsRequestRef.current = false;
+    }
+  }, []);
+
   const refreshHome = useCallback(async () => {
     setRefreshing(true);
     const jobs: Promise<unknown>[] = [
+      refreshHomeProjects(),
       loadHomeSettings().then((settings) => setMobileContent(settings.content)).catch(() => undefined),
       loadHomeBanners().then((raw) => {
         setHomeBannerSlides(raw.map(mapApiBanner).filter(
@@ -1471,12 +1504,9 @@ export default function HomeScreen() {
         setPropertyError('');
       }).catch(() => undefined),
     ];
-    if (user && role === 'developer') {
-      jobs.push(getDevProjects(user.id).then(setDevProjects).catch(() => undefined));
-    }
     await Promise.all(jobs);
     setRefreshing(false);
-  }, [role, user]);
+  }, [refreshHomeProjects]);
 
   // ── Tab focus → pause banner auto-advance while Home is inactive ──────────
   useFocusEffect(useCallback(() => {
@@ -1518,6 +1548,32 @@ export default function HomeScreen() {
       appStateSubscription.remove();
     };
   }, []));
+
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    let loading = false;
+    const refreshProjects = async () => {
+      if (!active || loading) return;
+      loading = true;
+      try {
+        await refreshHomeProjects();
+      } finally {
+        loading = false;
+      }
+    };
+    void refreshProjects();
+    const interval = setInterval(() => {
+      if (AppState.currentState === 'active') void refreshProjects();
+    }, HOME_REFRESH_INTERVAL_MS);
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') void refreshProjects();
+    });
+    return () => {
+      active = false;
+      clearInterval(interval);
+      appStateSubscription.remove();
+    };
+  }, [refreshHomeProjects]));
 
   useFocusEffect(useCallback(() => {
     let active = true;
@@ -1651,12 +1707,6 @@ export default function HomeScreen() {
       appStateSubscription.remove();
     };
   }, []));
-
-  useEffect(() => {
-    if (user && role === 'developer') {
-      getDevProjects(user.id).then(setDevProjects).catch(() => undefined);
-    }
-  }, [user, role]);
 
   const handleDrawerNavigate = (route?: DrawerRoute) => { setDrawerOpen(false); if (route) router.push(route); };
   const handleDrawerInfo = (_info: DrawerInfo) => { setDrawerOpen(true); };
@@ -1884,17 +1934,24 @@ export default function HomeScreen() {
       </AnimatedReveal>
 
       {/* ─── PREMIUM PROJECTS ────────────────────────────────────────────── */}
-      {(devProjects.length > 0 || projects.length > 0) && <AnimatedReveal delay={200}>
+      <AnimatedReveal delay={200}>
         <SectionHeader eyebrow={homeSections.projectsEyebrow || 'PREMIUM PROJECTS'} title={homeSections.projectsTitle || 'Exceptional developments'} onViewAll={() => router.push({ pathname: '/explore', params: { propertyType: 'House,Apartment' } })} colors={colors} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={s.hRow}>
-          {devProjects.map((p) => (
-            <DevProjectCard key={p.id} project={p} colors={colors} onPress={() => router.push(`/project/${p.id}` as any)} />
-          ))}
-          {projects.map((p) => (
-            <ProjectShowcaseCard key={p.id} project={p} colors={colors} onPress={() => router.push(`/project/${p.id}`)} />
-          ))}
-        </ScrollView>
-      </AnimatedReveal>}
+        {homeProjectsLoading ? (
+          <View style={[s.hRow, { paddingVertical: 28 }]}>
+            <ActivityIndicator size="small" color={colors.splashGold} />
+          </View>
+        ) : homeProjects.length > 0 ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={s.hRow}>
+            {homeProjects.map((project) => (
+              <DevProjectCard key={project.id} project={project} colors={colors} onPress={() => router.push(`/project/${project.id}` as any)} />
+            ))}
+          </ScrollView>
+        ) : (
+          <View style={s.hRow}>
+            <ProjectComingSoonCard colors={colors} />
+          </View>
+        )}
+      </AnimatedReveal>
 
       {/* ─── AGRICULTURAL & COMMERCIAL OPPORTUNITIES ────────────────────── */}
       {(agriProps.length > 0 || commercialProps.length > 0) && (

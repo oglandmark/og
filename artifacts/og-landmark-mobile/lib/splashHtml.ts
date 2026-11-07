@@ -1,4 +1,5 @@
-export const STARTUP_SPLASH_ANIMATION_DURATION_MS = 8_000;
+export const STARTUP_SPLASH_ANIMATION_DURATION_MS = 7_000;
+export const STARTUP_SPLASH_LOAD_TIMEOUT_MS = 3_500;
 
 const controlPanelMarkup = /<div id="ui">[\s\S]*?<\/div>/;
 const controlHandlers = /\$\('sd'\)\.onclick=[\s\S]*?\$\('rp'\)\.onclick=[\s\S]*?playAu\(\)\};/;

@@ -15,7 +15,7 @@ svg{display:block}
 <script>
 const P=new URLSearchParams(location.search);const RENDER=P.get('render')==='1';
 const CF={'app':{W:1080,H:2340,lw:640,lt:760,wmY:1536,wf:80,ry:1584,rey:1640,rf:32,Cy:1200,k:1,dy:0}};
-const D=8,FF="Inter,'DejaVu Sans',Arial,sans-serif";
+const D=7,FF="Inter,'DejaVu Sans',Arial,sans-serif";
 const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),pr=(t,a,b)=>cl((t-a)/(b-a)),eo=x=>1-Math.pow(1-x,3),eio=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2,eob=x=>{const c=1.70158;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
 const $=id=>document.getElementById(id);
 let C,F,R={},PT=[],Ls={};

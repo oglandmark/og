@@ -5,6 +5,7 @@ import {
   prepareSplashHtml,
   resolveSplashAssetUri,
   STARTUP_SPLASH_ANIMATION_DURATION_MS,
+  STARTUP_SPLASH_LOAD_TIMEOUT_MS,
 } from '../lib/splashHtml';
 
 const appConfig = JSON.parse(
@@ -49,8 +50,9 @@ const splashPlugin = appConfig.expo.plugins.find(
     Array.isArray(plugin) && plugin[0] === 'expo-splash-screen',
 );
 
-test('startup keeps the complete 8-second animated splash and removes the static native logo', () => {
-  assert.equal(STARTUP_SPLASH_ANIMATION_DURATION_MS, 8000);
+test('startup keeps the complete 7-second animated splash and removes the static native logo', () => {
+  assert.equal(STARTUP_SPLASH_ANIMATION_DURATION_MS, 7000);
+  assert.equal(STARTUP_SPLASH_LOAD_TIMEOUT_MS, 3500);
   assert.ok(splashPlugin);
   assert.equal(splashPlugin[1].image, undefined);
   assert.equal(splashPlugin[1].dark?.image, undefined);
@@ -58,7 +60,13 @@ test('startup keeps the complete 8-second animated splash and removes the static
   assert.equal(splashPlugin[1].android?.drawable?.darkIcon, './plugins/splash-transparent.xml');
   assert.match(layout, /splashDurationElapsed/);
   assert.match(layout, /onAnimationReady=\{handleSplashReady\}/);
+  assert.doesNotMatch(layout, /SplashScreen\.hideAsync/);
   assert.match(startupSplash, /onLoadEnd=\{\(\) => reportAnimationReady\(true\)\}/);
+  assert.match(startupSplash, /SplashScreen\.hideAsync/);
+  assert.match(startupSplash, /const splashHtmlPromise =/);
+  assert.doesNotMatch(startupSplash, /ActivityIndicator/);
+  assert.doesNotMatch(startupSplash, /fallbackName/);
+  assert.match(startupSplash, /readyState && readyState !== 'loading'/);
   assert.ok(appConfig.expo.assetBundlePatterns?.includes('assets/splash/*'));
   assert.match(colorTokens, /background: '#FFFFFF'/);
   assert.match(colorTokens, /teal: '#19C3B1'/);
@@ -79,7 +87,7 @@ test('web splash assets use the active preview origin instead of localhost', () 
 test('startup splash uses the supplied HTML scene and its complete animation timeline', () => {
   assert.doesNotMatch(layout, /OGLandmarkLogo/);
   assert.ok(existsSync(new URL('../assets/splash/og-landmark-intro.html', import.meta.url)));
-  assert.match(splashReference, /const D=8/);
+  assert.match(splashReference, /const D=7/);
   assert.match(splashReference, /function render\(t\)/);
   assert.match(splashReference, /PT\.forEach/);
   assert.match(splashReference, /requestAnimationFrame\(loop\)/);

@@ -11,11 +11,11 @@ Native startup must not depend indefinitely on the API session check. Restore a 
 
 ## Startup screen
 
-Keep the JavaScript animated splash visible for one complete, non-repeating 8-second HTML cycle after its WebView or iframe reports ready, and until auth and navigation are ready. Hold the final frame if readiness is delayed, and bound onboarding-storage reads so they cannot keep the overlay open indefinitely. On web, fetch the same-origin splash asset once; keep the native launch screen logo-free.
+Keep the JavaScript animated splash visible for one complete, non-repeating 7-second HTML cycle after its WebView or iframe reports ready, and until auth and navigation are ready. Start it as soon as the bundled scene is ready (target 50 ms after app startup) and show no spinner or interim loading UI. Hold the final frame if readiness is delayed, and bound onboarding-storage reads so they cannot keep the overlay open indefinitely. Keep the native launch screen color-only until the animation is ready.
 
-**Why:** The full animation must finish before onboarding or Home appears, but the HTML timeline previously wrapped back to its start while readiness gates were unresolved. A slow or stuck onboarding-storage read could keep the splash visible long enough to replay. On web, downloading the Expo asset before fetching its Metro URL also delayed the animation unnecessarily.
+**Why:** The user requested a 7-second animation that begins within 50 ms, with no loading screen before it. The HTML timeline previously wrapped back to its start while readiness gates were unresolved, and the asset-loading fallback exposed a spinner before the animation.
 
-**How to apply:** Start the duration timer from the WebView/iframe ready callback; clamp the HTML timeline at its end; bound auth and onboarding hydration; use a branded fallback if the asset cannot load. Resolve web asset URLs through the active Expo preview origin.
+**How to apply:** Preload the HTML as the startup module is evaluated; start the duration timer when the WebView/iframe first frame is ready; clamp the HTML timeline at its end; keep auth and navigation hydration bounded; omit visible loading indicators. Resolve web asset URLs through the active Expo preview origin.
 
 ## First-install onboarding
 

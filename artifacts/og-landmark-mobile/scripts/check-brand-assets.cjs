@@ -273,8 +273,12 @@ const splashReference = fs.readFileSync(
   path.resolve(projectRoot, "assets/splash/og-landmark-intro.html"),
   "utf8"
 );
+const splashTiming = fs.readFileSync(
+  path.resolve(projectRoot, "lib/splashHtml.ts"),
+  "utf8"
+);
 if (
-  !/<StartupSplash\s+colors=\{colors\}\s+overlay\s+fontsReady=\{fontsReady\}\s*\/>/.test(startupLayout) ||
+  !/<StartupSplash\s+colors=\{colors\}\s+overlay\s+fontsReady=\{fontsReady\}\s+onAnimationReady=\{handleSplashReady\}\s*\/>/.test(startupLayout) ||
   !startupSplash.includes("og-landmark-intro.html") ||
   !startupSplash.includes("prepareSplashHtml") ||
   !splashReference.includes("LANDMARK") ||
@@ -282,7 +286,10 @@ if (
 ) {
   fail("The in-app startup splash must load the supplied animated OG Landmark HTML.");
 }
-if (!/STARTUP_SPLASH_MIN_DURATION_MS\s*=\s*8000\b/.test(startupLayout)) {
-  fail("The branded startup splash must stay visible for at least eight seconds.");
+if (
+  !/STARTUP_SPLASH_ANIMATION_DURATION_MS\s*=\s*7_000\b/.test(splashTiming) ||
+  !/const D=7\b/.test(splashReference)
+) {
+  fail("The branded startup animation and its display duration must both be seven seconds.");
 }
-console.log("✓ Native splash is color-only; the in-app splash loads the supplied animated scene and keeps the eight-second minimum.");
+console.log("✓ Native splash is color-only; the in-app splash loads the supplied animated scene and runs for seven seconds.");

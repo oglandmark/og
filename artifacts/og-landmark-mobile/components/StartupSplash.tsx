@@ -1,19 +1,57 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system/legacy';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { WebView } from 'react-native-webview';
 import { useColors } from '@/hooks/useColors';
 import {
   prepareSplashHtml,
   resolveSplashAssetUri,
-  STARTUP_SPLASH_ANIMATION_DURATION_MS,
+  STARTUP_SPLASH_LOAD_TIMEOUT_MS,
 } from '@/lib/splashHtml';
 
 const splashHtmlAsset = Asset.fromModule(
   require('@/assets/splash/og-landmark-intro.html'),
 );
+
+async function fetchSplashHtml(uri: string): Promise<string> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await fetch(uri, { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`Splash asset request failed (${response.status}).`);
+      }
+      return await response.text();
+    } catch (error) {
+      lastError = error;
+      if (attempt < 2) {
+        await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1)));
+      }
+    }
+  }
+  throw lastError;
+}
+
+const splashHtmlPromise = (async () => {
+  let sourceUri = splashHtmlAsset.uri;
+  try {
+    let source: string;
+    if (Platform.OS === 'web') {
+      sourceUri = resolveSplashAssetUri(splashHtmlAsset.uri, window.location.origin);
+      source = await fetchSplashHtml(sourceUri);
+    } else {
+      if (!splashHtmlAsset.localUri) await splashHtmlAsset.downloadAsync();
+      sourceUri = splashHtmlAsset.localUri ?? splashHtmlAsset.uri;
+      source = await FileSystem.readAsStringAsync(sourceUri);
+    }
+    return { html: prepareSplashHtml(source), sourceUri };
+  } catch (error) {
+    return { error, sourceUri };
+  }
+})();
 
 export function StartupSplash({
   colors,
@@ -26,6 +64,7 @@ export function StartupSplash({
   onAnimationReady?: (animated: boolean) => void;
 }) {
   const [html, setHtml] = useState<string | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const readyReported = useRef(false);
   const loadWatchdog = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -36,49 +75,62 @@ export function StartupSplash({
       clearTimeout(loadWatchdog.current);
       loadWatchdog.current = null;
     }
-    onAnimationReady?.(animated);
+    void SplashScreen.hideAsync()
+      .catch(() => undefined)
+      .then(() => onAnimationReady?.(animated));
   }, [onAnimationReady]);
 
   useEffect(() => {
     let active = true;
     const watchdog = setTimeout(() => {
       if (!active) return;
-      console.error('[splash] Intro did not become ready; keeping the branded fallback.');
+      console.error('[splash] Intro did not become ready; continuing without a loading indicator.');
       setHtml(null);
       reportAnimationReady(false);
-    }, STARTUP_SPLASH_ANIMATION_DURATION_MS);
+    }, STARTUP_SPLASH_LOAD_TIMEOUT_MS);
     loadWatchdog.current = watchdog;
 
-    const loadSplash = async () => {
-      let sourceUri = splashHtmlAsset.uri;
-      try {
-        let source: string;
-        if (Platform.OS === 'web') {
-          sourceUri = resolveSplashAssetUri(splashHtmlAsset.uri, window.location.origin);
-          const response = await fetch(sourceUri);
-          if (!response.ok) {
-            throw new Error(`Splash asset request failed (${response.status}).`);
-          }
-          source = await response.text();
-        } else {
-          await splashHtmlAsset.downloadAsync();
-          sourceUri = splashHtmlAsset.localUri ?? splashHtmlAsset.uri;
-          source = await FileSystem.readAsStringAsync(sourceUri);
-        }
-        if (active && !readyReported.current) setHtml(prepareSplashHtml(source));
-      } catch (error) {
-        console.error('[splash] Could not load the branded intro.', { sourceUri, error });
-        if (active) reportAnimationReady(false);
+    void splashHtmlPromise.then((result) => {
+      if (!active || readyReported.current) return;
+      if ('error' in result) {
+        console.error('[splash] Could not load the branded intro.', result);
+        reportAnimationReady(false);
+        return;
       }
-    };
-
-    void loadSplash();
+      setHtml(result.html);
+    });
     return () => {
       active = false;
       clearTimeout(watchdog);
       if (loadWatchdog.current === watchdog) loadWatchdog.current = null;
     };
   }, [reportAnimationReady]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !html) return;
+    let active = true;
+    let readyCheck: ReturnType<typeof setTimeout>;
+    const checkFrameReady = () => {
+      if (!active || readyReported.current) return;
+      try {
+        const frame = iframeRef.current;
+        const readyState = frame?.contentDocument?.readyState;
+        if (readyState && readyState !== 'loading') {
+          requestAnimationFrame(() => reportAnimationReady(true));
+          return;
+        }
+      } catch {
+        // srcDoc is same-origin in Expo Web, but keep the native/browser
+        // fallback path working if a browser restricts frame inspection.
+      }
+      readyCheck = setTimeout(checkFrameReady, 16);
+    };
+    readyCheck = setTimeout(checkFrameReady, 0);
+    return () => {
+      active = false;
+      clearTimeout(readyCheck);
+    };
+  }, [html, reportAnimationReady]);
 
   const rootStyle = [
     styles.root,
@@ -93,6 +145,7 @@ export function StartupSplash({
         ? Platform.OS === 'web'
           ? React.createElement('iframe' as never, {
             title: 'OG Landmark animated splash',
+            ref: iframeRef,
             srcDoc: html,
             allow: 'fullscreen',
             frameBorder: '0',
@@ -121,14 +174,7 @@ export function StartupSplash({
                 style={styles.webView}
               />
             )
-        : (
-            <View style={styles.fallback}>
-              <Text style={[styles.fallbackName, { color: colors.splashWhite }]}>
-                OG LANDMARK
-              </Text>
-              <ActivityIndicator color={colors.splashTeal} size="small" />
-            </View>
-          )}
+        : null}
     </View>
   );
 }
@@ -150,16 +196,5 @@ const styles = StyleSheet.create({
   webView: {
     flex: 1,
     backgroundColor: 'transparent',
-  },
-  fallback: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 20,
-  },
-  fallbackName: {
-    fontSize: 22,
-    fontWeight: '700',
-    letterSpacing: 3,
   },
 });

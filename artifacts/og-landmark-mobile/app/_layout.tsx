@@ -43,16 +43,12 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
   const router = useRouter();
   const [navigationReady, setNavigationReady] = React.useState(false);
   const [splashDurationElapsed, setSplashDurationElapsed] = React.useState(false);
-  const splashShownAt = React.useRef(Date.now());
   const splashDurationTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const handledNotificationResponses = React.useRef(new Set<string>());
 
   const handleSplashReady = React.useCallback((animated: boolean) => {
     if (splashDurationTimer.current) return;
-    const elapsed = Date.now() - splashShownAt.current;
-    const remaining = animated
-      ? STARTUP_SPLASH_ANIMATION_DURATION_MS
-      : Math.max(0, STARTUP_SPLASH_ANIMATION_DURATION_MS - elapsed);
+    const remaining = animated ? STARTUP_SPLASH_ANIMATION_DURATION_MS : 0;
     splashDurationTimer.current = setTimeout(
       () => setSplashDurationElapsed(true),
       remaining,
@@ -260,9 +256,6 @@ export default function RootLayout() {
     PlayfairDisplay_500Medium, PlayfairDisplay_600SemiBold,
   };
   const [fontsLoaded] = useFonts(fontDefinitions);
-  useEffect(() => {
-    void SplashScreen.hideAsync().catch(() => undefined);
-  }, []);
 
   // ── Set audio session ONCE at app startup so videos play with sound
   // even when iOS silent switch is off or no explicit user interaction yet.

@@ -154,3 +154,17 @@ mtime_ms = 1793939671333
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/df7e8ed7-b1ac-42af-8dba-d7aee666aec5/06bee462-18e1-4ebc-b96c-ea78a3e118de"
 storage_version_token = "1793939691765101"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "fIh9-pjhkE50xvRYdDw59"
+uri = "file://generated-artifacts/OG-Landmark-4.1.2-52.aab"
+type = "unspecified"
+title = "OG Landmark Android AAB — 4.1.2 (52)"
+description = "Verified production Android App Bundle containing the latest Home update. Not submitted to Google Play."
+logical_id = "9c5f75e6-9613-46bf-8ac3-a2eda9ae9826"
+content_hash = "sha256:40d8bcb3ac71401412a1e38f52485a870f3db677bc0bb2ec2663676dca8f7d39"
+size = 92223590
+mtime_ms = 1794075007657
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/9c5f75e6-9613-46bf-8ac3-a2eda9ae9826/61b7a0d1-89e8-4430-9596-90bf9a40a55b"
+storage_version_token = "1794075033716238"
+content_type = "application/octet-stream"

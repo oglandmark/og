@@ -53,7 +53,7 @@ function PromisePoint({
     return { strokeDashoffset: 60 * (1 - eased) };
   });
   const pulseStyle = useAnimatedStyle(() => ({
-    shadowColor: colors.gold,
+    shadowColor: colors.splashGold,
     shadowOpacity: pulse.value * 0.38,
     shadowRadius: pulse.value * 16,
     elevation: 2 + pulse.value * 4,
@@ -114,9 +114,9 @@ function PromisePoint({
   return (
     <View style={styles.point}>
       <View style={[styles.pointCard, { borderColor: colors.actionGlassBorder }]}>
-        <Animated.View style={[styles.iconWrap, { borderColor: colors.goldGlassBorder, backgroundColor: colors.goldGlass }, pulseStyle]}>
-          <Animated.View pointerEvents="none" style={[styles.pingRing, { borderColor: colors.gold }, pingStyle]} />
-          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.gold} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
+        <Animated.View style={[styles.iconWrap, { borderColor: `${colors.splashGold}66`, backgroundColor: `${colors.splashGold}26` }, pulseStyle]}>
+          <Animated.View pointerEvents="none" style={[styles.pingRing, { borderColor: colors.splashGold }, pingStyle]} />
+          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.splashGold} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
             {iconShapes}
           </Svg>
         </Animated.View>
@@ -239,7 +239,7 @@ export function PromiseSection({ onExplore }: { onExplore: () => void }) {
             </Text>
             <Text style={[styles.title, { color: colors.actionForeground }]}>
               Property decisions{'\n'}made with{'\n'}
-              <Text style={[styles.confidence, { color: colors.gold }]}>confidence.</Text>
+              <Text style={[styles.confidence, { color: colors.splashGold }]}>confidence.</Text>
             </Text>
           </View>
 
@@ -264,14 +264,9 @@ export function PromiseSection({ onExplore }: { onExplore: () => void }) {
             testID="promise-explore-listings"
             style={({ pressed }) => [
               styles.button,
-              { opacity: pressed ? 0.84 : 1 },
+              { backgroundColor: colors.splashGold, opacity: pressed ? 0.84 : 1 },
             ]}
           >
-            <LinearGradient
-              pointerEvents="none"
-              colors={['#F7C96B', colors.gold, '#E9AA3B']}
-              style={StyleSheet.absoluteFill}
-            />
             <Animated.View pointerEvents="none" style={[styles.buttonShine, shineStyle]} />
             <Text style={[styles.buttonText, { color: colors.foreground }]}>Explore listings</Text>
             <Animated.View style={arrowStyle}>

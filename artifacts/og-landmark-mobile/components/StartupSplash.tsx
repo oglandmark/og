@@ -3,6 +3,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as SplashScreen from 'expo-splash-screen';
+import { NavigationBar } from 'expo-navigation-bar';
 import { StatusBar } from 'expo-status-bar';
 import { WebView } from 'react-native-webview';
 import { useColors } from '@/hooks/useColors';
@@ -67,6 +68,12 @@ export function StartupSplash({
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const readyReported = useRef(false);
   const loadWatchdog = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    NavigationBar.setHidden(true);
+    return () => NavigationBar.setHidden(false);
+  }, []);
 
   const reportAnimationReady = useCallback((animated: boolean) => {
     if (readyReported.current) return;
@@ -140,7 +147,7 @@ export function StartupSplash({
 
   return (
     <View style={rootStyle}>
-      <StatusBar style="light" />
+      <StatusBar style="light" hidden={Platform.OS !== 'web'} />
       {html
         ? Platform.OS === 'web'
           ? React.createElement('iframe' as never, {

@@ -4,6 +4,10 @@ export const STARTUP_SPLASH_LOAD_TIMEOUT_MS = 3_500;
 const controlPanelMarkup = /<div id="ui">[\s\S]*?<\/div>/;
 const controlHandlers = /\$\('sd'\)\.onclick=[\s\S]*?\$\('rp'\)\.onclick=[\s\S]*?playAu\(\)\};/;
 const audioElementMarkup = /<audio id="au"[^>]*><\/audio>/;
+const insetSplashFit =
+  "function fit(){const {W,H}=C,uh=RENDER?0:56,k=Math.min(innerWidth/W,(innerHeight-uh)/H);$('wrap').style.transform=`translate(-50%,-50%) translateY(${-uh/2}px) scale(${k})`}";
+const fullScreenSplashFit =
+  "function fit(){const {W,H}=C,k=Math.min(innerWidth/W,innerHeight/H);$('wrap').style.transform=`translate(-50%,-50%) scale(${k})`}";
 
 export function resolveSplashAssetUri(uri: string, origin: string): string {
   const asset = new URL(uri, origin);
@@ -24,13 +28,15 @@ export function prepareSplashHtml(source: string): string {
   if (
     !source.includes('let snd=false;') ||
     !controlHandlers.test(source) ||
-    !audioElementMarkup.test(source)
+    !audioElementMarkup.test(source) ||
+    !source.includes(insetSplashFit)
   ) {
-    throw new Error('Splash reference audio markup changed; update the silent-splash adapter.');
+    throw new Error('Splash reference changed; update the splash adapter.');
   }
 
   return source
     .replace(controlPanelMarkup, '')
     .replace(audioElementMarkup, '')
-    .replace(controlHandlers, '');
+    .replace(controlHandlers, '')
+    .replace(insetSplashFit, fullScreenSplashFit);
 }

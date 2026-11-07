@@ -74,6 +74,15 @@ test('startup keeps the complete 7-second animated splash and removes the static
   assert.match(colorTokens, /splashBackground: '#040C1A'/);
 });
 
+test('startup splash uses the full viewport and hides Android system bars temporarily', () => {
+  const preparedHtml = prepareSplashHtml(splashReference);
+  assert.ok(preparedHtml.includes('const {W,H}=C,k=Math.min(innerWidth/W,innerHeight/H);'));
+  assert.doesNotMatch(preparedHtml, /uh=RENDER\?0:56/);
+  assert.match(startupSplash, /NavigationBar\.setHidden\(true\)/);
+  assert.match(startupSplash, /NavigationBar\.setHidden\(false\)/);
+  assert.match(startupSplash, /hidden=\{Platform\.OS !== 'web'\}/);
+});
+
 test('web splash assets use the active preview origin instead of localhost', () => {
   assert.equal(
     resolveSplashAssetUri(

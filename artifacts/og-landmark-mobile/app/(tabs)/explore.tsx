@@ -1335,7 +1335,12 @@ export default function ExploreScreen() {
         windowSize={5}
         updateCellsBatchingPeriod={30}
         renderItem={({ item: p }) => (
-          <PropertyCard property={p} compact />
+          <PropertyCard
+            property={p}
+            compact
+            imageTapAction="details"
+            showGalleryArrows={false}
+          />
         )}
         ListFooterComponent={
           !isProjectsMode && viewMode === 'list' && filteredProperties.length > EXPLORE_PAGE_SIZE ? (

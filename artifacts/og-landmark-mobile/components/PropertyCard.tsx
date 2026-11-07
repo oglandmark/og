@@ -27,7 +27,19 @@ import {
   publicWhatsAppUrl,
 } from '@/lib/publicContact';
 
-function PropertyCardInner({ property, compact = false }: { property: Property; compact?: boolean }) {
+type PropertyCardProps = {
+  property: Property;
+  compact?: boolean;
+  imageTapAction?: 'gallery' | 'details';
+  showGalleryArrows?: boolean;
+};
+
+function PropertyCardInner({
+  property,
+  compact = false,
+  imageTapAction = 'gallery',
+  showGalleryArrows = true,
+}: PropertyCardProps) {
   const colors = useColors();
   const router = useRouter();
   const { isSaved, toggleSaved } = useSaved();
@@ -83,9 +95,20 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
       <View style={styles.pressable}>
         <View style={[styles.imageWrap, compact && styles.compactImageWrap]} {...swipeResponder.panHandlers}>
           <Pressable
-            onPress={(event) => { event.stopPropagation(); setGalleryVisible(true); }}
+            onPress={(event) => {
+              event.stopPropagation();
+              if (imageTapAction === 'details') {
+                router.push(`/property/${property.id}`);
+              } else {
+                setGalleryVisible(true);
+              }
+            }}
             style={styles.imageTap}
-            accessibilityLabel="Open property images full screen"
+            accessibilityRole="button"
+            accessibilityLabel={imageTapAction === 'details'
+              ? `Open property details for ${property.title}`
+              : `Open property images for ${property.title}`}
+            testID={`property-image-${property.id}`}
           >
             <ExpoImage
               source={images[activeImage] ?? images[0]}
@@ -94,7 +117,7 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
               cachePolicy="memory-disk"
             />
           </Pressable>
-          {images.length > 1 && (
+          {images.length > 1 && showGalleryArrows && (
             <>
               <Pressable
                 onPress={(event) => {
@@ -118,11 +141,13 @@ function PropertyCardInner({ property, compact = false }: { property: Property; 
               >
                 <Feather name="chevron-right" size={17} color={colors.actionForeground} />
               </Pressable>
-              <View pointerEvents="none" style={[styles.imageCounter, { backgroundColor: colors.actionGlassStrong }]}>
-                <Feather name="image" size={10} color={colors.actionForeground} />
-                <Text style={[styles.imageCounterText, { color: colors.actionForeground }]}>{activeImage + 1}/{images.length}</Text>
-              </View>
             </>
+          )}
+          {images.length > 1 && (
+            <View pointerEvents="none" style={[styles.imageCounter, { backgroundColor: colors.actionGlassStrong }]}>
+              <Feather name="image" size={10} color={colors.actionForeground} />
+              <Text style={[styles.imageCounterText, { color: colors.actionForeground }]}>{activeImage + 1}/{images.length}</Text>
+            </View>
           )}
           <LinearGradient
             pointerEvents="none"

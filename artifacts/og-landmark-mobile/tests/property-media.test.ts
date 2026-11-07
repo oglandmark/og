@@ -6,6 +6,11 @@ import { buildPropertyImageGallery } from '../lib/propertyGallery';
 
 const API_BASE = 'https://www.oglandmark.com';
 const propertyModelSource = readFileSync(new URL('../lib/properties.ts', import.meta.url), 'utf8');
+const propertyCardSource = readFileSync(
+  new URL('../components/PropertyCard.tsx', import.meta.url),
+  'utf8',
+);
+const exploreSource = readFileSync(new URL('../app/(tabs)/explore.tsx', import.meta.url), 'utf8');
 
 test('resolves relative listing media paths to absolute mobile-safe URLs', () => {
   assert.equal(
@@ -115,4 +120,11 @@ test('only bundled demo galleries are padded with bundled sample photos', () => 
 test('live listings without photos use a branded placeholder, not a demo property image', () => {
   assert.match(propertyModelSource, /LIVE_PROPERTY_NO_IMAGE[\s\S]*og-landmark-app-icon\.png/);
   assert.match(propertyModelSource, /imgs\[0\][\s\S]*LIVE_PROPERTY_NO_IMAGE/);
+});
+
+test('Explore property photos open details without gallery arrows', () => {
+  assert.match(exploreSource, /<PropertyCard[\s\S]*?imageTapAction="details"[\s\S]*?showGalleryArrows=\{false\}/);
+  assert.match(propertyCardSource, /imageTapAction === 'details'[\s\S]*?router\.push\(`\/property\/\$\{property\.id\}`\)/);
+  assert.match(propertyCardSource, /images\.length > 1 && showGalleryArrows/);
+  assert.match(propertyCardSource, /testID=\{`property-image-\$\{property\.id\}`\}/);
 });

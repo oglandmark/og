@@ -54,13 +54,21 @@ test('the shared refresh animation uses OG Landmark brand colors', () => {
   assert.match(control, /tintColor=\{colors\.teal\}/);
   assert.match(control, /colors=\{\[colors\.teal, colors\.gold, colors\.action\]\}/);
   assert.match(control, /title=\{Platform\.OS === 'ios' \? label : undefined\}/);
-  assert.match(control, /if \(Platform\.OS === 'android'\)\s*\{\s*return <RefreshControl refreshing=\{refreshing\} onRefresh=\{onRefresh\} \/>;/);
 });
 
-test('Home keeps its refresh control native-only for the Replit web preview', () => {
-  const home = read('app/(tabs)/index.tsx');
-  assert.match(home, /refreshControl=\{Platform\.OS === 'web' \? undefined : \(/);
-  assert.match(home, /<BrandedRefreshControl refreshing=\{refreshing\}/);
+test('Android buyer tabs avoid the native refresh control that hides page content', () => {
+  for (const path of [
+    'app/(tabs)/index.tsx',
+    'app/(tabs)/explore.tsx',
+    'app/(tabs)/saved.tsx',
+    'app/(tabs)/listings.tsx',
+  ]) {
+    assert.match(
+      read(path),
+      /refreshControl=\{Platform\.OS === 'web' \|\| Platform\.OS === 'android' \? undefined : \(/,
+      `${path} should skip the problematic Android control`,
+    );
+  }
 });
 
 test('Home only shows its full-feed loader for the first property request', () => {

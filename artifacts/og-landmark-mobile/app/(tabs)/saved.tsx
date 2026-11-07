@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,7 +17,6 @@ import { GlassCard } from '@/components/GlassCard';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
-import { useCallback, useRef, useState } from 'react';
 
 export default function SavedScreen() {
   const colors = useColors();

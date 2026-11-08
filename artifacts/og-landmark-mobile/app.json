@@ -2,7 +2,7 @@
   "expo": {
     "name": "OG Landmark",
     "slug": "og-landmark-uin4dnqfp8-zl28mrpom",
-    "version": "4.1.2",
+    "version": "4.1.3",
     "orientation": "portrait",
     "icon": "./assets/images/og-landmark-app-icon.png",
     "scheme": "og-land-mobile",
@@ -14,7 +14,7 @@
     },
     "android": {
       "package": "com.oglandmark.app",
-      "versionCode": 52,
+      "versionCode": 53,
       "softwareKeyboardLayoutMode": "resize",
       "icon": "./assets/images/og-landmark-app-icon.png",
       "adaptiveIcon": {
@@ -71,8 +71,8 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "OG Landmark uses your location to show nearby properties.",
-          "locationWhenInUsePermission": "OG Landmark uses your location to show nearby properties."
+          "locationAlwaysAndWhenInUsePermission": "OG Landmark uses your location only when you tap Use My Location to set a property pin.",
+          "locationWhenInUsePermission": "OG Landmark uses your location only when you tap Use My Location to set a property pin."
         }
       ],
       "expo-video",

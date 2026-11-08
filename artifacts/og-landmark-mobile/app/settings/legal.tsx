@@ -12,7 +12,7 @@ type Section = 'about' | 'legal' | 'security';
 type LegalTab = 'terms' | 'privacy';
 
 const TERMS_EFFECTIVE_DATE = 'September 6, 2026';
-const PRIVACY_EFFECTIVE_DATE = 'October 2, 2026';
+const PRIVACY_EFFECTIVE_DATE = 'November 8, 2026';
 
 function BulletList({
   items,
@@ -161,7 +161,7 @@ function LegalDocument({
               'Account details such as name, email, phone number, role, and verification information.',
               'Property listings, photos, documents, saved searches, calculator history, enquiries, and scheduled visits.',
               'Device and technical information needed to keep sessions, notifications, and security features working.',
-              'Optional location information when you choose location-based discovery or map features.',
+              'Precise device location when you choose Use My Location. If you submit a listing with that pin, its coordinates are sent to OG Landmark and stored with the listing; approved listing pins may be visible to other users. GPS access is optional, and you can choose a pin manually instead.',
             ]} />
           </SectionCard>
 
@@ -177,7 +177,7 @@ function LegalDocument({
 
           <SectionCard icon="share-2" eyebrow="03" title="When information is shared" colors={colors}>
             <Paragraph colors={colors}>
-              We share only what is needed to operate the requested service. For example, an enquiry may include your name and contact details with the relevant seller, agent, or developer. We may also use third-party service providers for hosting, email delivery, notifications, and security.
+              Approved listings may show the property pin and address to other users. An enquiry may include your name and contact details with the relevant seller, agent, or developer. Map or address-lookup providers may process coordinates when you use those features. We also use service providers for hosting, email delivery, notifications, and security.
             </Paragraph>
             <Paragraph colors={colors}>
               We do not sell personal information for advertising. We may disclose information when required by law, to protect users, or as part of a genuine business transfer.
@@ -333,7 +333,7 @@ function SecurityContent({ colors, router }: { colors: ReturnType<typeof useColo
         <View style={styles.controlRows}>
           {[
             ['bell', 'Notifications', 'Manage alerts from Profile settings.'],
-            ['map-pin', 'Location', 'Used only when you choose location-based tools.'],
+            ['map-pin', 'Location', 'GPS is used only when you tap Use My Location; manual pin options remain available.'],
             ['trash-2', 'Account deletion', 'Request permanent removal through account controls.'],
           ].map(([icon, title, body]) => (
             <View key={title} style={[styles.controlRow, { borderTopColor: colors.border }]}>

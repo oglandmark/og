@@ -27,7 +27,7 @@ export default function AdminLoginScreen() {
   const [otp,      setOtp]      = useState('');
   const [showPwd,  setShowPwd]  = useState(false);
   const [loading,  setLoading]  = useState(false);
-  const otpRef = useRef<import('react-native').TextInputInstance>(null);
+  const otpRef = useRef<React.ComponentRef<typeof TextInput>>(null);
 
   // ── Step 1 ──────────────────────────────────────────────────────────────────
   async function handleVerify() {

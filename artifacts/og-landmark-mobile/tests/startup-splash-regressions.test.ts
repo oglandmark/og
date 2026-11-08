@@ -155,7 +155,7 @@ test('shared OG and roof mark loops after ten focused seconds on each mobile pag
 });
 
 test('Home brand mark shows the full OG Landmark wordmark', () => {
-  assert.match(homeScreen, /<BrandMark showName \/>/);
+  assert.match(homeScreen, /<BrandMark showName compact \/>/);
   assert.match(brandMark, /accessibilityLabel="OG Landmark"/);
   assert.match(brandMark, /OG Landmark\s*<\/NativeText>/);
   assert.match(brandMark, /flexShrink: 0/);

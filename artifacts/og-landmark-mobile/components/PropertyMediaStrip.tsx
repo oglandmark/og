@@ -11,7 +11,7 @@
 import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator, Image, Modal, Pressable,
-  ScrollView, StatusBar, StyleSheet, TouchableOpacity, View, type ScrollViewInstance,
+  ScrollView, StatusBar, StyleSheet, TouchableOpacity, View,
 } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { setAudioModeAsync } from 'expo-audio';
@@ -89,7 +89,7 @@ export function PropertyMediaStrip({
   const [isMuted,       setIsMuted]       = useState(false);
   const [isPlaying,     setIsPlaying]     = useState(false);
   const videoPlayerRef = useRef<VideoPlayer | null>(null);
-  const stripRef = useRef<ScrollViewInstance>(null);
+  const stripRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const [stripOffset, setStripOffset] = useState(0);
   const [stripWidth, setStripWidth] = useState(0);
   const [stripContentWidth, setStripContentWidth] = useState(0);

@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   AccessibilityInfo,
@@ -15,7 +15,6 @@ import {
   Text,
   useWindowDimensions,
   View,
-  type ScrollViewInstance,
 } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
 import { useColors } from '@/hooks/useColors';
@@ -138,7 +137,7 @@ export default function HomeCategoryBannerCarousel({
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
   const slideHeight = Math.round(Math.min(192, Math.max(176, windowWidth * 0.46)));
-  const scrollRef = useRef<ScrollViewInstance>(null);
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const activeIndexRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [carouselWidth, setCarouselWidth] = useState(windowWidth);

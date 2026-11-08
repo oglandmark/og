@@ -522,7 +522,7 @@ export default function ExploreScreen() {
   const [remoteLoadingMore, setRemoteLoadingMore] = useState(false);
   const [currentPage, setCurrentPage]           = useState(1);
   const [refreshing, setRefreshing]             = useState(false);
-  const searchRef = useRef<import('react-native').TextInputInstance>(null);
+  const searchRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const initialParamsCleared = useRef(false);
 
   const refreshExplore = useCallback(async () => {

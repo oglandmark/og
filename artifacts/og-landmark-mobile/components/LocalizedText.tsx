@@ -3,9 +3,7 @@ import {
   Text as NativeText,
   TextInput as NativeTextInput,
   type TextProps as NativeTextProps,
-  type TextInstance,
   type TextInputProps as NativeTextInputProps,
-  type TextInputInstance,
 } from 'react-native';
 import { useLanguage } from '@/context/LanguageContext';
 import { translateText } from '@/lib/i18n';
@@ -18,7 +16,7 @@ function localizeChildren(children: React.ReactNode, lang: 'en' | 'ur'): React.R
   });
 }
 
-export const LocalizedText = forwardRef<TextInstance, NativeTextProps>(function LocalizedText(
+export const LocalizedText = forwardRef<React.ComponentRef<typeof NativeText>, NativeTextProps>(function LocalizedText(
   { children, ...props },
   ref,
 ) {
@@ -32,7 +30,7 @@ export const LocalizedText = forwardRef<TextInstance, NativeTextProps>(function 
 
 LocalizedText.displayName = 'LocalizedText';
 
-export const LocalizedTextInput = forwardRef<TextInputInstance, NativeTextInputProps>(
+export const LocalizedTextInput = forwardRef<React.ComponentRef<typeof NativeTextInput>, NativeTextInputProps>(
   function LocalizedTextInput({ placeholder, accessibilityLabel, ...props }, ref) {
     const { lang, isRTL } = useLanguage();
     return (

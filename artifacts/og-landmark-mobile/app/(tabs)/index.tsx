@@ -3,7 +3,6 @@ import {
   ActivityIndicator, AppState, Image,
   Modal, PanResponder, Platform, Pressable, ScrollView, StatusBar,
   StyleSheet, View, useWindowDimensions,
-  type ScrollViewInstance,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { setAudioModeAsync } from 'expo-audio';
@@ -1410,7 +1409,7 @@ export default function HomeScreen() {
   const { toggleSaved } = useSaved();
 
   // Scroll-to-top when user taps the Home tab icon while already on this screen
-  const mainScrollRef = useRef<ScrollViewInstance>(null);
+  const mainScrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   useEffect(() => {
     const unsub = navigation.addListener('tabPress' as any, () => {
       mainScrollRef.current?.scrollTo({ y: 0, animated: true });

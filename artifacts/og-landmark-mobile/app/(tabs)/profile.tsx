@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert, AppState, Image, Linking, Modal, Platform, Pressable,
   ScrollView, StyleSheet, View,
-  type ScrollViewInstance,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
@@ -880,7 +879,7 @@ function GuestScreen({
   focused,
 }: {
   colors: ReturnType<typeof useColors>; router: ReturnType<typeof useRouter>;
-  topInset: number; tabBarHeight: number; scrollRef: React.RefObject<ScrollViewInstance | null>;
+  topInset: number; tabBarHeight: number; scrollRef: React.RefObject<React.ComponentRef<typeof ScrollView> | null>;
   focused: boolean;
 }) {
   const onScroll = useTabBarScrollHandler();
@@ -1014,7 +1013,7 @@ export default function ProfileScreen() {
   const { tr }  = useLanguage();
   const { savedIds } = useSaved();
   const onScroll = useTabBarScrollHandler();
-  const guestScrollRef = useRef<ScrollViewInstance>(null);
+  const guestScrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const [profileFocused, setProfileFocused] = useState(false);
 
   useFocusEffect(useCallback(() => {

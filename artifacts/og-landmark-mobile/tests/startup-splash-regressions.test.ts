@@ -83,9 +83,17 @@ test('startup splash uses the full viewport and hides Android system bars tempor
   assert.match(preparedHtml, /function build\(f\)\{E\.clear\(\);/);
   assert.match(preparedHtml, /r="\$\{PT\[i\]\.r\}"/);
   assert.doesNotMatch(preparedHtml, /e\.setAttribute\('r',p\.r\);/);
-  assert.match(startupSplash, /NavigationBar\.setHidden\(true\)/);
-  assert.match(startupSplash, /NavigationBar\.setHidden\(false\)/);
+  assert.doesNotMatch(startupSplash, /import \{ NavigationBar \} from 'expo-navigation-bar'/);
+  assert.match(startupSplash, /import\('expo-navigation-bar'\)/);
+  assert.match(startupSplash, /setVisibilityAsync\('hidden'\)/);
+  assert.match(startupSplash, /setVisibilityAsync\('visible'\)/);
+  assert.match(startupSplash, /\.catch\(\(\) => undefined\)/);
   assert.match(startupSplash, /hidden=\{Platform\.OS !== 'web'\}/);
+});
+
+test('an unavailable Android navigation-bar module cannot block splash startup', () => {
+  assert.match(startupSplash, /void import\('expo-navigation-bar'\)[\s\S]*\.catch\(\(\) => undefined\)/);
+  assert.match(startupSplash, /Unsupported device\/navigation mode must not prevent app startup/);
 });
 
 test('startup animation starts only after the native splash is hidden', () => {

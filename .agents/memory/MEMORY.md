@@ -13,6 +13,7 @@
 - [Expo GitHub build dispatch](expo-github-build-dispatch.md) — after transfers, align the owner slug and verify app ID against the project URL; investigate repo binding when dispatch finds none.
 - [EAS environment project matching](eas-environment-project-id.md) — production variables must be added to the exact EAS project ID used by the build.
 - [EAS build log redaction](eas-build-log-redaction.md) — startup logs can print project environment-variable values; avoid raw log output and redact before review.
+- [Play Store crash diagnostics](playstore-crash-diagnostics.md) — Expo MCP Android Vitals lookup needs a Google Service Account key configured in the Expo account.
 - [Plot calculator geometry](plot-calculator-geometry.md) — irregular plots need diagonals for exact triangulation; side-only results must be labelled estimates or declined.
 - [EAS cloud monorepo builds](eas-cloud-monorepo-build.md) — direct CLI uploads bypass GitHub, but remote pnpm can fail on esbuild build-script policy in this workspace.
 - [EAS pnpm and lockfile compatibility](eas-pnpm8-lockfile.md) — align the lockfile with the target build profile's explicit pnpm version, not only the root package-manager field.

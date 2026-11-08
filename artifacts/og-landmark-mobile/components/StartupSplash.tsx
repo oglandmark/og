@@ -3,7 +3,6 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as SplashScreen from 'expo-splash-screen';
-import { NavigationBar } from 'expo-navigation-bar';
 import { StatusBar } from 'expo-status-bar';
 import { WebView } from 'react-native-webview';
 import { useColors } from '@/hooks/useColors';
@@ -72,8 +71,34 @@ export function StartupSplash({
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
-    NavigationBar.setHidden(true);
-    return () => NavigationBar.setHidden(false);
+    let active = true;
+    let restoreNavigationBar: (() => void) | null = null;
+
+    // Keep this native module out of the app's eager import graph. If it is
+    // unavailable in a Play build, the startup splash must still render.
+    void import('expo-navigation-bar')
+      .then(async ({ setVisibilityAsync }) => {
+        if (!active) return;
+        try {
+          await setVisibilityAsync('hidden');
+          restoreNavigationBar = () => {
+            try {
+              void setVisibilityAsync('visible').catch(() => undefined);
+            } catch {
+              // The navigation bar is best-effort; never block app startup.
+            }
+          };
+          if (!active) restoreNavigationBar();
+        } catch {
+          // Unsupported device/navigation mode must not prevent app startup.
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+      restoreNavigationBar?.();
+    };
   }, []);
 
   const startSplashAnimation = useCallback(() => {

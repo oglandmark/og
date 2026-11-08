@@ -9,6 +9,50 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Send a password reset code
+ */
+export const requestPasswordResetBodyEmailMax = 320;
+
+
+export const requestPasswordResetBodyEmailRegExp = new RegExp('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+
+
+export const RequestPasswordResetBody = zod.object({
+  "email": zod.string().max(requestPasswordResetBodyEmailMax).regex(requestPasswordResetBodyEmailRegExp)
+})
+
+export const RequestPasswordResetResponse = zod.object({
+  "success": zod.boolean(),
+  "smtpOff": zod.boolean().optional(),
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Reset a password using an emailed code
+ */
+export const confirmPasswordResetBodyEmailMax = 320;
+
+
+export const confirmPasswordResetBodyEmailRegExp = new RegExp('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+export const confirmPasswordResetBodyCodeRegExp = new RegExp('^\\d{6}$');
+export const confirmPasswordResetBodyNewPasswordMin = 8;
+export const confirmPasswordResetBodyNewPasswordMax = 1024;
+
+
+
+export const ConfirmPasswordResetBody = zod.object({
+  "email": zod.string().max(confirmPasswordResetBodyEmailMax).regex(confirmPasswordResetBodyEmailRegExp),
+  "code": zod.string().regex(confirmPasswordResetBodyCodeRegExp),
+  "newPassword": zod.string().min(confirmPasswordResetBodyNewPasswordMin).max(confirmPasswordResetBodyNewPasswordMax)
+})
+
+export const ConfirmPasswordResetResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
  * Returns server health status
  * @summary Health check
  */

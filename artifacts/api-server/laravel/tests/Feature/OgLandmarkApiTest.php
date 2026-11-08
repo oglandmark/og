@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Mail\SignupVerificationOtp;
+use App\Mail\PasswordResetOtp;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
@@ -224,6 +225,89 @@ final class OgLandmarkApiTest extends TestCase
             'user_id' => 42,
         ]);
         $this->withToken($token)->getJson('/api/auth/me')->assertOk()->assertJsonPath('user.email', 'user@example.test');
+    }
+
+    public function test_mobile_forgot_password_sends_code_resets_password_and_revokes_sessions(): void
+    {
+        Mail::fake();
+        config([
+            'mail.mailers.smtp.username' => 'no-reply@example.test',
+            'mail.mailers.smtp.password' => 'test-password',
+            'mail.from.address' => 'no-reply@example.test',
+        ]);
+
+        $this->postJson('/api/auth/login', [
+            'identifier' => 'user@example.test',
+            'password' => self::PASSWORD,
+        ])->assertOk();
+        $sessionToken = DB::table('auth_sessions')->where('user_id', 42)->value('token_hash');
+        $this->assertNotEmpty($sessionToken);
+
+        $this->postJson('/api/auth/forgot-password', ['email' => 'USER@example.test'])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $resetCode = null;
+        Mail::assertSent(PasswordResetOtp::class, function (PasswordResetOtp $mail) use (&$resetCode): bool {
+            $resetCode = $mail->code;
+            return true;
+        });
+        $this->assertMatchesRegularExpression('/^\d{6}$/', (string) $resetCode);
+        $this->assertDatabaseHas('auth_challenges', [
+            'email' => 'user@example.test',
+            'purpose' => 'password-reset',
+            'code_hash' => hash('sha256', (string) $resetCode),
+        ]);
+
+        $incorrectCode = $resetCode === '000000' ? '000001' : '000000';
+        $this->postJson('/api/auth/reset-password', [
+            'email' => 'user@example.test',
+            'code' => $incorrectCode,
+            'newPassword' => 'NewPassword123',
+        ])->assertStatus(422);
+        $this->assertDatabaseHas('auth_challenges', [
+            'email' => 'user@example.test',
+            'purpose' => 'password-reset',
+            'attempts' => 1,
+        ]);
+
+        $this->postJson('/api/auth/reset-password', [
+            'email' => 'user@example.test',
+            'code' => $resetCode,
+            'newPassword' => 'NewPassword123',
+        ])->assertOk()->assertJsonPath('success', true);
+
+        $this->assertDatabaseMissing('auth_challenges', [
+            'email' => 'user@example.test',
+            'purpose' => 'password-reset',
+        ]);
+        $this->assertDatabaseMissing('auth_sessions', ['user_id' => 42]);
+        $this->withToken((string) $sessionToken)->getJson('/api/auth/me')->assertUnauthorized();
+
+        $this->postJson('/api/auth/login', [
+            'identifier' => 'user@example.test',
+            'password' => self::PASSWORD,
+        ])->assertUnauthorized();
+        $this->postJson('/api/auth/login', [
+            'identifier' => 'user@example.test',
+            'password' => 'NewPassword123',
+        ])->assertOk();
+    }
+
+    public function test_mobile_forgot_password_does_not_reveal_unknown_accounts(): void
+    {
+        Mail::fake();
+        config([
+            'mail.mailers.smtp.username' => 'no-reply@example.test',
+            'mail.mailers.smtp.password' => 'test-password',
+            'mail.from.address' => 'no-reply@example.test',
+        ]);
+
+        $this->postJson('/api/auth/forgot-password', ['email' => 'unknown@example.test'])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonMissingPath('smtpOff');
+        Mail::assertNothingSent();
     }
 
     public function test_mobile_registration_creates_an_admin_visible_user_and_admin_delete_revokes_access(): void

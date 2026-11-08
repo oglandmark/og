@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Mail\SignupVerificationOtp;
+use App\Mail\PasswordResetOtp;
 use App\Http\Controllers\Controller;
 use App\Services\LegacyDataStore;
 use Illuminate\Http\JsonResponse;
@@ -207,6 +208,136 @@ final class AuthController extends Controller
             return response()->json(['error' => 'Unable to send the verification email. Please try again later.'], 503);
         }
         return response()->json(['verificationRequired' => true, 'email' => $email, 'message' => 'A new verification code has been sent.']);
+    }
+
+    public function forgotPassword(Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $validated = $request->validate(['email' => ['required', 'email', 'max:320']]);
+        $email = mb_strtolower(trim($validated['email']));
+
+        if (! $this->smtpReady()) {
+            return response()->json([
+                'success' => true,
+                'smtpOff' => true,
+                'message' => 'Email service is unavailable. Please contact admin for help.',
+            ]);
+        }
+
+        $users = $store->read()['users'] ?? [];
+        $user = collect($users)->first(
+            fn (array $candidate): bool => mb_strtolower(trim((string) ($candidate['email'] ?? ''))) === $email
+        );
+
+        // Keep the response the same for unknown email addresses.
+        if (! $user) {
+            return response()->json([
+                'success' => true,
+                'message' => 'If an account exists with this email, a reset code has been sent.',
+            ]);
+        }
+
+        $code = (string) random_int(100000, 999999);
+        DB::table('auth_challenges')->updateOrInsert(
+            ['email' => $email, 'purpose' => 'password-reset'],
+            ['code_hash' => hash('sha256', $code), 'attempts' => 0, 'expires_at' => now()->addMinutes(15)]
+        );
+
+        try {
+            $smtp = config('mail.mailers.smtp');
+            $from = (string) config('mail.from.address');
+            if (! filter_var($from, FILTER_VALIDATE_EMAIL)) {
+                $from = (string) ($smtp['username'] ?? '');
+            }
+            Mail::mailer('smtp')->to($email)->send(
+                (new PasswordResetOtp($code))->from($from, (string) config('mail.from.name', 'OG Landmark'))
+            );
+        } catch (Throwable $error) {
+            DB::table('auth_challenges')
+                ->where('email', $email)
+                ->where('purpose', 'password-reset')
+                ->delete();
+            report($error);
+            return response()->json([
+                'error' => 'Unable to send the password reset code. Please try again later.',
+            ], 503);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Reset code sent. Check your email.',
+        ]);
+    }
+
+    public function resetPassword(Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'max:320'],
+            'code' => ['required', 'digits:6'],
+            'newPassword' => ['required', 'string', 'min:8', 'max:1024', 'regex:/^(?=.*[A-Za-z])(?=.*\d).+$/'],
+        ]);
+        $email = mb_strtolower(trim($validated['email']));
+
+        $result = $store->mutate(function (array &$data) use ($email, $validated): array {
+            $challenge = DB::table('auth_challenges')
+                ->where('email', $email)
+                ->where('purpose', 'password-reset')
+                ->lockForUpdate()
+                ->first();
+            if (! $challenge) {
+                return ['error' => 'Invalid or expired reset code.', 'status' => 422];
+            }
+            if (now()->greaterThan($challenge->expires_at)) {
+                DB::table('auth_challenges')->where('email', $email)->where('purpose', 'password-reset')->delete();
+                return ['error' => 'Reset code has expired. Please request a new one.', 'status' => 422];
+            }
+            if ((int) $challenge->attempts >= 5) {
+                return ['error' => 'Too many incorrect codes. Request a new one.', 'status' => 429];
+            }
+            if (! hash_equals((string) $challenge->code_hash, hash('sha256', $validated['code']))) {
+                DB::table('auth_challenges')->where('email', $email)->where('purpose', 'password-reset')
+                    ->update(['attempts' => (int) $challenge->attempts + 1]);
+                return ['error' => 'Incorrect reset code. Please try again.', 'status' => 422];
+            }
+
+            $userIndex = null;
+            foreach ($data['users'] ?? [] as $index => $candidate) {
+                if (mb_strtolower(trim((string) ($candidate['email'] ?? ''))) === $email) {
+                    $userIndex = $index;
+                    break;
+                }
+            }
+            if ($userIndex === null) {
+                DB::table('auth_challenges')->where('email', $email)->where('purpose', 'password-reset')->delete();
+                return ['error' => 'Invalid or expired reset code.', 'status' => 422];
+            }
+
+            $salt = bin2hex(random_bytes(16));
+            $data['users'][$userIndex]['password'] = 'pbkdf2:'.$salt.':'.hash_pbkdf2(
+                'sha512',
+                $validated['newPassword'],
+                $salt,
+                100000,
+                128
+            );
+            DB::table('auth_challenges')->where('email', $email)->where('purpose', 'password-reset')->delete();
+            DB::table('auth_sessions')->where('user_id', (int) ($data['users'][$userIndex]['id'] ?? 0))->delete();
+
+            return ['success' => true];
+        });
+
+        if (isset($result['error'])) {
+            return response()->json(['error' => $result['error']], $result['status']);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    private function smtpReady(): bool
+    {
+        $smtp = config('mail.mailers.smtp');
+
+        return filter_var($smtp['username'] ?? '', FILTER_VALIDATE_EMAIL)
+            && (string) ($smtp['password'] ?? '') !== '';
     }
 
     private function sendRegistrationOtp(string $email, string $otp): void

@@ -10,9 +10,61 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Public authentication operations
   - name: admin
     description: Administrator operations
 paths:
+  /auth/forgot-password:
+    post:
+      operationId: requestPasswordReset
+      tags: [auth]
+      summary: Send a password reset code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordResetRequest"
+      responses:
+        "200":
+          description: A reset code was sent, or the request was accepted without revealing whether the account exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PasswordResetResponse"
+        "422":
+          description: Invalid email address
+        "429":
+          description: Too many reset requests
+        "503":
+          description: Email delivery is unavailable
+  /auth/reset-password:
+    post:
+      operationId: confirmPasswordReset
+      tags: [auth]
+      summary: Reset a password using an emailed code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordResetConfirmRequest"
+      responses:
+        "200":
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                required: [success]
+        "422":
+          description: Invalid code, expired code, or invalid password
+        "429":
+          description: Too many incorrect code attempts
   /healthz:
     get:
       operationId: healthCheck
@@ -311,6 +363,39 @@ components:
           type: string
       required:
         - status
+    PasswordResetRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+          maxLength: 320
+      required: [email]
+    PasswordResetResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        smtpOff:
+          type: boolean
+        message:
+          type: string
+      required: [success, message]
+    PasswordResetConfirmRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+          maxLength: 320
+        code:
+          type: string
+          pattern: "^\\d{6}$"
+        newPassword:
+          type: string
+          minLength: 8
+          maxLength: 1024
+      required: [email, code, newPassword]
     AdminUserCreate:
       type: object
       properties:

@@ -9,6 +9,35 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface PasswordResetRequest {
+  /**
+     * @maxLength 320
+     * @pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$
+     */
+  email: string;
+}
+
+export interface PasswordResetResponse {
+  success: boolean;
+  smtpOff?: boolean;
+  message: string;
+}
+
+export interface PasswordResetConfirmRequest {
+  /**
+     * @maxLength 320
+     * @pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$
+     */
+  email: string;
+  /** @pattern ^\d{6}$ */
+  code: string;
+  /**
+     * @minLength 8
+     * @maxLength 1024
+     */
+  newPassword: string;
+}
+
 export type AdminUserCreateRole = typeof AdminUserCreateRole[keyof typeof AdminUserCreateRole];
 
 
@@ -166,6 +195,10 @@ export type AgentProgressReport = AgentProgressInput & {
   status: AgentProgressReportStatus;
   adminNote?: string;
   submittedAt: string;
+};
+
+export type ConfirmPasswordReset200 = {
+  success: boolean;
 };
 
 export type UpdateAdminManagedUserRoleBodyRole = typeof UpdateAdminManagedUserRoleBodyRole[keyof typeof UpdateAdminManagedUserRoleBodyRole];

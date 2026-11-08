@@ -1767,7 +1767,7 @@ export default function HomeScreen() {
               <Feather name="menu" size={21} color={colors.action} />
             </View>
           </Pressable>
-          <BrandMark showName />
+          <BrandMark showName compact />
           <NotificationBell compact />
         </View>
 

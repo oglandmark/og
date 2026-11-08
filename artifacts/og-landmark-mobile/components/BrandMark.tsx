@@ -9,20 +9,22 @@ export function BrandMark({
   inverse = false,
   size = 'default',
   showName = true,
+  compact = false,
   animateOnWeb = false,
   focused,
 }: {
   inverse?: boolean;
   size?: 'default' | 'hero';
   showName?: boolean;
+  compact?: boolean;
   animateOnWeb?: boolean;
   focused?: boolean;
 }) {
   const colors = useColors();
   return (
-    <View style={[styles.container, size === 'hero' && styles.heroContainer]}>
+    <View style={[styles.container, compact && styles.compactContainer, size === 'hero' && styles.heroContainer]}>
       <OGLandmarkLogo
-        size={size === 'hero' ? (!showName ? 116 : 68) : 46}
+        size={size === 'hero' ? (!showName ? 116 : 68) : compact ? 38 : 46}
         inverse={inverse}
         animateOnWeb={animateOnWeb}
         focused={focused}
@@ -32,7 +34,12 @@ export function BrandMark({
           <NativeText
             numberOfLines={1}
             accessibilityLabel="OG Landmark"
-            style={[styles.title, { color: inverse ? colors.background : colors.action }, size === 'hero' && styles.heroTitle]}
+            style={[
+              styles.title,
+              compact && styles.compactTitle,
+              { color: inverse ? colors.background : colors.action },
+              size === 'hero' && styles.heroTitle,
+            ]}
           >
             OG Landmark
           </NativeText>
@@ -45,7 +52,9 @@ export function BrandMark({
 
 const styles = StyleSheet.create({
   container: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  compactContainer: { gap: 6 },
   title: { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 15, letterSpacing: 0.2, flexShrink: 0, color: '#1c2024' },
+  compactTitle: { fontSize: 13, letterSpacing: 0 },
   subtitle: { fontFamily: 'Inter_500Medium', fontSize: 8, letterSpacing: 2.3, color: brandColors.light.gold, marginTop: 2 },
   heroContainer: { justifyContent: 'center', gap: 13 },
   heroTitle: { fontSize: 20, letterSpacing: 0.5 },

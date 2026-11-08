@@ -20,3 +20,9 @@ After transferring an Expo project, the app config's `owner` can still name the 
 **Why:** The workspace's active release branch can lag or diverge from the branch used by the last successful EAS build, so rebuilding that old ref can silently omit recent mobile changes.
 
 **How to apply:** Compare local HEAD with the latest successful EAS build commit; push the intended source to a dedicated branch when needed, and confirm `gitCommitHash`, app version, and Android build number from build metadata.
+
+During longer Android builds, `buildInfo.updatedAt` may stop advancing while Gradle continues. The signed log file listed in `logFiles` can show whether native compilation is still progressing.
+
+**Why:** The build metadata stayed unchanged while the Gradle log continued to receive new native compilation steps.
+
+**How to apply:** For an apparently stalled build, compare the latest sanitized log timestamps before retrying or cancelling. Do not expose signed log URLs or raw environment-rich logs.

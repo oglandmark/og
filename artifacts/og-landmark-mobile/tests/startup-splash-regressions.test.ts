@@ -76,7 +76,7 @@ test('startup goes directly to the complete animation without a pre-animation lo
   assert.ok(appConfig.expo.assetBundlePatterns?.includes('assets/splash/*'));
   assert.match(colorTokens, /background: '#FFFFFF'/);
   assert.match(colorTokens, /teal: '#19C3B1'/);
-  assert.match(colorTokens, /gold: '#F2B84B'/);
+  assert.match(colorTokens, /gold: '#C9A248'/);
   assert.match(colorTokens, /splashBackground: '#040C1A'/);
 });
 

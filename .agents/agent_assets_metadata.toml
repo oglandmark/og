@@ -2,48 +2,6 @@ uploads = []
 generated = []
 
 [[outputs]]
-id = "iAEc6QmZmIeO-x8nH_yG7"
-uri = "file://generated-artifacts/og-landmark-release/og-landmark-react-website-hostinger.zip"
-type = "unspecified"
-title = "OG Landmark React Website · Hostinger ZIP"
-description = "Static React website package with .htaccess at ZIP root for extraction into Hostinger public_html. It continues to use the current production Laravel API; no Supabase database migration is included."
-logical_id = "9aa32874-7041-4bbd-8d98-91c23e487fa3"
-content_hash = "sha256:c0d999b90e9b693e03547868ebd05efaf0ae36a42df27b8162799e3a18796c19"
-size = 13183427
-mtime_ms = 1793379348587
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/9aa32874-7041-4bbd-8d98-91c23e487fa3/9d7c6651-8975-4596-a724-42df9604e68f"
-storage_version_token = "1793379376252792"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "1LYCIo9OF45O59mk5REOG"
-uri = "file://generated-artifacts/og-landmark-release/og-landmark-hostinger-vite-app.zip"
-type = "unspecified"
-title = "OG Landmark · Hostinger Vite ZIP"
-description = "Root contains package.json, vite.config.js, src/, and public/; excludes node_modules, .env, and .git. Production Vite build and archive integrity checks passed."
-logical_id = "9d6d3470-e6a5-4e51-bd1d-a98b8bb26d1d"
-content_hash = "sha256:f2ccaa7f05aa019a233091fbbdad0a5b5f37a3b3c5418fb702c30e5dff210f13"
-size = 13185903
-mtime_ms = 1793383459359
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/9d6d3470-e6a5-4e51-bd1d-a98b8bb26d1d/24094e0d-6a51-4b98-98db-5218e4115197"
-storage_version_token = "1793383478835189"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "B1yPzL8xNKN_RrR2Lj2dY"
-uri = "file://generated-artifacts/og-landmark-release/og-landmark-hostinger-express-app.zip"
-type = "unspecified"
-title = "OG Landmark · Hostinger Express ZIP"
-description = "Express deployment archive with package.json and server.js at ZIP root, React website files under public/, and no node_modules, .env, or .git. Local route and startup checks passed."
-logical_id = "2c3d8a19-abd7-44e2-b72e-a101921683f9"
-content_hash = "sha256:af015f236dab4d55aac021675fa9df710fbcc2888f71753f820e8d4076072353"
-size = 13185434
-mtime_ms = 1793424726336
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/2c3d8a19-abd7-44e2-b72e-a101921683f9/e404a273-bbd8-4eef-81f2-6a6cc4359a87"
-storage_version_token = "1793424739366542"
-content_type = "application/octet-stream"
-
-[[outputs]]
 id = "X3ma1xIsTqEFD6lqENjg3"
 uri = "file://generated-artifacts/og-landmark-release/og-landmark-supabase-express-api.zip"
 type = "unspecified"

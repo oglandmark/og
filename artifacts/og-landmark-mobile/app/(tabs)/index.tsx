@@ -1259,8 +1259,8 @@ function PlotCalculator({ colors }: { colors: Colors }) {
               <View style={[cc.seg, { backgroundColor: colors.secondary }]}>
                 {([3, 4, 5, 6, 7] as SharedCalcCorners[]).map(n => (
                   <Pressable key={n} onPress={() => switchCorners(n)}
-                    style={[cc.segItem, n === corners && { backgroundColor: colors.action }]}>
-                    <Text style={[cc.segText, { color: n === corners ? colors.actionForeground : colors.mutedForeground }]}>{n}</Text>
+                    style={[cc.segItem, n === corners && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder }]}>
+                    <Text style={[cc.segText, { color: n === corners ? colors.selectionForeground : colors.mutedForeground }]}>{n}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -1270,8 +1270,8 @@ function PlotCalculator({ colors }: { colors: Colors }) {
               <View style={[cc.seg, { backgroundColor: colors.secondary }]}>
                 {(['ft', 'in', 'm'] as SharedCalcUnit[]).map(u => (
                   <Pressable key={u} onPress={() => { setUnit(u); setResult(null); }}
-                    style={[cc.segItem, u === unit && { backgroundColor: colors.action }]}>
-                    <Text style={[cc.segText, { color: u === unit ? colors.actionForeground : colors.mutedForeground }]}>
+                    style={[cc.segItem, u === unit && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder }]}>
+                    <Text style={[cc.segText, { color: u === unit ? colors.selectionForeground : colors.mutedForeground }]}>
                       {u === 'ft' ? 'Feet' : u === 'in' ? 'Inches' : 'Meters'}
                     </Text>
                   </Pressable>
@@ -1782,7 +1782,7 @@ export default function HomeScreen() {
                 {
                   width: switcherW / 2 - 4,
                   left: transaction === 'Rent' ? switcherW / 2 + 2 : 2,
-                  backgroundColor: colors.action,
+                  backgroundColor: colors.teal,
                 },
               ]}
               pointerEvents="none"
@@ -2089,9 +2089,9 @@ export default function HomeScreen() {
           <Text style={[s.ctaTitle, { color: colors.foreground }]}>{ctaContent.title}</Text>
           <Text style={[s.ctaDesc, { color: colors.mutedForeground }]}>{ctaContent.desc}</Text>
           <View style={s.ctaBtns}>
-            <Pressable onPress={() => router.push(ctaContent.btn1Route as any)} style={({ pressed }) => [s.ctaBtn1, { backgroundColor: colors.action, opacity: pressed ? 0.82 : 1 }]}>
-              <Text style={[s.ctaBtn1Text, { color: colors.actionForeground }]}>{ctaContent.btn1}</Text>
-              <Feather name="arrow-up-right" size={15} color={colors.actionForeground} />
+            <Pressable onPress={() => router.push(ctaContent.btn1Route as any)} style={({ pressed }) => [s.ctaBtn1, { backgroundColor: colors.primaryAction, opacity: pressed ? 0.82 : 1 }]}>
+              <Text style={[s.ctaBtn1Text, { color: colors.primaryActionForeground }]}>{ctaContent.btn1}</Text>
+              <Feather name="arrow-up-right" size={15} color={colors.primaryActionForeground} />
             </Pressable>
             {ctaContent.btn2Route !== '/(auth)/login' && (
               <Pressable onPress={() => router.push(ctaContent.btn2Route as any)} style={({ pressed }) => [s.ctaBtn2, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.82 : 1 }]}>

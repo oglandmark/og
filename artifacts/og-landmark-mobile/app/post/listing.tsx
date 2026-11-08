@@ -858,12 +858,12 @@ export default function ListingWizard() {
           </Text>
           <AnimatedPressable
             onPress={submitting ? undefined : submit}
-            style={[s.submitBtn, { backgroundColor: colors.action, opacity: submitting ? 0.65 : 1 }]}
+            style={[s.submitBtn, { backgroundColor: colors.primaryAction, opacity: submitting ? 0.65 : 1 }]}
           >
-            <Text style={[s.submitBtnText, { color: colors.actionForeground }]}>
+            <Text style={[s.submitBtnText, { color: colors.primaryActionForeground }]}>
               {submitting ? 'Saving…' : editingListing ? 'Save & Resubmit for Review' : 'Submit Property for Review'}
             </Text>
-            <Feather name="arrow-up-right" size={17} color={colors.actionForeground} />
+            <Feather name="arrow-up-right" size={17} color={colors.primaryActionForeground} />
           </AnimatedPressable>
           <Text style={[s.submitFootnote, { color: colors.mutedForeground }]}>
             Required fields are marked with *

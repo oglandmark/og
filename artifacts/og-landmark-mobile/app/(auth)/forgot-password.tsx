@@ -295,8 +295,8 @@ export default function ForgotPasswordScreen() {
                 ))}
               </View>
 
-              <AnimatedPressable onPress={verifyCode} style={[st.btn, st.otpBtn, { backgroundColor: colors.action }]}>
-                <Text style={[st.btnText, { color: colors.actionForeground }]}>Verify Code</Text>
+              <AnimatedPressable onPress={verifyCode} style={[st.btn, st.otpBtn, { backgroundColor: colors.primaryAction }]}>
+                <Text style={[st.btnText, { color: colors.primaryActionForeground }]}>Verify Code</Text>
                 <Feather name="check" size={16} color={colors.actionForeground} />
               </AnimatedPressable>
 

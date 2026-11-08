@@ -35,7 +35,7 @@ export function Button({
 }: ButtonProps) {
   const colors = useColors();
   const palette = {
-    primary: { backgroundColor: colors.action, borderColor: colors.action, color: colors.actionForeground },
+    primary: { backgroundColor: colors.primaryAction, borderColor: colors.primaryAction, color: colors.primaryActionForeground },
     secondary: { backgroundColor: colors.card, borderColor: colors.border, color: colors.action },
     quiet: { backgroundColor: 'transparent', borderColor: 'transparent', color: colors.action },
     destructive: { backgroundColor: colors.destructive, borderColor: colors.destructive, color: colors.destructiveForeground },

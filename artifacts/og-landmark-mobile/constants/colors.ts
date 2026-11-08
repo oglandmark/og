@@ -33,21 +33,23 @@ const colors = {
     mapGlassPanel: 'rgba(255, 255, 255, 0.78)',
     mapGlassPanelBorder: 'rgba(255, 255, 255, 0.96)',
 
-    // Primary action color (buttons, links, active states)
+    // Navy remains the core brand color for structure and general accents.
     primary: '#0B1F3A',
     primaryForeground: '#FFFFFF',
 
-    // Official OG Landmark navy for interactive controls and CTAs
+    // Navy remains the structural color for icons, labels, and navigation.
     action: '#0B1F3A',
     actionDeep: '#071428',
     actionSoft: '#19C3B1',
     actionForeground: '#FFFFFF',
     actionPressed: '#082036',
+    primaryAction: '#C9A248',
+    primaryActionForeground: '#0B1F3A',
     // Premium glass control tokens
-    gold: '#F2B84B',
+    gold: '#C9A248',
     goldForeground: '#0B1F3A',
-    goldGlass: '#F2B84BB8',
-    goldGlassBorder: '#F7D58C',
+    goldGlass: '#C9A248B8',
+    goldGlassBorder: '#DDC27F',
     teal: '#19C3B1',
     tealForeground: '#0B1F3A',
     tealSoft: '#E6F8F5',

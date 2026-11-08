@@ -1,0 +1,124 @@
+:root {
+  --mobile-brand-navy: #0b1f3a;
+  --mobile-brand-gold: #c9a248;
+  --mobile-brand-teal: #19c3b1;
+  --mobile-brand-border: #e1e8ee;
+  --mobile-brand-muted: #5b6875;
+  --mobile-brand-danger: #b94b42;
+}
+
+.mobile-brand-preview {
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #f3f6f8;
+  color: var(--mobile-brand-navy);
+  font-family: Inter, Arial, sans-serif;
+}
+
+.mobile-brand-card {
+  width: 100%;
+  max-width: 390px;
+  padding: 24px;
+  border: 1px solid var(--mobile-brand-border);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 14px 40px #0b1f3a12;
+}
+
+.mobile-brand-kicker {
+  margin: 0 0 6px;
+  color: var(--mobile-brand-teal);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.mobile-brand-title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.mobile-brand-description {
+  margin: 8px 0 22px;
+  color: var(--mobile-brand-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.mobile-brand-section {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.mobile-brand-label {
+  color: var(--mobile-brand-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.mobile-brand-button {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font: 600 14px/20px Inter, Arial, sans-serif;
+  letter-spacing: 0.15px;
+}
+
+.mobile-brand-primary {
+  border-color: var(--mobile-brand-navy);
+  background: var(--mobile-brand-navy);
+  color: #fff;
+}
+
+.mobile-brand-secondary {
+  border-color: var(--mobile-brand-border);
+  background: #fff;
+  color: var(--mobile-brand-navy);
+}
+
+.mobile-brand-quiet {
+  background: transparent;
+  color: var(--mobile-brand-navy);
+}
+
+.mobile-brand-danger {
+  border-color: var(--mobile-brand-danger);
+  background: var(--mobile-brand-danger);
+  color: #fff;
+}
+
+.mobile-brand-selection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 9px 13px;
+  border: 1px solid var(--mobile-brand-teal);
+  border-radius: 999px;
+  background: #eaf9f7;
+  color: var(--mobile-brand-navy);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mobile-brand-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mobile-brand-teal);
+}

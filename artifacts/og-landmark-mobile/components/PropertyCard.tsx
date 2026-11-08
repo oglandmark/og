@@ -285,13 +285,13 @@ function PropertyCardInner({
 
         <Pressable
           onPress={(e) => { e.stopPropagation(); void Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`); }}
-          style={({ pressed }) => [ctaStyles.callBtn, compact && ctaStyles.compactButton, { backgroundColor: colors.action, opacity: pressed ? 0.82 : 1 }]}
+          style={({ pressed }) => [ctaStyles.callBtn, compact && ctaStyles.compactButton, { backgroundColor: colors.primaryAction, opacity: pressed ? 0.82 : 1 }]}
           hitSlop={6}
           accessibilityRole="button"
           accessibilityLabel="Call agent"
         >
-          <Feather name="phone" size={14} color={colors.actionForeground} />
-          <Text style={[ctaStyles.callTxt, { color: colors.actionForeground }]}>Call</Text>
+          <Feather name="phone" size={14} color={colors.primaryActionForeground} />
+          <Text style={[ctaStyles.callTxt, { color: colors.primaryActionForeground }]}>Call</Text>
         </Pressable>
 
         <Pressable

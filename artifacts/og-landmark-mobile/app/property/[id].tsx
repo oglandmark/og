@@ -228,9 +228,9 @@ function InquiryModal({
                   </Pressable>
                 ) : null}
                 <Pressable onPress={handleClose}
-                  style={[iq.successBtn, { backgroundColor: colors.action }]}>
-                  <Text style={[iq.successBtnText, { color: colors.actionForeground }]}>Done</Text>
-                  <Feather name="check" size={15} color={colors.actionForeground} />
+                  style={[iq.successBtn, { backgroundColor: colors.primaryAction }]}>
+                  <Text style={[iq.successBtnText, { color: colors.primaryActionForeground }]}>Done</Text>
+                  <Feather name="check" size={15} color={colors.primaryActionForeground} />
                 </Pressable>
               </View>
             </View>
@@ -357,8 +357,8 @@ function InquiryModal({
                   </Pressable>
                 ) : null}
                 <Pressable onPress={handleSend} disabled={sending}
-                  style={[iq.sendBtn, { backgroundColor: colors.action, opacity: sending ? 0.72 : 1 }]}>
-                  <Text style={[iq.sendBtnText, { color: colors.actionForeground }]}>
+                  style={[iq.sendBtn, { backgroundColor: colors.primaryAction, opacity: sending ? 0.72 : 1 }]}>
+                  <Text style={[iq.sendBtnText, { color: colors.primaryActionForeground }]}>
                     {sending ? 'Sending…' : bookVisit ? 'Send & Book Visit' : 'Send Inquiry'}
                   </Text>
                   <Feather name={bookVisit ? 'calendar' : 'send'} size={15} color={colors.actionForeground} />
@@ -455,9 +455,9 @@ function AppointmentModal({
                   <Text style={[iq.successBtnText, { color: colors.foreground }]}>Call Agent</Text>
                 </Pressable>
                 <Pressable onPress={handleClose}
-                  style={[iq.successBtn, { backgroundColor: colors.action }]}>
-                  <Text style={[iq.successBtnText, { color: colors.actionForeground }]}>Done</Text>
-                  <Feather name="check" size={15} color={colors.actionForeground} />
+                style={[iq.successBtn, { backgroundColor: colors.primaryAction }]}>
+                  <Text style={[iq.successBtnText, { color: colors.primaryActionForeground }]}>Done</Text>
+                  <Feather name="check" size={15} color={colors.primaryActionForeground} />
                 </Pressable>
               </View>
             </View>
@@ -544,7 +544,7 @@ function AppointmentModal({
                 style={({ pressed }) => [
                   iq.sendBtn,
                   {
-                    backgroundColor: colors.action,
+                    backgroundColor: colors.primaryAction,
                     opacity: booking ? 0.72 : pressed ? 0.88 : 1,
                     shadowColor: colors.actionDeep,
                     shadowOpacity: 0.2,
@@ -554,11 +554,11 @@ function AppointmentModal({
                   },
                 ]}
               >
-                <Feather name="calendar" size={16} color="#ffffff" />
-                <Text style={[iq.sendBtnText, { color: '#ffffff' }]}>
+                <Feather name="calendar" size={16} color={colors.primaryActionForeground} />
+                <Text style={[iq.sendBtnText, { color: colors.primaryActionForeground }]}>
                   {booking ? 'Booking…' : 'Confirm Site Visit'}
                 </Text>
-                {!booking ? <Feather name="arrow-right" size={16} color="#ffffff" /> : null}
+                {!booking ? <Feather name="arrow-right" size={16} color={colors.primaryActionForeground} /> : null}
               </Pressable>
             </>
           )}

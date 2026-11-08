@@ -166,7 +166,9 @@ test('Home brand mark shows the full OG Landmark wordmark', () => {
   assert.match(homeScreen, /<BrandMark showName compact \/>/);
   assert.match(brandMark, /accessibilityLabel="OG Landmark"/);
   assert.match(brandMark, /OG Landmark\s*<\/NativeText>/);
-  assert.doesNotMatch(brandMark, /numberOfLines=\{1\}/);
+  assert.match(brandMark, /numberOfLines=\{1\}/);
+  assert.match(brandMark, /adjustsFontSizeToFit=\{compact\}/);
+  assert.match(brandMark, /compactTitle: \{ fontSize: 15/);
   assert.match(brandMark, /flexShrink: 0/);
 });
 

@@ -33,6 +33,9 @@ export function BrandMark({
         <View>
           <NativeText
             accessibilityLabel="OG Landmark"
+            numberOfLines={1}
+            adjustsFontSizeToFit={compact}
+            minimumFontScale={0.8}
             style={[
               styles.title,
               compact && styles.compactTitle,
@@ -53,7 +56,7 @@ const styles = StyleSheet.create({
   container: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   compactContainer: { gap: 6 },
   title: { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 15, letterSpacing: 0.2, flexShrink: 0, color: '#1c2024' },
-  compactTitle: { fontSize: 13, letterSpacing: 0 },
+  compactTitle: { fontSize: 15, letterSpacing: 0.1 },
   subtitle: { fontFamily: 'Inter_500Medium', fontSize: 8, letterSpacing: 2.3, color: brandColors.light.gold, marginTop: 2 },
   heroContainer: { justifyContent: 'center', gap: 13 },
   heroTitle: { fontSize: 20, letterSpacing: 0.5 },

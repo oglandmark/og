@@ -6,6 +6,7 @@ import {
   resolveSplashAssetUri,
   STARTUP_SPLASH_ANIMATION_DURATION_MS,
   STARTUP_SPLASH_LOAD_TIMEOUT_MS,
+  STARTUP_SPLASH_NATIVE_HIDE_TIMEOUT_MS,
 } from '../lib/splashHtml';
 
 const appConfig = JSON.parse(
@@ -53,6 +54,7 @@ const splashPlugin = appConfig.expo.plugins.find(
 test('startup keeps the complete 7-second animated splash and removes the static native logo', () => {
   assert.equal(STARTUP_SPLASH_ANIMATION_DURATION_MS, 7000);
   assert.equal(STARTUP_SPLASH_LOAD_TIMEOUT_MS, 3500);
+  assert.equal(STARTUP_SPLASH_NATIVE_HIDE_TIMEOUT_MS, 800);
   assert.ok(splashPlugin);
   assert.equal(splashPlugin[1].image, undefined);
   assert.equal(splashPlugin[1].dark?.image, undefined);
@@ -64,6 +66,11 @@ test('startup keeps the complete 7-second animated splash and removes the static
   assert.match(startupSplash, /onLoadEnd=\{\(\) => reportAnimationReady\(true\)\}/);
   assert.match(startupSplash, /SplashScreen\.hideAsync/);
   assert.match(startupSplash, /const splashHtmlPromise =/);
+  assert.match(startupSplash, /onLayout=\{\(\) => void hideNativeSplash\(\)\}/);
+  assert.match(startupSplash, /STARTUP_SPLASH_NATIVE_HIDE_TIMEOUT_MS/);
+  assert.match(startupSplash, /<OGLandmarkLogo size=\{148\} focused=\{false\} \/>/);
+  assert.match(startupSplash, /fallbackPulse/);
+  assert.match(startupSplash, /duration: 240/);
   assert.doesNotMatch(startupSplash, /ActivityIndicator/);
   assert.doesNotMatch(startupSplash, /fallbackName/);
   assert.match(startupSplash, /readyState && readyState !== 'loading'/);

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Animated, Platform, StyleSheet, Text as NativeText, View } from 'react-native';
 import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as SplashScreen from 'expo-splash-screen';
@@ -10,7 +10,10 @@ import {
   prepareSplashHtml,
   resolveSplashAssetUri,
   STARTUP_SPLASH_LOAD_TIMEOUT_MS,
+  STARTUP_SPLASH_NATIVE_HIDE_TIMEOUT_MS,
 } from '@/lib/splashHtml';
+import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
+import { useReducedMotion } from 'react-native-reanimated';
 
 const splashHtmlAsset = Asset.fromModule(
   require('@/assets/splash/og-landmark-intro.html'),
@@ -68,6 +71,47 @@ export function StartupSplash({
   const webViewRef = useRef<WebView<{}>>(null);
   const readyReported = useRef(false);
   const loadWatchdog = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nativeSplashHidePromise = useRef<Promise<void> | null>(null);
+  const fallbackOpacity = useRef(new Animated.Value(1)).current;
+  const fallbackPulse = useRef(new Animated.Value(0)).current;
+  const reduceMotion = useReducedMotion();
+
+  const hideNativeSplash = useCallback(() => {
+    if (!nativeSplashHidePromise.current) {
+      nativeSplashHidePromise.current = SplashScreen.hideAsync().catch(() => undefined);
+    }
+    return nativeSplashHidePromise.current;
+  }, []);
+
+  useEffect(() => {
+    const fallbackTimer = setTimeout(() => {
+      void hideNativeSplash();
+    }, STARTUP_SPLASH_NATIVE_HIDE_TIMEOUT_MS);
+    return () => clearTimeout(fallbackTimer);
+  }, [hideNativeSplash]);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      fallbackPulse.setValue(0);
+      return undefined;
+    }
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(fallbackPulse, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(fallbackPulse, {
+          toValue: 0,
+          duration: 900,
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [fallbackPulse, reduceMotion]);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -119,13 +163,18 @@ export function StartupSplash({
       clearTimeout(loadWatchdog.current);
       loadWatchdog.current = null;
     }
-    void SplashScreen.hideAsync()
-      .catch(() => undefined)
-      .then(() => {
-        if (animated) startSplashAnimation();
+    void hideNativeSplash().then(() => {
+        if (animated) {
+          startSplashAnimation();
+          Animated.timing(fallbackOpacity, {
+            toValue: 0,
+            duration: 240,
+            useNativeDriver: Platform.OS !== 'web',
+          }).start();
+        }
         onAnimationReady?.(animated);
       });
-  }, [onAnimationReady, startSplashAnimation]);
+  }, [fallbackOpacity, hideNativeSplash, onAnimationReady, startSplashAnimation]);
 
   useEffect(() => {
     let active = true;
@@ -186,7 +235,7 @@ export function StartupSplash({
   ];
 
   return (
-    <View style={rootStyle}>
+    <View style={rootStyle} onLayout={() => void hideNativeSplash()}>
       <StatusBar style="light" hidden={Platform.OS !== 'web'} />
       {html
         ? Platform.OS === 'web'
@@ -223,6 +272,33 @@ export function StartupSplash({
               />
             )
         : null}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.fallback,
+          { backgroundColor: colors.splashBackground, opacity: fallbackOpacity },
+        ]}
+      >
+        <Animated.View
+          style={{
+            alignItems: 'center',
+            transform: [{
+              scale: fallbackPulse.interpolate({
+                inputRange: [0, 1],
+                outputRange: [1, 1.035],
+              }),
+            }],
+          }}
+        >
+          <OGLandmarkLogo size={148} focused={false} />
+          <NativeText style={[styles.fallbackTitle, { color: colors.splashWhite }]}>
+            OG Landmark
+          </NativeText>
+          <NativeText style={[styles.fallbackSubtitle, { color: colors.splashGold }]}>
+            REAL ESTATE
+          </NativeText>
+        </Animated.View>
+      </Animated.View>
     </View>
   );
 }
@@ -244,5 +320,24 @@ const styles = StyleSheet.create({
   webView: {
     flex: 1,
     backgroundColor: 'transparent',
+  },
+  fallback: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+    elevation: 2,
+  },
+  fallbackTitle: {
+    marginTop: 18,
+    fontFamily: 'PlayfairDisplay_600SemiBold',
+    fontSize: 23,
+    letterSpacing: 0.3,
+  },
+  fallbackSubtitle: {
+    marginTop: 6,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 9,
+    letterSpacing: 3,
   },
 });

@@ -245,8 +245,8 @@ if (!fs.readFileSync(transparentSplashPath, "utf8").includes('android:fillColor=
 if (!splashOptions?.backgroundColor || !splashOptions?.dark?.backgroundColor) {
   fail("Light and dark native splash screens must define matching brand backgrounds.");
 }
-if (splashOptions?.backgroundColor !== "#FFFFFF" || splashOptions?.dark?.backgroundColor !== "#FFFFFF") {
-  fail("Native splash backgrounds must match the new white app surface.");
+if (splashOptions?.backgroundColor !== "#040C1A" || splashOptions?.dark?.backgroundColor !== "#040C1A") {
+  fail("Native splash backgrounds must match the animated splash canvas.");
 }
 
 const sharedLogoComponent = fs.readFileSync(

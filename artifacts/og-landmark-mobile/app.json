@@ -52,7 +52,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFFFFF",
+          "backgroundColor": "#040C1A",
           "resizeMode": "contain",
           "android": {
             "drawable": {
@@ -61,7 +61,7 @@
             }
           },
           "dark": {
-            "backgroundColor": "#FFFFFF"
+            "backgroundColor": "#040C1A"
           }
         }
       ],

@@ -6,7 +6,6 @@ import {
   resolveSplashAssetUri,
   STARTUP_SPLASH_ANIMATION_DURATION_MS,
   STARTUP_SPLASH_LOAD_TIMEOUT_MS,
-  STARTUP_SPLASH_NATIVE_HIDE_TIMEOUT_MS,
 } from '../lib/splashHtml';
 
 const appConfig = JSON.parse(
@@ -43,19 +42,21 @@ const splashPlugin = appConfig.expo.plugins.find(
   (plugin): plugin is [
     string,
     {
+      backgroundColor?: string;
       image?: string;
-      dark?: { image?: string };
+      dark?: { backgroundColor?: string; image?: string };
       android?: { drawable?: { icon?: string; darkIcon?: string } };
     },
   ] =>
     Array.isArray(plugin) && plugin[0] === 'expo-splash-screen',
 );
 
-test('startup keeps the complete 7-second animated splash and removes the static native logo', () => {
+test('startup goes directly to the complete animation without a pre-animation logo', () => {
   assert.equal(STARTUP_SPLASH_ANIMATION_DURATION_MS, 7000);
   assert.equal(STARTUP_SPLASH_LOAD_TIMEOUT_MS, 3500);
-  assert.equal(STARTUP_SPLASH_NATIVE_HIDE_TIMEOUT_MS, 800);
   assert.ok(splashPlugin);
+  assert.equal(splashPlugin[1].backgroundColor, '#040C1A');
+  assert.equal(splashPlugin[1].dark?.backgroundColor, '#040C1A');
   assert.equal(splashPlugin[1].image, undefined);
   assert.equal(splashPlugin[1].dark?.image, undefined);
   assert.equal(splashPlugin[1].android?.drawable?.icon, './plugins/splash-transparent.xml');
@@ -66,11 +67,9 @@ test('startup keeps the complete 7-second animated splash and removes the static
   assert.match(startupSplash, /onLoadEnd=\{\(\) => reportAnimationReady\(true\)\}/);
   assert.match(startupSplash, /SplashScreen\.hideAsync/);
   assert.match(startupSplash, /const splashHtmlPromise =/);
-  assert.match(startupSplash, /onLayout=\{\(\) => void hideNativeSplash\(\)\}/);
-  assert.match(startupSplash, /STARTUP_SPLASH_NATIVE_HIDE_TIMEOUT_MS/);
-  assert.match(startupSplash, /<OGLandmarkLogo size=\{148\} focused=\{false\} \/>/);
-  assert.match(startupSplash, /fallbackPulse/);
-  assert.match(startupSplash, /duration: 240/);
+  assert.doesNotMatch(startupSplash, /OGLandmarkLogo|NativeText|fallbackPulse|fallbackOpacity/);
+  assert.doesNotMatch(startupSplash, /onLayout=\{\(\) => void hideNativeSplash\(\)\}/);
+  assert.match(startupSplash, /void hideNativeSplash\(\)\.then\(\(\) => \{/);
   assert.doesNotMatch(startupSplash, /ActivityIndicator/);
   assert.doesNotMatch(startupSplash, /fallbackName/);
   assert.match(startupSplash, /readyState && readyState !== 'loading'/);

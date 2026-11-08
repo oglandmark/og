@@ -32,7 +32,6 @@ export function BrandMark({
       {showName && (
         <View>
           <NativeText
-            numberOfLines={1}
             accessibilityLabel="OG Landmark"
             style={[
               styles.title,

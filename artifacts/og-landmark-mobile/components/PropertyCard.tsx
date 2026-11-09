@@ -164,7 +164,19 @@ function PropertyCardInner({
           <PropertyDemoBadge visible={property.isDemo === true} style={styles.demoBadge} />
           {/* Featured ribbon */}
           {property.featured && (
-            <View style={[styles.featuredBadge, { backgroundColor: colors.primary }]}>
+            <View
+              style={[
+                styles.featuredBadge,
+                { backgroundColor: colors.goldGlass, borderColor: colors.goldGlassBorder },
+              ]}
+            >
+              <LinearGradient
+                pointerEvents="none"
+                colors={[colors.actionGlassHighlight, 'transparent']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
               <Feather name="star" size={8} color={colors.goldForeground} />
               <Text style={[styles.featuredText, { color: colors.goldForeground }]}>FEATURED</Text>
             </View>
@@ -382,7 +394,7 @@ const styles = StyleSheet.create({
   statusText:    { fontFamily: 'Inter_600SemiBold', fontSize: 10, letterSpacing: 0.4 },
   compactStatus: { top: 9, left: 10, paddingHorizontal: 7, paddingVertical: 5 },
   compactStatusText: { fontSize: 9 },
-  featuredBadge: { position: 'absolute', bottom: 10, left: 12, flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 6, paddingHorizontal: 9, paddingVertical: 6 },
+  featuredBadge: { position: 'absolute', bottom: 10, left: 12, flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5, overflow: 'hidden' },
   featuredText:  { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 0.8 },
   videoTourButton: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 38, borderRadius: 11, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 4, overflow: 'hidden', shadowOpacity: 0.22, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
   compactVideoTourButton: { minHeight: 34, gap: 5, borderRadius: 9, paddingHorizontal: 8, paddingVertical: 3 },

@@ -2,7 +2,7 @@
   "expo": {
     "name": "OG Landmark",
     "slug": "og-landmark-uin4dnqfp8-zl28mrpom",
-    "version": "4.1.6",
+    "version": "4.1.7",
     "orientation": "portrait",
     "icon": "./assets/images/og-landmark-app-icon.png",
     "scheme": "og-land-mobile",
@@ -10,11 +10,11 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.oglandmark.app",
-      "buildNumber": "1"
+      "buildNumber": "57"
     },
     "android": {
       "package": "com.oglandmark.app",
-      "versionCode": 56,
+      "versionCode": 57,
       "softwareKeyboardLayoutMode": "resize",
       "icon": "./assets/images/og-landmark-app-icon.png",
       "adaptiveIcon": {

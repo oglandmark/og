@@ -177,12 +177,37 @@ function PropertyCardInner({
                   event.stopPropagation();
                   setVideoVisible(true);
                 }}
-                style={[styles.videoTourButton, compact && styles.compactVideoTourButton, { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder }]}
+                style={({ pressed }) => [
+                  styles.videoTourButton,
+                  compact && styles.compactVideoTourButton,
+                  {
+                    backgroundColor: colors.actionGlass,
+                    borderColor: colors.actionGlassBorder,
+                    shadowColor: colors.shadow,
+                    opacity: pressed ? 0.84 : 1,
+                  },
+                ]}
                 hitSlop={6}
                 accessibilityRole="button"
                 accessibilityLabel={`Play video visit for ${property.title}`}
               >
-                <Feather name="play" size={compact ? 11 : 13} color={colors.actionForeground} />
+                <LinearGradient
+                  pointerEvents="none"
+                  colors={[colors.actionGlassHighlight, 'transparent']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.videoTourIcon,
+                    compact && styles.compactVideoTourIcon,
+                    { backgroundColor: colors.goldGlass, borderColor: colors.goldGlassBorder },
+                  ]}
+                >
+                  <Feather name="play" size={compact ? 9 : 10} color={colors.goldForeground} />
+                </View>
                 <Text style={[styles.videoTourText, compact && styles.compactVideoTourText, { color: colors.actionForeground }]}>Video visit</Text>
               </Pressable>
             )}
@@ -359,8 +384,10 @@ const styles = StyleSheet.create({
   compactStatusText: { fontSize: 9 },
   featuredBadge: { position: 'absolute', bottom: 10, left: 12, flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 6, paddingHorizontal: 9, paddingVertical: 6 },
   featuredText:  { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 0.8 },
-  videoTourButton: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 36, borderRadius: 9, borderWidth: 1, paddingHorizontal: 9, paddingVertical: 4 },
-  compactVideoTourButton: { minHeight: 36, gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  videoTourButton: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 38, borderRadius: 11, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 4, overflow: 'hidden', shadowOpacity: 0.22, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
+  compactVideoTourButton: { minHeight: 34, gap: 5, borderRadius: 9, paddingHorizontal: 8, paddingVertical: 3 },
+  videoTourIcon: { width: 19, height: 19, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  compactVideoTourIcon: { width: 16, height: 16, borderRadius: 8 },
   videoTourText: { fontFamily: 'Inter_600SemiBold', fontSize: 10 },
   compactVideoTourText: { fontSize: 9 },
   cardActions:   { position: 'absolute', top: 10, right: 10, flexDirection: 'row', gap: 7 },

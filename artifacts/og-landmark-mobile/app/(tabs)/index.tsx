@@ -1446,9 +1446,6 @@ export default function HomeScreen() {
     action: homeContent?.theme?.action || baseColors.action,
   }), [baseColors, homeContent?.theme?.primary, homeContent?.theme?.action]);
 
-  // ── Static toggle pill ────────────────────────────────────────────────────
-  const [switcherW,   setSwitcherW]   = useState(0);
-
   // ── Home banner visibility tracking ───────────────────────────────────────
   const [tabFocused,     setTabFocused]     = useState(true);
   const [bannerVisible,  setBannerVisible]  = useState(true);
@@ -1773,31 +1770,26 @@ export default function HomeScreen() {
         {/* Buy / Rent toggle */}
         <View
           style={[s.switcher, { backgroundColor: colors.surfaceTint, borderColor: colors.border }]}
-          onLayout={(e) => setSwitcherW(e.nativeEvent.layout.width)}
         >
-          {switcherW > 0 && (
-            <View
-              style={[
-                s.switchPill,
-                {
-                  width: switcherW / 2 - 4,
-                  left: transaction === 'Rent' ? switcherW / 2 + 2 : 2,
-                  backgroundColor: colors.teal,
-                },
-              ]}
-              pointerEvents="none"
-            />
-          )}
           {(['Buy', 'Rent'] as Transaction[]).map((item) => (
             <Pressable
               key={item}
+              testID={`home-transaction-${item.toLowerCase()}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: transaction === item }}
               onPress={() => {
                 setTransaction(item);
                 queryRef.current = '';
               }}
-              style={({ pressed }) => [s.switchItem, { opacity: pressed ? 0.72 : 1 }]}
+              style={({ pressed }) => [
+                s.switchItem,
+                {
+                  backgroundColor: transaction === item ? colors.teal : 'transparent',
+                  opacity: pressed ? 0.72 : 1,
+                },
+              ]}
             >
-              <Text style={[s.switchText, { color: transaction === item ? colors.actionForeground : colors.mutedForeground }]}>{item}</Text>
+              <Text style={[s.switchText, { color: transaction === item ? colors.tealForeground : colors.mutedForeground }]}>{item}</Text>
             </Pressable>
           ))}
         </View>
@@ -2118,10 +2110,9 @@ const s = StyleSheet.create({
   header:           { paddingHorizontal: 18, paddingBottom: 20 },
   topBar:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
   headerIcon:       { width: 42, height: 42, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0, elevation: 0 },
-  switcher:         { flexDirection: 'row', borderRadius: 30, alignSelf: 'flex-start', padding: 3, marginBottom: 15, borderWidth: 1 },
-  switchPill:       { position: 'absolute', top: 3, left: 3, bottom: 3, borderRadius: 26 },
-  switchItem:       { paddingHorizontal: 24, paddingVertical: 7, borderRadius: 26, zIndex: 1 },
-  switchText:       { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  switcher:         { width: 168, height: 42, flexDirection: 'row', borderRadius: 30, alignSelf: 'flex-start', padding: 3, marginBottom: 15, borderWidth: 1 },
+  switchItem:       { flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', borderRadius: 26 },
+  switchText:       { fontFamily: 'Inter_600SemiBold', fontSize: 14, lineHeight: 18, includeFontPadding: false, textAlign: 'center' },
   searchRow:        { flexDirection: 'row', alignItems: 'center', borderRadius: 22, borderWidth: 1, paddingLeft: 10, paddingRight: 10, height: 50, gap: 9, shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 3 },
   searchIconWrap:   { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   searchInput:      { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13 },

@@ -82,6 +82,8 @@ test('startup goes directly to the complete animation without a pre-animation lo
 
 test('startup splash uses the full viewport and hides Android system bars temporarily', () => {
   const preparedHtml = prepareSplashHtml(splashReference);
+  assert.match(splashReference, /fonts\.googleapis\.com/);
+  assert.doesNotMatch(preparedHtml, /fonts\.googleapis\.com/);
   assert.ok(preparedHtml.includes('const {W,H}=C,k=Math.min(innerWidth/W,innerHeight/H);'));
   assert.doesNotMatch(preparedHtml, /uh=RENDER\?0:56/);
   assert.match(preparedHtml, /window\.startSplashAnimation=\(\)=>/);

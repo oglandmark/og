@@ -132,13 +132,20 @@ export function AuthPrimaryButton({
   accessibilityLabel,
   loading,
   onPress,
+  variant = 'gold',
 }: {
   label: string;
   accessibilityLabel: string;
   loading: boolean;
   onPress: () => void;
+  variant?: 'gold' | 'navy';
 }) {
   const colors = useColors();
+  const isNavy = variant === 'navy';
+  const buttonGradient = isNavy
+    ? [colors.action, colors.actionPressed, colors.actionDeep] as const
+    : [colors.authGoldHighlight, colors.splashGold, colors.authGoldShadow] as const;
+  const buttonForeground = isNavy ? colors.actionForeground : colors.action;
   return (
     <Pressable
       onPress={onPress}
@@ -147,21 +154,21 @@ export function AuthPrimaryButton({
       accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => [
         styles.primaryButton,
-        { shadowColor: colors.splashGold },
+        { shadowColor: isNavy ? colors.action : colors.splashGold },
         pressed && !loading && { opacity: 0.9 },
       ]}
     >
       <LinearGradient
-        colors={[colors.authGoldHighlight, colors.splashGold, colors.authGoldShadow]}
+        colors={buttonGradient}
         locations={[0, 0.55, 1]}
         style={styles.primaryButtonFill}
       >
         {loading ? (
-          <ActivityIndicator color={colors.action} />
+          <ActivityIndicator color={buttonForeground} />
         ) : (
           <>
-            <Text style={[styles.primaryButtonText, { color: colors.action }]}>{label}</Text>
-            <Feather name="arrow-right" size={20} color={colors.action} />
+            <Text style={[styles.primaryButtonText, { color: buttonForeground }]}>{label}</Text>
+            <Feather name="arrow-right" size={20} color={buttonForeground} />
           </>
         )}
       </LinearGradient>

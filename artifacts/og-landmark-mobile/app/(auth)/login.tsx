@@ -128,7 +128,7 @@ export default function LoginScreen() {
         <Text style={[styles.forgotText, { color: colors.authGoldText }]}>{tr('forgotPassword')}</Text>
       </Pressable>
 
-      <AuthPrimaryButton label={tr('authSignInButton')} accessibilityLabel={tr('loginBtn')} loading={loading} onPress={() => { void handleLogin(); }} />
+      <AuthPrimaryButton label={tr('authSignInButton')} accessibilityLabel={tr('loginBtn')} loading={loading} onPress={() => { void handleLogin(); }} variant="navy" />
       <AuthDivider label={tr('authLoginDivider')} />
       <AuthSocialButtons disabled={loading} />
       <View style={styles.footerRow}>

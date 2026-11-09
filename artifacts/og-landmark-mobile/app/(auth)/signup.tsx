@@ -196,7 +196,7 @@ export default function SignUpScreen() {
               <Text style={[styles.otpMessageText, { color: error ? colors.destructive : colors.teal }]}>{error || verificationNotice}</Text>
             </View>
           )}
-          <AuthPrimaryButton label="Verify email" accessibilityLabel="Verify email" loading={loading} onPress={() => { void handleVerifyEmail(); }} />
+          <AuthPrimaryButton label="Verify email" accessibilityLabel="Verify email" loading={loading} onPress={() => { void handleVerifyEmail(); }} variant="navy" />
           <View style={styles.otpResendRow}>
             <Text style={[styles.footerText, { color: colors.authMuted }]}>Didn’t receive a code?</Text>
             <Pressable onPress={() => { void handleResendEmail(); }} disabled={loading || resending} accessibilityRole="button">
@@ -260,7 +260,7 @@ export default function SignUpScreen() {
             </Text>
           </View>
 
-          <AuthPrimaryButton label={tr('createAccountBtn')} accessibilityLabel={tr('createAccountBtn')} loading={loading} onPress={() => { void handleRegister(); }} />
+          <AuthPrimaryButton label={tr('createAccountBtn')} accessibilityLabel={tr('createAccountBtn')} loading={loading} onPress={() => { void handleRegister(); }} variant="navy" />
           <AuthDivider label={tr('authSignupDivider')} />
           <AuthSocialButtons disabled={loading} />
           <View style={styles.footerRow}>

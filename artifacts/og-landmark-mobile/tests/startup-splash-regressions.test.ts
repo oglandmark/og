@@ -151,12 +151,16 @@ test('startup splash removes embedded audio and stays silent', () => {
   assert.doesNotMatch(startupSplash, /allow: 'autoplay; fullscreen'/);
 });
 
-test('shared OG and roof mark loops after ten focused seconds on each mobile page', () => {
+test('shared OG and roof mark loops after ten focused seconds, including with iOS Reduce Motion enabled', () => {
   assert.match(sharedLogo, /useFocusEffect/);
   assert.match(sharedLogo, /withDelay\(\s*10_000/);
   assert.match(sharedLogo, /withRepeat/);
   assert.match(sharedLogo, /cancelAnimation\(timeline\)/);
-  assert.match(sharedLogo, /useReducedMotion/);
+  assert.doesNotMatch(sharedLogo, /useReducedMotion/);
+  assert.match(sharedLogo, /withSequence\(\s*ReduceMotion\.Never/);
+  assert.match(sharedLogo, /withRepeat\([\s\S]*?undefined,\s*ReduceMotion\.Never,\s*\)/);
+  assert.match(sharedLogo, /withDelay\([\s\S]*?ReduceMotion\.Never,\s*\)/);
+  assert.equal((sharedLogo.match(/reduceMotion: ReduceMotion\.Never/g) || []).length, 2);
   assert.match(sharedLogo, /Platform\.OS === 'web'/);
   assert.match(sharedLogo, /OG Landmark roof and OG logo/);
   assert.match(sharedLogo, /M110 100 A40 40 0 0 0 30 100/);
@@ -165,7 +169,7 @@ test('shared OG and roof mark loops after ten focused seconds on each mobile pag
   assert.match(sharedLogo, /easedProgress\(timeline\.value, 0\.5, 1\.75\)/);
   assert.match(sharedLogo, /easedProgress\(timeline\.value, 1\.25, 2\.55\)/);
   assert.match(sharedLogo, /easedProgress\(timeline\.value, 2\.45, 3\.1, true\)/);
-  assert.match(sharedLogo, /withTiming\(8, \{ duration: 8000/);
+  assert.match(sharedLogo, /withTiming\(8, \{\s*duration: 8000/);
   assert.match(sharedLogo, /strokeDashoffset/);
   assert.doesNotMatch(sharedLogo, /markPulse|scale: 1 \+ markPulse/);
 });

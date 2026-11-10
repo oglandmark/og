@@ -7,12 +7,12 @@ import Animated, {
   cancelAnimation,
   Easing,
   useAnimatedProps,
-  useReducedMotion,
   useSharedValue,
   withDelay,
   withRepeat,
   withSequence,
   withTiming,
+  ReduceMotion,
 } from 'react-native-reanimated';
 import { useColors } from '@/hooks/useColors';
 
@@ -47,26 +47,35 @@ export function OGLandmarkLogo({
   focused?: boolean;
 }) {
   const colors = useColors();
-  const reduceMotion = useReducedMotion();
   const timeline = useSharedValue(8);
   const gradientId = React.useId().replace(/:/g, '');
 
   const startAnimation = useCallback(() => {
     cancelAnimation(timeline);
     timeline.value = 8;
-    if ((Platform.OS === 'web' && !animateOnWeb) || reduceMotion) return;
+    // The user explicitly wants the brand-mark animation on iOS even when
+    // Reduce Motion is enabled. Keep this exception local to the logo.
+    if (Platform.OS === 'web' && !animateOnWeb) return;
     timeline.value = withDelay(
       10_000,
       withRepeat(
         withSequence(
-          withTiming(0, { duration: 1 }),
-          withTiming(8, { duration: 8000, easing: Easing.linear }),
+          ReduceMotion.Never,
+          withTiming(0, { duration: 1, reduceMotion: ReduceMotion.Never }),
+          withTiming(8, {
+            duration: 8000,
+            easing: Easing.linear,
+            reduceMotion: ReduceMotion.Never,
+          }),
         ),
         -1,
         false,
+        undefined,
+        ReduceMotion.Never,
       ),
+      ReduceMotion.Never,
     );
-  }, [animateOnWeb, reduceMotion, timeline]);
+  }, [animateOnWeb, timeline]);
   const stopAnimation = useCallback(() => {
     cancelAnimation(timeline);
     timeline.value = 8;

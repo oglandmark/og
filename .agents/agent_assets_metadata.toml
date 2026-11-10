@@ -140,3 +140,17 @@ mtime_ms = 1794306312303
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/6dc0c89e-7a7b-4dc5-8cc5-7ead0b6f141f/72447738-dbb5-4056-a69a-44a720665cd8"
 storage_version_token = "1794306328970488"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "kri01Ozh5xoTqZsK7LkQS"
+uri = "file://generated-artifacts/og-landmark-api-inquiry-password-reset-update-2026-11-10.zip"
+type = "unspecified"
+title = "OG Landmark API Reset and Inquiry Update"
+description = "Laravel update package with password-reset route and inquiry fix. It is not deployed."
+logical_id = "06981560-8052-42ce-861c-2870db82cb6d"
+content_hash = "sha256:ba6ed566bbba5c62d5915027e44cd255ccea6946977cedf94dd66b3f08ebe604"
+size = 12220
+mtime_ms = 1794307787387
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/06981560-8052-42ce-861c-2870db82cb6d/32f90001-789e-442a-af78-9f164c01c73c"
+storage_version_token = "1794307881074264"
+content_type = "application/octet-stream"

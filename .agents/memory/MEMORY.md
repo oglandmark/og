@@ -29,7 +29,7 @@
 - [Android video compositing](android-video-compositing.md) — stacked Expo video surfaces can blank sibling content; use texture views and mount only the active banner video.
 - [GitHub connector write fallback](github-connector-write-fallback.md) — use Git data API on write blocks; stage large Base64 batches to disk and verify hashes.
 - [Android reveal lifecycle](android-reveal-lifecycle.md) — nested tab focus callbacks can miss; animated content must start visible to avoid blank Home sections.
-- [Mobile navigation stability](mobile-navigation-stability.md) — keep Android route changes immediate and the bottom bar visible during scrolling.
+- [Mobile navigation stability](mobile-navigation-stability.md) — keep Android route changes immediate; don't send account links through role-hidden tabs.
 - [Explore filter lifecycle](explore-filter-lifecycle.md) — clear project and other temporary filters on exit/reload so Explore returns to all properties.
 - [Location picker camera sync](location-picker-camera.md) — city/locality changes must drive the native map camera, while GPS recovery must persist the selected pin.
 - [Location flow testing](location-flow-testing.md) — keep native GPS recovery behind a provider seam so permission and fallback branches run in Node tests.

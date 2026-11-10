@@ -67,3 +67,4 @@
 - [Mobile button colors](mobile-button-brand-colors.md) — auth primary buttons dark blue; unrelated gold actions keep the official logo shade.
 - [Android tab refresh rendering](android-tab-refresh.md) — on the user's Android Expo Go preview, native pull-to-refresh blanked buyer tab content even with plain props.
 - [Silent startup splash](splash-audio-autoplay.md) — keep the startup animation silent while preserving unrelated app audio, such as listing videos.
+- [iPad orientation config](ipad-orientation-config.md) — enabling Expo tablet support adds the four iPad orientations without changing the app's root portrait setting for phones and Android.

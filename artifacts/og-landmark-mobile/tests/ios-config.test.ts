@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import test from 'node:test';
+
+const appConfig = JSON.parse(readFileSync(
+  fileURLToPath(new URL('../app.json', import.meta.url)),
+  'utf8',
+)).expo;
+
+test('iOS keeps the production bundle ID and enables iPad support', () => {
+  assert.equal(appConfig.ios.bundleIdentifier, 'com.oglandmark.app');
+  assert.equal(appConfig.ios.supportsTablet, true);
+  assert.equal(appConfig.ios.buildNumber, '61');
+});
+
+test('iPad support does not unlock Android landscape behavior', () => {
+  assert.equal(appConfig.orientation, 'portrait');
+  assert.equal(appConfig.android.package, 'com.oglandmark.app');
+  assert.equal(appConfig.android.versionCode, 62);
+});
+
+test('image picker has clear iOS photo and camera purpose strings', () => {
+  const imagePickerPlugin = appConfig.plugins.find(
+    (plugin: string | [string, Record<string, unknown>]) =>
+      Array.isArray(plugin) && plugin[0] === 'expo-image-picker',
+  );
+
+  assert.ok(imagePickerPlugin, 'expo-image-picker config plugin is required');
+  assert.match(imagePickerPlugin[1].photosPermission, /create listings/);
+  assert.match(imagePickerPlugin[1].cameraPermission, /take a listing/);
+  assert.ok(appConfig.plugins.includes('expo-notifications'));
+});

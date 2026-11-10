@@ -32,3 +32,12 @@ Record OS version, device model, app version/build, API environment, outcome, an
 - Native verification requires an installed Android/iOS app build. A browser preview cannot verify OS permission prompts, settings links, native gallery selection, or native WebView map camera gestures.
 - Native maps use the Mapbox-backed WebView renderer; the app's selected EAS build environment must include `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN`.
 - Automated GPS tests inject a provider and mocked geocoding; API media tests use fake uploaded files. Neither can establish physical-device GPS accuracy, real gallery behavior, carrier-network upload reliability, or production media hosting.
+
+## iOS release configuration — 2026-11-10
+
+- Enabled iPad support while retaining the existing `com.oglandmark.app` bundle identifier. The next iOS build number is `61`; Android remains `com.oglandmark.app`, version code `62`, and portrait-only.
+- Expo's iOS config introspection confirms all four iPad interface orientations, portrait-only iPhone orientations, multitasking enabled, the configured photo/camera purpose strings, and an APNs entitlement in the generated iOS config.
+- Added explicit purpose text for selected photos and camera capture. The app icon and color-only native launch screen already pass the workspace asset check.
+- The login screen's Google, Apple, and Facebook buttons currently show “Coming Soon”; the available sign-in flow is email/password. Recheck Apple's Sign in with Apple rule if a third-party provider becomes functional before App Store review.
+- Automated checks passed: iOS config tests (3), mobile regression suite (114), brand assets, and TypeScript typecheck. No dependency changes were made; the prior Expo SDK 57 alignment check remains applicable.
+- **Not verified:** iOS distribution build/signing, App Store Connect access, APNs credentials or actual push delivery, Mapbox token in the selected iOS build environment, and native flows on iPhone/iPad. The Replit screenshot showed only the startup animation, so it does not verify signed-in screens or device behavior. No App Store submission or billed simulator/build was started.

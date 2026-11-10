@@ -8,9 +8,9 @@
     "scheme": "og-land-mobile",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "com.oglandmark.app",
-      "buildNumber": "60"
+      "buildNumber": "61"
     },
     "android": {
       "package": "com.oglandmark.app",
@@ -68,6 +68,13 @@
       "expo-font",
       "expo-web-browser",
       "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "OG Landmark accesses photos you select to create listings, update your profile, and share project media.",
+          "cameraPermission": "OG Landmark uses the camera when you choose to take a listing, profile, or project photo."
+        }
+      ],
       [
         "expo-location",
         {

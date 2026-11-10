@@ -13,6 +13,12 @@ When a mobile preview screenshot remains on the splash screen or renders blank, 
 
 **How to apply:** Keep `CI` unset for the managed Expo dev command, verify the live feed after server changes, and present the mobile artifact. If a second Metro process occupies the fixed preview port, check which process owns it and restart the managed workflow so the preview isn't left on a stale bundle. Use explicit demo metadata plus approval/listing status; if screenshots do not reach Home or Explore, state that visual verification is incomplete.
 
+The user confirmed that the installed Android app now displays the Home transaction labels completely as “Buy” and “Rent” after the title-case and wider-toggle fix.
+
+**Why:** The clipping appeared in the Play Store-installed Android app and was not confirmed by the splash-only web preview.
+
+**How to apply:** For future changes to this Home toggle, retain an installed Android visual check; source tests and web previews alone do not prove native rendering.
+
 Expo web previews should load the app's bundled Inter and Playfair fonts too; an empty web font map makes declared font families fall back to browser defaults. First-visit screenshots may also land on onboarding instead of the requested tab.
 
 **Why:** The profile preview looked unstyled until web font loading was enabled, and reaching the requested guest Profile required completing onboarding and selecting its tab.

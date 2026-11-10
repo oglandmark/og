@@ -11,6 +11,13 @@ test('Home shows the complete Featured Properties title and fixes the known trun
   assert.match(home, /title=\{featuredTitle\}/);
 });
 
+test('Home Buy and Rent labels fit on one line without clipping', () => {
+  assert.match(home, /<Text\s+numberOfLines=\{1\}\s+adjustsFontSizeToFit/);
+  assert.match(home, /\{item\}/);
+  assert.match(home, /'Buy', 'Rent'/);
+  assert.match(home, /switcher:\s+\{\s*width:\s*196,/);
+});
+
 test('Home limits heavy horizontal cards and keeps text typing out of parent state', () => {
   assert.match(home, /featuredProps = useMemo\(\(\) => allProps\.filter\(\(p\) => p\.featured\)\.slice\(0, 8\)/);
   assert.match(home, /const queryRef = useRef\(''\)/);

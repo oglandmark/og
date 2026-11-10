@@ -75,3 +75,11 @@ test('all navigation tabs render full labels with wrapping instead of truncating
     'buyer, professional, and profile tabs must all use the full-label component',
   );
 });
+
+test('iOS glass navigation sits lower without changing Android safe-area spacing', () => {
+  assert.match(tabLayoutSource, /const isIOS = Platform\.OS === 'ios'/);
+  assert.match(tabLayoutSource, /const tabBarPadTop\s*=\s*isIOS \? 12 : 6/);
+  assert.match(tabLayoutSource, /const tabBarPadBottom\s*=\s*isWeb \? 30 : isIOS \? insets\.bottom : 6 \+ insets\.bottom/);
+  assert.match(tabLayoutSource, /top: isIOS \? 12 : 6/);
+  assert.match(tabLayoutSource, /bottom: isWeb \? 8 : isIOS \? insets\.bottom : insets\.bottom \+ 6/);
+});

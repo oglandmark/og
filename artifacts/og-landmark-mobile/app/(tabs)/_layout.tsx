@@ -99,6 +99,7 @@ export default function TabLayout() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === 'web';
+  const isIOS = Platform.OS === 'ios';
   const tabBarHidden = useSharedValue(false);
   const setTabBarHidden = useCallback((hidden: boolean) => {
     tabBarHidden.value = hidden;
@@ -107,15 +108,16 @@ export default function TabLayout() {
   // Keep the visible navigation compact and let only the safe-area inset extend
   // below the floating glass dock into the Android / iOS system area.
   const tabBarHeight     = isWeb ? 92 : 68 + insets.bottom;
-  const tabBarPadBottom  = isWeb ? 30 : 6 + insets.bottom;
+  const tabBarPadTop     = isIOS ? 12 : 6;
+  const tabBarPadBottom  = isWeb ? 30 : isIOS ? insets.bottom : 6 + insets.bottom;
   const tabDockStyle = [
     StyleSheet.absoluteFill,
     styles.tabGlass,
     {
-      top: 6,
+      top: isIOS ? 12 : 6,
       left: 12,
       right: 12,
-      bottom: isWeb ? 8 : insets.bottom + 6,
+      bottom: isWeb ? 8 : isIOS ? insets.bottom : insets.bottom + 6,
           borderColor: colors.border,
     },
     Platform.OS === 'ios'
@@ -160,7 +162,7 @@ export default function TabLayout() {
             position: 'absolute',
             bottom: 0,
             height: tabBarHeight,
-            paddingTop: 6,
+            paddingTop: tabBarPadTop,
             paddingBottom: tabBarPadBottom,
             backgroundColor: 'transparent',
             borderTopWidth: 0,

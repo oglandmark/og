@@ -58,7 +58,7 @@ test('web radius updates resize the existing circle without rebuilding the viewp
   });
   assert.match(web, /createMapAreaRadiusMessage\(radiusKm, fit\)/);
   assert.match(web, /areaCircle\.setRadius\(radiusKm \* 1000\)/);
-  assert.match(web, /\[properties, selectedId, userLat, userLng, centerLat, centerLng, channel, mapGlass, mapGlassBorder\]/);
+  assert.match(web, /\[properties, selectedId, userLat, userLng, centerLat, centerLng, channel, mapGlass, mapGlassBorder, colors\]/);
   const htmlMemo = web.match(
     /const html = useMemo\([\s\S]*?\n\s*\);/,
   )?.[0];

@@ -10,7 +10,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.oglandmark.app",
-      "buildNumber": "61"
+      "buildNumber": "61",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "OG Landmark accesses photos you select to create listings, update your profile, and share project media.",
+        "NSCameraUsageDescription": "OG Landmark uses the camera when you choose to take a listing, profile, or project photo."
+      }
     },
     "android": {
       "package": "com.oglandmark.app",
@@ -68,13 +72,6 @@
       "expo-font",
       "expo-web-browser",
       "expo-notifications",
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "OG Landmark accesses photos you select to create listings, update your profile, and share project media.",
-          "cameraPermission": "OG Landmark uses the camera when you choose to take a listing, profile, or project photo."
-        }
-      ],
       [
         "expo-location",
         {

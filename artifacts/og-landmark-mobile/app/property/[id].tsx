@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Alert, AppState, Dimensions, Image, Linking, Modal, Platform, Pressable,
-  ScrollView, StyleSheet, View,
+  Alert, AppState, Image, Linking, Modal, Platform, Pressable,
+  ScrollView, StyleSheet, View, useWindowDimensions,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
@@ -31,8 +31,6 @@ import {
   PUBLIC_CONTACT_PHONE_E164,
   publicWhatsAppUrl,
 } from '@/lib/publicContact';
-
-const SCREEN_W = Dimensions.get('window').width;
 
 // ── Safe initials helper — never crashes on empty/null agent name ─────────────
 function safeInitials(name: string | null | undefined, maxLen = 2): string {
@@ -622,6 +620,7 @@ const ap = StyleSheet.create({
   timeSlotText: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
 });
 function PropertyDetailScreen() {
+  const { width: screenWidth } = useWindowDimensions();
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -653,6 +652,9 @@ function PropertyDetailScreen() {
   const [bookingOpen,    setBookingOpen]    = useState(false);
   const galleryScrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const images = propertyImages(property);
+  useEffect(() => {
+    galleryScrollRef.current?.scrollTo({ x: activeImage * screenWidth, animated: false });
+  }, [activeImage, screenWidth]);
   const topInset = insets.top + (Platform.OS === 'web' ? 67 : 0);
   const demoWasRemoved = numId < 0
     && (property.isDemo === true || isDemoPropertyHidden(property, hiddenDemoPropertyIds));
@@ -807,7 +809,7 @@ function PropertyDetailScreen() {
         >
           {images.map((img, i) => (
             <Pressable key={i} onPress={() => setGalleryVisible(true)} accessibilityLabel="Open full-screen gallery">
-              <Image source={img} style={{ width: SCREEN_W, height: 352 }} resizeMode="cover" />
+              <Image source={img} style={{ width: screenWidth, height: 352 }} resizeMode="cover" />
             </Pressable>
           ))}
         </ScrollView>
@@ -879,7 +881,7 @@ function PropertyDetailScreen() {
         activeIndex={activeImage}
         onSelect={(i) => {
           setActiveImage(i);
-          galleryScrollRef.current?.scrollTo({ x: i * SCREEN_W, animated: true });
+          galleryScrollRef.current?.scrollTo({ x: i * screenWidth, animated: true });
         }}
       />
 

@@ -4,8 +4,8 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Alert, Dimensions, Image, Linking, Modal, Platform, Pressable,
-  ScrollView, Share, StyleSheet, View,
+  Alert, Image, Linking, Modal, Platform, Pressable,
+  ScrollView, Share, StyleSheet, View, useWindowDimensions,
 } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
@@ -26,8 +26,6 @@ import { addInquiry } from '@/lib/inquiriesStore';
 import { PinnedMapCard } from '@/components/LocationPicker';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import VisitSchedulerModal from '@/components/VisitSchedulerModal';
-const { width: SW } = Dimensions.get('window');
-
 // ── Development milestone derivation ─────────────────────────────────────────
 
 const MILESTONES = [
@@ -195,9 +193,14 @@ const iqm = StyleSheet.create({
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function ProjectDetailScreen() {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const colors  = useColors();
   const router  = useRouter();
   const insets  = useSafeAreaInsets();
+  const galleryImageSize = Math.max(
+    1,
+    Math.min(screenWidth, screenHeight - insets.top - insets.bottom - 100),
+  );
   const { user } = useAuth();
   const { id }  = useLocalSearchParams<{ id: string }>();
   const { deletedDemoProjectIds } = useDemoPropertyVisibility();
@@ -744,10 +747,17 @@ export default function ProjectDetailScreen() {
     {/* ── INLINE GALLERY MODAL ─────────────────────────────────────── */}
     <Modal visible={galleryOpen} transparent animationType="none" onRequestClose={() => setGalleryOpen(false)} statusBarTranslucent>
       <View style={{ flex: 1, backgroundColor: '#000000ee', justifyContent: 'center', alignItems: 'center' }}>
-        <Pressable style={{ position: 'absolute', top: 50, right: 20, zIndex: 10, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }} onPress={() => setGalleryOpen(false)}>
+        <Pressable style={{ position: 'absolute', top: insets.top + 12, right: insets.right + 12, zIndex: 10, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }} onPress={() => setGalleryOpen(false)}>
           <Feather name="x" size={20} color="#ffffff" />
         </Pressable>
-        <Image source={photos[galleryIndex] ?? photos[0]} style={{ width: SW, height: SW }} resizeMode="contain" />
+        <Image
+          source={photos[galleryIndex] ?? photos[0]}
+          style={{
+            width: galleryImageSize,
+            height: galleryImageSize,
+          }}
+          resizeMode="contain"
+        />
         {photos.length > 1 && (
           <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
             <Pressable onPress={() => setGalleryIndex(Math.max(0, galleryIndex - 1))} style={{ padding: 10 }}>

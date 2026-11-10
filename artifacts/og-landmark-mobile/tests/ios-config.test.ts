@@ -20,14 +20,12 @@ test('iPad support does not unlock Android landscape behavior', () => {
   assert.equal(appConfig.android.versionCode, 62);
 });
 
-test('image picker has clear iOS photo and camera purpose strings', () => {
-  const imagePickerPlugin = appConfig.plugins.find(
+test('iOS-only purpose strings do not add Android image-picker permissions', () => {
+  assert.match(appConfig.ios.infoPlist.NSPhotoLibraryUsageDescription, /create listings/);
+  assert.match(appConfig.ios.infoPlist.NSCameraUsageDescription, /take a listing/);
+  assert.ok(!appConfig.plugins.some(
     (plugin: string | [string, Record<string, unknown>]) =>
       Array.isArray(plugin) && plugin[0] === 'expo-image-picker',
-  );
-
-  assert.ok(imagePickerPlugin, 'expo-image-picker config plugin is required');
-  assert.match(imagePickerPlugin[1].photosPermission, /create listings/);
-  assert.match(imagePickerPlugin[1].cameraPermission, /take a listing/);
+  ));
   assert.ok(appConfig.plugins.includes('expo-notifications'));
 });

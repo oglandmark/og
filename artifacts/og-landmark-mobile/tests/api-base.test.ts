@@ -10,14 +10,15 @@ import {
 
 const apiClient = readFileSync(new URL('../lib/api.ts', import.meta.url), 'utf8');
 
-test('Replit previews use the local Laravel API route', () => {
+test('the preview resolver can address the local Laravel API route', () => {
   assert.equal(resolveApiBase('preview.replit.dev'), 'https://preview.replit.dev/api-legacy');
   assert.equal(resolveApiBase('preview.expo.pike.replit.dev'), 'https://preview.expo.pike.replit.dev/api-legacy');
   assert.equal(resolveApiBase('https://preview.replit.dev/mobile/'), 'https://preview.replit.dev/api-legacy');
 });
 
-test('the mobile API client selects its base from the build domain', () => {
-  assert.match(apiClient, /API_BASE\s*=\s*resolveApiBase\(process\.env\.EXPO_PUBLIC_DOMAIN\)/);
+test('the mobile client keeps account and inventory requests on the live API', () => {
+  assert.match(apiClient, /API_BASE\s*=\s*LIVE_API_BASE/);
+  assert.doesNotMatch(apiClient, /API_BASE\s*=\s*resolveApiBase/);
 });
 
 test('production and untrusted domains use the public API', () => {

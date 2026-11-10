@@ -25,6 +25,7 @@ import { shareProperty } from '@/lib/share';
 import { WhatsAppLogo } from '@/components/WhatsAppIcon';
 import { recordVisit } from '@/lib/visitHistoryStore';
 import { addInquiry } from '@/lib/inquiriesStore';
+import { toApiAppointmentTime } from '@/lib/appointmentTime';
 import { PropertyMediaStrip } from '@/components/PropertyMediaStrip';
 import {
   PUBLIC_CONTACT_PHONE,
@@ -162,7 +163,7 @@ function InquiryModal({
           sellerId,
           agentId,
           date:            selectedDate,
-          time:            selectedTime,
+          time:            toApiAppointmentTime(selectedTime),
           type:            visitType,
         });
         apptBooked = true;
@@ -399,7 +400,7 @@ function AppointmentModal({
         propertyAddress: property.address,
         buyerName:       user?.name ?? 'Guest',
         date:            selectedDate,
-        time:            selectedTime,
+        time:            toApiAppointmentTime(selectedTime),
         type:            visitType,
         sellerId,
         agentId,

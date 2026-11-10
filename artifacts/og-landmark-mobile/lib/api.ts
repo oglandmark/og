@@ -87,6 +87,7 @@ export async function apiRequest<T>(
   allowPreviewLiveFallback = true,
 ): Promise<T> {
   const headers: Record<string, string> = {
+    Accept: 'application/json',
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
@@ -117,8 +118,13 @@ export async function apiRequest<T>(
       }
     }
     clearTimeout(timer);
+    const contentType = res.headers.get('content-type') || '';
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText }));
+      const err = contentType.includes('json')
+        ? await res.json().catch(() => ({ error: res.statusText }))
+        : { error: res.status === 405
+          ? 'This action is not available on the server yet.'
+          : `The server returned an unexpected page (HTTP ${res.status}).` };
       const message = typeof err === 'object' && err !== null
         ? (err as { error?: string; message?: string; detail?: string }).error
           || (err as { message?: string }).message
@@ -128,6 +134,13 @@ export async function apiRequest<T>(
         message || `HTTP ${res.status}`,
         res.status,
         typeof err === 'object' && err !== null ? (err as { code?: string }).code : undefined,
+      );
+    }
+    if (res.status === 204) return undefined as T;
+    if (!contentType.includes('json')) {
+      throw new ApiRequestError(
+        `The server returned a page instead of API data (HTTP ${res.status}).`,
+        res.status,
       );
     }
     return res.json() as Promise<T>;
@@ -275,7 +288,7 @@ export type AppointmentPayload = {
   sellerId?: number;
   agentId?: number;
   date: string;   // YYYY-MM-DD
-  time: string;   // e.g. "10:00 AM"
+  time: string;   // HH:mm, as required by the Laravel API
   type: 'Site Visit' | 'Video Call';
 };
 

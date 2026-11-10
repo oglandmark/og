@@ -8,7 +8,7 @@
 - [Hostinger media recovery](hostinger-media-recovery.md) — back up app_data media references and files together, then verify live photo/video delivery after restore.
 - [Hostinger SMTP delivery](hostinger-smtp-delivery.md) — use a real mailbox and verify SMTP from the API workflow, not only the CLI.
 - [Mobile listing uploads](mobile-listing-uploads.md) — keep sequential upload/fallback compatibility and normalize relative media URLs before native rendering.
-- [Production database runtime parity](neon-database.md) — Supabase remains production storage; root Express app serves `/api` and needs its private `DATABASE_URL`.
+- [Production API runtime](neon-database.md) — mobile JSON API is currently on the `api` subdomain; the root website returns HTML for `/api` paths.
 - [Neon auth schema](neon-auth-schema.md) — app_data alone is insufficient; auth tables must exist before production auth flows are exercised.
 - [Expo GitHub build dispatch](expo-github-build-dispatch.md) — after transfers, align the owner slug and verify app ID against the project URL; investigate repo binding when dispatch finds none.
 - [EAS environment project matching](eas-environment-project-id.md) — production variables must be added to the exact EAS project ID used by the build.

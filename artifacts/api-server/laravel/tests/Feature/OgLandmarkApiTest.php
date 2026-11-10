@@ -1603,6 +1603,24 @@ final class OgLandmarkApiTest extends TestCase
             'propertyId' => 101, 'date' => now()->addDays(2)->toDateString(),
             'time' => '10:30', 'type' => 'Site Visit',
         ])->assertCreated()->assertJsonPath('buyerId', 42);
+
+        $this->withToken($token)->postJson('/api/appointments', [
+            'propertyId' => 101, 'date' => now()->addDays(2)->toDateString(),
+            'time' => '10:30 AM', 'type' => 'Site Visit',
+        ])->assertUnprocessable()->assertJsonValidationErrors('time');
+
+        $this->withToken($token)->postJson('/api/inquiries', [
+            'propertyId' => 101,
+            'clientName' => 'Test Buyer',
+            'email' => 'buyer@example.test',
+            'phone' => '03001234567',
+            'message' => 'Please share the available viewing times.',
+            'buyerId' => 7,
+            'sellerId' => 7,
+        ])->assertCreated()
+            ->assertJsonPath('buyerId', 42)
+            ->assertJsonPath('sellerId', 42)
+            ->assertJsonPath('status', 'Pending');
     }
 
     private function adminToken(): string

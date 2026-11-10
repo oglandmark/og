@@ -1,10 +1,10 @@
 ---
-name: Production database runtime parity
-description: Keep Supabase as production storage and route the Hostinger website to its active root-domain Express API.
+name: Production API runtime
+description: Current production API host and health-reported storage provider; recheck before changing either.
 ---
 
-The user confirms the production database is Supabase PostgreSQL. The root Hostinger Express app responds at `https://oglandmark.com/api/health`; when checked, it reported `DATABASE_URL` missing. The `api.oglandmark.com` subdomain was created as a normal website and does not currently route to the Node API. Production web API calls now target `https://oglandmark.com/api`.
+Read-only checks on 2026-11-10 showed that `https://api.oglandmark.com/api/health` returns JSON with status `ok`, database connected, provider `mysql`, and API `og-landmark-laravel`. Unauthenticated GET requests to `/api/inquiries` and `/api/appointments` return JSON 401 responses. The root website domain's `/api/*` paths return HTML, not API JSON.
 
-**Why:** Live health checks showed the root Express API is reachable but not connected to its database, while the API subdomain does not reach the app. The user's production data remains in Supabase.
+**Why:** These live responses contradict the earlier record that the API lived on the root domain and the API subdomain served a website; that record is stale.
 
-**How to apply:** Configure the private Supabase PostgreSQL `DATABASE_URL` in the existing root-domain Hostinger Express app, not just `SUPABASE_URL`/anon key. Keep the frontend on `/api` at `oglandmark.com`; do not import MySQL over Supabase. Keep database credentials out of browser code, ZIPs, Git, and chat.
+**How to apply:** Keep mobile API requests on `api.oglandmark.com`; do not route them to the root website domain. Recheck health before data-store or deployment changes, and never use production write requests as tests.

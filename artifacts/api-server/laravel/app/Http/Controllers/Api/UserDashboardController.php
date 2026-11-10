@@ -193,6 +193,54 @@ final class UserDashboardController extends Controller
         )));
     }
 
+    public function submitInquiry(Request $request, LegacyDataStore $store): JsonResponse
+    {
+        $values = $request->validate([
+            'propertyId' => ['required', 'integer', 'min:1'],
+            'clientName' => ['required', 'string', 'max:120'],
+            'email' => ['nullable', 'email', 'max:180'],
+            'phone' => ['required', 'string', 'max:40'],
+            'message' => ['required', 'string', 'max:5000'],
+        ]);
+        $user = $this->user($request);
+        $item = $store->mutate(function (array &$data) use ($values, $user): ?array {
+            $propertyIndex = null;
+            foreach ($data['properties'] ?? [] as $index => $property) {
+                if ((int) ($property['id'] ?? 0) === (int) $values['propertyId']) {
+                    $propertyIndex = $index;
+                    break;
+                }
+            }
+            if ($propertyIndex === null) return null;
+
+            $property = $data['properties'][$propertyIndex];
+            $item = [
+                'id' => $this->nextId($data),
+                'date' => now()->toDateString(),
+                'status' => 'Pending',
+                'reply' => null,
+                'replyDate' => null,
+                'propertyId' => (int) $values['propertyId'],
+                'propertyTitle' => $property['title'] ?? 'Property inquiry',
+                'clientName' => trim($values['clientName']),
+                'buyerName' => $user['name'] ?? trim($values['clientName']),
+                'email' => $values['email'] ?? null,
+                'phone' => trim($values['phone']),
+                'message' => trim($values['message']),
+                'buyerId' => $user['id'],
+                'sellerId' => $property['sellerId'] ?? null,
+                'agentId' => $property['agentId'] ?? null,
+            ];
+            $data['inquiries'] = is_array($data['inquiries'] ?? null) ? $data['inquiries'] : [];
+            $data['inquiries'][] = $item;
+            $data['properties'][$propertyIndex]['inquiryCount'] =
+                (int) ($property['inquiryCount'] ?? 0) + 1;
+            return $item;
+        });
+        abort_unless($item, 404, 'This property is no longer available.');
+        return response()->json($item, 201);
+    }
+
     public function notifications(Request $request, LegacyDataStore $store): JsonResponse
     {
         $userId = $this->userId($request);

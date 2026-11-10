@@ -54,6 +54,7 @@ $registerRoutes = static function (): void {
         Route::patch('/appointments/{id}', [UserDashboardController::class, 'cancelAppointment'])->whereNumber('id');
         Route::get('/offers', [UserDashboardController::class, 'offers']);
         Route::get('/inquiries', [UserDashboardController::class, 'inquiries']);
+        Route::post('/inquiries', [UserDashboardController::class, 'submitInquiry']);
         Route::get('/notifications', [UserDashboardController::class, 'notifications']);
         Route::patch('/notifications/{id}/read', [UserDashboardController::class, 'markNotificationRead'])->whereNumber('id');
         Route::get('/notification-preferences', [UserDashboardController::class, 'notificationPreferences']);

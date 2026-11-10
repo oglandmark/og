@@ -17,6 +17,7 @@
 - [Plot calculator geometry](plot-calculator-geometry.md) — irregular plots need diagonals for exact triangulation; side-only results must be labelled estimates or declined.
 - [EAS cloud monorepo builds](eas-cloud-monorepo-build.md) — direct CLI uploads bypass GitHub, but remote pnpm can fail on esbuild build-script policy in this workspace.
 - [EAS pnpm and lockfile compatibility](eas-pnpm8-lockfile.md) — align the lockfile with the target build profile's explicit pnpm version, not only the root package-manager field.
+- [EAS iOS internal builds](eas-ios-internal-builds.md) — non-interactive builds need complete remote Ad Hoc credentials and an Xcode image compatible with the React Native version.
 - [Expo preview native libraries](expo-preview-native-libraries.md) — Replit Expo preview needs the desktop libraries used by React Native DevTools; keep the root pnpm pin unset locally.
 - [Expo dependency alignment](expo-dependency-alignment.md) — package fixes can trigger mid-install Metro resolution errors; verify module resolution and the final bundle after installation finishes.
 - [Expo preview bundle routing](expo-preview-bundle-resolver.md) — use Expo host for Metro and local property media; avoid routing unrelated APIs to the incomplete local backend.

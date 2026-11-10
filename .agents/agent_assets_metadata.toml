@@ -154,3 +154,17 @@ mtime_ms = 1794307787387
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/06981560-8052-42ce-861c-2870db82cb6d/32f90001-789e-442a-af78-9f164c01c73c"
 storage_version_token = "1794307881074264"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9FrSc5EUOXJ951xXT899C"
+uri = "file://generated-artifacts/og-landmark-5.1.2-ios-preview.ipa"
+type = "unspecified"
+title = "OG Landmark iOS IPA"
+description = "Internal iOS preview build 5.1.2 (build 61). Installable on registered iPhones; not submitted to the App Store."
+logical_id = "d06c1393-0e1c-403f-a59c-7d44a25a21bd"
+content_hash = "sha256:9de0844b1dbb609f6815a4bdc216f964dc066cbb35310ee0bf17ea8124e521e0"
+size = 29003805
+mtime_ms = 1794333188702
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/d06c1393-0e1c-403f-a59c-7d44a25a21bd/fabf1555-86b8-468d-a82c-8216e8e036f1"
+storage_version_token = "1794333191134938"
+content_type = "application/octet-stream"

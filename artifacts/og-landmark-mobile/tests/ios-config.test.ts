@@ -29,3 +29,7 @@ test('iOS-only purpose strings do not add Android image-picker permissions', () 
   ));
   assert.ok(appConfig.plugins.includes('expo-notifications'));
 });
+
+test('iOS export-compliance plist flag declares no non-exempt encryption', () => {
+  assert.equal(appConfig.ios.infoPlist.ITSAppUsesNonExemptEncryption, false);
+});

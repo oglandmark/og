@@ -13,7 +13,8 @@
       "buildNumber": "61",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "OG Landmark accesses photos you select to create listings, update your profile, and share project media.",
-        "NSCameraUsageDescription": "OG Landmark uses the camera when you choose to take a listing, profile, or project photo."
+        "NSCameraUsageDescription": "OG Landmark uses the camera when you choose to take a listing, profile, or project photo.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {

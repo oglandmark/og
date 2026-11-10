@@ -575,8 +575,20 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
               style={[fp.videoTourBtn, !hasVideo && { opacity: 0.4 }]}
               hitSlop={6}
             >
+              <LinearGradient
+                pointerEvents="none"
+                colors={[
+                  'rgba(255,255,255,0.28)',
+                  'rgba(255,255,255,0.12)',
+                  'rgba(7,21,33,0.38)',
+                ]}
+                locations={[0, 0.48, 1]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
               <View style={fp.videoTourIcon}>
-                <Feather name="play" size={9} color="#0B1F3A" />
+                <Feather name="play" size={9} color={brandColors.light.splashGold} />
               </View>
               <Text style={fp.videoTourText}>Video Tour</Text>
             </Pressable>
@@ -687,10 +699,44 @@ const fp = StyleSheet.create({
   agentInitial: { fontFamily: 'Inter_700Bold', fontSize: 11, color: '#ffffff' },
   agentName:    { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#ffffffcc', flex: 1 },
 
-  // Video Tour pill
-  videoTourBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: brandColors.light.splashGold, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5 },
-  videoTourIcon: { width: 16, height: 16, borderRadius: 8, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
-  videoTourText: { fontFamily: 'Inter_700Bold', fontSize: 9, color: '#0B1F3A', letterSpacing: 0.3 },
+  // Video Tour pill: translucent surface and sheen simulate glass without native blur.
+  videoTourBtn:  {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.48)',
+    borderRadius: 12,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    overflow: 'hidden',
+    shadowColor: '#071521',
+    shadowOpacity: 0.24,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+  },
+  videoTourIcon: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.50)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  videoTourText: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 9,
+    color: '#ffffff',
+    letterSpacing: 0.4,
+    textShadowColor: 'rgba(7,21,33,0.42)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
 
   viewBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#ffffff22', borderWidth: 1, borderColor: '#ffffff44', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 6 },
   viewBtnText:  { fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#ffffff' },

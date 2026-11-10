@@ -46,6 +46,16 @@ test('profile and listing submission expose a My Properties route action', async
     readFile(join(here, '../app/(tabs)/profile.tsx'), 'utf8'),
     readFile(join(here, '../app/post/listing.tsx'), 'utf8'),
   ]);
-  assert.match(profile, /router\.navigate\('\/\(tabs\)\/listings' as any\)/);
-  assert.match(listingForm, /Alert\.alert\([\s\S]*?My Properties[\s\S]*?router\.navigate\('\/\(tabs\)\/listings' as any\)/);
+  assert.match(profile, /router\.push\('\/my-properties' as any\)/);
+  assert.match(listingForm, /Alert\.alert\([\s\S]*?My Properties[\s\S]*?router\.push\('\/my-properties' as any\)/);
+});
+
+test('My Properties has an allowed top-level route outside the role-hidden tab', async () => {
+  const [route, layout] = await Promise.all([
+    readFile(join(here, '../app/my-properties.tsx'), 'utf8'),
+    readFile(join(here, '../app/_layout.tsx'), 'utf8'),
+  ]);
+  assert.match(route, /from '\.\/\(tabs\)\/listings'/);
+  assert.match(layout, /'announcements',\s*'my-properties'/);
+  assert.match(layout, /Stack\.Screen name="my-properties"/);
 });

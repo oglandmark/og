@@ -185,7 +185,7 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
       const inAdmin = segments[0] === 'admin';
       const inKnownRoute = [
         '(tabs)', '(auth)', 'property', 'project', 'settings', 'agent',
-        'post', 'admin', 'tools', 'notifications', 'announcements',
+          'post', 'admin', 'tools', 'notifications', 'announcements', 'my-properties',
       ].includes(segments[0] ?? '');
 
       if (isLoggedIn && inAuth) {
@@ -220,6 +220,7 @@ function RootLayoutNav({ fontsReady }: { fontsReady: boolean }) {
         animation: Platform.OS === 'ios' ? 'slide_from_right' : 'none',
       }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="my-properties" options={{ headerShown: false }} />
         <Stack.Screen name="tools" options={{ headerShown: false }} />
         <Stack.Screen name="admin" options={{ headerShown: false }} />
         <Stack.Screen name="property/[id]" options={{ presentation: 'card' }} />

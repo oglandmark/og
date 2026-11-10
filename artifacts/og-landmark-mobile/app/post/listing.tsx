@@ -733,7 +733,7 @@ export default function ListingWizard() {
           ? 'Your changes were saved and the listing is back in the review queue.'
           : 'Your property was submitted for review. You can track it in My Properties.',
         [
-          { text: 'My Properties', onPress: () => router.navigate('/(tabs)/listings' as any) },
+          { text: 'My Properties', onPress: () => router.push('/my-properties' as any) },
           { text: 'Done', style: 'cancel' },
         ],
       );
@@ -776,7 +776,7 @@ export default function ListingWizard() {
           <Feather name="clock" size={13} color={colors.accentForeground} />
           <Text style={[s.reviewText, { color: colors.accentForeground }]}>PENDING REVIEW</Text>
         </View>
-        <AnimatedPressable onPress={() => router.navigate('/(tabs)/listings' as any)} style={[s.successBtn, { backgroundColor: colors.action, marginTop: 24 }]}>
+        <AnimatedPressable onPress={() => router.push('/my-properties' as any)} style={[s.successBtn, { backgroundColor: colors.action, marginTop: 24 }]}>
           <Text style={[s.successBtnText, { color: colors.actionForeground }]}>View My Listings</Text>
           <Feather name="arrow-right" size={16} color={colors.actionForeground} />
         </AnimatedPressable>

@@ -375,7 +375,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
       Alert.alert(
         isAgri ? 'Listing Submitted!' : isIndustrial ? 'Listing Submitted!' : 'Listing Submitted!',
         'Your property has been submitted for admin review. It will appear on OG Landmark once approved. You can track its status in My Listings.',
-        [{ text: 'My Listings', onPress: () => router.navigate('/(tabs)/listings' as any) }],
+        [{ text: 'My Listings', onPress: () => router.push('/my-properties' as any) }],
       );
     } catch (error) {
       const message = error instanceof Error && error.message

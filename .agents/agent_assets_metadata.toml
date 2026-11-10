@@ -126,3 +126,17 @@ mtime_ms = 1794165670851
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/7a21d532-8f39-47e8-a205-acd13b5fe8bb/1082fc9b-a972-4c1d-b9a5-2c42279c9aef"
 storage_version_token = "1794165696177617"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "ppataQAcGa7UYNDyvDcrw"
+uri = "file://generated-artifacts/og-landmark-inquiry-api-update-2026-11-10.zip"
+type = "unspecified"
+title = "OG Landmark Inquiry API Update"
+description = "Laravel source patch with upload steps. It does not deploy or modify production data."
+logical_id = "6dc0c89e-7a7b-4dc5-8cc5-7ead0b6f141f"
+content_hash = "sha256:4fc8297450e5853472343c681cebe44d785b040bab4c623cd8514916487e6717"
+size = 6972
+mtime_ms = 1794306312303
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/6dc0c89e-7a7b-4dc5-8cc5-7ead0b6f141f/72447738-dbb5-4056-a69a-44a720665cd8"
+storage_version_token = "1794306328970488"
+content_type = "application/octet-stream"

@@ -222,24 +222,26 @@ export default function SignUpScreen() {
             </View>
           )}
 
-          <View style={[styles.inputField, focusedField === 'name' && styles.inputFieldFocused, { backgroundColor: focusedField === 'name' ? colors.background : colors.authFieldSurface, borderColor: focusedField === 'name' ? colors.splashGold : colors.authBorder, shadowColor: colors.splashGold }]}>
-            <Feather name="user" size={19} color={focusedField === 'name' ? colors.authGoldText : colors.authMuted} />
-            <TextInput testID="signup-name-input" value={name} onChangeText={(value) => { setFocusedField('name'); setName(value); setError(''); }} onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField((current) => current === 'name' ? null : current)} placeholder={tr('authFullNamePlaceholder')} placeholderTextColor={colors.authMuted} autoCapitalize="words" textAlign={rtl} style={[styles.input, { color: colors.foreground }]} />
-          </View>
-          <View style={[styles.inputField, focusedField === 'email' && styles.inputFieldFocused, { backgroundColor: focusedField === 'email' ? colors.background : colors.authFieldSurface, borderColor: focusedField === 'email' ? colors.splashGold : colors.authBorder, shadowColor: colors.splashGold }]}>
-            <Feather name="mail" size={19} color={focusedField === 'email' ? colors.authGoldText : colors.authMuted} />
-            <TextInput testID="signup-email-input" value={identifier} onChangeText={(value) => { setFocusedField('email'); setIdentifier(value); setError(''); }} onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField((current) => current === 'email' ? null : current)} keyboardType="email-address" autoCapitalize="none" autoComplete="email" placeholder={tr('authEmailPlaceholder')} placeholderTextColor={colors.authMuted} textAlign="left" style={[styles.input, { color: colors.foreground }]} />
-          </View>
-          <View style={[styles.inputField, focusedField === 'phone' && styles.inputFieldFocused, { backgroundColor: focusedField === 'phone' ? colors.background : colors.authFieldSurface, borderColor: focusedField === 'phone' ? colors.splashGold : colors.authBorder, shadowColor: colors.splashGold }]}>
-            <Feather name="smartphone" size={19} color={focusedField === 'phone' ? colors.authGoldText : colors.authMuted} />
-            <TextInput testID="signup-phone-input" value={mobileNumber} onChangeText={(value) => { setFocusedField('phone'); setMobileNumber(value); setError(''); }} onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField((current) => current === 'phone' ? null : current)} keyboardType="phone-pad" autoComplete="tel" placeholder={tr('authPhonePlaceholder')} placeholderTextColor={colors.authMuted} textAlign="left" style={[styles.input, { color: colors.foreground }]} />
-          </View>
-          <View style={[styles.inputField, focusedField === 'password' && styles.inputFieldFocused, { backgroundColor: focusedField === 'password' ? colors.background : colors.authFieldSurface, borderColor: focusedField === 'password' ? colors.splashGold : colors.authBorder, shadowColor: colors.splashGold }]}>
-            <Feather name="lock" size={19} color={focusedField === 'password' ? colors.authGoldText : colors.authMuted} />
-            <TextInput testID="signup-password-input" value={password} onChangeText={(value) => { setFocusedField('password'); setPassword(value); setError(''); }} onFocus={() => setFocusedField('password')} onBlur={() => setFocusedField((current) => current === 'password' ? null : current)} secureTextEntry={!showPassword} autoComplete="new-password" placeholder={tr('authCreatePasswordPlaceholder')} placeholderTextColor={colors.authMuted} textAlign={rtl} style={[styles.input, { color: colors.foreground }]} />
-            <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
-              <Feather name={showPassword ? 'eye' : 'eye-off'} size={19} color={colors.authMuted} />
-            </Pressable>
+          <View style={styles.inputStack}>
+            <View style={[styles.inputField, focusedField === 'name' && styles.inputFieldFocused, { backgroundColor: focusedField === 'name' ? colors.background : colors.authFieldSurface, borderColor: focusedField === 'name' ? colors.splashGold : colors.authBorder, shadowColor: colors.splashGold }]}>
+              <Feather name="user" size={19} color={focusedField === 'name' ? colors.authGoldText : colors.authMuted} />
+              <TextInput testID="signup-name-input" value={name} onChangeText={(value) => { setFocusedField('name'); setName(value); setError(''); }} onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField((current) => current === 'name' ? null : current)} placeholder={tr('authFullNamePlaceholder')} placeholderTextColor={colors.authMuted} autoCapitalize="words" textAlign={rtl} style={[styles.input, { color: colors.foreground }]} />
+            </View>
+            <View style={[styles.inputField, focusedField === 'email' && styles.inputFieldFocused, { backgroundColor: focusedField === 'email' ? colors.background : colors.authFieldSurface, borderColor: focusedField === 'email' ? colors.splashGold : colors.authBorder, shadowColor: colors.splashGold }]}>
+              <Feather name="mail" size={19} color={focusedField === 'email' ? colors.authGoldText : colors.authMuted} />
+              <TextInput testID="signup-email-input" value={identifier} onChangeText={(value) => { setFocusedField('email'); setIdentifier(value); setError(''); }} onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField((current) => current === 'email' ? null : current)} keyboardType="email-address" autoCapitalize="none" autoComplete="email" placeholder={tr('authEmailPlaceholder')} placeholderTextColor={colors.authMuted} textAlign="left" style={[styles.input, { color: colors.foreground }]} />
+            </View>
+            <View style={[styles.inputField, focusedField === 'phone' && styles.inputFieldFocused, { backgroundColor: focusedField === 'phone' ? colors.background : colors.authFieldSurface, borderColor: focusedField === 'phone' ? colors.splashGold : colors.authBorder, shadowColor: colors.splashGold }]}>
+              <Feather name="smartphone" size={19} color={focusedField === 'phone' ? colors.authGoldText : colors.authMuted} />
+              <TextInput testID="signup-phone-input" value={mobileNumber} onChangeText={(value) => { setFocusedField('phone'); setMobileNumber(value); setError(''); }} onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField((current) => current === 'phone' ? null : current)} keyboardType="phone-pad" autoComplete="tel" placeholder={tr('authPhonePlaceholder')} placeholderTextColor={colors.authMuted} textAlign="left" style={[styles.input, { color: colors.foreground }]} />
+            </View>
+            <View style={[styles.inputField, focusedField === 'password' && styles.inputFieldFocused, { backgroundColor: focusedField === 'password' ? colors.background : colors.authFieldSurface, borderColor: focusedField === 'password' ? colors.splashGold : colors.authBorder, shadowColor: colors.splashGold }]}>
+              <Feather name="lock" size={19} color={focusedField === 'password' ? colors.authGoldText : colors.authMuted} />
+              <TextInput testID="signup-password-input" value={password} onChangeText={(value) => { setFocusedField('password'); setPassword(value); setError(''); }} onFocus={() => setFocusedField('password')} onBlur={() => setFocusedField((current) => current === 'password' ? null : current)} secureTextEntry={!showPassword} autoComplete="new-password" placeholder={tr('authCreatePasswordPlaceholder')} placeholderTextColor={colors.authMuted} textAlign={rtl} style={[styles.input, { color: colors.foreground }]} />
+              <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+                <Feather name={showPassword ? 'eye' : 'eye-off'} size={19} color={colors.authMuted} />
+              </Pressable>
+            </View>
           </View>
 
           <View style={styles.termsRow}>
@@ -281,6 +283,7 @@ const styles = StyleSheet.create({
   subtitle: { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 19 },
   errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 12, padding: 11 },
   errorText: { fontFamily: 'Inter_500Medium', fontSize: 12, flex: 1 },
+  inputStack: { gap: 12 },
   inputField: { height: 47, borderRadius: 14, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14 },
   inputFieldFocused: { borderWidth: 1.5, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 2 },
   input: { flex: 1, minWidth: 0, borderWidth: 0, outlineWidth: 0, outlineColor: 'transparent', backgroundColor: 'transparent', fontFamily: 'Inter_400Regular', fontSize: 14, paddingVertical: 0 },

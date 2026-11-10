@@ -66,62 +66,64 @@ export default function LoginScreen() {
         </View>
       )}
 
-      <View
-        style={[
-          styles.inputField,
-          focusedField === 'identifier' && styles.inputFieldFocused,
-          {
-            borderColor: focusedField === 'identifier' ? colors.splashGold : colors.authBorder,
-            backgroundColor: focusedField === 'identifier' ? colors.background : colors.authFieldSurface,
-            shadowColor: colors.splashGold,
-          },
-        ]}
-      >
-        <Feather name="mail" size={19} color={focusedField === 'identifier' ? colors.authGoldText : colors.authMuted} />
-        <TextInput
-          testID="login-identifier-input"
-          value={identifier}
-          onChangeText={(value) => { setFocusedField('identifier'); setIdentifier(value); setError(''); }}
-          onFocus={() => setFocusedField('identifier')}
-          onBlur={() => setFocusedField((current) => current === 'identifier' ? null : current)}
-          keyboardType={isMobileIdentifier ? 'phone-pad' : 'email-address'}
-          autoCapitalize="none"
-          autoComplete="email"
-          placeholder={tr('authEmailPlaceholder')}
-          placeholderTextColor={colors.authMuted}
-          textAlign={rtl}
-          style={[styles.input, { color: colors.foreground }]}
-        />
-      </View>
+      <View style={styles.inputStack}>
+        <View
+          style={[
+            styles.inputField,
+            focusedField === 'identifier' && styles.inputFieldFocused,
+            {
+              borderColor: focusedField === 'identifier' ? colors.splashGold : colors.authBorder,
+              backgroundColor: focusedField === 'identifier' ? colors.background : colors.authFieldSurface,
+              shadowColor: colors.splashGold,
+            },
+          ]}
+        >
+          <Feather name="mail" size={19} color={focusedField === 'identifier' ? colors.authGoldText : colors.authMuted} />
+          <TextInput
+            testID="login-identifier-input"
+            value={identifier}
+            onChangeText={(value) => { setFocusedField('identifier'); setIdentifier(value); setError(''); }}
+            onFocus={() => setFocusedField('identifier')}
+            onBlur={() => setFocusedField((current) => current === 'identifier' ? null : current)}
+            keyboardType={isMobileIdentifier ? 'phone-pad' : 'email-address'}
+            autoCapitalize="none"
+            autoComplete="email"
+            placeholder={tr('authEmailPlaceholder')}
+            placeholderTextColor={colors.authMuted}
+            textAlign={rtl}
+            style={[styles.input, { color: colors.foreground }]}
+          />
+        </View>
 
-      <View
-        style={[
-          styles.inputField,
-          focusedField === 'password' && styles.inputFieldFocused,
-          {
-            borderColor: focusedField === 'password' ? colors.splashGold : colors.authBorder,
-            backgroundColor: focusedField === 'password' ? colors.background : colors.authFieldSurface,
-            shadowColor: colors.splashGold,
-          },
-        ]}
-      >
-        <Feather name="lock" size={19} color={focusedField === 'password' ? colors.authGoldText : colors.authMuted} />
-        <TextInput
-          testID="login-password-input"
-          value={password}
-          onChangeText={(value) => { setFocusedField('password'); setPassword(value); setError(''); }}
-          onFocus={() => setFocusedField('password')}
-          onBlur={() => setFocusedField((current) => current === 'password' ? null : current)}
-          secureTextEntry={!showPassword}
-          autoComplete="current-password"
-          placeholder={tr('authPasswordPlaceholder')}
-          placeholderTextColor={colors.authMuted}
-          textAlign={rtl}
-          style={[styles.input, { color: colors.foreground }]}
-        />
-        <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
-          <Feather name={showPassword ? 'eye' : 'eye-off'} size={19} color={colors.authMuted} />
-        </Pressable>
+        <View
+          style={[
+            styles.inputField,
+            focusedField === 'password' && styles.inputFieldFocused,
+            {
+              borderColor: focusedField === 'password' ? colors.splashGold : colors.authBorder,
+              backgroundColor: focusedField === 'password' ? colors.background : colors.authFieldSurface,
+              shadowColor: colors.splashGold,
+            },
+          ]}
+        >
+          <Feather name="lock" size={19} color={focusedField === 'password' ? colors.authGoldText : colors.authMuted} />
+          <TextInput
+            testID="login-password-input"
+            value={password}
+            onChangeText={(value) => { setFocusedField('password'); setPassword(value); setError(''); }}
+            onFocus={() => setFocusedField('password')}
+            onBlur={() => setFocusedField((current) => current === 'password' ? null : current)}
+            secureTextEntry={!showPassword}
+            autoComplete="current-password"
+            placeholder={tr('authPasswordPlaceholder')}
+            placeholderTextColor={colors.authMuted}
+            textAlign={rtl}
+            style={[styles.input, { color: colors.foreground }]}
+          />
+          <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+            <Feather name={showPassword ? 'eye' : 'eye-off'} size={19} color={colors.authMuted} />
+          </Pressable>
+        </View>
       </View>
 
       <Pressable onPress={() => router.push('/(auth)/forgot-password')} style={styles.forgotLink} accessibilityRole="button">
@@ -147,6 +149,7 @@ const styles = StyleSheet.create({
   subtitle: { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 19 },
   errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 12, padding: 11 },
   errorText: { fontFamily: 'Inter_500Medium', fontSize: 12, flex: 1 },
+  inputStack: { gap: 14 },
   inputField: { height: 47, borderRadius: 14, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14 },
   inputFieldFocused: { borderWidth: 1.5, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 2 },
   input: { flex: 1, minWidth: 0, borderWidth: 0, outlineWidth: 0, outlineColor: 'transparent', backgroundColor: 'transparent', fontFamily: 'Inter_400Regular', fontSize: 14, paddingVertical: 0 },

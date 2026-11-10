@@ -24,3 +24,8 @@ test('login and register text input rows are exactly 47 pixels high', () => {
   assert.match(login, /inputField: \{ height: 47,/);
   assert.match(signup, /inputField: \{ height: 47,/);
 });
+
+test('login and registration fields have comfortable vertical spacing', () => {
+  assert.match(login, /inputStack: \{ gap: 14 \}/);
+  assert.match(signup, /inputStack: \{ gap: 12 \}/);
+});

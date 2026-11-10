@@ -27,6 +27,7 @@ import { okaraDistrict } from '@/lib/cities';
 import { useAuth } from '@/context/AuthContext';
 import { addUserListing } from '@/lib/listingsStore';
 import { uploadMultipleImages, uploadVideo } from '@/lib/api';
+import { getListingVideoExportOptions } from '@/lib/listingVideoOptions';
 import { LocationPicker } from '@/components/LocationPicker';
 import type { LocationData } from '@/lib/locationService';
 import { POST_AD_LISTING_ROUTE, shouldOpenPostAdListing } from '@/lib/postAdEntry';
@@ -234,6 +235,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
       mediaTypes: ImagePicker.MediaTypeOptions.Videos,
       allowsMultipleSelection: false,
       videoMaxDuration: 120,
+      ...getListingVideoExportOptions(Platform.OS, ImagePicker.VideoExportPreset.H264_1920x1080),
     });
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
@@ -373,7 +375,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
       Alert.alert(
         isAgri ? 'Listing Submitted!' : isIndustrial ? 'Listing Submitted!' : 'Listing Submitted!',
         'Your property has been submitted for admin review. It will appear on OG Landmark once approved. You can track its status in My Listings.',
-        [{ text: 'My Listings', onPress: () => router.push('/(tabs)/listings') }],
+        [{ text: 'My Listings', onPress: () => router.navigate('/(tabs)/listings' as any) }],
       );
     } catch (error) {
       const message = error instanceof Error && error.message

@@ -106,7 +106,7 @@ export default function AnalyticsScreen() {
       void (async () => {
         const [l, ls, v] = await Promise.all([
           getLeads(),
-          getMyListings(user?.id ?? ''),
+          getMyListings(),
           getAgentVisits(user?.id ?? ''),
         ]);
         setLeads(l);

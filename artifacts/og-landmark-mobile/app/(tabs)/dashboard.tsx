@@ -375,7 +375,7 @@ export default function DashboardScreen() {
     setDashboardError('');
     try {
       const [myListings, leads, visits] = await Promise.all([
-        getMyListings(user?.id ?? ''),
+        getMyListings(),
         getLeads(),
         getAgentVisits(user?.id ?? ''),
       ]);

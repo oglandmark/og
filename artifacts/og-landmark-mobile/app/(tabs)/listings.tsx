@@ -67,7 +67,7 @@ export default function ListingsScreen() {
     }
     if (showLoading) setLoading(true);
     setLoadError('');
-    void getMyListings(user.id)
+    void getMyListings()
       .then(setMyListings)
       .catch((cause: unknown) => setLoadError(cause instanceof Error ? cause.message : 'Could not load your listings. Check the API connection and try again.'))
       .finally(() => {

@@ -12,6 +12,7 @@ import {
   type CreatePropertyPayload,
 } from '@/lib/api';
 import { buildCreatePropertyPayload } from '@/lib/listingPayload';
+import { sortMyListings } from './listingSorting';
 
 export type ListingStatus = 'Active' | 'Pending' | 'Draft' | 'Paused' | 'Sold' | 'Rented';
 
@@ -226,11 +227,8 @@ export async function deleteUserListing(id: string): Promise<UserListing[]> {
   return getUserListings();
 }
 
-export async function getMyListings(userId: string): Promise<UserListing[]> {
-  const all = await getUserListings();
-  return all
-    .filter((l) => l.postedBy === userId)
-    .sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime());
+export async function getMyListings(userId?: string): Promise<UserListing[]> {
+  return sortMyListings(await getUserListings(), userId);
 }
 
 export function calcListingStats(listings: UserListing[]) {

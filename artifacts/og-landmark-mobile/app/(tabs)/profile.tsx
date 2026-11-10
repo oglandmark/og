@@ -1088,7 +1088,7 @@ export default function ProfileScreen() {
         .catch(() => setPhotoUri(null));
 
       if (role === 'agent' || role === 'user' || role === 'buyer') {
-        void getMyListings(user?.id ?? '')
+        void getMyListings()
           .then((myL) => setListingsCount(myL.length))
           .catch(() => setListingsCount(0));
       }
@@ -1406,7 +1406,7 @@ export default function ProfileScreen() {
             <View style={styles.menuGroup}>
               <RowLink icon="home" label="My Listed Properties"
                 sublabel={listingsCount > 0 ? `${listingsCount} propert${listingsCount !== 1 ? 'ies' : 'y'} listed` : 'View properties you have listed'}
-                onPress={() => router.push('/(tabs)/listings' as any)} colors={colors} iconColor={colors.action} />
+                onPress={() => router.navigate('/(tabs)/listings' as any)} colors={colors} iconColor={colors.action} />
               <RowLink icon="heart" label="Saved Properties"
                 sublabel={savedIds.length > 0 ? `${savedIds.length} propert${savedIds.length !== 1 ? 'ies' : 'y'} shortlisted` : 'Your favourites'}
                 onPress={() => router.push('/(tabs)/saved')} colors={colors} iconColor="#e71616" />
@@ -1430,7 +1430,7 @@ export default function ProfileScreen() {
           <AnimatedReveal delay={120}>
             <SectionHeader title="Agent Activity" colors={colors} />
             <View style={[styles.statsStrip, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Stat v={String(listingsCount)}   l="Listings" onPress={() => router.push('/(tabs)/listings' as any)} colors={colors} />
+              <Stat v={String(listingsCount)}   l="Listings" onPress={() => router.navigate('/(tabs)/listings' as any)} colors={colors} />
               <View style={[styles.statDiv, { backgroundColor: colors.border }]} />
               <Stat v={String(agentLeadsCount)} l="Leads"    onPress={() => router.push('/(tabs)/leads' as any)} colors={colors} />
               <View style={[styles.statDiv, { backgroundColor: colors.border }]} />
@@ -1445,7 +1445,7 @@ export default function ProfileScreen() {
             <View style={styles.menuGroup}>
               <RowLink icon="home" label="My Listings"
                 sublabel={`${listingsCount} active listing${listingsCount !== 1 ? 's' : ''}`}
-                onPress={() => router.push('/(tabs)/listings' as any)} colors={colors} iconColor={colors.action} />
+                onPress={() => router.navigate('/(tabs)/listings' as any)} colors={colors} iconColor={colors.action} />
               <RowLink icon="users" label="Leads"
                 sublabel={`${agentLeadsCount} lead${agentLeadsCount !== 1 ? 's' : ''}`}
                 onPress={() => router.push('/(tabs)/leads' as any)} colors={colors} iconColor={colors.teal} />

@@ -14,6 +14,7 @@ import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import {
   LIVE_API_BASE,
   getPreviewLiveProxyPath,
+  resolveApiBase,
   shouldFallbackUnauthenticatedReadToLive,
 } from './apiBase';
 import {
@@ -35,9 +36,9 @@ export type {
 } from './notificationData';
 
 // ─── Base URL ──────────────────────────────────────────────────────────────────
-// Mobile API reads and writes intentionally use the live Laravel API in every
-// environment. Keep EXPO_PUBLIC_DOMAIN for Expo routing, not API selection.
-export const API_BASE = LIVE_API_BASE;
+// Replit previews use the local Laravel API so preview mutations stay local.
+// Published builds use the live API unless their domain is an allowlisted preview host.
+export const API_BASE = resolveApiBase(process.env.EXPO_PUBLIC_DOMAIN);
 const PROPERTY_FEED_API_BASE = API_BASE;
 
 export function resolveMediaUrl(value?: string | null): string | undefined {

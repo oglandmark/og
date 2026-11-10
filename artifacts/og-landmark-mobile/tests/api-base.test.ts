@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   LIVE_API_BASE,
@@ -7,10 +8,16 @@ import {
   shouldFallbackUnauthenticatedReadToLive,
 } from '../lib/apiBase';
 
+const apiClient = readFileSync(new URL('../lib/api.ts', import.meta.url), 'utf8');
+
 test('Replit previews use the local Laravel API route', () => {
   assert.equal(resolveApiBase('preview.replit.dev'), 'https://preview.replit.dev/api-legacy');
   assert.equal(resolveApiBase('preview.expo.pike.replit.dev'), 'https://preview.expo.pike.replit.dev/api-legacy');
   assert.equal(resolveApiBase('https://preview.replit.dev/mobile/'), 'https://preview.replit.dev/api-legacy');
+});
+
+test('the mobile API client selects its base from the build domain', () => {
+  assert.match(apiClient, /API_BASE\s*=\s*resolveApiBase\(process\.env\.EXPO_PUBLIC_DOMAIN\)/);
 });
 
 test('production and untrusted domains use the public API', () => {

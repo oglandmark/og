@@ -21,9 +21,6 @@
       "pnpm": "10.26.1",
       "environment": "production",
       "distribution": "store",
-      "ios": {
-        "image": "macos-tahoe-26.6-xcode-27.1"
-      },
       "android": {
         "image": "ubuntu-22.04-jdk-17-ndk-r21e",
         "buildType": "app-bundle"

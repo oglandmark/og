@@ -23,6 +23,7 @@ import {
   getHomeBannerAutoplayMode,
   HOME_BANNER_IMAGE_AUTOPLAY_MS,
   HOME_BANNER_VIDEO_PLAYBACK_RATE,
+  shouldShowHomeBannerCopy,
 } from '@/lib/homeBannerPlayback';
 
 export type HomeCategoryBannerSlide = {
@@ -269,6 +270,7 @@ export default function HomeCategoryBannerCarousel({
           const isLoopClone = index >= slides.length;
           const logicalIndex = index % slides.length;
           const loopCloneSuffix = isLoopClone ? '-loop-clone' : '';
+          const showBannerCopy = shouldShowHomeBannerCopy(slide.videoUrl);
           return (
           <View
             key={isLoopClone ? `${slide.id}-loop-clone` : slide.id}
@@ -319,80 +321,84 @@ export default function HomeCategoryBannerCarousel({
               style={[styles.bottomGradient, { height: Math.round(slideHeight * 0.62) }]}
               pointerEvents="none"
             />
-            <View style={styles.topLine} pointerEvents="none">
-              <View style={styles.eyebrowGroup}>
-                <View style={[styles.goldRule, { backgroundColor: colors.gold }]} />
-                <Text style={[styles.eyebrow, { color: colors.gold }]} numberOfLines={1}>
-                  {slide.eyebrow}
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles.countPill,
-                  {
-                    backgroundColor: colors.actionGlass,
-                    borderColor: colors.actionGlassBorder,
-                  },
-                ]}
-              >
-                <Text style={[styles.countText, { color: colors.actionForeground }]}>
-                  {String(logicalIndex + 1).padStart(2, '0')}
-                  <Text style={[styles.countDivider, { color: colors.glassOverlay }]}>
-                    {' / '}
+            {showBannerCopy ? (
+              <View style={styles.topLine} pointerEvents="none">
+                <View style={styles.eyebrowGroup}>
+                  <View style={[styles.goldRule, { backgroundColor: colors.gold }]} />
+                  <Text style={[styles.eyebrow, { color: colors.gold }]} numberOfLines={1}>
+                    {slide.eyebrow}
                   </Text>
-                  {String(slides.length).padStart(2, '0')}
-                </Text>
+                </View>
+                <View
+                  style={[
+                    styles.countPill,
+                    {
+                      backgroundColor: colors.actionGlass,
+                      borderColor: colors.actionGlassBorder,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.countText, { color: colors.actionForeground }]}>
+                    {String(logicalIndex + 1).padStart(2, '0')}
+                    <Text style={[styles.countDivider, { color: colors.glassOverlay }]}>
+                      {' / '}
+                    </Text>
+                    {String(slides.length).padStart(2, '0')}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <View style={styles.copy}>
-              <Text
-                style={[
-                  styles.title,
-                  {
-                    color: colors.actionForeground,
-                    textShadowColor: colors.shadow,
-                  },
-                ]}
-                numberOfLines={2}
-              >
-                {slide.title}
-              </Text>
-              <Text
-                style={[styles.subtitle, { color: colors.glassOverlay }]}
-                numberOfLines={2}
-              >
-                {slide.subtitle}
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`${slide.cta}: ${slide.title}`}
-                testID={`home-category-cta-${slide.category}${loopCloneSuffix}`}
-                onPress={() =>
-                  router.push({
-                    pathname: slide.route as never,
-                    params: slide.ctaParams,
-                  })
-                }
-                style={({ pressed }) => [
-                  styles.cta,
-                  {
-                    backgroundColor: colors.splashGold,
-                    opacity: pressed ? 0.88 : 1,
-                    transform: [{ scale: pressed ? 0.985 : 1 }],
-                  },
-                ]}
-              >
-                <Text style={[styles.ctaText, { color: colors.actionDeep }]}>
-                  {slide.cta}
+            ) : null}
+            {showBannerCopy ? (
+              <View style={styles.copy}>
+                <Text
+                  style={[
+                    styles.title,
+                    {
+                      color: colors.actionForeground,
+                      textShadowColor: colors.shadow,
+                    },
+                  ]}
+                  numberOfLines={2}
+                >
+                  {slide.title}
                 </Text>
-                <Feather
-                  name="arrow-up-right"
-                  size={14}
-                  color={colors.actionDeep}
-                  accessible={false}
-                />
-              </Pressable>
-            </View>
+                <Text
+                  style={[styles.subtitle, { color: colors.glassOverlay }]}
+                  numberOfLines={2}
+                >
+                  {slide.subtitle}
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${slide.cta}: ${slide.title}`}
+                  testID={`home-category-cta-${slide.category}${loopCloneSuffix}`}
+                  onPress={() =>
+                    router.push({
+                      pathname: slide.route as never,
+                      params: slide.ctaParams,
+                    })
+                  }
+                  style={({ pressed }) => [
+                    styles.cta,
+                    {
+                      backgroundColor: colors.splashGold,
+                      opacity: pressed ? 0.88 : 1,
+                      transform: [{ scale: pressed ? 0.985 : 1 }],
+                    },
+                  ]}
+                >
+                  <Text style={[styles.ctaText, { color: colors.actionDeep }]}>
+                    {slide.cta}
+                  </Text>
+                  <Feather
+                    name="arrow-up-right"
+                    size={14}
+                    color={colors.actionDeep}
+                    accessible={false}
+                  />
+                </Pressable>
+              </View>
+            ) : null}
           </View>
           );
         })}

@@ -17,3 +17,7 @@ export function getHomeBannerAutoplayMode({
 
 export const HOME_BANNER_IMAGE_AUTOPLAY_MS = 5600;
 export const HOME_BANNER_VIDEO_PLAYBACK_RATE = 1.0;
+
+export function shouldShowHomeBannerCopy(videoUrl?: string): boolean {
+  return !videoUrl?.trim();
+}

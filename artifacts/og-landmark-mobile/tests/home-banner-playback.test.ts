@@ -4,6 +4,7 @@ import {
   getHomeBannerAutoplayMode,
   HOME_BANNER_IMAGE_AUTOPLAY_MS,
   HOME_BANNER_VIDEO_PLAYBACK_RATE,
+  shouldShowHomeBannerCopy,
 } from '../lib/homeBannerPlayback';
 
 test('video banners play at normal real-time speed', () => {
@@ -33,6 +34,12 @@ test('image banners keep their timed advance', () => {
     }),
     'timer',
   );
+});
+
+test('video banners hide all overlaid copy while image banners retain it', () => {
+  assert.equal(shouldShowHomeBannerCopy('https://cdn.example.com/banner.mp4'), false);
+  assert.equal(shouldShowHomeBannerCopy('   '), true);
+  assert.equal(shouldShowHomeBannerCopy(undefined), true);
 });
 
 test('hidden, single-slide, and reduced-motion carousels do not advance automatically', () => {

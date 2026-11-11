@@ -2,34 +2,6 @@ uploads = []
 generated = []
 
 [[outputs]]
-id = "472tDJOSeVNOkvTr9qCG5"
-uri = "file://generated-artifacts/og-landmark-mobile-latest-source.zip"
-type = "unspecified"
-title = "OG Landmark Mobile — Latest Source ZIP"
-description = "Complete current mobile app source, shared API client, and workspace package files. Excludes dependencies, Expo cache, and secret files."
-logical_id = "a71fd8f6-680e-4bdd-a3ab-23fa99557d83"
-content_hash = "sha256:38763a0b28f60044429e30901af4d5d6bccc3179fa288bc0bd89e76b91186411"
-size = 36932493
-mtime_ms = 1793905398487
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/a71fd8f6-680e-4bdd-a3ab-23fa99557d83/19cf7c58-2721-4d7f-bc23-e6858b12b0d3"
-storage_version_token = "1793905420429853"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "kqOKED2WKRInjYJTilL6o"
-uri = "file://generated-artifacts/OG-Landmark-3.1.6-build-50.aab"
-type = "unspecified"
-title = "OG Landmark Android AAB — v3.1.6 (50)"
-description = "Production Android App Bundle built from the latest mobile source. Build version verified as 3.1.6 (versionCode 50); it has not been submitted to Google Play."
-logical_id = "df7e8ed7-b1ac-42af-8dba-d7aee666aec5"
-content_hash = "sha256:3ce7f08661dc2ea818a3c63c8431e69ad1dae0aa1ce3e808cef6bb845af4f9f1"
-size = 95506287
-mtime_ms = 1793939671333
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/df7e8ed7-b1ac-42af-8dba-d7aee666aec5/06bee462-18e1-4ebc-b96c-ea78a3e118de"
-storage_version_token = "1793939691765101"
-content_type = "application/octet-stream"
-
-[[outputs]]
 id = "fIh9-pjhkE50xvRYdDw59"
 uri = "file://generated-artifacts/OG-Landmark-4.1.2-52.aab"
 type = "unspecified"

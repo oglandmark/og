@@ -21,6 +21,12 @@ test('the mobile client keeps account and inventory requests on the live API', (
   assert.doesNotMatch(apiClient, /API_BASE\s*=\s*resolveApiBase/);
 });
 
+test('preview-only Admin project reads use a separate local website API base', () => {
+  assert.match(apiClient, /EXPO_PUBLIC_LOCAL_WEB_API_BASE/);
+  assert.match(apiClient, /getLocalPreviewWebApiData/);
+  assert.match(apiClient, /getLocalPreviewProjectSettings/);
+});
+
 test('production and untrusted domains use the public API', () => {
   assert.equal(resolveApiBase(''), 'https://api.oglandmark.com');
   assert.equal(resolveApiBase('https://oglandmark.com'), 'https://api.oglandmark.com');

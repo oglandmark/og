@@ -116,6 +116,9 @@ test('Home replaces bundled project samples with a branded empty state', () => {
   assert.match(home, /homeProjects\.length > 0/);
   assert.match(home, /ProjectComingSoonCard/);
   assert.match(home, /testID="home-projects-coming-soon"/);
+  assert.match(home, /showProjectComingSoonCard !== false/);
+  assert.match(home, /homeProjectsLoading \|\| homeProjects\.length > 0 \|\| showProjectComingSoonCard/);
+  assert.match(home, /getLocalPreviewProjectSettings/);
   assert.doesNotMatch(home, /import \{ projects \} from '@\/lib\/projects'/);
   assert.doesNotMatch(home, /ProjectShowcaseCard/);
 });

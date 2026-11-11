@@ -150,6 +150,16 @@ test('new Admin projects default to mobile-visible Live status', () => {
   assert.match(source, /if \(key === 'projects' && name === 'status' && !value\) value = editing \? 'Draft' : 'Live';/);
 });
 
+test('Admin can hide the mobile Coming Soon fallback without deleting real projects', () => {
+  const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
+  const server = fs.readFileSync(path.join(root, 'server.js'), 'utf8');
+
+  assert.match(server, /showProjectComingSoonCard: true/);
+  assert.match(source, /data-project-coming-soon/);
+  assert.match(source, /showProjectComingSoonCard: nextValue/);
+  assert.match(source, /settings\?\.showProjectComingSoonCard !== false/);
+});
+
 test('mobile management pages use the existing Admin shell instead of a second fixed dashboard', () => {
   const source = fs.readFileSync(path.join(root, 'public/admin/admin-mobile-management.js'), 'utf8');
   const styles = fs.readFileSync(path.join(root, 'public/admin/admin-dashboard-polish.css'), 'utf8');

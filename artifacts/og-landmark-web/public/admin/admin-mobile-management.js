@@ -670,11 +670,13 @@
       let items = Array.isArray(result) ? result : (Array.isArray(result?.items) ? result.items : []);
       sectionData[key] = items;
       if (key === 'projects') {
+        let projectSettings = null;
         if (!projectViewState.archived) {
           const [catalogResponse, settings] = await Promise.all([
             fetch('/admin/demo-projects.json'),
             api('/mobile/settings'),
           ]);
+          projectSettings = settings;
           if (!catalogResponse.ok) throw new Error('Bundled mobile project list could not be loaded.');
           const bundled = await catalogResponse.json();
           const deleted = new Set((settings?.deletedDemoProjectIds || []).map(String));
@@ -683,7 +685,7 @@
             .map((project) => ({ ...project, isBundledDemo: true }))];
           sectionData[key] = items;
         }
-        renderProjects(content, items);
+        renderProjects(content, items, projectSettings);
         return;
       }
       const columnsBySection = {
@@ -723,7 +725,7 @@
       String(item.approvalStatus || item.listingStatus || item.status || '').trim().toLowerCase(),
     );
 
-  function renderProjects(content, items) {
+  function renderProjects(content, items, settings = null) {
     const statusOf = (item) => String(item.status || item.approvalStatus || 'Draft').trim() || 'Draft';
     const statusClass = (status) => {
       const value = status.toLowerCase();
@@ -770,6 +772,9 @@
     const notice = projectViewState.notice;
     projectViewState.notice = '';
     const viewLabel = projectViewState.archived ? 'Archived projects' : 'Developer projects';
+    const placeholderControl = !projectViewState.archived
+      ? `<div class="og-mm-note"><label><input type="checkbox" data-project-coming-soon ${settings?.showProjectComingSoonCard !== false ? 'checked' : ''}> Show the Coming Soon card in Mobile when there are no public projects</label><span data-project-placeholder-status role="status" aria-live="polite"></span></div>`
+      : '';
     content.innerHTML = `<section class="og-project-page">
       <div class="og-project-head"><div><h2>${viewLabel}</h2><p>${projectViewState.archived ? 'Archived records are hidden from the live portfolio. Restore a project to return it with its saved status and inventory.' : 'Create, publish and maintain project profiles used across the platform.'}</p></div>${addButton}</div>
       ${notice ? `<div class="og-mm-note" role="status">${esc(notice)}</div>` : ''}
@@ -785,12 +790,34 @@
       </div>
       <div id="og-mm-record-form"></div>
       <div class="og-mm-note">${projectViewState.archived ? 'Restoring a project keeps its ID and linked blocks, units, and inventory.' : 'Updates save to the shared project API. Publishing is controlled by project status. Archive removes a project from live lists while preserving its blocks, units and inventory.'}</div>
+      ${placeholderControl}
       <div class="og-project-toolbar"><input type="search" data-project-search aria-label="Search projects" placeholder="Search by project, developer, location or ID" value="${esc(projectViewState.query)}"><select data-project-status aria-label="Filter projects by status">${statusOptions.map((status) => `<option value="${esc(status.toLowerCase())}" ${projectViewState.status === status.toLowerCase() ? 'selected' : ''}>${status === 'all' ? 'All statuses' : esc(status)}</option>`).join('')}</select><span class="og-project-count" data-project-count>${items.length} projects</span></div>
       <div class="og-project-table-wrap"><table class="og-mm-table og-project-table"><thead><tr><th>Project</th><th>Location</th><th>Inventory</th><th>Completion</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead><tbody data-project-rows>
       ${rows || `<tr><td colspan="7" class="og-project-empty">${projectViewState.archived ? 'No archived projects.' : 'No projects yet. Add a project to begin managing the portfolio.'}</td></tr>`}
       </tbody></table></div>
       ${rows ? '<div class="og-project-empty" data-project-no-match hidden>No projects match these filters.</div>' : ''}
     </section>`;
+    const placeholderToggle = content.querySelector('[data-project-coming-soon]');
+    placeholderToggle?.addEventListener('change', async () => {
+      const nextValue = placeholderToggle.checked;
+      const status = content.querySelector('[data-project-placeholder-status]');
+      placeholderToggle.disabled = true;
+      if (status) status.textContent = 'Saving…';
+      try {
+        await api('/mobile/settings', {
+          method: 'PUT',
+          body: JSON.stringify({ showProjectComingSoonCard: nextValue }),
+        });
+        if (status) status.textContent = nextValue
+          ? 'Coming Soon card will show when the public project list is empty.'
+          : 'Coming Soon card is hidden while the public project list is empty.';
+      } catch (error) {
+        placeholderToggle.checked = !nextValue;
+        if (status) status.textContent = `Could not save: ${error.message}`;
+      } finally {
+        placeholderToggle.disabled = false;
+      }
+    });
     content.querySelectorAll('[data-project-view]').forEach((button) => {
       button.addEventListener('click', async () => {
         const nextArchived = button.dataset.projectView === 'archived';

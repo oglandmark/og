@@ -5319,6 +5319,7 @@ const DEFAULT_MOBILE_SETTINGS = {
   pushNotificationsEnabled: true,
   darkModeEnabled: true,
   maintenanceMode: false,
+  showProjectComingSoonCard: true,
   maintenanceMessage: '',
   deletedDemoProjectIds: [],
   appVersion: '1.0.0',

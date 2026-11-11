@@ -2,8 +2,9 @@
  * Developer Portal — Project Store
  * Developer projects are persisted to the authenticated backend account.
  */
-import { apiRequest } from '@/lib/api';
+import { apiRequest, getLocalPreviewWebApiData } from '@/lib/api';
 import brandColors from '@/constants/colors';
+import { mergePublicProjects } from '@/lib/projectFeed';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -261,10 +262,19 @@ export function newProjectId(): string {
 
 /** Find a single project by ID across all developers — for buyer-facing screens. */
 export async function getDevProjectById(id: string): Promise<DeveloperProject | null> {
+  const localProject = await getLocalPreviewWebApiData<DeveloperProject>(`/projects/${encodeURIComponent(id)}`);
+  if (localProject) return migrateProject(localProject);
   return migrateProject(await apiRequest<DeveloperProject>(`/api/projects/${encodeURIComponent(id)}`, {}, false));
 }
 
 /** Return all approved/live projects for buyer-facing browsing (not scoped to a developer). */
 export async function getAllPublicProjects(): Promise<DeveloperProject[]> {
-  return (await apiRequest<DeveloperProject[]>('/api/projects', {}, false)).map(migrateProject);
+  const [liveProjects, previewProjects] = await Promise.all([
+    apiRequest<DeveloperProject[]>('/api/projects', {}, false),
+    getLocalPreviewWebApiData<DeveloperProject[]>('/projects'),
+  ]);
+  return mergePublicProjects(
+    liveProjects.map(migrateProject),
+    (previewProjects || []).map(migrateProject),
+  );
 }

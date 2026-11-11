@@ -29,7 +29,7 @@ import { shouldUseBundledHomeBanner } from '@/lib/homeBannerImageSource';
 import { toExpoImageSource } from '@/lib/expoImageSource';
 import { PropertyDemoBadge } from '@/components/PropertyDemoBadge';
 import { VideoWatermark } from '@/components/VideoWatermark';
-import { getAgents, getBanners, getMobileSettings, getProperties, API_BASE, type BannerSlide as ApiBannerSlide, type MobileContent } from '@/lib/api';
+import { getAgents, getBanners, getLocalPreviewProjectSettings, getMobileSettings, getProperties, API_BASE, type BannerSlide as ApiBannerSlide, type MobileContent } from '@/lib/api';
 import { apiPropertyToProperty } from '@/lib/properties';
 import {
   filterVisibleDemoProperties,
@@ -1585,6 +1585,7 @@ export default function HomeScreen() {
   const [refreshing,       setRefreshing]       = useState(false);
   const [homeProjects,     setHomeProjects]     = useState<DeveloperProject[]>([]);
   const [homeProjectsLoading, setHomeProjectsLoading] = useState(true);
+  const [showProjectComingSoonCard, setShowProjectComingSoonCard] = useState(true);
   const homeProjectsRequestRef = useRef(false);
   const [managedAgents,    setManagedAgents]    = useState<SampleAgent[]>([]);
   const [managedAgentsLoading, setManagedAgentsLoading] = useState(true);
@@ -1642,7 +1643,13 @@ export default function HomeScreen() {
     setRefreshing(true);
     const jobs: Promise<unknown>[] = [
       refreshHomeProjects(),
-      loadHomeSettings().then((settings) => setMobileContent(settings.content)).catch(() => undefined),
+      loadHomeSettings().then(async (settings) => {
+        const previewSettings = await getLocalPreviewProjectSettings();
+        setMobileContent(settings.content);
+        setShowProjectComingSoonCard(
+          previewSettings?.showProjectComingSoonCard ?? settings.showProjectComingSoonCard !== false,
+        );
+      }).catch(() => undefined),
       loadHomeBanners().then((raw) => {
         setHomeBannerSlides(raw.map(mapApiBanner).filter(
           (slide): slide is HomeCategoryBannerSlide => slide !== null,
@@ -1682,7 +1689,14 @@ export default function HomeScreen() {
       loading = true;
       try {
         const settings = await getMobileSettings();
-        if (active) setMobileContent(settings.content);
+        if (active) {
+          const previewSettings = await getLocalPreviewProjectSettings();
+          if (!active) return;
+          setMobileContent(settings.content);
+          setShowProjectComingSoonCard(
+            previewSettings?.showProjectComingSoonCard ?? settings.showProjectComingSoonCard !== false,
+          );
+        }
       } catch {
         // Keep the last good Admin-managed content while the API is unavailable.
       } finally {
@@ -2089,24 +2103,26 @@ export default function HomeScreen() {
       </AnimatedReveal>
 
       {/* ─── PREMIUM PROJECTS ────────────────────────────────────────────── */}
-      <AnimatedReveal delay={200}>
-        <SectionHeader eyebrow={homeSections.projectsEyebrow || 'PREMIUM PROJECTS'} title={homeSections.projectsTitle || 'Exceptional developments'} onViewAll={() => router.push({ pathname: '/explore', params: { propertyType: 'House,Apartment' } })} colors={colors} />
-        {homeProjectsLoading ? (
-          <View style={[s.hRow, { paddingVertical: 28 }]}>
-            <ActivityIndicator size="small" color={colors.splashGold} />
-          </View>
-        ) : homeProjects.length > 0 ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={s.hRow}>
-            {homeProjects.map((project) => (
-              <DevProjectCard key={project.id} project={project} colors={colors} onPress={() => router.push(`/project/${project.id}` as any)} />
-            ))}
-          </ScrollView>
-        ) : (
-          <View style={s.hRow}>
-            <ProjectComingSoonCard colors={colors} />
-          </View>
-        )}
-      </AnimatedReveal>
+      {(homeProjectsLoading || homeProjects.length > 0 || showProjectComingSoonCard) && (
+        <AnimatedReveal delay={200}>
+          <SectionHeader eyebrow={homeSections.projectsEyebrow || 'PREMIUM PROJECTS'} title={homeSections.projectsTitle || 'Exceptional developments'} onViewAll={() => router.push({ pathname: '/explore', params: { propertyType: 'House,Apartment' } })} colors={colors} />
+          {homeProjectsLoading ? (
+            <View style={[s.hRow, { paddingVertical: 28 }]}>
+              <ActivityIndicator size="small" color={colors.splashGold} />
+            </View>
+          ) : homeProjects.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={s.hRow}>
+              {homeProjects.map((project) => (
+                <DevProjectCard key={project.id} project={project} colors={colors} onPress={() => router.push(`/project/${project.id}` as any)} />
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={s.hRow}>
+              <ProjectComingSoonCard colors={colors} />
+            </View>
+          )}
+        </AnimatedReveal>
+      )}
 
       {/* ─── AGRICULTURAL & COMMERCIAL OPPORTUNITIES ────────────────────── */}
       {(agriProps.length > 0 || commercialProps.length > 0) && (

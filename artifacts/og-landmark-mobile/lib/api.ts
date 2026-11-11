@@ -852,6 +852,7 @@ export type MobileSettings = {
   pushNotificationsEnabled: boolean;
   darkModeEnabled: boolean;
   maintenanceMode: boolean;
+  showProjectComingSoonCard?: boolean;
   maintenanceMessage: string;
   appVersion: string;
   minAppVersion: string;
@@ -860,6 +861,30 @@ export type MobileSettings = {
   deletedDemoPropertyIds?: number[];
   deletedDemoProjectIds?: string[];
 };
+
+const LOCAL_PREVIEW_WEB_API_BASE = String(process.env.EXPO_PUBLIC_LOCAL_WEB_API_BASE || '').replace(/\/+$/, '');
+
+export async function getLocalPreviewWebApiData<T>(path: string): Promise<T | null> {
+  if (!LOCAL_PREVIEW_WEB_API_BASE) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5_000);
+  try {
+    const response = await fetch(`${LOCAL_PREVIEW_WEB_API_BASE}${path}`, {
+      headers: { Accept: 'application/json' },
+      signal: controller.signal,
+    });
+    if (!response.ok) return null;
+    return await response.json() as T;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function getLocalPreviewProjectSettings(): Promise<Pick<MobileSettings, 'showProjectComingSoonCard'> | null> {
+  return getLocalPreviewWebApiData<Pick<MobileSettings, 'showProjectComingSoonCard'>>('/mobile/settings');
+}
 
 export async function getMobileSettings(): Promise<MobileSettings> {
   return apiFetch<MobileSettings>('/api/mobile/settings', {}, false);

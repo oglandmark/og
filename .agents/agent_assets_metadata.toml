@@ -168,3 +168,31 @@ mtime_ms = 1794393396445
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/e05edbee-2246-4fc3-ab7a-96a2a714caad/396b21ea-bc00-43ef-83fe-af777817ff76"
 storage_version_token = "1794393425741293"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "rTiMnfv0sTv5JgSZ0MyL5"
+uri = "file://generated-artifacts/OG-Landmark-Frontend-PublicData-PreviewFix-2026-11-11.zip"
+type = "unspecified"
+title = "OG Landmark Website ZIP"
+description = "Updated website package with 11 public properties and 4 approved Agents. No production credentials or account records are included."
+logical_id = "14565e94-f01d-4dca-b0e3-8423fd8e59dc"
+content_hash = "sha256:a8518ee2f5303bcea97097229a5439bc4d7b320b004b551d5527d76b39c43637"
+size = 32869436
+mtime_ms = 1794395726308
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/14565e94-f01d-4dca-b0e3-8423fd8e59dc/47609be4-e44d-40a0-9c93-9f80c45e9eea"
+storage_version_token = "1794395769055725"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "tT8Gl1zhNt4SLqnO_agtU"
+uri = "file://generated-artifacts/OG-Landmark-Backend-PublicData-PreviewFix-2026-11-11.zip"
+type = "unspecified"
+title = "OG Landmark Laravel API ZIP"
+description = "Updated Laravel API package with public property and Agent snapshots. QA account files, credentials, local databases, and runtime caches are excluded."
+logical_id = "d13896bc-5145-4d51-b6fe-3532e2046b15"
+content_hash = "sha256:88f7d6b0efd1efc61963434c41e165ba1823ffa2bf2cb6b8606f4058571af6ae"
+size = 37232867
+mtime_ms = 1794395745668
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/d13896bc-5145-4d51-b6fe-3532e2046b15/ace43a69-1f9a-4e44-9cee-232b1b719e17"
+storage_version_token = "1794395770737969"
+content_type = "application/octet-stream"

@@ -8,6 +8,8 @@
 (function () {
   var STORE_KEY = 'og-landmark-store';
   var FLAG_KEY = 'og_store_db_v2';
+  var isPreviewHost = /(^localhost$|^127\.0\.0\.1$|\.replit\.dev$|\.replit\.app$|\.repl\.co$)/i
+    .test(window.location.hostname);
 
   function clearStickyDemoOnce() {
     try {
@@ -38,12 +40,82 @@
     } catch (e) {}
   }
 
+  function cachedCollection(key) {
+    try {
+      var parsed = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+      var value = parsed && parsed.state && parsed.state[key];
+      return Array.isArray(value) ? value : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function hasPreviewSession() {
+    try {
+      if (localStorage.getItem('og_token')) return true;
+      var parsed = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+      return Boolean(parsed && parsed.state && parsed.state.token);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function installAnonymousPreviewFallbacks() {
+    if (!isPreviewHost) return;
+    var appFetch = window.fetch.bind(window);
+    var collections = {
+      '/api/users': 'users',
+      '/api/inquiries': 'inquiries',
+      '/api/offers': 'offers',
+      '/api/appointments': 'appointments',
+      '/api/conversations': 'conversations',
+      '/api/notifications': 'notifications',
+      '/api/blog': 'blogPosts'
+    };
+    window.fetch = function (input, init) {
+      var method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+      var sourceUrl = typeof input === 'string' ? input : input && input.url;
+      var parsed;
+      try {
+        parsed = new URL(sourceUrl, window.location.origin);
+      } catch (e) {
+        return appFetch(input, init);
+      }
+      if (method !== 'GET') return appFetch(input, init);
+      if (parsed.pathname === '/api/preview/live/mobile-agents') {
+        return appFetch('/api/mobile-agents' + parsed.search, init);
+      }
+      if (!hasPreviewSession() && Object.prototype.hasOwnProperty.call(collections, parsed.pathname)) {
+        return Promise.resolve(new Response(JSON.stringify(cachedCollection(collections[parsed.pathname])), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        }));
+      }
+      return appFetch(input, init);
+    };
+  }
+
   function applyToZustandIfPresent(list) {
     try {
       // Best-effort: some builds expose store on window; otherwise persist + reload hydrate is enough
       if (window.__OG_LANDMARK_STORE__ && typeof window.__OG_LANDMARK_STORE__.setState === 'function') {
         window.__OG_LANDMARK_STORE__.setState({ properties: list });
       }
+    } catch (e) {}
+  }
+
+  function preloadPreviewPropertiesBeforeApp() {
+    if (!isPreviewHost) return;
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', '/api/properties?limit=500', false);
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.send(null);
+      if (xhr.status < 200 || xhr.status >= 300) return;
+      var list = normalizeList(JSON.parse(xhr.responseText));
+      if (!list) return;
+      writePersistProperties(list);
+      window.__OG_DB_PROPERTIES__ = list;
     } catch (e) {}
   }
 
@@ -72,6 +144,8 @@
   }
 
   clearStickyDemoOnce();
+  preloadPreviewPropertiesBeforeApp();
+  installAnonymousPreviewFallbacks();
 
   // Run after API rewriter is ready; retry a few times so late hydrate in the SPA can be overwritten
   var attempts = 0;

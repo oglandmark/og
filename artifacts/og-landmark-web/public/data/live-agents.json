@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "snapshotAt": "2026-11-11T10:35:25.501Z",
+  "snapshotAt": "2026-11-11T10:49:50.359Z",
   "source": "https://api.oglandmark.com/api/mobile-agents",
   "items": [
     {
@@ -27,7 +27,10 @@
       "about": null,
       "title": "Property Consultant",
       "specialization": "",
-      "propertiesCount": 2
+      "propertiesCount": 2,
+      "status": "Active",
+      "approvalStatus": "Approved",
+      "visible": true
     },
     {
       "id": 1101,
@@ -51,7 +54,10 @@
       "about": null,
       "title": "Property Consultant",
       "specialization": "",
-      "propertiesCount": 0
+      "propertiesCount": 0,
+      "status": "Active",
+      "approvalStatus": "Approved",
+      "visible": true
     },
     {
       "id": 1105,
@@ -75,7 +81,10 @@
       "about": null,
       "title": "Property Consultant",
       "specialization": "",
-      "propertiesCount": 0
+      "propertiesCount": 0,
+      "status": "Active",
+      "approvalStatus": "Approved",
+      "visible": true
     },
     {
       "id": 1111,
@@ -99,7 +108,10 @@
       "about": null,
       "title": "Property Consultant",
       "specialization": "",
-      "propertiesCount": 0
+      "propertiesCount": 0,
+      "status": "Active",
+      "approvalStatus": "Approved",
+      "visible": true
     }
   ]
 }

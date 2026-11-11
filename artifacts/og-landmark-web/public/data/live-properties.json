@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "snapshotAt": "2026-11-11T10:35:25.501Z",
+  "snapshotAt": "2026-11-11T10:41:35.646Z",
   "source": "https://api.oglandmark.com/api/properties",
   "items": [
     {
@@ -173,6 +173,8 @@
         "showWhatsApp": true,
         "allowCalls": true
       },
+      "approvalStatus": "Active",
+      "listingStatus": "Active",
       "featured": true,
       "recommended": true,
       "views": 0,
@@ -378,6 +380,8 @@
         "showWhatsApp": true,
         "allowCalls": true
       },
+      "approvalStatus": "Active",
+      "listingStatus": "Active",
       "featured": true,
       "recommended": true,
       "views": 0,
@@ -584,6 +588,8 @@
         "showWhatsApp": false,
         "allowCalls": false
       },
+      "approvalStatus": "Active",
+      "listingStatus": "Active",
       "featured": true,
       "recommended": false,
       "views": 0,
@@ -646,6 +652,7 @@
         "Flat Land"
       ],
       "propertyDetails": [],
+      "approvalStatus": "Active",
       "featured": false,
       "views": 221,
       "inquiryCount": 4,
@@ -706,6 +713,7 @@
         "Boundary Wall"
       ],
       "propertyDetails": [],
+      "approvalStatus": "Active",
       "featured": false,
       "views": 181,
       "inquiryCount": 3,
@@ -766,6 +774,7 @@
         "Parking"
       ],
       "propertyDetails": [],
+      "approvalStatus": "Active",
       "featured": false,
       "views": 340,
       "inquiryCount": 5,
@@ -830,6 +839,7 @@
         "Fiber Internet"
       ],
       "propertyDetails": [],
+      "approvalStatus": "Active",
       "featured": false,
       "views": 291,
       "inquiryCount": 4,
@@ -897,6 +907,7 @@
         "Elevator"
       ],
       "propertyDetails": [],
+      "approvalStatus": "Active",
       "featured": true,
       "views": 681,
       "inquiryCount": 6,
@@ -968,6 +979,7 @@
         "Backup Generator"
       ],
       "propertyDetails": [],
+      "approvalStatus": "Active",
       "featured": true,
       "views": 561,
       "inquiryCount": 8,
@@ -1044,6 +1056,7 @@
         "EV Charging"
       ],
       "propertyDetails": [],
+      "approvalStatus": "Active",
       "featured": true,
       "views": 830,
       "inquiryCount": 12,
@@ -1113,6 +1126,7 @@
         "CCTV"
       ],
       "propertyDetails": [],
+      "approvalStatus": "Active",
       "featured": false,
       "views": 431,
       "inquiryCount": 10,

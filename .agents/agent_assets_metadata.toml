@@ -2,62 +2,6 @@ uploads = []
 generated = []
 
 [[outputs]]
-id = "CcWljg9BeNte0vWpxZKfq"
-uri = "file://generated-artifacts/og-landmark-website-frontend.zip"
-type = "unspecified"
-title = "OG Landmark Website Frontend ZIP"
-description = "Website ke static frontend pages, assets aur build scripts. Backend, private data, secrets aur user-uploaded media shamil nahi hain."
-logical_id = "66b9c30f-5e16-4571-8661-5d14096c6ffb"
-content_hash = "sha256:dd556491d1ee60bfc0775ea9669a71d594a81f88fbb3cb8582af80f807ec3502"
-size = 23128800
-mtime_ms = 1793990473502
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/66b9c30f-5e16-4571-8661-5d14096c6ffb/fc47acb9-f5ac-41f9-8833-829228969fad"
-storage_version_token = "1793990485594031"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "eCzvvElLb5hBkpURTo0Sw"
-uri = "file://generated-artifacts/og-landmark-laravel-backend.zip"
-type = "unspecified"
-title = "OG Landmark Laravel Backend ZIP"
-description = "Current Laravel API source with Composer packages; excludes .env, local database, uploaded media, logs, and runtime caches."
-logical_id = "2034755b-251f-4f2e-8600-c05ffc0ef4bd"
-content_hash = "sha256:8cb87d2b7fd434673ce5cdc77b2379a35da846e0a2e9410f602a2aba88896190"
-size = 36817526
-mtime_ms = 1793711277684
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/2034755b-251f-4f2e-8600-c05ffc0ef4bd/7387d05a-1e1b-4e77-8beb-af7dc9101752"
-storage_version_token = "1793711334283138"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "tEJJ_14Wd54Eph0jXHdlh"
-uri = "file://generated-artifacts/og-landmark-3.1.4-build-44.aab"
-type = "unspecified"
-title = "OG Landmark Android AAB — 3.1.4 (44)"
-description = "Production Android App Bundle built with the latest mobile code. Build verified; not submitted to Google Play."
-logical_id = "8d6295cf-25bf-49d1-8e88-4d794d03dcea"
-content_hash = "sha256:6c2ad54e4418f63837acf64345f5b583148404e15dfaf8ff082d3477b7483477"
-size = 95191297
-mtime_ms = 1793714779002
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/8d6295cf-25bf-49d1-8e88-4d794d03dcea/5f969a42-cae6-4493-846e-563c4f2ddc90"
-storage_version_token = "1793714821312050"
-content_type = "application/octet-stream"
-
-[[outputs]]
-id = "lYUAVv96s1FKF2JCZURId"
-uri = "file://generated-artifacts/OG-Landmark-3.1.5-45.aab"
-type = "unspecified"
-title = "OG Landmark Android App Bundle 3.1.5 (45)"
-description = "Production AAB built from the latest mobile source. Not submitted to Google Play. SHA-256: 44bae6f19ea96324be74ec8dde925e67029102c7481012a39be9adb66b06873d"
-logical_id = "f2cfa367-1162-4b8f-8504-f3196be60c15"
-content_hash = "sha256:44bae6f19ea96324be74ec8dde925e67029102c7481012a39be9adb66b06873d"
-size = 95191197
-mtime_ms = 1793785031970
-storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/f2cfa367-1162-4b8f-8504-f3196be60c15/b969295b-2885-4d42-b0db-84bbf6e80bae"
-storage_version_token = "1793785073331218"
-content_type = "application/octet-stream"
-
-[[outputs]]
 id = "472tDJOSeVNOkvTr9qCG5"
 uri = "file://generated-artifacts/og-landmark-mobile-latest-source.zip"
 type = "unspecified"

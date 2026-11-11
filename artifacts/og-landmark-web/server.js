@@ -6251,9 +6251,33 @@ app.get('/assets/index-CXxrK7KP.js', (_req, res, next) => {
       const contactPatchedBundle = patchPublicContacts(
         fs.readFileSync(path.join(publicDir, 'assets', 'index-CXxrK7KP.js'), 'utf8'),
       ).replaceAll('info@oglandmark.com', 'support@oglandmark.com');
-      patchedWebsiteBundleCache = patchPromiseSection(
+      let bundle = patchPromiseSection(
         patchDashboardAuth(contactPatchedBundle),
       );
+      if (localPreview) {
+        const propertyStoreMarkers = [
+          'function Qy({property:t,index:e=0})',
+          'function qTe(){const t=bn(c=>c.properties)',
+        ];
+        const previewStoreSync = 'window.__OG_LANDMARK_STORE__=bn;if(window.__OG_DB_PROPERTIES__&&bn&&typeof bn.setState==="function")bn.setState({properties:window.__OG_DB_PROPERTIES__});';
+        let propertyStoreHookFound = false;
+        for (const marker of propertyStoreMarkers) {
+          if (!bundle.includes(marker)) continue;
+          bundle = bundle.replace(marker, previewStoreSync + marker);
+          propertyStoreHookFound = true;
+        }
+        if (!propertyStoreHookFound) {
+          console.warn('Local preview property store hook was not found in the website bundle.');
+        }
+        const publicListingMarker = 'function qTe(){const t=bn(c=>c.properties),[e,n]=D.useState("grid")';
+        const publicListingSync = 'function qTe(){const storeProperties=bn(c=>c.properties),t=window.__OG_DB_PROPERTIES__||storeProperties,[e,n]=D.useState("grid")';
+        if (bundle.includes(publicListingMarker)) {
+          bundle = bundle.replace(publicListingMarker, publicListingSync);
+        } else {
+          console.warn('Local preview property page hook was not found in the website bundle.');
+        }
+      }
+      patchedWebsiteBundleCache = bundle;
     }
     res.setHeader('Cache-Control', 'no-store');
     res.type('application/javascript').send(patchedWebsiteBundleCache);

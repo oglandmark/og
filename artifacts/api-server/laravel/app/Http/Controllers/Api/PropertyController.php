@@ -13,13 +13,19 @@ final class PropertyController extends Controller
 {
     public function index(Request $request, LegacyDataStore $store, PreviewPropertyMirror $mirror): JsonResponse
     {
-        $mirror->syncIfStale($store);
         $request->validate([
             'featured' => ['sometimes', 'in:true,false,1,0'],
             'recommended' => ['sometimes', 'in:true,false,1,0'],
         ]);
         $user = $request->attributes->get('legacyUser');
-        $properties = array_values(array_filter($store->read()['properties'] ?? [], function (array $property) use ($user, $request): bool {
+        $previewProperties = $this->localPreviewPublicProperties($user);
+        if ($previewProperties === null) {
+            $mirror->syncIfStale($store);
+            $catalogue = $store->read()['properties'] ?? [];
+        } else {
+            $catalogue = $previewProperties;
+        }
+        $properties = array_values(array_filter($catalogue, function (array $property) use ($user, $request): bool {
             if (filter_var($property['adminHidden'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
                 return false;
             }
@@ -76,9 +82,12 @@ final class PropertyController extends Controller
         return response()->json($items)->header('X-Total-Count', (string) $total);
     }
 
-    public function show(string $id, LegacyDataStore $store): JsonResponse
+    public function show(Request $request, string $id, LegacyDataStore $store): JsonResponse
     {
-        $property = collect($store->read()['properties'] ?? [])->first(fn (array $item): bool => (string) ($item['id'] ?? '') === $id);
+        $user = $request->attributes->get('legacyUser');
+        $previewProperties = $this->localPreviewPublicProperties($user);
+        $catalogue = $previewProperties ?? ($store->read()['properties'] ?? []);
+        $property = collect($catalogue)->first(fn (array $item): bool => (string) ($item['id'] ?? '') === $id);
         if (! $property) return response()->json(['error' => 'Property not found.'], 404);
         if (filter_var($property['adminHidden'] ?? false, FILTER_VALIDATE_BOOLEAN)
             || ($property['approvalStatus'] ?? '') !== 'Active'
@@ -86,6 +95,39 @@ final class PropertyController extends Controller
             return response()->json(['error' => 'Property not found.'], 404);
         }
         return response()->json($property);
+    }
+
+    private function localPreviewPublicProperties(?array $user): ?array
+    {
+        if (
+            config('app.env') !== 'local'
+            || getenv('APP_ENV') === 'testing'
+            || defined('PHPUNIT_COMPOSER_INSTALL')
+            || $user !== null
+        ) return null;
+
+        $snapshotPath = public_path('data/live-properties.json');
+        if (! is_file($snapshotPath)) return null;
+
+        $snapshot = json_decode((string) file_get_contents($snapshotPath), true);
+        if (! is_array($snapshot) || ! is_array($snapshot['items'] ?? null)) return null;
+
+        $absoluteMedia = static function (mixed $url): mixed {
+            if (! is_string($url) || $url === '' || preg_match('/^https?:\/\//i', $url) || str_starts_with($url, '//')) {
+                return $url;
+            }
+            return 'https://www.oglandmark.com/' . ltrim($url, '/');
+        };
+
+        return array_values(array_map(static function (array $property) use ($absoluteMedia): array {
+            foreach (['coverImage', 'videoUrl'] as $field) {
+                if (array_key_exists($field, $property)) $property[$field] = $absoluteMedia($property[$field]);
+            }
+            if (is_array($property['images'] ?? null)) {
+                $property['images'] = array_map($absoluteMedia, $property['images']);
+            }
+            return $property;
+        }, array_filter($snapshot['items'], 'is_array')));
     }
 
     public function mine(Request $request, LegacyDataStore $store): JsonResponse

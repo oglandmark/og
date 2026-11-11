@@ -42,7 +42,10 @@ final class PreviewLiveFeedController extends Controller
 
     public function mobileAgents(Request $request, LegacyDataStore $store): JsonResponse
     {
-        $liveResponse = $this->forward('mobile-agents', $request->only(['city', 'limit']));
+        $previewRecords = $this->localPreviewPublicAgents();
+        $liveResponse = $previewRecords === null
+            ? $this->forward('mobile-agents', $request->only(['city', 'limit']))
+            : response()->json($previewRecords);
         $data = $store->read();
         $adminCreatedIds = [];
         foreach ($data['adminAudit'] ?? [] as $entry) {
@@ -73,6 +76,18 @@ final class PreviewLiveFeedController extends Controller
             : [];
 
         $city = mb_strtolower(trim((string) $request->query('city', '')));
+        if ($city !== '') {
+            $liveRecords = array_values(array_filter($liveRecords, function (array $agent) use ($city): bool {
+                $locations = array_merge(
+                    [(string) ($agent['city'] ?? '')],
+                    is_array($agent['areas'] ?? null) ? $agent['areas'] : [],
+                );
+
+                return collect($locations)->contains(
+                    fn ($location): bool => mb_strtolower(trim((string) $location)) === $city
+                );
+            }));
+        }
         if ($city !== '') {
             $localRecords = array_values(array_filter($localRecords, function (array $agent) use ($city): bool {
                 $locations = array_merge(
@@ -149,5 +164,39 @@ final class PreviewLiveFeedController extends Controller
         }
 
         return response()->json($payload, $response->status());
+    }
+
+    private function localPreviewPublicAgents(): ?array
+    {
+        if (
+            config('app.env') !== 'local'
+            || getenv('APP_ENV') === 'testing'
+            || defined('PHPUNIT_COMPOSER_INSTALL')
+        ) return null;
+
+        $snapshotPath = public_path('data/live-agents.json');
+        if (! is_file($snapshotPath)) return null;
+
+        $snapshot = json_decode((string) file_get_contents($snapshotPath), true);
+        if (! is_array($snapshot) || ! is_array($snapshot['items'] ?? null)) return null;
+
+        $absoluteMedia = static function (mixed $url): mixed {
+            if (! is_string($url) || $url === '' || preg_match('/^https?:\/\//i', $url) || str_starts_with($url, '//')) {
+                return $url;
+            }
+            return 'https://api.oglandmark.com/' . ltrim($url, '/');
+        };
+
+        return array_values(array_map(static function (array $agent) use ($absoluteMedia): array {
+            foreach (['photo', 'profilePhoto', 'coverPhoto'] as $field) {
+                if (array_key_exists($field, $agent)) $agent[$field] = $absoluteMedia($agent[$field]);
+            }
+            return $agent;
+        }, array_filter($snapshot['items'], static fn ($agent): bool =>
+            is_array($agent)
+            && ($agent['visible'] ?? true) !== false
+            && strtolower((string) ($agent['status'] ?? '')) === 'active'
+            && strtolower((string) ($agent['approvalStatus'] ?? '')) === 'approved'
+        )));
     }
 }

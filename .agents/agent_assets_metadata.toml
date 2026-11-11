@@ -168,3 +168,31 @@ mtime_ms = 1794333188702
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/d06c1393-0e1c-403f-a59c-7d44a25a21bd/fabf1555-86b8-468d-a82c-8216e8e036f1"
 storage_version_token = "1794333191134938"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "PVTwq45ypVd1MXJzhGeEh"
+uri = "file://generated-artifacts/OG-Landmark-Backend-Updated-2026-11-11.zip"
+type = "unspecified"
+title = "OG Landmark — Updated Backend ZIP"
+description = "Laravel backend updated with password reset, Inquiry submit, and public Projects APIs. .env excluded."
+logical_id = "489a6ba9-9c22-45dd-b8f0-b60adf900c58"
+content_hash = "sha256:1c614e22f597d6ea70c30cc37c0f0c4bf954cec6cd245ba82bffacd4128eb67d"
+size = 37292675
+mtime_ms = 1794392621221
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/489a6ba9-9c22-45dd-b8f0-b60adf900c58/a45e3881-6510-486a-85b5-2c06aba7cf1f"
+storage_version_token = "1794392680759673"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "M4mGxBq5mGgAVolJdnDr2"
+uri = "file://generated-artifacts/OG-Landmark-Frontend-Updated-2026-11-11.zip"
+type = "unspecified"
+title = "OG Landmark — Updated Website Frontend ZIP"
+description = "Website source and refreshed static build, with API routing to api.oglandmark.com preserved."
+logical_id = "c2aa57f2-2593-4b7b-9cfd-83cbdc38d180"
+content_hash = "sha256:393221048da5ab6a8fe6af2d977e69cdf4fdeb62232dbc16a9b59fb83c0c0730"
+size = 32861139
+mtime_ms = 1794392623049
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/c2aa57f2-2593-4b7b-9cfd-83cbdc38d180/d9ac2b3c-8811-47b0-a462-6eb263bf6f1f"
+storage_version_token = "1794392682666614"
+content_type = "application/octet-stream"

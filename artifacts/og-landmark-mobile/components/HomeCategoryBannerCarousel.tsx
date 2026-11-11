@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import { setAudioModeAsync } from 'expo-audio';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -22,6 +23,7 @@ import { toExpoImageSource } from '@/lib/expoImageSource';
 import {
   getHomeBannerAutoplayMode,
   HOME_BANNER_IMAGE_AUTOPLAY_MS,
+  HOME_BANNER_VIDEO_MUTED,
   HOME_BANNER_VIDEO_PLAYBACK_RATE,
   shouldShowHomeBannerCopy,
 } from '@/lib/homeBannerPlayback';
@@ -65,10 +67,28 @@ function BannerVideo({
   const [hasError, setHasError] = useState(false);
   const player = useVideoPlayer({ uri, useCaching: true }, (videoPlayer) => {
     videoPlayer.loop = loop;
-    videoPlayer.muted = true;
+    videoPlayer.muted = HOME_BANNER_VIDEO_MUTED;
+    videoPlayer.volume = 1;
     videoPlayer.playbackRate = HOME_BANNER_VIDEO_PLAYBACK_RATE;
-    videoPlayer.play();
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    void setAudioModeAsync({
+      playsInSilentMode: true,
+      allowsRecording: false,
+      shouldPlayInBackground: false,
+    })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) player.play();
+      });
+
+    return () => {
+      cancelled = true;
+      player.pause();
+    };
+  }, [player]);
 
   useEffect(() => {
     player.loop = loop;

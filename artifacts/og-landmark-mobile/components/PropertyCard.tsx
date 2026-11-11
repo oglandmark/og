@@ -113,7 +113,7 @@ function PropertyCardInner({
       style={({ pressed }) => [
         styles.videoTourButton,
         compact && styles.compactVideoTourButton,
-        inFeaturedRow && styles.videoTourButtonRow,
+        inFeaturedRow && styles.videoTourButtonInFeaturedRow,
         {
           backgroundColor: inFeaturedRow ? colors.actionDeep : colors.actionGlass,
           borderColor: inFeaturedRow ? colors.splashGold : colors.actionGlassBorder,
@@ -210,7 +210,11 @@ function PropertyCardInner({
             </>
           )}
           {images.length > 1 && (
-            <View pointerEvents="none" style={[styles.imageCounter, { backgroundColor: colors.actionGlassStrong }]}>
+            <View pointerEvents="none" style={[
+              styles.imageCounter,
+              videoVisitPlacement === 'featured-row' && styles.imageCounterAboveActions,
+              { backgroundColor: colors.actionGlassStrong },
+            ]}>
               <Feather name="image" size={10} color={colors.actionForeground} />
               <Text style={[styles.imageCounterText, { color: colors.actionForeground }]}>{activeImage + 1}/{images.length}</Text>
             </View>
@@ -228,6 +232,12 @@ function PropertyCardInner({
           </View>
           <PropertyDemoBadge visible={property.isDemo === true} style={styles.demoBadge} />
           {videoVisitPlacement === 'top' && renderFeaturedBadge()}
+          {videoVisitPlacement === 'featured-row' && (property.featured || hasVideo) && (
+            <View pointerEvents="box-none" style={styles.featuredActionsOverlay}>
+              {renderFeaturedBadge(true)}
+              {renderVideoVisitButton(true)}
+            </View>
+          )}
           {/* Action buttons */}
           <View style={[styles.cardActions, compact && styles.compactCardActions]}>
             {videoVisitPlacement === 'top' && renderVideoVisitButton()}
@@ -269,13 +279,6 @@ function PropertyCardInner({
             </Pressable>
           </View>
         </View>
-
-        {videoVisitPlacement === 'featured-row' && (property.featured || hasVideo) && (
-          <View style={[styles.featuredActionRow, { backgroundColor: colors.surfaceRaised, borderTopColor: colors.glassBorder }]}>
-            {renderFeaturedBadge(true)}
-            {renderVideoVisitButton(true)}
-          </View>
-        )}
 
         <Pressable
           onPress={() => router.push(`/property/${property.id}`)}
@@ -402,6 +405,7 @@ const styles = StyleSheet.create({
   galleryArrowLeft: { left: 8 },
   galleryArrowRight:{ right: 8 },
   imageCounter:  { position: 'absolute', bottom: 8, right: 9, zIndex: 4, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#071521bb', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 4 },
+  imageCounterAboveActions: { bottom: 52 },
   imageCounterText:{ fontSize: 9, fontWeight: '700' },
   imageShade:    { ...StyleSheet.absoluteFill },
   status:        { position: 'absolute', top: 12, left: 12, borderRadius: 7, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6, overflow: 'hidden' },
@@ -412,9 +416,9 @@ const styles = StyleSheet.create({
   featuredBadge: { position: 'absolute', bottom: 10, left: 12, flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5, overflow: 'hidden' },
   featuredBadgeInline: { position: 'relative', bottom: undefined, left: undefined },
   featuredText:  { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 0.8 },
-  featuredActionRow: { minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 6, borderTopWidth: 1 },
+  featuredActionsOverlay: { position: 'absolute', bottom: 10, left: 12, right: 12, zIndex: 5, flexDirection: 'row', alignItems: 'center', gap: 8 },
   videoTourButton: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 38, borderRadius: 11, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 4, overflow: 'hidden', shadowOpacity: 0.22, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
-  videoTourButtonRow: { minHeight: 32, marginLeft: 'auto', borderRadius: 9, paddingHorizontal: 9, paddingVertical: 3, shadowOpacity: 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
+  videoTourButtonInFeaturedRow: { minHeight: 32, marginLeft: 'auto', borderRadius: 9, paddingHorizontal: 9, paddingVertical: 3, shadowOpacity: 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
   compactVideoTourButton: { minHeight: 34, gap: 5, borderRadius: 9, paddingHorizontal: 8, paddingVertical: 3 },
   videoTourIcon: { width: 19, height: 19, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   compactVideoTourIcon: { width: 16, height: 16, borderRadius: 8 },

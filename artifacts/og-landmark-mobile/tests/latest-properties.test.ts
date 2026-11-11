@@ -36,9 +36,10 @@ test('section titles can wrap instead of clipping beside the View all button', (
   assert.match(home, /numberOfLines=\{2\} style=\{\[s\.sectionTitle/);
 });
 
-test('Latest property cards place Video visit beside FEATURED below the photo', () => {
+test('Latest property cards place Video visit beside FEATURED over the photo', () => {
   assert.match(home, /property=\{p\} videoVisitPlacement="featured-row"/);
-  assert.match(propertyCard, /styles\.featuredActionRow/);
-  assert.match(propertyCard, /styles\.videoTourButtonRow/);
+  assert.match(propertyCard, /styles\.featuredActionsOverlay/);
+  assert.match(propertyCard, /styles\.videoTourButtonInFeaturedRow/);
+  assert.doesNotMatch(propertyCard, /videoVisitPlacement === 'featured-row' && \(property\.featured \|\| hasVideo\) && \(\s*<View style=\{\[styles\.featuredActionRow/);
   assert.match(propertyCard, /accessibilityLabel=\{`Play video visit for \$\{property\.title\}`\}/);
 });

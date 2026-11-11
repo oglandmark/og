@@ -196,3 +196,31 @@ mtime_ms = 1794392623049
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/c2aa57f2-2593-4b7b-9cfd-83cbdc38d180/d9ac2b3c-8811-47b0-a462-6eb263bf6f1f"
 storage_version_token = "1794392682666614"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "luAVxKpCPpYUcUUSZPMBm"
+uri = "file://generated-artifacts/OG-Landmark-Backend-PublicData-2026-11-11.zip"
+type = "unspecified"
+title = "OG Landmark Backend + Public Data"
+description = "Laravel backend ZIP with current public properties/Agents snapshots; user and Admin accounts are not included."
+logical_id = "2a3d7e66-1085-4885-a4dc-b0d1411dbb3a"
+content_hash = "sha256:489a3ffaf495545d1b4cc2e9cd5bce3ad195daeca6cf82c2fad91f834a2b36be"
+size = 37298552
+mtime_ms = 1794393394513
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/2a3d7e66-1085-4885-a4dc-b0d1411dbb3a/654c1eb6-9997-4295-85ae-bd8a65b9f92f"
+storage_version_token = "1794393424199438"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "WVjd0wp-Eg76bksSbqY2J"
+uri = "file://generated-artifacts/OG-Landmark-Frontend-PublicData-2026-11-11.zip"
+type = "unspecified"
+title = "OG Landmark Website + Public Data"
+description = "Website source and refreshed build with current public properties/Agents JSON snapshots."
+logical_id = "e05edbee-2246-4fc3-ab7a-96a2a714caad"
+content_hash = "sha256:6e7596ff01164ba95fafcc2a2bbcd0496ddc7094e1937223e8738a2de1b1fb47"
+size = 32866924
+mtime_ms = 1794393396445
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/e05edbee-2246-4fc3-ab7a-96a2a714caad/396b21ea-bc00-43ef-83fe-af777817ff76"
+storage_version_token = "1794393425741293"
+content_type = "application/octet-stream"

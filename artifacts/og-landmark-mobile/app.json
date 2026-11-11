@@ -2,7 +2,7 @@
   "expo": {
     "name": "OG Landmark",
     "slug": "og-landmark-uin4dnqfp8-zl28mrpom",
-    "version": "5.1.2",
+    "version": "5.1.3",
     "orientation": "portrait",
     "icon": "./assets/images/og-landmark-app-icon.png",
     "scheme": "og-land-mobile",
@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.oglandmark.app",
-      "buildNumber": "61",
+      "buildNumber": "62",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "OG Landmark accesses photos you select to create listings, update your profile, and share project media.",
         "NSCameraUsageDescription": "OG Landmark uses the camera when you choose to take a listing, profile, or project photo."

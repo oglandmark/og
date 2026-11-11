@@ -9,6 +9,7 @@ import {
 } from '../lib/apiBase';
 
 const apiClient = readFileSync(new URL('../lib/api.ts', import.meta.url), 'utf8');
+const mobilePackage = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 test('the preview resolver can address the local Laravel API route', () => {
   assert.equal(resolveApiBase('preview.replit.dev'), 'https://preview.replit.dev/api-legacy');
@@ -25,6 +26,8 @@ test('preview-only Admin project reads use a separate local website API base', (
   assert.match(apiClient, /EXPO_PUBLIC_LOCAL_WEB_API_BASE/);
   assert.match(apiClient, /getLocalPreviewWebApiData/);
   assert.match(apiClient, /getLocalPreviewProjectSettings/);
+  assert.match(mobilePackage.scripts.dev, /EXPO_PUBLIC_LOCAL_WEB_API_BASE/);
+  assert.match(mobilePackage.scripts.dev, /REPLIT_DEV_DOMAIN/);
 });
 
 test('production and untrusted domains use the public API', () => {

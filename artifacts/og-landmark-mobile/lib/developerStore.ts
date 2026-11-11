@@ -269,12 +269,15 @@ export async function getDevProjectById(id: string): Promise<DeveloperProject | 
 
 /** Return all approved/live projects for buyer-facing browsing (not scoped to a developer). */
 export async function getAllPublicProjects(): Promise<DeveloperProject[]> {
-  const [liveProjects, previewProjects] = await Promise.all([
-    apiRequest<DeveloperProject[]>('/api/projects', {}, false),
+  const [liveResult, previewProjects] = await Promise.all([
+    apiRequest<DeveloperProject[]>('/api/projects', {}, false)
+      .then((projects) => ({ projects, error: null as unknown }))
+      .catch((error: unknown) => ({ projects: [] as DeveloperProject[], error })),
     getLocalPreviewWebApiData<DeveloperProject[]>('/projects'),
   ]);
+  if (liveResult.error && !previewProjects?.length) throw liveResult.error;
   return mergePublicProjects(
-    liveProjects.map(migrateProject),
+    liveResult.projects.map(migrateProject),
     (previewProjects || []).map(migrateProject),
   );
 }

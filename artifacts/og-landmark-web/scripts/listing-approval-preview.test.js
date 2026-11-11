@@ -211,6 +211,7 @@ test('Admin listing, directory, project, banner, and Home edits sync across Webs
     MAIL_PASSWORD: '',
     MEDIA_STORAGE_DIR: path.join(tempDir, 'media'),
     MEDIA_PUBLIC_BASE_URL: '',
+    LOCAL_PREVIEW_ADMIN_PASSWORD: adminPassword,
     LOG_CHANNEL: 'stderr',
   });
 
@@ -287,7 +288,12 @@ $fixture = json_decode(file_get_contents($argv[1]), true, 512, JSON_THROW_ON_ERR
         'updated_at' => now(),
     ],
 );
-$stored = \\App\\Services\\JsonStore::read();
+$row = \\Illuminate\\Support\\Facades\\DB::table('app_data')->where('id', 1)->first();
+$stored = $row
+    ? (is_string($row->data)
+        ? json_decode($row->data, true, 512, JSON_THROW_ON_ERROR)
+        : $row->data)
+    : [];
 $admin = collect($stored['users'] ?? [])->firstWhere('email', ${JSON.stringify(adminEmail)});
 file_put_contents($argv[2], json_encode([
     'fixtureLoaded' => $admin !== null,
@@ -353,6 +359,9 @@ file_put_contents($argv[2], json_encode([
         LARAVEL_WEB_URL: '',
         DATABASE_URL: '',
         NEON_DATABASE_URL: '',
+        OG_LANDMARK_RUNTIME_DATA: fixturePath,
+        LOCAL_PREVIEW_ADMIN_EMAIL: adminEmail,
+        LOCAL_PREVIEW_ADMIN_PASSWORD: adminPassword,
       }),
     });
     await waitForHttp(webProcess, `${webBase}/admin/login`, 'local website preview');
@@ -365,6 +374,7 @@ file_put_contents($argv[2], json_encode([
         EXPO_NO_DOTENV: '1',
         EXPO_TOKEN: '',
         EXPO_PUBLIC_DOMAIN: webBase,
+        EXPO_PUBLIC_LOCAL_WEB_API_BASE: `${webBase}/api`,
         PORT: String(mobilePort),
         REPLIT_DEV_DOMAIN: '',
         REPLIT_EXPO_DEV_DOMAIN: '',

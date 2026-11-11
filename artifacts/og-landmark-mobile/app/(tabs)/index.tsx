@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AccessibilityInfo, ActivityIndicator, AppState, Image,
+  ActivityIndicator, AppState, Image,
   Modal, PanResponder, Platform, Pressable, ScrollView, StatusBar,
   StyleSheet, View, useWindowDimensions,
 } from 'react-native';
-import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { setAudioModeAsync } from 'expo-audio';
 import { VideoView, useVideoPlayer, type VideoPlayer, type VideoSource } from 'expo-video';
@@ -57,10 +56,19 @@ import { PlotMeasurementCalculator } from '@/components/PlotMeasurementCalculato
 import { StatusNotice } from '@/components/PolishedUI';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import { PromiseSection } from '@/components/PromiseSection';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import {
-  AGENT_CAROUSEL_INTERVAL_MS,
   AGENT_CARD_SCROLL_STEP,
-  getNextAgentCardIndex,
+  AGENT_MARQUEE_SPEED_PX_PER_SECOND,
+  getAgentMarqueeDurationMs,
 } from '@/lib/agentCarouselPlayback';
 
 type Transaction = 'Buy' | 'Rent';
@@ -772,98 +780,136 @@ function AgentCarousel({ agents, colors, isVisible, onAgentPress }: { agents: Sa
   const visibleAgents = agents.length
     ? agents
     : [];
-  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
-  const activeIndexRef = useRef(0);
-  const userDraggingRef = useRef(false);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const cycleWidth = visibleAgents.length * AGENT_CARD_SCROLL_STEP;
+  const fullDuration = getAgentMarqueeDurationMs(visibleAgents.length);
+  const translateX = useSharedValue(0);
+  const dragOriginRef = useRef(0);
+  const dragPositionRef = useRef(0);
+  const animationClockRef = useRef({
+    startedAt: 0,
+    fromX: 0,
+    firstLegDuration: 0,
+  });
+  const marqueeStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
 
-  useEffect(() => {
-    let mounted = true;
-    AccessibilityInfo.isReduceMotionEnabled()
-      .then((enabled) => {
-        if (mounted) setReduceMotion(enabled);
-      })
-      .catch(() => undefined);
-    const subscription = AccessibilityInfo.addEventListener(
-      'reduceMotionChanged',
-      setReduceMotion,
-    );
-    return () => {
-      mounted = false;
-      subscription.remove();
-    };
-  }, []);
-
-  useEffect(() => {
-    activeIndexRef.current = 0;
-    scrollRef.current?.scrollTo({ x: 0, animated: false });
-  }, [visibleAgents.length]);
-
-  useEffect(() => {
-    if (!isVisible || visibleAgents.length < 2) return undefined;
-    const timer = setInterval(() => {
-      if (userDraggingRef.current) return;
-      const nextIndex = getNextAgentCardIndex(
-        activeIndexRef.current,
-        visibleAgents.length,
+  const getCurrentOffset = useCallback(() => {
+    const { startedAt, fromX, firstLegDuration } = animationClockRef.current;
+    if (!startedAt || fullDuration <= 0) return 0;
+    const elapsed = Math.max(0, Date.now() - startedAt);
+    if (elapsed < firstLegDuration) {
+      return Math.max(
+        -cycleWidth,
+        fromX - (AGENT_MARQUEE_SPEED_PX_PER_SECOND * elapsed) / 1000,
       );
-      activeIndexRef.current = nextIndex;
-      scrollRef.current?.scrollTo({
-        x: nextIndex * AGENT_CARD_SCROLL_STEP,
-        animated: !reduceMotion && nextIndex !== 0,
-      });
-    }, AGENT_CAROUSEL_INTERVAL_MS);
-    return () => clearInterval(timer);
-  }, [isVisible, reduceMotion, visibleAgents.length]);
+    }
+    const loopElapsed = (elapsed - firstLegDuration) % fullDuration;
+    return -(AGENT_MARQUEE_SPEED_PX_PER_SECOND * loopElapsed) / 1000;
+  }, [cycleWidth, fullDuration]);
 
-  const handleManualScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    activeIndexRef.current = Math.max(
-      0,
-      Math.min(
-        visibleAgents.length - 1,
-        Math.round(event.nativeEvent.contentOffset.x / AGENT_CARD_SCROLL_STEP),
-      ),
+  const startMarquee = useCallback((fromX: number) => {
+    cancelAnimation(translateX);
+    if (!isVisible || visibleAgents.length < 2) {
+      translateX.value = 0;
+      animationClockRef.current.startedAt = 0;
+      return;
+    }
+
+    const remainingDistance = Math.max(0, cycleWidth + fromX);
+    const duration = Math.max(
+      1,
+      Math.round((remainingDistance / AGENT_MARQUEE_SPEED_PX_PER_SECOND) * 1000),
     );
-    userDraggingRef.current = false;
-  }, [visibleAgents.length]);
+    animationClockRef.current = {
+      startedAt: Date.now(),
+      fromX,
+      firstLegDuration: duration,
+    };
+    translateX.value = withTiming(
+      -cycleWidth,
+      {
+        duration,
+        easing: Easing.linear,
+        reduceMotion: ReduceMotion.Never,
+      },
+      (finished) => {
+        if (!finished) return;
+        translateX.value = 0;
+        translateX.value = withRepeat(
+          withTiming(-cycleWidth, {
+            duration: fullDuration,
+            easing: Easing.linear,
+            reduceMotion: ReduceMotion.Never,
+          }),
+          -1,
+          false,
+          undefined,
+          ReduceMotion.Never,
+        );
+      },
+    );
+  }, [cycleWidth, fullDuration, isVisible, translateX, visibleAgents.length]);
+
+  useEffect(() => {
+    translateX.value = 0;
+    if (!isVisible || visibleAgents.length < 2) return undefined;
+    startMarquee(0);
+    return () => cancelAnimation(translateX);
+  }, [isVisible, startMarquee, translateX, visibleAgents.length]);
+
+  const panResponder = useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => false,
+    onMoveShouldSetPanResponder: (_event, gesture) =>
+      Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+    onPanResponderGrant: () => {
+      cancelAnimation(translateX);
+      dragOriginRef.current = getCurrentOffset();
+      dragPositionRef.current = dragOriginRef.current;
+    },
+    onPanResponderMove: (_event, gesture) => {
+      const nextOffset = Math.max(
+        -cycleWidth,
+        Math.min(0, dragOriginRef.current + gesture.dx),
+      );
+      dragPositionRef.current = nextOffset;
+      translateX.value = nextOffset;
+    },
+    onPanResponderRelease: () => startMarquee(dragPositionRef.current),
+    onPanResponderTerminate: () => startMarquee(dragPositionRef.current),
+  }), [cycleWidth, getCurrentOffset, startMarquee, translateX]);
+  const renderedAgents = visibleAgents.length > 1
+    ? [...visibleAgents, ...visibleAgents]
+    : visibleAgents;
 
   return (
-    <ScrollView
-      ref={scrollRef}
-      horizontal
-      nestedScrollEnabled
-      directionalLockEnabled
-      scrollEnabled={visibleAgents.length > 1}
-      decelerationRate="fast"
-      keyboardShouldPersistTaps="handled"
-      scrollEventThrottle={16}
-      style={s.agentCarouselViewport}
-      contentContainerStyle={[s.agentTrack, s.hRow]}
-      showsHorizontalScrollIndicator={false}
-      onScrollBeginDrag={() => {
-        userDraggingRef.current = true;
-      }}
-      onScrollEndDrag={handleManualScrollEnd}
-      onMomentumScrollEnd={handleManualScrollEnd}
-    >
-      {visibleAgents.map((agent) => (
-          <AgentCard
-            key={agent.id}
-            agent={agent}
-            colors={colors}
-            onPress={() => onAgentPress(agent.id)}
-          />
-      ))}
-    </ScrollView>
+    <View style={s.agentCarouselViewport} {...panResponder.panHandlers}>
+      <Animated.View style={[s.agentTrack, marqueeStyle]}>
+        {renderedAgents.map((agent, index) => {
+          const isDuplicate = index >= visibleAgents.length;
+          return (
+            <AgentCard
+              key={`${agent.id}-${index}`}
+              agent={agent}
+              colors={colors}
+              isDuplicate={isDuplicate}
+              onPress={() => onAgentPress(agent.id)}
+            />
+          );
+        })}
+      </Animated.View>
+    </View>
   );
 }
 
-function AgentCard({ agent, colors, onPress }: { agent: SampleAgent; colors: Colors; onPress: () => void }) {
+function AgentCard({ agent, colors, isDuplicate = false, onPress }: { agent: SampleAgent; colors: Colors; isDuplicate?: boolean; onPress: () => void }) {
   const primarySpecialty = agent.specialties.find((specialty) => specialty.trim().length > 0);
 
   return (
     <Pressable
       onPress={onPress}
+      accessibilityElementsHidden={isDuplicate}
+      importantForAccessibility={isDuplicate ? 'no-hide-descendants' : 'auto'}
     >
       <View style={[ac.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={ac.photoWrap}>
@@ -2247,7 +2293,7 @@ const s = StyleSheet.create({
   viewAllText:      { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
   hRow:             { paddingHorizontal: 18, paddingBottom: 4 },
   agentCarouselViewport: { width: '100%', overflow: 'hidden' },
-  agentTrack:       { flexDirection: 'row' },
+  agentTrack:       { flexDirection: 'row', paddingLeft: 18, paddingBottom: 4 },
 
   // Recommended eyebrow
   recommendedEyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 5 },

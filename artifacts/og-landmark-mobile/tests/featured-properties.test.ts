@@ -25,16 +25,15 @@ test('Home limits heavy horizontal cards and keeps text typing out of parent sta
   assert.doesNotMatch(home, /const \[query,\s*setQuery\] = useState/);
 });
 
-test('Home agent cards auto-advance slowly while keeping manual swipe available', () => {
+test('Home Agent cards use a smooth loop and retain horizontal drag support', () => {
   const start = home.indexOf('function AgentCarousel');
   const end = home.indexOf('function AgentCard', start);
   assert.ok(start >= 0 && end > start);
   const carousel = home.slice(start, end);
-  assert.match(carousel, /visibleAgents\.map/);
-  assert.match(carousel, /setInterval\(/);
-  assert.match(carousel, /AGENT_CAROUSEL_INTERVAL_MS/);
-  assert.match(carousel, /scrollEnabled=\{visibleAgents\.length > 1\}/);
-  assert.match(carousel, /if \(userDraggingRef\.current\) return/);
+  assert.match(carousel, /withRepeat/);
+  assert.match(carousel, /Easing\.linear/);
+  assert.match(carousel, /PanResponder\.create/);
+  assert.match(carousel, /\[\.\.\.visibleAgents, \.\.\.visibleAgents\]/);
   assert.match(carousel, /if \(!isVisible \|\| visibleAgents\.length < 2\)/);
 });
 

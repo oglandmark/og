@@ -17,7 +17,6 @@ test('video banners advance on playback completion rather than the image timer',
   assert.equal(
     getHomeBannerAutoplayMode({
       isVisible: true,
-      reduceMotion: false,
       slideCount: 3,
       isVideo: true,
     }),
@@ -30,7 +29,6 @@ test('image banners keep their timed advance', () => {
   assert.equal(
     getHomeBannerAutoplayMode({
       isVisible: true,
-      reduceMotion: false,
       slideCount: 3,
       isVideo: false,
     }),
@@ -44,15 +42,22 @@ test('video banners hide all overlaid copy while image banners retain it', () =>
   assert.equal(shouldShowHomeBannerCopy(undefined), true);
 });
 
-test('hidden, single-slide, and reduced-motion carousels do not advance automatically', () => {
-  const base = { reduceMotion: false, slideCount: 3, isVideo: false };
+test('hidden and single-slide carousels do not advance automatically', () => {
+  const base = { slideCount: 3, isVideo: false };
   assert.equal(getHomeBannerAutoplayMode({ ...base, isVisible: false }), 'paused');
   assert.equal(
     getHomeBannerAutoplayMode({ ...base, isVisible: true, slideCount: 1 }),
     'paused',
   );
+});
+
+test('reduced motion does not disable autoplay for visible multi-slide carousels', () => {
   assert.equal(
-    getHomeBannerAutoplayMode({ ...base, isVisible: true, reduceMotion: true }),
-    'paused',
+    getHomeBannerAutoplayMode({
+      isVisible: true,
+      slideCount: 3,
+      isVideo: false,
+    }),
+    'timer',
   );
 });

@@ -166,7 +166,6 @@ export default function HomeCategoryBannerCarousel({
   const activeSlide = slides[activeIndex];
   const autoplayMode = getHomeBannerAutoplayMode({
     isVisible,
-    reduceMotion,
     slideCount: slides.length,
     isVideo: Boolean(activeSlide?.videoUrl),
   });
@@ -212,9 +211,9 @@ export default function HomeCategoryBannerCarousel({
     setIndex(nextIndex);
     scrollRef.current?.scrollTo({
       x: targetIndex * carouselWidth,
-      animated: true,
+      animated: !reduceMotion,
     });
-  }, [carouselWidth, setIndex, slides.length]);
+  }, [carouselWidth, reduceMotion, setIndex, slides.length]);
 
   useEffect(() => {
     if (autoplayMode !== 'timer') return undefined;

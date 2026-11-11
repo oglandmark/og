@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, AppState, Image,
+  AccessibilityInfo, ActivityIndicator, AppState, Image,
   Modal, PanResponder, Platform, Pressable, ScrollView, StatusBar,
   StyleSheet, View, useWindowDimensions,
 } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { setAudioModeAsync } from 'expo-audio';
 import { VideoView, useVideoPlayer, type VideoPlayer, type VideoSource } from 'expo-video';
@@ -56,6 +57,11 @@ import { PlotMeasurementCalculator } from '@/components/PlotMeasurementCalculato
 import { StatusNotice } from '@/components/PolishedUI';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import { PromiseSection } from '@/components/PromiseSection';
+import {
+  AGENT_CAROUSEL_INTERVAL_MS,
+  AGENT_CARD_SCROLL_STEP,
+  getNextAgentCardIndex,
+} from '@/lib/agentCarouselPlayback';
 
 type Transaction = 'Buy' | 'Rent';
 const HOME_REFRESH_INTERVAL_MS = 60_000;
@@ -762,13 +768,68 @@ const fp = StyleSheet.create({
 
 // ─── Agent Card (premium) ─────────────────────────────────────────────────────
 
-function AgentCarousel({ agents, colors, onAgentPress }: { agents: SampleAgent[]; colors: Colors; onAgentPress: (id: string) => void }) {
+function AgentCarousel({ agents, colors, isVisible, onAgentPress }: { agents: SampleAgent[]; colors: Colors; isVisible: boolean; onAgentPress: (id: string) => void }) {
   const visibleAgents = agents.length
     ? agents
     : [];
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const activeIndexRef = useRef(0);
+  const userDraggingRef = useRef(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((enabled) => {
+        if (mounted) setReduceMotion(enabled);
+      })
+      .catch(() => undefined);
+    const subscription = AccessibilityInfo.addEventListener(
+      'reduceMotionChanged',
+      setReduceMotion,
+    );
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    activeIndexRef.current = 0;
+    scrollRef.current?.scrollTo({ x: 0, animated: false });
+  }, [visibleAgents.length]);
+
+  useEffect(() => {
+    if (!isVisible || visibleAgents.length < 2) return undefined;
+    const timer = setInterval(() => {
+      if (userDraggingRef.current) return;
+      const nextIndex = getNextAgentCardIndex(
+        activeIndexRef.current,
+        visibleAgents.length,
+      );
+      activeIndexRef.current = nextIndex;
+      scrollRef.current?.scrollTo({
+        x: nextIndex * AGENT_CARD_SCROLL_STEP,
+        animated: !reduceMotion && nextIndex !== 0,
+      });
+    }, AGENT_CAROUSEL_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [isVisible, reduceMotion, visibleAgents.length]);
+
+  const handleManualScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    activeIndexRef.current = Math.max(
+      0,
+      Math.min(
+        visibleAgents.length - 1,
+        Math.round(event.nativeEvent.contentOffset.x / AGENT_CARD_SCROLL_STEP),
+      ),
+    );
+    userDraggingRef.current = false;
+  }, [visibleAgents.length]);
 
   return (
     <ScrollView
+      ref={scrollRef}
       horizontal
       nestedScrollEnabled
       directionalLockEnabled
@@ -779,6 +840,11 @@ function AgentCarousel({ agents, colors, onAgentPress }: { agents: SampleAgent[]
       style={s.agentCarouselViewport}
       contentContainerStyle={[s.agentTrack, s.hRow]}
       showsHorizontalScrollIndicator={false}
+      onScrollBeginDrag={() => {
+        userDraggingRef.current = true;
+      }}
+      onScrollEndDrag={handleManualScrollEnd}
+      onMomentumScrollEnd={handleManualScrollEnd}
     >
       {visibleAgents.map((agent) => (
           <AgentCard
@@ -2054,6 +2120,7 @@ export default function HomeScreen() {
           <AgentCarousel
             agents={visibleAgents}
             colors={colors}
+            isVisible={tabFocused}
             onAgentPress={(agentId) => router.push(`/agent/${agentId}` as any)}
           />
         ) : managedAgentsLoading ? (

@@ -25,13 +25,17 @@ test('Home limits heavy horizontal cards and keeps text typing out of parent sta
   assert.doesNotMatch(home, /const \[query,\s*setQuery\] = useState/);
 });
 
-test('Home agent carousel is swipe-driven instead of a 32ms JS scroll loop', () => {
+test('Home agent cards auto-advance slowly while keeping manual swipe available', () => {
   const start = home.indexOf('function AgentCarousel');
   const end = home.indexOf('function AgentCard', start);
   assert.ok(start >= 0 && end > start);
   const carousel = home.slice(start, end);
   assert.match(carousel, /visibleAgents\.map/);
-  assert.doesNotMatch(carousel, /setInterval|marqueeAgents/);
+  assert.match(carousel, /setInterval\(/);
+  assert.match(carousel, /AGENT_CAROUSEL_INTERVAL_MS/);
+  assert.match(carousel, /scrollEnabled=\{visibleAgents\.length > 1\}/);
+  assert.match(carousel, /if \(userDraggingRef\.current\) return/);
+  assert.match(carousel, /if \(!isVisible \|\| visibleAgents\.length < 2\)/);
 });
 
 test('Home and Explore avoid duplicate loads and short public-feed polling', () => {

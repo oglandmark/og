@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import { selectLatestProperties } from '../lib/latestProperties';
 
 const home = readFileSync(new URL('../app/(tabs)/index.tsx', import.meta.url), 'utf8');
+const propertyCard = readFileSync(new URL('../components/PropertyCard.tsx', import.meta.url), 'utf8');
 const properties = [
   { id: 1, createdAt: '2026-01-01T00:00:00Z' },
   { id: 2, createdAt: '2026-03-01T00:00:00Z' },
@@ -33,4 +34,11 @@ test('mobile Latest is limited to six properties', () => {
 test('section titles can wrap instead of clipping beside the View all button', () => {
   assert.match(home, /sectionHeaderContent/);
   assert.match(home, /numberOfLines=\{2\} style=\{\[s\.sectionTitle/);
+});
+
+test('Latest property cards place Video visit beside FEATURED below the photo', () => {
+  assert.match(home, /property=\{p\} videoVisitPlacement="featured-row"/);
+  assert.match(propertyCard, /styles\.featuredActionRow/);
+  assert.match(propertyCard, /styles\.videoTourButtonRow/);
+  assert.match(propertyCard, /accessibilityLabel=\{`Play video visit for \$\{property\.title\}`\}/);
 });

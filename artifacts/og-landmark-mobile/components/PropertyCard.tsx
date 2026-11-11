@@ -33,6 +33,7 @@ type PropertyCardProps = {
   compact?: boolean;
   imageTapAction?: 'gallery' | 'details';
   showGalleryArrows?: boolean;
+  videoVisitPlacement?: 'top' | 'featured-row';
 };
 
 function PropertyCardInner({
@@ -40,6 +41,7 @@ function PropertyCardInner({
   compact = false,
   imageTapAction = 'gallery',
   showGalleryArrows = true,
+  videoVisitPlacement = 'top',
 }: PropertyCardProps) {
   const colors = useColors();
   const router = useRouter();
@@ -81,6 +83,69 @@ function PropertyCardInner({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     toggleSaved(property.id);
   }, [toggleSaved, property.id]);
+
+  const renderFeaturedBadge = (inline = false) => property.featured ? (
+    <View
+      style={[
+        styles.featuredBadge,
+        inline && styles.featuredBadgeInline,
+        { backgroundColor: colors.goldGlass, borderColor: colors.goldGlassBorder },
+      ]}
+    >
+      <LinearGradient
+        pointerEvents="none"
+        colors={[colors.actionGlassHighlight, 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <Feather name="star" size={8} color={colors.goldForeground} />
+      <Text style={[styles.featuredText, { color: colors.goldForeground }]}>FEATURED</Text>
+    </View>
+  ) : null;
+
+  const renderVideoVisitButton = (inFeaturedRow = false) => hasVideo ? (
+    <Pressable
+      onPress={(event) => {
+        event.stopPropagation();
+        setVideoVisible(true);
+      }}
+      style={({ pressed }) => [
+        styles.videoTourButton,
+        compact && styles.compactVideoTourButton,
+        inFeaturedRow && styles.videoTourButtonRow,
+        {
+          backgroundColor: inFeaturedRow ? colors.actionDeep : colors.actionGlass,
+          borderColor: inFeaturedRow ? colors.splashGold : colors.actionGlassBorder,
+          shadowColor: colors.shadow,
+          opacity: pressed ? 0.84 : 1,
+        },
+      ]}
+      hitSlop={6}
+      accessibilityRole="button"
+      accessibilityLabel={`Play video visit for ${property.title}`}
+      testID={`video-visit-property-${property.id}`}
+    >
+      <LinearGradient
+        pointerEvents="none"
+        colors={[colors.actionGlassHighlight, 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <View
+        pointerEvents="none"
+        style={[
+          styles.videoTourIcon,
+          compact && styles.compactVideoTourIcon,
+          { backgroundColor: inFeaturedRow ? colors.splashGold : colors.goldGlass, borderColor: colors.goldGlassBorder },
+        ]}
+      >
+        <Feather name="play" size={compact ? 9 : 10} color={colors.goldForeground} />
+      </View>
+      <Text style={[styles.videoTourText, compact && styles.compactVideoTourText, { color: colors.actionForeground }]}>Video visit</Text>
+    </Pressable>
+  ) : null;
 
   return (
     <View
@@ -162,67 +227,10 @@ function PropertyCardInner({
             <Text style={[styles.statusText, compact && styles.compactStatusText, { color: colors.foreground }]}>{property.status}</Text>
           </View>
           <PropertyDemoBadge visible={property.isDemo === true} style={styles.demoBadge} />
-          {/* Featured ribbon */}
-          {property.featured && (
-            <View
-              style={[
-                styles.featuredBadge,
-                { backgroundColor: colors.goldGlass, borderColor: colors.goldGlassBorder },
-              ]}
-            >
-              <LinearGradient
-                pointerEvents="none"
-                colors={[colors.actionGlassHighlight, 'transparent']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFill}
-              />
-              <Feather name="star" size={8} color={colors.goldForeground} />
-              <Text style={[styles.featuredText, { color: colors.goldForeground }]}>FEATURED</Text>
-            </View>
-          )}
+          {videoVisitPlacement === 'top' && renderFeaturedBadge()}
           {/* Action buttons */}
           <View style={[styles.cardActions, compact && styles.compactCardActions]}>
-            {hasVideo && (
-              <Pressable
-                onPress={(event) => {
-                  event.stopPropagation();
-                  setVideoVisible(true);
-                }}
-                style={({ pressed }) => [
-                  styles.videoTourButton,
-                  compact && styles.compactVideoTourButton,
-                  {
-                    backgroundColor: colors.actionGlass,
-                    borderColor: colors.actionGlassBorder,
-                    shadowColor: colors.shadow,
-                    opacity: pressed ? 0.84 : 1,
-                  },
-                ]}
-                hitSlop={6}
-                accessibilityRole="button"
-                accessibilityLabel={`Play video visit for ${property.title}`}
-              >
-                <LinearGradient
-                  pointerEvents="none"
-                  colors={[colors.actionGlassHighlight, 'transparent']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={StyleSheet.absoluteFill}
-                />
-                <View
-                  pointerEvents="none"
-                  style={[
-                    styles.videoTourIcon,
-                    compact && styles.compactVideoTourIcon,
-                    { backgroundColor: colors.goldGlass, borderColor: colors.goldGlassBorder },
-                  ]}
-                >
-                  <Feather name="play" size={compact ? 9 : 10} color={colors.goldForeground} />
-                </View>
-                <Text style={[styles.videoTourText, compact && styles.compactVideoTourText, { color: colors.actionForeground }]}>Video visit</Text>
-              </Pressable>
-            )}
+            {videoVisitPlacement === 'top' && renderVideoVisitButton()}
             <Pressable
               onPress={handleShare}
               style={({ pressed }) => [
@@ -261,6 +269,13 @@ function PropertyCardInner({
             </Pressable>
           </View>
         </View>
+
+        {videoVisitPlacement === 'featured-row' && (property.featured || hasVideo) && (
+          <View style={[styles.featuredActionRow, { backgroundColor: colors.surfaceRaised, borderTopColor: colors.glassBorder }]}>
+            {renderFeaturedBadge(true)}
+            {renderVideoVisitButton(true)}
+          </View>
+        )}
 
         <Pressable
           onPress={() => router.push(`/property/${property.id}`)}
@@ -395,8 +410,11 @@ const styles = StyleSheet.create({
   compactStatus: { top: 9, left: 10, paddingHorizontal: 7, paddingVertical: 5 },
   compactStatusText: { fontSize: 9 },
   featuredBadge: { position: 'absolute', bottom: 10, left: 12, flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5, overflow: 'hidden' },
+  featuredBadgeInline: { position: 'relative', bottom: undefined, left: undefined },
   featuredText:  { fontFamily: 'Inter_700Bold', fontSize: 8, letterSpacing: 0.8 },
+  featuredActionRow: { minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 6, borderTopWidth: 1 },
   videoTourButton: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 38, borderRadius: 11, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 4, overflow: 'hidden', shadowOpacity: 0.22, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
+  videoTourButtonRow: { minHeight: 32, marginLeft: 'auto', borderRadius: 9, paddingHorizontal: 9, paddingVertical: 3, shadowOpacity: 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
   compactVideoTourButton: { minHeight: 34, gap: 5, borderRadius: 9, paddingHorizontal: 8, paddingVertical: 3 },
   videoTourIcon: { width: 19, height: 19, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   compactVideoTourIcon: { width: 16, height: 16, borderRadius: 8 },

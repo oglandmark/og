@@ -1972,7 +1972,7 @@ export default function HomeScreen() {
       <AnimatedReveal delay={170}>
         <SectionHeader eyebrow={homeSections.latestEyebrow || 'JUST LISTED'} title={homeSections.latestTitle || 'Latest properties'} onViewAll={() => router.push({ pathname: '/explore', params: { type: transaction } })} colors={colors} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={s.hRow}>
-          {latestProps.map((p, i) => <PropertyCard key={`latest-${p.id}-${i}`} property={p} />)}
+          {latestProps.map((p, i) => <PropertyCard key={`latest-${p.id}-${i}`} property={p} videoVisitPlacement="featured-row" />)}
         </ScrollView>
       </AnimatedReveal>
 

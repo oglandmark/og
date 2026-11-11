@@ -95,6 +95,21 @@ const fallbackFile = process.env.OG_LANDMARK_RUNTIME_DATA
   || path.join(__dirname, 'runtime-data.json');
 const previewSessionFile = process.env.OG_LANDMARK_PREVIEW_SESSION_STORE
   || path.join(__dirname, '.local', 'og-landmark-preview', 'auth-sessions.json');
+
+function readLocalPublicSnapshot(fileName) {
+  if (!localPreview || !['live-properties.json', 'live-agents.json'].includes(fileName)) return null;
+  try {
+    const filePath = path.join(__dirname, 'public', 'data', fileName);
+    const snapshot = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    return Array.isArray(snapshot.items) ? snapshot.items : null;
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.warn(`Local public snapshot unavailable (${fileName}): ${error.message}`);
+    }
+    return null;
+  }
+}
+
 let dbReady = false;
 let dbInitError = null;
 // Legacy maps remain only as a local cache; authoritative sessions/challenges are persisted.
@@ -1749,7 +1764,7 @@ app.get('/api/properties', async (req, res) => {
       }
     }
     const data = await readData();
-    let props = data.properties;
+    let props = readLocalPublicSnapshot('live-properties.json') || data.properties;
     const {
       type, status, city, approvalStatus, approval_status, sellerId, seller_id,
       keyword, minPrice, maxPrice, minArea, maxArea, areaUnit,
@@ -2647,7 +2662,8 @@ app.patch('/api/users/:id/status', requireAdmin, async (req, res) => {
 app.get('/api/mobile-agents', async (req, res) => {
   try {
     const data = await readData();
-    let agents = (data.mobileAgents || []).filter(a =>
+    const previewSnapshot = readLocalPublicSnapshot('live-agents.json');
+    let agents = previewSnapshot || (data.mobileAgents || []).filter(a =>
       isAdminManagedMobileAgent(a, data)
       && a.visible !== false
       && String(a.status || '').toLowerCase() === 'active'
@@ -2658,7 +2674,7 @@ app.get('/api/mobile-agents', async (req, res) => {
       agents = agents.filter(a => (a.areas || []).some(area => String(area).toLowerCase() === city));
     }
     if (req.query.limit) agents = agents.slice(0, Math.max(0, Number(req.query.limit) || 0));
-    res.json(agents.map(agent => {
+    res.json(previewSnapshot ? agents : agents.map(agent => {
       const linkedUser = (data.users || []).find(user => String(user.id) === String(agent.authUserId));
       return safeMobileAgent({
         ...agent,

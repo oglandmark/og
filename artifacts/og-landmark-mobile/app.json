@@ -18,7 +18,7 @@
     },
     "android": {
       "package": "com.oglandmark.app",
-      "versionCode": 62,
+      "versionCode": 63,
       "softwareKeyboardLayoutMode": "resize",
       "icon": "./assets/images/og-landmark-app-icon.png",
       "adaptiveIcon": {

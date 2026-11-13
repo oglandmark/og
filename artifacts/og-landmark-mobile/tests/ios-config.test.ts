@@ -18,7 +18,7 @@ test('iOS keeps the production bundle ID and enables iPad support', () => {
 test('iPad support does not unlock Android landscape behavior', () => {
   assert.equal(appConfig.orientation, 'portrait');
   assert.equal(appConfig.android.package, 'com.oglandmark.app');
-  assert.equal(appConfig.android.versionCode, 62);
+  assert.equal(appConfig.android.versionCode, 63);
 });
 
 test('iOS-only purpose strings do not add Android image-picker permissions', () => {

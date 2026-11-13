@@ -86,7 +86,8 @@ function BannerVideo({
 
     return () => {
       cancelled = true;
-      player.pause();
+      // useVideoPlayer releases its native shared object on unmount. Calling
+      // pause here can race that release and throw from the native module.
     };
   }, [player]);
 

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   getHomeBannerAutoplayMode,
@@ -7,6 +8,20 @@ import {
   HOME_BANNER_VIDEO_PLAYBACK_RATE,
   shouldShowHomeBannerCopy,
 } from '../lib/homeBannerPlayback';
+
+const bannerCarousel = readFileSync(
+  new URL('../components/HomeCategoryBannerCarousel.tsx', import.meta.url).pathname,
+  'utf8',
+);
+
+test('banner video cleanup does not pause an already released native player', () => {
+  assert.match(bannerCarousel, /useVideoPlayer/);
+  assert.match(bannerCarousel, /cancelled = true/);
+  assert.doesNotMatch(
+    bannerCarousel,
+    /return\s*\(\)\s*=>\s*\{[^}]*player\.pause\(\)/s,
+  );
+});
 
 test('video banners play at normal real-time speed', () => {
   assert.equal(HOME_BANNER_VIDEO_PLAYBACK_RATE, 1.0);

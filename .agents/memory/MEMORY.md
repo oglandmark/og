@@ -28,6 +28,7 @@
 - [Color-only native splash](native-splash-color-only.md) — keep the native pre-JS splash logo-free; Android still needs transparent splash drawables for resource linking.
 - [Expo startup hydration](expo-startup-hydration.md) — show fallback immediately and wait for one full splash cycle plus auth and route readiness.
 - [Android video compositing](android-video-compositing.md) — stacked Expo video surfaces can blank sibling content; use texture views and mount only the active banner video.
+- [Expo video player cleanup](expo-video-player-cleanup.md) — let `useVideoPlayer` release automatically; don't pause after unmount because the native object may already be gone.
 - [GitHub connector write fallback](github-connector-write-fallback.md) — use Git data API on write blocks; stage large Base64 batches to disk and verify hashes.
 - [Android reveal lifecycle](android-reveal-lifecycle.md) — nested tab focus callbacks can miss; animated content must start visible to avoid blank Home sections.
 - [Mobile navigation stability](mobile-navigation-stability.md) — keep Android route changes immediate; don't send account links through role-hidden tabs.

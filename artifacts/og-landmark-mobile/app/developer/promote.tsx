@@ -13,6 +13,7 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import brandColors from '@/constants/colors';
@@ -169,10 +170,10 @@ const pc = StyleSheet.create({
 
 // ── Share platform button ─────────────────────────────────────────────────────
 function PlatformBtn({
-  icon, label, bg, fg, onPress,
-}: { icon: React.ComponentProps<typeof Feather>['name']; label: string; bg: string; fg: string; onPress: () => void }) {
+  icon, label, bg, fg, onPress, colors,
+}: { icon: React.ComponentProps<typeof Feather>['name']; label: string; bg: string; fg: string; onPress: () => void; colors: ReturnType<typeof useColors> }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [pb.btn, { backgroundColor: bg, opacity: pressed ? 0.8 : 1 }]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [pb.btn, { ...glassControlStyle(colors, 'secondary'), backgroundColor: bg, opacity: pressed ? 0.8 : 1 }]}>
       <Feather name={icon} size={20} color={fg} />
       <Text style={[pb.label, { color: fg }]}>{label}</Text>
     </Pressable>
@@ -282,7 +283,7 @@ export default function PromoteScreen() {
         {/* ── Header ───────────────────────────────────── */}
         <AnimatedReveal>
           <View style={[pr.header, { paddingTop: topPad + 12, paddingHorizontal: 20 }]}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={[pr.backBtn, { backgroundColor: colors.secondary }]}>
+            <Pressable onPress={() => router.back()} hitSlop={12} style={[pr.backBtn, glassControlStyle(colors, 'secondary')]}>
               <Feather name="arrow-left" size={20} color={colors.foreground} />
             </Pressable>
             <View style={{ flex: 1, marginLeft: 12 }}>
@@ -311,16 +312,13 @@ export default function PromoteScreen() {
                 const active = selected?.id === p.id;
                 return (
                   <Pressable key={p.id} onPress={() => selectProject(p)}
-                    style={[pr.projChip, {
-                      backgroundColor: active ? colors.action : colors.card,
-                      borderColor: active ? colors.action : colors.border,
-                    }]}>
+                    style={[pr.projChip, glassControlStyle(colors, active ? 'selected' : 'secondary')]}>
                     <View style={[pr.projChipDot, { backgroundColor: active ? colors.gold : colors.mutedForeground }]} />
                     <View>
-                      <Text style={[pr.projChipName, { color: active ? '#ffffff' : colors.foreground }]} numberOfLines={1}>
+                      <Text style={[pr.projChipName, { color: active ? colors.selectionForeground : colors.foreground }]} numberOfLines={1}>
                         {p.name}
                       </Text>
-                      <Text style={[pr.projChipType, { color: active ? '#ffffffaa' : colors.mutedForeground }]}>{p.type}</Text>
+                      <Text style={[pr.projChipType, { color: active ? colors.selectionForeground : colors.mutedForeground }]}>{p.type}</Text>
                     </View>
                     {active && <Feather name="check-circle" size={14} color={colors.goldForeground} style={{ marginLeft: 6 }} />}
                   </Pressable>
@@ -350,17 +348,17 @@ export default function PromoteScreen() {
               <View style={{ paddingHorizontal: 20, flexDirection: 'row', gap: 10 }}>
                 <PlatformBtn
                   icon="message-circle" label={tr('promoteShareWhatsApp')}
-                  bg="#25d36618" fg="#25d366"
+                  bg="#25d36618" fg="#25d366" colors={colors}
                   onPress={() => { void shareWhatsApp(); }}
                 />
                 <PlatformBtn
                   icon="facebook" label={tr('promoteShareFacebook')}
-                  bg="#1877f218" fg="#1877f2"
+                  bg="#1877f218" fg="#1877f2" colors={colors}
                   onPress={() => { void shareFacebook(); }}
                 />
                 <PlatformBtn
                   icon="share-2" label={tr('promoteShareMore')}
-                  bg={colors.secondary} fg={colors.foreground}
+                  bg={colors.secondary} fg={colors.foreground} colors={colors}
                   onPress={() => { void shareNative(); }}
                 />
               </View>
@@ -377,8 +375,8 @@ export default function PromoteScreen() {
                     <View style={[pr.langToggle, { backgroundColor: colors.secondary }]}>
                       {(['en', 'ur'] as const).map((l) => (
                         <Pressable key={l} onPress={() => toggleLang(l)}
-                          style={[pr.langBtn, { backgroundColor: copyLang === l ? colors.action : 'transparent' }]}>
-                          <Text style={[pr.langBtnText, { color: copyLang === l ? '#ffffff' : colors.mutedForeground }]}>
+                          style={[pr.langBtn, glassControlStyle(colors, copyLang === l ? 'selected' : 'secondary')]}>
+                          <Text style={[pr.langBtnText, { color: copyLang === l ? colors.selectionForeground : colors.mutedForeground }]}>
                             {l === 'en' ? tr('promoteLangEN') : tr('promoteLangUR')}
                           </Text>
                         </Pressable>
@@ -386,7 +384,7 @@ export default function PromoteScreen() {
                     </View>
                     {/* Regenerate */}
                     <Pressable onPress={regenerate}
-                      style={[pr.regenBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+                      style={[pr.regenBtn, glassControlStyle(colors, 'secondary')]}>
                       <Feather name="refresh-cw" size={12} color={colors.mutedForeground} />
                       <Text style={[pr.regenText, { color: colors.mutedForeground }]}>{tr('promoteRefreshCopy')}</Text>
                     </Pressable>
@@ -406,7 +404,7 @@ export default function PromoteScreen() {
                   {/* Copy button overlay */}
                   <Pressable
                     onPress={() => { void copyToClipboard(); }}
-                    style={[pr.copyBtn, { backgroundColor: copied ? colors.actionPressed : colors.action }]}
+                    style={[pr.copyBtn, { ...glassControlStyle(colors, copied ? 'success' : 'action') }]}
                   >
                     <Feather name={copied ? 'check' : 'copy'} size={13} color="#ffffff" />
                     <Text style={pr.copyBtnText}>{copied ? tr('promoteCopied') : tr('promoteCopyText')}</Text>
@@ -416,7 +414,7 @@ export default function PromoteScreen() {
                 {/* Quick-send to WhatsApp button */}
                 <Pressable
                   onPress={() => { void shareWhatsApp(); }}
-                  style={[pr.whatsappSend, { backgroundColor: '#25d366' }]}
+                   style={[pr.whatsappSend, { ...glassControlStyle(colors, 'secondary'), backgroundColor: '#25d366' }]}
                 >
                   <Feather name="message-circle" size={16} color="#ffffff" />
                   <Text style={pr.whatsappSendText}>Send via WhatsApp</Text>

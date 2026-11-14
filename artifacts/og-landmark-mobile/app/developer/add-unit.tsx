@@ -13,6 +13,7 @@ import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import {
   InventoryUnit, UnitStatus, UnitType,
   UNIT_TYPES, UNIT_STATUSES, PLOT_SIZES, FACINGS,
@@ -68,11 +69,8 @@ function ChipSelect({
           const active = opt === selected;
           return (
             <Pressable key={opt} onPress={() => onSelect(opt)}
-              style={[f.chip, {
-                borderColor: active ? colors.action : colors.border,
-                backgroundColor: active ? colors.action + '15' : colors.secondary,
-              }]}>
-              <Text style={[f.chipText, { color: active ? colors.action : colors.mutedForeground }]}>{opt}</Text>
+              style={[f.chip, glassControlStyle(colors, active ? 'selected' : 'secondary')]}>
+              <Text style={[f.chipText, { color: active ? colors.selectionForeground : colors.mutedForeground }]}>{opt}</Text>
             </Pressable>
           );
         })}
@@ -199,7 +197,7 @@ export default function AddUnitScreen() {
       <View style={[w.root, { backgroundColor: colors.background }]}>
         {/* ── Header ──────────────────────────────────────────── */}
         <View style={[w.header, { paddingTop: topPad + 10, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={w.backBtn}>
+          <Pressable onPress={() => router.back()} hitSlop={12} style={[w.backBtn, glassControlStyle(colors, 'secondary')]}>
             <Feather name="arrow-left" size={21} color={colors.foreground} />
           </Pressable>
           <View style={{ flex: 1 }}>
@@ -245,10 +243,7 @@ export default function AddUnitScreen() {
                 const stColor = unitStatusColor(st);
                 return (
                   <Pressable key={st} onPress={() => set({ status: st as UnitStatus })}
-                    style={[f.statusChip, {
-                      borderColor:     active ? stColor.text : colors.border,
-                      backgroundColor: active ? stColor.bg  : colors.secondary,
-                    }]}>
+                    style={[f.statusChip, glassControlStyle(colors, active ? st === 'Available' ? 'success' : st === 'Reserved' ? 'warning' : st === 'Sold' ? 'destructive' : 'selected' : 'secondary'), { borderColor: active ? stColor.text : colors.border }]}>
                     <Text style={[f.statusChipText, { color: active ? stColor.text : colors.mutedForeground }]}>{st}</Text>
                   </Pressable>
                 );
@@ -335,10 +330,10 @@ export default function AddUnitScreen() {
           <Pressable
             onPress={() => { void handleSave(); }}
             disabled={saving}
-            style={[w.saveBtn, { backgroundColor: saving ? colors.muted : colors.action }]}
+            style={[w.saveBtn, { ...glassControlStyle(colors, 'gold'), opacity: saving ? 0.6 : 1 }]}
           >
-            <Feather name={isEditing ? 'check' : 'plus'} size={16} color="#fff" />
-            <Text style={w.saveBtnText}>{saving ? 'Saving...' : (isEditing ? 'Update Unit' : 'Add Unit')}</Text>
+            <Feather name={isEditing ? 'check' : 'plus'} size={16} color={colors.primaryActionForeground} />
+            <Text style={[w.saveBtnText, { color: colors.primaryActionForeground }]}>{saving ? 'Saving...' : (isEditing ? 'Update Unit' : 'Add Unit')}</Text>
           </Pressable>
         </View>
       </View>

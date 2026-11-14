@@ -11,6 +11,7 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { apiAgentToSample, SampleAgent } from '@/lib/agentsData';
@@ -81,15 +82,15 @@ function ContactModal({
               <Text style={[cm.successDesc, { color: colors.mutedForeground }]}>
                 {agent.displayName} will respond to your inquiry shortly. Check Profile → My Inquiries for status updates.
               </Text>
-              <Pressable onPress={handleClose} style={[cm.doneBtn, { backgroundColor: colors.action }]}>
-                <Text style={[cm.doneBtnText, { color: colors.actionForeground }]}>Done</Text>
+              <Pressable onPress={handleClose} style={[cm.doneBtn, glassControlStyle(colors, 'success')]}>
+                <Text style={[cm.doneBtnText, { color: colors.successForeground }]}>Done</Text>
               </Pressable>
             </View>
           ) : (
             <>
               <View style={cm.header}>
                 <Text style={[cm.title, { color: colors.foreground }]}>Contact Agent</Text>
-                <Pressable onPress={handleClose} style={[cm.closeBtn, { backgroundColor: colors.secondary }]}>
+                <Pressable onPress={handleClose} style={[cm.closeBtn, glassControlStyle(colors, 'secondary')]}>
                   <Feather name="x" size={16} color={colors.mutedForeground} />
                 </Pressable>
               </View>
@@ -97,10 +98,8 @@ function ContactModal({
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
                 {types.map((t) => (
                   <Pressable key={t} onPress={() => setInquiryType(t)}
-                    style={[cm.typeChip, inquiryType === t
-                      ? { backgroundColor: colors.action }
-                      : { backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.border }]}>
-                    <Text style={[cm.typeChipText, { color: inquiryType === t ? colors.actionForeground : colors.mutedForeground }]}>{t}</Text>
+                    style={[cm.typeChip, glassControlStyle(colors, inquiryType === t ? 'selected' : 'secondary')]}>
+                    <Text style={[cm.typeChipText, { color: inquiryType === t ? colors.selectionForeground : colors.mutedForeground }]}>{t}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -111,14 +110,14 @@ function ContactModal({
                 style={[cm.input, { backgroundColor: colors.secondary, borderColor: colors.border, color: colors.foreground }]} />
               <View style={cm.actions}>
                 <Pressable onPress={() => Linking.openURL(publicWhatsAppUrl(`Hello, I found your profile on OG Landmark.`))
-                } style={[cm.altBtn, { borderColor: '#25d366', backgroundColor: '#25d36612' }]}>
+                } style={[cm.altBtn, glassControlStyle(colors, 'secondary')]}>
                   <Feather name="message-circle" size={15} color="#25d366" />
                   <Text style={[cm.altBtnText, { color: '#25d366' }]}>WhatsApp</Text>
                 </Pressable>
                 <Pressable onPress={handleSend} disabled={sending}
-                  style={[cm.sendBtn, { backgroundColor: colors.action, opacity: sending ? 0.7 : 1 }]}>
-                  <Text style={[cm.sendBtnText, { color: colors.actionForeground }]}>{sending ? 'Sending…' : 'Send Inquiry'}</Text>
-                  <Feather name="send" size={14} color={colors.actionForeground} />
+                  style={[cm.sendBtn, { ...glassControlStyle(colors, 'gold'), opacity: sending ? 0.7 : 1 }]}>
+                  <Text style={[cm.sendBtnText, { color: colors.primaryActionForeground }]}>{sending ? 'Sending…' : 'Send Inquiry'}</Text>
+                  <Feather name="send" size={14} color={colors.primaryActionForeground} />
                 </Pressable>
               </View>
             </>
@@ -271,7 +270,7 @@ export default function AgentProfileScreen() {
       <View style={[styles.screen, { backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }]}>
         <Feather name="user-x" size={36} color={colors.mutedForeground} style={{ marginBottom: 14 }} />
         <Text style={[styles.notFoundText, { color: colors.mutedForeground }]}>Agent profile not found.</Text>
-        <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.action }]}>
+        <Pressable onPress={() => router.back()} style={[styles.backBtn, glassControlStyle(colors, 'action')]}>
           <Text style={[styles.backBtnText, { color: colors.actionForeground }]}>Go Back</Text>
         </Pressable>
       </View>
@@ -298,13 +297,13 @@ export default function AgentProfileScreen() {
         ) : null}
         <View style={styles.coverOverlay} />
         {/* back */}
-        <Pressable onPress={() => router.back()} style={[styles.backCircle, { top: topInset + 10 }]}>
+        <Pressable onPress={() => router.back()} style={[styles.backCircle, { ...glassControlStyle(colors, 'action'), top: topInset + 10 }]}>
           <Feather name="arrow-left" size={20} color="#ffffff" />
         </Pressable>
 
         {/* share */}
         <Pressable onPress={() => Share.share({ message: `${agent.displayName} — ${agent.agency}\nVerified Agent on OG Landmark`, title: agent.displayName })}
-          style={[styles.shareCircle, { top: topInset + 10 }]}>
+          style={[styles.shareCircle, { ...glassControlStyle(colors, 'action'), top: topInset + 10 }]}>
           <Feather name="share-2" size={18} color="#ffffff" />
         </Pressable>
 
@@ -362,7 +361,7 @@ export default function AgentProfileScreen() {
           { icon: 'calendar', label: 'Schedule', color: colors.gold, onPress: () => setVisitOpen(true) },
           { icon: 'send',     label: 'Enquire',  color: '#0B1F3A', onPress: () => setContactOpen(true) },
         ].map((a) => (
-          <Pressable key={a.label} onPress={a.onPress} style={({ pressed }) => [styles.actionBtn, { opacity: pressed ? 0.8 : 1 }]}>
+          <Pressable key={a.label} onPress={a.onPress} style={({ pressed }) => [{ ...styles.actionBtn, ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.8 : 1 }]}>
             <View style={[styles.actionIcon, { backgroundColor: a.color + '18', borderColor: a.color + '44' }]}>
               <Feather name={a.icon as any} size={18} color={a.color} />
             </View>
@@ -482,8 +481,8 @@ export default function AgentProfileScreen() {
         <View style={[styles.tabBar, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           {(['For Sale', 'For Rent', 'Featured'] as const).map((t) => (
             <Pressable key={t} onPress={() => setActiveTab(t)}
-              style={[styles.tabItem, activeTab === t ? { backgroundColor: colors.action, borderRadius: 10 } : {}]}>
-              <Text style={[styles.tabText, { color: activeTab === t ? colors.actionForeground : colors.mutedForeground }]}>{t}</Text>
+              style={[styles.tabItem, glassControlStyle(colors, activeTab === t ? 'selected' : 'secondary')]}>
+              <Text style={[styles.tabText, { color: activeTab === t ? colors.selectionForeground : colors.mutedForeground }]}>{t}</Text>
             </Pressable>
           ))}
         </View>
@@ -511,14 +510,14 @@ export default function AgentProfileScreen() {
       {/* ── CONTACT CTA ───────────────────────────────────────────────── */}
       <View style={styles.footerCTA}>
         <Pressable onPress={() => Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`)}
-          style={({ pressed }) => [styles.callBtn, { borderColor: colors.action, opacity: pressed ? 0.8 : 1 }]}>
+          style={({ pressed }) => [{ ...styles.callBtn, ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.8 : 1 }]}>
           <Feather name="phone" size={16} color={colors.action} />
           <Text style={[styles.callBtnText, { color: colors.action }]}>Call Agent</Text>
         </Pressable>
         <Pressable onPress={() => setContactOpen(true)}
-          style={({ pressed }) => [styles.enquireBtn, { backgroundColor: colors.action, opacity: pressed ? 0.85 : 1 }]}>
-          <Text style={[styles.enquireBtnText, { color: colors.actionForeground }]}>Send Inquiry</Text>
-          <Feather name="arrow-up-right" size={16} color={colors.actionForeground} />
+          style={({ pressed }) => [{ ...styles.enquireBtn, ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.85 : 1 }]}>
+          <Text style={[styles.enquireBtnText, { color: colors.primaryActionForeground }]}>Send Inquiry</Text>
+          <Feather name="arrow-up-right" size={16} color={colors.primaryActionForeground} />
         </Pressable>
       </View>
 

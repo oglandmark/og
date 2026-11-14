@@ -14,6 +14,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import {
@@ -87,7 +88,7 @@ function AddBlockModal({
             const active = status === ds;
             return (
               <Pressable key={ds} onPress={() => setStatus(ds)}
-                style={[modal.chip, { borderColor: active ? colors.action : colors.border, backgroundColor: active ? colors.action + '15' : colors.secondary }]}>
+                style={[modal.chip, glassControlStyle(colors, active ? 'selected' : 'secondary')]}>
                 <Text style={[modal.chipText, { color: active ? colors.action : colors.mutedForeground }]}>{ds}</Text>
               </Pressable>
             );
@@ -95,12 +96,12 @@ function AddBlockModal({
         </ScrollView>
 
         <View style={modal.btns}>
-          <Pressable onPress={onCancel} style={[modal.cancelBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+          <Pressable onPress={onCancel} style={[modal.cancelBtn, glassControlStyle(colors, 'secondary')]}>
             <Text style={[modal.cancelText, { color: colors.foreground }]}>Cancel</Text>
           </Pressable>
           <Pressable onPress={() => { void handleSave(); }} disabled={saving}
-            style={[modal.saveBtn, { backgroundColor: saving ? colors.muted : colors.action }]}>
-            <Text style={modal.saveText}>{saving ? 'Saving...' : 'Add Block'}</Text>
+            style={[modal.saveBtn, { ...glassControlStyle(colors, 'gold'), opacity: saving ? 0.6 : 1 }]}>
+            <Text style={[modal.saveText, { color: colors.primaryActionForeground }]}>{saving ? 'Saving...' : 'Add Block'}</Text>
           </Pressable>
         </View>
       </View>
@@ -174,10 +175,10 @@ function UnitRow({
           <Text style={[row.price, { color: colors.action }]}>PKR {formatPKR(unit.price)}</Text>
         )}
         <View style={row.actions}>
-          <Pressable onPress={onEdit} hitSlop={8} style={[row.iconBtn, { backgroundColor: colors.secondary }]}>
+          <Pressable onPress={onEdit} hitSlop={8} style={[row.iconBtn, glassControlStyle(colors, 'secondary')]}>
             <Feather name="edit-2" size={13} color={colors.action} />
           </Pressable>
-          <Pressable onPress={onDelete} hitSlop={8} style={[row.iconBtn, { backgroundColor: colors.secondary }]}>
+          <Pressable onPress={onDelete} hitSlop={8} style={[row.iconBtn, glassControlStyle(colors, 'destructive')]}>
             <Feather name="trash-2" size={13} color={colors.destructive} />
           </Pressable>
         </View>
@@ -207,7 +208,7 @@ function BlockSection({
   return (
     <View style={[blk.wrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
       {/* Block header */}
-      <Pressable onPress={() => setCollapsed(!collapsed)} style={blk.header}>
+      <Pressable onPress={() => setCollapsed(!collapsed)} style={[blk.header, glassControlStyle(colors, 'secondary')]}>
         <View style={[blk.icon, { backgroundColor: colors.action + '18' }]}>
           <Feather name="layers" size={16} color={colors.action} />
         </View>
@@ -223,10 +224,10 @@ function BlockSection({
               pathname: '/developer/add-unit' as Parameters<typeof router.push>[0],
               params: { projectId, blockId: block.id, blockName: block.name },
             } as Parameters<typeof router.push>[0])}
-            style={[blk.addBtn, { backgroundColor: colors.action }]}
+            style={[blk.addBtn, glassControlStyle(colors, 'gold')]}
           >
-            <Feather name="plus" size={13} color="#fff" />
-            <Text style={blk.addText}>Add Unit</Text>
+            <Feather name="plus" size={13} color={colors.primaryActionForeground} />
+            <Text style={[blk.addText, { color: colors.primaryActionForeground }]}>Add Unit</Text>
           </Pressable>
           <Pressable
             onPress={() => Alert.alert(block.name, '', [
@@ -234,11 +235,11 @@ function BlockSection({
               { text: 'Cancel', style: 'cancel' },
             ])}
             hitSlop={8}
-            style={[blk.menuBtn, { backgroundColor: colors.secondary }]}
+            style={[blk.menuBtn, glassControlStyle(colors, 'destructive')]}
           >
             <Feather name="trash-2" size={13} color={colors.destructive} />
           </Pressable>
-          <Pressable onPress={() => setCollapsed(!collapsed)} hitSlop={8}>
+          <Pressable onPress={() => setCollapsed(!collapsed)} hitSlop={8} style={glassControlStyle(colors, 'secondary')}>
             <Feather name={collapsed ? 'chevron-down' : 'chevron-up'} size={16} color={colors.mutedForeground} />
           </Pressable>
         </View>
@@ -252,7 +253,7 @@ function BlockSection({
                 pathname: '/developer/add-unit' as Parameters<typeof router.push>[0],
                 params: { projectId, blockId: block.id, blockName: block.name },
               } as Parameters<typeof router.push>[0])}
-              style={[blk.emptyUnits, { borderColor: colors.border }]}
+              style={[blk.emptyUnits, glassControlStyle(colors, 'secondary')]}
             >
               <Feather name="plus-circle" size={20} color={colors.mutedForeground} />
               <Text style={[blk.emptyText, { color: colors.mutedForeground }]}>No units yet — tap to add units</Text>
@@ -348,7 +349,7 @@ export default function InventoryScreen() {
     <View style={[sc.root, { backgroundColor: colors.background }]}>
       {/* ── Header ──────────────────────────────────────────── */}
       <View style={[sc.header, { paddingTop: topPad + 10, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={sc.backBtn}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={[sc.backBtn, glassControlStyle(colors, 'secondary')]}>
           <Feather name="arrow-left" size={21} color={colors.foreground} />
         </Pressable>
         <View style={{ flex: 1 }}>
@@ -357,10 +358,10 @@ export default function InventoryScreen() {
         </View>
         <Pressable
           onPress={() => setShowAddBlock(true)}
-          style={[sc.addBlockBtn, { backgroundColor: colors.action }]}
+          style={[sc.addBlockBtn, glassControlStyle(colors, 'gold')]}
         >
-          <Feather name="plus" size={15} color="#fff" />
-          <Text style={sc.addBlockText}>Add Block</Text>
+          <Feather name="plus" size={15} color={colors.primaryActionForeground} />
+          <Text style={[sc.addBlockText, { color: colors.primaryActionForeground }]}>Add Block</Text>
         </Pressable>
       </View>
 
@@ -405,7 +406,7 @@ export default function InventoryScreen() {
           <AnimatedReveal delay={80}>
             <Pressable
               onPress={() => setShowAddBlock(true)}
-              style={[sc.emptyWrap, { borderColor: colors.border }]}
+              style={[sc.emptyWrap, glassControlStyle(colors, 'secondary')]}
             >
               <View style={[sc.emptyIcon, { backgroundColor: colors.secondary }]}>
                 <Feather name="layers" size={36} color={colors.mutedForeground} />
@@ -414,9 +415,9 @@ export default function InventoryScreen() {
               <Text style={[sc.emptyDesc, { color: colors.mutedForeground }]}>
                 Add your first block or phase to start managing units (e.g. Block A, Phase 1, Tower 1)
               </Text>
-              <View style={[sc.emptyBtn, { backgroundColor: colors.action }]}>
-                <Feather name="plus" size={15} color="#fff" />
-                <Text style={sc.emptyBtnText}>Add First Block</Text>
+              <View style={[sc.emptyBtn, glassControlStyle(colors, 'gold')]}>
+                <Feather name="plus" size={15} color={colors.primaryActionForeground} />
+                <Text style={[sc.emptyBtnText, { color: colors.primaryActionForeground }]}>Add First Block</Text>
               </View>
             </Pressable>
           </AnimatedReveal>

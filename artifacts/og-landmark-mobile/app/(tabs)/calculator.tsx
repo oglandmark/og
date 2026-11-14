@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import {
   MARLA_SQFT, KANAL_SQFT, ACRE_SQFT,
@@ -69,7 +70,7 @@ function ChipRow({
         const active = item === selected;
         return (
           <Pressable key={item} onPress={() => onSelect(item)}
-            style={[lc.chip, { backgroundColor: active ? colors.selectionBackground : colors.secondary, borderColor: active ? colors.selectionBorder : colors.border, borderWidth: active ? 1.5 : 1 }]}>
+            style={[lc.chip, glassControlStyle(colors, active ? 'selected' : 'secondary'), { borderWidth: active ? 1.5 : 1 }]}>
             <Text style={[lc.chipText, { color: active ? colors.selectionForeground : colors.foreground, fontWeight: active ? '600' : '400' }]}>{item}</Text>
           </Pressable>
         );
@@ -90,7 +91,7 @@ function SegRow({
         const active = it.key === selected;
         return (
           <Pressable key={it.key} onPress={() => onSelect(it.key)}
-            style={[lc.segBtn, { backgroundColor: active ? colors.selectionBackground : 'transparent', borderColor: active ? colors.selectionBorder : 'transparent', borderWidth: active ? 1.5 : 0 }]}>
+            style={[lc.segBtn, glassControlStyle(colors, active ? 'selected' : 'secondary'), { borderWidth: active ? 1.5 : 1 }]}>
             <Text style={[lc.segText, { color: active ? colors.selectionForeground : colors.mutedForeground, fontWeight: active ? '600' : '400' }]}>{it.label}</Text>
           </Pressable>
         );
@@ -176,7 +177,7 @@ function QuickTool({
   return (
     <Pressable
       onPress={() => router.push({ pathname: '/tools', params: { tool: toolKey } } as any)}
-      style={({ pressed }) => [lc.quickTile, { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.84 : 1 }]}>
+      style={({ pressed }) => [lc.quickTile, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.84 : 1 }]}>
       <View style={[lc.quickIcon, { backgroundColor: colors.action + '14' }]}>
         <Feather name={icon} size={17} color={colors.action} />
       </View>
@@ -218,7 +219,7 @@ export default function CalculatorScreen() {
           <Text style={[lc.headerTitle, { color: colors.foreground }]}>{content?.title || 'Land Calculator'}</Text>
         </View>
         <Pressable onPress={() => router.push('/tools' as any)}
-          style={({ pressed }) => [lc.allToolsBtn, { backgroundColor: colors.secondary, borderColor: colors.border, opacity: pressed ? 0.8 : 1 }]}>
+          style={({ pressed }) => [lc.allToolsBtn, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.8 : 1 }]}>
           <Feather name="tool" size={13} color={colors.action} />
           <Text style={[lc.allToolsText, { color: colors.action }]}>All Tools</Text>
         </Pressable>

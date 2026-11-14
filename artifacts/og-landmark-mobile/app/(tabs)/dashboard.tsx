@@ -6,6 +6,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // BlurView removed — crashes Android GPU
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { useMobileContent } from '@/hooks/useMobileContent';
 import { useAuth } from '@/context/AuthContext';
@@ -133,7 +134,7 @@ function DeveloperDashboard({
       <AnimatedReveal>
         <View style={[ds.topBar, { paddingHorizontal: 20 }]}>
           <BrandMark />
-          <Pressable onPress={() => { void logout(); }} style={[ds.iconBtn, { backgroundColor: colors.secondary }]} hitSlop={8}>
+          <Pressable onPress={() => { void logout(); }} style={[ds.iconBtn, glassControlStyle(colors, 'secondary')]} hitSlop={8}>
             <Feather name="log-out" size={16} color={colors.mutedForeground} />
           </Pressable>
         </View>
@@ -238,7 +239,7 @@ function DeveloperDashboard({
       {portal?.showPromotion !== false && <AnimatedReveal delay={330}>
         <Pressable
           onPress={() => router.push('/developer/promote' as Parameters<typeof router.push>[0])}
-          style={({ pressed }) => [ds.promoteBanner, { backgroundColor: colors.action, opacity: pressed ? 0.88 : 1, marginHorizontal: 20, marginTop: 22 }]}
+          style={({ pressed }) => [{ ...ds.promoteBanner, ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.88 : 1, marginHorizontal: 20, marginTop: 22 }]}
         >
           <View style={ds.promoteBannerLeft}>
             <View style={ds.promoteBannerIconWrap}>
@@ -263,7 +264,7 @@ function DeveloperDashboard({
             <AnimatedReveal key={a.label} delay={370 + i * 30} style={ds.kpiWrap}>
               <Pressable
                 onPress={a.onPress}
-                style={({ pressed }) => [ds.actionCard, { backgroundColor: colors.action, opacity: pressed ? 0.85 : 1 }]}
+                 style={({ pressed }) => [{ ...ds.actionCard, ...glassControlStyle(colors, 'action'), opacity: pressed ? 0.85 : 1 }]}
               >
                 <View style={ds.actionIcon}>
                   <Feather name={a.icon} size={18} color="#ffffff" />
@@ -281,7 +282,7 @@ function DeveloperDashboard({
           <Text style={[ds.sectionLabel, { color: colors.mutedForeground, textAlign: rtl }]}>
             {portal?.recentProjectsTitle || tr('sectionRecentProjects')}
           </Text>
-          <Pressable onPress={() => router.push('/(tabs)/projects' as Parameters<typeof router.push>[0])}>
+          <Pressable onPress={() => router.push('/(tabs)/projects' as Parameters<typeof router.push>[0])} style={glassControlStyle(colors, 'secondary')}>
             <Text style={[ds.viewAll, { color: colors.action }]}>{portal?.viewAllProjects || tr('viewAllProjects')}</Text>
           </Pressable>
         </View>
@@ -295,9 +296,9 @@ function DeveloperDashboard({
                 <Feather name="layers" size={28} color={colors.mutedForeground} style={{ marginBottom: 10 }} />
                 <Text style={[ds.emptyTitle, { color: colors.foreground }]}>{portal?.noProjectsTitle || tr('noProjectsYet')}</Text>
                 <Text style={[ds.emptyDesc, { color: colors.mutedForeground }]}>{portal?.noProjectsDescription || tr('noProjectsDesc')}</Text>
-                <View style={[ds.emptyBtn, { backgroundColor: colors.action }]}>
-                  <Feather name="plus" size={14} color="#ffffff" />
-                  <Text style={ds.emptyBtnText}>{portal?.createFirstProject || tr('createFirstProject')}</Text>
+                <View style={[ds.emptyBtn, glassControlStyle(colors, 'gold')]}>
+                  <Feather name="plus" size={14} color={colors.primaryActionForeground} />
+                  <Text style={[ds.emptyBtnText, { color: colors.primaryActionForeground }]}>{portal?.createFirstProject || tr('createFirstProject')}</Text>
                 </View>
               </Pressable>
             </AnimatedReveal>
@@ -447,7 +448,7 @@ export default function DashboardScreen() {
       <AnimatedReveal>
         <View style={[styles.header, { paddingHorizontal: 20 }]}>
           <BrandMark />
-          <Pressable onPress={() => { void logout(); }} style={[styles.headerBtn, { backgroundColor: colors.secondary }]} hitSlop={8}>
+          <Pressable onPress={() => { void logout(); }} style={[styles.headerBtn, glassControlStyle(colors, 'secondary')]} hitSlop={8}>
             <Feather name="log-out" size={16} color={colors.mutedForeground} />
           </Pressable>
         </View>
@@ -517,7 +518,7 @@ export default function DashboardScreen() {
             <AnimatedReveal key={a.label} delay={220 + i * 30} style={styles.statCardWrap}>
               <Pressable
                 onPress={() => router.push(a.route as Parameters<typeof router.push>[0])}
-                style={({ pressed }) => [styles.actionCard, { backgroundColor: colors.action, opacity: pressed ? 0.85 : 1 }]}
+                 style={({ pressed }) => [{ ...styles.actionCard, ...glassControlStyle(colors, 'action'), opacity: pressed ? 0.85 : 1 }]}
               >
                 <View style={[styles.actionIconWrap, { backgroundColor: '#ffffff22' }]}>
                   <Feather name={a.icon} size={20} color="#ffffff" />
@@ -533,7 +534,7 @@ export default function DashboardScreen() {
       {agentPortal?.showRecentLeads !== false && <AnimatedReveal delay={280}>
         <View style={[styles.sectionHeader, { paddingHorizontal: 20, marginTop: 28 }]}>
           <Text style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign: rtl }]}>{agentPortal?.recentLeadsTitle || tr('sectionRecentLeads')}</Text>
-          <Pressable onPress={() => router.push('/(tabs)/leads')}>
+          <Pressable onPress={() => router.push('/(tabs)/leads')} style={glassControlStyle(colors, 'secondary')}>
             <Text style={[styles.viewAll, { color: colors.action }]}>{agentPortal?.viewAllLeads || tr('viewAllLeads')}</Text>
           </Pressable>
         </View>

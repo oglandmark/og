@@ -13,6 +13,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // BlurView removed — crashes Android GPU
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -87,7 +88,7 @@ function ProjectCard({
             </View>
           </View>
         </View>
-        <Pressable onPress={handleMenu} hitSlop={12} style={[card.menuBtn, { backgroundColor: colors.secondary }]}>
+        <Pressable onPress={handleMenu} hitSlop={12} style={[card.menuBtn, glassControlStyle(colors, 'secondary')]}>
           <Feather name="more-vertical" size={15} color={colors.mutedForeground} />
         </Pressable>
       </View>
@@ -135,7 +136,7 @@ function ProjectCard({
           <Pressable
             key={btn.label}
             onPress={btn.onPress}
-            style={({ pressed }) => [card.actionBtn, { backgroundColor: colors.secondary, opacity: pressed ? 0.75 : 1 }]}
+             style={({ pressed }) => [{ ...card.actionBtn, ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.75 : 1 }]}
           >
             <Feather name={btn.icon} size={13} color={colors.action} />
             <Text style={[card.actionBtnText, { color: colors.action }]}>{btn.label}</Text>
@@ -212,11 +213,11 @@ export default function ProjectsScreen() {
             </View>
             <Pressable
               onPress={goCreate}
-              style={[s.createBtn, { backgroundColor: colors.action }]}
+               style={[s.createBtn, glassControlStyle(colors, 'gold')]}
               hitSlop={8}
             >
-              <Feather name="plus" size={16} color="#ffffff" />
-              <Text style={s.createBtnText}>{tr('createProject')}</Text>
+              <Feather name="plus" size={16} color={colors.primaryActionForeground} />
+              <Text style={[s.createBtnText, { color: colors.primaryActionForeground }]}>{tr('createProject')}</Text>
             </Pressable>
           </View>
         </AnimatedReveal>
@@ -244,10 +245,10 @@ export default function ProjectsScreen() {
                 <Text style={[s.emptyDesc, { color: colors.mutedForeground }]}>{tr('noProjectsDesc')}</Text>
                 <Pressable
                   onPress={goCreate}
-                  style={({ pressed }) => [s.emptyBtn, { backgroundColor: colors.action, opacity: pressed ? 0.85 : 1 }]}
+                   style={({ pressed }) => [{ ...s.emptyBtn, ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.85 : 1 }]}
                 >
-                  <Feather name="plus" size={16} color="#ffffff" />
-                  <Text style={s.emptyBtnText}>{tr('createFirstProject')}</Text>
+                  <Feather name="plus" size={16} color={colors.primaryActionForeground} />
+                  <Text style={[s.emptyBtnText, { color: colors.primaryActionForeground }]}>{tr('createFirstProject')}</Text>
                 </Pressable>
               </View>
             </AnimatedReveal>
@@ -271,9 +272,9 @@ export default function ProjectsScreen() {
       {/* ── FAB ───────────────────────────────────────────── */}
       <Pressable
         onPress={goCreate}
-        style={({ pressed }) => [s.fab, { backgroundColor: colors.action, opacity: pressed ? 0.9 : 1, bottom: botPad + 90 }]}
+        style={({ pressed }) => [{ ...s.fab, ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.9 : 1, bottom: botPad + 90 }]}
       >
-        <Feather name="plus" size={24} color="#ffffff" />
+        <Feather name="plus" size={24} color={colors.primaryActionForeground} />
       </Pressable>
     </View>
   );

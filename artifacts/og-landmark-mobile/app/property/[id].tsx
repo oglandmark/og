@@ -15,6 +15,7 @@ import { isDemoPropertyHidden } from '@/lib/demoPropertyVisibility';
 import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import { getProperty, incrementView, submitInquiry, bookAppointment, type ApiProperty } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useSaved } from '@/context/SavedContext';
@@ -221,13 +222,13 @@ function InquiryModal({
               <View style={iq.successBtns}>
                 {agentPhone ? (
                   <Pressable onPress={() => Linking.openURL(`tel:${agentPhone}`)}
-                    style={[iq.successBtn, { backgroundColor: colors.secondary, borderColor: colors.border, borderWidth: 1 }]}>
+                    style={[iq.successBtn, glassControlStyle(colors, 'secondary')]}>
                     <Feather name="phone" size={15} color={colors.foreground} />
                     <Text style={[iq.successBtnText, { color: colors.foreground }]}>Call</Text>
                   </Pressable>
                 ) : null}
                 <Pressable onPress={handleClose}
-                  style={[iq.successBtn, { backgroundColor: colors.primaryAction }]}>
+                  style={[iq.successBtn, glassControlStyle(colors, 'gold')]}>
                   <Text style={[iq.successBtnText, { color: colors.primaryActionForeground }]}>Done</Text>
                   <Feather name="check" size={15} color={colors.primaryActionForeground} />
                 </Pressable>
@@ -244,7 +245,7 @@ function InquiryModal({
                     {property.title} · {property.city}
                   </Text>
                 </View>
-                <Pressable onPress={handleClose} style={[iq.closeBtn, { backgroundColor: colors.secondary }]}>
+                <Pressable onPress={handleClose} style={[iq.closeBtn, glassControlStyle(colors, 'secondary')]}>
                   <Feather name="x" size={16} color={colors.mutedForeground} />
                 </Pressable>
               </View>
@@ -299,7 +300,7 @@ function InquiryModal({
               {/* Book a site visit toggle */}
               <Pressable
                 onPress={() => setBookVisit((v) => !v)}
-                style={[iq.visitToggle, { backgroundColor: bookVisit ? colors.action + '12' : colors.secondary, borderColor: bookVisit ? colors.action : colors.border }]}>
+                style={[iq.visitToggle, glassControlStyle(colors, bookVisit ? 'selected' : 'secondary')]}>
                 <View style={[iq.toggleCheck, { backgroundColor: bookVisit ? colors.action : 'transparent', borderColor: bookVisit ? colors.action : colors.border }]}>
                   {bookVisit && <Feather name="check" size={10} color={colors.actionForeground} />}
                 </View>
@@ -315,7 +316,7 @@ function InquiryModal({
                   <View style={iq.typeRow}>
                     {(['Site Visit', 'Video Call'] as const).map((t) => (
                       <Pressable key={t} onPress={() => setVisitType(t)}
-                        style={[iq.typeChip, { borderColor: visitType === t ? colors.selectionBorder : colors.border, backgroundColor: visitType === t ? colors.selectionBackground : 'transparent', borderWidth: visitType === t ? 1.5 : 1 }]}>
+                        style={[iq.typeChip, glassControlStyle(colors, visitType === t ? 'selected' : 'secondary'), { borderWidth: visitType === t ? 1.5 : 1 }]}>
                         <Feather name={t === 'Site Visit' ? 'map-pin' : 'video'} size={11} color={visitType === t ? colors.action : colors.mutedForeground} />
                         <Text style={[iq.typeChipText, { color: visitType === t ? colors.selectionForeground : colors.mutedForeground, fontWeight: visitType === t ? '600' : '400' }]}>{t}</Text>
                       </Pressable>
@@ -327,7 +328,7 @@ function InquiryModal({
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }} contentContainerStyle={{ gap: 8 }}>
                     {dates.map((d) => (
                       <Pressable key={d.iso} onPress={() => setSelectedDate(d.iso)}
-                        style={[iq.dateChip, { borderColor: selectedDate === d.iso ? colors.selectionBorder : colors.border, backgroundColor: selectedDate === d.iso ? colors.selectionBackground : colors.secondary, borderWidth: selectedDate === d.iso ? 1.5 : 1 }]}>
+                        style={[iq.dateChip, glassControlStyle(colors, selectedDate === d.iso ? 'selected' : 'secondary'), { borderWidth: selectedDate === d.iso ? 1.5 : 1 }]}>
                         <Text style={[iq.dateChipText, { color: selectedDate === d.iso ? colors.selectionForeground : colors.foreground, fontWeight: selectedDate === d.iso ? '600' : '400' }]}>{d.label}</Text>
                       </Pressable>
                     ))}
@@ -338,7 +339,7 @@ function InquiryModal({
                   <View style={iq.timeGrid}>
                     {TIME_SLOTS.map((t) => (
                       <Pressable key={t} onPress={() => setSelectedTime(t)}
-                        style={[iq.timeChip, { borderColor: selectedTime === t ? colors.selectionBorder : colors.border, backgroundColor: selectedTime === t ? colors.selectionBackground : 'transparent', borderWidth: selectedTime === t ? 1.5 : 1 }]}>
+                        style={[iq.timeChip, glassControlStyle(colors, selectedTime === t ? 'selected' : 'secondary'), { borderWidth: selectedTime === t ? 1.5 : 1 }]}>
                         <Text style={[iq.timeChipText, { color: selectedTime === t ? colors.selectionForeground : colors.foreground, fontWeight: selectedTime === t ? '600' : '400' }]}>{t}</Text>
                       </Pressable>
                     ))}
@@ -350,17 +351,17 @@ function InquiryModal({
               <View style={iq.actions}>
                 {agentPhone ? (
                   <Pressable onPress={() => Linking.openURL(publicWhatsAppUrl(`I am interested in ${property.title}`))}
-                    style={[iq.altBtn, { borderColor: '#25d366', backgroundColor: '#25d36612' }]}>
+                    style={[iq.altBtn, glassControlStyle(colors, 'secondary')]}>
                     <Feather name="message-circle" size={15} color="#25d366" />
                     <Text style={[iq.altBtnText, { color: '#25d366' }]}>WhatsApp</Text>
                   </Pressable>
                 ) : null}
                 <Pressable onPress={handleSend} disabled={sending}
-                  style={[iq.sendBtn, { backgroundColor: colors.primaryAction, opacity: sending ? 0.72 : 1 }]}>
+                  style={[iq.sendBtn, { ...glassControlStyle(colors, 'gold'), opacity: sending ? 0.72 : 1 }]}>
                   <Text style={[iq.sendBtnText, { color: colors.primaryActionForeground }]}>
                     {sending ? 'Sending…' : bookVisit ? 'Send & Book Visit' : 'Send Inquiry'}
                   </Text>
-                  <Feather name={bookVisit ? 'calendar' : 'send'} size={15} color={colors.actionForeground} />
+                  <Feather name={bookVisit ? 'calendar' : 'send'} size={15} color={colors.primaryActionForeground} />
                 </Pressable>
               </View>
             </ScrollView>
@@ -449,12 +450,12 @@ function AppointmentModal({
               </Text>
               <View style={iq.successBtns}>
                 <Pressable onPress={() => Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`)}
-                  style={[iq.successBtn, { backgroundColor: colors.secondary, borderColor: colors.border, borderWidth: 1 }]}>
+                  style={[iq.successBtn, glassControlStyle(colors, 'secondary')]}>
                   <Feather name="phone" size={15} color={colors.foreground} />
                   <Text style={[iq.successBtnText, { color: colors.foreground }]}>Call Agent</Text>
                 </Pressable>
                 <Pressable onPress={handleClose}
-                style={[iq.successBtn, { backgroundColor: colors.primaryAction }]}>
+                style={[iq.successBtn, glassControlStyle(colors, 'gold')]}>
                   <Text style={[iq.successBtnText, { color: colors.primaryActionForeground }]}>Done</Text>
                   <Feather name="check" size={15} color={colors.primaryActionForeground} />
                 </Pressable>
@@ -469,7 +470,7 @@ function AppointmentModal({
                     {property.title} · {property.city}
                   </Text>
                 </View>
-                <Pressable onPress={handleClose} style={[iq.closeBtn, { backgroundColor: colors.secondary }]}>
+                <Pressable onPress={handleClose} style={[iq.closeBtn, glassControlStyle(colors, 'secondary')]}>
                   <Feather name="x" size={16} color={colors.mutedForeground} />
                 </Pressable>
               </View>
@@ -479,11 +480,7 @@ function AppointmentModal({
               <View style={[ap.typeRow, { marginBottom: 16 }]}>
                 {(['Site Visit', 'Video Call'] as const).map((t) => (
                   <Pressable key={t} onPress={() => setVisitType(t)}
-                    style={[ap.typeBtn, {
-                       backgroundColor: visitType === t ? colors.selectionBackground : colors.secondary,
-                       borderColor: visitType === t ? colors.selectionBorder : colors.border,
-                       borderWidth: visitType === t ? 1.5 : 1,
-                    }]}>
+                    style={[ap.typeBtn, glassControlStyle(colors, visitType === t ? 'selected' : 'secondary'), { borderWidth: visitType === t ? 1.5 : 1 }]}>
                     <Feather
                       name={t === 'Site Visit' ? 'map-pin' : 'video'}
                       size={14}
@@ -503,11 +500,7 @@ function AppointmentModal({
                 contentContainerStyle={{ gap: 8, paddingRight: 4 }}>
                 {DAYS.map((d) => (
                   <Pressable key={d.iso} onPress={() => setSelectedDate(d.iso)}
-                    style={[ap.datePill, {
-                       backgroundColor: selectedDate === d.iso ? colors.selectionBackground : colors.secondary,
-                       borderColor: selectedDate === d.iso ? colors.selectionBorder : colors.border,
-                       borderWidth: selectedDate === d.iso ? 1.5 : 1,
-                    }]}>
+                    style={[ap.datePill, glassControlStyle(colors, selectedDate === d.iso ? 'selected' : 'secondary'), { borderWidth: selectedDate === d.iso ? 1.5 : 1 }]}>
                     <Text style={[ap.datePillText, {
                        color: selectedDate === d.iso ? colors.selectionForeground : colors.foreground,
                        fontWeight: selectedDate === d.iso ? '600' : '400',
@@ -521,11 +514,7 @@ function AppointmentModal({
               <View style={[ap.timeGrid, { marginBottom: 18 }]}>
                 {TIME_SLOTS.map((t) => (
                   <Pressable key={t} onPress={() => setSelectedTime(t)}
-                    style={[ap.timeSlot, {
-                       backgroundColor: selectedTime === t ? colors.selectionBackground : colors.secondary,
-                       borderColor: selectedTime === t ? colors.selectionBorder : colors.border,
-                       borderWidth: selectedTime === t ? 1.5 : 1,
-                    }]}>
+                    style={[ap.timeSlot, glassControlStyle(colors, selectedTime === t ? 'selected' : 'secondary'), { borderWidth: selectedTime === t ? 1.5 : 1 }]}>
                     <Text style={[ap.timeSlotText, {
                        color: selectedTime === t ? colors.selectionForeground : colors.foreground,
                        fontWeight: selectedTime === t ? '600' : '400',
@@ -543,7 +532,7 @@ function AppointmentModal({
                 style={({ pressed }) => [
                   iq.sendBtn,
                   {
-                    backgroundColor: colors.primaryAction,
+                    ...glassControlStyle(colors, 'gold'),
                     opacity: booking ? 0.72 : pressed ? 0.88 : 1,
                     shadowColor: colors.actionDeep,
                     shadowOpacity: 0.2,
@@ -763,7 +752,7 @@ function PropertyDetailScreen() {
           accessibilityRole="button"
           accessibilityLabel="Go back"
           onPress={() => router.back()}
-          style={{ marginTop: 18, borderRadius: 10, backgroundColor: colors.action, paddingHorizontal: 18, paddingVertical: 11 }}
+          style={[styles.returnButton, { ...glassControlStyle(colors, 'action'), marginTop: 18 }]}
         >
           <Text style={{ color: colors.actionForeground, fontFamily: 'Inter_600SemiBold', fontSize: 13 }}>Go back</Text>
         </Pressable>
@@ -781,7 +770,7 @@ function PropertyDetailScreen() {
         <Pressable
           accessibilityRole="button"
           onPress={() => router.back()}
-          style={{ marginTop: 18, borderRadius: 10, backgroundColor: colors.action, paddingHorizontal: 18, paddingVertical: 11 }}
+          style={[styles.returnButton, { ...glassControlStyle(colors, 'action'), marginTop: 18 }]}
         >
           <Text style={{ color: colors.actionForeground, fontFamily: 'Inter_600SemiBold', fontSize: 13 }}>Go back</Text>
         </Pressable>
@@ -820,13 +809,13 @@ function PropertyDetailScreen() {
 
         {/* Back + Share + Save */}
         <View style={[styles.backRow, { top: topInset + 8 }]}>
-          <Pressable onPress={() => router.back()} style={[styles.roundButton, { backgroundColor: colors.action }]} hitSlop={8}>
+          <Pressable onPress={() => router.back()} style={[styles.roundButton, glassControlStyle(colors, 'action')]} hitSlop={8}>
             <Feather name="arrow-left" size={20} color={colors.actionForeground} />
           </Pressable>
           <View style={styles.topActions}>
             <Pressable
               onPress={() => void shareProperty(property)}
-              style={[styles.roundButton, { backgroundColor: 'rgba(15,25,35,0.68)' }]}
+              style={[styles.roundButton, glassControlStyle(colors, 'action')]}
               hitSlop={10}
               accessibilityRole="button"
               accessibilityLabel={`Share ${property.title}`}
@@ -836,7 +825,7 @@ function PropertyDetailScreen() {
             </Pressable>
             <Pressable
               onPress={() => toggleSaved(property.id)}
-              style={[styles.roundButton, { backgroundColor: isSaved(property.id) ? colors.splashGold : 'rgba(15,25,35,0.68)' }]}
+              style={[styles.roundButton, glassControlStyle(colors, isSaved(property.id) ? 'gold' : 'action')]}
               hitSlop={10}
               accessibilityRole="button"
               accessibilityLabel={`${isSaved(property.id) ? 'Remove from' : 'Add to'} favorites: ${property.title}`}
@@ -932,14 +921,14 @@ function PropertyDetailScreen() {
         <View style={styles.actionRow}>
           <Pressable
             onPress={openBooking}
-            style={({ pressed }) => [styles.cta, styles.primaryCta, { backgroundColor: '#0B1F3A', opacity: pressed ? 0.85 : 1 }]}
+             style={({ pressed }) => [styles.cta, styles.primaryCta, { ...glassControlStyle(colors, 'action'), opacity: pressed ? 0.85 : 1 }]}
           >
             <Feather name="calendar" size={16} color="#ffffff" />
             <Text style={[styles.ctaText, { color: '#ffffff' }]}>Schedule a Visit</Text>
           </Pressable>
           <Pressable
             onPress={openInquiry}
-            style={({ pressed }) => [styles.cta, styles.secondaryCta, { borderColor: '#0B1F3A', backgroundColor: '#0B1F3A12', opacity: pressed ? 0.8 : 1 }]}
+             style={({ pressed }) => [styles.cta, styles.secondaryCta, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.8 : 1 }]}
           >
             <Feather name="message-circle" size={16} color="#0B1F3A" />
             <Text style={[styles.secondaryCtaText, { color: '#0B1F3A' }]}>Inquire</Text>
@@ -1120,10 +1109,10 @@ function PropertyDetailScreen() {
             <Text style={[styles.agentTitle, { color: colors.mutedForeground }]}>{property.agentTitle}</Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Pressable onPress={() => Linking.openURL(waUrl)} style={[styles.callButton, { backgroundColor: '#25D366' }]}>
+            <Pressable onPress={() => Linking.openURL(waUrl)} style={[styles.callButton, glassControlStyle(colors, 'secondary')]}>
               <WhatsAppLogo size={20} />
             </Pressable>
-            <Pressable onPress={() => Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`)} style={[styles.callButton, { backgroundColor: colors.action }]}>
+            <Pressable onPress={() => Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`)} style={[styles.callButton, glassControlStyle(colors, 'action')]}>
               <Feather name="phone" size={17} color={colors.actionForeground} />
             </Pressable>
           </View>
@@ -1138,7 +1127,7 @@ function PropertyDetailScreen() {
       {/* Call icon */}
       <Pressable
         onPress={() => Linking.openURL(`tel:${agentPhone}`)}
-        style={({ pressed }) => [styles.fixedIconBtn, { borderColor: colors.action + '55', backgroundColor: colors.action + '18', opacity: pressed ? 0.75 : 1 }]}
+        style={({ pressed }) => [styles.fixedIconBtn, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.75 : 1 }]}
         accessibilityRole="button" accessibilityLabel="Call agent"
       >
         <Feather name="phone" size={20} color={colors.action} />
@@ -1147,7 +1136,7 @@ function PropertyDetailScreen() {
       {/* Inquiry — always reachable above the Android home indicator */}
       <Pressable
         onPress={openInquiry}
-        style={({ pressed }) => [styles.fixedInquiryBtn, { borderColor: colors.action + '55', backgroundColor: colors.action + '10', opacity: pressed ? 0.75 : 1 }]}
+        style={({ pressed }) => [styles.fixedInquiryBtn, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.75 : 1 }]}
         accessibilityRole="button" accessibilityLabel="Send an inquiry"
       >
         <Feather name="message-circle" size={19} color={colors.action} />
@@ -1156,7 +1145,7 @@ function PropertyDetailScreen() {
       {/* Schedule Visit — primary navy CTA */}
       <Pressable
         onPress={openBooking}
-        style={({ pressed }) => [styles.fixedCallBtn, { backgroundColor: '#0B1F3A', opacity: pressed ? 0.85 : 1 }]}
+        style={({ pressed }) => [styles.fixedCallBtn, { ...glassControlStyle(colors, 'action'), opacity: pressed ? 0.85 : 1 }]}
         accessibilityRole="button" accessibilityLabel="Schedule a site visit"
       >
         <Feather name="calendar" size={17} color="#ffffff" />
@@ -1166,7 +1155,7 @@ function PropertyDetailScreen() {
       {/* WhatsApp */}
       <Pressable
         onPress={() => Linking.openURL(waUrl)}
-        style={({ pressed }) => [styles.fixedWaBtn, { opacity: pressed ? 0.75 : 1 }]}
+        style={({ pressed }) => [styles.fixedWaBtn, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.75 : 1 }]}
         accessibilityRole="button" accessibilityLabel="WhatsApp"
       >
         <WhatsAppLogo size={42} />
@@ -1289,7 +1278,7 @@ function PropertyDetailMap({
             }
             style={({ pressed }) => [
               styles.detailMapAction,
-              { flex: 1, backgroundColor: colors.action + '15', opacity: pressed ? 0.72 : 1 },
+              { ...glassControlStyle(colors, 'secondary'), flex: 1, opacity: pressed ? 0.72 : 1 },
             ]}
           >
             <Feather name="map-pin" size={13} color={colors.action} />
@@ -1299,7 +1288,7 @@ function PropertyDetailMap({
             onPress={() => openDirections(latitude, longitude)}
             style={({ pressed }) => [
               styles.detailMapAction,
-              { flex: 1, backgroundColor: colors.tealSoft, opacity: pressed ? 0.72 : 1 },
+              { ...glassControlStyle(colors, 'selected'), flex: 1, opacity: pressed ? 0.72 : 1 },
             ]}
           >
             <Feather name="navigation" size={13} color={colors.teal} />
@@ -1343,6 +1332,7 @@ const styles = StyleSheet.create({
   backRow: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between' },
   topActions: { flexDirection: 'row', gap: 8 },
   roundButton: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
+  returnButton: { borderRadius: 12, paddingHorizontal: 18, paddingVertical: 11 },
   shareButton: { shadowColor: '#0B1F3A', shadowOpacity: 0.28, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
   favoriteButton: { shadowColor: brandColors.light.gold, shadowOpacity: 0.35, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
   imageLabel: { position: 'absolute', bottom: 18, left: 20, backgroundColor: brandColors.light.gold, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },

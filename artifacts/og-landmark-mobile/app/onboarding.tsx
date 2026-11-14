@@ -17,6 +17,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OGLandmarkLogo } from '@/components/OGLandmarkLogo';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useLanguage } from '@/context/LanguageContext';
 import { markOnboardingComplete } from '@/lib/onboarding';
 
@@ -157,7 +158,7 @@ export default function OnboardingScreen() {
                   onPress={() => void completeOnboarding()}
                   style={({ pressed }) => [
                     styles.skipButton,
-                    { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder },
+                    glassControlStyle(colors, 'action'),
                     pressed && styles.pressed,
                   ]}
                 >
@@ -234,7 +235,7 @@ export default function OnboardingScreen() {
                   onPress={advance}
                   style={({ pressed }) => [
                     styles.continueButton,
-                    { backgroundColor: colors.action, shadowColor: colors.shadow },
+                    { ...glassControlStyle(colors, 'action'), shadowColor: colors.shadow },
                     pressed && styles.pressed,
                     isCompleting && styles.disabled,
                   ]}

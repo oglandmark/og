@@ -9,6 +9,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useAuth } from '@/context/AuthContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import {
@@ -233,7 +234,7 @@ export default function AccountSettingsScreen() {
           <View style={styles.header}>
             <Pressable
               onPress={() => router.back()}
-              style={[styles.backBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+               style={[styles.backBtn, glassControlStyle(colors, 'secondary')]}
               hitSlop={8}
             >
               <Feather name="arrow-left" size={18} color={colors.foreground} />
@@ -249,7 +250,7 @@ export default function AccountSettingsScreen() {
         <AnimatedReveal delay={60}>
           <View style={[styles.avatarSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {/* Photo / initials */}
-            <Pressable onPress={handlePhotoPress} style={styles.avatarWrap}>
+            <Pressable onPress={handlePhotoPress} style={[styles.avatarWrap, glassControlStyle(colors, 'secondary')]}>
               {photoUri ? (
                 <Image source={{ uri: photoUri }} style={styles.avatarPhoto} />
               ) : (
@@ -270,7 +271,7 @@ export default function AccountSettingsScreen() {
                  user?.verificationStatus === 'pending'  ? '⏳ Verification Pending' :
                  'OG Landmark Agent'}
               </Text>
-              <Pressable onPress={handlePhotoPress} style={styles.changePhotoLink}>
+              <Pressable onPress={handlePhotoPress} style={[styles.changePhotoLink, glassControlStyle(colors, 'secondary')]}>
                 <Text style={[styles.changePhotoText, { color: colors.action }]}>
                   {photoUri ? 'Change photo' : 'Add profile photo'}
                 </Text>
@@ -285,7 +286,7 @@ export default function AccountSettingsScreen() {
             <Pressable
               onPress={handleCoverPress}
               disabled={coverLoading}
-              style={[styles.coverCard, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+              style={[styles.coverCard, glassControlStyle(colors, 'secondary')]}
             >
               {coverUri ? (
                 <Image source={{ uri: coverUri }} style={styles.coverImage} resizeMode="cover" />
@@ -344,17 +345,17 @@ export default function AccountSettingsScreen() {
           <Pressable
             onPress={() => void handleSave()}
             disabled={saving}
-            style={({ pressed }) => [styles.saveBtn, { backgroundColor: colors.action, opacity: pressed || saving ? 0.8 : 1 }]}
+             style={({ pressed }) => [styles.saveBtn, { ...glassControlStyle(colors, 'gold'), opacity: pressed || saving ? 0.8 : 1 }]}
           >
             {saving
-              ? <Text style={[styles.saveBtnText, { color: colors.actionForeground }]}>Saving…</Text>
+              ? <Text style={[styles.saveBtnText, { color: colors.primaryActionForeground }]}>Saving…</Text>
               : <>
-                  <Feather name="check" size={16} color={colors.actionForeground} />
-                  <Text style={[styles.saveBtnText, { color: colors.actionForeground }]}>{content?.screens?.account?.saveLabel || 'Save Changes'}</Text>
+                  <Feather name="check" size={16} color={colors.primaryActionForeground} />
+                  <Text style={[styles.saveBtnText, { color: colors.primaryActionForeground }]}>{content?.screens?.account?.saveLabel || 'Save Changes'}</Text>
                 </>
             }
           </Pressable>
-          <Pressable onPress={() => router.back()} style={styles.cancelBtn}>
+          <Pressable onPress={() => router.back()} style={[styles.cancelBtn, glassControlStyle(colors, 'secondary')]}>
             <Text style={[styles.cancelText, { color: colors.mutedForeground }]}>Cancel</Text>
           </Pressable>
         </AnimatedReveal>

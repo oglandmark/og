@@ -29,6 +29,7 @@ import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { okaraDistrict } from '@/lib/cities';
+import { glassControlStyle } from '@/components/glassControls';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -776,11 +777,11 @@ export default function ListingWizard() {
           <Feather name="clock" size={13} color={colors.accentForeground} />
           <Text style={[s.reviewText, { color: colors.accentForeground }]}>PENDING REVIEW</Text>
         </View>
-        <AnimatedPressable onPress={() => router.push('/my-properties' as any)} style={[s.successBtn, { backgroundColor: colors.action, marginTop: 24 }]}>
+        <AnimatedPressable onPress={() => router.push('/my-properties' as any)} style={[s.successBtn, { ...glassControlStyle(colors, 'action'), marginTop: 24 }]}>
           <Text style={[s.successBtnText, { color: colors.actionForeground }]}>View My Listings</Text>
           <Feather name="arrow-right" size={16} color={colors.actionForeground} />
         </AnimatedPressable>
-        <Pressable onPress={() => router.push('/(tabs)/' as any)} style={{ marginTop: 14 }} hitSlop={10}>
+        <Pressable onPress={() => router.push('/(tabs)/' as any)} style={[{ marginTop: 14 }, glassControlStyle(colors, 'secondary')]} hitSlop={10}>
           <Text style={[s.successLink, { color: colors.action }]}>Back to Home</Text>
         </Pressable>
       </View>
@@ -791,7 +792,7 @@ export default function ListingWizard() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* ── Fixed header ─────────────────────────────────────────────────── */}
       <View style={[s.header, { backgroundColor: colors.background, paddingTop: topInset + 8, borderBottomColor: colors.border }]}>
-        <Pressable onPress={goBack} hitSlop={12} style={[s.backBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+        <Pressable onPress={goBack} hitSlop={12} style={[s.backBtn, glassControlStyle(colors, 'secondary')]}>
           <Feather name="arrow-left" size={16} color={colors.foreground} />
         </Pressable>
         <View style={{ flex: 1, minWidth: 0, paddingHorizontal: 4 }}>
@@ -870,7 +871,7 @@ export default function ListingWizard() {
           </Text>
           <AnimatedPressable
             onPress={submitting ? undefined : submit}
-            style={[s.submitBtn, { backgroundColor: colors.primaryAction, opacity: submitting ? 0.65 : 1 }]}
+            style={[s.submitBtn, { ...glassControlStyle(colors, 'gold'), opacity: submitting ? 0.65 : 1 }]}
           >
             <Text style={[s.submitBtnText, { color: colors.primaryActionForeground }]}>
               {submitting ? 'Saving…' : editingListing ? 'Save & Resubmit for Review' : 'Submit Property for Review'}
@@ -912,10 +913,7 @@ function TransactionToggle({ form, update, colors }: { form: Form; update: (p: P
               onPress={() => setPurpose(option.value)}
               style={[
                 s.transactionToggleOption,
-                {
-                  backgroundColor: active ? colors.selectionBackground : colors.card,
-                  borderColor: active ? colors.selectionBorder : colors.border,
-                },
+                 glassControlStyle(colors, active ? 'selected' : 'secondary'),
               ]}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
@@ -1018,7 +1016,7 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
           return (
             <Pressable key={g.category} onPress={() => setActiveGroup(g.category)}
                accessibilityRole="button" accessibilityState={{ selected: active }} accessibilityLabel={`${g.label} property types`}
-               style={[s.groupTab, { backgroundColor: active ? colors.selectionBackground : colors.card, borderColor: active ? colors.selectionBorder : colors.border, borderWidth: active ? 1.5 : 1 }]}>
+               style={[s.groupTab, glassControlStyle(colors, active ? 'selected' : 'secondary'), { borderWidth: active ? 1.5 : 1 }]}>
               <Text style={s.groupEmoji}>{g.emoji}</Text>
                <Text style={[s.groupTabText, { color: active ? colors.selectionForeground : colors.foreground, fontWeight: active ? '600' : '400' }]}>{g.label}</Text>
             </Pressable>
@@ -1033,7 +1031,7 @@ function StepType({ form, update, colors }: { form: Form; update: (p: Partial<Fo
           return (
             <Pressable key={t.key} onPress={() => handleTypeSelect(t.key)}
                accessibilityRole="button" accessibilityState={{ selected: sel }} accessibilityLabel={t.label}
-               style={[s.typeCard, { backgroundColor: sel ? colors.selectionBackground : colors.card, borderColor: sel ? colors.selectionBorder : colors.border, borderWidth: sel ? 1.5 : 1 }]}>
+               style={[s.typeCard, glassControlStyle(colors, sel ? 'selected' : 'secondary'), { borderWidth: sel ? 1.5 : 1 }]}>
               <View
                 style={[
                   s.typeIconTile,
@@ -1099,7 +1097,7 @@ function StepLocation({ form, update, colors, errors, onConfirmationChange }: an
             onConfirmationChange?.(false);
             setMapOpen(true);
           }}
-              style={[s.chip, { backgroundColor: form.city === c ? colors.selectionBackground : colors.card, borderColor: form.city === c ? colors.selectionBorder : colors.border, borderWidth: form.city === c ? 1.5 : 1 }]}>
+              style={[s.chip, glassControlStyle(colors, form.city === c ? 'selected' : 'secondary'), { borderWidth: form.city === c ? 1.5 : 1 }]}>
              <Text style={[s.chipText, { color: form.city === c ? colors.selectionForeground : colors.foreground, fontWeight: form.city === c ? '600' : '400' }]}>{c}</Text>
           </Pressable>
         ))}
@@ -1243,10 +1241,7 @@ function StepBasic({ form, update, colors, errors }: any) {
                 accessibilityState={{ selected: form.areaUnit === u }}
                 style={[
                   s.unitBtn,
-                  {
-                    backgroundColor: form.areaUnit === u ? colors.selectionBackground : colors.card,
-                    borderColor: form.areaUnit === u ? colors.selectionBorder : colors.border,
-                  },
+                   glassControlStyle(colors, form.areaUnit === u ? 'selected' : 'secondary'),
                 ]}
               >
                 <Text style={[s.unitText, { color: form.areaUnit === u ? colors.selectionForeground : colors.mutedForeground, fontWeight: form.areaUnit === u ? '600' : '400' }]}>{u}</Text>
@@ -1830,7 +1825,7 @@ function StepFeatures({ form, update, colors, category }: any) {
           const sel = form.features.includes(f);
           return (
             <Pressable key={f} onPress={() => toggle(f)}
-              style={[s.featureChip, { backgroundColor: sel ? colors.selectionBackground : colors.card, borderColor: sel ? colors.selectionBorder : colors.border, borderWidth: sel ? 1.5 : 1 }]}>
+               style={[s.featureChip, glassControlStyle(colors, sel ? 'selected' : 'secondary'), { borderWidth: sel ? 1.5 : 1 }]}>
               {sel && <Feather name="check" size={11} color={colors.selectionForeground} />}
               <Text style={[s.featureText, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{f}</Text>
             </Pressable>
@@ -1857,7 +1852,7 @@ function StepMedia({ form, update, colors, errors, pickPhotos, pickVideo }: any)
             <Feather name="camera" size={16} color={colors.action} />
           </View>
           <Text style={[s.mediaTitle, { color: colors.foreground }]}>Photos {form.photos.length > 0 ? `(${form.photos.length}/30)` : '*'}</Text>
-          <Pressable onPress={pickPhotos} style={[s.addBtn, { backgroundColor: colors.action }]}>
+          <Pressable onPress={pickPhotos} style={[s.addBtn, glassControlStyle(colors, 'action')]}>
             <Feather name="plus" size={12} color="#ffffff" />
             <Text style={[s.addBtnText, { color: '#ffffff' }]}>Add</Text>
           </Pressable>
@@ -1870,16 +1865,16 @@ function StepMedia({ form, update, colors, errors, pickPhotos, pickVideo }: any)
                 {i === form.coverPhotoIndex && (
                   <View style={s.coverBadge}><Text style={s.coverText}>COVER</Text></View>
                 )}
-                <Pressable onPress={() => update({ coverPhotoIndex: i })} style={s.thumbStarBtn}>
+                <Pressable onPress={() => update({ coverPhotoIndex: i })} style={[s.thumbStarBtn, glassControlStyle(colors, i === form.coverPhotoIndex ? 'gold' : 'secondary')]}>
                   <Feather name="star" size={9} color={i === form.coverPhotoIndex ? '#f4c430' : '#ffffff88'} />
                 </Pressable>
-                <Pressable onPress={() => update({ photos: form.photos.filter((_: any, idx: number) => idx !== i) })} style={s.thumbRemove}>
+                <Pressable onPress={() => update({ photos: form.photos.filter((_: any, idx: number) => idx !== i) })} style={[s.thumbRemove, glassControlStyle(colors, 'destructive')]}>
                   <Feather name="x" size={10} color="#ffffff" />
                 </Pressable>
               </View>
             ))}
             {form.photos.length < 30 && (
-              <Pressable onPress={pickPhotos} style={[s.thumbAdd, { borderColor: colors.action + '66', backgroundColor: colors.action + '12' }]}>
+              <Pressable onPress={pickPhotos} style={[s.thumbAdd, glassControlStyle(colors, 'secondary')]}>
                 <Feather name="plus" size={20} color={colors.action} />
                 <Text style={[s.thumbAddText, { color: colors.action }]}>More</Text>
               </Pressable>
@@ -1896,7 +1891,7 @@ function StepMedia({ form, update, colors, errors, pickPhotos, pickVideo }: any)
           </View>
           <Text style={[s.mediaTitle, { color: colors.foreground }]}>Video {form.video ? '(1/1)' : '(optional)'}</Text>
           {!form.video && (
-            <Pressable onPress={pickVideo} style={[s.addBtn, { backgroundColor: colors.action }]}>
+            <Pressable onPress={pickVideo} style={[s.addBtn, glassControlStyle(colors, 'action')]}>
               <Feather name="plus" size={12} color="#ffffff" />
               <Text style={[s.addBtnText, { color: '#ffffff' }]}>Add</Text>
             </Pressable>
@@ -1906,7 +1901,7 @@ function StepMedia({ form, update, colors, errors, pickPhotos, pickVideo }: any)
           <View style={[s.videoCard, { backgroundColor: colors.secondary, borderColor: colors.border, marginTop: 10 }]}>
             <Feather name="film" size={20} color={colors.action} />
             <Text style={[s.videoName, { color: colors.foreground }]} numberOfLines={1}>{form.video.filename ?? 'video.mp4'}</Text>
-            <Pressable onPress={() => update({ video: null })} hitSlop={8}>
+            <Pressable onPress={() => update({ video: null })} hitSlop={8} style={[s.thumbRemove, glassControlStyle(colors, 'destructive')]}>
               <Feather name="trash-2" size={16} color="#e53838" />
             </Pressable>
           </View>
@@ -1964,7 +1959,7 @@ function StepDocs({ form, update, colors, errors, user, category }: any) {
           const sel = form.documents.includes(d);
           return (
             <Pressable key={d} onPress={() => toggleDoc(d)}
-              style={[s.featureChip, { backgroundColor: sel ? colors.selectionBackground : colors.card, borderColor: sel ? colors.selectionBorder : colors.border, borderWidth: sel ? 1.5 : 1 }]}>
+              style={[s.featureChip, glassControlStyle(colors, sel ? 'selected' : 'secondary'), { borderWidth: sel ? 1.5 : 1 }]}>
               {sel && <Feather name="check" size={11} color={colors.selectionForeground} />}
               <Text style={[s.featureText, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{d}</Text>
             </Pressable>
@@ -2240,7 +2235,7 @@ function ChipRow({ options, selected, onSelect, colors }: { options: string[]; s
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
       {options.map((o) => (
         <Pressable key={o} onPress={() => onSelect(o)}
-           style={[s.chip, { backgroundColor: selected === o ? colors.selectionBackground : colors.card, borderColor: selected === o ? colors.selectionBorder : colors.border, borderWidth: selected === o ? 1.5 : 1 }]}>
+           style={[s.chip, glassControlStyle(colors, selected === o ? 'selected' : 'secondary'), { borderWidth: selected === o ? 1.5 : 1 }]}>
            <Text style={[s.chipText, { color: selected === o ? colors.selectionForeground : colors.foreground, fontWeight: selected === o ? '600' : '400' }]}>{o}</Text>
         </Pressable>
       ))}
@@ -2252,7 +2247,7 @@ function ToggleRow({ label, value, onChange, colors }: { label: string; value: b
   const isOn = value === true;
   return (
     <Pressable onPress={() => onChange(!value)}
-      style={[s.toggleRow, { backgroundColor: isOn ? colors.selectionBackground : colors.card, borderColor: isOn ? colors.selectionBorder : colors.border }]}>
+      style={[s.toggleRow, glassControlStyle(colors, isOn ? 'selected' : 'secondary')]}>
       <Text style={[s.toggleLabel, { color: colors.foreground }]}>{label}</Text>
       <View style={[s.togglePill, { backgroundColor: isOn ? colors.action : colors.border }]}>
         <Text style={[s.togglePillText, { color: '#ffffff' }]}>{isOn ? 'Yes' : 'No'}</Text>
@@ -2268,7 +2263,7 @@ function TogRow({ label, value, onChange, colors }: { label: string; value: bool
   return (
     <Pressable
       onPress={() => onChange(value === null ? true : value === true ? false : null)}
-      style={[s.toggleRow, { backgroundColor: isOn ? colors.selectionBackground : colors.card, borderColor: isOn ? colors.selectionBorder : colors.border, marginBottom: 8 }]}>
+      style={[s.toggleRow, glassControlStyle(colors, isOn ? 'selected' : 'secondary'), { marginBottom: 8 }]}>
       <Text style={[s.toggleLabel, { color: colors.foreground }]}>{label}</Text>
       <View style={[s.togglePill, { backgroundColor: isOn ? colors.action : isOff ? '#e5383822' : colors.border }]}>
         <Text style={[s.togglePillText, { color: isOn ? '#ffffff' : isOff ? '#e53838' : colors.mutedForeground }]}>
@@ -2289,7 +2284,7 @@ function BoolGrid({ items, form, update, colors, tristate }: { items: { key: str
         return (
           <Pressable key={it.key}
             onPress={() => update({ [it.key]: tristate ? (val === null ? true : val === true ? false : null) : !val })}
-            style={[s.featureChip, { backgroundColor: sel ? colors.selectionBackground : colors.card, borderColor: sel ? colors.selectionBorder : colors.border, borderWidth: sel ? 1.5 : 1 }]}>
+             style={[s.featureChip, glassControlStyle(colors, sel ? 'selected' : 'secondary'), { borderWidth: sel ? 1.5 : 1 }]}>
             {sel && <Feather name="check" size={11} color={colors.selectionForeground} />}
             <Text style={[s.featureText, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{it.label}</Text>
           </Pressable>

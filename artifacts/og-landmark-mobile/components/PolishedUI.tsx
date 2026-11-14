@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle, glassHighlightStyle } from '@/components/glassControls';
 
 type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'destructive';
 
@@ -35,10 +36,10 @@ export function Button({
 }: ButtonProps) {
   const colors = useColors();
   const palette = {
-    primary: { backgroundColor: colors.primaryAction, borderColor: colors.primaryAction, color: colors.primaryActionForeground },
-    secondary: { backgroundColor: colors.card, borderColor: colors.border, color: colors.action },
-    quiet: { backgroundColor: 'transparent', borderColor: 'transparent', color: colors.action },
-    destructive: { backgroundColor: colors.destructive, borderColor: colors.destructive, color: colors.destructiveForeground },
+    primary: { ...glassControlStyle(colors, 'gold'), color: colors.primaryActionForeground },
+    secondary: { ...glassControlStyle(colors, 'secondary'), color: colors.action },
+    quiet: { ...glassControlStyle(colors, 'secondary'), backgroundColor: colors.actionGlassSoft, color: colors.action },
+    destructive: { ...glassControlStyle(colors, 'destructive'), color: colors.destructiveForeground },
   }[variant];
 
   return (
@@ -51,10 +52,11 @@ export function Button({
       style={[
         styles.button,
         { borderRadius: colors.radii.md },
-        { backgroundColor: palette.backgroundColor, borderColor: palette.borderColor, opacity: disabled ? 0.52 : 1 },
+        { backgroundColor: palette.backgroundColor, borderColor: palette.borderColor, shadowColor: palette.shadowColor, shadowOffset: palette.shadowOffset, shadowOpacity: palette.shadowOpacity, shadowRadius: palette.shadowRadius, elevation: palette.elevation, opacity: disabled ? 0.52 : 1 },
         style,
       ]}
     >
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, glassHighlightStyle(colors)]} />
       {loading ? (
         <ActivityIndicator size="small" color={palette.color} />
       ) : (

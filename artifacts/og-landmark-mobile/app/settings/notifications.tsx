@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { getNotificationPreferences, updateNotificationPreferences, type NotificationPreferences } from '@/lib/api';
 import { cities } from '@/lib/cities';
 
@@ -41,7 +42,7 @@ export default function NotificationPreferencesScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) + 12 }]}>
-        <Pressable onPress={() => router.back()} style={styles.back} accessibilityLabel="Back">
+        <Pressable onPress={() => router.back()} style={[styles.back, glassControlStyle(colors, 'secondary')]} accessibilityLabel="Back">
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
         <View style={{ flex: 1 }}>
@@ -92,9 +93,9 @@ export default function NotificationPreferencesScreen() {
                     setSaving('cities');
                     try { await updateNotificationPreferences({ cities: next }); } finally { setSaving(null); }
                   }}
-                  style={[styles.cityChip, { borderColor: colors.border }, selected && { backgroundColor: colors.action, borderColor: colors.action }]}
+                  style={[styles.cityChip, glassControlStyle(colors, selected ? 'selected' : 'secondary')]}
                 >
-                  <Text style={[styles.cityText, { color: selected ? colors.actionForeground : colors.mutedForeground }]}>{city}</Text>
+                  <Text style={[styles.cityText, { color: selected ? colors.selectionForeground : colors.mutedForeground }]}>{city}</Text>
                 </Pressable>
               );
             })}
@@ -109,15 +110,15 @@ export default function NotificationPreferencesScreen() {
                   setSaving('frequency');
                   try { await updateNotificationPreferences({ frequency }); } finally { setSaving(null); }
                 }}
-                style={[styles.frequencyItem, preferences.frequency === frequency && { backgroundColor: colors.action }]}
+                style={[styles.frequencyItem, glassControlStyle(colors, preferences.frequency === frequency ? 'selected' : 'secondary')]}
               >
-                <Text style={[styles.frequencyText, { color: preferences.frequency === frequency ? colors.actionForeground : colors.mutedForeground }]}>
+                <Text style={[styles.frequencyText, { color: preferences.frequency === frequency ? colors.selectionForeground : colors.mutedForeground }]}>
                   {frequency[0].toUpperCase() + frequency.slice(1)}
                 </Text>
               </Pressable>
             ))}
           </View>
-          <Pressable onPress={() => router.push('/notifications' as any)} style={[styles.historyButton, { borderColor: colors.border }]}>
+          <Pressable onPress={() => router.push('/notifications' as any)} style={[styles.historyButton, glassControlStyle(colors, 'secondary')]}>
             <Feather name="inbox" size={16} color={colors.action} />
             <Text style={[styles.historyText, { color: colors.action }]}>Open notification history</Text>
             <Feather name="arrow-right" size={15} color={colors.action} />

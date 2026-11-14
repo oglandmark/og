@@ -9,6 +9,7 @@ import { LocalizedText as Text } from '@/components/LocalizedText';
 import { useAuth } from '@/context/AuthContext';
 import { useColors } from '@/hooks/useColors';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
+import { glassControlStyle } from '@/components/glassControls';
 import {
   deleteNotification,
   getNotifications,
@@ -117,7 +118,7 @@ export default function NotificationsScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) + 12, backgroundColor: colors.background }]}>
-        <Pressable accessibilityLabel="Back" onPress={() => router.back()} style={styles.iconButton}>
+        <Pressable accessibilityLabel="Back" onPress={() => router.back()} style={[styles.iconButton, glassControlStyle(colors, 'secondary')]}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
         <View style={styles.titleWrap}>
@@ -133,7 +134,7 @@ export default function NotificationsScreen() {
               setItems((current) => current.map(item => ({ ...item, isRead: true, read: true })));
               setUnreadCount(0);
             }}
-            style={[styles.markAll, { borderColor: colors.border }]}
+            style={[styles.markAll, glassControlStyle(colors, 'secondary')]}
           >
             <Feather name="check-circle" size={17} color={colors.action} />
           </Pressable>
@@ -146,7 +147,7 @@ export default function NotificationsScreen() {
             <Pressable
               key={entry.key}
               onPress={() => handleFilter(entry.key)}
-              style={[styles.filter, filter === entry.key && { backgroundColor: colors.action }]}
+              style={[styles.filter, glassControlStyle(colors, filter === entry.key ? 'selected' : 'secondary')]}
             >
               <Text style={[styles.filterText, { color: filter === entry.key ? colors.actionForeground : colors.mutedForeground }]}>
                 {entry.label}
@@ -174,7 +175,7 @@ export default function NotificationsScreen() {
             accessibilityLabel="Sign in to view your notifications"
             testID="notification-sign-in"
             onPress={() => router.push('/(auth)/login' as any)}
-            style={[styles.signInButton, { backgroundColor: colors.action }]}
+            style={[styles.signInButton, glassControlStyle(colors, 'action')]}
           >
             <Feather name="log-in" size={16} color={colors.actionForeground} />
             <Text style={[styles.signInText, { color: colors.actionForeground }]}>Sign in</Text>
@@ -233,6 +234,7 @@ export default function NotificationsScreen() {
                     accessibilityLabel="Delete notification"
                     hitSlop={8}
                     onPress={() => { void deleteNotification(item.notificationId || item.id).then(() => setItems(current => current.filter(entry => entry.notificationId !== item.notificationId))).catch(() => undefined); }}
+                    style={[styles.deleteButton, glassControlStyle(colors, 'secondary')]}
                   >
                     <Feather name="trash-2" size={14} color={colors.mutedForeground} />
                   </Pressable>
@@ -254,6 +256,7 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: 'Inter_700Bold', fontSize: 9, letterSpacing: 1.4 },
   title: { fontFamily: 'PlayfairDisplay_600SemiBold', fontSize: 25, marginTop: 1 },
   markAll: { width: 38, height: 38, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  deleteButton: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   filterRow: { maxHeight: 54, borderBottomWidth: 1 },
   filterRowContent: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 18, paddingBottom: 10 },
   filter: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },

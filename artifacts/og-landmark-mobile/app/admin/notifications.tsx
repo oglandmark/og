@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import brandColors from '@/constants/colors';
 import {
@@ -84,7 +85,7 @@ export default function AdminNotifications() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: NAVY, paddingTop: top + (Platform.OS === 'web' ? 67 : 0) + 14 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8}><Feather name="arrow-left" size={20} color="#8a9ab5" /></Pressable>
+        <Pressable onPress={() => router.back()} hitSlop={8} style={glassControlStyle(colors, 'action')}><Feather name="arrow-left" size={20} color="#8a9ab5" /></Pressable>
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={styles.eyebrow}>ADMIN TOOLS</Text>
           <Text style={styles.headerTitle}>Notifications & Announcements</Text>
@@ -106,16 +107,16 @@ export default function AdminNotifications() {
           <Text style={[styles.label, { color: colors.mutedForeground }]}>Type</Text>
           <View style={styles.choiceRow}>
             {(['general', 'important', 'system', 'promotional'] as const).map(value => (
-              <Pressable key={value} onPress={() => setType(value)} style={[styles.choice, { borderColor: colors.border }, type === value && { backgroundColor: colors.action, borderColor: colors.action }]}>
-                <Text style={[styles.choiceText, { color: type === value ? colors.actionForeground : colors.mutedForeground }]}>{value[0].toUpperCase() + value.slice(1)}</Text>
+              <Pressable key={value} onPress={() => setType(value)} style={[styles.choice, glassControlStyle(colors, type === value ? value === 'important' ? 'warning' : 'selected' : 'secondary')]}>
+                <Text style={[styles.choiceText, { color: type === value ? value === 'important' ? colors.warningForeground : colors.selectionForeground : colors.mutedForeground }]}>{value[0].toUpperCase() + value.slice(1)}</Text>
               </Pressable>
             ))}
           </View>
           <Text style={[styles.label, { color: colors.mutedForeground }]}>Priority</Text>
           <View style={styles.choiceRow}>
             {(['NORMAL', 'HIGH', 'URGENT'] as const).map(value => (
-              <Pressable key={value} onPress={() => setPriority(value)} style={[styles.choice, { borderColor: colors.border }, priority === value && { backgroundColor: colors.action, borderColor: colors.action }]}>
-                <Text style={[styles.choiceText, { color: priority === value ? colors.actionForeground : colors.mutedForeground }]}>{value}</Text>
+              <Pressable key={value} onPress={() => setPriority(value)} style={[styles.choice, glassControlStyle(colors, priority === value ? value === 'URGENT' ? 'destructive' : value === 'HIGH' ? 'warning' : 'selected' : 'secondary')]}>
+                <Text style={[styles.choiceText, { color: priority === value ? value === 'URGENT' ? colors.destructiveForeground : value === 'HIGH' ? colors.warningForeground : colors.selectionForeground : colors.mutedForeground }]}>{value}</Text>
               </Pressable>
             ))}
           </View>
@@ -135,11 +136,11 @@ export default function AdminNotifications() {
             <Text style={[styles.previewBody, { color: colors.mutedForeground }]}>{message || 'Your announcement message will appear here.'}</Text>
           </View>
           <View style={styles.actions}>
-            <Pressable disabled={saving} onPress={() => { void submit(false); }} style={[styles.secondaryButton, { borderColor: colors.border }]}>
+            <Pressable disabled={saving} onPress={() => { void submit(false); }} style={[styles.secondaryButton, glassControlStyle(colors, 'secondary')]}>
               <Text style={[styles.secondaryText, { color: colors.foreground }]}>Save Draft</Text>
             </Pressable>
-            <Pressable disabled={saving} onPress={() => { void submit(true); }} style={[styles.primaryButton, { backgroundColor: NAVY }]}>
-              {saving ? <ActivityIndicator color="#fff" /> : <><Feather name="send" size={14} color="#fff" /><Text style={styles.primaryText}>Send Now</Text></>}
+            <Pressable disabled={saving} onPress={() => { void submit(true); }} style={[styles.primaryButton, glassControlStyle(colors, 'gold')]}>
+              {saving ? <ActivityIndicator color={colors.primaryActionForeground} /> : <><Feather name="send" size={14} color={colors.primaryActionForeground} /><Text style={[styles.primaryText, { color: colors.primaryActionForeground }]}>Send Now</Text></>}
             </Pressable>
           </View>
         </View>
@@ -148,8 +149,8 @@ export default function AdminNotifications() {
         {loading ? <ActivityIndicator color={colors.action} /> : loadError ? (
           <View style={[styles.loadError, { borderColor: colors.border, backgroundColor: colors.card }]}>
             <Text style={[styles.empty, { color: colors.foreground }]}>{loadError}</Text>
-            <Pressable onPress={load} style={[styles.retryButton, { backgroundColor: colors.action }]}>
-              <Text style={[styles.primaryText, { color: colors.actionForeground }]}>Retry</Text>
+            <Pressable onPress={load} style={[styles.retryButton, glassControlStyle(colors, 'gold')]}>
+              <Text style={[styles.primaryText, { color: colors.primaryActionForeground }]}>Retry</Text>
             </Pressable>
           </View>
         ) : items.length === 0 ? (
@@ -160,7 +161,7 @@ export default function AdminNotifications() {
               <Text style={[styles.historyTitle, { color: colors.foreground }]}>{item.title}</Text>
               <Text style={[styles.historyMeta, { color: colors.mutedForeground }]}>{item.status} · {item.recipientCount || 0} recipients · {new Date(item.createdAt).toLocaleDateString('en-PK')}</Text>
             </View>
-            {item.status !== 'sent' ? <Pressable onPress={() => { void sendAdminAnnouncement(item.id).then(updated => setItems(current => current.map(entry => entry.id === updated.id ? updated : entry))).catch(() => Alert.alert('Could not send', 'Please try again.')); }} style={[styles.sendSmall, { backgroundColor: colors.action }]}><Feather name="send" size={13} color={colors.actionForeground} /></Pressable> : <Feather name="check-circle" size={18} color={colors.action} />}
+            {item.status !== 'sent' ? <Pressable onPress={() => { void sendAdminAnnouncement(item.id).then(updated => setItems(current => current.map(entry => entry.id === updated.id ? updated : entry))).catch(() => Alert.alert('Could not send', 'Please try again.')); }} style={[styles.sendSmall, glassControlStyle(colors, 'gold')]}><Feather name="send" size={13} color={colors.primaryActionForeground} /></Pressable> : <Feather name="check-circle" size={18} color={colors.action} />}
           </View>
         ))}
       </ScrollView>

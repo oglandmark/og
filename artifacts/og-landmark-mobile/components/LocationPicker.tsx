@@ -24,6 +24,7 @@ import {
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import type { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import brandColors from '@/constants/colors';
 import { InteractiveMap, StaticMap } from '@/components/MapViewComponent';
@@ -165,7 +166,7 @@ export function PinnedMapCard({
         <View style={[pmc.actionRow, { borderTopColor: colors.border }]}>
           <Pressable
             onPress={handleOpen}
-            style={({ pressed }) => [pmc.actionBtn, { backgroundColor: (colors as any).action + '15', opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [pmc.actionBtn, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.7 : 1 }]}
           >
             <Feather name="map-pin" size={13} color={(colors as any).action ?? colors.primary} />
             <Text style={[pmc.actionBtnText, { color: (colors as any).action ?? colors.primary }]}>Open in Maps</Text>
@@ -173,7 +174,7 @@ export function PinnedMapCard({
           {showDirections && (
             <Pressable
               onPress={handleDirections}
-              style={({ pressed }) => [pmc.actionBtn, { backgroundColor: colors.selectionBackground, opacity: pressed ? 0.7 : 1 }]}
+              style={({ pressed }) => [pmc.actionBtn, { ...glassControlStyle(colors, 'selected'), opacity: pressed ? 0.7 : 1 }]}
             >
               <Feather name="navigation" size={13} color={colors.action} />
               <Text style={[pmc.actionBtnText, { color: colors.action }]}>Get Directions</Text>
@@ -613,7 +614,7 @@ export function LocationPicker({
           onPress={openMap}
           style={({ pressed }) => [
             lp.fullScreenTrigger,
-            { backgroundColor: colors.secondary, borderColor: hasPin ? accent : colors.border, opacity: pressed ? 0.82 : 1 },
+            { ...glassControlStyle(colors, hasPin ? 'success' : 'secondary'), opacity: pressed ? 0.82 : 1 },
           ]}
         >
           <View style={[lp.fullScreenTriggerIcon, { backgroundColor: accent + '18' }]}>
@@ -644,7 +645,7 @@ export function LocationPicker({
                 testID="close-fullscreen-location-map"
                 onPress={closeMap}
                 hitSlop={10}
-                style={[lp.fullHeaderButton, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+                style={[lp.fullHeaderButton, glassControlStyle(colors, 'secondary')]}
               >
                 <Feather name="arrow-left" size={18} color={colors.foreground} />
               </Pressable>
@@ -703,7 +704,7 @@ export function LocationPicker({
                     setConfirmed(false);
                   }}
                   hitSlop={8}
-                  style={lp.changeLocationButton}
+                  style={[lp.changeLocationButton, glassControlStyle(colors, 'secondary')]}
                 >
                   <Feather name="map-pin" size={14} color={brandColors.light.action} />
                   <Text style={lp.changeLocationText}>Change</Text>
@@ -724,7 +725,7 @@ export function LocationPicker({
             </View>
 
             <View style={[lp.fullFooter, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: insets.bottom + 12 }]}>
-              <Pressable onPress={closeMap} hitSlop={10} style={lp.skipButton}>
+              <Pressable onPress={closeMap} hitSlop={10} style={[lp.skipButton, glassControlStyle(colors, 'secondary')]}>
                 <Text style={[lp.skipButtonText, { color: colors.mutedForeground }]}>Skip</Text>
               </Pressable>
               <Pressable
@@ -747,7 +748,7 @@ export function LocationPicker({
                 }}
                 style={({ pressed }) => [
                   lp.doneButton,
-                  { backgroundColor: accent, opacity: pressed ? 0.82 : 1 },
+                  { ...glassControlStyle(colors, 'success'), opacity: pressed ? 0.82 : 1 },
                 ]}
               >
                 <Feather name="check" size={16} color="#ffffff" />
@@ -788,9 +789,9 @@ export function LocationPicker({
               setAccuracyMetres(null);
             }}
             hitSlop={10}
-            style={[lp.clearBtn, { backgroundColor: '#dc262618' }]}
+            style={[lp.clearBtn, glassControlStyle(colors, 'destructive')]}
           >
-            <Feather name="x" size={13} color="#dc2626" />
+            <Feather name="x" size={13} color={colors.destructiveForeground} />
           </Pressable>
         )}
       </View>
@@ -812,7 +813,7 @@ export function LocationPicker({
         {!acLoading && query.length > 0 && (
           <Pressable
             onPress={() => { setQuery(''); setSuggestions([]); setShowSuggestions(false); }}
-            hitSlop={8} style={{ marginRight: 12 }}
+            hitSlop={8} style={[glassControlStyle(colors, 'secondary'), { marginRight: 12 }]}
           >
             <Feather name="x-circle" size={15} color={colors.mutedForeground} />
           </Pressable>
@@ -832,6 +833,7 @@ export function LocationPicker({
                 onPress={() => onSelectSuggestion(item)}
                 style={({ pressed }) => [
                   lp.suggItem,
+                  glassControlStyle(colors, 'secondary'),
                   index < suggestions.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },
                   pressed && { backgroundColor: accent + '15' },
                 ]}
@@ -928,7 +930,7 @@ export function LocationPicker({
               </Text>
             )}
           </View>
-          <Pressable onPress={() => openGoogleMaps(latitude!, longitude!)} hitSlop={8}>
+          <Pressable onPress={() => openGoogleMaps(latitude!, longitude!)} hitSlop={8} style={glassControlStyle(colors, 'secondary')}>
             <Feather name="external-link" size={12} color={colors.mutedForeground} />
           </Pressable>
         </View>
@@ -941,20 +943,20 @@ export function LocationPicker({
           disabled={gpsLoading}
           style={({ pressed }) => [
             lp.btn,
-            { backgroundColor: accent, opacity: gpsLoading || pressed ? 0.75 : 1, flex: 1 },
+            { ...glassControlStyle(colors, 'action'), opacity: gpsLoading || pressed ? 0.75 : 1, flex: 1 },
           ]}
         >
           {gpsLoading
             ? <ActivityIndicator size="small" color="#ffffff" />
-            : <Feather name="crosshair" size={14} color="#ffffff" />}
-          <Text style={lp.btnText}>{gpsLoading ? 'Locating…' : 'Use My Location'}</Text>
+            : <Feather name="crosshair" size={14} color={colors.primaryActionForeground} />}
+          <Text style={[lp.btnText, { color: colors.primaryActionForeground }]}>{gpsLoading ? 'Locating…' : 'Use My Location'}</Text>
         </Pressable>
 
         <Pressable
           onPress={() => setShowManual(!showManual)}
           style={({ pressed }) => [
             lp.btn, lp.btnOutline,
-            { borderColor: accent + '55', backgroundColor: accent + '12', opacity: pressed ? 0.75 : 1 },
+            { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.75 : 1 },
           ]}
         >
           <Feather name="edit-3" size={14} color={accent} />
@@ -966,7 +968,7 @@ export function LocationPicker({
       {requireConfirm && hasPin && !confirmed && (
         <Pressable
           onPress={() => setConfirmed(true)}
-          style={({ pressed }) => [lp.confirmLocationBtn, { backgroundColor: '#16a34a', opacity: pressed ? 0.82 : 1 }]}
+          style={({ pressed }) => [lp.confirmLocationBtn, { ...glassControlStyle(colors, 'success'), opacity: pressed ? 0.82 : 1 }]}
         >
           <Feather name="check-circle" size={15} color="#ffffff" />
           <Text style={lp.confirmLocationText}>Confirm Location</Text>
@@ -1013,9 +1015,9 @@ export function LocationPicker({
             </View>
           </View>
           {manualErr ? <Text style={lp.manualErr}>{manualErr}</Text> : null}
-          <Pressable onPress={confirmManual} style={[lp.confirmBtn, { backgroundColor: accent }]}>
-            <Feather name="check" size={14} color="#ffffff" />
-            <Text style={lp.btnText}>Set Location</Text>
+          <Pressable onPress={confirmManual} style={[lp.confirmBtn, glassControlStyle(colors, 'success')]}>
+            <Feather name="check" size={14} color={colors.successForeground} />
+            <Text style={[lp.btnText, { color: colors.successForeground }]}>Set Location</Text>
           </Pressable>
         </View>
       )}

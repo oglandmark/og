@@ -2,6 +2,7 @@ import React from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
+import { glassControlStyle } from '@/components/glassControls';
 import {
   formatMapAreaRange,
   MAP_AREA_COLOR,
@@ -33,6 +34,7 @@ interface Props {
     border: string;
     foreground: string;
     mutedForeground: string;
+    actionForeground: string;
   };
 }
 export function MapAreaRange({ value, onChange, onChangeEnd, onApply, resultCount = 0, colors }: Props) {
@@ -139,14 +141,14 @@ export function MapAreaRange({ value, onChange, onChangeEnd, onApply, resultCoun
             accessibilityLabel={`Show ${resultCount} properties from this area in Explore`}
             style={({ pressed }) => [
               styles.applyButton,
-              { backgroundColor: colors.foreground, opacity: pressed ? 0.82 : 1 },
+               { ...glassControlStyle(colors, 'action'), opacity: pressed ? 0.82 : 1 },
             ]}
           >
-            <Feather name="list" size={14} color={colors.card} />
-            <Text style={[styles.applyText, { color: colors.card }]}>
+            <Feather name="list" size={14} color={colors.actionForeground} />
+            <Text style={[styles.applyText, { color: colors.actionForeground }]}>
               Show {resultCount} properties in Explore
             </Text>
-            <Feather name="arrow-right" size={14} color={colors.card} />
+            <Feather name="arrow-right" size={14} color={colors.actionForeground} />
           </Pressable>
         )}
     </View>

@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -192,30 +193,30 @@ export default function SiteVisitsScreen() {
             <View style={[sv.actions, { marginTop: 12 }]}>
               {canConfirm && (
                 <Pressable onPress={() => { void handleAction(visit, 'confirm'); }}
-                  style={[sv.actionBtn, { backgroundColor: colors.selectionBackground }]}>
+                  style={[sv.actionBtn, glassControlStyle(colors, 'success')]}>
                   <Feather name="check" size={12} color={colors.action} />
                   <Text style={[sv.actionBtnText, { color: colors.action }]}>{tr('visitActionConfirm')}</Text>
                 </Pressable>
               )}
               {canReschedule && (
                 <Pressable onPress={() => { void handleAction(visit, 'reschedule'); }}
-                  style={[sv.actionBtn, { backgroundColor: '#0891b218' }]}>
+                  style={[sv.actionBtn, glassControlStyle(colors, 'warning')]}>
                   <Feather name="calendar" size={12} color="#0891b2" />
                   <Text style={[sv.actionBtnText, { color: '#0891b2' }]}>{tr('visitActionReschedule')}</Text>
                 </Pressable>
               )}
               {canComplete && (
                 <Pressable onPress={() => { void handleAction(visit, 'complete'); }}
-                  style={[sv.actionBtn, { backgroundColor: colors.splashGold + '26' }]}>
+                  style={[sv.actionBtn, glassControlStyle(colors, 'success')]}>
                   <Feather name="check-circle" size={12} color={colors.goldForeground} />
                   <Text style={[sv.actionBtnText, { color: colors.goldForeground }]}>{tr('visitActionComplete')}</Text>
                 </Pressable>
               )}
               {canReject && (
                 <Pressable onPress={() => { void handleAction(visit, 'reject'); }}
-                  style={[sv.actionBtn, { backgroundColor: '#dc262618' }]}>
-                  <Feather name="x" size={12} color="#dc2626" />
-                  <Text style={[sv.actionBtnText, { color: '#dc2626' }]}>{tr('visitActionReject')}</Text>
+                  style={[sv.actionBtn, glassControlStyle(colors, 'destructive')]}>
+                  <Feather name="x" size={12} color={colors.destructiveForeground} />
+                  <Text style={[sv.actionBtnText, { color: colors.destructiveForeground }]}>{tr('visitActionReject')}</Text>
                 </Pressable>
               )}
             </View>
@@ -236,7 +237,7 @@ export default function SiteVisitsScreen() {
         {/* ── Header ────────────────────────────────────── */}
         <AnimatedReveal>
           <View style={[sv.header, { paddingTop: topPad + 12, paddingHorizontal: 20, paddingBottom: 4 }]}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={[sv.backBtn, { backgroundColor: colors.secondary }]}>
+            <Pressable onPress={() => router.back()} hitSlop={12} style={[sv.backBtn, glassControlStyle(colors, 'secondary')]}>
               <Feather name="arrow-left" size={20} color={colors.foreground} />
             </Pressable>
             <View style={{ flex: 1, marginLeft: 12 }}>
@@ -244,9 +245,9 @@ export default function SiteVisitsScreen() {
               <Text style={[sv.title, { color: colors.foreground }]}>{tr('siteVisitsTitle')}</Text>
             </View>
             <Pressable onPress={() => setShowForm(!showForm)}
-              style={[sv.addBtn, { backgroundColor: showForm ? colors.secondary : colors.action }]}>
-              <Feather name={showForm ? 'x' : 'plus'} size={14} color={showForm ? colors.foreground : '#ffffff'} />
-              <Text style={[sv.addBtnText, { color: showForm ? colors.foreground : '#ffffff' }]}>
+              style={[sv.addBtn, glassControlStyle(colors, showForm ? 'secondary' : 'gold')]}>
+              <Feather name={showForm ? 'x' : 'plus'} size={14} color={showForm ? colors.foreground : colors.primaryActionForeground} />
+              <Text style={[sv.addBtnText, { color: showForm ? colors.foreground : colors.primaryActionForeground }]}>
                 {showForm ? 'Cancel' : tr('addSiteVisitBtn')}
               </Text>
             </Pressable>
@@ -285,8 +286,8 @@ export default function SiteVisitsScreen() {
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
                     {projectNames.map((pn) => (
                       <Pressable key={pn} onPress={() => setFormProject(pn)}
-                        style={[sv.chip, { borderColor: formProject === pn ? colors.action : colors.border, backgroundColor: formProject === pn ? colors.action + '15' : colors.secondary }]}>
-                        <Text style={[sv.chipText, { color: formProject === pn ? colors.action : colors.mutedForeground }]}>{pn}</Text>
+                        style={[sv.chip, glassControlStyle(colors, formProject === pn ? 'selected' : 'secondary')]}>
+                        <Text style={[sv.chipText, { color: formProject === pn ? colors.selectionForeground : colors.mutedForeground }]}>{pn}</Text>
                       </Pressable>
                     ))}
                   </ScrollView>
@@ -323,8 +324,8 @@ export default function SiteVisitsScreen() {
               </View>
 
               <Pressable onPress={() => { void handleSaveVisit(); }} disabled={saving}
-                style={[sv.saveBtn, { backgroundColor: colors.action }]}>
-                <Text style={sv.saveBtnText}>{saving ? 'Saving...' : 'Save Visit'}</Text>
+                style={[sv.saveBtn, glassControlStyle(colors, 'gold')]}>
+                <Text style={[sv.saveBtnText, { color: colors.primaryActionForeground }]}>{saving ? 'Saving...' : 'Save Visit'}</Text>
               </Pressable>
             </View>
           </AnimatedReveal>
@@ -337,8 +338,8 @@ export default function SiteVisitsScreen() {
               const active = filter === f.key;
               return (
                 <Pressable key={f.key} onPress={() => setFilter(f.key)}
-                  style={[sv.tab, { borderColor: active ? colors.action : colors.border, backgroundColor: active ? colors.action + '1a' : 'transparent' }]}>
-                  <Text style={[sv.tabText, { color: active ? colors.action : colors.mutedForeground }]}>{f.label}</Text>
+                  style={[sv.tab, glassControlStyle(colors, active ? 'selected' : 'secondary')]}>
+                  <Text style={[sv.tabText, { color: active ? colors.selectionForeground : colors.mutedForeground }]}>{f.label}</Text>
                 </Pressable>
               );
             })}

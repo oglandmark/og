@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
@@ -125,8 +126,8 @@ function ProjectInquiryModal({
                 Your inquiry has been submitted. The developer will contact you within 24 hours. You can view it in Profile → My Inquiries.
               </Text>
               <Pressable onPress={() => { reset(); onClose(); }}
-                style={[iqm.successBtn, { backgroundColor: colors.action }]}>
-                <Text style={[iqm.successBtnText, { color: colors.actionForeground }]}>Done</Text>
+                style={[iqm.successBtn, glassControlStyle(colors, 'success')]}>
+                <Text style={[iqm.successBtnText, { color: colors.successForeground }]}>Done</Text>
               </Pressable>
             </View>
           ) : (
@@ -136,7 +137,7 @@ function ProjectInquiryModal({
                   <Text style={[iqm.title, { color: colors.foreground }]}>Project Inquiry</Text>
                   <Text style={[iqm.sub, { color: colors.mutedForeground }]} numberOfLines={1}>{projectName}</Text>
                 </View>
-                <Pressable onPress={onClose} style={[iqm.closeBtn, { backgroundColor: colors.secondary }]}>
+                <Pressable onPress={onClose} style={[iqm.closeBtn, glassControlStyle(colors, 'secondary')]}>
                   <Feather name="x" size={16} color={colors.mutedForeground} />
                 </Pressable>
               </View>
@@ -156,9 +157,9 @@ function ProjectInquiryModal({
                   placeholderTextColor={colors.mutedForeground}
                   style={[iqm.input, iqm.multiline, { backgroundColor: colors.secondary, borderColor: colors.border, color: colors.foreground }]} />
                 <Pressable onPress={handleSend} disabled={sending}
-                  style={[iqm.sendBtn, { backgroundColor: colors.action, opacity: sending ? 0.7 : 1 }]}>
-                  <Text style={[iqm.sendBtnText, { color: colors.actionForeground }]}>{sending ? 'Sending…' : 'Submit Inquiry'}</Text>
-                  <Feather name="send" size={15} color={colors.actionForeground} />
+                  style={[iqm.sendBtn, { ...glassControlStyle(colors, 'gold'), opacity: sending ? 0.7 : 1 }]}>
+                  <Text style={[iqm.sendBtnText, { color: colors.primaryActionForeground }]}>{sending ? 'Sending…' : 'Submit Inquiry'}</Text>
+                  <Feather name="send" size={15} color={colors.primaryActionForeground} />
                 </Pressable>
               </ScrollView>
             </>
@@ -336,14 +337,14 @@ export default function ProjectDetailScreen() {
 
         {/* top controls — zIndex above gallery tap */}
         <View style={[styles.heroTopRow, { top: topInset + 8, zIndex: 10 }]}>
-          <Pressable onPress={() => router.back()} style={styles.heroRound} hitSlop={10}>
+          <Pressable onPress={() => router.back()} style={[styles.heroRound, glassControlStyle(colors, 'action')]} hitSlop={10}>
             <Feather name="arrow-left" size={20} color="#ffffff" />
           </Pressable>
           <View style={styles.heroTopRight}>
-            <Pressable onPress={() => setSaved(!saved)} style={styles.heroRound} hitSlop={10}>
+            <Pressable onPress={() => setSaved(!saved)} style={[styles.heroRound, glassControlStyle(colors, saved ? 'gold' : 'action')]} hitSlop={10}>
               <Feather name="heart" size={19} color={saved ? '#e85c5c' : '#ffffff'} />
             </Pressable>
-            <Pressable onPress={handleShare} style={styles.heroRound} hitSlop={10}>
+            <Pressable onPress={handleShare} style={[styles.heroRound, glassControlStyle(colors, 'action')]} hitSlop={10}>
               <Feather name="share-2" size={19} color="#ffffff" />
             </Pressable>
           </View>
@@ -386,8 +387,8 @@ export default function ProjectDetailScreen() {
           <Text style={[styles.priceText, { color: colors.foreground }]} numberOfLines={1}>{priceText.replace('Starting from ', '')}</Text>
         </View>
         <Pressable onPress={() => setInquiryOpen(true)}
-          style={({ pressed }) => [styles.enquireBtn, { backgroundColor: colors.action, opacity: pressed ? 0.85 : 1 }]}>
-          <Text style={[styles.enquireBtnText, { color: colors.actionForeground }]}>Enquire Now</Text>
+          style={({ pressed }) => [styles.enquireBtn, { ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.85 : 1 }]}>
+          <Text style={[styles.enquireBtnText, { color: colors.primaryActionForeground }]}>Enquire Now</Text>
         </Pressable>
       </View>
 
@@ -404,14 +405,14 @@ export default function ProjectDetailScreen() {
           }},
           { icon: 'share-2', label: 'Share', onPress: handleShare },
         ].map((a: any) => (
-          <Pressable key={a.label} onPress={a.onPress} style={styles.quickAction}>
+          <Pressable key={a.label} onPress={a.onPress} style={[styles.quickAction, glassControlStyle(colors, a.highlight ? 'gold' : 'secondary')]}>
             <View style={[styles.quickIcon, {
-              backgroundColor: a.highlight ? colors.action : colors.card,
-              borderColor: a.highlight ? colors.action : colors.border,
+              backgroundColor: a.highlight ? colors.goldGlass : colors.card,
+              borderColor: a.highlight ? colors.goldGlassBorder : colors.border,
             }]}>
-              <Feather name={a.icon as any} size={16} color={a.highlight ? colors.actionForeground : colors.action} />
+              <Feather name={a.icon as any} size={16} color={a.highlight ? colors.primaryActionForeground : colors.action} />
             </View>
-            <Text style={[styles.quickLabel, { color: a.highlight ? colors.action : colors.mutedForeground, fontFamily: a.highlight ? 'Inter_600SemiBold' : 'Inter_400Regular' }]}>{a.label}</Text>
+            <Text style={[styles.quickLabel, { color: a.highlight ? colors.primaryActionForeground : colors.mutedForeground, fontFamily: a.highlight ? 'Inter_600SemiBold' : 'Inter_400Regular' }]}>{a.label}</Text>
           </Pressable>
         ))}
       </View>
@@ -485,7 +486,7 @@ export default function ProjectDetailScreen() {
             </View>
           </View>
           <Pressable onPress={() => router.push(`/dev-profile/${developerId}`)}
-            style={({ pressed }) => [styles.viewDevBtn, { borderColor: colors.action, opacity: pressed ? 0.8 : 1 }]}>
+             style={({ pressed }) => [styles.viewDevBtn, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.8 : 1 }]}>
             <Text style={[styles.viewDevText, { color: colors.action }]}>View Developer Profile</Text>
             <Feather name="arrow-right" size={13} color={colors.action} />
           </Pressable>
@@ -519,7 +520,7 @@ export default function ProjectDetailScreen() {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
                 {unitTypes.map((t) => (
                   <Pressable key={t} onPress={() => setUnitFilter(t)}
-                    style={[styles.filterTab, unitFilter === t ? { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 } : { backgroundColor: colors.secondary, borderColor: colors.border, borderWidth: 1 }]}>
+                    style={[styles.filterTab, glassControlStyle(colors, unitFilter === t ? 'selected' : 'secondary'), { borderWidth: unitFilter === t ? 1.5 : 1 }]}>
                     <Text style={[styles.filterTabText, { color: unitFilter === t ? colors.selectionForeground : colors.mutedForeground, fontWeight: unitFilter === t ? '600' : '400' }]}>{t}</Text>
                   </Pressable>
                 ))}
@@ -554,7 +555,7 @@ export default function ProjectDetailScreen() {
                   </Text>
                   {u.status === 'Available' && (
                     <Pressable onPress={() => setInquiryOpen(true)}
-                      style={({ pressed }) => [styles.unitEnquire, { borderColor: colors.action, opacity: pressed ? 0.8 : 1 }]}>
+                      style={({ pressed }) => [styles.unitEnquire, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.8 : 1 }]}>
                       <Text style={[styles.unitEnquireText, { color: colors.action }]}>Enquire about this unit</Text>
                     </Pressable>
                   )}
@@ -580,7 +581,7 @@ export default function ProjectDetailScreen() {
                 </View>
                 <Text style={[styles.unitPrice, { color: colors.foreground }]}>{u.price}</Text>
                 <Pressable onPress={() => setInquiryOpen(true)}
-                  style={({ pressed }) => [styles.unitEnquire, { borderColor: colors.action, opacity: pressed ? 0.8 : 1 }]}>
+                  style={({ pressed }) => [styles.unitEnquire, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.8 : 1 }]}>
                   <Text style={[styles.unitEnquireText, { color: colors.action }]}>Enquire about this unit</Text>
                 </Pressable>
               </View>
@@ -612,9 +613,9 @@ export default function ProjectDetailScreen() {
               ))}
             </View>
             <Pressable onPress={() => setInquiryOpen(true)}
-              style={({ pressed }) => [styles.payRequestBtn, { backgroundColor: colors.action, opacity: pressed ? 0.85 : 1 }]}>
-              <Text style={[styles.payRequestText, { color: colors.actionForeground }]}>Request Full Payment Plan</Text>
-              <Feather name="arrow-right" size={14} color={colors.actionForeground} />
+              style={({ pressed }) => [styles.payRequestBtn, { ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.85 : 1 }]}>
+              <Text style={[styles.payRequestText, { color: colors.primaryActionForeground }]}>Request Full Payment Plan</Text>
+              <Feather name="arrow-right" size={14} color={colors.primaryActionForeground} />
             </Pressable>
           </View>
         </AnimatedReveal>
@@ -711,7 +712,7 @@ export default function ProjectDetailScreen() {
             const lat = devProject?.latitude ?? 30.8136;
             const lng = devProject?.longitude ?? 73.4519;
             Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
-          }} style={({ pressed }) => [styles.directionsBtn, { borderColor: colors.action, opacity: pressed ? 0.8 : 1 }]}>
+           }} style={({ pressed }) => [styles.directionsBtn, { ...glassControlStyle(colors, 'selected'), opacity: pressed ? 0.8 : 1 }]}>
             <Feather name="navigation" size={14} color={colors.action} />
             <Text style={[styles.directionsBtnText, { color: colors.action }]}>Get Directions</Text>
           </Pressable>
@@ -747,7 +748,7 @@ export default function ProjectDetailScreen() {
     {/* ── INLINE GALLERY MODAL ─────────────────────────────────────── */}
     <Modal visible={galleryOpen} transparent animationType="none" onRequestClose={() => setGalleryOpen(false)} statusBarTranslucent>
       <View style={{ flex: 1, backgroundColor: '#000000ee', justifyContent: 'center', alignItems: 'center' }}>
-        <Pressable style={{ position: 'absolute', top: insets.top + 12, right: insets.right + 12, zIndex: 10, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }} onPress={() => setGalleryOpen(false)}>
+        <Pressable style={[{ position: 'absolute', top: insets.top + 12, right: insets.right + 12, zIndex: 10, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }, glassControlStyle(colors, 'action')]} onPress={() => setGalleryOpen(false)}>
           <Feather name="x" size={20} color="#ffffff" />
         </Pressable>
         <Image
@@ -760,11 +761,11 @@ export default function ProjectDetailScreen() {
         />
         {photos.length > 1 && (
           <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
-            <Pressable onPress={() => setGalleryIndex(Math.max(0, galleryIndex - 1))} style={{ padding: 10 }}>
+            <Pressable onPress={() => setGalleryIndex(Math.max(0, galleryIndex - 1))} style={[{ padding: 10 }, glassControlStyle(colors, 'action')]}>
               <Feather name="chevron-left" size={24} color="#ffffff" />
             </Pressable>
             <Text style={{ color: '#ffffff', fontFamily: 'Inter_400Regular', fontSize: 13, paddingTop: 12 }}>{galleryIndex + 1} / {photos.length}</Text>
-            <Pressable onPress={() => setGalleryIndex(Math.min(photos.length - 1, galleryIndex + 1))} style={{ padding: 10 }}>
+            <Pressable onPress={() => setGalleryIndex(Math.min(photos.length - 1, galleryIndex + 1))} style={[{ padding: 10 }, glassControlStyle(colors, 'action')]}>
               <Feather name="chevron-right" size={24} color="#ffffff" />
             </Pressable>
           </View>

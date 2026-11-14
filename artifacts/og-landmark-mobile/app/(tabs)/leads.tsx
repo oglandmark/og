@@ -8,6 +8,7 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
@@ -132,10 +133,10 @@ function DeveloperCRM() {
             <BrandMark />
             <Pressable
               onPress={() => router.push('/developer/add-dev-lead' as Parameters<typeof router.push>[0])}
-              style={[d.addBtn, { backgroundColor: colors.action }]}
+              style={[d.addBtn, glassControlStyle(colors, 'gold')]}
             >
-              <Feather name="plus" size={14} color="#ffffff" />
-              <Text style={d.addBtnText}>{tr('addDevLeadBtn')}</Text>
+              <Feather name="plus" size={14} color={colors.primaryActionForeground} />
+              <Text style={[d.addBtnText, { color: colors.primaryActionForeground }]}>{tr('addDevLeadBtn')}</Text>
             </Pressable>
           </View>
           <View style={{ paddingHorizontal: 20, marginTop: 16, marginBottom: 12 }}>
@@ -170,10 +171,7 @@ function DeveloperCRM() {
               const stageColor = t.key !== 'all' ? DEV_STAGE_CONFIG[t.key].color : colors.action;
               return (
                 <Pressable key={t.key} onPress={() => setFilter(t.key)}
-                  style={[d.tab, {
-                    borderColor: active ? stageColor : colors.border,
-                    backgroundColor: active ? stageColor + '1a' : 'transparent',
-                  }]}>
+                  style={[d.tab, glassControlStyle(colors, active ? 'selected' : 'secondary'), active && { borderColor: stageColor }]}>
                   <Text style={[d.tabText, { color: active ? stageColor : colors.mutedForeground }]}>
                     {t.label}
                   </Text>
@@ -277,18 +275,18 @@ function DeveloperCRM() {
                               style={[d.noteInput, { color: colors.foreground }]}
                             />
                             <View style={d.noteActions}>
-                              <Pressable onPress={() => setNoteEditId(null)} style={[d.noteCancelBtn, { borderColor: colors.border }]}>
+                              <Pressable onPress={() => setNoteEditId(null)} style={[d.noteCancelBtn, glassControlStyle(colors, 'secondary')]}>
                                 <Text style={[d.noteCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
                               </Pressable>
-                              <Pressable onPress={() => { void saveNote(lead.id); }} style={[d.noteSaveBtn, { backgroundColor: colors.action }]}>
-                                <Text style={d.noteSaveText}>Save</Text>
+                              <Pressable onPress={() => { void saveNote(lead.id); }} style={[d.noteSaveBtn, glassControlStyle(colors, 'gold')]}>
+                                <Text style={[d.noteSaveText, { color: colors.primaryActionForeground }]}>Save</Text>
                               </Pressable>
                             </View>
                           </View>
                         ) : lead.notes ? (
                           <Pressable
                             onPress={() => { setNoteText(lead.notes); setNoteEditId(lead.id); }}
-                            style={[d.noteRead, { backgroundColor: colors.secondary }]}
+                            style={[d.noteRead, glassControlStyle(colors, 'secondary')]}
                           >
                             <Text style={[d.noteLabel, { color: colors.mutedForeground }]}>NOTES</Text>
                             <Text style={[d.noteText, { color: colors.foreground }]}>{lead.notes}</Text>
@@ -298,17 +296,17 @@ function DeveloperCRM() {
 
                         {/* Action buttons */}
                         <View style={d.actions}>
-                          <Pressable onPress={() => dialNumber(lead.phone)} style={[d.actionBtn, { backgroundColor: colors.action }]}>
-                            <Feather name="phone" size={12} color="#ffffff" />
-                            <Text style={[d.actionBtnText, { color: '#ffffff' }]}>Call</Text>
+                          <Pressable onPress={() => dialNumber(lead.phone)} style={[d.actionBtn, glassControlStyle(colors, 'gold')]}>
+                            <Feather name="phone" size={12} color={colors.primaryActionForeground} />
+                            <Text style={[d.actionBtnText, { color: colors.primaryActionForeground }]}>Call</Text>
                           </Pressable>
-                          <Pressable onPress={() => openWhatsApp(lead.phone)} style={[d.actionBtn, { backgroundColor: '#25d36618' }]}>
+                          <Pressable onPress={() => openWhatsApp(lead.phone)} style={[d.actionBtn, { ...glassControlStyle(colors, 'secondary'), backgroundColor: '#25d36618' }]}>
                             <Feather name="message-circle" size={12} color="#25d366" />
                             <Text style={[d.actionBtnText, { color: '#25d366' }]}>WhatsApp</Text>
                           </Pressable>
                           <Pressable
                             onPress={() => { setNoteText(lead.notes); setNoteEditId(lead.id); }}
-                            style={[d.actionBtn, { backgroundColor: colors.secondary }]}
+                            style={[d.actionBtn, glassControlStyle(colors, 'secondary')]}
                           >
                             <Feather name="edit-3" size={12} color={colors.mutedForeground} />
                             <Text style={[d.actionBtnText, { color: colors.mutedForeground }]}>Note</Text>
@@ -325,9 +323,9 @@ function DeveloperCRM() {
                               <Pressable
                                 key={s}
                                 onPress={() => { void handleUpdateStage(lead.id, s); }}
-                                style={[d.stageChip, {
-                                  borderColor: active ? cfg.color : colors.border,
-                                  backgroundColor: active ? cfg.color + '1a' : 'transparent',
+                                style={[d.stageChip, glassControlStyle(colors, active ? 'selected' : 'secondary'), active && {
+                                  borderColor: cfg.color,
+                                  backgroundColor: cfg.color + '1a',
                                 }]}
                               >
                                 {active && <View style={[d.stageChipDot, { backgroundColor: cfg.color }]} />}
@@ -342,7 +340,7 @@ function DeveloperCRM() {
                         {/* Delete */}
                         <Pressable
                           onPress={() => handleDelete(lead.id, lead.name)}
-                          style={[d.deleteBtn, { borderColor: '#dc262633' }]}
+                          style={[d.deleteBtn, glassControlStyle(colors, 'secondary')]}
                         >
                           <Feather name="trash-2" size={12} color="#dc2626" />
                           <Text style={[d.deleteBtnText, { color: '#dc2626' }]}>Delete Lead</Text>
@@ -360,9 +358,9 @@ function DeveloperCRM() {
       {/* ── FAB ───────────────────────────────────────── */}
       <Pressable
         onPress={() => router.push('/developer/add-dev-lead' as Parameters<typeof router.push>[0])}
-        style={[d.fab, { backgroundColor: colors.action, bottom: botPad + 90 }]}
+        style={[d.fab, { ...glassControlStyle(colors, 'gold'), bottom: botPad + 90 }]}
       >
-        <Feather name="plus" size={24} color="#ffffff" />
+        <Feather name="plus" size={24} color={colors.primaryActionForeground} />
       </Pressable>
     </View>
   );
@@ -440,11 +438,11 @@ export default function LeadsScreen() {
             <BrandMark />
             <Pressable
               onPress={() => setFilter(filter === 'new' ? 'all' : 'new')}
-              style={({ pressed }) => [styles.newBadge, { backgroundColor: newCount > 0 ? colors.action : colors.secondary, opacity: pressed ? 0.75 : 1 }]}
+              style={({ pressed }) => [styles.newBadge, { ...glassControlStyle(colors, newCount > 0 ? 'selected' : 'secondary'), opacity: pressed ? 0.75 : 1 }]}
             >
-              <Feather name="bell" size={10} color={newCount > 0 ? colors.actionForeground : colors.mutedForeground} />
+              <Feather name="bell" size={10} color={newCount > 0 ? colors.selectionForeground : colors.mutedForeground} />
               {newCount > 0 ? (
-                <Text style={[styles.newBadgeText, { color: colors.actionForeground }]}>{newCount} {tr('newLeadsLabel')}</Text>
+                <Text style={[styles.newBadgeText, { color: colors.selectionForeground }]}>{newCount} {tr('newLeadsLabel')}</Text>
               ) : (
                 <Text style={[styles.newBadgeText, { color: colors.mutedForeground }]}>{tr('leadsTitle')}</Text>
               )}
@@ -476,8 +474,8 @@ export default function LeadsScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsRow}>
             {filterTabs.map((t) => (
               <Pressable key={t.key} onPress={() => setFilter(t.key)}
-                style={[styles.tabChip, { borderColor: filter === t.key ? colors.action : colors.border, backgroundColor: filter === t.key ? colors.action : 'transparent' }]}>
-                <Text style={[styles.tabChipText, { color: filter === t.key ? colors.actionForeground : colors.mutedForeground }]}>{t.label}</Text>
+                style={[styles.tabChip, glassControlStyle(colors, filter === t.key ? 'selected' : 'secondary')]}>
+                <Text style={[styles.tabChipText, { color: filter === t.key ? colors.selectionForeground : colors.mutedForeground }]}>{t.label}</Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -532,21 +530,21 @@ export default function LeadsScreen() {
                           <Text style={[styles.notesLabel, { color: colors.mutedForeground }]}>{tr('leadsNotes')}</Text>
                           <TextInput style={[styles.noteInput, { color: colors.foreground }]} value={noteText} onChangeText={setNoteText} multiline autoFocus placeholder="Add a note..." placeholderTextColor={colors.mutedForeground} />
                           <View style={styles.noteActions}>
-                            <Pressable onPress={() => setNoteEditId(null)} style={[styles.noteCancelBtn, { borderColor: colors.border }]}><Text style={[styles.noteCancelText, { color: colors.mutedForeground }]}>Cancel</Text></Pressable>
-                            <Pressable onPress={() => { void saveNote(lead.id); }} style={[styles.noteSaveBtn, { backgroundColor: colors.action }]}><Text style={[styles.noteSaveText, { color: colors.actionForeground }]}>Save Note</Text></Pressable>
+                            <Pressable onPress={() => setNoteEditId(null)} style={[styles.noteCancelBtn, glassControlStyle(colors, 'secondary')]}><Text style={[styles.noteCancelText, { color: colors.mutedForeground }]}>Cancel</Text></Pressable>
+                            <Pressable onPress={() => { void saveNote(lead.id); }} style={[styles.noteSaveBtn, glassControlStyle(colors, 'gold')]}><Text style={[styles.noteSaveText, { color: colors.primaryActionForeground }]}>Save Note</Text></Pressable>
                           </View>
                         </View>
                       ) : lead.notes ? (
-                        <Pressable onPress={() => openNote(lead)} style={[styles.notesBox, { backgroundColor: colors.secondary }]}>
+                        <Pressable onPress={() => openNote(lead)} style={[styles.notesBox, glassControlStyle(colors, 'secondary')]}>
                           <Text style={[styles.notesLabel, { color: colors.mutedForeground, textAlign: rtl }]}>{tr('leadsNotes')}</Text>
                           <Text style={[styles.notesText, { color: colors.foreground, textAlign: rtl }]}>{lead.notes}</Text>
                           <Text style={[styles.editNoteHint, { color: colors.action }]}>Tap to edit</Text>
                         </Pressable>
                       ) : null}
                       <View style={[styles.actions, isRTL && { flexDirection: 'row-reverse' }]}>
-                        <Pressable onPress={() => dialNumber(lead.phone)} style={[styles.actionBtn, { backgroundColor: colors.action }]}><Feather name="phone" size={13} color={colors.actionForeground} /><Text style={[styles.actionBtnText, { color: colors.actionForeground }]}>{tr('actionCall')}</Text></Pressable>
-                        <Pressable onPress={() => openWhatsApp(lead.phone)} style={[styles.actionBtn, { backgroundColor: '#25d36618' }]}><Feather name="message-circle" size={13} color="#25d366" /><Text style={[styles.actionBtnText, { color: '#25d366' }]}>WhatsApp</Text></Pressable>
-                        <Pressable onPress={() => openNote(lead)} style={[styles.actionBtn, { backgroundColor: colors.secondary }]}><Feather name="edit-3" size={13} color={colors.mutedForeground} /><Text style={[styles.actionBtnText, { color: colors.mutedForeground }]}>{tr('actionNote')}</Text></Pressable>
+                        <Pressable onPress={() => dialNumber(lead.phone)} style={[styles.actionBtn, glassControlStyle(colors, 'gold')]}><Feather name="phone" size={13} color={colors.primaryActionForeground} /><Text style={[styles.actionBtnText, { color: colors.primaryActionForeground }]}>{tr('actionCall')}</Text></Pressable>
+                        <Pressable onPress={() => openWhatsApp(lead.phone)} style={[styles.actionBtn, { ...glassControlStyle(colors, 'secondary'), backgroundColor: '#25d36618' }]}><Feather name="message-circle" size={13} color="#25d366" /><Text style={[styles.actionBtnText, { color: '#25d366' }]}>WhatsApp</Text></Pressable>
+                        <Pressable onPress={() => openNote(lead)} style={[styles.actionBtn, glassControlStyle(colors, 'secondary')]}><Feather name="edit-3" size={13} color={colors.mutedForeground} /><Text style={[styles.actionBtnText, { color: colors.mutedForeground }]}>{tr('actionNote')}</Text></Pressable>
                       </View>
                       <Text style={[styles.updateLabel, { color: colors.mutedForeground, textAlign: rtl }]}>{tr('updateStatus')}</Text>
                       <View style={styles.statusRow}>
@@ -555,7 +553,7 @@ export default function LeadsScreen() {
                           const cfg = statusConfig[s];
                           return (
                             <Pressable key={s} onPress={() => { void handleUpdateStatus(lead.id, s); }}
-                              style={[styles.statusChip, { borderColor: isActive ? cfg.color : colors.border, backgroundColor: isActive ? cfg.color + '1a' : 'transparent' }]}>
+                              style={[styles.statusChip, glassControlStyle(colors, isActive ? 'selected' : 'secondary'), isActive && { borderColor: cfg.color, backgroundColor: cfg.color + '1a' }]}>
                               {isActive && <View style={[styles.statusChipDot, { backgroundColor: cfg.color }]} />}
                               <Text style={[styles.statusChipText, { color: isActive ? cfg.color : colors.mutedForeground }]}>{cfg.label}</Text>
                             </Pressable>

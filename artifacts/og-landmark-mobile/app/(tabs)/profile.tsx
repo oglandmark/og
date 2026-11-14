@@ -14,6 +14,7 @@ import { BrandMark } from '@/components/BrandMark';
 import { NotificationBell } from '@/components/NotificationBell';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -72,7 +73,7 @@ function SlideSheet({
               <Text style={[sh.sheetTitle, { color: colors.foreground }]}>{title}</Text>
               {subtitle ? <Text style={[sh.sheetSub, { color: colors.mutedForeground }]}>{subtitle}</Text> : null}
             </View>
-            <Pressable onPress={onClose} style={[sh.closeBtn, { backgroundColor: colors.secondary }]}>
+            <Pressable onPress={onClose} style={[sh.closeBtn, glassControlStyle(colors, 'secondary')]}>
               <Feather name="x" size={16} color={colors.mutedForeground} />
             </Pressable>
           </View>
@@ -142,7 +143,7 @@ function InquiriesModal({
               When you tap "Arrange a viewing" on a property, your inquiry will appear here.
             </Text>
             <Pressable onPress={() => { onClose(); router.push('/explore'); }}
-              style={[im.exploreBtn, { backgroundColor: colors.action }]}>
+              style={[im.exploreBtn, glassControlStyle(colors, 'action')]}>
               <Text style={[im.exploreBtnText, { color: colors.actionForeground }]}>Browse Properties</Text>
               <Feather name="arrow-right" size={14} color={colors.actionForeground} />
             </Pressable>
@@ -196,16 +197,16 @@ function InquiriesModal({
                   {/* Actions */}
                   <View style={im.actionRow}>
                     <Pressable onPress={() => Linking.openURL('tel:+923272569000')}
-                      style={[im.actionBtn, { backgroundColor: colors.action }]}>
+                      style={[im.actionBtn, glassControlStyle(colors, 'action')]}>
                       <Feather name="phone" size={13} color={colors.actionForeground} />
                       <Text style={[im.actionBtnText, { color: colors.actionForeground }]}>Call Agent</Text>
                     </Pressable>
                     <Pressable onPress={() => Alert.alert('Delete Inquiry', 'Remove this inquiry from your list?', [
                       { text: 'Cancel', style: 'cancel' },
                       { text: 'Delete', style: 'destructive', onPress: () => { onDelete(inq.id); setExpanded(null); } },
-                    ])} style={[im.actionBtn, im.actionBtnDelete, { borderColor: '#dc262644', backgroundColor: '#dc262610' }]}>
-                      <Feather name="trash-2" size={13} color="#dc2626" />
-                      <Text style={[im.actionBtnText, { color: '#dc2626' }]}>Delete</Text>
+                    ])} style={[im.actionBtn, im.actionBtnDelete, glassControlStyle(colors, 'destructive')]}>
+                      <Feather name="trash-2" size={13} color={colors.destructiveForeground} />
+                      <Text style={[im.actionBtnText, { color: colors.destructiveForeground }]}>Delete</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -277,7 +278,7 @@ function VisitHistoryModal({
         <Pressable onPress={() => Alert.alert('Clear History', 'Remove all viewed properties?', [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Clear All', style: 'destructive', onPress: () => { onClearAll(); } },
-        ])} style={vh.clearBtn}>
+        ])} style={[vh.clearBtn, glassControlStyle(colors, 'secondary')]}>
           <Text style={[vh.clearBtnText, { color: colors.mutedForeground }]}>Clear all history</Text>
         </Pressable>
       )}
@@ -292,7 +293,7 @@ function VisitHistoryModal({
               Properties you open will appear here so you can easily find them again.
             </Text>
             <Pressable onPress={() => { onClose(); router.push('/explore'); }}
-              style={[vh.exploreBtn, { backgroundColor: colors.action }]}>
+              style={[vh.exploreBtn, glassControlStyle(colors, 'action')]}>
               <Text style={[vh.exploreBtnText, { color: colors.actionForeground }]}>Start Browsing</Text>
               <Feather name="arrow-right" size={14} color={colors.actionForeground} />
             </Pressable>
@@ -322,8 +323,8 @@ function VisitHistoryModal({
             </View>
             {/* Remove */}
             <Pressable onPress={(e) => { e.stopPropagation(); onRemove(v.propertyId); }}
-              hitSlop={10} style={vh.removeBtn}>
-              <Feather name="x" size={13} color={colors.mutedForeground} />
+              hitSlop={10} style={[vh.removeBtn, glassControlStyle(colors, 'destructive')]}>
+              <Feather name="x" size={13} color={colors.destructiveForeground} />
             </Pressable>
           </Pressable>
         ))}
@@ -387,7 +388,7 @@ function SavedSearchesModal({
               </Text>
             </View>
             <Pressable onPress={() => { onClose(); router.push('/explore'); }}
-              style={[ss.exploreBtn, { backgroundColor: colors.action }]}>
+              style={[ss.exploreBtn, glassControlStyle(colors, 'action')]}>
               <Text style={[ss.exploreBtnText, { color: colors.actionForeground }]}>Open Search</Text>
               <Feather name="search" size={14} color={colors.actionForeground} />
             </Pressable>
@@ -412,14 +413,14 @@ function SavedSearchesModal({
                 <Pressable onPress={() => {
                   onClose();
                   router.push({ pathname: '/explore', params: { search: s.query, ...s.filters } });
-                }} style={[ss.searchAgainBtn, { backgroundColor: colors.action }]}>
+                }} style={[ss.searchAgainBtn, glassControlStyle(colors, 'action')]}>
                   <Text style={[ss.searchAgainText, { color: colors.actionForeground }]}>Search</Text>
                 </Pressable>
                 <Pressable onPress={() => Alert.alert('Delete Search', `Remove "${s.label}"?`, [
                   { text: 'Cancel', style: 'cancel' },
                   { text: 'Delete', style: 'destructive', onPress: () => onDelete(s.id) },
-                ])} hitSlop={8} style={[ss.deleteBtn, { backgroundColor: '#dc262612' }]}>
-                  <Feather name="trash-2" size={13} color="#dc2626" />
+                ])} hitSlop={8} style={[ss.deleteBtn, glassControlStyle(colors, 'destructive')]}>
+                  <Feather name="trash-2" size={13} color={colors.destructiveForeground} />
                 </Pressable>
               </View>
             </View>
@@ -514,7 +515,7 @@ function MyVisitsModal({
               Tap "Schedule Visit" on any project or agent page to book a property viewing.
             </Text>
             <Pressable onPress={() => { onClose(); router.push('/explore'); }}
-              style={[mv.exploreBtn, { backgroundColor: colors.action }]}>
+              style={[mv.exploreBtn, glassControlStyle(colors, 'action')]}>
               <Text style={[mv.exploreBtnText, { color: colors.actionForeground }]}>Browse Properties</Text>
               <Feather name="arrow-right" size={14} color={colors.actionForeground} />
             </Pressable>
@@ -572,7 +573,7 @@ function MyVisitsModal({
                         <Text style={[mv.detailText, { color: colors.foreground }]}>{v.contactName}</Text>
                       </View>
                       {v.contactPhone ? (
-                        <Pressable style={mv.detailRow} onPress={() => Linking.openURL(`tel:${v.contactPhone}`)}>
+                        <Pressable style={[mv.detailRow, glassControlStyle(colors, 'secondary')]} onPress={() => Linking.openURL(`tel:${v.contactPhone}`)}>
                           <Feather name="phone" size={12} color={colors.action} />
                           <Text style={[mv.detailText, { color: colors.action }]}>{v.contactPhone}</Text>
                         </Pressable>
@@ -628,7 +629,7 @@ function Stat({ v, l, onPress, colors }: { v: string; l: string; onPress?: () =>
     </View>
   );
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.stat, { opacity: pressed ? 0.76 : 1 }]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.stat, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.76 : 1 }]}>
       <Text style={[styles.statValue, { color: colors.foreground }]}>{v}</Text>
       <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{l}</Text>
       <Feather name="chevron-up" size={10} color={colors.action} style={{ marginTop: 2 }} />
@@ -649,7 +650,7 @@ function ActivityTile({
   const col = accentColor ?? colors.action;
   return (
     <Pressable onPress={onPress}
-      style={({ pressed }) => [at.tile, { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.87 : 1 }]}>
+      style={({ pressed }) => [at.tile, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.87 : 1 }]}>
       <View style={[at.iconWrap, { backgroundColor: col + '14' }]}>
         <Feather name={icon} size={19} color={col} />
       </View>
@@ -682,7 +683,7 @@ function RowLink({
   const col = destructive ? '#dc2626' : iconColor ?? colors.action;
   return (
     <Pressable onPress={onPress} testID={testID}
-      style={({ pressed }) => [rl.row, { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.83 : 1 }]}>
+      style={({ pressed }) => [rl.row, { ...glassControlStyle(colors, destructive ? 'destructive' : 'secondary'), opacity: pressed ? 0.83 : 1 }]}>
       <View style={[rl.iconBox, { backgroundColor: col + '14' }]}>
         <Feather name={icon} size={17} color={col} />
       </View>
@@ -768,7 +769,7 @@ function NotificationSettingsPanel({
           disabled={busy}
           style={({ pressed }) => [
             notificationPanel.action,
-            { backgroundColor: colors.action, opacity: busy ? 0.55 : pressed ? 0.82 : 1 },
+            { ...glassControlStyle(colors, 'action'), opacity: busy ? 0.55 : pressed ? 0.82 : 1 },
           ]}
         >
           <Feather name={isBlocked ? 'settings' : 'bell'} size={14} color={colors.actionForeground} />
@@ -777,7 +778,7 @@ function NotificationSettingsPanel({
           </Text>
         </Pressable>
       ) : null}
-      <Pressable onPress={onManage} style={[notificationPanel.manageAction, { borderColor: colors.border }]}>
+      <Pressable onPress={onManage} style={[notificationPanel.manageAction, glassControlStyle(colors, 'secondary')]}>
         <Feather name="sliders" size={13} color={colors.action} />
         <Text style={[notificationPanel.manageText, { color: colors.action }]}>Manage alert preferences</Text>
       </Pressable>
@@ -820,7 +821,7 @@ function ProfileCompletionCard({
   return (
     <AnimatedReveal delay={110}>
       <Pressable onPress={() => router.push('/settings/account' as any)}
-        style={[pc.card, { backgroundColor: colors.card, borderColor: colors.action + '33' }]}>
+        style={[pc.card, glassControlStyle(colors, 'secondary')]}>
         {/* Header */}
         <View style={pc.header}>
           <View style={[pc.headerIcon, { backgroundColor: colors.action + '15' }]}>
@@ -913,7 +914,7 @@ function GuestScreen({
         <View style={gst.brandHeader}>
           <BrandMark animateOnWeb focused={focused} />
           <Pressable testID="guest-settings" accessibilityLabel="Settings" onPress={() => router.push('/settings' as any)}
-            style={[gst.settingsButton, { backgroundColor: colors.surfaceRaised, borderColor: colors.border }]}>
+            style={[gst.settingsButton, glassControlStyle(colors, 'secondary')]}>
             <Feather name="settings" size={19} color={colors.foreground} />
           </Pressable>
         </View>
@@ -936,13 +937,13 @@ function GuestScreen({
             Sign in to unlock your profile, saved searches, visits and instant alerts.
           </Text>
           <Pressable testID="guest-sign-in" onPress={() => router.push('/(auth)/login' as any)}
-            style={({ pressed }) => [gst.loginBtn, { backgroundColor: colors.splashGold, opacity: pressed ? 0.86 : 1 }]}>
+            style={({ pressed }) => [gst.loginBtn, { ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.86 : 1 }]}>
             <Text style={[gst.loginBtnText, { color: colors.goldForeground }]}>Sign In</Text>
             <Feather name="arrow-right" size={17} color={colors.goldForeground} />
           </Pressable>
           <Pressable testID="guest-create-account" onPress={() => router.push('/(auth)/signup' as any)}
             accessibilityRole="button" accessibilityLabel="Create Account"
-            style={({ pressed }) => [gst.registerBtn, { borderColor: colors.actionGlassBorder, opacity: pressed ? 0.82 : 1 }]}>
+            style={({ pressed }) => [gst.registerBtn, { ...glassControlStyle(colors, 'action'), opacity: pressed ? 0.82 : 1 }]}>
             <Text style={[gst.registerBtnText, { color: colors.splashWhite }]}>Create Account</Text>
           </Pressable>
         </View>
@@ -955,7 +956,7 @@ function GuestScreen({
             <Pressable key={item.label} accessibilityRole="button" accessibilityLabel={`${item.label}, sign in required`}
               testID={`guest-shortcut-${item.label.toLowerCase().replaceAll(' ', '-')}`}
               onPress={() => router.push('/(auth)/login' as any)}
-              style={({ pressed }) => [gst.activityRow, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, opacity: pressed ? 0.83 : 1 }]}>
+              style={({ pressed }) => [gst.activityRow, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.83 : 1 }]}>
               <View style={[gst.activityIcon, { backgroundColor: colors.muted }]}>
                 <Feather name={item.icon} size={22} color={colors.mutedForeground} />
               </View>
@@ -982,7 +983,7 @@ function GuestScreen({
               accessibilityRole="button"
               accessibilityLabel={item.label}
               onPress={() => router.push(item.route as any)}
-              style={({ pressed }) => [gst.activityRow, { backgroundColor: colors.surfaceRaised, borderColor: colors.border, opacity: pressed ? 0.83 : 1 }]}
+               style={({ pressed }) => [gst.activityRow, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.83 : 1 }]}
             >
               <View style={[gst.activityIcon, { backgroundColor: colors.muted }]}>
                 <Feather name={item.icon} size={21} color={colors.foreground} />
@@ -1310,7 +1311,7 @@ export default function ProfileScreen() {
           <View style={styles.headerActions}>
             <NotificationBell compact />
             <Pressable testID="profile-settings" accessibilityLabel="Settings" onPress={() => router.push('/settings' as any)}
-              style={[styles.iconButton, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+              style={[styles.iconButton, glassControlStyle(colors, 'secondary')]}>
               <Feather name="settings" size={18} color={colors.mutedForeground} />
             </Pressable>
           </View>
@@ -1354,7 +1355,7 @@ export default function ProfileScreen() {
           </View>
           {/* Edit */}
           <Pressable onPress={() => router.push('/settings/account' as any)}
-            style={({ pressed }) => [styles.editBtn, { opacity: pressed ? 0.8 : 1 }]}>
+             style={({ pressed }) => [styles.editBtn, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.8 : 1 }]}>
             <Feather name="edit-2" size={13} color={colors.action} />
             <Text style={[styles.editBtnText, { color: colors.action }]}>Edit</Text>
           </Pressable>

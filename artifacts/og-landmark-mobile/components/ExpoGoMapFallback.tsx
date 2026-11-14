@@ -3,6 +3,7 @@ import { Pressable, View, StyleSheet } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { Feather } from '@expo/vector-icons';
 import { MapViewModeControl, type MapViewMode } from '@/components/MapViewModeControl';
+import { glassControlStyle } from '@/components/glassControls';
 import { MAP_VIEW_MODE_SWITCH_SCRIPT } from '@/components/MapViewModes';
 import { useColors } from '@/hooks/useColors';
 import brandColors from '@/constants/colors';
@@ -469,7 +470,7 @@ export function ExpoGoMapFallback(props: Props) {
          <Pressable
            accessibilityRole="button"
            accessibilityLabel="Zoom in map"
-            style={[styles.zoomButton, { backgroundColor: colors.mapGlass, borderColor: colors.mapGlassBorder }]}
+             style={[styles.zoomButton, glassControlStyle(colors, 'secondary')]}
            onPress={() => zoomBy(1)}
          >
             <Feather name="plus" size={20} color={colors.foreground} />
@@ -477,7 +478,7 @@ export function ExpoGoMapFallback(props: Props) {
          <Pressable
            accessibilityRole="button"
            accessibilityLabel="Zoom out map"
-            style={[styles.zoomButton, { backgroundColor: colors.mapGlass, borderColor: colors.mapGlassBorder }]}
+             style={[styles.zoomButton, glassControlStyle(colors, 'secondary')]}
            onPress={() => zoomBy(-1)}
          >
             <Feather name="minus" size={20} color={colors.foreground} />

@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import brandColors from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { saveSiteVisit, newVisitId as newSiteVisitId } from '@/lib/siteVisitStore';
 import { saveAgentVisit, newVisitId as newAgentVisitId } from '@/lib/agentVisitsStore';
 
@@ -215,7 +216,7 @@ export default function VisitSchedulerModal({
                 Check Profile → My Visits for status updates. The {providerType} will confirm or reschedule your visit.
               </Text>
 
-              <Pressable onPress={handleClose} style={[vs.doneBtn, { backgroundColor: colors.action }]}>
+              <Pressable onPress={handleClose} style={[vs.doneBtn, glassControlStyle(colors, 'action')]}>
                 <Text style={[vs.doneBtnText, { color: colors.actionForeground }]}>Done</Text>
               </Pressable>
             </ScrollView>
@@ -228,7 +229,7 @@ export default function VisitSchedulerModal({
                   <Text style={[vs.title, { color: colors.foreground }]}>Schedule a Visit</Text>
                   <Text style={[vs.subtitle, { color: colors.mutedForeground }]} numberOfLines={1}>{projectTitle}</Text>
                 </View>
-                <Pressable onPress={handleClose} style={[vs.closeBtn, { backgroundColor: colors.secondary }]}>
+                <Pressable onPress={handleClose} style={[vs.closeBtn, glassControlStyle(colors, 'secondary')]}>
                   <Feather name="x" size={16} color={colors.mutedForeground} />
                 </Pressable>
               </View>
@@ -265,8 +266,8 @@ export default function VisitSchedulerModal({
                         <Pressable key={d.iso} onPress={() => setSelectedDate(d.iso)}
                           style={[vs.dateChip,
                             selected
-                              ? { backgroundColor: colors.action, borderColor: colors.action }
-                              : { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+                              ? glassControlStyle(colors, 'selected')
+                              : glassControlStyle(colors, 'secondary')]}>
                           <Text style={[vs.dateChipDow, { color: selected ? colors.actionForeground : colors.mutedForeground }]}>{d.dow}</Text>
                           <Text style={[vs.dateChipDay, { color: selected ? colors.actionForeground : colors.foreground }]}>{d.label}</Text>
                         </Pressable>
@@ -285,8 +286,8 @@ export default function VisitSchedulerModal({
                         <Pressable key={t} onPress={() => setSelectedTime(t)}
                           style={[vs.timeSlot,
                             selected
-                              ? { backgroundColor: colors.action, borderColor: colors.action }
-                              : { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+                              ? glassControlStyle(colors, 'selected')
+                              : glassControlStyle(colors, 'secondary')]}>
                           <Text style={[vs.timeSlotText, { color: selected ? colors.actionForeground : colors.foreground }]}>{t}</Text>
                         </Pressable>
                       );
@@ -299,12 +300,12 @@ export default function VisitSchedulerModal({
                   <Text style={[vs.sectionLabel, { color: colors.mutedForeground }]}>NUMBER OF VISITORS</Text>
                   <View style={vs.stepperRow}>
                     <Pressable onPress={() => setVisitors((v) => Math.max(1, v - 1))}
-                      style={[vs.stepperBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+                      style={[vs.stepperBtn, glassControlStyle(colors, 'secondary')]}>
                       <Feather name="minus" size={16} color={colors.foreground} />
                     </Pressable>
                     <Text style={[vs.stepperValue, { color: colors.foreground }]}>{visitors}</Text>
                     <Pressable onPress={() => setVisitors((v) => Math.min(10, v + 1))}
-                      style={[vs.stepperBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+                      style={[vs.stepperBtn, glassControlStyle(colors, 'secondary')]}>
                       <Feather name="plus" size={16} color={colors.foreground} />
                     </Pressable>
                     <Text style={[vs.stepperLabel, { color: colors.mutedForeground }]}>
@@ -327,7 +328,7 @@ export default function VisitSchedulerModal({
 
                 {/* ── Submit ───────────────────────────────────────────── */}
                 <Pressable onPress={handleSubmit} disabled={submitting}
-                  style={({ pressed }) => [vs.submitBtn, { backgroundColor: colors.action, opacity: submitting || pressed ? 0.7 : 1 }]}>
+                  style={({ pressed }) => [vs.submitBtn, { ...glassControlStyle(colors, 'action'), opacity: submitting || pressed ? 0.7 : 1 }]}>
                   <Feather name="calendar" size={16} color={colors.actionForeground} />
                   <Text style={[vs.submitBtnText, { color: colors.actionForeground }]}>
                     {submitting ? 'Scheduling…' : 'Request Visit'}

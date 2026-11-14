@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useColors } from '@/hooks/useColors';
 import brandColors from '@/constants/colors';
 import { getAgentAdminThreads, sendAgentAdminMessage, type AgentAdminThread } from '@/lib/api';
+import { glassControlStyle } from '@/components/glassControls';
 
 export function AgentAdminInbox({ admin = false }: { admin?: boolean }) {
   const colors = useColors();
@@ -63,21 +64,21 @@ export function AgentAdminInbox({ admin = false }: { admin?: boolean }) {
     <KeyboardAvoidingView style={[s.root, { backgroundColor: colors.background }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={[s.header, { backgroundColor: colors.action, paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) + 14 }]}>
         <View style={s.headerRow}>
-          <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back" style={s.backButton}><Feather name="arrow-left" size={19} color="#fff" /></Pressable>
+          <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back" style={[s.backButton, glassControlStyle(colors, 'action')]}><Feather name="arrow-left" size={19} color="#fff" /></Pressable>
           <View style={{ flex: 1 }}>
             <Text style={s.eyebrow}>{admin ? 'ADMIN SUPPORT' : 'AGENT PORTAL'}</Text>
             <Text style={s.title}>{admin ? 'Agent messages' : 'Message Admin'}</Text>
           </View>
-          <Pressable onPress={() => void load()} accessibilityRole="button" accessibilityLabel="Refresh messages" style={s.backButton}><Feather name="refresh-cw" size={17} color="#fff" /></Pressable>
+          <Pressable onPress={() => void load()} accessibilityRole="button" accessibilityLabel="Refresh messages" style={[s.backButton, glassControlStyle(colors, 'action')]}><Feather name="refresh-cw" size={17} color="#fff" /></Pressable>
         </View>
         <Text style={s.subtitle}>{admin ? 'Reply to Agents and keep the conversation in one place.' : 'Contact the OG Landmark Admin team. Replies will appear here.'}</Text>
       </View>
       {admin && (
         <ScrollView horizontal style={[s.threadStrip, { borderBottomColor: colors.border }]} contentContainerStyle={s.threadStripContent}>
           {threads.map((thread) => (
-            <Pressable key={thread.id} onPress={() => setSelectedId(thread.id)} style={[s.threadChip, { backgroundColor: thread.id === selectedId ? colors.action : colors.card, borderColor: colors.border }]}>
-              <Text style={{ color: thread.id === selectedId ? '#fff' : colors.foreground, fontWeight: '700' }}>{thread.agentName}</Text>
-              <Text numberOfLines={1} style={{ color: thread.id === selectedId ? '#ffffffcc' : colors.mutedForeground, fontSize: 11, marginTop: 3 }}>{thread.lastMessage || thread.agentEmail}</Text>
+            <Pressable key={thread.id} onPress={() => setSelectedId(thread.id)} style={[s.threadChip, glassControlStyle(colors, thread.id === selectedId ? 'selected' : 'secondary')]}>
+              <Text style={{ color: thread.id === selectedId ? colors.selectionForeground : colors.foreground, fontWeight: '700' }}>{thread.agentName}</Text>
+              <Text numberOfLines={1} style={{ color: thread.id === selectedId ? colors.selectionForeground : colors.mutedForeground, fontSize: 11, marginTop: 3 }}>{thread.lastMessage || thread.agentEmail}</Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -100,7 +101,7 @@ export function AgentAdminInbox({ admin = false }: { admin?: boolean }) {
       {!!error && <Text style={[s.error, { color: colors.destructive }]}>{error}</Text>}
       <View style={[s.composer, { borderTopColor: colors.border, backgroundColor: colors.card, paddingBottom: insets.bottom + 10 }]}>
         <TextInput value={text} onChangeText={setText} multiline maxLength={4000} placeholder="Write a message…" placeholderTextColor={colors.mutedForeground} style={[s.input, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]} />
-        <Pressable accessibilityRole="button" accessibilityLabel="Send message" disabled={!text.trim() || sending || (admin && !active)} onPress={() => void send()} style={[s.send, { backgroundColor: colors.action, opacity: !text.trim() || sending || (admin && !active) ? 0.5 : 1 }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Send message" disabled={!text.trim() || sending || (admin && !active)} onPress={() => void send()} style={[s.send, { ...glassControlStyle(colors, 'action'), opacity: !text.trim() || sending || (admin && !active) ? 0.5 : 1 }]}>
           <Feather name="send" size={17} color="#fff" />
         </Pressable>
       </View>

@@ -13,6 +13,7 @@ import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import { GlassCard } from '@/components/GlassCard';
 import { properties } from '@/lib/properties';
+import { glassControlStyle } from '@/components/glassControls';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Colors = Record<string, any>;
@@ -535,7 +536,7 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
           accessibilityRole="button"
           accessibilityLabel="View all properties"
           hitSlop={8}
-          style={[mod.viewAll, { backgroundColor: colors.action + '12', borderColor: colors.action + '38' }]}
+          style={[mod.viewAll, glassControlStyle(colors, 'secondary')]}
         >
           <Text style={[mod.viewAllText, { color: colors.action }]}>View All</Text>
           <Feather name="arrow-right" size={12} color={colors.action} />
@@ -561,9 +562,7 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
               }}
               style={[
                 mod.catChip,
-                sel
-                  ? { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 2 }
-                  : { backgroundColor: colors.glassOverlay, borderColor: colors.glassBorder },
+                 glassControlStyle(colors, sel ? 'selected' : 'secondary'),
               ]}
             >
               <View style={[
@@ -613,9 +612,7 @@ export function BrowseDiscoveryModule({ transaction, selectedLocation, colors, r
               onPress={() => goToTab(tab)}
               style={[
                 mod.tabPill,
-                sel
-                  ? { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }
-                  : { backgroundColor: 'transparent' },
+                 glassControlStyle(colors, sel ? 'selected' : 'secondary'),
               ]}
             >
               <Text style={[

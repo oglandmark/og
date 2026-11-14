@@ -13,6 +13,7 @@ import { LocalizedText as Text } from '@/components/LocalizedText';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { propertyImages, Property } from '@/lib/properties';
 
 export function PropertyGalleryModal({
@@ -81,7 +82,7 @@ export function PropertyGalleryModal({
           </Text>
           <Pressable
             onPress={onClose}
-            style={[styles.closeButton, { backgroundColor: colors.action, borderColor: colors.action }]}
+            style={[styles.closeButton, glassControlStyle(colors, 'action')]}
             accessibilityLabel="Close full screen gallery"
             hitSlop={8}
           >
@@ -92,7 +93,7 @@ export function PropertyGalleryModal({
         {currentIndex > 0 && (
           <Pressable
             onPress={() => moveTo(currentIndex - 1)}
-            style={[styles.arrowButton, styles.leftArrow, { backgroundColor: colors.action, borderColor: colors.action }]}
+            style={[styles.arrowButton, styles.leftArrow, glassControlStyle(colors, 'action')]}
             accessibilityLabel="View previous property image"
             hitSlop={8}
           >
@@ -102,7 +103,7 @@ export function PropertyGalleryModal({
         {currentIndex < images.length - 1 && (
           <Pressable
             onPress={() => moveTo(currentIndex + 1)}
-            style={[styles.arrowButton, styles.rightArrow, { backgroundColor: colors.action, borderColor: colors.action }]}
+            style={[styles.arrowButton, styles.rightArrow, glassControlStyle(colors, 'action')]}
             accessibilityLabel="View next property image"
             hitSlop={8}
           >

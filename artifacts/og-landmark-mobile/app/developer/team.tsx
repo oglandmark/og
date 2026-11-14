@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import brandColors from '@/constants/colors';
@@ -130,7 +131,7 @@ export default function TeamScreen() {
         {/* ── Header ────────────────────────────────────── */}
         <AnimatedReveal>
           <View style={[tm.header, { paddingTop: topPad + 12, paddingHorizontal: 20 }]}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={[tm.backBtn, { backgroundColor: colors.secondary }]}>
+            <Pressable onPress={() => router.back()} hitSlop={12} style={[tm.backBtn, glassControlStyle(colors, 'secondary')]}>
               <Feather name="arrow-left" size={20} color={colors.foreground} />
             </Pressable>
             <View style={{ flex: 1, marginLeft: 12 }}>
@@ -139,10 +140,10 @@ export default function TeamScreen() {
             </View>
             <Pressable
               onPress={() => { setShowForm(!showForm); resetForm(); }}
-              style={[tm.addBtn, { backgroundColor: showForm ? colors.secondary : colors.action }]}
+              style={[tm.addBtn, glassControlStyle(colors, showForm ? 'secondary' : 'gold')]}
             >
-              <Feather name={showForm ? 'x' : 'user-plus'} size={14} color={showForm ? colors.foreground : '#ffffff'} />
-              <Text style={[tm.addBtnText, { color: showForm ? colors.foreground : '#ffffff' }]}>
+              <Feather name={showForm ? 'x' : 'user-plus'} size={14} color={showForm ? colors.foreground : colors.primaryActionForeground} />
+              <Text style={[tm.addBtnText, { color: showForm ? colors.foreground : colors.primaryActionForeground }]}>
                 {showForm ? 'Cancel' : tr('addTeamMemberBtn')}
               </Text>
             </Pressable>
@@ -198,10 +199,7 @@ export default function TeamScreen() {
                     const rc = roleColor(r);
                     return (
                       <Pressable key={r} onPress={() => setRole(r)}
-                        style={[tm.roleChip, {
-                          borderColor: role === r ? rc.text : colors.border,
-                          backgroundColor: role === r ? rc.bg : colors.secondary,
-                        }]}>
+                        style={[tm.roleChip, glassControlStyle(colors, role === r ? 'selected' : 'secondary'), { borderColor: role === r ? rc.text : colors.border }]}>
                         <Text style={[tm.roleChipText, { color: role === r ? rc.text : colors.mutedForeground }]}>{r}</Text>
                       </Pressable>
                     );
@@ -210,9 +208,9 @@ export default function TeamScreen() {
               </View>
 
               <Pressable onPress={() => { void handleSave(); }} disabled={saving}
-                style={[tm.saveBtn, { backgroundColor: colors.action }]}>
-                <Feather name="check" size={15} color="#ffffff" />
-                <Text style={tm.saveBtnText}>{saving ? 'Saving...' : tr('saveTeamMemberBtn')}</Text>
+                style={[tm.saveBtn, glassControlStyle(colors, 'gold')]}>
+                <Feather name="check" size={15} color={colors.primaryActionForeground} />
+                <Text style={[tm.saveBtnText, { color: colors.primaryActionForeground }]}>{saving ? 'Saving...' : tr('saveTeamMemberBtn')}</Text>
               </Pressable>
             </View>
           </AnimatedReveal>
@@ -228,9 +226,9 @@ export default function TeamScreen() {
                 </View>
                 <Text style={[tm.emptyTitle, { color: colors.foreground }]}>{tr('noTeamYet')}</Text>
                 <Text style={[tm.emptyDesc, { color: colors.mutedForeground }]}>{tr('noTeamDesc')}</Text>
-                <Pressable onPress={() => setShowForm(true)} style={[tm.emptyBtn, { backgroundColor: colors.action }]}>
-                  <Feather name="user-plus" size={14} color="#ffffff" />
-                  <Text style={tm.emptyBtnText}>{tr('addTeamMemberBtn')}</Text>
+                <Pressable onPress={() => setShowForm(true)} style={[tm.emptyBtn, glassControlStyle(colors, 'gold')]}>
+                  <Feather name="user-plus" size={14} color={colors.primaryActionForeground} />
+                  <Text style={[tm.emptyBtnText, { color: colors.primaryActionForeground }]}>{tr('addTeamMemberBtn')}</Text>
                 </Pressable>
               </View>
             </AnimatedReveal>
@@ -271,16 +269,16 @@ export default function TeamScreen() {
                     {/* Actions */}
                     <View style={[tm.memberActions, { borderTopColor: colors.border }]}>
                       <Pressable onPress={() => { void handleToggle(m.id); }}
-                        style={[tm.memberActionBtn, { backgroundColor: m.active ? colors.secondary : brandColors.light.selectionBackground }]}>
+                        style={[tm.memberActionBtn, glassControlStyle(colors, m.active ? 'secondary' : 'selected')]}>
                         <Feather name={m.active ? 'pause-circle' : 'play-circle'} size={13} color={m.active ? colors.mutedForeground : colors.action} />
                         <Text style={[tm.memberActionText, { color: m.active ? colors.mutedForeground : colors.action }]}>
                           {m.active ? tr('teamInactiveLabel') : tr('teamActiveLabel')}
                         </Text>
                       </Pressable>
                       <Pressable onPress={() => handleDelete(m.id, m.name)}
-                        style={[tm.memberActionBtn, { backgroundColor: '#dc262610' }]}>
-                        <Feather name="user-x" size={13} color="#dc2626" />
-                        <Text style={[tm.memberActionText, { color: '#dc2626' }]}>Remove</Text>
+                        style={[tm.memberActionBtn, glassControlStyle(colors, 'destructive')]}>
+                        <Feather name="user-x" size={13} color={colors.destructiveForeground} />
+                        <Text style={[tm.memberActionText, { color: colors.destructiveForeground }]}>Remove</Text>
                       </Pressable>
                     </View>
                   </View>

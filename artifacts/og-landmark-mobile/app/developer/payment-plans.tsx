@@ -13,6 +13,7 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -86,7 +87,7 @@ function PlanCard({
         </View>
         <View style={{ gap: 6, alignItems: 'flex-end' }}>
           <Text style={[pc.totalPrice, { color: colors.foreground }]}>PKR {fmtPKR(plan.totalPrice)}</Text>
-          <Pressable onPress={() => setOpen(!open)} hitSlop={10}>
+          <Pressable onPress={() => setOpen(!open)} hitSlop={10} style={glassControlStyle(colors, 'secondary')}>
             <Feather name={open ? 'chevron-up' : 'chevron-down'} size={16} color={colors.mutedForeground} />
           </Pressable>
         </View>
@@ -133,7 +134,7 @@ function PlanCard({
             <Text style={[pc.breakValue, { color: colors.action, fontFamily: 'Inter_700Bold' }]}>PKR {fmtPKR(plan.totalPrice)}</Text>
           </View>
 
-          <Pressable onPress={onDelete} style={[pc.deleteBtn, { borderColor: '#dc262633' }]}>
+          <Pressable onPress={onDelete} style={[pc.deleteBtn, glassControlStyle(colors, 'destructive')]}>
             <Feather name="trash-2" size={12} color="#dc2626" />
             <Text style={[pc.deleteBtnText, { color: '#dc2626' }]}>Delete Plan</Text>
           </Pressable>
@@ -233,7 +234,7 @@ export default function PaymentPlansScreen() {
         {/* ── Header ────────────────────────────────────── */}
         <AnimatedReveal>
           <View style={[pp.header, { paddingTop: topPad + 12, paddingHorizontal: 20 }]}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={[pp.backBtn, { backgroundColor: colors.secondary }]}>
+            <Pressable onPress={() => router.back()} hitSlop={12} style={[pp.backBtn, glassControlStyle(colors, 'secondary')]}>
               <Feather name="arrow-left" size={20} color={colors.foreground} />
             </Pressable>
             <View style={{ flex: 1, marginLeft: 12 }}>
@@ -241,9 +242,9 @@ export default function PaymentPlansScreen() {
               <Text style={[pp.title, { color: colors.foreground }]}>{tr('paymentPlansTitle')}</Text>
             </View>
             <Pressable onPress={() => { setShowForm(!showForm); setForm(blankPlan(user?.id ?? '')); }}
-              style={[pp.addBtn, { backgroundColor: showForm ? colors.secondary : colors.action }]}>
-              <Feather name={showForm ? 'x' : 'plus'} size={14} color={showForm ? colors.foreground : '#ffffff'} />
-              <Text style={[pp.addBtnText, { color: showForm ? colors.foreground : '#ffffff' }]}>
+              style={[pp.addBtn, glassControlStyle(colors, showForm ? 'secondary' : 'gold')]}>
+              <Feather name={showForm ? 'x' : 'plus'} size={14} color={showForm ? colors.foreground : colors.primaryActionForeground} />
+              <Text style={[pp.addBtnText, { color: showForm ? colors.foreground : colors.primaryActionForeground }]}>
                 {showForm ? 'Cancel' : tr('addPaymentPlanBtn')}
               </Text>
             </Pressable>
@@ -266,8 +267,8 @@ export default function PaymentPlansScreen() {
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
                     {projectNames.map((p) => (
                       <Pressable key={p.id} onPress={() => setF({ projectId: p.id, projectName: p.name })}
-                        style={[pp.chip, { borderColor: form.projectId === p.id ? colors.action : colors.border, backgroundColor: form.projectId === p.id ? colors.action + '15' : colors.secondary }]}>
-                        <Text style={[pp.chipText, { color: form.projectId === p.id ? colors.action : colors.mutedForeground }]}>{p.name}</Text>
+                        style={[pp.chip, glassControlStyle(colors, form.projectId === p.id ? 'selected' : 'secondary')]}>
+                        <Text style={[pp.chipText, { color: form.projectId === p.id ? colors.selectionForeground : colors.mutedForeground }]}>{p.name}</Text>
                       </Pressable>
                     ))}
                   </ScrollView>
@@ -323,9 +324,9 @@ export default function PaymentPlansScreen() {
               </View>
 
               <Pressable onPress={() => { void handleSave(); }} disabled={saving}
-                style={[pp.saveBtn, { backgroundColor: colors.action }]}>
-                <Feather name="check" size={16} color="#ffffff" />
-                <Text style={pp.saveBtnText}>{saving ? 'Saving...' : tr('savePlanBtn')}</Text>
+                style={[pp.saveBtn, glassControlStyle(colors, 'gold')]}>
+                <Feather name="check" size={16} color={colors.primaryActionForeground} />
+                <Text style={[pp.saveBtnText, { color: colors.primaryActionForeground }]}>{saving ? 'Saving...' : tr('savePlanBtn')}</Text>
               </Pressable>
             </View>
           </AnimatedReveal>
@@ -340,9 +341,9 @@ export default function PaymentPlansScreen() {
               </View>
               <Text style={[pp.emptyTitle, { color: colors.foreground }]}>{tr('noPlansYet')}</Text>
               <Text style={[pp.emptyDesc, { color: colors.mutedForeground }]}>{tr('noPlansDesc')}</Text>
-              <Pressable onPress={() => setShowForm(true)} style={[pp.emptyBtn, { backgroundColor: colors.action }]}>
-                <Feather name="plus" size={14} color="#ffffff" />
-                <Text style={pp.emptyBtnText}>{tr('addPaymentPlanBtn')}</Text>
+              <Pressable onPress={() => setShowForm(true)} style={[pp.emptyBtn, glassControlStyle(colors, 'gold')]}>
+                <Feather name="plus" size={14} color={colors.primaryActionForeground} />
+                <Text style={[pp.emptyBtnText, { color: colors.primaryActionForeground }]}>{tr('addPaymentPlanBtn')}</Text>
               </Pressable>
             </View>
           </AnimatedReveal>

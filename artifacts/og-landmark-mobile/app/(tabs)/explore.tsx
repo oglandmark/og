@@ -18,6 +18,7 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { PropertyCard } from '@/components/PropertyCard';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
+import { glassControlStyle } from '@/components/glassControls';
 import { properties, apiPropertyToProperty } from '@/lib/properties';
 import {
   filterDeletedDemoProjects,
@@ -1065,7 +1066,7 @@ export default function ExploreScreen() {
             <Pressable
               key={p}
               onPress={() => setFilters((prev) => ({ ...prev, purpose: p }))}
-               style={({ pressed }) => [ex.purposeTab, filters.purpose === p && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }, { opacity: pressed ? 0.74 : 1 }]}
+               style={({ pressed }) => [ex.purposeTab, glassControlStyle(colors, filters.purpose === p ? 'selected' : 'secondary'), { borderWidth: filters.purpose === p ? 1.5 : 1, opacity: pressed ? 0.74 : 1 }]}
             >
                <Text style={[ex.purposeTabText, { color: filters.purpose === p ? colors.selectionForeground : colors.mutedForeground, fontWeight: filters.purpose === p ? '600' : '400' }]}>{p}</Text>
             </Pressable>
@@ -1097,14 +1098,14 @@ export default function ExploreScreen() {
               style={[ex.searchInput, { color: colors.foreground }]}
             />
             {query.length > 0 && (
-              <Pressable onPress={() => { setQuery(''); setSearchedPlace(null); setMapAreaSearch(null); setPlaceSuggestions([]); }} hitSlop={8}>
+              <Pressable onPress={() => { setQuery(''); setSearchedPlace(null); setMapAreaSearch(null); setPlaceSuggestions([]); }} hitSlop={8} style={glassControlStyle(colors, 'secondary')}>
                 <Feather name="x-circle" size={16} color={colors.mutedForeground} />
               </Pressable>
             )}
           </View>
 
           {/* Filter button */}
-           <Pressable onPress={() => openFilterSheet()} style={({ pressed }) => [ex.filterBtn, { backgroundColor: hasActiveFilters ? colors.selectionBackground : colors.glassCard, borderColor: hasActiveFilters ? colors.selectionBorder : colors.glassBorder, borderWidth: hasActiveFilters ? 1.5 : 1, opacity: pressed ? 0.76 : 1 }]}>
+           <Pressable onPress={() => openFilterSheet()} style={({ pressed }) => [ex.filterBtn, glassControlStyle(colors, hasActiveFilters ? 'selected' : 'secondary'), { borderWidth: hasActiveFilters ? 1.5 : 1, opacity: pressed ? 0.76 : 1 }]}>
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceRaised + '18' }]} />
              <Feather name="sliders" size={17} color={hasActiveFilters ? colors.selectionForeground : colors.foreground} />
             {hasActiveFilters && <View style={[ex.filterDot, { backgroundColor: colors.gold }]}><Text style={[ex.filterDotText, { color: '#1c2024' }]}>{activeFilterCount}</Text></View>}
@@ -1118,7 +1119,7 @@ export default function ExploreScreen() {
              }}
              style={({ pressed }) => [
                ex.mapAction,
-               { backgroundColor: colors.glassCard, borderColor: colors.glassBorder, opacity: pressed ? 0.8 : 1 },
+                { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.8 : 1 },
              ]}
              accessibilityRole="button"
              accessibilityLabel="Open map view"
@@ -1142,7 +1143,7 @@ export default function ExploreScreen() {
             ) : placeSuggestions.map((suggestion) => (
               <Pressable
                 key={suggestion.placeId}
-                style={ex.recentItem}
+                style={[ex.recentItem, glassControlStyle(colors, 'secondary')]}
                 onPress={() => handlePlaceSuggestion(suggestion)}
               >
                 <Feather name="map-pin" size={13} color={colors.action} />
@@ -1167,15 +1168,15 @@ export default function ExploreScreen() {
               <>
                 <View style={ex.recentHeader}>
                   <Text style={[ex.recentLabel, { color: colors.mutedForeground }]}>Recent Searches</Text>
-                  <Pressable onPress={() => clearRecentSearches().then(() => setRecentSearches([]))}>
+                  <Pressable onPress={() => clearRecentSearches().then(() => setRecentSearches([]))} style={glassControlStyle(colors, 'secondary')}>
                     <Text style={[ex.recentClear, { color: colors.action }]}>Clear</Text>
                   </Pressable>
                 </View>
                 {recentSearches.slice(0, 4).map((s) => (
-                  <Pressable key={s} style={ex.recentItem} onPress={() => { setQuery(s); setSearchFocused(false); }}>
+                  <Pressable key={s} style={[ex.recentItem, glassControlStyle(colors, 'secondary')]} onPress={() => { setQuery(s); setSearchFocused(false); }}>
                     <Feather name="clock" size={13} color={colors.mutedForeground} />
                     <Text style={[ex.recentItemText, { color: colors.foreground }]}>{s}</Text>
-                    <Pressable onPress={() => removeRecentSearch(s).then(() => getRecentSearches().then(setRecentSearches))} hitSlop={8}>
+                    <Pressable onPress={() => removeRecentSearch(s).then(() => getRecentSearches().then(setRecentSearches))} hitSlop={8} style={glassControlStyle(colors, 'destructive')}>
                       <Feather name="x" size={13} color={colors.mutedForeground} />
                     </Pressable>
                   </Pressable>
@@ -1188,7 +1189,7 @@ export default function ExploreScreen() {
                   <Text style={[ex.recentLabel, { color: colors.mutedForeground }]}>Saved Searches</Text>
                 </View>
                 {savedSearchLabels.map((label) => (
-                  <Pressable key={label} style={ex.recentItem} onPress={() => { setQuery(label); setSearchFocused(false); }}>
+                  <Pressable key={label} style={[ex.recentItem, glassControlStyle(colors, 'secondary')]} onPress={() => { setQuery(label); setSearchFocused(false); }}>
                     <Feather name="bookmark" size={13} color={colors.primary} />
                     <Text style={[ex.recentItemText, { color: colors.foreground }]}>{label}</Text>
                     <Feather name="arrow-up-left" size={13} color={colors.mutedForeground} />
@@ -1204,7 +1205,7 @@ export default function ExploreScreen() {
           {searchedPlace && (
             <Pressable
               onPress={() => { setSearchedPlace(null); setQuery(''); }}
-               style={[ex.quickChip, { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }]}
+                style={[ex.quickChip, glassControlStyle(colors, 'selected')]}
             >
                <Feather name="map-pin" size={12} color={colors.selectionForeground} />
                <Text style={[ex.quickChipText, { color: colors.selectionForeground, fontWeight: '600' }]} numberOfLines={1}>
@@ -1221,7 +1222,7 @@ export default function ExploreScreen() {
               setCurrentPage(1);
               flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
             }}
-             style={[ex.quickChip, { backgroundColor: isProjectsMode ? colors.selectionBackground : colors.glassCard, borderColor: isProjectsMode ? colors.selectionBorder : colors.glassBorder, borderWidth: isProjectsMode ? 1.5 : 1 }]}
+             style={[ex.quickChip, glassControlStyle(colors, isProjectsMode ? 'selected' : 'secondary')]}
           >
              <Text style={[ex.quickChipText, { color: isProjectsMode ? colors.selectionForeground : colors.foreground, fontWeight: isProjectsMode ? '600' : '400' }]}>Projects</Text>
           </Pressable>
@@ -1231,11 +1232,7 @@ export default function ExploreScreen() {
               <Pressable
                 key={qf.label}
                 onPress={() => openFilterSheet(qf.section)}
-                style={[ex.quickChip, {
-                  backgroundColor: isActive ? colors.selectionBackground : colors.glassCard,
-                  borderColor: isActive ? colors.selectionBorder : colors.glassBorder,
-                  borderWidth: isActive ? 1.5 : 1,
-                }]}
+                 style={[ex.quickChip, glassControlStyle(colors, isActive ? 'selected' : 'secondary')]}
               >
                 <Feather name={qf.icon as any} size={12} color={isActive ? colors.selectionForeground : colors.mutedForeground} />
                 <Text style={[ex.quickChipText, { color: isActive ? colors.selectionForeground : colors.foreground, fontFamily: isActive ? 'Inter_600SemiBold' : 'Inter_400Regular' }]}>{qf.label}</Text>
@@ -1249,12 +1246,12 @@ export default function ExploreScreen() {
         {activeChips.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={ex.chipRow}>
             {activeChips.map((chip) => (
-              <Pressable key={chip.key} onPress={() => removeChip(chip.key)} style={[ex.chip, { backgroundColor: `${colors.splashGold}26`, borderColor: `${colors.splashGold}66` }]}>
+              <Pressable key={chip.key} onPress={() => removeChip(chip.key)} style={[ex.chip, glassControlStyle(colors, 'gold')]}>
                 <Text style={[ex.chipText, { color: colors.goldForeground }]}>{chip.label}</Text>
                 <Feather name="x" size={11} color={colors.goldForeground} />
               </Pressable>
             ))}
-            <Pressable onPress={resetAllFilters} style={[ex.clearAll, { borderColor: colors.border }]}>
+            <Pressable onPress={resetAllFilters} style={[ex.clearAll, glassControlStyle(colors, 'secondary')]}>
               <Text style={[ex.clearAllText, { color: colors.mutedForeground }]}>Clear All</Text>
             </Pressable>
           </ScrollView>
@@ -1287,18 +1284,18 @@ export default function ExploreScreen() {
                     <>
                       <Pressable
                         onPress={() => Alert.alert('Search Alert Set', 'We\'ll notify you when new matching properties are listed.')}
-                        style={({ pressed }) => [ex.saveBtn, { borderColor: colors.border, opacity: pressed ? 0.72 : 1 }]}
+                        style={({ pressed }) => [ex.saveBtn, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.72 : 1 }]}
                       >
                         <Feather name="bell" size={13} color={colors.action} />
                         <Text style={[ex.saveBtnText, { color: colors.action }]}>Alert</Text>
                       </Pressable>
-                      <Pressable onPress={() => setSaveModalOpen(true)} style={({ pressed }) => [ex.saveBtn, { borderColor: colors.border, opacity: pressed ? 0.72 : 1 }]}>
+                      <Pressable onPress={() => setSaveModalOpen(true)} style={({ pressed }) => [ex.saveBtn, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.72 : 1 }]}>
                         <Feather name="bookmark" size={13} color={colors.action} />
                         <Text style={[ex.saveBtnText, { color: colors.action }]}>Save</Text>
                       </Pressable>
                     </>
                   )}
-                  <Pressable onPress={() => openFilterSheet('sort')} style={ex.sortBtn}>
+                  <Pressable onPress={() => openFilterSheet('sort')} style={[ex.sortBtn, glassControlStyle(colors, 'secondary')]}>
                     <Feather name="chevrons-down" size={13} color={colors.mutedForeground} />
                     <Text style={[ex.sortBtnText, { color: colors.mutedForeground }]}>
                       {SORT_OPTIONS.find((s) => s.value === filters.sortBy)?.label ?? 'Sort'}
@@ -1388,9 +1385,9 @@ export default function ExploreScreen() {
                   testID="explore-properties-retry"
                   accessibilityRole="button"
                   onPress={() => { void refreshExplore(); }}
-                  style={{ paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10, backgroundColor: colors.action }}
+                  style={[{ paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10 }, glassControlStyle(colors, 'gold')]}
                 >
-                  <Text style={{ color: colors.actionForeground, fontSize: 13, fontWeight: '600' }}>Retry</Text>
+                  <Text style={{ color: colors.primaryActionForeground, fontSize: 13, fontWeight: '600' }}>Retry</Text>
                 </Pressable>
               </View>
             ) : (
@@ -1406,7 +1403,7 @@ export default function ExploreScreen() {
           <View style={[ex.mapScreenHeader, { paddingTop: topInset + 8, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
             <Pressable
               onPress={closeMapScreen}
-              style={ex.mapScreenBack}
+              style={[ex.mapScreenBack, glassControlStyle(colors, 'secondary')]}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Back to filters"
@@ -1476,6 +1473,7 @@ export default function ExploreScreen() {
                       setPlaceSuggestions([]);
                     }}
                     hitSlop={10}
+                    style={glassControlStyle(colors, 'secondary')}
                     accessibilityRole="button"
                     accessibilityLabel="Clear place search"
                   >
@@ -1502,7 +1500,7 @@ export default function ExploreScreen() {
                   ) : placeSuggestions.map((suggestion) => (
                     <Pressable
                       key={suggestion.placeId}
-                      style={ex.mapSuggestionRow}
+                      style={[ex.mapSuggestionRow, glassControlStyle(colors, 'secondary')]}
                       onPress={() => {
                         setMapSearchFocused(false);
                         handlePlaceSuggestion(suggestion);
@@ -1528,11 +1526,11 @@ export default function ExploreScreen() {
           </View>
 
           <View style={[ex.mapActions, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, 14) }]}>
-            <Pressable onPress={closeMapScreen} style={[ex.mapActionBack, { borderColor: colors.border }]} accessibilityRole="button">
+            <Pressable onPress={closeMapScreen} style={[ex.mapActionBack, glassControlStyle(colors, 'secondary')]} accessibilityRole="button">
               <Text style={[ex.mapActionBackText, { color: colors.mutedForeground }]}>Back</Text>
             </Pressable>
-            <Pressable onPress={closeMapScreen} style={[ex.mapActionDone, { backgroundColor: colors.action }]} accessibilityRole="button">
-              <Text style={[ex.mapActionDoneText, { color: colors.actionForeground }]}>Done</Text>
+            <Pressable onPress={closeMapScreen} style={[ex.mapActionDone, glassControlStyle(colors, 'gold')]} accessibilityRole="button">
+              <Text style={[ex.mapActionDoneText, { color: colors.primaryActionForeground }]}>Done</Text>
             </Pressable>
           </View>
         </View>
@@ -1575,12 +1573,12 @@ export default function ExploreScreen() {
               />
             </View>
             <View style={ex.saveModalBtns}>
-              <Pressable onPress={() => setSaveModalOpen(false)} style={[ex.saveModalCancel, { borderColor: colors.border }]}>
+              <Pressable onPress={() => setSaveModalOpen(false)} style={[ex.saveModalCancel, glassControlStyle(colors, 'secondary')]}>
                 <Text style={[ex.saveModalCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
               </Pressable>
-              <Pressable onPress={handleSaveSearch} style={[ex.saveModalConfirm, { backgroundColor: colors.action }]}>
-                <Feather name="bookmark" size={14} color={colors.actionForeground} />
-                <Text style={[ex.saveModalConfirmText, { color: colors.actionForeground }]}>Save</Text>
+              <Pressable onPress={handleSaveSearch} style={[ex.saveModalConfirm, glassControlStyle(colors, 'gold')]}>
+                <Feather name="bookmark" size={14} color={colors.primaryActionForeground} />
+                <Text style={[ex.saveModalConfirmText, { color: colors.primaryActionForeground }]}>Save</Text>
               </Pressable>
             </View>
           </View>
@@ -1624,7 +1622,7 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
               <Text style={[fs.eyebrow, { color: colors.primary }]}>ADVANCED FILTERS</Text>
               <Text style={[fs.title, { color: colors.foreground }]}>Refine Search</Text>
             </View>
-            <Pressable onPress={onReset} hitSlop={10}>
+            <Pressable onPress={onReset} hitSlop={10} style={glassControlStyle(colors, 'secondary')}>
               <Text style={[fs.reset, { color: colors.action }]}>Reset All</Text>
             </Pressable>
           </View>
@@ -1646,9 +1644,9 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
                     <Pressable key={t} onPress={() => {
                       const next = sel ? draft.propertyTypes.filter((x) => x !== t) : [...draft.propertyTypes, t];
                       set({ propertyTypes: next });
-                    }} style={[fs.typeChip, { backgroundColor: sel ? colors.selectionBackground : colors.glassCard, borderColor: sel ? colors.selectionBorder : colors.glassBorder, borderWidth: sel ? 1.5 : 1 }]}>
+                    }} style={[fs.typeChip, glassControlStyle(colors, sel ? 'selected' : 'secondary'), { borderWidth: sel ? 1.5 : 1 }]}>
                       <Text style={[fs.typeChipText, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{t}</Text>
-                      {sel && <Feather name="check" size={11} color={colors.actionForeground} />}
+                      {sel && <Feather name="check" size={11} color={colors.selectionForeground} />}
                     </Pressable>
                   );
                 })}
@@ -1665,7 +1663,7 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
                     <Pressable key={c} onPress={() => {
                       const next = sel ? draft.cities.filter((x) => x !== c) : [...draft.cities, c];
                       set({ cities: next });
-                     }} style={[fs.cityChip, { backgroundColor: sel ? colors.selectionBackground : colors.glassCard, borderColor: sel ? colors.selectionBorder : colors.glassBorder, borderWidth: sel ? 1.5 : 1 }]}>
+                     }} style={[fs.cityChip, glassControlStyle(colors, sel ? 'selected' : 'secondary'), { borderWidth: sel ? 1.5 : 1 }]}>
                        <Feather name="map-pin" size={11} color={sel ? colors.selectionForeground : colors.mutedForeground} />
                        <Text style={[fs.cityChipText, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{c}</Text>
                     </Pressable>
@@ -1681,7 +1679,7 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
                   const active = Number(draft.minPrice) === p.min && Number(draft.maxPrice) === p.max;
                   return (
                     <Pressable key={p.label} onPress={() => set({ minPrice: p.min ? String(p.min) : '', maxPrice: p.max ? String(p.max) : '' })}
-                       style={[fs.presetChip, { backgroundColor: active ? colors.selectionBackground : colors.glassCard, borderColor: active ? colors.selectionBorder : colors.glassBorder, borderWidth: active ? 1.5 : 1 }]}>
+                       style={[fs.presetChip, glassControlStyle(colors, active ? 'selected' : 'secondary'), { borderWidth: active ? 1.5 : 1 }]}>
                        <Text style={[fs.presetChipText, { color: active ? colors.selectionForeground : colors.foreground, fontWeight: active ? '600' : '400' }]}>{p.label}</Text>
                     </Pressable>
                   );
@@ -1830,7 +1828,7 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
               <PillRow options={SELLER_TYPES} selected={draft.sellerType || 'Any'}
                 onSelect={(v) => set({ sellerType: v })} colors={colors} />
               <Pressable onPress={() => set({ verifiedOnly: !draft.verifiedOnly })}
-                style={[fs.toggleRow, { backgroundColor: draft.verifiedOnly ? `${colors.splashGold}26` : colors.glassCard, borderColor: draft.verifiedOnly ? `${colors.splashGold}66` : colors.glassBorder, marginTop: 12 }]}>
+                 style={[fs.toggleRow, glassControlStyle(colors, draft.verifiedOnly ? 'gold' : 'secondary'), { backgroundColor: draft.verifiedOnly ? `${colors.splashGold}26` : colors.glassCard, borderColor: draft.verifiedOnly ? `${colors.splashGold}66` : colors.glassBorder, marginTop: 12 }]}>
                 <Feather name="shield" size={16} color={draft.verifiedOnly ? colors.goldForeground : colors.mutedForeground} />
                 <View style={{ flex: 1 }}>
                   <Text style={[fs.toggleLabel, { color: draft.verifiedOnly ? colors.goldForeground : colors.foreground }]}>Verified Listings Only</Text>
@@ -1855,7 +1853,7 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
               <View style={fs.sortGrid}>
                 {SORT_OPTIONS.map((s) => (
                   <Pressable key={s.value} onPress={() => set({ sortBy: s.value })}
-                     style={[fs.sortChip, { backgroundColor: draft.sortBy === s.value ? colors.selectionBackground : colors.glassCard, borderColor: draft.sortBy === s.value ? colors.selectionBorder : colors.glassBorder, borderWidth: draft.sortBy === s.value ? 1.5 : 1 }]}>
+                     style={[fs.sortChip, glassControlStyle(colors, draft.sortBy === s.value ? 'selected' : 'secondary'), { borderWidth: draft.sortBy === s.value ? 1.5 : 1 }]}>
                      <Feather name={s.icon as any} size={13} color={draft.sortBy === s.value ? colors.selectionForeground : colors.mutedForeground} />
                      <Text style={[fs.sortChipText, { color: draft.sortBy === s.value ? colors.selectionForeground : colors.foreground, fontWeight: draft.sortBy === s.value ? '600' : '400' }]}>{s.label}</Text>
                   </Pressable>
@@ -1868,12 +1866,12 @@ function FilterSheet({ open, draft, onChange, onClose, onApply, onReset, draftRe
           {/* Sticky apply button */}
           <Pressable
             onPress={onApply}
-            style={[fs.applyBtn, { backgroundColor: draftResultCount > 0 ? colors.action : colors.muted }]}
+            style={[fs.applyBtn, glassControlStyle(colors, draftResultCount > 0 ? 'gold' : 'secondary'), draftResultCount <= 0 && { opacity: 0.7 }]}
           >
-            <Text style={[fs.applyBtnText, { color: draftResultCount > 0 ? colors.actionForeground : colors.mutedForeground }]}>
+            <Text style={[fs.applyBtnText, { color: draftResultCount > 0 ? colors.primaryActionForeground : colors.mutedForeground }]}>
               {draftResultCount > 0 ? `Show ${draftResultCount} Properties` : '0 Properties Found'}
             </Text>
-            <Feather name="arrow-right" size={16} color={draftResultCount > 0 ? colors.actionForeground : colors.mutedForeground} />
+            <Feather name="arrow-right" size={16} color={draftResultCount > 0 ? colors.primaryActionForeground : colors.mutedForeground} />
           </Pressable>
         </View>
       </View>
@@ -1889,7 +1887,7 @@ function Section({ label, icon, expanded, onToggle, children }: {
   const colors = useColors();
   return (
     <View style={fs.section}>
-      <Pressable onPress={onToggle} style={fs.sectionHeader}>
+      <Pressable onPress={onToggle} style={[fs.sectionHeader, glassControlStyle(colors, 'secondary')]}>
         <Feather name={icon as any} size={15} color={colors.mutedForeground} />
         <Text style={[fs.sectionLabel, { color: colors.foreground }]}>{label}</Text>
         <Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={15} color={colors.mutedForeground} />
@@ -1906,7 +1904,7 @@ function PillRow({ options, selected, onSelect, colors }: { options: string[]; s
     <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
       {options.map((o) => (
         <Pressable key={o} onPress={() => onSelect(o)}
-           style={[fs.pill, { backgroundColor: selected === o ? colors.selectionBackground : colors.glassCard, borderColor: selected === o ? colors.selectionBorder : colors.glassBorder, borderWidth: selected === o ? 1.5 : 1 }]}>
+           style={[fs.pill, glassControlStyle(colors, selected === o ? 'selected' : 'secondary'), { borderWidth: selected === o ? 1.5 : 1 }]}>
            <Text style={[fs.pillText, { color: selected === o ? colors.selectionForeground : colors.foreground, fontWeight: selected === o ? '600' : '400' }]}>{o}</Text>
         </Pressable>
       ))}
@@ -1919,7 +1917,7 @@ function PillRow({ options, selected, onSelect, colors }: { options: string[]; s
 function CheckChip({ label, selected, onToggle, colors, accentColor }: { label: string; selected: boolean; onToggle: () => void; colors: any; accentColor?: string }) {
   const accent = accentColor ?? colors.goldForeground;
   return (
-    <Pressable onPress={onToggle} style={[fs.checkChip, {
+    <Pressable onPress={onToggle} style={[fs.checkChip, glassControlStyle(colors, selected ? accentColor ? 'selected' : 'gold' : 'secondary'), {
       backgroundColor: selected ? (accentColor ? accentColor + '18' : `${colors.splashGold}26`) : colors.glassCard,
       borderColor: selected ? (accentColor ?? `${colors.splashGold}66`) : colors.glassBorder,
     }]}>
@@ -1967,7 +1965,7 @@ function ProjectsList({ staticProjects, devProjects, loading, loadError, onRetry
   if (all.length === 0 && loadError) return (
     <View style={{ alignItems: 'center', paddingHorizontal: 20, paddingVertical: 32 }}>
       <Text style={{ color: colors.mutedForeground, fontSize: 14, textAlign: 'center' }}>Projects could not be loaded right now.</Text>
-      <Pressable onPress={onRetry} style={{ paddingTop: 12 }}>
+      <Pressable onPress={onRetry} style={[{ padding: 8 }, glassControlStyle(colors, 'gold')]}>
         <Text style={{ color: colors.action, fontSize: 14 }}>Try again</Text>
       </Pressable>
     </View>
@@ -2006,7 +2004,7 @@ function ProjectsList({ staticProjects, devProjects, loading, loadError, onRetry
       {loadError && devProjects.length === 0 && (
         <View style={{ alignItems: 'center', paddingVertical: 18 }}>
           <Text style={{ color: colors.mutedForeground, fontSize: 13, textAlign: 'center' }}>Approved projects could not be loaded.</Text>
-          <Pressable onPress={onRetry} style={{ paddingTop: 10 }}>
+          <Pressable onPress={onRetry} style={[{ padding: 8 }, glassControlStyle(colors, 'gold')]}>
             <Text style={{ color: colors.action, fontSize: 13 }}>Try again</Text>
           </Pressable>
         </View>
@@ -2093,10 +2091,10 @@ function NoResultsView({ colors, message, onAdjust, onClear }: { colors: any; me
         ))}
       </View>
       <View style={nr.btnRow}>
-        <Pressable onPress={onAdjust} style={[nr.btn, { backgroundColor: colors.action }]}>
-          <Text style={[nr.btnText, { color: colors.actionForeground }]}>Adjust Filters</Text>
+        <Pressable onPress={onAdjust} style={[nr.btn, glassControlStyle(colors, 'gold')]}>
+          <Text style={[nr.btnText, { color: colors.primaryActionForeground }]}>Adjust Filters</Text>
         </Pressable>
-        <Pressable onPress={onClear} style={[nr.btn, { backgroundColor: colors.glassCard, borderWidth: 1, borderColor: colors.glassBorder }]}>
+        <Pressable onPress={onClear} style={[nr.btn, glassControlStyle(colors, 'secondary')]}>
           <Text style={[nr.btnText, { color: colors.foreground }]}>Clear All</Text>
         </Pressable>
       </View>
@@ -2127,7 +2125,7 @@ function ExplorePagination({
         onPress={() => onPageChange(currentPage - 1)}
         style={({ pressed }) => [
           ex.paginationButton,
-          { backgroundColor: colors.glassCard, borderColor: colors.glassBorder },
+          glassControlStyle(colors, 'secondary'),
           (loading || currentPage === 1) && ex.paginationDisabled,
           pressed && !loading && currentPage > 1 && ex.paginationPressed,
         ]}
@@ -2148,17 +2146,14 @@ function ExplorePagination({
           onPress={() => onPageChange(item)}
           style={({ pressed }) => [
             ex.paginationButton,
-            {
-              backgroundColor: currentPage === item ? colors.action : colors.glassCard,
-              borderColor: currentPage === item ? colors.action : colors.glassBorder,
-            },
+            glassControlStyle(colors, currentPage === item ? 'selected' : 'secondary'),
             currentPage === item && ex.paginationActive,
             pressed && !loading && ex.paginationPressed,
           ]}
         >
           <Text style={[
             ex.paginationText,
-            { color: currentPage === item ? colors.actionForeground : colors.foreground },
+            { color: currentPage === item ? colors.selectionForeground : colors.foreground },
           ]}>
             {item}
           </Text>
@@ -2171,7 +2166,7 @@ function ExplorePagination({
         onPress={() => onPageChange(currentPage + 1)}
         style={({ pressed }) => [
           ex.paginationButton,
-          { backgroundColor: colors.glassCard, borderColor: colors.glassBorder },
+          glassControlStyle(colors, 'secondary'),
           (loading || currentPage === totalPages) && ex.paginationDisabled,
           pressed && !loading && currentPage < totalPages && ex.paginationPressed,
         ]}

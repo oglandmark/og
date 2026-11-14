@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { getNotificationUnreadCount } from '@/lib/api';
+import { glassControlStyle } from '@/components/glassControls';
 
 export function NotificationBell({ compact = false }: { compact?: boolean }) {
   const colors = useColors();
@@ -40,7 +41,7 @@ export function NotificationBell({ compact = false }: { compact?: boolean }) {
       onPress={() => router.push('/notifications' as any)}
       style={({ pressed }) => [
         styles.button,
-        { width: compact ? 36 : 42, height: compact ? 36 : 42, backgroundColor: colors.secondary, borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
+        { width: compact ? 36 : 42, height: compact ? 36 : 42, ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.75 : 1 },
       ]}
     >
       <Feather name="bell" size={compact ? 17 : 19} color={colors.action} />

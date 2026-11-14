@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 // BlurView removed — crashes Android GPU
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { createProperty } from '@/lib/api';
@@ -111,11 +112,11 @@ export default function BuyerRequestScreen() {
           <Feather name="radio" size={12} color={brandColors.light.action} />
           <Text style={[st.statusText, { color: brandColors.light.action }]}>ACTIVE REQUEST</Text>
         </View>
-        <AnimatedPressable onPress={() => router.push('/(tabs)/listings')} style={[st.successBtn, { backgroundColor: colors.action, marginTop: 24 }]}>
-          <Text style={[st.successBtnText, { color: colors.actionForeground }]}>View My Requests</Text>
-          <Feather name="arrow-right" size={16} color={colors.actionForeground} />
+        <AnimatedPressable onPress={() => router.push('/(tabs)/listings')} style={[st.successBtn, { ...glassControlStyle(colors, 'success'), marginTop: 24 }]}>
+          <Text style={[st.successBtnText, { color: colors.successForeground }]}>View My Requests</Text>
+          <Feather name="arrow-right" size={16} color={colors.successForeground} />
         </AnimatedPressable>
-        <Pressable onPress={() => router.push('/(tabs)/' as any)} hitSlop={10} style={{ marginTop: 14 }}>
+        <Pressable onPress={() => router.push('/(tabs)/' as any)} hitSlop={10} style={[{ marginTop: 14 }, glassControlStyle(colors, 'secondary')]}>
           <Text style={[st.successLink, { color: colors.action }]}>Back to Home</Text>
         </Pressable>
       </View>
@@ -132,7 +133,7 @@ export default function BuyerRequestScreen() {
       >
         {/* ── Header ── */}
         <AnimatedReveal>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={[st.backBtn, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
+          <Pressable onPress={() => router.back()} hitSlop={12} style={[st.backBtn, glassControlStyle(colors, 'secondary')]}>
             <Feather name="arrow-left" size={18} color={colors.foreground} />
           </Pressable>
           <Text style={[st.eyebrow, { color: colors.primary }]}>BUYER REQUEST</Text>
@@ -148,7 +149,7 @@ export default function BuyerRequestScreen() {
           <View style={st.pillWrap}>
             {PROPERTY_TYPES.map((t) => (
               <Pressable key={t} onPress={() => setPropertyType(t)}
-                style={[st.pill, { backgroundColor: propertyType === t ? colors.selectionBackground : colors.glassCard, borderColor: propertyType === t ? colors.selectionBorder : colors.glassBorder, borderWidth: propertyType === t ? 1.5 : 1 }]}>
+                style={[st.pill, glassControlStyle(colors, propertyType === t ? 'selected' : 'secondary'), { borderWidth: propertyType === t ? 1.5 : 1 }]}>
                 <Text style={[st.pillText, { color: propertyType === t ? colors.selectionForeground : colors.foreground, fontWeight: propertyType === t ? '600' : '400' }]}>{t}</Text>
               </Pressable>
             ))}
@@ -161,7 +162,7 @@ export default function BuyerRequestScreen() {
           <View style={st.pillWrap}>
             {PURPOSE_OPTIONS.map((p) => (
               <Pressable key={p} onPress={() => setPurpose(p)}
-                style={[st.pill, { backgroundColor: purpose === p ? colors.selectionBackground : colors.glassCard, borderColor: purpose === p ? colors.selectionBorder : colors.glassBorder, borderWidth: purpose === p ? 1.5 : 1 }]}>
+                style={[st.pill, glassControlStyle(colors, purpose === p ? 'selected' : 'secondary'), { borderWidth: purpose === p ? 1.5 : 1 }]}>
                 <Text style={[st.pillText, { color: purpose === p ? colors.selectionForeground : colors.foreground, fontWeight: purpose === p ? '600' : '400' }]}>{p}</Text>
               </Pressable>
             ))}
@@ -180,7 +181,7 @@ export default function BuyerRequestScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
             {CITIES.map((c) => (
               <Pressable key={c} onPress={() => { setCity(c); setLocality(''); }}
-                style={[st.pill, { backgroundColor: city === c ? colors.selectionBackground : colors.glassCard, borderColor: city === c ? colors.selectionBorder : colors.glassBorder, borderWidth: city === c ? 1.5 : 1 }]}>
+                style={[st.pill, glassControlStyle(colors, city === c ? 'selected' : 'secondary'), { borderWidth: city === c ? 1.5 : 1 }]}>
                 <Text style={[st.pillText, { color: city === c ? colors.selectionForeground : colors.foreground, fontWeight: city === c ? '600' : '400' }]}>{c}</Text>
               </Pressable>
             ))}
@@ -195,7 +196,7 @@ export default function BuyerRequestScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
               {areas.map((a) => (
                 <Pressable key={a} onPress={() => setLocality(locality === a ? '' : a)}
-                  style={[st.pill, { backgroundColor: locality === a ? colors.selectionBackground : colors.glassCard, borderColor: locality === a ? colors.selectionBorder : colors.glassBorder, borderWidth: locality === a ? 1.5 : 1 }]}>
+                  style={[st.pill, glassControlStyle(colors, locality === a ? 'selected' : 'secondary'), { borderWidth: locality === a ? 1.5 : 1 }]}>
                   <Text style={[st.pillText, { color: locality === a ? colors.selectionForeground : colors.foreground, fontWeight: locality === a ? '600' : '400' }]}>{a}</Text>
                 </Pressable>
               ))}
@@ -223,7 +224,7 @@ export default function BuyerRequestScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center' }}>
               {AREA_UNITS.map((u) => (
                 <Pressable key={u} onPress={() => setSizeUnit(u)}
-                  style={[st.unitChip, { backgroundColor: sizeUnit === u ? colors.selectionBackground : colors.glassCard, borderColor: sizeUnit === u ? colors.selectionBorder : colors.glassBorder, borderWidth: sizeUnit === u ? 1.5 : 1 }]}>
+                  style={[st.unitChip, glassControlStyle(colors, sizeUnit === u ? 'selected' : 'secondary'), { borderWidth: sizeUnit === u ? 1.5 : 1 }]}>
                   <Text style={[st.unitText, { color: sizeUnit === u ? colors.selectionForeground : colors.foreground, fontWeight: sizeUnit === u ? '600' : '400' }]}>{u}</Text>
                 </Pressable>
               ))}
@@ -239,7 +240,7 @@ export default function BuyerRequestScreen() {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 4 }}>
                 {BED_OPTIONS.map((b) => (
                   <Pressable key={b} onPress={() => setBedrooms(b)}
-                    style={[st.unitChip, { backgroundColor: bedrooms === b ? colors.selectionBackground : colors.glassCard, borderColor: bedrooms === b ? colors.selectionBorder : colors.glassBorder, borderWidth: bedrooms === b ? 1.5 : 1 }]}>
+                    style={[st.unitChip, glassControlStyle(colors, bedrooms === b ? 'selected' : 'secondary'), { borderWidth: bedrooms === b ? 1.5 : 1 }]}>
                     <Text style={[st.unitText, { color: bedrooms === b ? colors.selectionForeground : colors.foreground, fontWeight: bedrooms === b ? '600' : '400' }]}>{b}</Text>
                   </Pressable>
                 ))}
@@ -251,7 +252,7 @@ export default function BuyerRequestScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 4 }}>
               {BATH_OPTIONS.map((b) => (
                 <Pressable key={b} onPress={() => setBathrooms(b)}
-                  style={[st.unitChip, { backgroundColor: bathrooms === b ? colors.selectionBackground : colors.glassCard, borderColor: bathrooms === b ? colors.selectionBorder : colors.glassBorder, borderWidth: bathrooms === b ? 1.5 : 1 }]}>
+                  style={[st.unitChip, glassControlStyle(colors, bathrooms === b ? 'selected' : 'secondary'), { borderWidth: bathrooms === b ? 1.5 : 1 }]}>
                   <Text style={[st.unitText, { color: bathrooms === b ? colors.selectionForeground : colors.foreground, fontWeight: bathrooms === b ? '600' : '400' }]}>{b}</Text>
                 </Pressable>
               ))}
@@ -265,7 +266,7 @@ export default function BuyerRequestScreen() {
           <View style={st.pillWrap}>
             {TIMELINE_OPTIONS.map((t) => (
               <Pressable key={t} onPress={() => setTimeline(t)}
-                style={[st.pill, { backgroundColor: timeline === t ? colors.accent : colors.glassCard, borderColor: timeline === t ? colors.primary : colors.glassBorder }]}>
+                style={[st.pill, glassControlStyle(colors, timeline === t ? 'selected' : 'secondary')]}>
                 <Text style={[st.pillText, { color: timeline === t ? colors.primary : colors.foreground }]}>{t}</Text>
               </Pressable>
             ))}
@@ -281,8 +282,8 @@ export default function BuyerRequestScreen() {
               const sel = contactPref === c;
               return (
                 <Pressable key={c} onPress={() => setContactPref(c)}
-                  style={[st.contactChip, { backgroundColor: sel ? colors.selectionBackground : colors.glassCard, borderColor: sel ? colors.selectionBorder : colors.glassBorder, borderWidth: sel ? 1.5 : 1 }]}>
-                  <Feather name={icons[c] ?? 'message-square'} size={13} color={sel ? colors.actionForeground : colors.mutedForeground} />
+                  style={[st.contactChip, glassControlStyle(colors, sel ? 'selected' : 'secondary'), { borderWidth: sel ? 1.5 : 1 }]}>
+                  <Feather name={icons[c] ?? 'message-square'} size={13} color={sel ? colors.selectionForeground : colors.mutedForeground} />
                   <Text style={[st.pillText, { color: sel ? colors.selectionForeground : colors.foreground, fontWeight: sel ? '600' : '400' }]}>{c}</Text>
                 </Pressable>
               );
@@ -311,9 +312,9 @@ export default function BuyerRequestScreen() {
 
         {/* ── Submit ── */}
         <AnimatedReveal delay={220}>
-          <AnimatedPressable onPress={submit} style={[st.submit, { backgroundColor: colors.action, opacity: submitting ? 0.7 : 1 }]}>
-            <Text style={[st.submitText, { color: colors.actionForeground }]}>{submitting ? 'Submitting…' : 'Submit Buyer Request'}</Text>
-            <Feather name="arrow-up-right" size={18} color={colors.actionForeground} />
+          <AnimatedPressable onPress={submit} style={[st.submit, { ...glassControlStyle(colors, 'gold'), opacity: submitting ? 0.7 : 1 }]}>
+            <Text style={[st.submitText, { color: colors.primaryActionForeground }]}>{submitting ? 'Submitting…' : 'Submit Buyer Request'}</Text>
+            <Feather name="arrow-up-right" size={18} color={colors.primaryActionForeground} />
           </AnimatedPressable>
           <Text style={[st.hint, { color: colors.mutedForeground }]}>
             Your request will be visible to verified agents matching your criteria.

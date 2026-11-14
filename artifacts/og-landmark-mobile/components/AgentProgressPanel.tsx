@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import {
   getAgentProgressReports,
   reviewAgentProgressReport,
@@ -84,7 +85,7 @@ export function AgentProgressPanel({ admin = false }: { admin?: boolean }) {
 
   return (
     <ScrollView style={[s.root, { backgroundColor: colors.background }]} contentContainerStyle={[s.content, { paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) + 16, paddingBottom: insets.bottom + 32 }]} keyboardShouldPersistTaps="handled">
-      <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back" style={s.back}><Feather name="arrow-left" size={19} color={colors.foreground} /><Text style={{ color: colors.foreground, fontWeight: '700' }}>Back</Text></Pressable>
+      <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back" style={[s.back, glassControlStyle(colors, 'secondary')]}><Feather name="arrow-left" size={19} color={colors.foreground} /><Text style={{ color: colors.foreground, fontWeight: '700' }}>Back</Text></Pressable>
       <Text style={[s.eyebrow, { color: colors.action }]}>{admin ? 'TEAM OPERATIONS' : 'AGENT PORTAL'}</Text>
       <Text style={[s.title, { color: colors.foreground }]}>{admin ? 'Daily Agent Progress' : 'Daily Progress'}</Text>
       <Text style={[s.subtitle, { color: colors.mutedForeground }]}>{admin ? 'Review submitted activity and send a status back to each Agent.' : `Submit today’s activity (${today}) for Admin review.`}</Text>
@@ -101,7 +102,7 @@ export function AgentProgressPanel({ admin = false }: { admin?: boolean }) {
           </View>
           <Text style={[s.label, { color: colors.mutedForeground }]}>BLOCKERS / SUPPORT NEEDED (OPTIONAL)</Text>
           <TextInput value={blockers} onChangeText={setBlockers} multiline maxLength={1500} placeholder="Anything blocking your work?" placeholderTextColor={colors.mutedForeground} style={[s.textArea, { minHeight: 72, color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]} />
-          <Pressable disabled={saving} onPress={() => void submit()} style={[s.button, { backgroundColor: colors.action, opacity: saving ? 0.6 : 1 }]}>
+          <Pressable disabled={saving} onPress={() => void submit()} style={[s.button, { ...glassControlStyle(colors, 'action'), opacity: saving ? 0.6 : 1 }]}>
             {saving ? <ActivityIndicator color="#fff" /> : <><Feather name="send" size={15} color="#fff" /><Text style={s.buttonText}>Submit to Admin</Text></>}
           </Pressable>
         </View>
@@ -121,8 +122,8 @@ export function AgentProgressPanel({ admin = false }: { admin?: boolean }) {
           {admin && report.status === 'submitted' ? <>
             <TextInput value={reviewNotes[report.id] ?? ''} onChangeText={(value) => setReviewNotes((current) => ({ ...current, [report.id]: value }))} placeholder="Optional note; required for follow-up" placeholderTextColor={colors.mutedForeground} style={[s.input, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]} />
             <View style={s.reviewRow}>
-            <Pressable onPress={() => void review(report, 'needs_follow_up')} style={[s.reviewButton, { borderColor: colors.border }]}><Text style={{ color: colors.foreground, fontWeight: '700' }}>Needs follow-up</Text></Pressable>
-            <Pressable onPress={() => void review(report, 'reviewed')} style={[s.reviewButton, { backgroundColor: colors.action, borderColor: colors.action }]}><Text style={{ color: '#fff', fontWeight: '700' }}>Mark reviewed</Text></Pressable>
+            <Pressable onPress={() => void review(report, 'needs_follow_up')} style={[s.reviewButton, glassControlStyle(colors, 'secondary')]}><Text style={{ color: colors.foreground, fontWeight: '700' }}>Needs follow-up</Text></Pressable>
+            <Pressable onPress={() => void review(report, 'reviewed')} style={[s.reviewButton, glassControlStyle(colors, 'success')]}><Text style={{ color: colors.successForeground, fontWeight: '700' }}>Mark reviewed</Text></Pressable>
             </View>
           </> : null}
         </View>

@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useMobileContent } from '@/hooks/useMobileContent';
 import {
   AREA_UNITS,
@@ -115,11 +116,8 @@ function OptionChips({
             onPress={() => onSelect(option.key)}
             style={[
               styles.chip,
-              {
-                backgroundColor: active ? colors.selectionBackground : colors.secondary,
-                borderColor: active ? colors.selectionBorder : colors.border,
-                borderWidth: active ? 2 : 1,
-              },
+               glassControlStyle(colors, active ? 'selected' : 'secondary'),
+               { borderWidth: active ? 2 : 1 },
             ]}
           >
             <Text style={[styles.chipText, { color: active ? colors.selectionForeground : colors.foreground, fontWeight: active ? '600' : '400' }]}>
@@ -223,14 +221,13 @@ function ActionButton({
       style={({ pressed }) => [
         styles.actionButton,
         {
-          backgroundColor: secondary ? colors.secondary : colors.action,
-          borderColor: secondary ? colors.border : colors.action,
+          ...glassControlStyle(colors, secondary ? 'secondary' : 'gold'),
           opacity: pressed ? 0.78 : 1,
         },
       ]}
     >
-      <Feather name={icon} size={14} color={secondary ? colors.foreground : colors.actionForeground} />
-      <Text style={[styles.actionButtonText, { color: secondary ? colors.foreground : colors.actionForeground }]}>
+      <Feather name={icon} size={14} color={secondary ? colors.foreground : colors.primaryActionForeground} />
+      <Text style={[styles.actionButtonText, { color: secondary ? colors.foreground : colors.primaryActionForeground }]}>
         {label}
       </Text>
     </Pressable>
@@ -765,10 +762,7 @@ function AgriGuide({ colors }: { colors: Colors }) {
               onPress={() => setAvailable((current) => ({ ...current, [option.key]: !isAvailable }))}
               style={[
                 styles.irrigationItem,
-                {
-                  backgroundColor: isAvailable ? `${colors.action}12` : colors.secondary,
-                  borderColor: isAvailable ? `${colors.action}66` : colors.border,
-                },
+                 glassControlStyle(colors, isAvailable ? 'selected' : 'secondary'),
               ]}
             >
               <Feather name={option.icon} size={15} color={isAvailable ? colors.action : colors.mutedForeground} />
@@ -1020,7 +1014,7 @@ export default function PropertyToolsScreen() {
           <Pressable
             onPress={() => router.back()}
             accessibilityLabel="Go back"
-            style={({ pressed }) => [styles.backButton, { opacity: pressed ? 0.72 : 1 }]}
+             style={({ pressed }) => [styles.backButton, { ...glassControlStyle(colors, 'action'), opacity: pressed ? 0.72 : 1 }]}
           >
             <Feather name="arrow-left" size={20} color={colors.actionForeground} />
           </Pressable>

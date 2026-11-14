@@ -27,6 +27,7 @@ import {
   PUBLIC_CONTACT_PHONE_E164,
   publicWhatsAppUrl,
 } from '@/lib/publicContact';
+import { glassControlStyle } from '@/components/glassControls';
 
 type PropertyCardProps = {
   property: Property;
@@ -115,8 +116,7 @@ function PropertyCardInner({
         compact && styles.compactVideoTourButton,
         inFeaturedRow && styles.videoTourButtonInFeaturedRow,
         {
-          backgroundColor: inFeaturedRow ? colors.actionDeep : colors.actionGlass,
-          borderColor: inFeaturedRow ? colors.splashGold : colors.actionGlassBorder,
+          ...glassControlStyle(colors, inFeaturedRow ? 'gold' : 'action'),
           shadowColor: colors.shadow,
           opacity: pressed ? 0.84 : 1,
         },
@@ -190,7 +190,7 @@ function PropertyCardInner({
                   event.stopPropagation();
                   setActiveImage((current) => (current - 1 + images.length) % images.length);
                 }}
-                style={[styles.galleryArrow, styles.galleryArrowLeft, { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder }]}
+                style={[styles.galleryArrow, styles.galleryArrowLeft, glassControlStyle(colors, 'action')]}
                 hitSlop={6}
                 accessibilityLabel="Previous property image"
               >
@@ -201,7 +201,7 @@ function PropertyCardInner({
                   event.stopPropagation();
                   setActiveImage((current) => (current + 1) % images.length);
                 }}
-                style={[styles.galleryArrow, styles.galleryArrowRight, { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder }]}
+                style={[styles.galleryArrow, styles.galleryArrowRight, glassControlStyle(colors, 'action')]}
                 hitSlop={6}
                 accessibilityLabel="Next property image"
               >
@@ -246,7 +246,7 @@ function PropertyCardInner({
               style={({ pressed }) => [
                 styles.circleAction,
                 compact && styles.compactCircleAction,
-                { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder, opacity: pressed ? 0.78 : 1 },
+                { ...glassControlStyle(colors, 'action'), opacity: pressed ? 0.78 : 1 },
               ]}
               hitSlop={10}
               accessibilityRole="button"
@@ -261,8 +261,7 @@ function PropertyCardInner({
                 styles.circleAction,
                 compact && styles.compactCircleAction,
                 {
-                  backgroundColor: saved ? colors.splashGold : `${colors.splashGold}26`,
-                  borderColor: saved ? colors.splashGold : `${colors.splashGold}66`,
+                  ...glassControlStyle(colors, saved ? 'gold' : 'secondary'),
                   opacity: pressed ? 0.78 : 1,
                 },
               ]}
@@ -329,7 +328,7 @@ function PropertyCardInner({
       <View style={[ctaStyles.row, compact && ctaStyles.compactRow, { borderTopColor: colors.border, backgroundColor: colors.surfaceRaised }]}>
         <Pressable
           onPress={(e) => { e.stopPropagation(); void Linking.openURL(`sms:${PUBLIC_CONTACT_PHONE}`); }}
-          style={({ pressed }) => [ctaStyles.smsBtn, compact && ctaStyles.compactButton, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.75 : 1 }]}
+          style={({ pressed }) => [ctaStyles.smsBtn, compact && ctaStyles.compactButton, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.75 : 1 }]}
           hitSlop={6}
           accessibilityRole="button"
           accessibilityLabel="Send SMS"
@@ -340,7 +339,7 @@ function PropertyCardInner({
 
         <Pressable
           onPress={(e) => { e.stopPropagation(); void Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`); }}
-          style={({ pressed }) => [ctaStyles.callBtn, compact && ctaStyles.compactButton, { backgroundColor: colors.primaryAction, opacity: pressed ? 0.82 : 1 }]}
+          style={({ pressed }) => [ctaStyles.callBtn, compact && ctaStyles.compactButton, { ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.82 : 1 }]}
           hitSlop={6}
           accessibilityRole="button"
           accessibilityLabel="Call agent"
@@ -351,7 +350,7 @@ function PropertyCardInner({
 
         <Pressable
           onPress={(e) => { e.stopPropagation(); void Linking.openURL(publicWhatsAppUrl(`I am interested in ${property.title}`)); }}
-          style={({ pressed }) => [ctaStyles.waBtn, { opacity: pressed ? 0.75 : 1 }]}
+          style={({ pressed }) => [ctaStyles.waBtn, glassControlStyle(colors, 'secondary'), { opacity: pressed ? 0.75 : 1 }]}
           hitSlop={6}
           accessibilityRole="button"
           accessibilityLabel="WhatsApp agent"

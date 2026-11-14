@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { getMobileSettings, updateMobileSettings, sendBroadcastPush, MobileSettings } from '@/lib/api';
 
@@ -86,7 +87,7 @@ export default function AdminSettings() {
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
       <View style={[s.header, { backgroundColor: NAVY, paddingTop: top + (Platform.OS === 'web' ? 67 : 0) + 14 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
+        <Pressable onPress={() => router.back()} hitSlop={8} style={glassControlStyle(colors, 'action')}>
           <Feather name="arrow-left" size={20} color="#8a9ab5" />
         </Pressable>
         <Text style={s.headerTitle}>App Settings</Text>
@@ -159,13 +160,13 @@ export default function AdminSettings() {
               numberOfLines={3}
             />
             <Pressable
-              style={({ pressed }) => [s.sendBtn, { backgroundColor: NAVY, opacity: pressed ? 0.85 : 1 }]}
+              style={({ pressed }) => [s.sendBtn, { ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.85 : 1 }]}
               onPress={handleSendPush}
               disabled={pushing}
             >
               {pushing
-                ? <ActivityIndicator color="#fff" />
-                : <><Feather name="bell" size={15} color="#fff" /><Text style={s.sendText}>Send to All Users</Text></>
+                ? <ActivityIndicator color={colors.primaryActionForeground} />
+                : <><Feather name="bell" size={15} color={colors.primaryActionForeground} /><Text style={[s.sendText, { color: colors.primaryActionForeground }]}>Send to All Users</Text></>
               }
             </Pressable>
           </View>

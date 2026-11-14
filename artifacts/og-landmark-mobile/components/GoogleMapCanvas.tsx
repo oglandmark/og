@@ -5,6 +5,8 @@ import MapView, { Circle, Marker, PROVIDER_GOOGLE, type Region } from 'react-nat
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { MapViewModeControl, type MapViewMode } from '@/components/MapViewModeControl';
 import { getCurrentPosition } from '@/lib/locationService';
+import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 
 export interface GoogleMapPoint {
@@ -85,6 +87,7 @@ export function GoogleMapCanvas({
   modeControlHorizontal = false,
   modeControlButtonHeight = 38,
 }: Props) {
+  const colors = useColors();
   const initialRegion = useMemo<Region>(() => {
     const delta = deltaForZoom(zoom);
     return {
@@ -288,20 +291,20 @@ export function GoogleMapCanvas({
           ]}
         >
           <Pressable
-            style={styles.zoomButton}
+            style={[styles.zoomButton, glassControlStyle(colors, 'secondary')]}
             onPress={() => zoomBy(0.55)}
             accessibilityRole="button"
             accessibilityLabel="Zoom in"
           >
-            <Feather name="plus" size={19} color="#0B1F3A" />
+            <Feather name="plus" size={19} color={colors.action} />
           </Pressable>
           <Pressable
-            style={[styles.zoomButton, styles.zoomButtonDivider]}
+            style={[styles.zoomButton, styles.zoomButtonDivider, glassControlStyle(colors, 'secondary')]}
             onPress={() => zoomBy(1.8)}
             accessibilityRole="button"
             accessibilityLabel="Zoom out"
           >
-            <Feather name="minus" size={19} color="#0B1F3A" />
+            <Feather name="minus" size={19} color={colors.action} />
           </Pressable>
         </View>
       )}
@@ -319,13 +322,14 @@ export function GoogleMapCanvas({
             styles.myLocationButton,
             zoomControlsBottomRight && styles.myLocationButtonRaised,
             locating && styles.disabledButton,
+            glassControlStyle(colors, 'secondary'),
           ]}
           onPress={goToMyLocation}
           disabled={locating}
           accessibilityRole="button"
           accessibilityLabel="Center map on my location"
         >
-          <Feather name="crosshair" size={18} color={brandColors.light.gold} />
+          <Feather name="crosshair" size={18} color={colors.gold} />
         </Pressable>
       )}
     </View>

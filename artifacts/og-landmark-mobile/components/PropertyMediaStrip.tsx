@@ -21,6 +21,7 @@ import { propertyImages, type Property } from '@/lib/properties';
 import { useColors } from '@/hooks/useColors';
 import brandColors from '@/constants/colors';
 import { VideoWatermark } from '@/components/VideoWatermark';
+import { glassControlStyle } from '@/components/glassControls';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const THUMB_SIZE  = 52;   // square thumbnail size
@@ -174,7 +175,7 @@ export function PropertyMediaStrip({
               <Pressable
                 key={i}
                 onPress={() => onSelect(i)}
-                style={[s.thumb, compact && s.compactThumb, selected && s.thumbSelected]}
+                 style={[s.thumb, compact && s.compactThumb, glassControlStyle(colors, selected ? 'selected' : 'secondary'), selected && s.thumbSelected]}
                 accessibilityLabel={`Property image ${i + 1}`}
               >
                 <Image source={src} style={s.thumbImg} resizeMode="cover" />
@@ -214,7 +215,7 @@ export function PropertyMediaStrip({
               event.stopPropagation();
               moveStrip(-1);
             }}
-                style={[s.stripArrow, compact && s.compactStripArrow, s.stripArrowLeft]}
+                style={[s.stripArrow, compact && s.compactStripArrow, s.stripArrowLeft, glassControlStyle(colors, 'action')]}
             hitSlop={4}
             accessibilityRole="button"
             accessibilityLabel="Scroll property images left"
@@ -228,7 +229,7 @@ export function PropertyMediaStrip({
               event.stopPropagation();
               moveStrip(1);
             }}
-                style={[s.stripArrow, compact && s.compactStripArrow, s.stripArrowRight]}
+                style={[s.stripArrow, compact && s.compactStripArrow, s.stripArrowRight, glassControlStyle(colors, 'action')]}
             hitSlop={4}
             accessibilityRole="button"
             accessibilityLabel="Scroll property images right"
@@ -250,7 +251,7 @@ export function PropertyMediaStrip({
         <View style={fs.container}>
 
           {/* Close */}
-          <Pressable style={fs.closeBtn} onPress={closeVideo} hitSlop={14}>
+          <Pressable style={[fs.closeBtn, glassControlStyle(colors, 'action')]} onPress={closeVideo} hitSlop={14}>
             <View style={fs.closeBtnInner}>
               <Feather name="x" size={20} color="#fff" />
             </View>
@@ -260,7 +261,7 @@ export function PropertyMediaStrip({
             <View style={fs.errorBox}>
               <Feather name="alert-circle" size={36} color={colors.gold} />
               <Text style={fs.errorText}>Video load nahi ho saka</Text>
-              <Pressable onPress={closeVideo} style={fs.errorClose}>
+              <Pressable onPress={closeVideo} style={[fs.errorClose, glassControlStyle(colors, 'secondary')]}>
                 <Text style={fs.errorCloseText}>Close</Text>
               </Pressable>
             </View>
@@ -299,7 +300,7 @@ export function PropertyMediaStrip({
                 {/* Mute / Unmute button */}
                 <TouchableOpacity
                   onPress={toggleMute}
-                  style={fs.muteBtn}
+                  style={[fs.muteBtn, glassControlStyle(colors, 'secondary')]}
                   activeOpacity={0.8}
                   accessibilityLabel={isMuted ? 'Unmute video' : 'Mute video'}
                 >
@@ -338,6 +339,7 @@ export function PropertyVideoModal({
   visible: boolean;
   onClose: () => void;
 }) {
+  const colors = useColors();
   const [isBuffering, setIsBuffering] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -361,7 +363,7 @@ export function PropertyVideoModal({
     >
       <StatusBar hidden />
       <View style={fs.container}>
-        <Pressable style={fs.closeBtn} onPress={closeVideo} hitSlop={14}>
+        <Pressable style={[fs.closeBtn, glassControlStyle(colors, 'action')]} onPress={closeVideo} hitSlop={14}>
           <View style={fs.closeBtnInner}>
             <Feather name="x" size={20} color="#fff" />
           </View>
@@ -371,7 +373,7 @@ export function PropertyVideoModal({
           <View style={fs.errorBox}>
             <Feather name="alert-circle" size={36} color={brandColors.light.gold} />
             <Text style={fs.errorText}>Video load nahi ho saka</Text>
-            <Pressable onPress={closeVideo} style={fs.errorClose}>
+              <Pressable onPress={closeVideo} style={[fs.errorClose, glassControlStyle(colors, 'secondary')]}>
               <Text style={fs.errorCloseText}>Close</Text>
             </Pressable>
           </View>
@@ -413,7 +415,7 @@ export function PropertyVideoModal({
                   setIsMuted(next);
                   if (videoPlayerRef.current) videoPlayerRef.current.muted = next;
                 }}
-                style={fs.muteBtn}
+                style={[fs.muteBtn, glassControlStyle(colors, 'secondary')]}
                 activeOpacity={0.8}
                 accessibilityLabel={isMuted ? 'Unmute video' : 'Mute video'}
               >

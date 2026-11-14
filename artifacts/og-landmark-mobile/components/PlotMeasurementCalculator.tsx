@@ -7,6 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import Svg, { Circle, Line, Polygon, Text as SvgText } from 'react-native-svg';
 import { useAuth } from '@/context/AuthContext';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import {
   CALC_FIELDS, type CalcCorners, type CalcMode, type CalcResult, type CalcUnit,
   computePlotArea,
@@ -139,7 +140,7 @@ function MeasurementField({
             onBlur={() => setEditingLabel(false)} onSubmitEditing={() => setEditingLabel(false)}
             style={[styles.renameInput, { color: colors.foreground, borderColor: colors.action }]} />
         ) : (
-          <Pressable disabled={field.kind !== 'side'} onPress={() => setEditingLabel(true)} style={styles.labelButton}>
+          <Pressable disabled={field.kind !== 'side'} onPress={() => setEditingLabel(true)} style={[styles.labelButton, glassControlStyle(colors, 'secondary')]}>
             <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{label}</Text>
             {field.kind === 'side' && <Feather name="edit-2" size={10} color={colors.mutedForeground} />}
           </Pressable>
@@ -249,7 +250,7 @@ export function PlotMeasurementCalculator({
           <Text style={[styles.title, { color: colors.foreground }]}>Land Plot Calculator</Text>
           <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>3 to 8 sides · feet or meters</Text>
         </View>
-        <Pressable onPress={() => setHistoryOpen((open) => !open)} hitSlop={8}>
+        <Pressable onPress={() => setHistoryOpen((open) => !open)} hitSlop={8} style={glassControlStyle(colors, 'secondary')}>
           <Feather name="clock" size={18} color={colors.action} />
         </Pressable>
       </View>
@@ -259,7 +260,7 @@ export function PlotMeasurementCalculator({
         <View style={styles.chipRow}>
           {CORNERS.map((value) => (
             <Pressable key={value} onPress={() => switchCorners(value)}
-              style={[styles.chip, { backgroundColor: value === corners ? colors.selectionBackground : colors.secondary, borderColor: value === corners ? colors.selectionBorder : colors.border, borderWidth: value === corners ? 2 : 1 }]}>
+              style={[styles.chip, glassControlStyle(colors, value === corners ? 'selected' : 'secondary'), { borderWidth: value === corners ? 2 : 1 }]}>
               <Text style={[styles.chipText, { color: value === corners ? colors.selectionForeground : colors.foreground, fontWeight: value === corners ? '600' : '400' }]}>{value}</Text>
             </Pressable>
           ))}
@@ -270,7 +271,7 @@ export function PlotMeasurementCalculator({
             <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>INPUT UNIT</Text>
             <View style={[styles.segment, { backgroundColor: colors.secondary }]}>
               {(['ft', 'm'] as CalcUnit[]).map((value) => (
-                <Pressable key={value} onPress={() => switchUnit(value)} style={[styles.segmentButton, value === unit && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }]}>
+                <Pressable key={value} onPress={() => switchUnit(value)} style={[styles.segmentButton, glassControlStyle(colors, value === unit ? 'selected' : 'secondary')]}>
                   <Text style={[styles.segmentText, { color: value === unit ? colors.selectionForeground : colors.mutedForeground, fontWeight: value === unit ? '600' : '400' }]}>{value === 'ft' ? 'Feet' : 'Meters'}</Text>
                 </Pressable>
               ))}
@@ -281,7 +282,7 @@ export function PlotMeasurementCalculator({
         <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>CALCULATION MODE</Text>
         <View style={[styles.modeRow, { backgroundColor: colors.secondary }]}>
           {MODES.map((item) => (
-            <Pressable key={item.key} onPress={() => switchMode(item.key)} style={[styles.modeButton, mode === item.key && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, borderWidth: 1.5 }]}>
+            <Pressable key={item.key} onPress={() => switchMode(item.key)} style={[styles.modeButton, glassControlStyle(colors, mode === item.key ? 'selected' : 'secondary')]}>
               <Text style={[styles.modeText, { color: mode === item.key ? colors.selectionForeground : colors.mutedForeground, fontWeight: mode === item.key ? '600' : '400' }]}>{item.label}</Text>
             </Pressable>
           ))}
@@ -307,14 +308,14 @@ export function PlotMeasurementCalculator({
 
         {!!error && <View style={styles.errorRow}><Feather name="alert-circle" size={13} color="#dc2626" /><Text style={styles.errorText}>{error}</Text></View>}
         <View style={styles.actionRow}>
-          <Pressable onPress={reset} style={[styles.secondaryButton, { borderColor: colors.border }]}><Feather name="trash-2" size={14} color={colors.mutedForeground} /><Text style={[styles.buttonText, { color: colors.mutedForeground }]}>Clear All</Text></Pressable>
-          <Pressable onPress={calculate} style={[styles.primaryButton, { backgroundColor: colors.action }]}><Feather name="check" size={14} color={colors.actionForeground} /><Text style={[styles.buttonText, { color: colors.actionForeground }]}>Calculate Area</Text></Pressable>
+          <Pressable onPress={reset} style={[styles.secondaryButton, glassControlStyle(colors, 'secondary')]}><Feather name="trash-2" size={14} color={colors.mutedForeground} /><Text style={[styles.buttonText, { color: colors.mutedForeground }]}>Clear All</Text></Pressable>
+          <Pressable onPress={calculate} style={[styles.primaryButton, glassControlStyle(colors, 'action')]}><Feather name="check" size={14} color={colors.actionForeground} /><Text style={[styles.buttonText, { color: colors.actionForeground }]}>Calculate Area</Text></Pressable>
         </View>
 
         {result && <ResultCard result={result} colors={colors} />}
         {result && <View style={styles.actionRow}>
-          <Pressable onPress={saveCurrent} style={[styles.secondaryButton, { flex: 1, borderColor: colors.border }]}><Feather name="bookmark" size={14} color={colors.action} /><Text style={[styles.buttonText, { color: colors.action }]}>Save Measurement</Text></Pressable>
-          <Pressable onPress={shareResult} style={[styles.secondaryButton, { flex: 1, borderColor: colors.border }]}><Feather name="share-2" size={14} color={colors.action} /><Text style={[styles.buttonText, { color: colors.action }]}>Share Result</Text></Pressable>
+          <Pressable onPress={saveCurrent} style={[styles.secondaryButton, { ...glassControlStyle(colors, 'secondary'), flex: 1 }]}><Feather name="bookmark" size={14} color={colors.action} /><Text style={[styles.buttonText, { color: colors.action }]}>Save Measurement</Text></Pressable>
+          <Pressable onPress={shareResult} style={[styles.secondaryButton, { ...glassControlStyle(colors, 'secondary'), flex: 1 }]}><Feather name="share-2" size={14} color={colors.action} /><Text style={[styles.buttonText, { color: colors.action }]}>Share Result</Text></Pressable>
         </View>}
 
         {historyOpen && (
@@ -324,11 +325,11 @@ export function PlotMeasurementCalculator({
             {isLoggedIn && saved.length === 0 && <Text style={[styles.emptyHistory, { color: colors.mutedForeground }]}>No saved measurements yet.</Text>}
             {saved.slice(0, 8).map((item) => (
               <View key={String(item.id)} style={[styles.historyItem, { borderTopColor: colors.border }]}>
-                <Pressable onPress={() => reopen(item)} style={{ flex: 1 }}>
+                <Pressable onPress={() => reopen(item)} style={[{ flex: 1 }, glassControlStyle(colors, 'secondary')]}>
                   <Text style={[styles.historyName, { color: colors.foreground }]}>{item.name}</Text>
                   <Text style={[styles.historyMeta, { color: colors.mutedForeground }]}>{item.corners} sides · {item.unit === 'ft' ? 'Feet' : 'Meters'} · {item.result ? `${formatNumber(item.result.sqft)} sq ft` : 'Saved draft'}</Text>
                 </Pressable>
-                <Pressable onPress={() => removeSaved(item)} hitSlop={8}><Feather name="x" size={15} color={colors.mutedForeground} /></Pressable>
+                <Pressable onPress={() => removeSaved(item)} hitSlop={8} style={glassControlStyle(colors, 'destructive')}><Feather name="x" size={15} color={colors.destructiveForeground} /></Pressable>
               </View>
             ))}
           </View>
@@ -343,8 +344,8 @@ export function PlotMeasurementCalculator({
             <NativeTextInput autoFocus value={saveName} onChangeText={setSaveName} placeholder="e.g. House plot - DHA"
               placeholderTextColor={colors.mutedForeground} style={[styles.modalInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.secondary }]} />
             <View style={styles.actionRow}>
-              <Pressable onPress={() => setSaveModalOpen(false)} style={[styles.secondaryButton, { flex: 1, borderColor: colors.border }]}><Text style={[styles.buttonText, { color: colors.mutedForeground }]}>Cancel</Text></Pressable>
-              <Pressable onPress={confirmSave} style={[styles.primaryButton, { flex: 1, backgroundColor: colors.action }]}><Text style={[styles.buttonText, { color: colors.actionForeground }]}>Save</Text></Pressable>
+              <Pressable onPress={() => setSaveModalOpen(false)} style={[styles.secondaryButton, { ...glassControlStyle(colors, 'secondary'), flex: 1 }]}><Text style={[styles.buttonText, { color: colors.mutedForeground }]}>Cancel</Text></Pressable>
+              <Pressable onPress={confirmSave} style={[styles.primaryButton, { ...glassControlStyle(colors, 'gold'), flex: 1 }]}><Text style={[styles.buttonText, { color: colors.primaryActionForeground }]}>Save</Text></Pressable>
             </View>
           </View>
         </View>

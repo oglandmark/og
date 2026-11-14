@@ -13,6 +13,7 @@ import { filterVisibleDemoProperties } from '@/lib/demoPropertyVisibility';
 import { useDemoPropertyVisibility } from '@/context/DemoPropertyVisibilityContext';
 import { useSaved } from '@/context/SavedContext';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { GlassCard } from '@/components/GlassCard';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -107,7 +108,7 @@ export default function SavedScreen() {
             onPress={() => router.push('/explore')}
             accessibilityRole="button"
             accessibilityLabel="Explore properties"
-            style={({ pressed }) => [styles.exploreButton, { backgroundColor: colors.action, opacity: pressed ? 0.84 : 1 }]}
+            style={({ pressed }) => [styles.exploreButton, { ...glassControlStyle(colors, 'action'), opacity: pressed ? 0.84 : 1 }]}
           >
             <Text style={[styles.exploreText, { color: colors.actionForeground }]}>Explore properties</Text>
             <Feather name="arrow-right" size={15} color={colors.actionForeground} />

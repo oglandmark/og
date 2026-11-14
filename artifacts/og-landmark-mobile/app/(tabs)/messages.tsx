@@ -8,6 +8,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { BrandMark } from '@/components/BrandMark';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
+import { glassControlStyle } from '@/components/glassControls';
 import { useTabBarScrollHandler } from '@/context/TabBarScrollContext';
 import { useAuth } from '@/context/AuthContext';
 import { getConversations, getMessages, sendMessage as sendMessageAPI, type ApiConversation, type ApiMessage } from '@/lib/api';
@@ -164,7 +165,7 @@ export default function MessagesScreen() {
         keyboardVerticalOffset={0}
       >
         <View style={[styles.chatHeader, { paddingTop: topPad + 12, paddingBottom: 14, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-            <Pressable onPress={() => setActiveConv(null)} hitSlop={12} style={styles.backBtn} accessibilityRole="button" accessibilityLabel="Back to conversations">
+            <Pressable onPress={() => setActiveConv(null)} hitSlop={12} style={[styles.backBtn, glassControlStyle(colors, 'secondary')]} accessibilityRole="button" accessibilityLabel="Back to conversations">
             <Feather name="arrow-left" size={21} color={colors.foreground} />
           </Pressable>
           <View style={[styles.chatAvatar, { backgroundColor: colors.action }]}>
@@ -177,7 +178,7 @@ export default function MessagesScreen() {
             </Text>
           </View>
           <Pressable
-            style={[styles.headerAction, { backgroundColor: colors.secondary }]}
+            style={[styles.headerAction, glassControlStyle(colors, 'secondary')]}
             onPress={() => {
               if (activeConv.phone) {
                 Linking.openURL(`tel:${activeConv.phone}`);
@@ -210,7 +211,7 @@ export default function MessagesScreen() {
             ) : messagesError ? (
               <View style={styles.inlineState}>
                 <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>{messagesError}</Text>
-                <Pressable onPress={() => void openConversation(activeConv)} style={[styles.retryButton, { backgroundColor: colors.action }]}>
+                <Pressable onPress={() => void openConversation(activeConv)} style={[styles.retryButton, glassControlStyle(colors, 'action')]}>
                   <Text style={[styles.retryText, { color: colors.actionForeground }]}>Try again</Text>
                 </Pressable>
               </View>
@@ -241,7 +242,7 @@ export default function MessagesScreen() {
             textAlign={rtl}
             style={[styles.msgInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
              onSubmitEditing={() => void sendMessage()} returnKeyType="send" editable={!sending} />
-   <Pressable onPress={() => void sendMessage()} disabled={sending || !inputText.trim()} accessibilityRole="button" accessibilityLabel="Send message" style={[styles.sendBtn, { backgroundColor: colors.action, opacity: inputText.trim() && !sending ? 1 : 0.5 }]}>
+   <Pressable onPress={() => void sendMessage()} disabled={sending || !inputText.trim()} accessibilityRole="button" accessibilityLabel="Send message" style={[styles.sendBtn, { ...glassControlStyle(colors, 'action'), opacity: inputText.trim() && !sending ? 1 : 0.5 }]}>
             <Feather name={isRTL ? 'arrow-left' : 'send'} size={17} color={colors.actionForeground} />
           </Pressable>
         </View>
@@ -266,7 +267,7 @@ export default function MessagesScreen() {
             <BrandMark />
               <Pressable
               onPress={handleNewConversation}
-              style={({ pressed }) => [styles.headerAction, { backgroundColor: colors.secondary, opacity: pressed ? 0.7 : 1 }]}
+              style={({ pressed }) => [styles.headerAction, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.7 : 1 }]}
               accessibilityRole="button"
               accessibilityLabel="New conversation information"
             >
@@ -288,7 +289,7 @@ export default function MessagesScreen() {
             <Feather name="alert-circle" size={48} color={colors.border} />
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Unable to load conversations</Text>
             <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>{error}</Text>
-            <Pressable onPress={() => void loadConversations()} style={[styles.retryButton, { backgroundColor: colors.action }]}>
+            <Pressable onPress={() => void loadConversations()} style={[styles.retryButton, glassControlStyle(colors, 'action')]}>
               <Text style={[styles.retryText, { color: colors.actionForeground }]}>Try again</Text>
             </Pressable>
           </View>

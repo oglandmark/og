@@ -11,6 +11,7 @@ import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { DeveloperProject, formatPKR, getDevProjectById, getDevProjects, statusColor } from '@/lib/developerStore';
@@ -155,11 +156,11 @@ export default function DeveloperProfileScreen() {
 
       {/* ── HEADER ──────────────────────────────────────────────────── */}
       <View style={[styles.header, { backgroundColor: colors.action }]}>
-        <Pressable onPress={() => router.back()} style={[styles.backCircle, { top: topInset + 10 }]}>
+        <Pressable onPress={() => router.back()} style={[styles.backCircle, glassControlStyle(colors, 'secondary'), { top: topInset + 10 }]}>
           <Feather name="arrow-left" size={20} color="#ffffff" />
         </Pressable>
         <Pressable onPress={() => Share.share({ message: `${devInfo.companyName} — Verified Developer on OG Landmark`, title: devInfo.companyName })}
-          style={[styles.shareCircle, { top: topInset + 10 }]}>
+          style={[styles.shareCircle, glassControlStyle(colors, 'secondary'), { top: topInset + 10 }]}>
           <Feather name="share-2" size={18} color="#ffffff" />
         </Pressable>
 
@@ -224,18 +225,18 @@ export default function DeveloperProfileScreen() {
       {/* ── CONTACT ACTIONS ──────────────────────────────────────────── */}
       <View style={styles.contactRow}>
         <Pressable onPress={() => Linking.openURL(`tel:${devInfo.phone}`)}
-          style={({ pressed }) => [styles.contactBtn, { backgroundColor: colors.secondary, borderColor: colors.border, opacity: pressed ? 0.8 : 1 }]}>
-          <Feather name="phone" size={15} color={colors.action} />
-          <Text style={[styles.contactBtnText, { color: colors.action }]}>Call Office</Text>
+          style={({ pressed }) => [styles.contactBtn, { ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.8 : 1 }]}>
+          <Feather name="phone" size={15} color={colors.primaryActionForeground} />
+          <Text style={[styles.contactBtnText, { color: colors.primaryActionForeground }]}>Call Office</Text>
         </Pressable>
         <Pressable onPress={() => Linking.openURL(`https://wa.me/92${devInfo.phone.replace(/^0/, '')}`)}
-          style={({ pressed }) => [styles.contactBtn, { backgroundColor: '#25d36615', borderColor: '#25d36640', opacity: pressed ? 0.8 : 1 }]}>
+          style={({ pressed }) => [styles.contactBtn, { ...glassControlStyle(colors, 'secondary'), backgroundColor: '#25d36615', borderColor: '#25d36640', opacity: pressed ? 0.8 : 1 }]}>
           <Feather name="message-circle" size={15} color="#25d366" />
           <Text style={[styles.contactBtnText, { color: '#25d366' }]}>WhatsApp</Text>
         </Pressable>
         {devInfo.website ? (
           <Pressable onPress={() => Linking.openURL(devInfo.website)}
-            style={({ pressed }) => [styles.contactBtn, { backgroundColor: colors.secondary, borderColor: colors.border, opacity: pressed ? 0.8 : 1 }]}>
+            style={({ pressed }) => [styles.contactBtn, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.8 : 1 }]}>
             <Feather name="globe" size={15} color={colors.mutedForeground} />
             <Text style={[styles.contactBtnText, { color: colors.mutedForeground }]}>Website</Text>
           </Pressable>
@@ -268,8 +269,8 @@ export default function DeveloperProfileScreen() {
         <View style={[styles.tabBar, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           {(['Ongoing', 'Upcoming', 'Completed'] as const).map((t) => (
             <Pressable key={t} onPress={() => setActiveTab(t)}
-              style={[styles.tabItem, activeTab === t ? { backgroundColor: colors.action, borderRadius: 10 } : {}]}>
-              <Text style={[styles.tabText, { color: activeTab === t ? colors.actionForeground : colors.mutedForeground }]}>{t}</Text>
+              style={[styles.tabItem, glassControlStyle(colors, activeTab === t ? 'selected' : 'secondary')]}>
+              <Text style={[styles.tabText, { color: activeTab === t ? colors.selectionForeground : colors.mutedForeground }]}>{t}</Text>
             </Pressable>
           ))}
         </View>

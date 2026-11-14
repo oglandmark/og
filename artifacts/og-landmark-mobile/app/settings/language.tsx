@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import type { Lang } from '@/lib/i18n';
@@ -43,7 +44,7 @@ export default function LanguageSettingsScreen() {
         <View style={styles.header}>
           <Pressable
             onPress={() => router.back()}
-            style={[styles.backBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+            style={[styles.backBtn, glassControlStyle(colors, 'secondary')]}
             hitSlop={8}
           >
             <Feather name="arrow-left" size={18} color={colors.foreground} />
@@ -79,8 +80,8 @@ export default function LanguageSettingsScreen() {
                   onPress={() => void handleSelect(lang.code)}
                   style={({ pressed }) => [
                     styles.optionRow,
-                    isActive && { backgroundColor: colors.selectionTint, borderColor: colors.selectionBorder, borderWidth: 1.5 },
-                    { opacity: pressed ? 0.75 : 1 },
+                     glassControlStyle(colors, isActive ? 'selected' : 'secondary'),
+                     { opacity: pressed ? 0.75 : 1 },
                   ]}
                 >
                   {/* Script icon */}
@@ -138,10 +139,10 @@ export default function LanguageSettingsScreen() {
       <AnimatedReveal delay={200}>
         <Pressable
           onPress={() => router.back()}
-          style={({ pressed }) => [styles.doneBtn, { backgroundColor: colors.action, opacity: pressed ? 0.85 : 1 }]}
+          style={({ pressed }) => [styles.doneBtn, { ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.85 : 1 }]}
         >
-          <Feather name="check" size={16} color={colors.actionForeground} />
-          <Text style={[styles.doneBtnText, { color: colors.actionForeground }]}>
+          <Feather name="check" size={16} color={colors.primaryActionForeground} />
+          <Text style={[styles.doneBtnText, { color: colors.primaryActionForeground }]}>
             {selected === 'ur' ? 'مکمل' : 'Done'}
           </Text>
         </Pressable>

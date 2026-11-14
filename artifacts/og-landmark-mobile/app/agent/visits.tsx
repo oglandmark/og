@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useAuth } from '@/context/AuthContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
@@ -88,10 +89,10 @@ function VisitCard({
           <Text style={[vc.clientName, { color: colors.foreground }]}>{visit.clientName}</Text>
           <Text style={[vc.clientPhone, { color: colors.mutedForeground }]}>{visit.clientPhone}</Text>
         </View>
-        <Pressable onPress={call} style={[vc.contactBtn, { backgroundColor: colors.action + '18' }]} hitSlop={8}>
+        <Pressable onPress={call} style={[vc.contactBtn, glassControlStyle(colors, 'secondary')]} hitSlop={8}>
           <Feather name="phone" size={14} color={colors.action} />
         </Pressable>
-        <Pressable onPress={whatsapp} style={[vc.contactBtn, { backgroundColor: '#25d36618' }]} hitSlop={8}>
+        <Pressable onPress={whatsapp} style={[vc.contactBtn, glassControlStyle(colors, 'secondary')]} hitSlop={8}>
           <Feather name="message-circle" size={14} color="#25d366" />
         </Pressable>
       </View>
@@ -109,32 +110,32 @@ function VisitCard({
         <View style={[vc.actions, { borderTopColor: colors.border }]}>
           {visit.status === 'Requested' && (
             <Pressable onPress={() => onStatusChange(visit.id, 'Confirmed')}
-              style={[vc.actionBtn, { backgroundColor: colors.selectionBackground }]}>
+              style={[vc.actionBtn, glassControlStyle(colors, 'selected')]}>
               <Feather name="check" size={13} color={colors.action} />
               <Text style={[vc.actionBtnText, { color: colors.action }]}>Confirm</Text>
             </Pressable>
           )}
           {visit.status === 'Confirmed' && (
             <Pressable onPress={() => onStatusChange(visit.id, 'Completed')}
-              style={[vc.actionBtn, { backgroundColor: '#0B1F3A18' }]}>
+              style={[vc.actionBtn, glassControlStyle(colors, 'success')]}>
               <Feather name="check-circle" size={13} color="#0B1F3A" />
               <Text style={[vc.actionBtnText, { color: '#0B1F3A' }]}>Complete</Text>
             </Pressable>
           )}
           <Pressable onPress={() => onStatusChange(visit.id, 'Rescheduled')}
-            style={[vc.actionBtn, { backgroundColor: '#7c3aed18' }]}>
+            style={[vc.actionBtn, glassControlStyle(colors, 'warning')]}>
             <Feather name="clock" size={13} color="#7c3aed" />
             <Text style={[vc.actionBtnText, { color: '#7c3aed' }]}>Reschedule</Text>
           </Pressable>
           <Pressable onPress={() => onStatusChange(visit.id, 'Cancelled')}
-            style={[vc.actionBtn, { backgroundColor: '#b94b4218' }]}>
+            style={[vc.actionBtn, glassControlStyle(colors, 'destructive')]}>
             <Feather name="x" size={13} color="#b94b42" />
             <Text style={[vc.actionBtnText, { color: '#b94b42' }]}>Cancel</Text>
           </Pressable>
           <Pressable onPress={() => onDelete(visit.id, visit.clientName)}
-            style={[vc.actionBtn, { backgroundColor: '#dc262610' }]}>
-            <Feather name="trash-2" size={13} color="#dc2626" />
-            <Text style={[vc.actionBtnText, { color: '#dc2626' }]}>Delete</Text>
+            style={[vc.actionBtn, glassControlStyle(colors, 'destructive')]}>
+            <Feather name="trash-2" size={13} color={colors.destructiveForeground} />
+            <Text style={[vc.actionBtnText, { color: colors.destructiveForeground }]}>Delete</Text>
           </Pressable>
         </View>
       )}
@@ -213,12 +214,12 @@ function AddVisitForm({
       <InputField label="Time (HH:MM)" value={time} onChangeText={setTime} placeholder="10:00" />
       <InputField label="Notes" value={notes} onChangeText={setNotes} placeholder="Anything the client mentioned..." />
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Pressable onPress={onCancel} style={[af.cancelBtn, { borderColor: colors.border, backgroundColor: colors.secondary }]}>
+        <Pressable onPress={onCancel} style={[af.cancelBtn, glassControlStyle(colors, 'secondary')]}>
           <Text style={[af.cancelText, { color: colors.foreground }]}>Cancel</Text>
         </Pressable>
-        <Pressable onPress={() => { void save(); }} disabled={saving} style={[af.saveBtn, { backgroundColor: colors.action }]}>
-          <Feather name="calendar" size={14} color="#ffffff" />
-          <Text style={af.saveText}>{saving ? 'Saving…' : 'Schedule Visit'}</Text>
+        <Pressable onPress={() => { void save(); }} disabled={saving} style={[af.saveBtn, glassControlStyle(colors, 'gold')]}>
+          <Feather name="calendar" size={14} color={colors.primaryActionForeground} />
+          <Text style={[af.saveText, { color: colors.primaryActionForeground }]}>{saving ? 'Saving…' : 'Schedule Visit'}</Text>
         </Pressable>
       </View>
     </View>
@@ -300,7 +301,7 @@ export default function AgentVisitsScreen() {
         <AnimatedReveal>
           <View style={[sc.header, { paddingTop: topPad + 12, paddingHorizontal: 20 }]}>
             <Pressable onPress={() => router.back()} hitSlop={12}
-              style={[sc.backBtn, { backgroundColor: colors.secondary }]}>
+              style={[sc.backBtn, glassControlStyle(colors, 'secondary')]}>
               <Feather name="arrow-left" size={20} color={colors.foreground} />
             </Pressable>
             <View style={{ flex: 1, marginLeft: 12 }}>
@@ -308,9 +309,9 @@ export default function AgentVisitsScreen() {
               <Text style={[sc.title, { color: colors.foreground }]}>Visit Management</Text>
             </View>
             <Pressable onPress={() => setShowForm(!showForm)}
-              style={[sc.addBtn, { backgroundColor: showForm ? colors.secondary : colors.action }]}>
-              <Feather name={showForm ? 'x' : 'plus'} size={14} color={showForm ? colors.foreground : '#ffffff'} />
-              <Text style={[sc.addBtnText, { color: showForm ? colors.foreground : '#ffffff' }]}>
+              style={[sc.addBtn, glassControlStyle(colors, showForm ? 'secondary' : 'gold')]}>
+              <Feather name={showForm ? 'x' : 'plus'} size={14} color={showForm ? colors.foreground : colors.primaryActionForeground} />
+              <Text style={[sc.addBtnText, { color: showForm ? colors.foreground : colors.primaryActionForeground }]}>
                 {showForm ? 'Cancel' : 'Schedule'}
               </Text>
             </Pressable>
@@ -350,8 +351,8 @@ export default function AgentVisitsScreen() {
             contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingVertical: 14 }}>
             {TABS.map((t) => (
               <Pressable key={t} onPress={() => setTab(t)}
-                style={[sc.tabPill, { backgroundColor: tab === t ? colors.action : colors.secondary, borderColor: tab === t ? colors.action : colors.border }]}>
-                <Text style={[sc.tabText, { color: tab === t ? '#ffffff' : colors.mutedForeground }]}>{t}</Text>
+                style={[sc.tabPill, glassControlStyle(colors, tab === t ? 'selected' : 'secondary')]}>
+                <Text style={[sc.tabText, { color: tab === t ? colors.selectionForeground : colors.mutedForeground }]}>{t}</Text>
                 {tabCounts[t] > 0 && (
                   <View style={[sc.tabBadge, { backgroundColor: tab === t ? '#ffffff33' : colors.border }]}>
                     <Text style={[sc.tabBadgeText, { color: tab === t ? '#ffffff' : colors.mutedForeground }]}>{tabCounts[t]}</Text>
@@ -376,9 +377,9 @@ export default function AgentVisitsScreen() {
                 </Text>
                 {tab === 'Today' || tab === 'Upcoming' ? (
                   <Pressable onPress={() => setShowForm(true)}
-                    style={[sc.emptyBtn, { backgroundColor: colors.action }]}>
-                    <Feather name="plus" size={14} color="#ffffff" />
-                    <Text style={sc.emptyBtnText}>Schedule Visit</Text>
+                    style={[sc.emptyBtn, glassControlStyle(colors, 'gold')]}>
+                    <Feather name="plus" size={14} color={colors.primaryActionForeground} />
+                    <Text style={[sc.emptyBtnText, { color: colors.primaryActionForeground }]}>Schedule Visit</Text>
                   </Pressable>
                 ) : null}
               </View>

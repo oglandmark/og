@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { getAnnouncement, type AdminAnnouncement } from '@/lib/api';
 
 export default function AnnouncementDetailScreen() {
@@ -27,7 +28,7 @@ export default function AnnouncementDetailScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) + 12 }]}>
-        <Pressable onPress={() => router.back()} style={styles.iconButton} accessibilityLabel="Back">
+        <Pressable onPress={() => router.back()} style={[styles.iconButton, glassControlStyle(colors, 'secondary')]} accessibilityLabel="Back">
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Announcement</Text>

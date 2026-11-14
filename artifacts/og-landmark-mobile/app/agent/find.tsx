@@ -12,6 +12,7 @@ import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { PUBLIC_CONTACT_PHONE_E164, publicWhatsAppUrl } from '@/lib/publicContact';
 import { GlassCard } from '@/components/GlassCard';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import { apiAgentToSample, SampleAgent } from '@/lib/agentsData';
 import { getAgents } from '@/lib/api';
@@ -122,7 +123,7 @@ export default function FindAgentScreen() {
       {/* ── Header ── */}
       <AnimatedReveal>
         <View style={st.headerRow}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={[st.backBtn, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
+          <Pressable onPress={() => router.back()} hitSlop={12} style={[st.backBtn, glassControlStyle(colors, 'secondary')]}>
             <Feather name="arrow-left" size={18} color={colors.foreground} />
           </Pressable>
           <View style={{ flex: 1 }}>
@@ -130,7 +131,7 @@ export default function FindAgentScreen() {
             <Text style={[st.title, { color: colors.foreground }]}>Verified Agents</Text>
           </View>
           {hasFilters && (
-            <Pressable onPress={resetFilters} hitSlop={8} style={[st.resetBtn, { borderColor: colors.border, backgroundColor: colors.glassCard }]}>
+            <Pressable onPress={resetFilters} hitSlop={8} style={[st.resetBtn, glassControlStyle(colors, 'secondary')]}>
               <Text style={[st.resetText, { color: colors.action }]}>Reset</Text>
             </Pressable>
           )}
@@ -151,7 +152,7 @@ export default function FindAgentScreen() {
             autoCorrect={false}
           />
           {query.length > 0 && (
-            <Pressable onPress={() => setQuery('')} hitSlop={8}>
+            <Pressable onPress={() => setQuery('')} hitSlop={8} style={glassControlStyle(colors, 'secondary')}>
               <Feather name="x-circle" size={16} color={colors.mutedForeground} />
             </Pressable>
           )}
@@ -164,11 +165,7 @@ export default function FindAgentScreen() {
           onPress={() => setVerifiedOnly(!verifiedOnly)}
           style={({ pressed }) => [
             st.verifiedToggle,
-            {
-              backgroundColor: verifiedOnly ? colors.tealSoft : colors.glassCard,
-              borderColor: verifiedOnly ? colors.teal + '55' : colors.glassBorder,
-              opacity: pressed ? 0.85 : 1,
-            },
+             { ...glassControlStyle(colors, verifiedOnly ? 'selected' : 'secondary'), opacity: pressed ? 0.85 : 1 },
           ]}
         >
           <View style={[st.verifiedDot, { backgroundColor: verifiedOnly ? colors.teal : colors.mutedForeground }]}>
@@ -191,14 +188,10 @@ export default function FindAgentScreen() {
               onPress={() => setSpecialty(s)}
               style={({ pressed }) => [
                 st.chip,
-                {
-                  backgroundColor: specialty === s ? colors.action : colors.glassCard,
-                  borderColor: specialty === s ? colors.action : colors.glassBorder,
-                  opacity: pressed ? 0.82 : 1,
-                },
+                 { ...glassControlStyle(colors, specialty === s ? 'selected' : 'secondary'), opacity: pressed ? 0.82 : 1 },
               ]}
             >
-              <Text style={[st.chipText, { color: specialty === s ? colors.actionForeground : colors.foreground }]}>{s}</Text>
+              <Text style={[st.chipText, { color: specialty === s ? colors.selectionForeground : colors.foreground }]}>{s}</Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -214,15 +207,11 @@ export default function FindAgentScreen() {
               onPress={() => setLocation(loc)}
               style={({ pressed }) => [
                 st.chip,
-                {
-                  backgroundColor: location === loc ? colors.primary : colors.glassCard,
-                  borderColor: location === loc ? colors.primary : colors.glassBorder,
-                  opacity: pressed ? 0.82 : 1,
-                },
+                 { ...glassControlStyle(colors, location === loc ? 'selected' : 'secondary'), opacity: pressed ? 0.82 : 1 },
               ]}
             >
-              {location === loc && loc !== 'All' && <Feather name="map-pin" size={10} color="#ffffff" />}
-              <Text style={[st.chipText, { color: location === loc ? '#ffffff' : colors.foreground }]}>{loc}</Text>
+              {location === loc && loc !== 'All' && <Feather name="map-pin" size={10} color={colors.selectionForeground} />}
+              <Text style={[st.chipText, { color: location === loc ? colors.selectionForeground : colors.foreground }]}>{loc}</Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -238,11 +227,7 @@ export default function FindAgentScreen() {
               onPress={() => setExpBucket(b)}
               style={({ pressed }) => [
                 st.expChip,
-                {
-                  backgroundColor: expBucket === b ? colors.accent : colors.glassCard,
-                  borderColor: expBucket === b ? colors.primary : colors.glassBorder,
-                  opacity: pressed ? 0.82 : 1,
-                },
+                 { ...glassControlStyle(colors, expBucket === b ? 'selected' : 'secondary'), opacity: pressed ? 0.82 : 1 },
               ]}
             >
               <Text style={[st.expChipText, { color: expBucket === b ? colors.primary : colors.mutedForeground }]}>{b}</Text>
@@ -258,7 +243,7 @@ export default function FindAgentScreen() {
             {filtered.length} {filtered.length === 1 ? 'agent' : 'agents'} found
           </Text>
           {hasFilters && (
-            <Pressable onPress={resetFilters} hitSlop={8}>
+            <Pressable onPress={resetFilters} hitSlop={8} style={glassControlStyle(colors, 'secondary')}>
               <Text style={[st.clearText, { color: colors.action }]}>Clear filters</Text>
             </Pressable>
           )}
@@ -278,7 +263,7 @@ export default function FindAgentScreen() {
           </View>
           <Text style={[st.emptyTitle, { color: colors.foreground }]}>Could not load agents</Text>
           <Text style={[st.emptyText, { color: colors.mutedForeground }]}>{loadError}</Text>
-          <Pressable onPress={() => void loadAgents()} style={[st.emptyBtn, { backgroundColor: colors.action }]}>
+          <Pressable onPress={() => void loadAgents()} style={[st.emptyBtn, glassControlStyle(colors, 'action')]}>
             <Text style={[st.emptyBtnText, { color: colors.actionForeground }]}>Try again</Text>
           </Pressable>
         </GlassCard>
@@ -298,7 +283,7 @@ export default function FindAgentScreen() {
             <Text style={[st.emptyText, { color: colors.mutedForeground }]}>
               Try a different specialty, location, or experience level.
             </Text>
-            <Pressable onPress={resetFilters} style={[st.emptyBtn, { backgroundColor: colors.action }]}>
+            <Pressable onPress={resetFilters} style={[st.emptyBtn, glassControlStyle(colors, 'action')]}>
               <Text style={[st.emptyBtnText, { color: colors.actionForeground }]}>Clear all filters</Text>
             </Pressable>
           </GlassCard>
@@ -390,7 +375,7 @@ function AgentListCard({
       <View style={[lc.ctaRow, { borderColor: colors.border }]}>
         <Pressable
           onPress={(e) => { e.stopPropagation(); Linking.openURL(`tel:${PUBLIC_CONTACT_PHONE_E164}`); }}
-          style={[lc.callBtn, { backgroundColor: colors.tealSoft, borderColor: colors.teal + '33' }]}
+          style={[lc.callBtn, glassControlStyle(colors, 'secondary')]}
           hitSlop={6}
         >
           <Feather name="phone" size={13} color={colors.teal} />
@@ -398,7 +383,7 @@ function AgentListCard({
         </Pressable>
         <Pressable
           onPress={(e) => { e.stopPropagation(); Linking.openURL(publicWhatsAppUrl(`Hello, I found your profile on OG Landmark.`)); }}
-          style={[lc.callBtn, { backgroundColor: '#25d36612', borderColor: '#25d36633' }]}
+          style={[lc.callBtn, glassControlStyle(colors, 'secondary')]}
           hitSlop={6}
         >
           <Feather name="message-circle" size={13} color="#25d366" />

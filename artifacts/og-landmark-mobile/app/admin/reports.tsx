@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { useColors } from '@/hooks/useColors';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
+import { glassControlStyle } from '@/components/glassControls';
 import { AdminReport, getAdminReports, updateAdminReport } from '@/lib/api';
 
 const FILTERS = ['All', 'Pending', 'Resolved', 'Dismissed'] as const;
@@ -62,6 +63,7 @@ export default function AdminReportsScreen() {
           testID="admin-reports-back"
           onPress={() => router.back()}
           hitSlop={10}
+          style={[styles.headerBack, glassControlStyle(colors, 'secondary')]}
         >
           <Feather name="arrow-left" size={20} color={colors.actionForeground} />
         </Pressable>
@@ -86,7 +88,7 @@ export default function AdminReportsScreen() {
                 onPress={() => setFilter(item)}
                 style={[
                   styles.filterChip,
-                  { backgroundColor: selected ? colors.action : colors.card, borderColor: colors.border },
+                   glassControlStyle(colors, selected ? 'selected' : 'secondary'),
                 ]}
               >
                 <Text style={{ color: selected ? colors.actionForeground : colors.foreground, fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>
@@ -100,7 +102,7 @@ export default function AdminReportsScreen() {
         {error ? (
           <View style={[styles.errorCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={{ color: colors.foreground }}>{error}</Text>
-            <Pressable accessibilityRole="button" testID="admin-reports-retry" onPress={() => { void load(); }}>
+            <Pressable accessibilityRole="button" testID="admin-reports-retry" onPress={() => { void load(); }} style={[styles.retryButton, glassControlStyle(colors, 'secondary')]}>
               <Text style={{ color: colors.action, fontFamily: 'Inter_600SemiBold', marginTop: 10 }}>Try again</Text>
             </Pressable>
           </View>
@@ -139,7 +141,7 @@ export default function AdminReportsScreen() {
                       accessibilityRole="button"
                       testID={`admin-report-resolve-${report.id}`}
                       onPress={() => { void resolveReport(report, 'Resolved'); }}
-                      style={[styles.actionButton, { backgroundColor: colors.action }]}
+                       style={[styles.actionButton, glassControlStyle(colors, 'success')]}
                     >
                       <Feather name="check" size={15} color={colors.actionForeground} />
                       <Text style={{ color: colors.actionForeground, fontFamily: 'Inter_600SemiBold' }}>Resolve</Text>
@@ -148,7 +150,7 @@ export default function AdminReportsScreen() {
                       accessibilityRole="button"
                       testID={`admin-report-dismiss-${report.id}`}
                       onPress={() => { void resolveReport(report, 'Dismissed'); }}
-                      style={[styles.actionButton, { backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1 }]}
+                       style={[styles.actionButton, glassControlStyle(colors, 'secondary')]}
                     >
                       <Feather name="x" size={15} color={colors.foreground} />
                       <Text style={{ color: colors.foreground, fontFamily: 'Inter_600SemiBold' }}>Dismiss</Text>
@@ -167,6 +169,8 @@ export default function AdminReportsScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingBottom: 14 },
+  headerBack: { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  retryButton: { minHeight: 36, alignSelf: 'flex-start', marginTop: 8, paddingHorizontal: 12, borderRadius: 10, justifyContent: 'center' },
   headerTitle: { fontFamily: 'Inter_700Bold', fontSize: 17 },
   filters: { gap: 8, paddingHorizontal: 16, paddingVertical: 16 },
   filterChip: { borderWidth: 1, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 9 },

@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -138,7 +139,7 @@ export default function ListingsScreen() {
         <Text style={[styles.emptyTitle, { color: colors.foreground, marginTop: 16 }]}>{tr('listingsEyebrow')}</Text>
         <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>{tr('listingsSubtitle')}</Text>
         <Pressable onPress={() => router.push('/(auth)/login')}
-          style={[styles.emptyBtn, { backgroundColor: colors.action, marginTop: 16 }]}>
+          style={[styles.emptyBtn, { ...glassControlStyle(colors, 'action'), marginTop: 16 }]}>
           <Text style={[styles.emptyBtnText, { color: colors.actionForeground }]}>{tr('signInBtn')}</Text>
         </Pressable>
       </View>
@@ -178,7 +179,7 @@ export default function ListingsScreen() {
           </View>
           <Pressable
             onPress={() => router.push('/(tabs)/post-ad')}
-            style={[styles.addBtn, { backgroundColor: colors.action }]}
+            style={[styles.addBtn, glassControlStyle(colors, 'action')]}
           >
             <Feather name="plus" size={16} color={colors.actionForeground} />
             <Text style={[styles.addBtnText, { color: colors.actionForeground }]}>{tr('addBtn')}</Text>
@@ -209,11 +210,8 @@ export default function ListingsScreen() {
           contentContainerStyle={[styles.tabsRow, { paddingHorizontal: 20 }]}>
           {FILTER_TABS.map((t) => (
             <Pressable key={t} onPress={() => setActiveTab(t)}
-              style={[styles.tabPill, {
-                backgroundColor: activeTab === t ? colors.action : colors.secondary,
-                borderColor: activeTab === t ? colors.action : colors.border,
-              }]}>
-              <Text style={[styles.tabPillText, { color: activeTab === t ? colors.actionForeground : colors.mutedForeground }]}>
+              style={[styles.tabPill, glassControlStyle(colors, activeTab === t ? 'selected' : 'secondary')]}>
+              <Text style={[styles.tabPillText, { color: activeTab === t ? colors.selectionForeground : colors.mutedForeground }]}>
                 {tabLabels[t]}
               </Text>
               {tabCounts[t] != null && tabCounts[t]! > 0 && (
@@ -239,7 +237,7 @@ export default function ListingsScreen() {
             <Feather name="alert-circle" size={36} color={colors.mutedForeground} />
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Could not load listings</Text>
             <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>{loadError}</Text>
-            <Pressable onPress={() => reload()} style={[styles.emptyBtn, { backgroundColor: colors.action }]}>
+            <Pressable onPress={() => reload()} style={[styles.emptyBtn, glassControlStyle(colors, 'action')]}>
               <Text style={[styles.emptyBtnText, { color: colors.actionForeground }]}>Try again</Text>
             </Pressable>
           </View>
@@ -252,7 +250,7 @@ export default function ListingsScreen() {
                 {activeTab === 'All' ? tr('listingsEmptyAllDesc') : tr('listingsEmptyDesc')}
               </Text>
               <Pressable onPress={() => router.push('/(tabs)/post-ad')}
-                style={[styles.emptyBtn, { backgroundColor: colors.action }]}>
+                style={[styles.emptyBtn, glassControlStyle(colors, 'action')]}>
                 <Text style={[styles.emptyBtnText, { color: colors.actionForeground }]}>{tr('addPropertyBtn')}</Text>
               </Pressable>
             </View>
@@ -367,7 +365,7 @@ function ListingCard({
           </View>
         </View>
         <Pressable onPress={moreActions} hitSlop={12}
-          style={[lc.moreBtn, { backgroundColor: colors.secondary }]}>
+          style={[lc.moreBtn, glassControlStyle(colors, 'secondary')]}>
           <Feather name="more-vertical" size={16} color={colors.mutedForeground} />
         </Pressable>
       </View>
@@ -389,7 +387,7 @@ function ListingCard({
       <View style={[lc.actions, isRTL && { flexDirection: 'row-reverse' }]}>
         {/* Promote */}
         <Pressable
-          style={[lc.actionPill, { borderColor: colors.action + '44', backgroundColor: colors.action + '0d', flex: 1 }]}
+          style={[lc.actionPill, { ...glassControlStyle(colors, 'gold'), flex: 1 }]}
           onPress={() => Alert.alert('Promote', 'Share your listing to reach more buyers.', [
             { text: 'Share via WhatsApp', onPress: whatsapp },
             { text: 'Share Link', onPress: share },
@@ -403,7 +401,7 @@ function ListingCard({
         {/* Pause/Activate toggle */}
         {(listing.listingStatus === 'Active' || listing.listingStatus === 'Paused') && (
           <Pressable
-            style={[lc.actionPill, { borderColor: colors.border, flex: 1 }]}
+            style={[lc.actionPill, { ...glassControlStyle(colors, 'secondary'), flex: 1 }]}
             onPress={() =>
               onStatusChange(
                 listing.id,
@@ -419,7 +417,7 @@ function ListingCard({
 
         {/* Share */}
         <Pressable
-          style={[lc.actionPill, { borderColor: colors.border }]}
+          style={[lc.actionPill, glassControlStyle(colors, 'secondary')]}
           onPress={share}
         >
           <Feather name="share-2" size={13} color={colors.mutedForeground} />
@@ -428,10 +426,10 @@ function ListingCard({
 
         {/* Delete */}
         <Pressable
-          style={[lc.actionPill, { borderColor: '#dc262622', backgroundColor: '#dc262608' }]}
+          style={[lc.actionPill, glassControlStyle(colors, 'destructive')]}
           onPress={() => onDelete(listing.id, listing.title)}
         >
-          <Feather name="trash-2" size={13} color="#dc2626" />
+          <Feather name="trash-2" size={13} color={colors.destructiveForeground} />
         </Pressable>
       </View>
     </View>

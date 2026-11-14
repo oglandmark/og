@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import {
@@ -97,7 +98,7 @@ export default function AddDevLeadScreen() {
     >
       {/* Header */}
       <View style={[s.header, { paddingTop: topPad + 12, borderBottomColor: colors.border, backgroundColor: colors.card }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backBtn, { backgroundColor: colors.secondary }]}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backBtn, glassControlStyle(colors, 'secondary')]}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
         <View style={{ flex: 1 }}>
@@ -128,8 +129,8 @@ export default function AddDevLeadScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
               {projects.map((pn) => (
                 <Pressable key={pn} onPress={() => setProject(pn)}
-                  style={[s.chip, { borderColor: project === pn ? colors.action : colors.border, backgroundColor: project === pn ? colors.action + '15' : colors.secondary }]}>
-                  <Text style={[s.chipText, { color: project === pn ? colors.action : colors.mutedForeground }]}>{pn}</Text>
+                  style={[s.chip, glassControlStyle(colors, project === pn ? 'selected' : 'secondary')]}>
+                  <Text style={[s.chipText, { color: project === pn ? colors.selectionForeground : colors.mutedForeground }]}>{pn}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -150,11 +151,8 @@ export default function AddDevLeadScreen() {
           <View style={s.sourceGrid}>
             {DEV_LEAD_SOURCES.map((src) => (
               <Pressable key={src} onPress={() => setSource(src)}
-                style={[s.sourceChip, {
-                  borderColor: source === src ? colors.action : colors.border,
-                  backgroundColor: source === src ? colors.action + '15' : colors.secondary,
-                }]}>
-                <Text style={[s.sourceChipText, { color: source === src ? colors.action : colors.mutedForeground }]}>{src}</Text>
+                style={[s.sourceChip, glassControlStyle(colors, source === src ? 'selected' : 'secondary')]}>
+                <Text style={[s.sourceChipText, { color: source === src ? colors.selectionForeground : colors.mutedForeground }]}>{src}</Text>
               </Pressable>
             ))}
           </View>
@@ -171,10 +169,10 @@ export default function AddDevLeadScreen() {
         <Pressable
           onPress={() => { void handleSave(); }}
           disabled={saving}
-          style={({ pressed }) => [s.saveBtn, { backgroundColor: colors.action, opacity: pressed ? 0.87 : 1 }]}
+          style={({ pressed }) => [s.saveBtn, { ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.87 : 1 }]}
         >
-          <Feather name="check" size={16} color="#ffffff" />
-          <Text style={s.saveBtnText}>{saving ? 'Saving...' : tr('saveDevLeadBtn')}</Text>
+          <Feather name="check" size={16} color={colors.primaryActionForeground} />
+          <Text style={[s.saveBtnText, { color: colors.primaryActionForeground }]}>{saving ? 'Saving...' : tr('saveDevLeadBtn')}</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>

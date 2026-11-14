@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { Feather } from '@expo/vector-icons';
 import { reloadAppAsync } from 'expo';
 
@@ -58,7 +59,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             styles.topButton,
             {
               top: insets.top + 16,
-              backgroundColor: colors.card,
+              ...glassControlStyle(colors, 'secondary'),
               opacity: pressed ? 0.8 : 1,
             },
           ]}
@@ -81,7 +82,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           style={({ pressed }) => [
             styles.button,
             {
-              backgroundColor: colors.action,
+              ...glassControlStyle(colors, 'action'),
               opacity: pressed ? 0.9 : 1,
               transform: [{ scale: pressed ? 0.98 : 1 }],
             },
@@ -124,7 +125,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
                   accessibilityRole="button"
                   style={({ pressed }) => [
                     styles.closeButton,
-                    { opacity: pressed ? 0.6 : 1 },
+                     { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.6 : 1 },
                   ]}
                 >
                   <Feather name="x" size={24} color={colors.foreground} />

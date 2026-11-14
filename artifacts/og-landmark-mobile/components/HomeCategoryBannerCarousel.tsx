@@ -20,6 +20,7 @@ import {
 import type { ImageSourcePropType } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { toExpoImageSource } from '@/lib/expoImageSource';
+import { glassControlStyle } from '@/components/glassControls';
 import {
   getHomeBannerAutoplayMode,
   HOME_BANNER_IMAGE_AUTOPLAY_MS,
@@ -400,20 +401,26 @@ export default function HomeCategoryBannerCarousel({
                   }
                   style={({ pressed }) => [
                     styles.cta,
+                    glassControlStyle(colors, 'gold'),
                     {
-                      backgroundColor: colors.splashGold,
                       opacity: pressed ? 0.88 : 1,
                       transform: [{ scale: pressed ? 0.985 : 1 }],
                     },
                   ]}
                 >
-                  <Text style={[styles.ctaText, { color: colors.actionDeep }]}>
+                  <LinearGradient
+                    pointerEvents="none"
+                    colors={[colors.actionGlassHighlight, 'transparent']}
+                    locations={[0, 1]}
+                    style={styles.ctaSheen}
+                  />
+                    <Text style={[styles.ctaText, { color: colors.primaryActionForeground }]}>
                     {slide.cta}
                   </Text>
                   <Feather
                     name="arrow-up-right"
                     size={14}
-                    color={colors.actionDeep}
+                    color={colors.primaryActionForeground}
                     accessible={false}
                   />
                 </Pressable>
@@ -573,11 +580,14 @@ const styles = StyleSheet.create({
     minHeight: 31,
     paddingHorizontal: 11,
     borderRadius: 7,
+    overflow: 'hidden',
+    position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
+  ctaSheen: { position: 'absolute', top: 0, left: 0, right: 0, height: '52%' },
   ctaText: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 11,

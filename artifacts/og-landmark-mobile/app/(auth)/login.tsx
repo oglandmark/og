@@ -9,6 +9,7 @@ import { AuthDivider, AuthPrimaryButton, AuthScreenFrame, AuthSocialButtons } fr
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -120,13 +121,13 @@ export default function LoginScreen() {
             textAlign={rtl}
             style={[styles.input, { color: colors.foreground }]}
           />
-          <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+          <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'} style={[styles.passwordToggle, glassControlStyle(colors, 'secondary')]}>
             <Feather name={showPassword ? 'eye' : 'eye-off'} size={19} color={colors.authMuted} />
           </Pressable>
         </View>
       </View>
 
-      <Pressable onPress={() => router.push('/(auth)/forgot-password')} style={styles.forgotLink} accessibilityRole="button">
+      <Pressable onPress={() => router.push('/(auth)/forgot-password')} style={[styles.forgotLink, glassControlStyle(colors, 'secondary')]} accessibilityRole="button">
         <Text style={[styles.forgotText, { color: colors.authGoldText }]}>{tr('forgotPassword')}</Text>
       </Pressable>
 
@@ -135,7 +136,7 @@ export default function LoginScreen() {
       <AuthSocialButtons disabled={loading} />
       <View style={styles.footerRow}>
         <Text style={[styles.footerText, { color: colors.authMuted }]}>{tr('noAccount')}</Text>
-        <Pressable onPress={() => router.push('/(auth)/signup')} accessibilityRole="button">
+        <Pressable onPress={() => router.push('/(auth)/signup')} style={glassControlStyle(colors, 'secondary')} accessibilityRole="button">
           <Text style={[styles.footerLink, { color: colors.authGoldText }]}>{tr('signUpWithEmail')}</Text>
         </Pressable>
       </View>
@@ -153,6 +154,7 @@ const styles = StyleSheet.create({
   inputField: { height: 47, borderRadius: 14, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14 },
   inputFieldFocused: { borderWidth: 1.5, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 2 },
   input: { flex: 1, minWidth: 0, borderWidth: 0, outlineWidth: 0, outlineColor: 'transparent', backgroundColor: 'transparent', fontFamily: 'Inter_400Regular', fontSize: 14, paddingVertical: 0 },
+  passwordToggle: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   forgotLink: { alignSelf: 'flex-end', paddingVertical: 2, marginTop: -4 },
   forgotText: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
   footerRow: {

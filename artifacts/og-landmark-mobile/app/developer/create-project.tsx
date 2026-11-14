@@ -17,6 +17,7 @@ import { LocationPicker } from '@/components/LocationPicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -98,8 +99,8 @@ function ChipSelect({
           const active = opt === selected;
           return (
             <Pressable key={opt} onPress={() => onSelect(active ? '' : opt)}
-              style={[fd.chip, { borderColor: active ? colors.action : colors.border, backgroundColor: active ? colors.action + '18' : colors.secondary }]}>
-              <Text style={[fd.chipText, { color: active ? colors.action : colors.mutedForeground }]}>{opt}</Text>
+              style={[fd.chip, glassControlStyle(colors, active ? 'selected' : 'secondary')]}>
+              <Text style={[fd.chipText, { color: active ? colors.selectionForeground : colors.mutedForeground }]}>{opt}</Text>
             </Pressable>
           );
         })}
@@ -125,9 +126,9 @@ function MultiChipGrid({
           const active = selected.includes(opt);
           return (
             <Pressable key={opt} onPress={() => onToggle(opt)}
-              style={[fd.chip, { borderColor: active ? colors.action : colors.border, backgroundColor: active ? colors.action + '18' : colors.secondary }]}>
-              {active && <Feather name="check" size={10} color={colors.action} />}
-              <Text style={[fd.chipText, { color: active ? colors.action : colors.mutedForeground }]}>{opt}</Text>
+              style={[fd.chip, glassControlStyle(colors, active ? 'selected' : 'secondary')]}>
+              {active && <Feather name="check" size={10} color={colors.selectionForeground} />}
+              <Text style={[fd.chipText, { color: active ? colors.selectionForeground : colors.mutedForeground }]}>{opt}</Text>
             </Pressable>
           );
         })}
@@ -147,7 +148,7 @@ function Toggle({
         {hint ? <Text style={[fd.hint, { color: colors.mutedForeground, marginTop: 2 }]}>{hint}</Text> : null}
       </View>
       <Pressable onPress={onToggle}
-        style={[tgl.track, { backgroundColor: value ? colors.action : colors.secondary, borderColor: value ? colors.action : colors.border }]}>
+        style={[tgl.track, glassControlStyle(colors, value ? 'selected' : 'secondary')]}>
         <View style={[tgl.thumb, { backgroundColor: '#ffffff', transform: [{ translateX: value ? 20 : 2 }] }]} />
       </Pressable>
     </View>
@@ -165,7 +166,7 @@ function Stepper({
       {hint ? <Text style={[fd.hint, { color: colors.mutedForeground }]}>{hint}</Text> : null}
       <View style={[stp.row, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
         <Pressable hitSlop={10} onPress={() => onChange(Math.max(min ?? 0, value - s))}
-          style={[stp.btn, { backgroundColor: colors.border }]}>
+          style={[stp.btn, glassControlStyle(colors, 'secondary')]}>
           <Feather name="minus" size={14} color={colors.foreground} />
         </Pressable>
         <TextInput
@@ -176,7 +177,7 @@ function Stepper({
           textAlign="center"
         />
         <Pressable hitSlop={10} onPress={() => onChange(Math.min(max ?? 9999, value + s))}
-          style={[stp.btn, { backgroundColor: colors.border }]}>
+          style={[stp.btn, glassControlStyle(colors, 'secondary')]}>
           <Feather name="plus" size={14} color={colors.foreground} />
         </Pressable>
       </View>
@@ -517,11 +518,11 @@ function Step6Media({ data, set, colors }: StepProps) {
             <Image source={{ uri: data.coverImageUri }} style={md.coverImage} resizeMode="cover" />
             <View style={md.coverOverlay}>
               <Pressable onPress={() => set({ coverImageUri: undefined })}
-                style={[md.removeBtn, { backgroundColor: '#dc262688' }]}>
-                <Feather name="trash-2" size={14} color="#ffffff" />
+                style={[md.removeBtn, glassControlStyle(colors, 'destructive')]}>
+                <Feather name="trash-2" size={14} color={colors.destructiveForeground} />
               </Pressable>
               <Pressable onPress={() => { void requestAndPick(true, false); }}
-                style={[md.removeBtn, { backgroundColor: '#00000066' }]}>
+                style={[md.removeBtn, glassControlStyle(colors, 'secondary')]}>
                 <Feather name="edit-2" size={14} color="#ffffff" />
               </Pressable>
             </View>
@@ -537,12 +538,12 @@ function Step6Media({ data, set, colors }: StepProps) {
             <Text style={[md.placeholderSub, { color: colors.mutedForeground }]}>16:9 ratio recommended</Text>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
               <Pressable onPress={() => { void requestAndPick(true, false); }} disabled={pickingCover}
-                style={[md.pickBtn, { backgroundColor: colors.action }]}>
-                <Feather name="image" size={14} color="#ffffff" />
-                <Text style={md.pickBtnText}>Gallery</Text>
+                style={[md.pickBtn, glassControlStyle(colors, 'gold')]}>
+                <Feather name="image" size={14} color={colors.primaryActionForeground} />
+                <Text style={[md.pickBtnText, { color: colors.primaryActionForeground }]}>Gallery</Text>
               </Pressable>
               <Pressable onPress={() => { void requestAndPick(true, true); }} disabled={pickingCover}
-                style={[md.pickBtn, { backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.border }]}>
+                style={[md.pickBtn, glassControlStyle(colors, 'secondary')]}>
                 <Feather name="camera" size={14} color={colors.foreground} />
                 <Text style={[md.pickBtnText, { color: colors.foreground }]}>Camera</Text>
               </Pressable>
@@ -565,7 +566,7 @@ function Step6Media({ data, set, colors }: StepProps) {
           </View>
           {(data.photos?.length ?? 0) < 10 && (
             <Pressable onPress={() => { void requestAndPick(false, false); }} disabled={pickingGallery}
-              style={[md.addPhotoBtn, { backgroundColor: colors.action + '18', borderColor: colors.action + '44' }]}>
+              style={[md.addPhotoBtn, glassControlStyle(colors, 'secondary')]}>
               <Feather name="plus" size={14} color={colors.action} />
               <Text style={[md.addPhotoBtnText, { color: colors.action }]}>Add Photos</Text>
             </Pressable>
@@ -579,9 +580,9 @@ function Step6Media({ data, set, colors }: StepProps) {
               Add project photos — entrance, plots, facilities, amenities
             </Text>
             <Pressable onPress={() => { void requestAndPick(false, false); }} disabled={pickingGallery}
-              style={[md.pickBtn, { backgroundColor: colors.action, marginTop: 4 }]}>
-              <Feather name="image" size={14} color="#ffffff" />
-              <Text style={md.pickBtnText}>Choose from Gallery</Text>
+              style={[md.pickBtn, { ...glassControlStyle(colors, 'gold'), marginTop: 4 }]}>
+              <Feather name="image" size={14} color={colors.primaryActionForeground} />
+              <Text style={[md.pickBtnText, { color: colors.primaryActionForeground }]}>Choose from Gallery</Text>
             </Pressable>
           </View>
         ) : (
@@ -591,8 +592,8 @@ function Step6Media({ data, set, colors }: StepProps) {
               <View key={uri + idx} style={md.thumbWrap}>
                 <Image source={{ uri }} style={md.thumb} resizeMode="cover" />
                 <Pressable onPress={() => removePhoto(idx)}
-                  style={md.thumbRemove}>
-                  <Feather name="x" size={11} color="#ffffff" />
+                  style={[md.thumbRemove, glassControlStyle(colors, 'destructive')]}>
+                  <Feather name="x" size={11} color={colors.destructiveForeground} />
                 </Pressable>
                 <View style={[md.thumbBadge, { backgroundColor: '#00000066' }]}>
                   <Text style={md.thumbBadgeText}>{idx + 1}</Text>
@@ -601,7 +602,7 @@ function Step6Media({ data, set, colors }: StepProps) {
             ))}
             {(data.photos?.length ?? 0) < 10 && (
               <Pressable onPress={() => { void requestAndPick(false, false); }} disabled={pickingGallery}
-                style={[md.thumbAdd, { borderColor: colors.border, backgroundColor: colors.secondary }]}>
+                style={[md.thumbAdd, glassControlStyle(colors, 'secondary')]}>
                 <Feather name="plus" size={20} color={colors.mutedForeground} />
                 <Text style={[md.thumbAddText, { color: colors.mutedForeground }]}>Add</Text>
               </Pressable>
@@ -624,7 +625,7 @@ function Step6Media({ data, set, colors }: StepProps) {
           </View>
           {(data.videoLinks?.length ?? 0) < 3 && Platform.OS === 'ios' && (
             <Pressable onPress={addVideoLink}
-              style={[md.addPhotoBtn, { backgroundColor: '#b94b4218', borderColor: '#b94b4244' }]}>
+              style={[md.addPhotoBtn, glassControlStyle(colors, 'secondary')]}>
               <Feather name="plus" size={14} color="#b94b42" />
               <Text style={[md.addPhotoBtnText, { color: '#b94b42' }]}>Add Link</Text>
             </Pressable>
@@ -653,13 +654,13 @@ function Step6Media({ data, set, colors }: StepProps) {
                 />
                 {value ? (
                   <Pressable onPress={() => removeVideo(slot)} hitSlop={8}
-                    style={[md.videoClearBtn, { backgroundColor: '#dc262618' }]}>
-                    <Feather name="x" size={14} color="#dc2626" />
+                    style={[md.videoClearBtn, glassControlStyle(colors, 'destructive')]}>
+                    <Feather name="x" size={14} color={colors.destructiveForeground} />
                   </Pressable>
                 ) : null}
                 {value ? (
                   <Pressable onPress={() => Linking.openURL(value).catch(() => {})} hitSlop={8}
-                    style={[md.videoClearBtn, { backgroundColor: brandColors.light.selectionBackground }]}>
+                    style={[md.videoClearBtn, glassControlStyle(colors, 'secondary')]}>
                     <Feather name="external-link" size={14} color={brandColors.light.action} />
                   </Pressable>
                 ) : null}
@@ -916,7 +917,7 @@ export default function CreateProjectScreen() {
     >
       {/* ── Header ──────────────────────────────────── */}
       <View style={[wz.header, { paddingTop: topPad + 10, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <Pressable onPress={() => (step > 0 ? setStep(step - 1) : router.back())} hitSlop={12} style={wz.backBtn}>
+        <Pressable onPress={() => (step > 0 ? setStep(step - 1) : router.back())} hitSlop={12} style={[wz.backBtn, glassControlStyle(colors, 'secondary')]}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
         <View style={{ flex: 1 }}>
@@ -928,7 +929,7 @@ export default function CreateProjectScreen() {
           </Text>
         </View>
         <Pressable onPress={() => { void handleSave(false); }} disabled={saving}
-          style={[wz.draftBtn, { backgroundColor: colors.secondary }]}>
+          style={[wz.draftBtn, glassControlStyle(colors, 'secondary')]}>
           <Feather name="save" size={12} color={colors.mutedForeground} />
           <Text style={[wz.draftBtnText, { color: colors.mutedForeground }]}>{tr('btnSaveDraft')}</Text>
         </Pressable>
@@ -955,27 +956,27 @@ export default function CreateProjectScreen() {
       <View style={[wz.footer, { paddingBottom: botPad + 10, backgroundColor: colors.card, borderTopColor: colors.border }]}>
         {step > 0 && (
           <Pressable onPress={() => setStep((s) => s - 1)}
-            style={[wz.backFooterBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+            style={[wz.backFooterBtn, glassControlStyle(colors, 'secondary')]}>
             <Feather name="arrow-left" size={15} color={colors.foreground} />
             <Text style={[wz.backFooterText, { color: colors.foreground }]}>{tr('btnBackStep')}</Text>
           </Pressable>
         )}
         {!isLastStep ? (
           <Pressable onPress={handleNext}
-            style={[wz.nextBtn, { backgroundColor: colors.action, flex: step > 0 ? 1 : undefined, minWidth: 140 }]}>
-            <Text style={wz.nextBtnText}>{tr('btnNextStep')}</Text>
-            <Feather name="arrow-right" size={15} color="#ffffff" />
+            style={[wz.nextBtn, { ...glassControlStyle(colors, 'gold'), flex: step > 0 ? 1 : undefined, minWidth: 140 }]}>
+            <Text style={[wz.nextBtnText, { color: colors.primaryActionForeground }]}>{tr('btnNextStep')}</Text>
+            <Feather name="arrow-right" size={15} color={colors.primaryActionForeground} />
           </Pressable>
         ) : (
           <View style={{ flex: 1, flexDirection: 'row', gap: 10 }}>
             <Pressable onPress={() => { void handleSave(false); }} disabled={saving}
-              style={[wz.draftFooterBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+              style={[wz.draftFooterBtn, glassControlStyle(colors, 'secondary')]}>
               <Text style={[wz.draftFooterText, { color: colors.foreground }]}>{tr('btnSaveDraft')}</Text>
             </Pressable>
             <Pressable onPress={() => { void handleSave(true); }} disabled={saving}
-              style={[wz.submitBtn, { backgroundColor: colors.action }]}>
-              <Feather name="send" size={14} color="#ffffff" />
-              <Text style={wz.submitBtnText}>{saving ? 'Saving…' : tr('btnSubmitProject')}</Text>
+              style={[wz.submitBtn, glassControlStyle(colors, 'gold')]}>
+              <Feather name="send" size={14} color={colors.primaryActionForeground} />
+              <Text style={[wz.submitBtnText, { color: colors.primaryActionForeground }]}>{saving ? 'Saving…' : tr('btnSubmitProject')}</Text>
             </Pressable>
           </View>
         )}

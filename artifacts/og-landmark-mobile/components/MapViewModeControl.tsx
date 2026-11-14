@@ -2,6 +2,7 @@ import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 
 export type MapViewMode = 'map' | 'satellite';
 
@@ -39,8 +40,8 @@ export function MapViewModeControl({
       styles.container,
       horizontal && styles.horizontalContainer,
       {
-        backgroundColor: '#ffffff',
-        borderColor: '#d6e0e8',
+        backgroundColor: colors.glassCard,
+        borderColor: colors.glassBorder,
       },
       glassBlur,
       { top, left, right },
@@ -61,9 +62,10 @@ export function MapViewModeControl({
               horizontal && { height: buttonHeight, minHeight: buttonHeight },
               horizontal && option.value === 'map' && [
                 styles.firstHorizontalButton,
-                { borderRightColor: '#d6e0e8' },
+                 { borderRightColor: colors.glassBorder },
               ],
-              { borderBottomColor: selected ? colors.splashGold : 'transparent' },
+              selected ? glassControlStyle(colors, 'gold') : { backgroundColor: colors.actionGlassSoft, borderColor: 'transparent' },
+              { borderBottomColor: selected ? colors.primaryAction : 'transparent' },
             ]}
           >
             <View style={styles.optionContent}>
@@ -97,7 +99,7 @@ const styles = StyleSheet.create({
     padding: 3,
     borderWidth: 1,
     borderRadius: 10,
-    shadowColor: '#0B1F3A',
+    shadowColor: 'transparent',
     shadowOpacity: 0.18,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },

@@ -11,6 +11,7 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -77,7 +78,7 @@ export default function AdminLoginScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Back */}
-        <Pressable onPress={() => router.back()} style={s.back} hitSlop={10}>
+        <Pressable onPress={() => router.back()} style={[s.back, glassControlStyle(colors, 'secondary')]} hitSlop={10}>
           <Feather name="arrow-left" size={20} color={colors.splashMuted} />
         </Pressable>
 
@@ -122,19 +123,19 @@ export default function AdminLoginScreen() {
                   returnKeyType="done"
                   onSubmitEditing={handleVerify}
                 />
-                <Pressable style={s.eyeBtn} onPress={() => setShowPwd(v => !v)} hitSlop={8}>
+                <Pressable style={[s.eyeBtn, glassControlStyle(colors, 'secondary')]} onPress={() => setShowPwd(v => !v)} hitSlop={8}>
                   <Feather name={showPwd ? 'eye-off' : 'eye'} size={18} color={colors.splashMuted} />
                 </Pressable>
               </View>
 
               <Pressable
-                style={({ pressed }) => [s.btn, { backgroundColor: colors.splashGold, opacity: pressed ? 0.85 : 1 }]}
+                 style={({ pressed }) => [s.btn, { ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.85 : 1 }]}
                 onPress={handleVerify}
                 disabled={loading}
               >
                 {loading
                   ? <ActivityIndicator color={colors.goldForeground} />
-                  : <><Text style={[s.btnText, { color: colors.goldForeground }]}>Send OTP</Text><Feather name="arrow-right" size={18} color={colors.goldForeground} /></>
+                  : <><Text style={[s.btnText, { color: colors.primaryActionForeground }]}>Send OTP</Text><Feather name="arrow-right" size={18} color={colors.primaryActionForeground} /></>
                 }
               </Pressable>
             </>
@@ -162,18 +163,18 @@ export default function AdminLoginScreen() {
               <Text style={s.otpNote}>Code valid for 5 minutes · check server logs if email is not configured</Text>
 
               <Pressable
-                style={({ pressed }) => [s.btn, { backgroundColor: colors.splashGold, opacity: pressed ? 0.85 : 1 }]}
+                 style={({ pressed }) => [s.btn, { ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.85 : 1 }]}
                 onPress={handleOtp}
                 disabled={loading}
               >
                 {loading
                   ? <ActivityIndicator color={colors.goldForeground} />
-                  : <><Text style={[s.btnText, { color: colors.goldForeground }]}>Verify &amp; Sign In</Text><Feather name="check" size={18} color={colors.goldForeground} /></>
+                  : <><Text style={[s.btnText, { color: colors.primaryActionForeground }]}>Verify &amp; Sign In</Text><Feather name="check" size={18} color={colors.primaryActionForeground} /></>
                 }
               </Pressable>
 
               <Pressable
-                style={s.resend}
+                style={[s.resend, glassControlStyle(colors, 'secondary')]}
                 onPress={() => { setStep('credentials'); setOtp(''); }}
               >
                 <Text style={{ color: colors.splashMuted, fontSize: 13 }}>← Change email or resend OTP</Text>

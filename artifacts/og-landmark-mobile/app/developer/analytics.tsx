@@ -9,6 +9,7 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -165,7 +166,7 @@ export default function AnalyticsScreen() {
         {/* ── Header ────────────────────────────────────── */}
         <AnimatedReveal>
           <View style={[an.header, { paddingTop: topPad + 12, paddingHorizontal: 20 }]}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={[an.backBtn, { backgroundColor: colors.secondary }]}>
+            <Pressable onPress={() => router.back()} hitSlop={12} style={[an.backBtn, glassControlStyle(colors, 'secondary')]}>
               <Feather name="arrow-left" size={20} color={colors.foreground} />
             </Pressable>
             <View style={{ flex: 1, marginLeft: 12 }}>

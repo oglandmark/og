@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -117,7 +118,7 @@ export default function AddLeadScreen() {
         <AnimatedReveal>
           <View style={[al.header, { paddingTop: topPad + 12, paddingHorizontal: 20 }]}>
             <Pressable onPress={() => router.back()} hitSlop={12}
-              style={[al.backBtn, { backgroundColor: colors.secondary }]}>
+              style={[al.backBtn, glassControlStyle(colors, 'secondary')]}>
               <Feather name="arrow-left" size={20} color={colors.foreground} />
             </Pressable>
             <View style={{ flex: 1, marginLeft: 12 }}>
@@ -186,7 +187,7 @@ export default function AddLeadScreen() {
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                     {STATUSES.map((s) => (
                       <Pressable key={s.key} onPress={() => setStatus(s.key)}
-                        style={[al.chip, { borderColor: status === s.key ? s.color : colors.border, backgroundColor: status === s.key ? s.color + '18' : colors.secondary }]}>
+                        style={[al.chip, glassControlStyle(colors, status === s.key ? 'selected' : 'secondary'), { borderColor: status === s.key ? s.color : colors.border }]}>
                         <Text style={[al.chipText, { color: status === s.key ? s.color : colors.mutedForeground }]}>{s.label}</Text>
                       </Pressable>
                     ))}
@@ -199,7 +200,7 @@ export default function AddLeadScreen() {
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     {PRIORITIES.map((p) => (
                       <Pressable key={p.key} onPress={() => setPriority(p.key)}
-                        style={[al.chip, { borderColor: priority === p.key ? p.color : colors.border, backgroundColor: priority === p.key ? p.color + '18' : colors.secondary, flex: 1, justifyContent: 'center' }]}>
+                        style={[al.chip, glassControlStyle(colors, priority === p.key ? 'selected' : 'secondary'), { borderColor: priority === p.key ? p.color : colors.border, flex: 1, justifyContent: 'center' }]}>
                         <Text style={[al.chipText, { color: priority === p.key ? p.color : colors.mutedForeground }]}>{p.label}</Text>
                       </Pressable>
                     ))}
@@ -212,7 +213,7 @@ export default function AddLeadScreen() {
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
                     {LEAD_SOURCES.map((s) => (
                       <Pressable key={s} onPress={() => setSource(s)}
-                        style={[al.chip, { borderColor: source === s ? colors.action : colors.border, backgroundColor: source === s ? colors.action + '18' : colors.secondary }]}>
+                        style={[al.chip, glassControlStyle(colors, source === s ? 'selected' : 'secondary')]}>
                         <Text style={[al.chipText, { color: source === s ? colors.action : colors.mutedForeground }]}>{s}</Text>
                       </Pressable>
                     ))}
@@ -234,9 +235,9 @@ export default function AddLeadScreen() {
           {/* Save */}
           <AnimatedReveal delay={100}>
             <Pressable onPress={() => { void save(); }} disabled={saving}
-              style={[al.saveBtn, { backgroundColor: colors.action }]}>
-              <Feather name="user-plus" size={16} color="#ffffff" />
-              <Text style={al.saveBtnText}>{saving ? 'Adding Lead…' : 'Add Lead to CRM'}</Text>
+              style={[al.saveBtn, glassControlStyle(colors, 'gold')]}>
+              <Feather name="user-plus" size={16} color={colors.primaryActionForeground} />
+              <Text style={[al.saveBtnText, { color: colors.primaryActionForeground }]}>{saving ? 'Adding Lead…' : 'Add Lead to CRM'}</Text>
             </Pressable>
           </AnimatedReveal>
         </View>

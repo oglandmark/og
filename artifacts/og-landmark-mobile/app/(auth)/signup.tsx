@@ -16,6 +16,7 @@ import { AuthDivider, AuthPrimaryButton, AuthScreenFrame, AuthSocialButtons } fr
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 
 export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
@@ -215,7 +216,7 @@ export default function SignUpScreen() {
           <AuthPrimaryButton label="Verify email" accessibilityLabel="Verify email" loading={loading} onPress={() => { void handleVerifyEmail(); }} variant="navy" />
           <View style={styles.otpResendRow}>
             <Text style={[styles.footerText, { color: colors.authMuted }]}>Didn’t receive a code?</Text>
-            <Pressable onPress={() => { void handleResendEmail(); }} disabled={loading || resending} accessibilityRole="button">
+              <Pressable onPress={() => { void handleResendEmail(); }} disabled={loading || resending} accessibilityRole="button" style={glassControlStyle(colors, 'secondary')}>
               {resending ? <ActivityIndicator size="small" color={colors.teal} /> : <Text style={[styles.footerLink, { color: colors.teal }]}>Resend code</Text>}
             </Pressable>
           </View>
@@ -254,7 +255,7 @@ export default function SignUpScreen() {
             <View style={[styles.inputField, focusedField === 'password' && styles.inputFieldFocused, { backgroundColor: focusedField === 'password' ? colors.background : colors.authFieldSurface, borderColor: focusedField === 'password' ? colors.splashGold : colors.authBorder, shadowColor: colors.splashGold }]}>
               <Feather name="lock" size={19} color={focusedField === 'password' ? colors.authGoldText : colors.authMuted} />
               <TextInput testID="signup-password-input" value={password} onChangeText={(value) => { setFocusedField('password'); setPassword(value); setError(''); }} onFocus={() => setFocusedField('password')} onBlur={() => setFocusedField((current) => current === 'password' ? null : current)} secureTextEntry={!showPassword} autoComplete="new-password" placeholder={tr('authCreatePasswordPlaceholder')} placeholderTextColor={colors.authMuted} textAlign={rtl} style={[styles.input, { color: colors.foreground }]} />
-              <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+              <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'} style={[styles.passwordToggle, glassControlStyle(colors, 'secondary')]}>
                 <Feather name={showPassword ? 'eye' : 'eye-off'} size={19} color={colors.authMuted} />
               </Pressable>
             </View>
@@ -266,7 +267,7 @@ export default function SignUpScreen() {
               accessibilityRole="checkbox"
               accessibilityState={{ checked: termsAccepted }}
               accessibilityLabel="Agree to the Terms and Privacy Policy"
-              style={[styles.checkbox, { borderColor: termsAccepted ? colors.splashGold : colors.authBorder, backgroundColor: termsAccepted ? colors.splashGold : colors.background }]}
+              style={[styles.checkbox, glassControlStyle(colors, termsAccepted ? 'gold' : 'secondary')]}
             >
               {termsAccepted && <Feather name="check" size={14} color={colors.action} />}
             </Pressable>
@@ -283,7 +284,7 @@ export default function SignUpScreen() {
           <AuthSocialButtons disabled={loading} />
           <View style={styles.footerRow}>
             <Text style={[styles.footerText, { color: colors.authMuted }]}>{tr('authAlreadyHaveAccount')}</Text>
-            <Pressable onPress={() => router.push('/(auth)/login')} accessibilityRole="button">
+        <Pressable onPress={() => router.push('/(auth)/login')} style={glassControlStyle(colors, 'secondary')} accessibilityRole="button">
               <Text style={[styles.footerLink, { color: colors.authGoldText }]}>{tr('authSignInButton')}</Text>
             </Pressable>
           </View>
@@ -303,6 +304,7 @@ const styles = StyleSheet.create({
   inputField: { height: 47, borderRadius: 14, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14 },
   inputFieldFocused: { borderWidth: 1.5, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 2 },
   input: { flex: 1, minWidth: 0, borderWidth: 0, outlineWidth: 0, outlineColor: 'transparent', backgroundColor: 'transparent', fontFamily: 'Inter_400Regular', fontSize: 14, paddingVertical: 0 },
+  passwordToggle: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   termsRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 1 },
   checkbox: { width: 20, height: 20, borderWidth: 1, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   termsText: { flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18 },

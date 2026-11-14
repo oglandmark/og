@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useAuth } from '@/context/AuthContext';
 import { deleteMyAccount } from '@/lib/api';
 import { clearLocalAccountData } from '@/lib/accountCleanup';
@@ -112,7 +113,7 @@ export default function SettingsHomeScreen() {
         else if (item.action === 'signout') void logout();
         else if (item.action === 'delete') confirmDelete();
       }}
-      style={({ pressed }) => [styles.row, { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.82 : 1 }, index === 0 && styles.firstRow]}
+       style={({ pressed }) => [styles.row, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.82 : 1 }, index === 0 && styles.firstRow]}
     >
       <View style={[styles.icon, { backgroundColor: colors.action + '14' }]}><Feather name={item.icon} size={17} color={colors.action} /></View>
       <View style={styles.copy}>
@@ -127,7 +128,7 @@ export default function SettingsHomeScreen() {
       <View style={[styles.root, { backgroundColor: colors.surfaceTint }]}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) + 12, paddingHorizontal: 20, paddingBottom: insets.bottom + 35 }} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Pressable testID="settings-back" accessibilityLabel="Back to profile" onPress={() => router.back()} style={[styles.back, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Pressable testID="settings-back" accessibilityLabel="Back to profile" onPress={() => router.back()} style={[styles.back, glassControlStyle(colors, 'secondary')]}>
             <Feather name="arrow-left" size={18} color={colors.foreground} />
           </Pressable>
           <View style={{ flex: 1 }}>
@@ -147,7 +148,7 @@ export default function SettingsHomeScreen() {
                 <Text style={[styles.identityName, { color: colors.foreground }]}>{user?.name || 'Your account'}</Text>
                 <Text style={[styles.identityEmail, { color: colors.mutedForeground }]}>{user?.email || user?.phone || 'Manage your OG Landmark account'}</Text>
               </View>
-              <Pressable accessibilityLabel="Edit account details" onPress={() => router.push('/settings/account' as any)}><Feather name="edit-2" size={16} color={colors.action} /></Pressable>
+              <Pressable accessibilityLabel="Edit account details" onPress={() => router.push('/settings/account' as any)} style={glassControlStyle(colors, 'secondary')}><Feather name="edit-2" size={16} color={colors.action} /></Pressable>
             </View>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>ACCOUNT</Text>
             <View style={styles.group}>{privateItems.map(renderItem)}</View>
@@ -159,12 +160,12 @@ export default function SettingsHomeScreen() {
                 </View>
                 {notice ? <Text style={[styles.notice, { color: colors.action }]}>{notice}</Text> : null}
                 {permission?.status !== 'granted' ? (
-                  <Pressable testID="settings-enable-notifications" disabled={busy} onPress={() => void enableNotifications()} style={[styles.notificationButton, { backgroundColor: colors.action, opacity: busy ? 0.55 : 1 }]}>
-                    <Feather name={permission?.status === 'denied' && !permission.canAskAgain ? 'settings' : 'bell'} size={14} color={colors.actionForeground} />
-                    <Text style={[styles.notificationButtonText, { color: colors.actionForeground }]}>{busy ? 'Updating…' : permission?.status === 'denied' && !permission.canAskAgain ? 'Open Device Settings' : 'Enable Notifications'}</Text>
+                  <Pressable testID="settings-enable-notifications" disabled={busy} onPress={() => void enableNotifications()} style={[styles.notificationButton, { ...glassControlStyle(colors, 'gold'), opacity: busy ? 0.55 : 1 }]}>
+                    <Feather name={permission?.status === 'denied' && !permission.canAskAgain ? 'settings' : 'bell'} size={14} color={colors.primaryActionForeground} />
+                    <Text style={[styles.notificationButtonText, { color: colors.primaryActionForeground }]}>{busy ? 'Updating…' : permission?.status === 'denied' && !permission.canAskAgain ? 'Open Device Settings' : 'Enable Notifications'}</Text>
                   </Pressable>
                 ) : null}
-                <Pressable testID="settings-manage-notifications" onPress={() => router.push('/settings/notifications' as any)} style={[styles.preferenceButton, { borderColor: colors.border }]}>
+                <Pressable testID="settings-manage-notifications" onPress={() => router.push('/settings/notifications' as any)} style={[styles.preferenceButton, glassControlStyle(colors, 'secondary')]}>
                   <Feather name="sliders" size={14} color={colors.action} />
                   <Text style={[styles.preferenceText, { color: colors.action }]}>Manage alert preferences</Text>
                   <Feather name="arrow-right" size={14} color={colors.action} />
@@ -176,7 +177,7 @@ export default function SettingsHomeScreen() {
           <View style={[styles.guestNote, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Feather name="lock" size={17} color={colors.action} />
             <Text style={[styles.guestCopy, { color: colors.foreground }]}>Sign in to manage account details and notification preferences.</Text>
-            <Pressable onPress={() => router.push('/(auth)/login' as any)}><Text style={[styles.signInLink, { color: colors.action }]}>Sign in</Text></Pressable>
+            <Pressable onPress={() => router.push('/(auth)/login' as any)} style={glassControlStyle(colors, 'gold')}><Text style={[styles.signInLink, { color: colors.primaryActionForeground }]}>Sign in</Text></Pressable>
           </View>
         )}
 
@@ -187,7 +188,7 @@ export default function SettingsHomeScreen() {
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>ACCOUNT ACTIONS</Text>
             <View style={styles.group}>
               {renderItem({ icon: 'log-out', title: 'Sign Out', detail: 'Log out of your account', action: 'signout' }, 0)}
-              <Pressable testID="settings-delete-account" onPress={confirmDelete} style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Pressable testID="settings-delete-account" onPress={confirmDelete} style={[styles.row, glassControlStyle(colors, 'secondary')]}>
                 <View style={[styles.icon, { backgroundColor: colors.destructive + '14' }]}><Feather name="trash-2" size={17} color={colors.destructive} /></View>
                 <View style={styles.copy}><Text style={[styles.rowTitle, { color: colors.destructive }]}>{deleting ? 'Deleting Account…' : 'Delete Account'}</Text><Text style={[styles.detail, { color: colors.mutedForeground }]}>Permanently remove your account and saved data</Text></View>
                 <Feather name="chevron-right" size={16} color={colors.mutedForeground} />

@@ -14,6 +14,7 @@ import { router } from 'expo-router';
 // BlurView removed — crashes Android GPU
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { BrandMark } from '@/components/BrandMark';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -193,7 +194,7 @@ export default function ForgotPasswordScreen() {
         {/* ── Header ── */}
         <View style={st.headerRow}>
           <Pressable onPress={() => (step > 1 ? setStep((step - 1) as 1 | 2 | 3) : router.back())}
-            hitSlop={12} style={[st.backBtn, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
+            hitSlop={12} style={[st.backBtn, glassControlStyle(colors, 'secondary')]}>
             <Feather name="arrow-left" size={18} color={colors.foreground} />
           </Pressable>
           <View style={{ flex: 1, marginLeft: 14 }}>
@@ -233,7 +234,7 @@ export default function ForgotPasswordScreen() {
 
             <AnimatedPressable
               onPress={sendCode}
-              style={[st.btn, { backgroundColor: loading ? colors.muted : colors.action }]}
+              style={[st.btn, { ...glassControlStyle(colors, 'action'), backgroundColor: loading ? colors.muted : colors.actionGlass }]}
             >
               {loading
                 ? <Text style={[st.btnText, { color: colors.mutedForeground }]}>Sending…</Text>
@@ -243,7 +244,7 @@ export default function ForgotPasswordScreen() {
                   </>}
             </AnimatedPressable>
 
-            <Pressable onPress={() => router.back()} style={st.linkRow}>
+            <Pressable onPress={() => router.back()} style={[st.linkRow, glassControlStyle(colors, 'secondary')]}>
               <Text style={[st.link, { color: colors.action }]}>← Back to Login</Text>
             </Pressable>
           </AnimatedReveal>
@@ -295,22 +296,22 @@ export default function ForgotPasswordScreen() {
                 ))}
               </View>
 
-              <AnimatedPressable onPress={verifyCode} style={[st.btn, st.otpBtn, { backgroundColor: colors.primaryAction }]}>
+              <AnimatedPressable onPress={verifyCode} style={[st.btn, st.otpBtn, glassControlStyle(colors, 'gold')]}>
                 <Text style={[st.btnText, { color: colors.primaryActionForeground }]}>Verify Code</Text>
-                <Feather name="check" size={16} color={colors.actionForeground} />
+                <Feather name="check" size={16} color={colors.primaryActionForeground} />
               </AnimatedPressable>
 
               {/* Resend */}
               <View style={st.resendRow}>
                 <Text style={[st.resendLabel, { color: colors.mutedForeground }]}>Didn't receive it?</Text>
-                <Pressable onPress={resendCode} disabled={resendSecs > 0 || loading} hitSlop={8}>
+              <Pressable onPress={resendCode} disabled={resendSecs > 0 || loading} hitSlop={8} style={glassControlStyle(colors, 'secondary')}>
                   <Text style={[st.link, { color: resendSecs > 0 ? colors.mutedForeground : colors.action }]}>
                     {resendSecs > 0 ? ` Resend in ${resendSecs}s` : ' Resend Code'}
                   </Text>
                 </Pressable>
               </View>
 
-              <Pressable onPress={() => { setStep(1); setCode(['','','','','','']); setError(''); }} style={st.linkRow} hitSlop={8}>
+              <Pressable onPress={() => { setStep(1); setCode(['','','','','','']); setError(''); }} style={[st.linkRow, glassControlStyle(colors, 'secondary')]} hitSlop={8}>
                 <Text style={[st.link, { color: colors.action }]}>← Change Email</Text>
               </Pressable>
             </AnimatedReveal>
@@ -342,7 +343,7 @@ export default function ForgotPasswordScreen() {
                 placeholderTextColor={colors.mutedForeground}
                 style={[st.input, { color: colors.foreground }]}
               />
-              <Pressable onPress={() => setShowPass(!showPass)} style={st.eyeBtn} hitSlop={8}>
+              <Pressable onPress={() => setShowPass(!showPass)} style={[st.eyeBtn, glassControlStyle(colors, 'secondary')]} hitSlop={8}>
                 <Feather name={showPass ? 'eye-off' : 'eye'} size={16} color={colors.mutedForeground} />
               </Pressable>
             </View>
@@ -375,7 +376,7 @@ export default function ForgotPasswordScreen() {
                 placeholderTextColor={colors.mutedForeground}
                 style={[st.input, { color: colors.foreground }]}
               />
-              <Pressable onPress={() => setShowConfirm(!showConfirm)} style={st.eyeBtn} hitSlop={8}>
+              <Pressable onPress={() => setShowConfirm(!showConfirm)} style={[st.eyeBtn, glassControlStyle(colors, 'secondary')]} hitSlop={8}>
                 <Feather name={showConfirm ? 'eye-off' : 'eye'} size={16} color={colors.mutedForeground} />
               </Pressable>
               {confirmPass.length > 0 && (
@@ -391,7 +392,7 @@ export default function ForgotPasswordScreen() {
 
             <AnimatedPressable
               onPress={resetPassword}
-              style={[st.btn, { backgroundColor: loading ? colors.muted : colors.action, marginTop: 8 }]}
+              style={[st.btn, { ...glassControlStyle(colors, 'action'), backgroundColor: loading ? colors.muted : colors.actionGlass, marginTop: 8 }]}
             >
               {loading
                 ? <Text style={[st.btnText, { color: colors.mutedForeground }]}>Updating…</Text>

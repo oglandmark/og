@@ -18,6 +18,7 @@ import { LocalizedText as Text } from '@/components/LocalizedText';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { useLanguage } from '@/context/LanguageContext';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 
 const HOUSE = require('../assets/images/auth-house.png');
 const AUTH_SHEET_TOP = 295;
@@ -101,6 +102,7 @@ export function AuthScreenFrame({
               hitSlop={8}
               style={({ pressed }) => [
                 styles.backArrowButton,
+                glassControlStyle(colors, 'secondary'),
                 {
                   backgroundColor: `${colors.surfaceTint}B8`,
                   borderColor: `${colors.splashGold}66`,
@@ -144,7 +146,7 @@ export function AuthPrimaryButton({
   const isNavy = variant === 'navy';
   const buttonGradient = isNavy
     ? [colors.action, colors.actionPressed, colors.actionDeep] as const
-    : [colors.authGoldHighlight, colors.splashGold, colors.authGoldShadow] as const;
+    : [colors.authGoldHighlight, colors.primaryAction, colors.authGoldShadow] as const;
   const buttonForeground = isNavy ? colors.actionForeground : colors.action;
   return (
     <Pressable
@@ -154,7 +156,8 @@ export function AuthPrimaryButton({
       accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => [
         styles.primaryButton,
-        { shadowColor: isNavy ? colors.action : colors.splashGold },
+        glassControlStyle(colors, isNavy ? 'action' : 'gold'),
+        { shadowColor: isNavy ? colors.action : colors.primaryAction, borderWidth: 1, borderColor: isNavy ? colors.actionGlassBorder : colors.goldGlassBorder },
         pressed && !loading && { opacity: 0.9 },
       ]}
     >
@@ -172,6 +175,12 @@ export function AuthPrimaryButton({
           </>
         )}
       </LinearGradient>
+      <LinearGradient
+        pointerEvents="none"
+        colors={[colors.actionGlassHighlight, 'transparent']}
+        locations={[0, 1]}
+        style={styles.primaryButtonSheen}
+      />
     </Pressable>
   );
 }
@@ -192,7 +201,7 @@ export function AuthSocialButtons({ disabled }: { disabled: boolean }) {
           disabled={disabled}
           accessibilityRole="button"
           accessibilityLabel="Continue with Google"
-          style={[styles.socialButton, { backgroundColor: colors.background, borderColor: colors.authBorder, shadowColor: colors.action }]}
+          style={[styles.socialButton, glassControlStyle(colors, 'secondary')]}
         >
           <FontAwesome5 name="google" size={18} color="#4285F4" />
         </Pressable>
@@ -201,7 +210,7 @@ export function AuthSocialButtons({ disabled }: { disabled: boolean }) {
           disabled={disabled}
           accessibilityRole="button"
           accessibilityLabel="Continue with Apple"
-          style={[styles.socialButton, { backgroundColor: colors.background, borderColor: colors.authBorder, shadowColor: colors.action }]}
+          style={[styles.socialButton, glassControlStyle(colors, 'secondary')]}
         >
           <FontAwesome5 name="apple" size={20} color="#000000" />
         </Pressable>
@@ -210,7 +219,7 @@ export function AuthSocialButtons({ disabled }: { disabled: boolean }) {
           disabled={disabled}
           accessibilityRole="button"
           accessibilityLabel="Continue with Facebook"
-          style={[styles.socialButton, { backgroundColor: colors.background, borderColor: colors.authBorder, shadowColor: colors.action }]}
+          style={[styles.socialButton, glassControlStyle(colors, 'secondary')]}
         >
           <FontAwesome5 name="facebook" size={18} color="#1877F2" />
         </Pressable>
@@ -244,7 +253,7 @@ export function AuthSocialButtons({ disabled }: { disabled: boolean }) {
             <Pressable
               onPress={closeComingSoon}
               accessibilityRole="button"
-              style={[styles.socialModalClose, { backgroundColor: colors.action }]}
+              style={[styles.socialModalClose, glassControlStyle(colors, 'action')]}
             >
               <Text style={[styles.socialModalCloseText, { color: colors.actionForeground }]}>{tr('continueBtn')}</Text>
             </Pressable>
@@ -308,6 +317,7 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 18,
     overflow: 'hidden',
+    borderWidth: 1,
     marginTop: 2,
     marginBottom: 4,
     shadowColor: 'transparent',
@@ -317,6 +327,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   primaryButtonFill: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  primaryButtonSheen: { position: 'absolute', top: 0, left: 0, right: 0, height: '48%' },
   primaryButtonText: { fontFamily: 'Inter_700Bold', fontSize: 16 },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 2 },
   dividerLine: { flex: 1, height: 1 },

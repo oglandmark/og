@@ -13,6 +13,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
@@ -137,7 +138,7 @@ export default function DocumentsScreen() {
         {/* ── Header ────────────────────────────────────── */}
         <AnimatedReveal>
           <View style={[dc.header, { paddingTop: topPad + 12, paddingHorizontal: 20 }]}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={[dc.backBtn, { backgroundColor: colors.secondary }]}>
+            <Pressable onPress={() => router.back()} hitSlop={12} style={[dc.backBtn, glassControlStyle(colors, 'secondary')]}>
               <Feather name="arrow-left" size={20} color={colors.foreground} />
             </Pressable>
             <View style={{ flex: 1, marginLeft: 12 }}>
@@ -146,10 +147,10 @@ export default function DocumentsScreen() {
             </View>
             <Pressable
               onPress={() => { setShowForm(!showForm); resetForm(); }}
-              style={[dc.addBtn, { backgroundColor: showForm ? colors.secondary : colors.action }]}
+              style={[dc.addBtn, glassControlStyle(colors, showForm ? 'secondary' : 'gold')]}
             >
-              <Feather name={showForm ? 'x' : 'upload'} size={14} color={showForm ? colors.foreground : '#ffffff'} />
-              <Text style={[dc.addBtnText, { color: showForm ? colors.foreground : '#ffffff' }]}>
+              <Feather name={showForm ? 'x' : 'upload'} size={14} color={showForm ? colors.foreground : colors.primaryActionForeground} />
+              <Text style={[dc.addBtnText, { color: showForm ? colors.foreground : colors.primaryActionForeground }]}>
                 {showForm ? 'Cancel' : tr('addDocumentBtn')}
               </Text>
             </Pressable>
@@ -173,7 +174,7 @@ export default function DocumentsScreen() {
                     const dtc = docTypeColor(dt);
                     return (
                       <Pressable key={dt} onPress={() => setDocType(dt)}
-                        style={[dc.chip, { borderColor: docType === dt ? dtc.text : colors.border, backgroundColor: docType === dt ? dtc.bg : colors.secondary }]}>
+                        style={[dc.chip, glassControlStyle(colors, docType === dt ? 'selected' : 'secondary'), { borderColor: docType === dt ? dtc.text : colors.border }]}>
                         <Text style={[dc.chipText, { color: docType === dt ? dtc.text : colors.mutedForeground }]}>{dt}</Text>
                       </Pressable>
                     );
@@ -199,8 +200,8 @@ export default function DocumentsScreen() {
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
                     {projects.map((p) => (
                       <Pressable key={p.id} onPress={() => { setDocProjectId(p.id); setDocProject(p.name); }}
-                        style={[dc.chip, { borderColor: docProjectId === p.id ? colors.action : colors.border, backgroundColor: docProjectId === p.id ? colors.action + '15' : colors.secondary }]}>
-                        <Text style={[dc.chipText, { color: docProjectId === p.id ? colors.action : colors.mutedForeground }]}>{p.name}</Text>
+                        style={[dc.chip, glassControlStyle(colors, docProjectId === p.id ? 'selected' : 'secondary')]}>
+                        <Text style={[dc.chipText, { color: docProjectId === p.id ? colors.selectionForeground : colors.mutedForeground }]}>{p.name}</Text>
                       </Pressable>
                     ))}
                   </ScrollView>
@@ -212,12 +213,12 @@ export default function DocumentsScreen() {
                 <Text style={[dc.fLabel, { color: colors.mutedForeground }]}>Document File *</Text>
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Pressable onPress={() => { void pickImage(false); }}
-                    style={[dc.pickBtn, { backgroundColor: colors.secondary, borderColor: colors.border, flex: 1 }]}>
+                    style={[dc.pickBtn, { ...glassControlStyle(colors, 'secondary'), flex: 1 }]}>
                     <Feather name="image" size={16} color={colors.mutedForeground} />
                     <Text style={[dc.pickBtnText, { color: colors.mutedForeground }]}>{tr('uploadFromGallery')}</Text>
                   </Pressable>
                   <Pressable onPress={() => { void pickImage(true); }}
-                    style={[dc.pickBtn, { backgroundColor: colors.secondary, borderColor: colors.border, flex: 1 }]}>
+                    style={[dc.pickBtn, { ...glassControlStyle(colors, 'secondary'), flex: 1 }]}>
                     <Feather name="camera" size={16} color={colors.mutedForeground} />
                     <Text style={[dc.pickBtnText, { color: colors.mutedForeground }]}>{tr('uploadFromCamera')}</Text>
                   </Pressable>
@@ -229,7 +230,7 @@ export default function DocumentsScreen() {
                       <Text style={[dc.previewName, { color: colors.foreground }]} numberOfLines={2}>{docFileName}</Text>
                       <Text style={[dc.previewOk, { color: colors.action }]}>✓ File selected</Text>
                     </View>
-                    <Pressable onPress={() => { setDocUri(''); setDocFileName(''); }} hitSlop={8}>
+                    <Pressable onPress={() => { setDocUri(''); setDocFileName(''); }} hitSlop={8} style={glassControlStyle(colors, 'destructive')}>
                       <Feather name="x" size={16} color={colors.mutedForeground} />
                     </Pressable>
                   </View>
@@ -237,9 +238,9 @@ export default function DocumentsScreen() {
               </View>
 
               <Pressable onPress={() => { void handleUpload(); }} disabled={saving}
-                style={[dc.saveBtn, { backgroundColor: colors.action }]}>
-                <Feather name="upload" size={15} color="#ffffff" />
-                <Text style={dc.saveBtnText}>{saving ? 'Uploading...' : 'Upload Document'}</Text>
+                style={[dc.saveBtn, glassControlStyle(colors, 'gold')]}>
+                <Feather name="upload" size={15} color={colors.primaryActionForeground} />
+                <Text style={[dc.saveBtnText, { color: colors.primaryActionForeground }]}>{saving ? 'Uploading...' : 'Upload Document'}</Text>
               </Pressable>
             </View>
           </AnimatedReveal>
@@ -254,9 +255,9 @@ export default function DocumentsScreen() {
               </View>
               <Text style={[dc.emptyTitle, { color: colors.foreground }]}>{tr('noDocumentsYet')}</Text>
               <Text style={[dc.emptyDesc, { color: colors.mutedForeground }]}>{tr('noDocumentsDesc')}</Text>
-              <Pressable onPress={() => setShowForm(true)} style={[dc.emptyBtn, { backgroundColor: colors.action }]}>
-                <Feather name="upload" size={14} color="#ffffff" />
-                <Text style={dc.emptyBtnText}>{tr('addDocumentBtn')}</Text>
+              <Pressable onPress={() => setShowForm(true)} style={[dc.emptyBtn, glassControlStyle(colors, 'gold')]}>
+                <Feather name="upload" size={14} color={colors.primaryActionForeground} />
+                <Text style={[dc.emptyBtnText, { color: colors.primaryActionForeground }]}>{tr('addDocumentBtn')}</Text>
               </Pressable>
             </View>
           </AnimatedReveal>
@@ -303,8 +304,8 @@ export default function DocumentsScreen() {
                           </View>
 
                           {/* Delete */}
-                          <Pressable onPress={() => handleDelete(doc.id, doc.title)} hitSlop={10} style={[dc.deleteBtn, { backgroundColor: '#dc262610' }]}>
-                            <Feather name="trash-2" size={14} color="#dc2626" />
+                          <Pressable onPress={() => handleDelete(doc.id, doc.title)} hitSlop={10} style={[dc.deleteBtn, glassControlStyle(colors, 'destructive')]}>
+                            <Feather name="trash-2" size={14} color={colors.destructiveForeground} />
                           </Pressable>
                         </View>
                       ))}

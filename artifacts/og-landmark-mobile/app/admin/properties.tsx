@@ -13,6 +13,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { LocationPicker } from '@/components/LocationPicker';
 import { openGoogleMaps, type LocationData } from '@/lib/locationService';
@@ -252,10 +253,10 @@ export default function AdminProperties() {
           testID={`admin-demo-property-toggle-${item.id}`}
           disabled={demoActionBusy}
           onPress={() => toggleDemoVisibility(item, hidden)}
-          style={[s.demoAction, { borderColor: hidden ? colors.border : '#dc262640', opacity: demoActionBusy ? 0.5 : 1 }]}
+          style={[s.demoAction, { ...glassControlStyle(colors, hidden ? 'success' : 'destructive'), opacity: demoActionBusy ? 0.5 : 1 }]}
         >
-          <Feather name={hidden ? 'rotate-ccw' : 'trash-2'} size={14} color={hidden ? colors.action : '#dc2626'} />
-          <Text style={[s.demoActionText, { color: hidden ? colors.action : '#dc2626' }]}>
+          <Feather name={hidden ? 'rotate-ccw' : 'trash-2'} size={14} color={hidden ? colors.successForeground : colors.destructiveForeground} />
+          <Text style={[s.demoActionText, { color: hidden ? colors.successForeground : colors.destructiveForeground }]}>
             {hidden ? 'Restore' : 'Remove'}
           </Text>
         </Pressable>
@@ -389,12 +390,12 @@ export default function AdminProperties() {
               : 'No GPS coordinates — using address'}
           </Text>
           <View style={s.locActions}>
-            <Pressable style={[s.locBtn, { borderColor: GOLD }]} onPress={() => openInMaps(item)}>
-              <Feather name="map" size={13} color={GOLD} />
-              <Text style={[s.locBtnText, { color: GOLD }]}>Open in Maps</Text>
+            <Pressable style={[s.locBtn, glassControlStyle(colors, 'gold')]} onPress={() => openInMaps(item)}>
+              <Feather name="map" size={13} color={colors.primaryActionForeground} />
+              <Text style={[s.locBtnText, { color: colors.primaryActionForeground }]}>Open in Maps</Text>
             </Pressable>
             <Pressable
-              style={[s.locBtn, { borderColor: colors.border }]}
+              style={[s.locBtn, glassControlStyle(colors, 'secondary')]}
               onPress={() => beginLocationEdit(item)}
             >
               <Feather name="edit-2" size={13} color={colors.foreground} />
@@ -405,35 +406,35 @@ export default function AdminProperties() {
 
       {/* Action buttons */}
       <View style={s.actions}>
-        <Pressable style={[s.actBtn, { backgroundColor: NAVY }]} onPress={() => void openReview(item)}>
+        <Pressable style={[s.actBtn, glassControlStyle(colors, 'action')]} onPress={() => void openReview(item)}>
           <Feather name="eye" size={13} color="#fff" />
           <Text style={s.actText}>Review</Text>
         </Pressable>
         {(item.approvalStatus === 'Pending' || !item.approvalStatus) && (
           <>
-            <Pressable style={[s.actBtn, { backgroundColor: '#15803d' }]} onPress={() => doApprove(item)}>
+            <Pressable style={[s.actBtn, glassControlStyle(colors, 'success')]} onPress={() => doApprove(item)}>
               <Feather name="check" size={13} color="#fff" />
               <Text style={s.actText}>Approve</Text>
             </Pressable>
-            <Pressable style={[s.actBtn, { backgroundColor: '#dc2626' }]} onPress={() => beginReject(item)}>
+            <Pressable style={[s.actBtn, glassControlStyle(colors, 'destructive')]} onPress={() => beginReject(item)}>
               <Feather name="x" size={13} color="#fff" />
               <Text style={s.actText}>Reject</Text>
             </Pressable>
-            <Pressable style={[s.actBtn, { backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.warning }]} onPress={() => beginRequestChanges(item)}>
+            <Pressable style={[s.actBtn, glassControlStyle(colors, 'warning')]} onPress={() => beginRequestChanges(item)}>
               <Feather name="edit-3" size={13} color={colors.warning} />
               <Text style={[s.actText, { color: colors.warning }]}>Request changes</Text>
             </Pressable>
           </>
         )}
-        <Pressable style={[s.actBtn, { backgroundColor: item.featured ? colors.splashGold : colors.secondary, borderWidth: 1, borderColor: colors.splashGold }]} onPress={() => doFeature(item)}>
-          <Feather name="star" size={13} color={item.featured ? '#fff' : colors.splashGold} />
-          <Text style={[s.actText, { color: item.featured ? '#fff' : colors.splashGold }]}>
+        <Pressable style={[s.actBtn, glassControlStyle(colors, item.featured ? 'gold' : 'secondary')]} onPress={() => doFeature(item)}>
+          <Feather name="star" size={13} color={item.featured ? colors.primaryActionForeground : colors.goldForeground} />
+          <Text style={[s.actText, { color: item.featured ? colors.primaryActionForeground : colors.goldForeground }]}>
             {item.featured ? 'Unfeature' : 'Feature'}
           </Text>
         </Pressable>
-        <Pressable style={[s.actBtn, { backgroundColor: '#dc262615' }]} onPress={() => doDelete(item.id)}>
-          <Feather name="trash-2" size={13} color="#dc2626" />
-          <Text style={[s.actText, { color: '#dc2626' }]}>Delete</Text>
+        <Pressable style={[s.actBtn, glassControlStyle(colors, 'destructive')]} onPress={() => doDelete(item.id)}>
+          <Feather name="trash-2" size={13} color={colors.destructiveForeground} />
+          <Text style={[s.actText, { color: colors.destructiveForeground }]}>Delete</Text>
         </Pressable>
       </View>
     </View>
@@ -443,7 +444,7 @@ export default function AdminProperties() {
     <View style={[s.root, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[s.header, { backgroundColor: NAVY, paddingTop: top + (Platform.OS === 'web' ? 67 : 0) + 14 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
+        <Pressable onPress={() => router.back()} hitSlop={8} style={[s.headerBack, glassControlStyle(colors, 'action')]}>
           <Feather name="arrow-left" size={20} color="#8a9ab5" />
         </Pressable>
         <Text style={s.headerTitle}>Properties</Text>
@@ -455,10 +456,10 @@ export default function AdminProperties() {
         {STATUS_TABS.map(t => (
           <Pressable
             key={t}
-            style={[s.tabItem, tab === t && { borderBottomColor: colors.splashGold, borderBottomWidth: 2 }]}
+            style={[s.tabItem, glassControlStyle(colors, tab === t ? 'selected' : 'secondary'), tab === t && { borderBottomColor: colors.selectionBorder, borderBottomWidth: 2 }]}
             onPress={() => setTab(t)}
           >
-            <Text style={[s.tabText, { color: tab === t ? colors.splashGold : colors.mutedForeground }]}>{t}</Text>
+          <Text style={[s.tabText, { color: tab === t ? colors.selectionForeground : colors.mutedForeground }]}>{t}</Text>
           </Pressable>
         ))}
       </View>
@@ -469,8 +470,8 @@ export default function AdminProperties() {
         <View style={s.empty}>
           <Feather name="wifi-off" size={40} color="#dc2626" />
           <Text style={[s.emptyText, { color: colors.foreground }]}>{loadError}</Text>
-          <Pressable style={[s.actBtn, { backgroundColor: colors.splashGold }]} onPress={() => { setLoading(true); load(); }}>
-            <Text style={[s.actText, { color: NAVY }]}>Retry</Text>
+          <Pressable style={[s.actBtn, glassControlStyle(colors, 'gold')]} onPress={() => { setLoading(true); load(); }}>
+            <Text style={[s.actText, { color: colors.primaryActionForeground }]}>Retry</Text>
           </Pressable>
         </View>
       ) : tab === 'Demos' ? (
@@ -491,10 +492,10 @@ export default function AdminProperties() {
                   testID="admin-remove-all-demo-properties"
                   disabled={demoActionBusy}
                   onPress={removeAllVisibleDemos}
-                  style={[s.removeAllDemos, { opacity: demoActionBusy ? 0.5 : 1 }]}
+                  style={[s.removeAllDemos, { ...glassControlStyle(colors, 'destructive'), opacity: demoActionBusy ? 0.5 : 1 }]}
                 >
-                  <Feather name="trash-2" size={14} color="#dc2626" />
-                  <Text style={s.removeAllDemosText}>Remove all visible demos</Text>
+                  <Feather name="trash-2" size={14} color={colors.destructiveForeground} />
+                  <Text style={[s.removeAllDemosText, { color: colors.destructiveForeground }]}>Remove all visible demos</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -532,7 +533,7 @@ export default function AdminProperties() {
                   {editingProperty?.title}
                 </Text>
               </View>
-              <Pressable onPress={() => closeLocationEdit()} hitSlop={10}>
+              <Pressable onPress={() => closeLocationEdit()} hitSlop={10} style={glassControlStyle(colors, 'secondary')}>
                 <Feather name="x" size={20} color={colors.mutedForeground} />
               </Pressable>
             </View>
@@ -566,16 +567,16 @@ export default function AdminProperties() {
               />
             </ScrollView>
             <View style={[s.modalFooter, { borderTopColor: colors.border }]}>
-              <Pressable onPress={() => closeLocationEdit()} style={[s.modalCancel, { borderColor: colors.border }]}>
+              <Pressable onPress={() => closeLocationEdit()} style={[s.modalCancel, glassControlStyle(colors, 'secondary')]}>
                 <Text style={[s.modalCancelText, { color: colors.foreground }]}>Cancel</Text>
               </Pressable>
               <Pressable
                 onPress={saveLocationEdit}
                 disabled={savingLocation || !editConfirmed}
-                style={[s.modalSave, { backgroundColor: colors.splashGold, opacity: savingLocation || !editConfirmed ? 0.55 : 1 }]}
+                style={[s.modalSave, { ...glassControlStyle(colors, 'gold'), opacity: savingLocation || !editConfirmed ? 0.55 : 1 }]}
               >
-                {savingLocation ? <ActivityIndicator size="small" color={colors.action} /> : <Feather name="check" size={15} color={colors.action} />}
-                <Text style={s.modalSaveText}>{savingLocation ? 'Saving…' : 'Save Location'}</Text>
+                {savingLocation ? <ActivityIndicator size="small" color={colors.primaryActionForeground} /> : <Feather name="check" size={15} color={colors.primaryActionForeground} />}
+                <Text style={[s.modalSaveText, { color: colors.primaryActionForeground }]}>{savingLocation ? 'Saving…' : 'Save Location'}</Text>
               </Pressable>
             </View>
           </View>
@@ -608,14 +609,14 @@ export default function AdminProperties() {
               <Pressable
                 onPress={() => setRejectingProperty(null)}
                 disabled={rejecting}
-                style={[s.modalCancel, { borderColor: colors.border, opacity: rejecting ? 0.5 : 1 }]}
+                style={[s.modalCancel, { ...glassControlStyle(colors, 'secondary'), opacity: rejecting ? 0.5 : 1 }]}
               >
                 <Text style={[s.modalCancelText, { color: colors.foreground }]}>Cancel</Text>
               </Pressable>
               <Pressable
                 onPress={submitReject}
                 disabled={rejecting}
-                style={[s.modalSave, { backgroundColor: reviewDecision === 'request_changes' ? colors.warning : '#dc2626', opacity: rejecting ? 0.6 : 1 }]}
+                style={[s.modalSave, { ...glassControlStyle(colors, reviewDecision === 'request_changes' ? 'warning' : 'destructive'), opacity: rejecting ? 0.6 : 1 }]}
               >
                 {rejecting ? <ActivityIndicator size="small" color="#fff" /> : <Feather name={reviewDecision === 'request_changes' ? 'edit-3' : 'x'} size={15} color="#fff" />}
                 <Text style={[s.modalSaveText, { color: '#fff' }]}>{rejecting ? 'Saving…' : reviewDecision === 'request_changes' ? 'Send correction request' : 'Reject Listing'}</Text>
@@ -640,7 +641,7 @@ export default function AdminProperties() {
                   {reviewingProperty?.title}
                 </Text>
               </View>
-              <Pressable onPress={() => setReviewingProperty(null)} hitSlop={10}>
+              <Pressable onPress={() => setReviewingProperty(null)} hitSlop={10} style={[s.headerBack, glassControlStyle(colors, 'secondary')]}>
                 <Feather name="x" size={20} color={colors.mutedForeground} />
               </Pressable>
             </View>
@@ -681,7 +682,7 @@ export default function AdminProperties() {
                 </View>
                 {getPropertyCoordinates(reviewData.property) ? (
                   <Pressable
-                    style={[s.locBtn, { borderColor: GOLD, alignSelf: 'flex-start', marginTop: 12 }]}
+                    style={[s.locBtn, glassControlStyle(colors, 'gold'), { alignSelf: 'flex-start', marginTop: 12 }]}
                     onPress={() => openInMaps(reviewData.property)}
                   >
                     <Feather name="map" size={13} color={GOLD} />
@@ -714,6 +715,7 @@ const s = StyleSheet.create({
   root:        { flex: 1 },
   header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16 },
   headerTitle: { fontFamily: 'Inter_700Bold', fontSize: 17, color: '#ffffff' },
+  headerBack: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   tabs:        { flexDirection: 'row', borderBottomWidth: 1 },
   tabItem:     { flex: 1, alignItems: 'center', paddingVertical: 13 },
   tabText:     { fontFamily: 'Inter_600SemiBold', fontSize: 13 },

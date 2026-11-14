@@ -5,6 +5,8 @@ import { Feather } from '@expo/vector-icons';
 import { ExpoGoMapFallback } from '@/components/ExpoGoMapFallback';
 import { getCurrentPosition } from '@/lib/locationService';
 import brandColors from '@/constants/colors';
+import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 
 interface StaticMapProps {
   latitude?: number;
@@ -67,6 +69,7 @@ export function InteractiveMap({
   zoomControlsBottomRight = false,
   satellite = false,
 }: InteractiveMapProps) {
+  const colors = useColors();
   const initialLatitude = pinLat ?? region?.latitude ?? 30.8141;
   const initialLongitude = pinLng ?? region?.longitude ?? 73.4502;
   const [center, setCenter] = useState({
@@ -134,13 +137,13 @@ export function InteractiveMap({
       />
       {showMyLocation && (
         <Pressable
-          style={[styles.myLocBtn, locating && styles.myLocBtnDisabled]}
+          style={[styles.myLocBtn, glassControlStyle(colors, 'secondary'), locating && styles.myLocBtnDisabled]}
           onPress={goToMyLocation}
           disabled={locating}
           accessibilityRole="button"
           accessibilityLabel="Center map on my location"
         >
-          <Feather name="crosshair" size={18} color={brandColors.light.gold} />
+          <Feather name="crosshair" size={18} color={colors.gold} />
         </Pressable>
       )}
     </View>

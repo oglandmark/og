@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 // BlurView removed — crashes Android GPU
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useLanguage } from '@/context/LanguageContext';
@@ -125,7 +126,7 @@ function NotLoggedInPrompt({ colors, topInset, insets, router }: any) {
         <View style={styles.authActionRow}>
           <AnimatedPressable
             onPress={() => router.push({ pathname: '/(auth)/login', params: { from: 'post-ad' } })}
-            style={[styles.authPrimaryButton, { backgroundColor: colors.action }]}
+            style={[styles.authPrimaryButton, glassControlStyle(colors, 'action')]}
             accessibilityRole="button"
             accessibilityLabel="Log in to post an ad"
           >
@@ -136,7 +137,7 @@ function NotLoggedInPrompt({ colors, topInset, insets, router }: any) {
             onPress={() => router.push('/(auth)/signup')}
             style={({ pressed }) => [
               styles.authSecondaryButton,
-              { borderColor: colors.action, backgroundColor: colors.card, opacity: pressed ? 0.72 : 1 },
+              { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.72 : 1 },
             ]}
             accessibilityRole="button"
             accessibilityLabel="Sign up to post an ad"
@@ -434,17 +435,12 @@ function AgentForm({ colors, topInset, user, router }: any) {
               <Pressable
                 key={c}
                 onPress={() => handleCategoryChange(c)}
-                style={[styles.pill, {
+                style={[styles.pill, glassControlStyle(colors, category === c ? 'selected' : 'secondary'), {
                   borderColor: category === c
                     ? c === 'Agricultural' ? colors.teal
                     : c === 'Industrial' ? INDUSTRIAL_COLOR
                      : colors.selectionBorder
                     : colors.border,
-                  backgroundColor: category === c
-                    ? c === 'Agricultural' ? colors.teal
-                    : c === 'Industrial' ? INDUSTRIAL_COLOR
-                     : colors.selectionBackground
-                    : colors.glassCard,
                 }]}
               >
                  <Text style={[styles.pillText, { color: category === c ? colors.selectionForeground : colors.mutedForeground, fontWeight: category === c ? '600' : '400' }]}>{c}</Text>
@@ -461,10 +457,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
               <Pressable
                 key={t}
                 onPress={() => setPropType(t)}
-                style={[styles.pill, {
-                   borderColor: propType === t ? colors.selectionBorder : colors.border,
-                   backgroundColor: propType === t ? colors.selectionBackground : colors.glassCard,
-                }]}
+                 style={[styles.pill, glassControlStyle(colors, propType === t ? 'selected' : 'secondary')]}
               >
                  <Text style={[styles.pillText, { color: propType === t ? colors.selectionForeground : colors.mutedForeground, fontWeight: propType === t ? '600' : '400' }]}>{t}</Text>
               </Pressable>
@@ -503,7 +496,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 <View style={styles.unitChips}>
                   {AGRI_SIZE_UNITS.map((u) => (
                     <Pressable key={u} onPress={() => setAgriUnit(u)}
-                      style={[styles.unitChip, { borderColor: agriUnit === u ? colors.teal : colors.border, backgroundColor: agriUnit === u ? colors.tealSoft : 'transparent' }]}>
+                      style={[styles.unitChip, glassControlStyle(colors, agriUnit === u ? 'selected' : 'secondary')]}>
                       <Text style={[styles.unitChipText, { color: agriUnit === u ? colors.teal : colors.mutedForeground }]}>{u}</Text>
                     </Pressable>
                   ))}
@@ -539,7 +532,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                   const sel = soilType === s.key;
                   return (
                     <Pressable key={s.key} onPress={() => setSoilType(s.key)}
-                      style={[styles.soilCard, { borderColor: sel ? colors.teal : colors.border, backgroundColor: sel ? colors.tealSoft : colors.card }]}>
+                      style={[styles.soilCard, glassControlStyle(colors, sel ? 'selected' : 'secondary')]}>
                       <Text style={[styles.soilName, { color: sel ? colors.teal : colors.foreground }]}>{s.key}</Text>
                       <Text style={[styles.soilDesc, { color: sel ? colors.teal : colors.mutedForeground }]}>{s.desc}</Text>
                       {sel && <View style={styles.soilCheck}><Feather name="check" size={10} color={colors.teal} /></View>}
@@ -557,7 +550,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                   const sel = mainCrop === c;
                   return (
                     <Pressable key={c} onPress={() => setMainCrop(c)}
-                      style={[styles.cropChip, { borderColor: sel ? colors.teal : colors.border, backgroundColor: sel ? colors.teal : 'transparent' }]}>
+                      style={[styles.cropChip, glassControlStyle(colors, sel ? 'selected' : 'secondary')]}>
                       <Text style={[styles.cropChipText, { color: sel ? '#ffffff' : colors.mutedForeground }]}>{c}</Text>
                     </Pressable>
                   );
@@ -573,7 +566,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
               <View style={styles.tehsilRow}>
                 {okaraDistrict.tehsils.map((t) => (
                   <Pressable key={t} onPress={() => setTehsil(t)}
-                    style={[styles.tehsilChip, { borderColor: tehsil === t ? colors.teal : colors.border, backgroundColor: tehsil === t ? colors.tealSoft : 'transparent' }]}>
+                    style={[styles.tehsilChip, glassControlStyle(colors, tehsil === t ? 'selected' : 'secondary')]}>
                     <Text style={[styles.tehsilChipText, { color: tehsil === t ? colors.teal : colors.mutedForeground }]}>{t}</Text>
                   </Pressable>
                 ))}
@@ -581,7 +574,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
 
               <Text style={[styles.label, { color: colors.foreground, textAlign: rtl, marginTop: 14 }]}>Village / Mauza</Text>
               <Pressable onPress={() => setShowVillages(!showVillages)}
-                style={[styles.dropdownShell, { borderColor: colors.glassBorder }]}>
+                style={[styles.dropdownShell, glassControlStyle(colors, 'secondary')]}>
                 <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
                 <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassOverlay }]} />
                 <Text style={[styles.dropdownText, { color: village ? colors.foreground : colors.mutedForeground }]}>
@@ -593,7 +586,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 <View style={[styles.dropdownList, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   {okaraDistrict.villages.map((v) => (
                     <Pressable key={v} onPress={() => { setVillage(v); setShowVillages(false); }}
-                      style={[styles.dropdownItem, { borderBottomColor: colors.border }]}>
+                      style={[styles.dropdownItem, glassControlStyle(colors, village === v ? 'selected' : 'secondary'), { borderBottomColor: colors.border }]}>
                       <Text style={[styles.dropdownItemText, { color: colors.foreground }]}>{v}</Text>
                       {village === v && <Feather name="check" size={13} color={colors.teal} />}
                     </Pressable>
@@ -664,9 +657,9 @@ function AgentForm({ colors, topInset, user, router }: any) {
             {/* Submit */}
             <AnimatedReveal delay={280}>
               <AnimatedPressable onPress={submit}
-                style={[styles.submit, { backgroundColor: colors.action, opacity: submitting ? 0.7 : 1 }]}>
-                <Text style={styles.submitText}>{submitting ? 'Posting…' : 'Post Agricultural Listing'}</Text>
-                <Feather name="arrow-up-right" size={18} color="#ffffff" />
+                style={[styles.submit, { ...glassControlStyle(colors, 'gold'), opacity: submitting ? 0.7 : 1 }]}>
+                <Text style={[styles.submitText, { color: colors.primaryActionForeground }]}>{submitting ? 'Posting…' : 'Post Agricultural Listing'}</Text>
+                <Feather name="arrow-up-right" size={18} color={colors.primaryActionForeground} />
               </AnimatedPressable>
               <Text style={[styles.hint, { color: colors.mutedForeground }]}>
                 Your listing will appear in the Listings tab and on the home feed immediately.
@@ -691,7 +684,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
               <View style={styles.pillRow}>
                 {STATUSES.map((s) => (
                   <Pressable key={s} onPress={() => setStatus(s)}
-                     style={[styles.pill, { borderColor: status === s ? colors.selectionBorder : colors.border, backgroundColor: status === s ? colors.selectionBackground : colors.glassCard }]}>
+                     style={[styles.pill, glassControlStyle(colors, status === s ? 'selected' : 'secondary')]}>
                      <Text style={[styles.pillText, { color: status === s ? colors.selectionForeground : colors.mutedForeground, fontWeight: status === s ? '600' : '400' }]}>{s}</Text>
                   </Pressable>
                 ))}
@@ -717,7 +710,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, alignItems: 'center' }}>
                   {AREA_UNITS.map((u) => (
                     <Pressable key={u} onPress={() => setAreaUnit(u as any)}
-                       style={[styles.pill, { borderColor: areaUnit === u ? colors.selectionBorder : colors.border, backgroundColor: areaUnit === u ? colors.selectionBackground : colors.glassCard }]}>
+                       style={[styles.pill, glassControlStyle(colors, areaUnit === u ? 'selected' : 'secondary')]}>
                        <Text style={[styles.pillText, { color: areaUnit === u ? colors.selectionForeground : colors.mutedForeground, fontWeight: areaUnit === u ? '600' : '400' }]}>{u}</Text>
                     </Pressable>
                   ))}
@@ -748,7 +741,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                       setGpsBoundary('');
                     }
                   }}
-                     style={[styles.pill, { borderColor: city === c ? colors.selectionBorder : colors.border, backgroundColor: city === c ? colors.selectionBackground : colors.glassCard }]}>
+                     style={[styles.pill, glassControlStyle(colors, city === c ? 'selected' : 'secondary')]}>
                      <Text style={[styles.pillText, { color: city === c ? colors.selectionForeground : colors.mutedForeground, fontWeight: city === c ? '600' : '400' }]}>{c}</Text>
                   </Pressable>
                 ))}
@@ -816,9 +809,9 @@ function AgentForm({ colors, topInset, user, router }: any) {
             {/* Submit */}
             <AnimatedReveal delay={210}>
               <AnimatedPressable onPress={submit}
-                style={[styles.submit, { backgroundColor: INDUSTRIAL_COLOR, opacity: submitting ? 0.7 : 1 }]}>
-                <Text style={styles.submitText}>{submitting ? 'Posting…' : 'Post Industrial Listing'}</Text>
-                <Feather name="arrow-up-right" size={18} color="#ffffff" />
+                style={[styles.submit, { ...glassControlStyle(colors, 'gold'), backgroundColor: INDUSTRIAL_COLOR, opacity: submitting ? 0.7 : 1 }]}>
+                <Text style={[styles.submitText, { color: colors.primaryActionForeground }]}>{submitting ? 'Posting…' : 'Post Industrial Listing'}</Text>
+                <Feather name="arrow-up-right" size={18} color={colors.primaryActionForeground} />
               </AnimatedPressable>
               <Text style={[styles.hint, { color: colors.mutedForeground }]}>
                 Your listing will appear in Industrial search results immediately.
@@ -834,7 +827,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
               <View style={styles.pillRow}>
                 {STATUSES.map((s) => (
                   <Pressable key={s} onPress={() => setStatus(s)}
-                     style={[styles.pill, { borderColor: status === s ? colors.selectionBorder : colors.border, backgroundColor: status === s ? colors.selectionBackground : colors.glassCard }]}>
+                     style={[styles.pill, glassControlStyle(colors, status === s ? 'selected' : 'secondary')]}>
                      <Text style={[styles.pillText, { color: status === s ? colors.selectionForeground : colors.mutedForeground, fontWeight: status === s ? '600' : '400' }]}>{s}</Text>
                   </Pressable>
                 ))}
@@ -869,7 +862,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, alignItems: 'center' }}>
                   {AREA_UNITS.map((u) => (
                     <Pressable key={u} onPress={() => setAreaUnit(u as any)}
-                       style={[styles.pill, { borderColor: areaUnit === u ? colors.selectionBorder : colors.border, backgroundColor: areaUnit === u ? colors.selectionBackground : colors.glassCard }]}>
+                        style={[styles.pill, glassControlStyle(colors, areaUnit === u ? 'selected' : 'secondary')]}>
                        <Text style={[styles.pillText, { color: areaUnit === u ? colors.selectionForeground : colors.mutedForeground, fontWeight: areaUnit === u ? '600' : '400' }]}>{u}</Text>
                     </Pressable>
                   ))}
@@ -895,7 +888,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                       setGpsBoundary('');
                     }
                   }}
-                     style={[styles.pill, { borderColor: city === c ? colors.selectionBorder : colors.border, backgroundColor: city === c ? colors.selectionBackground : colors.glassCard }]}>
+                     style={[styles.pill, glassControlStyle(colors, city === c ? 'selected' : 'secondary')]}>
                      <Text style={[styles.pillText, { color: city === c ? colors.selectionForeground : colors.mutedForeground, fontWeight: city === c ? '600' : '400' }]}>{c}</Text>
                   </Pressable>
                 ))}
@@ -909,7 +902,7 @@ function AgentForm({ colors, topInset, user, router }: any) {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
                   {neighborhoods.map((a) => (
                     <Pressable key={a} onPress={() => setNeighborhood(a)}
-                       style={[styles.pill, { borderColor: neighborhood === a ? colors.selectionBorder : colors.border, backgroundColor: neighborhood === a ? colors.selectionBackground : colors.glassCard }]}>
+                       style={[styles.pill, glassControlStyle(colors, neighborhood === a ? 'selected' : 'secondary')]}>
                        <Text style={[styles.pillText, { color: neighborhood === a ? colors.selectionForeground : colors.mutedForeground, fontWeight: neighborhood === a ? '600' : '400' }]}>{a}</Text>
                     </Pressable>
                   ))}
@@ -979,9 +972,9 @@ function AgentForm({ colors, topInset, user, router }: any) {
             {/* Submit */}
             <AnimatedReveal delay={210}>
               <AnimatedPressable onPress={submit}
-                style={[styles.submit, { backgroundColor: colors.action, opacity: submitting ? 0.7 : 1 }]}>
-                <Text style={styles.submitText}>{submitting ? 'Posting…' : 'Post Listing'}</Text>
-                <Feather name="arrow-up-right" size={18} color={colors.actionForeground} />
+                style={[styles.submit, { ...glassControlStyle(colors, 'gold'), opacity: submitting ? 0.7 : 1 }]}>
+                <Text style={[styles.submitText, { color: colors.primaryActionForeground }]}>{submitting ? 'Posting…' : 'Post Listing'}</Text>
+                <Feather name="arrow-up-right" size={18} color={colors.primaryActionForeground} />
               </AnimatedPressable>
               <Text style={[styles.hint, { color: colors.mutedForeground }]}>
                 Your listing will appear in the Listings tab and on the home feed immediately.
@@ -1032,7 +1025,7 @@ function MediaPicker({
         </View>
         <Pressable
           onPress={onPickPhotos}
-          style={[mStyles.addBtn, { borderColor: accentColor, backgroundColor: accentColor + '14' }]}
+          style={[mStyles.addBtn, glassControlStyle(colors, 'secondary')]}
         >
           <Feather name="plus" size={14} color={accentColor} />
           <Text style={[mStyles.addBtnText, { color: accentColor }]}>Add</Text>
@@ -1044,13 +1037,13 @@ function MediaPicker({
           {photos.map((uri, i) => (
             <View key={i} style={mStyles.thumbWrap}>
               <Image source={{ uri }} style={mStyles.thumb} resizeMode="cover" />
-              <Pressable onPress={() => onRemovePhoto(i)} style={[mStyles.thumbRemove, { backgroundColor: '#000000bb' }]}>
+              <Pressable onPress={() => onRemovePhoto(i)} style={[mStyles.thumbRemove, glassControlStyle(colors, 'destructive')]}>
                 <Feather name="x" size={10} color="#ffffff" />
               </Pressable>
             </View>
           ))}
           {photos.length < 10 && (
-            <Pressable onPress={onPickPhotos} style={[mStyles.thumbAdd, { borderColor: accentColor + '66', backgroundColor: accentColor + '0e' }]}>
+            <Pressable onPress={onPickPhotos} style={[mStyles.thumbAdd, glassControlStyle(colors, 'secondary')]}>
               <Feather name="plus" size={20} color={accentColor} />
               <Text style={[mStyles.thumbAddText, { color: accentColor }]}>More</Text>
             </Pressable>
@@ -1076,7 +1069,7 @@ function MediaPicker({
         {!video && (
           <Pressable
             onPress={onPickVideo}
-            style={[mStyles.addBtn, { borderColor: accentColor, backgroundColor: accentColor + '14' }]}
+            style={[mStyles.addBtn, glassControlStyle(colors, 'secondary')]}
           >
             <Feather name="plus" size={14} color={accentColor} />
             <Text style={[mStyles.addBtnText, { color: accentColor }]}>Add</Text>
@@ -1106,12 +1099,12 @@ function MediaPicker({
               </View>
             </View>
           </View>
-          <Pressable onPress={onRemoveVideo} style={[mStyles.videoRemove, { backgroundColor: '#e5383822' }]}>
-            <Feather name="trash-2" size={14} color="#e53838" />
+          <Pressable onPress={onRemoveVideo} style={[mStyles.videoRemove, glassControlStyle(colors, 'destructive')]}>
+            <Feather name="trash-2" size={14} color={colors.destructiveForeground} />
           </Pressable>
         </View>
       ) : (
-        <Pressable onPress={onPickVideo} style={[mStyles.videoPickBtn, { borderColor: accentColor + '44', backgroundColor: accentColor + '08' }]}>
+        <Pressable onPress={onPickVideo} style={[mStyles.videoPickBtn, glassControlStyle(colors, 'secondary')]}>
           <Feather name="video" size={16} color={accentColor} />
           <Text style={[mStyles.videoPickText, { color: accentColor }]}>Pick a video from your gallery</Text>
           <Feather name="chevron-right" size={14} color={accentColor + '88'} />
@@ -1226,7 +1219,7 @@ function BuyerForm({ colors, topInset, user, router }: any) {
       <View style={styles.pillRow}>
         {BUYER_TYPES.map((t) => (
           <Pressable key={t} onPress={() => setBuyerType(t)}
-            style={[styles.pill, { borderColor: buyerType === t ? colors.selectionBorder : colors.border, backgroundColor: buyerType === t ? colors.selectionBackground : colors.glassCard }]}>
+            style={[styles.pill, glassControlStyle(colors, buyerType === t ? 'selected' : 'secondary')]}>
             <Text style={[styles.pillText, { color: buyerType === t ? colors.selectionForeground : colors.mutedForeground, fontWeight: buyerType === t ? '600' : '400' }]}>{t}</Text>
           </Pressable>
         ))}
@@ -1239,7 +1232,7 @@ function BuyerForm({ colors, topInset, user, router }: any) {
       <View style={styles.pillRow}>
         {CITIES.map((c) => (
           <Pressable key={c} onPress={() => { setCity(c); setNeighborhood(''); }}
-            style={[styles.pill, { borderColor: city === c ? colors.selectionBorder : colors.border, backgroundColor: city === c ? colors.selectionBackground : colors.glassCard }]}>
+            style={[styles.pill, glassControlStyle(colors, city === c ? 'selected' : 'secondary')]}>
             <Text style={[styles.pillText, { color: city === c ? colors.selectionForeground : colors.mutedForeground, fontWeight: city === c ? '600' : '400' }]}>{c}</Text>
           </Pressable>
         ))}
@@ -1252,7 +1245,7 @@ function BuyerForm({ colors, topInset, user, router }: any) {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
             {areas.map((a) => (
               <Pressable key={a} onPress={() => setNeighborhood(a)}
-                style={[styles.pill, { borderColor: neighborhood === a ? colors.selectionBorder : colors.border, backgroundColor: neighborhood === a ? colors.selectionBackground : colors.glassCard }]}>
+                style={[styles.pill, glassControlStyle(colors, neighborhood === a ? 'selected' : 'secondary')]}>
                 <Text style={[styles.pillText, { color: neighborhood === a ? colors.selectionForeground : colors.mutedForeground, fontWeight: neighborhood === a ? '600' : '400' }]}>{a}</Text>
               </Pressable>
             ))}
@@ -1266,9 +1259,9 @@ function BuyerForm({ colors, topInset, user, router }: any) {
         multiline error={errors.requirements} colors={colors} />
 
       <AnimatedPressable onPress={submit}
-        style={[styles.submit, { backgroundColor: colors.action, opacity: submitting ? 0.7 : 1 }]}>
-        <Text style={styles.submitText}>{submitting ? 'Sending…' : 'Send Request'}</Text>
-        <Feather name="arrow-up-right" size={18} color={colors.actionForeground} />
+        style={[styles.submit, { ...glassControlStyle(colors, 'gold'), opacity: submitting ? 0.7 : 1 }]}>
+        <Text style={[styles.submitText, { color: colors.primaryActionForeground }]}>{submitting ? 'Sending…' : 'Send Request'}</Text>
+        <Feather name="arrow-up-right" size={18} color={colors.primaryActionForeground} />
       </AnimatedPressable>
     </ScrollView>
   );
@@ -1314,11 +1307,11 @@ function ToggleField({ label, subtitle, icon, value, onChange, colors, accentCol
       </View>
       <View style={styles.toggleBtns}>
         <Pressable onPress={() => onChange(true)}
-          style={[styles.yesNo, { backgroundColor: value === true ? accentColor : colors.secondary, borderColor: value === true ? accentColor : colors.border }]}>
-          <Text style={[styles.yesNoText, { color: value === true ? '#ffffff' : colors.mutedForeground }]}>Yes</Text>
+          style={[styles.yesNo, glassControlStyle(colors, value === true ? 'selected' : 'secondary')]}>
+          <Text style={[styles.yesNoText, { color: value === true ? colors.selectionForeground : colors.mutedForeground }]}>Yes</Text>
         </Pressable>
         <Pressable onPress={() => onChange(false)}
-          style={[styles.yesNo, { backgroundColor: value === false ? '#b94b42' : colors.secondary, borderColor: value === false ? '#b94b42' : colors.border }]}>
+          style={[styles.yesNo, glassControlStyle(colors, value === false ? 'destructive' : 'secondary')]}>
           <Text style={[styles.yesNoText, { color: value === false ? '#ffffff' : colors.mutedForeground }]}>No</Text>
         </Pressable>
       </View>

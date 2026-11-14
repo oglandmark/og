@@ -16,6 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 
 const promisePoints = [
   { label: 'Verified Listings', icon: 'check-circle' as const },
@@ -264,13 +265,13 @@ export function PromiseSection({ onExplore }: { onExplore: () => void }) {
             testID="promise-explore-listings"
             style={({ pressed }) => [
               styles.button,
-              { backgroundColor: colors.splashGold, opacity: pressed ? 0.84 : 1 },
+               { ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.84 : 1 },
             ]}
           >
             <Animated.View pointerEvents="none" style={[styles.buttonShine, shineStyle]} />
-            <Text style={[styles.buttonText, { color: colors.foreground }]}>Explore listings</Text>
+            <Text style={[styles.buttonText, { color: colors.primaryActionForeground }]}>Explore listings</Text>
             <Animated.View style={arrowStyle}>
-              <Feather name="arrow-up-right" size={20} color={colors.foreground} />
+              <Feather name="arrow-up-right" size={20} color={colors.primaryActionForeground} />
             </Animated.View>
           </Pressable>
         </View>

@@ -15,6 +15,7 @@ import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollV
 import { LocalizedText as Text, LocalizedTextInput as TextInput } from '@/components/LocalizedText';
 import { useColors } from '@/hooks/useColors';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
+import { glassControlStyle } from '@/components/glassControls';
 import { BannerSlide, createBanner, deleteBanner, getAdminBanners, toggleBanner } from '@/lib/api';
 
 const CATEGORIES = ['homes', 'commercial', 'agriculture', 'plots', 'projects'] as const;
@@ -111,6 +112,7 @@ export default function AdminBannersScreen() {
           testID="admin-banners-back"
           onPress={() => router.back()}
           hitSlop={10}
+          style={[styles.headerButton, glassControlStyle(colors, 'secondary')]}
         >
           <Feather name="arrow-left" size={20} color={colors.actionForeground} />
         </Pressable>
@@ -142,7 +144,7 @@ export default function AdminBannersScreen() {
                   onPress={() => setCategory(item)}
                   style={[
                     styles.categoryChip,
-                    { backgroundColor: selected ? colors.action : colors.background, borderColor: colors.border },
+                     glassControlStyle(colors, selected ? 'selected' : 'secondary'),
                   ]}
                 >
                   <Text style={{ color: selected ? colors.actionForeground : colors.foreground, fontSize: 12, fontFamily: 'Inter_600SemiBold', textTransform: 'capitalize' }}>
@@ -189,7 +191,7 @@ export default function AdminBannersScreen() {
             testID="admin-banner-save"
             onPress={() => { void saveBanner(); }}
             disabled={saving || loading}
-            style={[styles.saveButton, { backgroundColor: colors.action, opacity: saving || loading ? 0.65 : 1 }]}
+             style={[styles.saveButton, { ...glassControlStyle(colors, 'action'), opacity: saving || loading ? 0.65 : 1 }]}
           >
             {saving ? <ActivityIndicator size="small" color={colors.actionForeground} /> : <Feather name="save" size={16} color={colors.actionForeground} />}
             <Text style={{ color: colors.actionForeground, fontFamily: 'Inter_600SemiBold' }}>Save banner</Text>
@@ -221,6 +223,7 @@ export default function AdminBannersScreen() {
                     accessibilityLabel={banner.active ? 'Hide banner' : 'Show banner'}
                     onPress={() => { void changeActive(banner); }}
                     hitSlop={8}
+                    style={[styles.iconAction, glassControlStyle(colors, 'secondary')]}
                   >
                     <Feather name={banner.active ? 'eye-off' : 'eye'} size={19} color={colors.action} />
                   </Pressable>
@@ -230,6 +233,7 @@ export default function AdminBannersScreen() {
                     accessibilityLabel="Delete banner"
                     onPress={() => confirmDelete(banner)}
                     hitSlop={8}
+                    style={[styles.iconAction, glassControlStyle(colors, 'destructive')]}
                   >
                     <Feather name="trash-2" size={19} color={colors.destructive} />
                   </Pressable>
@@ -247,6 +251,8 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingBottom: 14 },
+  headerButton: { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  iconAction: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontFamily: 'Inter_700Bold', fontSize: 16 },
   form: { margin: 16, padding: 16, borderWidth: 1, borderRadius: 14, gap: 12 },
   sectionTitle: { fontFamily: 'Inter_700Bold', fontSize: 16 },

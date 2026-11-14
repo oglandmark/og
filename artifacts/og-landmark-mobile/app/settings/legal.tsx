@@ -6,6 +6,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { BrandMark } from '@/components/BrandMark';
 
 type Section = 'about' | 'legal' | 'security';
@@ -92,7 +93,7 @@ function LegalDocument({
               onPress={() => onTabChange(value)}
               style={[
                 styles.tab,
-                selected && { backgroundColor: colors.card, borderColor: colors.selectionBorder },
+                glassControlStyle(colors, selected ? 'selected' : 'secondary'),
               ]}
             >
               <Feather name={icon} size={14} color={selected ? colors.selectionForeground : colors.mutedForeground} />
@@ -191,7 +192,7 @@ function LegalDocument({
             <Pressable
               accessibilityRole="link"
               onPress={() => Linking.openURL('https://oglandmark.com/privacy-policy')}
-              style={[styles.inlineAction, { borderColor: colors.selectionBorder, backgroundColor: colors.selectionTint }]}
+              style={[styles.inlineAction, glassControlStyle(colors, 'selected')]}
             >
               <Feather name="external-link" size={14} color={colors.selectionForeground} />
               <Text style={[styles.inlineActionText, { color: colors.selectionForeground }]}>Read the full Privacy Policy</Text>
@@ -199,7 +200,7 @@ function LegalDocument({
             <Pressable
               accessibilityRole="link"
               onPress={() => Linking.openURL('https://oglandmark.com/account-deletion')}
-              style={[styles.inlineAction, { borderColor: colors.selectionBorder, backgroundColor: colors.selectionTint }]}
+              style={[styles.inlineAction, glassControlStyle(colors, 'selected')]}
             >
               <Feather name="user-x" size={14} color={colors.selectionForeground} />
               <Text style={[styles.inlineActionText, { color: colors.selectionForeground }]}>Request account deletion online</Text>
@@ -207,7 +208,7 @@ function LegalDocument({
             <Pressable
               accessibilityRole="link"
               onPress={() => Linking.openURL('mailto:support@oglandmark.com')}
-              style={[styles.inlineAction, { borderColor: colors.selectionBorder, backgroundColor: colors.selectionTint }]}
+              style={[styles.inlineAction, glassControlStyle(colors, 'selected')]}
             >
               <Feather name="mail" size={14} color={colors.selectionForeground} />
               <Text style={[styles.inlineActionText, { color: colors.selectionForeground }]}>Contact privacy support</Text>
@@ -320,7 +321,7 @@ function SecurityContent({ colors, router }: { colors: ReturnType<typeof useColo
           'Only upload documents and contact details needed for your property journey.',
           'Contact support immediately if you see activity you do not recognise.',
         ]} />
-        <Pressable onPress={() => router.push('/settings/account' as any)} style={[styles.inlineAction, { borderColor: colors.selectionBorder, backgroundColor: colors.selectionTint }]}>
+        <Pressable onPress={() => router.push('/settings/account' as any)} style={[styles.inlineAction, glassControlStyle(colors, 'selected')]}>
           <Feather name="settings" size={14} color={colors.selectionForeground} />
           <Text style={[styles.inlineActionText, { color: colors.selectionForeground }]}>Manage account settings</Text>
         </Pressable>
@@ -353,7 +354,7 @@ function SecurityContent({ colors, router }: { colors: ReturnType<typeof useColo
           <Text style={[styles.contactTitle, { color: colors.foreground }]}>Need help with privacy or security?</Text>
           <Text style={[styles.contactBody, { color: colors.mutedForeground }]}>Our support team can help with account access and data requests.</Text>
         </View>
-        <Pressable onPress={() => Linking.openURL('mailto:support@oglandmark.com')} hitSlop={8}>
+        <Pressable onPress={() => Linking.openURL('mailto:support@oglandmark.com')} hitSlop={8} style={glassControlStyle(colors, 'secondary')}>
           <Feather name="arrow-up-right" size={17} color={colors.action} />
         </Pressable>
       </View>
@@ -384,7 +385,7 @@ export default function LegalScreen() {
     >
       <AnimatedReveal>
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={[styles.backButton, { backgroundColor: colors.secondary, borderColor: colors.border }]} hitSlop={8}>
+          <Pressable onPress={() => router.back()} style={[styles.backButton, glassControlStyle(colors, 'secondary')]} hitSlop={8}>
             <Feather name="arrow-left" size={18} color={colors.foreground} />
           </Pressable>
           <View style={{ flex: 1 }}>

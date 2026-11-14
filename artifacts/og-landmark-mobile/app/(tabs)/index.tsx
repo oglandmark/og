@@ -54,6 +54,7 @@ import {
 } from '@/lib/plotCalculator';
 import { PlotMeasurementCalculator } from '@/components/PlotMeasurementCalculator';
 import { StatusNotice } from '@/components/PolishedUI';
+import { glassControlStyle } from '@/components/glassControls';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
 import { PromiseSection } from '@/components/PromiseSection';
 import Animated, {
@@ -126,11 +127,11 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.drawerScrollContent} keyboardShouldPersistTaps="handled">
             <View style={s.drawerHeader}>
               <BrandMark />
-              <Pressable onPress={onClose} style={({ pressed }) => [s.drawerClose, { backgroundColor: colors.actionGlass, opacity: pressed ? 0.72 : 1 }]} accessibilityRole="button" accessibilityLabel="Close navigation menu">
+              <Pressable onPress={onClose} style={({ pressed }) => [s.drawerClose, { ...glassControlStyle(colors, 'action'), opacity: pressed ? 0.72 : 1 }]} accessibilityRole="button" accessibilityLabel="Close navigation menu">
                 <Feather name="x" size={18} color={colors.actionForeground} />
               </Pressable>
             </View>
-            <Pressable onPress={() => onNavigate('/(auth)/login')} style={({ pressed }) => [s.drawerAccount, { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder, opacity: pressed ? 0.78 : 1 }]} accessibilityRole="button" accessibilityLabel="Sign in to your account">
+            <Pressable onPress={() => onNavigate('/(auth)/login')} style={({ pressed }) => [s.drawerAccount, { ...glassControlStyle(colors, 'action'), opacity: pressed ? 0.78 : 1 }]} accessibilityRole="button" accessibilityLabel="Sign in to your account">
               <View style={[s.drawerAccountIcon, { backgroundColor: `${colors.splashGold}26` }]}><Feather name="user" size={18} color={colors.goldForeground} /></View>
               <View style={s.drawerAccountCopy}><Text style={[s.drawerAccountTitle, { color: colors.actionForeground }]}>Welcome to OG Landmark</Text><Text style={[s.drawerAccountDetail, { color: colors.actionForeground }]}>Sign in to manage your properties</Text></View>
               <Feather name="arrow-up-right" size={16} color={colors.splashGold} />
@@ -138,7 +139,7 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
             <Text style={[s.drawerSectionLabel, { color: colors.mutedForeground }]}>EXPLORE</Text>
             <View style={s.drawerList}>
               {drawerItems.map((item, i) => (
-                <Pressable key={item.label} onPress={() => item.info ? onInfo(item.info) : onNavigate(item.route)} style={({ pressed }) => [s.drawerItem, i === 0 && { backgroundColor: `${colors.splashGold}26` }, { borderColor: i === 0 ? `${colors.splashGold}66` : colors.glassBorder, opacity: pressed ? 0.72 : 1 }]} accessibilityRole="button" accessibilityLabel={item.label}>
+                  <Pressable key={item.label} onPress={() => item.info ? onInfo(item.info) : onNavigate(item.route)} style={({ pressed }) => [s.drawerItem, i === 0 ? glassControlStyle(colors, 'gold') : glassControlStyle(colors, 'secondary'), { opacity: pressed ? 0.72 : 1 }]} accessibilityRole="button" accessibilityLabel={item.label}>
                   <View style={[s.drawerItemIcon, { backgroundColor: i === 0 ? `${colors.splashGold}26` : colors.glassOverlay }]}><Feather name={item.icon} size={18} color={i === 0 ? colors.goldForeground : colors.action} /></View>
                   <View style={s.drawerItemCopy}><Text style={[s.drawerItemLabel, { color: colors.foreground }]}>{item.label}</Text><Text style={[s.drawerItemDetail, { color: colors.mutedForeground }]}>{item.detail}</Text></View>
                   <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
@@ -149,7 +150,7 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
             <Text style={[s.drawerSectionLabel, { color: colors.mutedForeground }]}>DISCOVER</Text>
             <View style={s.drawerList}>
               {discoverItems.map((item) => (
-                <Pressable key={item.label} onPress={() => { if (item.info) { setSelectedInfo(item.info); onInfo(item.info); } }} style={({ pressed }) => [s.drawerItem, { borderColor: colors.glassBorder, opacity: pressed ? 0.72 : 1 }]} accessibilityRole="button" accessibilityLabel={item.label}>
+                <Pressable key={item.label} onPress={() => { if (item.info) { setSelectedInfo(item.info); onInfo(item.info); } }} style={({ pressed }) => [s.drawerItem, glassControlStyle(colors, 'secondary'), { opacity: pressed ? 0.72 : 1 }]} accessibilityRole="button" accessibilityLabel={item.label}>
                   <View style={[s.drawerItemIcon, { backgroundColor: colors.glassOverlay }]}><Feather name={item.icon} size={18} color={colors.action} /></View>
                   <View style={s.drawerItemCopy}><Text style={[s.drawerItemLabel, { color: colors.foreground }]}>{item.label}</Text><Text style={[s.drawerItemDetail, { color: colors.mutedForeground }]}>{item.detail}</Text></View>
                   <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
@@ -160,7 +161,7 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
             <Text style={[s.drawerSectionLabel, { color: colors.mutedForeground }]}>COMPANY & SUPPORT</Text>
             <View style={s.drawerList}>
               {companyItems.map((item) => (
-                <Pressable key={item.label} onPress={() => { if (item.info) { setSelectedInfo(item.info); onInfo(item.info); } }} style={({ pressed }) => [s.drawerSupportItem, { opacity: pressed ? 0.72 : 1 }]} accessibilityRole="button" accessibilityLabel={item.label}>
+                <Pressable key={item.label} onPress={() => { if (item.info) { setSelectedInfo(item.info); onInfo(item.info); } }} style={({ pressed }) => [s.drawerSupportItem, glassControlStyle(colors, 'secondary'), { opacity: pressed ? 0.72 : 1 }]} accessibilityRole="button" accessibilityLabel={item.label}>
                   <View style={[s.drawerItemIcon, { backgroundColor: colors.glassOverlay }]}><Feather name={item.icon} size={18} color={colors.action} /></View>
                   <View style={s.drawerItemCopy}><Text style={[s.drawerItemLabel, { color: colors.foreground }]}>{item.label}</Text><Text style={[s.drawerItemDetail, { color: colors.mutedForeground }]}>{item.detail}</Text></View>
                   <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
@@ -182,7 +183,7 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
                     <Pressable
                       key={item.label}
                       onPress={() => { onClose(); drawerRouter.push(item.route as any); }}
-                      style={({ pressed }) => [s.drawerItem, { borderColor: colors.splashGold + '55', backgroundColor: pressed ? colors.splashGold + '18' : 'transparent', opacity: pressed ? 0.88 : 1 }]}
+                      style={({ pressed }) => [s.drawerItem, glassControlStyle(colors, 'secondary'), { opacity: pressed ? 0.88 : 1 }]}
                     >
                       <View style={[s.drawerItemIcon, { backgroundColor: colors.splashGold + '26' }]}>
                         <Feather name={item.icon} size={18} color={colors.splashGold} />
@@ -201,7 +202,7 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
             <Text style={[s.drawerSectionLabel, { color: colors.mutedForeground }]}>LANGUAGE / زبان</Text>
             <View style={s.drawerLangRow}>
               {(['en', 'ur'] as const).map((l) => (
-                <Pressable key={l} onPress={() => { void setLang(l); }} style={[s.drawerLangBtn, { borderColor: lang === l ? colors.action : colors.border, backgroundColor: lang === l ? colors.action : 'transparent' }]}>
+                <Pressable key={l} onPress={() => { void setLang(l); }} style={[s.drawerLangBtn, glassControlStyle(colors, lang === l ? 'action' : 'secondary')]}>
                 <Text style={[s.drawerLangBtnText, { color: lang === l ? colors.actionForeground : colors.mutedForeground }]}>{l === 'en' ? 'English' : 'اردو'}</Text>
                 </Pressable>
               ))}
@@ -213,11 +214,11 @@ function MenuDrawer({ open, onClose, onNavigate, onInfo }: { open: boolean; onCl
               <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.25)' }]} />
               <Pressable style={StyleSheet.absoluteFill} onPress={() => setSelectedInfo(null)} accessibilityLabel="Close information panel" />
               <View style={[s.infoCard, { backgroundColor: colors.glassCard, borderColor: colors.glassBorder }]}>
-                <View style={s.infoCardTop}><View style={[s.infoCardIcon, { backgroundColor: colors.goldGlass }]}><Feather name="compass" size={20} color={colors.goldForeground} /></View><Pressable onPress={() => setSelectedInfo(null)} accessibilityLabel="Close information panel"><Feather name="x" size={20} color={colors.foreground} /></Pressable></View>
+                 <View style={s.infoCardTop}><View style={[s.infoCardIcon, { backgroundColor: colors.goldGlass }]}><Feather name="compass" size={20} color={colors.goldForeground} /></View><Pressable onPress={() => setSelectedInfo(null)} accessibilityLabel="Close information panel" style={glassControlStyle(colors, 'secondary')}><Feather name="x" size={20} color={colors.foreground} /></Pressable></View>
                 <Text style={[s.infoEyebrow, { color: colors.primary }]}>{selectedInfo.eyebrow}</Text>
                 <Text style={[s.infoTitle, { color: colors.foreground }]}>{selectedInfo.title}</Text>
                 <Text style={[s.infoBody, { color: colors.mutedForeground }]}>{selectedInfo.body}</Text>
-                <Pressable onPress={() => setSelectedInfo(null)} style={[s.infoButton, { backgroundColor: colors.action }]}><Text style={[s.infoButtonText, { color: colors.actionForeground }]}>Got it</Text><Feather name="arrow-right" size={15} color={colors.actionForeground} /></Pressable>
+                <Pressable onPress={() => setSelectedInfo(null)} style={[s.infoButton, glassControlStyle(colors, 'action')]}><Text style={[s.infoButtonText, { color: colors.actionForeground }]}>Got it</Text><Feather name="arrow-right" size={15} color={colors.actionForeground} /></Pressable>
               </View>
             </View>
           )}
@@ -395,8 +396,8 @@ function SectionHeader({ eyebrow, title, onViewAll, colors }: { eyebrow: string;
         <Text numberOfLines={2} style={[s.sectionTitle, { color: colors.foreground }]}>{title}</Text>
       </View>
       {onViewAll && (
-        <Pressable onPress={onViewAll} hitSlop={10}>
-          <View style={[s.viewAllBtn, { backgroundColor: colors.action + '14', borderColor: colors.action + '33' }]}>
+          <Pressable onPress={onViewAll} hitSlop={10}>
+          <View style={[s.viewAllBtn, glassControlStyle(colors, 'secondary')]}>
             <Text style={[s.viewAllText, { color: colors.action }]}>View all</Text>
             <Feather name="arrow-right" size={11} color={colors.action} />
           </View>
@@ -557,8 +558,8 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
             <Text style={fp.badgeText}>VERIFIED</Text>
           </View>
           <View style={{ flex: 1 }} />
-          <Pressable onPress={handleSave} style={[fp.saveBtn, { backgroundColor: saved ? '#ef444488' : '#ffffff22', borderColor: saved ? '#ef4444aa' : '#ffffff55' }]}>
-            <Feather name="heart" size={14} color={saved ? '#ef4444' : '#ffffff'} />
+          <Pressable onPress={handleSave} style={[fp.saveBtn, glassControlStyle(colors, saved ? 'selected' : 'secondary')]}>
+            <Feather name="heart" size={14} color={saved ? colors.selectionForeground : colors.foreground} />
           </Pressable>
         </View>
 
@@ -586,7 +587,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
             {/* Video Tour pill */}
             <Pressable
               onPress={openVideoTour}
-              style={[fp.videoTourBtn, !hasVideo && { opacity: 0.4 }]}
+              style={[fp.videoTourBtn, glassControlStyle(colors, 'action'), !hasVideo && { opacity: 0.4 }]}
               hitSlop={6}
             >
               <LinearGradient
@@ -628,7 +629,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
       <View style={fp.fsContainer}>
 
         {/* Close */}
-        <Pressable style={fp.fsClose} onPress={closeVideo} hitSlop={14}>
+            <Pressable style={[fp.fsClose, glassControlStyle(colors, 'secondary')]} onPress={closeVideo} hitSlop={14}>
           <View style={fp.fsCloseInner}><Feather name="x" size={20} color="#fff" /></View>
         </Pressable>
 
@@ -636,7 +637,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
           <View style={fp.fsError}>
             <Feather name="alert-circle" size={36} color={colors.gold} />
             <Text style={fp.fsErrorText}>Video load nahi ho saka</Text>
-            <Pressable onPress={closeVideo} style={fp.fsErrorBtn}>
+            <Pressable onPress={closeVideo} style={[fp.fsErrorBtn, glassControlStyle(colors, 'secondary')]}>
               <Text style={fp.fsErrorBtnText}>Close</Text>
             </Pressable>
           </View>
@@ -670,7 +671,7 @@ function FeaturedPropertyCard({ property, colors, onPress, onSave }: {
 
             {/* Control bar */}
             <View style={fp.fsBar}>
-              <Pressable onPress={toggleMute} style={fp.fsMuteBtn}>
+          <Pressable onPress={toggleMute} style={[fp.fsMuteBtn, glassControlStyle(colors, 'secondary')]}>
                 <Feather name={isMutedV ? 'volume-x' : 'volume-2'} size={18} color={isMutedV ? '#888' : colors.splashGold} />
                 <Text style={[fp.fsMuteLabel, { color: isMutedV ? '#888' : colors.splashGold }]}>
                   {isMutedV ? 'Unmute' : 'Sound On'}
@@ -985,9 +986,9 @@ function AgentCard({ agent, colors, isDuplicate = false, onPress }: { agent: Sam
                 </Text>
               </View>
             ) : null}
-            <Pressable onPress={onPress} style={[ac.cta, { backgroundColor: colors.action }]}>
-              <Text style={[ac.ctaText, { color: colors.actionForeground }]}>View profile</Text>
-              <Feather name="arrow-up-right" size={13} color={colors.actionForeground} />
+            <Pressable onPress={onPress} style={[ac.cta, glassControlStyle(colors, 'gold')]}>
+              <Text style={[ac.ctaText, { color: colors.primaryActionForeground }]}>View profile</Text>
+              <Feather name="arrow-up-right" size={13} color={colors.primaryActionForeground} />
             </Pressable>
           </View>
         </View>
@@ -1179,9 +1180,9 @@ function RecommendedCard({ property, colors, onPress }: { property: Property; co
         {/* Save */}
         <Pressable
           onPress={(e) => { e.stopPropagation(); toggleSaved(property.id); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-          style={[rc.saveBtn, { backgroundColor: saved ? '#ef444466' : '#00000044' }]}
+          style={[rc.saveBtn, glassControlStyle(colors, saved ? 'selected' : 'secondary')]}
         >
-          <Feather name="heart" size={12} color={saved ? '#ef4444' : '#ffffff'} />
+          <Feather name="heart" size={12} color={saved ? colors.selectionForeground : colors.foreground} />
         </Pressable>
 
         {/* AI match chip */}
@@ -1297,12 +1298,12 @@ function LocationSheet({ visible, selected, onSelect, onClose, colors, insets, m
               const isMapRow = area.value === '__map__';
               const isSelected = isMapRow ? mapOpen : selected === area.value;
               return (
-                <Pressable key={area.value} onPress={() => { if (isMapRow) { setMapOpen((o) => !o); } else { onSelect(area.value); onClose(); } }} style={({ pressed }) => [ls.row, { borderColor: colors.border, backgroundColor: isSelected ? colors.action + '0f' : 'transparent', opacity: pressed ? 0.72 : 1 }]} accessibilityRole="button" accessibilityLabel={isMapRow ? 'Select a location on the map' : area.label} testID={isMapRow ? 'home-select-on-map' : undefined}>
+                <Pressable key={area.value} onPress={() => { if (isMapRow) { setMapOpen((o) => !o); } else { onSelect(area.value); onClose(); } }} style={({ pressed }) => [ls.row, glassControlStyle(colors, isSelected ? 'selected' : 'secondary'), { opacity: pressed ? 0.72 : 1 }]} accessibilityRole="button" accessibilityLabel={isMapRow ? 'Select a location on the map' : area.label} testID={isMapRow ? 'home-select-on-map' : undefined}>
                   <View style={[ls.rowIcon, { backgroundColor: isSelected ? colors.action + '18' : colors.secondary }]}>
-                    <Feather name={area.icon} size={15} color={isSelected ? colors.action : colors.mutedForeground} />
+                    <Feather name={area.icon} size={15} color={isSelected ? colors.selectionForeground : colors.mutedForeground} />
                   </View>
-                  <Text style={[ls.rowLabel, { color: isSelected ? colors.action : colors.foreground }]}>{area.label}</Text>
-                  {isSelected && !isMapRow && <Feather name="check" size={15} color={colors.action} />}
+                  <Text style={[ls.rowLabel, { color: isSelected ? colors.selectionForeground : colors.foreground }]}>{area.label}</Text>
+                  {isSelected && !isMapRow && <Feather name="check" size={15} color={colors.selectionForeground} />}
                   {isMapRow && <Feather name={mapOpen ? 'chevron-up' : 'chevron-down'} size={15} color={colors.action} />}
                 </Pressable>
               );
@@ -1395,7 +1396,7 @@ function PlotCalculator({ colors }: { colors: Colors }) {
   return (
     <View style={[cc.wrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
       {/* Header toggle */}
-      <Pressable onPress={toggleOpen} style={({ pressed }) => [cc.header, { opacity: pressed ? 0.8 : 1 }]}>
+      <Pressable onPress={toggleOpen} style={({ pressed }) => [cc.header, glassControlStyle(colors, 'secondary'), { opacity: pressed ? 0.8 : 1 }]}>
         <View style={[cc.headerIcon, { backgroundColor: colors.action + '18' }]}>
           <Feather name="grid" size={16} color={colors.action} />
         </View>
@@ -1417,7 +1418,7 @@ function PlotCalculator({ colors }: { colors: Colors }) {
               <View style={[cc.seg, { backgroundColor: colors.secondary }]}>
                 {([3, 4, 5, 6, 7] as SharedCalcCorners[]).map(n => (
                   <Pressable key={n} onPress={() => switchCorners(n)}
-                    style={[cc.segItem, n === corners && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder }]}>
+                style={[cc.segItem, glassControlStyle(colors, n === corners ? 'selected' : 'secondary')]}>
                     <Text style={[cc.segText, { color: n === corners ? colors.selectionForeground : colors.mutedForeground }]}>{n}</Text>
                   </Pressable>
                 ))}
@@ -1428,7 +1429,7 @@ function PlotCalculator({ colors }: { colors: Colors }) {
               <View style={[cc.seg, { backgroundColor: colors.secondary }]}>
                 {(['ft', 'in', 'm'] as SharedCalcUnit[]).map(u => (
                   <Pressable key={u} onPress={() => { setUnit(u); setResult(null); }}
-                    style={[cc.segItem, u === unit && { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder }]}>
+                style={[cc.segItem, glassControlStyle(colors, u === unit ? 'selected' : 'secondary')]}>
                     <Text style={[cc.segText, { color: u === unit ? colors.selectionForeground : colors.mutedForeground }]}>
                       {u === 'ft' ? 'Feet' : u === 'in' ? 'Inches' : 'Meters'}
                     </Text>
@@ -1489,7 +1490,7 @@ function PlotCalculator({ colors }: { colors: Colors }) {
 
           {/* Reset */}
           <Pressable onPress={reset}
-            style={({ pressed }) => [cc.resetBtn, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.72 : 1 }]}>
+            style={({ pressed }) => [cc.resetBtn, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.72 : 1 }]}>
             <Feather name="refresh-ccw" size={13} color={colors.mutedForeground} />
             <Text style={[cc.resetText, { color: colors.mutedForeground }]}>Clear all fields</Text>
           </Pressable>
@@ -1930,6 +1931,7 @@ export default function HomeScreen() {
           <Pressable
             onPress={() => setDrawerOpen(true)}
             accessibilityRole="button" accessibilityLabel="Open navigation menu" testID="open-navigation-menu"
+            style={glassControlStyle(colors, 'secondary')}
           >
             <View style={[s.headerIcon, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Feather name="menu" size={21} color={colors.action} />
@@ -1955,10 +1957,7 @@ export default function HomeScreen() {
               }}
               style={({ pressed }) => [
                 s.switchItem,
-                {
-                  backgroundColor: transaction === item ? colors.teal : 'transparent',
-                  opacity: pressed ? 0.72 : 1,
-                },
+                 { ...glassControlStyle(colors, transaction === item ? 'selected' : 'secondary'), opacity: pressed ? 0.72 : 1 },
               ]}
             >
               <Text
@@ -1978,6 +1977,7 @@ export default function HomeScreen() {
             onPress={() => router.push({ pathname: '/explore', params: { type: transaction, search: queryRef.current } })}
             accessibilityRole="button"
             accessibilityLabel={`Search ${transaction === 'Buy' ? 'properties to buy' : 'properties to rent'}`}
+            style={glassControlStyle(colors, 'secondary')}
           >
             <View style={[s.searchIconWrap, { backgroundColor: colors.action + '18' }]}>
               <Feather name="search" size={16} color={colors.action} />
@@ -1995,7 +1995,7 @@ export default function HomeScreen() {
           />
           <Pressable
             onPress={() => setLocationOpen(true)}
-            style={[s.locationChip, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+            style={[s.locationChip, glassControlStyle(colors, 'secondary')]}
             accessibilityRole="button"
             accessibilityLabel={`Change location, currently ${selectedLocation}`}
           >
@@ -2075,7 +2075,7 @@ export default function HomeScreen() {
               <Text style={[s.sectionTitle, { color: colors.foreground }]}>{homeSections.recommendedTitle || 'Recommended for you'}</Text>
             </View>
             <Pressable onPress={() => router.push({ pathname: '/explore', params: { type: transaction } })} hitSlop={10}>
-              <View style={[s.viewAllBtn, { backgroundColor: colors.action + '14', borderColor: colors.action + '33' }]}>
+              <View style={[s.viewAllBtn, glassControlStyle(colors, 'secondary')]}>
                 <Text style={[s.viewAllText, { color: colors.action }]}>View all</Text>
                 <Feather name="arrow-right" size={11} color={colors.action} />
               </View>
@@ -2130,7 +2130,7 @@ export default function HomeScreen() {
           {/* Section header with dual tabs */}
           <View style={[s.acHeader, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {/* Agricultural */}
-            <Pressable onPress={() => router.push({ pathname: '/explore', params: { propertyType: 'Agriculture Land' } })} style={[s.acTab, { borderRightColor: colors.border }]}>
+            <Pressable onPress={() => router.push({ pathname: '/explore', params: { propertyType: 'Agriculture Land' } })} style={[s.acTab, glassControlStyle(colors, 'secondary'), { borderRightColor: colors.border }]}>
                 <View style={[s.acTabIcon, { backgroundColor: colors.tealSoft }]}>
                   <Feather name="sun" size={16} color={colors.teal} />
               </View>
@@ -2141,7 +2141,7 @@ export default function HomeScreen() {
                 <Feather name="arrow-up-right" size={14} color={colors.teal} style={{ marginLeft: 'auto' }} />
             </Pressable>
             {/* Commercial */}
-            <Pressable onPress={() => router.push({ pathname: '/explore', params: { propertyType: 'Commercial' } })} style={s.acTab}>
+            <Pressable onPress={() => router.push({ pathname: '/explore', params: { propertyType: 'Commercial' } })} style={[s.acTab, glassControlStyle(colors, 'secondary')]}>
               <View style={[s.acTabIcon, { backgroundColor: colors.action + '18' }]}>
                 <Feather name="briefcase" size={16} color={colors.action} />
               </View>
@@ -2173,7 +2173,7 @@ export default function HomeScreen() {
             <Text style={[s.agentTitle, { color: colors.foreground }]}>{homeSections.agentsTitle || 'Verified Agents'}</Text>
           </View>
           <Pressable onPress={() => router.push('/agent/find' as any)}
-            style={({ pressed }) => [s.seeAllPill, { backgroundColor: colors.secondary, borderColor: colors.border, opacity: pressed ? 0.8 : 1 }]}>
+            style={({ pressed }) => [s.seeAllPill, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.8 : 1 }]}>
             <Text style={[s.seeAllText, { color: colors.action }]}>See All</Text>
             <Feather name="arrow-right" size={12} color={colors.action} />
           </Pressable>
@@ -2197,7 +2197,7 @@ export default function HomeScreen() {
             <Text style={{ color: colors.mutedForeground, fontSize: 14, textAlign: 'center' }}>
               Agents could not be loaded right now.
             </Text>
-            <Pressable onPress={() => router.push('/agent/find' as any)} style={{ paddingTop: 10 }}>
+            <Pressable onPress={() => router.push('/agent/find' as any)} style={[{ padding: 8 }, glassControlStyle(colors, 'secondary')]}>
               <Text style={{ color: colors.action, fontSize: 13 }}>Open Find Agents</Text>
             </Pressable>
           </View>
@@ -2218,7 +2218,7 @@ export default function HomeScreen() {
             <Text style={[s.agentTitle, { color: colors.foreground }]}>{homeSections.toolsTitle || 'Explore Tools'}</Text>
           </View>
           <Pressable onPress={() => router.push('/tools' as any)}
-            style={({ pressed }) => [s.seeAllPill, { backgroundColor: colors.secondary, borderColor: colors.border, opacity: pressed ? 0.8 : 1 }]}>
+            style={({ pressed }) => [s.seeAllPill, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.8 : 1 }]}>
             <Text style={[s.seeAllText, { color: colors.action }]}>Open All</Text>
             <Feather name="arrow-right" size={12} color={colors.action} />
           </Pressable>
@@ -2238,7 +2238,7 @@ export default function HomeScreen() {
                   ? router.push('/(tabs)/calculator' as any)
                   : router.push({ pathname: '/tools', params: { tool: tool.toolKey } } as any)
               }
-              style={({ pressed }) => [s.toolTile, { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.85 : 1 }]}>
+              style={({ pressed }) => [s.toolTile, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.85 : 1 }]}>
               <View style={[s.toolTileIcon, { backgroundColor: colors.action + '14' }]}>
                 <Feather name={tool.icon} size={18} color={colors.action} />
               </View>
@@ -2262,12 +2262,12 @@ export default function HomeScreen() {
           <Text style={[s.ctaTitle, { color: colors.foreground }]}>{ctaContent.title}</Text>
           <Text style={[s.ctaDesc, { color: colors.mutedForeground }]}>{ctaContent.desc}</Text>
           <View style={s.ctaBtns}>
-            <Pressable onPress={() => router.push(ctaContent.btn1Route as any)} style={({ pressed }) => [s.ctaBtn1, { backgroundColor: colors.primaryAction, opacity: pressed ? 0.82 : 1 }]}>
+            <Pressable onPress={() => router.push(ctaContent.btn1Route as any)} style={({ pressed }) => [s.ctaBtn1, { ...glassControlStyle(colors, 'gold'), opacity: pressed ? 0.82 : 1 }]}>
               <Text style={[s.ctaBtn1Text, { color: colors.primaryActionForeground }]}>{ctaContent.btn1}</Text>
               <Feather name="arrow-up-right" size={15} color={colors.primaryActionForeground} />
             </Pressable>
             {ctaContent.btn2Route !== '/(auth)/login' && (
-              <Pressable onPress={() => router.push(ctaContent.btn2Route as any)} style={({ pressed }) => [s.ctaBtn2, { borderColor: colors.border, backgroundColor: colors.secondary, opacity: pressed ? 0.82 : 1 }]}>
+              <Pressable onPress={() => router.push(ctaContent.btn2Route as any)} style={({ pressed }) => [s.ctaBtn2, { ...glassControlStyle(colors, 'secondary'), opacity: pressed ? 0.82 : 1 }]}>
                 <Text style={[s.ctaBtn2Text, { color: colors.foreground }]}>{ctaContent.btn2}</Text>
               </Pressable>
             )}

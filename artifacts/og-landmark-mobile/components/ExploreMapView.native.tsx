@@ -209,6 +209,7 @@ export function ExploreMapView({
             border: colors?.mapGlassPanelBorder ?? 'rgba(255, 255, 255, 0.94)',
             foreground: colors?.foreground ?? '#0B1F3A',
             mutedForeground: colors?.mutedForeground ?? '#587089',
+            actionForeground: colors?.actionForeground ?? '#FFFFFF',
           }}
         />
       </View>

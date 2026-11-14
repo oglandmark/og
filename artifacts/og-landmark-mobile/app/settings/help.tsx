@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { getMobileSettings } from '@/lib/api';
 
@@ -96,7 +97,7 @@ export default function HelpScreen() {
         <View style={styles.header}>
           <Pressable
             onPress={() => router.back()}
-            style={[styles.backBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+            style={[styles.backBtn, glassControlStyle(colors, 'secondary')]}
             hitSlop={8}
           >
             <Feather name="arrow-left" size={18} color={colors.foreground} />
@@ -131,7 +132,7 @@ export default function HelpScreen() {
                 onPress={c.onPress}
                 style={({ pressed }) => [
                   styles.contactCard,
-                  { backgroundColor: c.bg, borderColor: c.color + '33', opacity: pressed ? 0.85 : 1 },
+                  { ...glassControlStyle(colors, 'secondary'), backgroundColor: c.bg, borderColor: c.color + '33', opacity: pressed ? 0.85 : 1 },
                 ]}
               >
                 <View style={[styles.contactIcon, { backgroundColor: c.color + '22' }]}>
@@ -159,10 +160,10 @@ export default function HelpScreen() {
                 {i > 0 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
                 <Pressable
                   onPress={() => setOpenFaq(isOpen ? null : i)}
-                  style={styles.faqRow}
+                  style={[styles.faqRow, glassControlStyle(colors, isOpen ? 'selected' : 'secondary')]}
                 >
-                  <View style={[styles.faqNumBadge, { backgroundColor: isOpen ? colors.action : colors.secondary }]}>
-                    <Text style={[styles.faqNum, { color: isOpen ? colors.actionForeground : colors.mutedForeground }]}>
+                  <View style={[styles.faqNumBadge, { backgroundColor: isOpen ? colors.selectionBackground : colors.secondary }]}>
+                    <Text style={[styles.faqNum, { color: isOpen ? colors.selectionForeground : colors.mutedForeground }]}>
                       {i + 1}
                     </Text>
                   </View>

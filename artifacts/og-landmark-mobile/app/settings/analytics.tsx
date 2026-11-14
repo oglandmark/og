@@ -8,6 +8,7 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { glassControlStyle } from '@/components/glassControls';
 import { useAuth } from '@/context/AuthContext';
 import { AnimatedReveal } from '@/components/AnimatedReveal';
 import { getLeads, Lead } from '@/lib/leadsStore';
@@ -168,7 +169,7 @@ export default function AnalyticsScreen() {
       <AnimatedReveal>
         <View style={st.header}>
           <Pressable onPress={() => router.back()}
-            style={[st.backBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]} hitSlop={8}>
+            style={[st.backBtn, glassControlStyle(colors, 'secondary')]} hitSlop={8}>
             <Feather name="arrow-left" size={18} color={colors.foreground} />
           </Pressable>
           <View style={{ flex: 1 }}>
@@ -183,7 +184,7 @@ export default function AnalyticsScreen() {
         <View style={[st.periodRow, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           {(['7d', '30d', '90d', '6m'] as Period[]).map((p) => (
             <Pressable key={p} onPress={() => setPeriod(p)}
-              style={[st.periodBtn, period === p && { backgroundColor: colors.action }]}>
+              style={[st.periodBtn, glassControlStyle(colors, period === p ? 'selected' : 'secondary')]}>
               <Text style={[st.periodBtnText, { color: period === p ? colors.actionForeground : colors.mutedForeground }]}>
                 {PERIOD_LABELS[p]}
               </Text>

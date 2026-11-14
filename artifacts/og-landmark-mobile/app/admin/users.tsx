@@ -13,6 +13,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import {
@@ -211,10 +212,7 @@ export default function AdminUsers() {
               onPress={() => handleAgentCoverAccess(item)}
               style={[
                 s.coverAccessButton,
-                {
-                  backgroundColor: item.agentCoverUploadEnabled === true ? colors.action + '18' : colors.secondary,
-                  borderColor: item.agentCoverUploadEnabled === true ? colors.action + '55' : colors.border,
-                },
+                glassControlStyle(colors, item.agentCoverUploadEnabled === true ? 'selected' : 'secondary'),
               ]}
             >
               <Feather
@@ -235,7 +233,7 @@ export default function AdminUsers() {
         </View>
         <View style={s.actions}>
           <Pressable
-            style={[s.actBtn, { borderColor: colors.border, backgroundColor: colors.secondary }]}
+            style={[s.actBtn, glassControlStyle(colors, 'secondary')]}
             onPress={() => openEditor(item)}
             hitSlop={6}
             accessibilityLabel={`Edit ${item.name}`}
@@ -243,11 +241,11 @@ export default function AdminUsers() {
             <Feather name="edit-2" size={13} color={GOLD} />
           </Pressable>
           <Pressable
-            style={[s.actBtn, { borderColor: '#dc262630', backgroundColor: '#dc262610' }]}
+            style={[s.actBtn, glassControlStyle(colors, 'destructive')]}
             onPress={() => handleDelete(item)}
             hitSlop={6}
           >
-            <Feather name="trash-2" size={13} color="#dc2626" />
+            <Feather name="trash-2" size={13} color={colors.destructiveForeground} />
           </Pressable>
         </View>
       </View>
@@ -257,11 +255,11 @@ export default function AdminUsers() {
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
       <View style={[s.header, { backgroundColor: NAVY, paddingTop: top + (Platform.OS === 'web' ? 67 : 0) + 14 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
+        <Pressable onPress={() => router.back()} hitSlop={8} style={[s.headerIcon, glassControlStyle(colors, 'secondary')]}>
           <Feather name="arrow-left" size={20} color="#8a9ab5" />
         </Pressable>
         <Text style={s.headerTitle}>{roleFilter === 'agents' ? 'Agents' : 'Users'} ({filtered.length})</Text>
-        <Pressable onPress={() => openEditor()} accessibilityRole="button" accessibilityLabel="Add user" style={[s.addButton, { backgroundColor: colors.action }]}>
+        <Pressable onPress={() => openEditor()} accessibilityRole="button" accessibilityLabel="Add user" style={[s.addButton, glassControlStyle(colors, 'action')]}>
           <Feather name="user-plus" size={17} color={colors.actionForeground} />
           <Text style={{ color: colors.actionForeground, fontWeight: '700', fontSize: 12 }}>Add</Text>
         </Pressable>
@@ -282,7 +280,7 @@ export default function AdminUsers() {
               onPress={() => setRoleFilter(option.key)}
               style={[
                 s.filterButton,
-                { backgroundColor: selected ? colors.action : colors.secondary, borderColor: selected ? colors.action : colors.border },
+                 glassControlStyle(colors, selected ? 'selected' : 'secondary'),
               ]}
             >
               <Text style={[s.filterText, { color: selected ? colors.actionForeground : colors.mutedForeground }]}>
@@ -304,7 +302,7 @@ export default function AdminUsers() {
           onChangeText={setQuery}
         />
         {query.length > 0 && (
-          <Pressable onPress={() => setQuery('')} hitSlop={8}>
+          <Pressable onPress={() => setQuery('')} hitSlop={8} style={[s.headerIcon, glassControlStyle(colors, 'secondary')]}>
             <Feather name="x" size={15} color={colors.mutedForeground} />
           </Pressable>
         )}
@@ -315,7 +313,7 @@ export default function AdminUsers() {
       ) : error ? (
         <View style={s.errorCard}>
           <Text style={[s.errorText, { color: colors.foreground }]}>{error}</Text>
-          <Pressable onPress={() => { void load(); }} style={[s.retryButton, { backgroundColor: colors.action }]}>
+          <Pressable onPress={() => { void load(); }} style={[s.retryButton, glassControlStyle(colors, 'action')]}>
             <Text style={{ color: colors.actionForeground, fontFamily: 'Inter_600SemiBold', fontSize: 12 }}>Retry</Text>
           </Pressable>
         </View>
@@ -342,7 +340,7 @@ export default function AdminUsers() {
                 <Text style={[s.headerTitle, { color: colors.foreground }]}>{editingUser ? 'Edit account' : 'Create account'}</Text>
                 <Text style={{ color: colors.mutedForeground, fontSize: 12, marginTop: 4 }}>Manage account access and details</Text>
               </View>
-              <Pressable onPress={() => setEditorOpen(false)} disabled={savingUser} accessibilityLabel="Close editor">
+              <Pressable onPress={() => setEditorOpen(false)} disabled={savingUser} accessibilityLabel="Close editor" style={[s.headerIcon, glassControlStyle(colors, 'secondary')]}>
                 <Feather name="x" size={22} color={colors.mutedForeground} />
               </Pressable>
             </View>
@@ -372,15 +370,15 @@ export default function AdminUsers() {
               ))}
               <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>ROLE</Text>
               <View style={s.optionRow}>
-                {ROLES.map((role) => <Pressable key={role} onPress={() => setForm((current) => ({ ...current, role }))} style={[s.option, { borderColor: form.role === role ? colors.action : colors.border, backgroundColor: form.role === role ? colors.action : colors.card }]}><Text style={{ color: form.role === role ? colors.actionForeground : colors.foreground, fontWeight: '700', fontSize: 12 }}>{role}</Text></Pressable>)}
+                {ROLES.map((role) => <Pressable key={role} onPress={() => setForm((current) => ({ ...current, role }))} style={[s.option, glassControlStyle(colors, form.role === role ? 'selected' : 'secondary')]}><Text style={{ color: form.role === role ? colors.selectionForeground : colors.foreground, fontWeight: '700', fontSize: 12 }}>{role}</Text></Pressable>)}
               </View>
               {editingUser ? <>
                 <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>ACCOUNT STATUS</Text>
                 <View style={s.optionRow}>
-                  {(['Active', 'Suspended'] as const).map((status) => <Pressable key={status} onPress={() => setForm((current) => ({ ...current, status }))} style={[s.option, { borderColor: form.status === status ? colors.action : colors.border, backgroundColor: form.status === status ? colors.action : colors.card }]}><Text style={{ color: form.status === status ? colors.actionForeground : colors.foreground, fontWeight: '700', fontSize: 12 }}>{status}</Text></Pressable>)}
+                  {(['Active', 'Suspended'] as const).map((status) => <Pressable key={status} onPress={() => setForm((current) => ({ ...current, status }))} style={[s.option, glassControlStyle(colors, status === 'Suspended' && form.status === status ? 'destructive' : form.status === status ? 'selected' : 'secondary')]}><Text style={{ color: status === 'Suspended' && form.status === status ? colors.destructiveForeground : form.status === status ? colors.selectionForeground : colors.foreground, fontWeight: '700', fontSize: 12 }}>{status}</Text></Pressable>)}
                 </View>
               </> : null}
-              <Pressable onPress={() => void saveUser()} disabled={savingUser} style={[s.saveButton, { backgroundColor: colors.action, opacity: savingUser ? 0.6 : 1 }]}>
+              <Pressable onPress={() => void saveUser()} disabled={savingUser} style={[s.saveButton, { ...glassControlStyle(colors, 'action'), opacity: savingUser ? 0.6 : 1 }]}>
                 {savingUser ? <ActivityIndicator color={colors.actionForeground} /> : <Text style={{ color: colors.actionForeground, fontWeight: '800' }}>{editingUser ? 'Save account' : 'Create account'}</Text>}
               </Pressable>
             </KeyboardAwareScrollViewCompat>
@@ -395,6 +393,7 @@ const s = StyleSheet.create({
   root:        { flex: 1 },
   header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16 },
   headerTitle: { fontFamily: 'Inter_700Bold', fontSize: 17, color: '#ffffff' },
+  headerIcon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   searchWrap:  { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
   filterRow:   { flexDirection: 'row', gap: 8, paddingHorizontal: 14, paddingVertical: 9, borderBottomWidth: 1 },
   filterButton:{ minHeight: 34, paddingHorizontal: 13, borderWidth: 1, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },

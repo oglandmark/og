@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { useColors } from '@/hooks/useColors';
 import { BrandedRefreshControl } from '@/components/BrandedRefreshControl';
+import { glassControlStyle } from '@/components/glassControls';
 import brandColors from '@/constants/colors';
 import {
   getAdminStats, AdminStats,
@@ -125,7 +126,7 @@ export default function AdminDashboard() {
           <Text style={s.greeting}>Admin Panel</Text>
           <Text style={s.adminName}>{user?.name ?? 'Administrator'}</Text>
         </View>
-        <Pressable onPress={handleLogout} style={s.logoutBtn} hitSlop={8} accessibilityRole="button" accessibilityLabel="Log out of admin panel">
+        <Pressable onPress={handleLogout} style={[s.logoutBtn, glassControlStyle(colors, 'secondary')]} hitSlop={8} accessibilityRole="button" accessibilityLabel="Log out of admin panel">
           <Feather name="log-out" size={18} color="#8a9ab5" />
         </Pressable>
       </View>
@@ -171,7 +172,7 @@ export default function AdminDashboard() {
               {navItems.map((n) => (
                 <Pressable
                   key={n.label}
-                  style={({ pressed }) => [s.navCard, { backgroundColor: colors.action, opacity: pressed ? 0.85 : 1 }]}
+                  style={({ pressed }) => [s.navCard, { ...glassControlStyle(colors, 'action'), opacity: pressed ? 0.85 : 1 }]}
                   onPress={() => router.push(n.route as any)}
                 >
                   <Feather name={n.icon} size={22} color={colors.gold} />
@@ -198,7 +199,7 @@ export default function AdminDashboard() {
                     </View>
                     <View style={s.pendingActions}>
                       <Pressable
-                        style={[s.approveBtn, { backgroundColor: colors.success }]}
+                        style={[s.approveBtn, glassControlStyle(colors, 'success')]}
                         onPress={() => handleApprove(p)}
                         accessibilityRole="button"
                         accessibilityLabel={`Approve ${p.title}`}
@@ -206,7 +207,7 @@ export default function AdminDashboard() {
                         <Feather name="check" size={14} color="#fff" />
                       </Pressable>
                       <Pressable
-                        style={[s.approveBtn, { backgroundColor: colors.destructive }]}
+                        style={[s.approveBtn, glassControlStyle(colors, 'destructive')]}
                         onPress={() => beginReject(p)}
                         accessibilityRole="button"
                         accessibilityLabel={`Reject ${p.title}`}
@@ -217,7 +218,7 @@ export default function AdminDashboard() {
                   </View>
                 ))}
                 <Pressable
-                  style={[s.viewAll, { borderColor: colors.border }]}
+                  style={[s.viewAll, glassControlStyle(colors, 'secondary')]}
                   onPress={() => router.push('/admin/properties' as any)}
                 >
                   <Text style={[s.viewAllText, { color: colors.primary }]}>View All Properties</Text>
@@ -254,14 +255,14 @@ export default function AdminDashboard() {
               <Pressable
                 onPress={() => setRejectingProperty(null)}
                 disabled={rejecting}
-                style={[s.modalCancel, { borderColor: colors.border, opacity: rejecting ? 0.5 : 1 }]}
+                 style={[s.modalCancel, { ...glassControlStyle(colors, 'secondary'), opacity: rejecting ? 0.5 : 1 }]}
               >
                 <Text style={[s.modalCancelText, { color: colors.foreground }]}>Cancel</Text>
               </Pressable>
               <Pressable
                 onPress={submitReject}
                 disabled={rejecting}
-                style={[s.modalReject, { opacity: rejecting ? 0.6 : 1 }]}
+                 style={[s.modalReject, { ...glassControlStyle(colors, 'destructive'), opacity: rejecting ? 0.6 : 1 }]}
               >
                 {rejecting ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="x" size={15} color="#fff" />}
                 <Text style={s.modalRejectText}>{rejecting ? 'Rejecting…' : 'Reject Listing'}</Text>

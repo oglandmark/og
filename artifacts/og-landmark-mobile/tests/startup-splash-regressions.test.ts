@@ -80,6 +80,12 @@ test('startup goes directly to the complete animation without a pre-animation lo
   assert.match(colorTokens, /splashBackground: '#040C1A'/);
 });
 
+test('Expo Router uses the Home tab as the only root route', () => {
+  assert.equal(existsSync(new URL('../app/index.tsx', import.meta.url)), false);
+  assert.ok(existsSync(new URL('../app/(tabs)/index.tsx', import.meta.url)));
+  assert.match(layout, /'\(tabs\)'/);
+});
+
 test('startup splash uses the full viewport and hides Android system bars temporarily', () => {
   const preparedHtml = prepareSplashHtml(splashReference);
   assert.match(splashReference, /fonts\.googleapis\.com/);

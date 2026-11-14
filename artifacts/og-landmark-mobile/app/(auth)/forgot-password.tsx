@@ -194,7 +194,7 @@ export default function ForgotPasswordScreen() {
         {/* ── Header ── */}
         <View style={st.headerRow}>
           <Pressable onPress={() => (step > 1 ? setStep((step - 1) as 1 | 2 | 3) : router.back())}
-            hitSlop={12} style={[st.backBtn, glassControlStyle(colors, 'secondary')]}>
+            hitSlop={12} style={st.backBtn}>
             <Feather name="arrow-left" size={18} color={colors.foreground} />
           </Pressable>
           <View style={{ flex: 1, marginLeft: 14 }}>
@@ -244,7 +244,7 @@ export default function ForgotPasswordScreen() {
                   </>}
             </AnimatedPressable>
 
-            <Pressable onPress={() => router.back()} style={[st.linkRow, glassControlStyle(colors, 'secondary')]}>
+            <Pressable onPress={() => router.back()} style={st.linkRow}>
               <Text style={[st.link, { color: colors.action }]}>← Back to Login</Text>
             </Pressable>
           </AnimatedReveal>
@@ -304,14 +304,14 @@ export default function ForgotPasswordScreen() {
               {/* Resend */}
               <View style={st.resendRow}>
                 <Text style={[st.resendLabel, { color: colors.mutedForeground }]}>Didn't receive it?</Text>
-              <Pressable onPress={resendCode} disabled={resendSecs > 0 || loading} hitSlop={8} style={glassControlStyle(colors, 'secondary')}>
+              <Pressable onPress={resendCode} disabled={resendSecs > 0 || loading} hitSlop={8}>
                   <Text style={[st.link, { color: resendSecs > 0 ? colors.mutedForeground : colors.action }]}>
                     {resendSecs > 0 ? ` Resend in ${resendSecs}s` : ' Resend Code'}
                   </Text>
                 </Pressable>
               </View>
 
-              <Pressable onPress={() => { setStep(1); setCode(['','','','','','']); setError(''); }} style={[st.linkRow, glassControlStyle(colors, 'secondary')]} hitSlop={8}>
+              <Pressable onPress={() => { setStep(1); setCode(['','','','','','']); setError(''); }} style={st.linkRow} hitSlop={8}>
                 <Text style={[st.link, { color: colors.action }]}>← Change Email</Text>
               </Pressable>
             </AnimatedReveal>
@@ -343,7 +343,7 @@ export default function ForgotPasswordScreen() {
                 placeholderTextColor={colors.mutedForeground}
                 style={[st.input, { color: colors.foreground }]}
               />
-              <Pressable onPress={() => setShowPass(!showPass)} style={[st.eyeBtn, glassControlStyle(colors, 'secondary')]} hitSlop={8}>
+              <Pressable onPress={() => setShowPass(!showPass)} style={st.eyeBtn} hitSlop={8}>
                 <Feather name={showPass ? 'eye-off' : 'eye'} size={16} color={colors.mutedForeground} />
               </Pressable>
             </View>
@@ -376,7 +376,7 @@ export default function ForgotPasswordScreen() {
                 placeholderTextColor={colors.mutedForeground}
                 style={[st.input, { color: colors.foreground }]}
               />
-              <Pressable onPress={() => setShowConfirm(!showConfirm)} style={[st.eyeBtn, glassControlStyle(colors, 'secondary')]} hitSlop={8}>
+              <Pressable onPress={() => setShowConfirm(!showConfirm)} style={st.eyeBtn} hitSlop={8}>
                 <Feather name={showConfirm ? 'eye-off' : 'eye'} size={16} color={colors.mutedForeground} />
               </Pressable>
               {confirmPass.length > 0 && (
@@ -443,7 +443,7 @@ function GlassInput({ value, onChangeText, placeholder, keyboardType, autoCapita
 const st = StyleSheet.create({
   screen:        { flex: 1 },
   headerRow:     { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
-  backBtn:       { width: 40, height: 40, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  backBtn:       { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   stepLabel:     { fontFamily: 'Inter_400Regular', fontSize: 11, marginBottom: 6 },
   progressTrack: { height: 3, borderRadius: 2, overflow: 'hidden' },
   progressFill:  { height: 3, borderRadius: 2 },

@@ -102,11 +102,6 @@ export function AuthScreenFrame({
               hitSlop={8}
               style={({ pressed }) => [
                 styles.backArrowButton,
-                glassControlStyle(colors, 'secondary'),
-                {
-                  backgroundColor: colors.surfaceTint,
-                  borderColor: colors.authBorder,
-                },
                 pressed && { opacity: 0.72 },
               ]}
             >
@@ -269,13 +264,6 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderRadius: 18,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 2,
   },
   house: { position: 'absolute', top: 78 },
   keyboardFrame: { flex: 1 },

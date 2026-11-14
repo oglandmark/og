@@ -216,7 +216,7 @@ export default function SignUpScreen() {
           <AuthPrimaryButton label="Verify email" accessibilityLabel="Verify email" loading={loading} onPress={() => { void handleVerifyEmail(); }} variant="navy" />
           <View style={styles.otpResendRow}>
             <Text style={[styles.footerText, { color: colors.authMuted }]}>Didn’t receive a code?</Text>
-              <Pressable onPress={() => { void handleResendEmail(); }} disabled={loading || resending} accessibilityRole="button" style={glassControlStyle(colors, 'secondary')}>
+              <Pressable onPress={() => { void handleResendEmail(); }} disabled={loading || resending} accessibilityRole="button">
               {resending ? <ActivityIndicator size="small" color={colors.teal} /> : <Text style={[styles.footerLink, { color: colors.teal }]}>Resend code</Text>}
             </Pressable>
           </View>
@@ -255,7 +255,7 @@ export default function SignUpScreen() {
             <View style={[styles.inputField, focusedField === 'password' && styles.inputFieldFocused, { backgroundColor: focusedField === 'password' ? colors.background : colors.authFieldSurface, borderColor: focusedField === 'password' ? colors.splashGold : colors.authBorder, shadowColor: colors.splashGold }]}>
               <Feather name="lock" size={19} color={focusedField === 'password' ? colors.authGoldText : colors.authMuted} />
               <TextInput testID="signup-password-input" value={password} onChangeText={(value) => { setFocusedField('password'); setPassword(value); setError(''); }} onFocus={() => setFocusedField('password')} onBlur={() => setFocusedField((current) => current === 'password' ? null : current)} secureTextEntry={!showPassword} autoComplete="new-password" placeholder={tr('authCreatePasswordPlaceholder')} placeholderTextColor={colors.authMuted} textAlign={rtl} style={[styles.input, { color: colors.foreground }]} />
-              <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'} style={[styles.passwordToggle, glassControlStyle(colors, 'secondary')]}>
+              <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'} style={styles.passwordToggle}>
                 <Feather name={showPassword ? 'eye' : 'eye-off'} size={19} color={colors.authMuted} />
               </Pressable>
             </View>
@@ -284,7 +284,7 @@ export default function SignUpScreen() {
           <AuthSocialButtons disabled={loading} />
           <View style={styles.footerRow}>
             <Text style={[styles.footerText, { color: colors.authMuted }]}>{tr('authAlreadyHaveAccount')}</Text>
-        <Pressable onPress={() => router.push('/(auth)/login')} style={glassControlStyle(colors, 'secondary')} accessibilityRole="button">
+        <Pressable onPress={() => router.push('/(auth)/login')} accessibilityRole="button">
               <Text style={[styles.footerLink, { color: colors.authGoldText }]}>{tr('authSignInButton')}</Text>
             </Pressable>
           </View>

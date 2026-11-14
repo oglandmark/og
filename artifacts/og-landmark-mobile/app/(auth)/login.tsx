@@ -121,13 +121,13 @@ export default function LoginScreen() {
             textAlign={rtl}
             style={[styles.input, { color: colors.foreground }]}
           />
-          <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'} style={[styles.passwordToggle, glassControlStyle(colors, 'secondary')]}>
+          <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'} style={styles.passwordToggle}>
             <Feather name={showPassword ? 'eye' : 'eye-off'} size={19} color={colors.authMuted} />
           </Pressable>
         </View>
       </View>
 
-      <Pressable onPress={() => router.push('/(auth)/forgot-password')} style={[styles.forgotLink, glassControlStyle(colors, 'secondary')]} accessibilityRole="button">
+      <Pressable onPress={() => router.push('/(auth)/forgot-password')} style={styles.forgotLink} accessibilityRole="button">
         <Text style={[styles.forgotText, { color: colors.authGoldText }]}>{tr('forgotPassword')}</Text>
       </Pressable>
 
@@ -136,7 +136,7 @@ export default function LoginScreen() {
       <AuthSocialButtons disabled={loading} />
       <View style={styles.footerRow}>
         <Text style={[styles.footerText, { color: colors.authMuted }]}>{tr('noAccount')}</Text>
-        <Pressable onPress={() => router.push('/(auth)/signup')} style={glassControlStyle(colors, 'secondary')} accessibilityRole="button">
+        <Pressable onPress={() => router.push('/(auth)/signup')} accessibilityRole="button">
           <Text style={[styles.footerLink, { color: colors.authGoldText }]}>{tr('signUpWithEmail')}</Text>
         </Pressable>
       </View>

@@ -22,7 +22,7 @@ test('iPad support does not unlock Android landscape behavior', () => {
 });
 
 test('Expo build metadata matches the connected owner and existing project', () => {
-  assert.equal(appConfig.owner, 'ogland');
+  assert.equal(appConfig.owner, 'og-landmark');
   assert.equal(appConfig.extra.eas.projectId, 'e1d0d001-f2f1-47d6-ac6a-480298d77e2d');
 });
 

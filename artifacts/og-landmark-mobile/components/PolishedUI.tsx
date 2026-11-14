@@ -12,7 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { LocalizedText as Text } from '@/components/LocalizedText';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { useColors } from '@/hooks/useColors';
-import { glassControlStyle, glassHighlightStyle } from '@/components/glassControls';
+import { glassControlStyle } from '@/components/glassControls';
 
 type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'destructive';
 
@@ -56,7 +56,6 @@ export function Button({
         style,
       ]}
     >
-      <View pointerEvents="none" style={[StyleSheet.absoluteFill, glassHighlightStyle(colors)]} />
       {loading ? (
         <ActivityIndicator size="small" color={palette.color} />
       ) : (

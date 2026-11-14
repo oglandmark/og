@@ -53,7 +53,7 @@ test('mobile primary actions use official gold with navy foreground', () => {
   assert.match(polishedUiSource, /color:\s*colors\.primaryActionForeground/);
 });
 
-test('shared button controls use semantic glass tokens without changing brand action roles', () => {
+test('shared button controls use solid semantic colors without glass effects', () => {
   const glassSource = readFileSync(
     resolve(fileURLToPath(new URL('../components/glassControls.ts', import.meta.url))),
     'utf8',
@@ -62,18 +62,27 @@ test('shared button controls use semantic glass tokens without changing brand ac
     resolve(fileURLToPath(new URL('../components/AuthScreenUI.tsx', import.meta.url))),
     'utf8',
   );
-  assert.match(glassSource, /colors\.goldGlass/);
-  assert.match(glassSource, /colors\.glassOverlay/);
-  assert.match(glassSource, /colors\.actionGlassBorder/);
+  assert.match(glassSource, /primaryAction/);
+  assert.match(glassSource, /colors\.action/);
   assert.match(glassSource, /colors\.selectionBackground/);
-  assert.match(polishedUiSource, /glassHighlightStyle\(colors\)/);
-  assert.match(authSource, /colors\.action,\s*colors\.actionPressed,\s*colors\.actionDeep/);
+  assert.doesNotMatch(glassSource, /shadowOpacity|shadowRadius|elevation/);
+  assert.doesNotMatch(polishedUiSource, /glassHighlightStyle|actionGlassHighlight/);
+  assert.match(authSource, /backgroundColor:\s*isNavy\s*\?\s*colors\.action\s*:\s*colors\.primaryAction/);
   assert.match(authSource, /colors\.primaryAction/);
   assert.match(homeBannerSource, /glassControlStyle\(colors,\s*'gold'\)/);
   assert.match(homeBannerSource, /colors\.primaryActionForeground/);
   for (const source of glassCoverageSources) {
     assert.match(source, /glassControlStyle/);
   }
+});
+
+test('property card Call action uses the branded navy treatment', () => {
+  const propertyCardSource = readFileSync(
+    resolve(fileURLToPath(new URL('../components/PropertyCard.tsx', import.meta.url))),
+    'utf8',
+  );
+  assert.match(propertyCardSource, /ctaStyles\.callBtn[\s\S]*?glassControlStyle\(colors,\s*'action'\)/);
+  assert.match(propertyCardSource, /ctaStyles\.callTxt,\s*\{\s*color:\s*colors\.actionForeground\s*\}/);
 });
 
 test('all mobile UI files with Pressable actions use the shared glass helper', () => {

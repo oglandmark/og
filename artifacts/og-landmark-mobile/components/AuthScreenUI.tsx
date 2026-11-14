@@ -104,19 +104,12 @@ export function AuthScreenFrame({
                 styles.backArrowButton,
                 glassControlStyle(colors, 'secondary'),
                 {
-                  backgroundColor: `${colors.surfaceTint}B8`,
-                  borderColor: `${colors.splashGold}66`,
-                  shadowColor: colors.action,
+                  backgroundColor: colors.surfaceTint,
+                  borderColor: colors.authBorder,
                 },
                 pressed && { opacity: 0.72 },
               ]}
             >
-              <LinearGradient
-                colors={[`${colors.splashWhite}E8`, `${colors.surfaceTint}B8`]}
-                start={{ x: 0.2, y: 0 }}
-                end={{ x: 0.8, y: 1 }}
-                style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}
-              />
               <Feather name={isRTL ? 'arrow-right' : 'arrow-left'} size={18} color={colors.authGoldText} />
             </Pressable>
             <View style={[styles.content, { gap: contentGap }]}>
@@ -144,9 +137,6 @@ export function AuthPrimaryButton({
 }) {
   const colors = useColors();
   const isNavy = variant === 'navy';
-  const buttonGradient = isNavy
-    ? [colors.action, colors.actionPressed, colors.actionDeep] as const
-    : [colors.authGoldHighlight, colors.primaryAction, colors.authGoldShadow] as const;
   const buttonForeground = isNavy ? colors.actionForeground : colors.action;
   return (
     <Pressable
@@ -157,15 +147,11 @@ export function AuthPrimaryButton({
       style={({ pressed }) => [
         styles.primaryButton,
         glassControlStyle(colors, isNavy ? 'action' : 'gold'),
-        { shadowColor: isNavy ? colors.action : colors.primaryAction, borderWidth: 1, borderColor: isNavy ? colors.actionGlassBorder : colors.goldGlassBorder },
+        { borderWidth: 1, borderColor: isNavy ? colors.action : colors.primaryAction },
         pressed && !loading && { opacity: 0.9 },
       ]}
     >
-      <LinearGradient
-        colors={buttonGradient}
-        locations={[0, 0.55, 1]}
-        style={styles.primaryButtonFill}
-      >
+      <View style={[styles.primaryButtonFill, { backgroundColor: isNavy ? colors.action : colors.primaryAction }]}>
         {loading ? (
           <ActivityIndicator color={buttonForeground} />
         ) : (
@@ -174,13 +160,7 @@ export function AuthPrimaryButton({
             <Feather name="arrow-right" size={20} color={buttonForeground} />
           </>
         )}
-      </LinearGradient>
-      <LinearGradient
-        pointerEvents="none"
-        colors={[colors.actionGlassHighlight, 'transparent']}
-        locations={[0, 1]}
-        style={styles.primaryButtonSheen}
-      />
+      </View>
     </Pressable>
   );
 }
@@ -320,14 +300,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginTop: 2,
     marginBottom: 4,
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
-    elevation: 5,
   },
   primaryButtonFill: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  primaryButtonSheen: { position: 'absolute', top: 0, left: 0, right: 0, height: '48%' },
   primaryButtonText: { fontFamily: 'Inter_700Bold', fontSize: 16 },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 2 },
   dividerLine: { flex: 1, height: 1 },

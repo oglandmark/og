@@ -1,6 +1,11 @@
 import type { ViewStyle } from 'react-native';
 
 type GlassColors = object & Partial<Record<
+  | 'primaryAction'
+  | 'gold'
+  | 'secondary'
+  | 'border'
+  | 'action'
   | 'goldGlass'
   | 'goldGlassBorder'
   | 'glassOverlay'
@@ -23,40 +28,22 @@ type GlassColors = object & Partial<Record<
 
 export type GlassControlTone = 'gold' | 'secondary' | 'action' | 'selected' | 'destructive' | 'success' | 'warning';
 
-/** Shared restrained glass surface for interactive controls (not cards or content surfaces). */
+/** Shared solid surface for interactive controls, using the app's semantic brand colors. */
 export function glassControlStyle(
   colors: GlassColors,
   tone: GlassControlTone = 'secondary',
 ): ViewStyle {
   const surface = {
-    gold: { backgroundColor: colors.goldGlass, borderColor: colors.goldGlassBorder, shadowColor: colors.shadow },
-    secondary: { backgroundColor: colors.glassOverlay, borderColor: colors.glassBorder, shadowColor: colors.shadow },
-    action: { backgroundColor: colors.actionGlass, borderColor: colors.actionGlassBorder, shadowColor: colors.shadow },
-    selected: { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder, shadowColor: colors.shadow },
-    destructive: { backgroundColor: colors.destructive, borderColor: colors.destructiveForeground, shadowColor: colors.shadow },
-    success: { backgroundColor: colors.success, borderColor: colors.successForeground, shadowColor: colors.shadow },
-    warning: { backgroundColor: colors.warning, borderColor: colors.warningForeground, shadowColor: colors.shadow },
+    gold: { backgroundColor: colors.primaryAction ?? colors.gold, borderColor: colors.primaryAction ?? colors.gold },
+    secondary: { backgroundColor: colors.secondary, borderColor: colors.border },
+    action: { backgroundColor: colors.action, borderColor: colors.action },
+    selected: { backgroundColor: colors.selectionBackground, borderColor: colors.selectionBorder },
+    destructive: { backgroundColor: colors.destructive, borderColor: colors.destructive },
+    success: { backgroundColor: colors.success, borderColor: colors.success },
+    warning: { backgroundColor: colors.warning, borderColor: colors.warning },
   }[tone];
   return {
     ...surface,
     borderWidth: 1,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: tone === 'secondary' ? 0.08 : 0.16,
-    shadowRadius: 7,
-    elevation: 2,
-  };
-}
-
-/** Thin top sheen used inside button surfaces; keep it pointer-transparent. */
-export function glassHighlightStyle(colors: GlassColors): ViewStyle {
-  return {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '52%',
-    backgroundColor: colors.actionGlassHighlight,
-    borderTopLeftRadius: 14,
-    borderTopRightRadius: 14,
   };
 }

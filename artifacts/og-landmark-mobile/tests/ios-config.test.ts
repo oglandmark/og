@@ -11,14 +11,19 @@ const appConfig = JSON.parse(readFileSync(
 test('iOS keeps the production bundle ID and enables iPad support', () => {
   assert.equal(appConfig.ios.bundleIdentifier, 'com.oglandmark.app');
   assert.equal(appConfig.ios.supportsTablet, true);
-  assert.equal(appConfig.version, '5.1.3');
+  assert.equal(appConfig.version, '5.1.5');
   assert.equal(appConfig.ios.buildNumber, '62');
 });
 
 test('iPad support does not unlock Android landscape behavior', () => {
   assert.equal(appConfig.orientation, 'portrait');
   assert.equal(appConfig.android.package, 'com.oglandmark.app');
-  assert.equal(appConfig.android.versionCode, 63);
+  assert.equal(appConfig.android.versionCode, 65);
+});
+
+test('Expo build metadata matches the connected owner and existing project', () => {
+  assert.equal(appConfig.owner, 'ogland');
+  assert.equal(appConfig.extra.eas.projectId, 'e1d0d001-f2f1-47d6-ac6a-480298d77e2d');
 });
 
 test('iOS-only purpose strings do not add Android image-picker permissions', () => {

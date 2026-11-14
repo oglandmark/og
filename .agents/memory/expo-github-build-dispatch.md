@@ -26,3 +26,9 @@ During longer Android builds, `buildInfo.updatedAt` may stop advancing while Gra
 **Why:** The build metadata stayed unchanged while the Gradle log continued to receive new native compilation steps.
 
 **How to apply:** For an apparently stalled build, compare the latest sanitized log timestamps before retrying or cancelling. Do not expose signed log URLs or raw environment-rich logs.
+
+The connected Expo account owner slug is `ogland`; keep `owner` aligned to that value while preserving the existing `extra.eas.projectId`.
+
+**Why:** The user confirmed `ogland` is the Expo account connected to this project and approved aligning the app config owner.
+
+**How to apply:** Keep the project ID unchanged when correcting the owner slug, and verify project/build history before any future project transfer or ID change.

@@ -23,6 +23,7 @@
 - [Expo preview bundle routing](expo-preview-bundle-resolver.md) — use Expo host for Metro and local property media; avoid routing unrelated APIs to the incomplete local backend.
 - [Expo Go tunnel routing](expo-go-tunnel.md) — use a short tunnel subdomain for physical devices while retaining Replit's Expo-domain host overrides.
 - [Expo preview CLI prompt](expo-preview-cli-prompt.md) — Expo-domain mobile previews use the domain root; test after the splash before diagnosing route reloads.
+- [Expo Router root route](expo-root-route-loop.md) — keep one owner for `/`; group names do not add URL segments, so a separate root redirect can target its own URL.
 - [Mobile preview verification](mobile-preview-verification.md) — splash-only screenshots do not verify app content; inspect the live feed and report visual-check limits.
 - [Native splash provider order](native-splash-provider-order.md) — native-only startup overlays must render inside every context provider they consume; web previews may hide this class of crash.
 - [Color-only native splash](native-splash-color-only.md) — keep the native pre-JS splash logo-free; Android still needs transparent splash drawables for resource linking.

@@ -1,9 +1,8 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 const layout = readFileSync(new URL('../app/_layout.tsx', import.meta.url), 'utf8');
-const rootIndex = readFileSync(new URL('../app/index.tsx', import.meta.url), 'utf8');
 const onboarding = readFileSync(new URL('../app/onboarding.tsx', import.meta.url), 'utf8');
 const storage = readFileSync(new URL('../lib/onboarding.ts', import.meta.url), 'utf8');
 
@@ -38,7 +37,7 @@ test('skip or completion persists onboarding so later launches go to Home', () =
   assert.match(layout, /completed && inOnboarding/);
   assert.match(layout, /router\.replace\('\/\(tabs\)'\)/);
   assert.match(onboarding, /router\.replace\('\/\(tabs\)'\)/);
-  assert.match(rootIndex, /Redirect href="\/\(tabs\)"/);
+  assert.ok(existsSync(new URL('../app/(tabs)/index.tsx', import.meta.url)));
 });
 
 test('onboarding storage reads cannot keep startup splash open indefinitely', () => {

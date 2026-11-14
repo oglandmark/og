@@ -11,9 +11,17 @@ test('signup OTP screen keeps six-digit autofill and existing verification navig
   assert.ok(signup.includes("value.replace(/\\D/g, '').slice(0, 6)"));
   assert.ok(signup.includes('autoComplete="one-time-code"'));
   assert.ok(signup.includes('textContentType="oneTimeCode"'));
-  assert.ok(signup.includes("if (!/^\\d{6}$/.test(verificationCode))"));
-  assert.ok(signup.includes('verifySignupEmail(verificationEmail, verificationCode)'));
+  assert.ok(signup.includes("if (!/^\\d{6}$/.test(codeToVerify))"));
+  assert.ok(signup.includes('verifySignupEmail(verificationEmail, codeToVerify)'));
   assert.ok(signup.includes("router.replace('/(tabs)')"));
+});
+
+test('signup verifies automatically after six digits and prevents duplicate requests', () => {
+  assert.match(signup, /if \(normalizedCode\.length === 6\) void handleVerifyEmail\(normalizedCode\)/);
+  assert.match(signup, /if \(verifyingOtpRef\.current\) return/);
+  assert.match(signup, /verifyingOtpRef\.current = true/);
+  assert.match(signup, /editable=\{!loading\}/);
+  assert.match(signup, /label="Verify email"/);
 });
 
 test('resending an OTP reports success separately from errors and preserves resend request', () => {

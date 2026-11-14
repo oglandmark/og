@@ -37,6 +37,7 @@ export default function SignUpScreen() {
   const [isCodeFocused, setIsCodeFocused] = useState(false);
   const [resending, setResending] = useState(false);
   const verificationCodeInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const verifyingOtpRef = useRef(false);
   const rtl = isRTL ? 'right' as const : 'left' as const;
   const identifierValue = identifier.trim();
   const isMobileIdentifier = identifierValue.length > 0 && /^[+\d\s().-]+$/.test(identifierValue);
@@ -92,13 +93,25 @@ export default function SignUpScreen() {
     router.replace('/(tabs)');
   }
 
-  async function handleVerifyEmail() {
-    if (!/^\d{6}$/.test(verificationCode)) { setError('Enter the six-digit code from your email.'); return; }
+  async function handleVerifyEmail(codeToVerify = verificationCode) {
+    if (!/^\d{6}$/.test(codeToVerify)) { setError('Enter the six-digit code from your email.'); return; }
+    if (verifyingOtpRef.current) return;
+    verifyingOtpRef.current = true;
     setError('');
     setVerificationNotice('');
     setLoading(true);
-    const result = await verifySignupEmail(verificationEmail, verificationCode);
-    setLoading(false);
+    let result: { success: boolean; error?: string };
+    try {
+      result = await verifySignupEmail(verificationEmail, codeToVerify);
+    } catch (verificationError) {
+      result = {
+        success: false,
+        error: verificationError instanceof Error ? verificationError.message : 'Verification failed.',
+      };
+    } finally {
+      verifyingOtpRef.current = false;
+      setLoading(false);
+    }
     if (!result.success) { setError(result.error ?? 'Verification failed.'); return; }
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.replace('/(tabs)');
@@ -165,9 +178,11 @@ export default function SignUpScreen() {
               ref={verificationCodeInputRef}
               value={verificationCode}
               onChangeText={(value) => {
-                setVerificationCode(value.replace(/\D/g, '').slice(0, 6));
+                const normalizedCode = value.replace(/\D/g, '').slice(0, 6);
+                setVerificationCode(normalizedCode);
                 setError('');
                 setVerificationNotice('');
+                if (normalizedCode.length === 6) void handleVerifyEmail(normalizedCode);
               }}
               onFocus={() => setIsCodeFocused(true)}
               onBlur={() => setIsCodeFocused(false)}
@@ -175,6 +190,7 @@ export default function SignUpScreen() {
               maxLength={6}
               autoComplete="one-time-code"
               textContentType="oneTimeCode"
+              editable={!loading}
               accessibilityLabel="Six-digit email verification code"
               accessibilityHint="Enter the six-digit code from your email."
               selectionColor={colors.teal}

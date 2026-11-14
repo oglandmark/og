@@ -27,8 +27,8 @@ During longer Android builds, `buildInfo.updatedAt` may stop advancing while Gra
 
 **How to apply:** For an apparently stalled build, compare the latest sanitized log timestamps before retrying or cancelling. Do not expose signed log URLs or raw environment-rich logs.
 
-The connected Expo account owner slug is `ogland`; keep `owner` aligned to that value while preserving the existing `extra.eas.projectId`.
+Expo ownership is unresolved: the user reports the connected account slug is `ogland`, EAS logs identify the existing project ID owner as `og-landmark`, and the checked-in app config had `ogland313`. A project-history lookup found no experience under `@ogland` with the app's current slug.
 
-**Why:** The user confirmed `ogland` is the Expo account connected to this project and approved aligning the app config owner.
+**Why:** These identifiers conflict, and EAS failed twice before producing an archive; changing `owner` to the connected account slug may point at a different project.
 
-**How to apply:** Keep the project ID unchanged when correcting the owner slug, and verify project/build history before any future project transfer or ID change.
+**How to apply:** Keep `extra.eas.projectId` unchanged and do not commit an owner change or retry a build until the Expo account/project mapping is confirmed.

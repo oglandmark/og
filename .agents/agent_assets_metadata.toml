@@ -168,3 +168,17 @@ mtime_ms = 1794395745668
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/d13896bc-5145-4d51-b6fe-3532e2046b15/ace43a69-1f9a-4e44-9cee-232b1b719e17"
 storage_version_token = "1794395770737969"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "qnyDQbsFDNXp6lVI3cCAf"
+uri = "file://generated-artifacts/OG-Landmark-5.1.5-65.aab"
+type = "unspecified"
+title = "OG Landmark 5.1.5 (65) Android AAB"
+description = "Production Android App Bundle built from the owner-aligned 5.1.5 release branch on Expo SDK 57. Archive integrity verified. It has not been uploaded to Google Play."
+logical_id = "8e6de083-5913-43ae-9d1d-94c7b9563ed7"
+content_hash = "sha256:0eb6023ed76a7dd632181f25379c5416b6ca16a35daf64992a1e8ff8b0b8699a"
+size = 96747263
+mtime_ms = 1794638954847
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/8e6de083-5913-43ae-9d1d-94c7b9563ed7/4a98bdda-b5a3-40ce-a0ec-50e2e7d6748d"
+storage_version_token = "1794638986040440"
+content_type = "application/octet-stream"

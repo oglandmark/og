@@ -196,3 +196,17 @@ mtime_ms = 1794650476494
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/fc344fe5-98d9-4e33-994d-c17cacca5111/d333a433-a733-49ae-a68c-adf94f7eb810"
 storage_version_token = "1794650517495848"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "LmrLSPPy9a04SmqssQzb5"
+uri = "file://generated-artifacts/OG-Landmark-5.1.7-67.aab"
+type = "unspecified"
+title = "OG Landmark Android AAB 5.1.7 (67)"
+description = "Verified production Android app bundle for Google Play. Archive integrity passed. SHA-256: c13f9e5a19cca0015d61aa6d7644b2df4a398f1641644a6ebc4a2e42da46a3ef. Not submitted to Google Play."
+logical_id = "42199044-f463-4e7f-bb97-3089c810f466"
+content_hash = "sha256:c13f9e5a19cca0015d61aa6d7644b2df4a398f1641644a6ebc4a2e42da46a3ef"
+size = 96749544
+mtime_ms = 1794657694013
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:b06dc013-0a56-4afb-bcd9-07962d56413a/42199044-f463-4e7f-bb97-3089c810f466/1fa95aca-569c-42a3-9fa6-26b54d7515e3"
+storage_version_token = "1794657726782833"
+content_type = "application/octet-stream"
